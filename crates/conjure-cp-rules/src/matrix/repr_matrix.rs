@@ -1,7 +1,7 @@
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{
-    Atom, Expression as Expr, GroundDomain, Literal, Metadata, Moo, Name, Range, SymbolTable,
-    matrix,
+    Atom, DomainPtr, Expression as Expr, GroundDomain, Literal, Metadata, Moo, Name, Range,
+    SymbolTable, matrix,
 };
 use conjure_cp::essence_expr;
 use conjure_cp::into_matrix_expr;
@@ -127,17 +127,36 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
                     return Err(RuleNotApplicable);
                 };
 
-                let &[Range::Bounded(from, _)] = &ranges[..] else {
-                    return Err(RuleNotApplicable);
-                };
+                let flat_index = match &ranges[..] {
+                    [Range::Bounded(from, _)] => {
+                        let offset = Expr::Atomic(Metadata::new(), Literal::Int(from - 1).into());
+                        let old_index = indices[0].clone();
+                        essence_expr!(&old_index - &offset)
+                    }
+                    _ => {
+                        let index_value_exprs: Vec<Expr> = old_index_domain
+                            .values()
+                            .map_err(|_| RuleNotApplicable)?
+                            .map(|lit| Expr::Atomic(Metadata::new(), Atom::Literal(lit)))
+                            .collect();
 
-                let offset = Expr::Atomic(Metadata::new(), Literal::Int(from - 1).into());
-                let old_index = &indices[0].clone();
+                        let index_labels = into_matrix_expr![
+                            index_value_exprs;
+                            DomainPtr::from(old_index_domain.clone())
+                        ];
+
+                        Expr::ElementId(
+                            Metadata::new(),
+                            Moo::new(index_labels),
+                            Moo::new(indices[0].clone()),
+                        )
+                    }
+                };
 
                 return Ok(Reduction::pure(Expr::SafeIndex(
                     Metadata::new(),
                     Moo::new(new_subject),
-                    vec![essence_expr!(&old_index - &offset)],
+                    vec![flat_index],
                 )));
             }
 

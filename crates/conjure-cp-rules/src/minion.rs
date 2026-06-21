@@ -1015,13 +1015,36 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
     let value_expr = (**value).clone();
     let value_atom: Atom = value_expr.clone().try_into().or(Err(RuleNotApplicable))?;
 
-    if let Some(list) = matrix_expr.unwrap_list() {
+    let matrix_elems = matrix_expr
+        .unwrap_list()
+        .or_else(|| matrix_expr.clone().unwrap_matrix_unchecked().map(|(elems, _)| elems));
+
+    if let Some(elems) = matrix_elems {
         let mut atom_list = vec![];
-        for elem in list {
+        for elem in elems {
             let Expr::Atomic(_, elem) = elem else {
                 return Err(RuleNotApplicable);
             };
             atom_list.push(elem);
+        }
+
+        if let Some(search_values) = literal_matrix_int_values(&atom_list)
+            && element_id_value_may_be_outside_matrix(&value_expr, &search_values)
+        {
+            let rows = element_id_table_rows(&value_expr, &search_values)?;
+            let tuple = into_matrix_expr![vec![
+                value_expr,
+                Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(reference.clone()),
+                ),
+            ]];
+
+            return Ok(Reduction::pure(Expr::Table(
+                Metadata::new(),
+                Moo::new(tuple),
+                Moo::new(rows),
+            )));
         }
 
         let atom_list =
@@ -1165,6 +1188,61 @@ fn lit_int(lit: &Lit) -> Option<i32> {
         Lit::Int(value) => Some(*value),
         _ => None,
     }
+}
+
+fn literal_matrix_int_values(atoms: &[Atom]) -> Option<Vec<i32>> {
+    atoms.iter().map(|atom| match atom {
+        Atom::Literal(lit) => lit_int(lit),
+        _ => None,
+    }).collect()
+}
+
+fn element_id_value_may_be_outside_matrix(value_expr: &Expr, search_values: &[i32]) -> bool {
+    let Some(value_domain) = value_expr.domain_of().and_then(|domain| domain.resolve()) else {
+        return true;
+    };
+    let Ok(value_values) = value_domain.values_i32() else {
+        return true;
+    };
+
+    value_values
+        .iter()
+        .any(|value| !search_values.contains(value))
+}
+
+fn element_id_table_rows(
+    value_expr: &Expr,
+    search_values: &[i32],
+) -> Result<Expr, ApplicationError> {
+    let value_domain = value_expr
+        .domain_of()
+        .ok_or(RuleNotApplicable)?
+        .resolve()
+        .ok_or(RuleNotApplicable)?;
+    let value_values = value_domain
+        .values_i32()
+        .map_err(|_| RuleNotApplicable)?;
+    let sentinel = i32::try_from(search_values.len())
+        .map_err(|_| RuleNotApplicable)?
+        + 1;
+    let value_to_index: HashMap<i32, i32> = search_values
+        .iter()
+        .enumerate()
+        .map(|(index, value)| (*value, (index + 1) as i32))
+        .collect();
+
+    let rows = value_values
+        .into_iter()
+        .map(|value| {
+            let index = value_to_index.get(&value).copied().unwrap_or(sentinel);
+            into_matrix_expr![vec![
+                Expr::Atomic(Metadata::new(), Lit::Int(value).into()),
+                Expr::Atomic(Metadata::new(), Lit::Int(index).into()),
+            ]]
+        })
+        .collect_vec();
+
+    Ok(into_matrix_expr![rows])
 }
 
 fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
