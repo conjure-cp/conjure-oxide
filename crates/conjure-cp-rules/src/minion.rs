@@ -1028,9 +1028,19 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
             atom_list.push(elem);
         }
 
+        // Use table only if the search value can be out of bounds; otherwise element_one.
         if let Some(search_values) = literal_matrix_int_values(&atom_list)
             && element_id_value_may_be_outside_matrix(&value_expr, &search_values)
         {
+            if let Ok(atom_list) = indexed_element_id_inverse_lookup(&matrix_expr, &value_expr) {
+                return Ok(Reduction::pure(Expr::MinionElementOne(
+                    Metadata::new(),
+                    atom_list,
+                    Moo::new(Atom::Reference(reference.clone())),
+                    Moo::new(value_atom),
+                )));
+            }
+
             let rows = element_id_table_rows(&value_expr, &search_values)?;
             let tuple = into_matrix_expr![vec![
                 value_expr,
