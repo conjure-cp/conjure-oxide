@@ -505,7 +505,15 @@ module.exports = grammar ({
       $.sub_atom_expr,
       $.constant,
       $.identifier,
-      $.metavar
+      $.metavar,
+      $.matrix,
+      $.comprehension,
+      $.tuple,
+      $.record,
+      $.set_literal,
+      $.index_or_slice,
+      $.flatten,
+      $.element_id
     ),
 
     annotation_domain: $ => choice(
@@ -670,7 +678,7 @@ module.exports = grammar ({
     list_combining_expr_arith: $ => prec(-10, seq(
       field("operator", choice("min", "max", "sum")),
       "(",
-      field("arg", $.atom),
+      field("arg", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.annotation_expr, $.atom)),
       ")"
     )),
 

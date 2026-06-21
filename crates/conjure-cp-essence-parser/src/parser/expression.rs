@@ -21,7 +21,9 @@ pub fn parse_expression(
     node: Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" | "primary_atom" | "table" | "negative_table" => parse_atom(ctx, &node),
+        "atom" | "primary_atom" | "constant" | "identifier" | "metavar" | "matrix" | "record"
+        | "tuple" | "set_literal" | "comprehension" | "index_or_slice" | "flatten"
+        | "element_id" | "table" | "negative_table" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
@@ -241,7 +243,7 @@ fn parse_list_combining_expression(
     };
     // While parsing inner, the typechecking context is SetOrMatrix
     // The inner context is either Boolean or Arithmetic so the elements of the set/matrix are typechecked correctly.
-    let Some(inner) = parse_atom(ctx, &arg_node)? else {
+    let Some(inner) = parse_expression(ctx, arg_node)? else {
         return Ok(None);
     };
 
