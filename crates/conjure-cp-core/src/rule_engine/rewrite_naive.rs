@@ -20,7 +20,7 @@ use crate::{
 };
 
 use itertools::Itertools;
-use std::{sync::Arc, time::Instant};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 use tracing::trace;
 
 // debug imports
@@ -32,6 +32,62 @@ use {
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
 type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
+
+#[derive(Clone)]
+struct RuleGroup<'a> {
+    priority: u16,
+    rules: Vec<RuleData<'a>>,
+    rules_by_discriminant: HashMap<usize, Vec<RuleData<'a>>>,
+    universal_rules: Vec<RuleData<'a>>,
+}
+
+impl<'a> RuleGroup<'a> {
+    fn new(priority: u16, rules: Vec<RuleData<'a>>) -> Self {
+        let discriminants = rules
+            .iter()
+            .filter_map(|rd| rd.rule.applicable_to)
+            .flatten()
+            .copied()
+            .collect_vec();
+
+        let rules_by_discriminant = discriminants
+            .into_iter()
+            .unique()
+            .map(|discriminant| {
+                let bucket = rules
+                    .iter()
+                    .filter(|rd| rule_applies_to_discriminant(rd, discriminant))
+                    .cloned()
+                    .collect();
+                (discriminant, bucket)
+            })
+            .collect();
+
+        let universal_rules = rules
+            .iter()
+            .filter(|rd| rd.rule.applicable_to.is_none())
+            .cloned()
+            .collect();
+
+        Self {
+            priority,
+            rules,
+            rules_by_discriminant,
+            universal_rules,
+        }
+    }
+
+    fn candidates(&self, config: RewriteConfig, expr: &Expr) -> &[RuleData<'a>] {
+        if !config.prefilter {
+            return &self.rules;
+        }
+
+        let discriminant = discriminant_from_value(expr);
+        self.rules_by_discriminant
+            .get(&discriminant)
+            .unwrap_or(&self.universal_rules)
+    }
+}
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.
@@ -46,6 +102,10 @@ pub fn rewrite_naive<'a>(
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
+        .collect_vec();
+    let bucketed_rules = rules_grouped
+        .iter()
+        .map(|(priority, rules)| RuleGroup::new(*priority, rules.clone()))
         .collect_vec();
 
     let mut model = introduce_objective_auxiliary(model.clone());
@@ -74,6 +134,7 @@ pub fn rewrite_naive<'a>(
         done_something = try_rewrite_model(
             &mut model,
             &rules_grouped,
+            &bucketed_rules,
             prop_multiple_equally_applicable,
             &mut rewriter_stats,
             &run_start,
@@ -108,6 +169,7 @@ pub fn rewrite_naive<'a>(
 fn try_rewrite_model(
     submodel: &mut Model,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
+    bucketed_rules: &Vec<RuleGroup<'_>>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
     #[cfg(debug_assertions)] run_start: &Instant,
@@ -124,18 +186,13 @@ fn try_rewrite_model(
     let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
 
     // Iterate over rules by priority in descending order.
-    'top: for (priority, rules) in rules_grouped.iter() {
+    'top: for rule_group in bucketed_rules.iter() {
         // Rewrite within the current root expression tree.
         for (expr, ctx) in expression_ctx(submodel.root().clone()) {
             // Clone expr and ctx so they can be reused
             let expr = expr.clone();
             let ctx = ctx.clone();
-            let expr_discriminant = config.prefilter.then(|| discriminant_from_value(&expr));
-            for rd in rules {
-                if expr_discriminant.is_some_and(|id| !rule_applies_to_discriminant(rd, id)) {
-                    continue;
-                }
-
+            for rd in rule_group.candidates(config, &expr) {
                 // Count rule application attempts
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
@@ -159,7 +216,7 @@ fn try_rewrite_model(
                         if rule_trace_enabled() && rule_trace_verbose_enabled() {
                             log_verbose_rule_attempt(
                                 run_start,
-                                priority,
+                                &rule_group.priority,
                                 rd.rule.name,
                                 rd.rule_set.name,
                                 "success",
@@ -183,7 +240,7 @@ fn try_rewrite_model(
                                 rule_data: rd.clone(),
                                 reduction: red,
                             },
-                            *priority,
+                            rule_group.priority,
                             expr.clone(),
                             ctx.clone(),
                             variable_snapshots,
@@ -195,7 +252,7 @@ fn try_rewrite_model(
                         if rule_trace_enabled() && rule_trace_verbose_enabled() {
                             log_verbose_rule_attempt(
                                 run_start,
-                                priority,
+                                &rule_group.priority,
                                 rd.rule.name,
                                 rd.rule_set.name,
                                 "fail",
