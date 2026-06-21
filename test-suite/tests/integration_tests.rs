@@ -10,6 +10,7 @@ use conjure_cp_cli::utils::testing::{
     DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, normalize_solutions_for_comparison,
     read_default_rule_trace, truncate_to_first_chars,
 };
+use serde_json::Value as JsonValue;
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fs;
@@ -53,8 +54,9 @@ use test_suite::diagnostics::{
 };
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
-    RecordedRunStats, round_expected_time, upsert_expected_time_config,
-    upsert_recorded_run_stats_config, upsert_status_config, upsert_tool_status_config,
+    RecordedRunStats, RuleTraceAggregateStats, read_stats_or_default, round_expected_time,
+    stats_path, upsert_expected_time_stats, upsert_recorded_run_stats,
+    upsert_rule_trace_aggregate_stats, upsert_status_stats, upsert_tool_status_stats,
 };
 use test_suite::text_files::write_text_with_trailing_newline;
 
@@ -131,8 +133,8 @@ where
         if started_at.elapsed() >= timeout {
             terminate_timed_child(&mut child)?;
             let child_output = format_child_output(stdout, stderr);
-            upsert_status_config(
-                &Path::new(test_dir).join("config.toml"),
+            upsert_status_stats(
+                &stats_path(Path::new(test_dir)),
                 &format!("timeout({})", timeout.as_secs()),
             )?;
             let _ = write_failure_record(
@@ -300,7 +302,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     if AcceptMode::from_env().accepts_outputs() {
         let status = if result.is_ok() { "ok" } else { "fail" };
-        upsert_status_config(&Path::new(path).join("config.toml"), status)?;
+        upsert_status_stats(&stats_path(Path::new(path)), status)?;
     }
 
     result
@@ -326,6 +328,7 @@ fn integration_test_inner_with_status(
             Default::default()
         };
 
+    let run_stats = read_stats_or_default(&stats_path(Path::new(path)))?;
     let config = file_config;
 
     let skip_conjure_validation = config.should_skip_conjure_validation();
@@ -349,7 +352,7 @@ fn integration_test_inner_with_status(
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
     let param_file = param_file_in_test_dir(path);
-    let config_path = Path::new(path).join("config.toml");
+    let stats_path = stats_path(Path::new(path));
     let mut conjure_captured = false;
     let conjure_solutions = if accept && !skip_conjure_validation {
         let conjure_run = match get_solutions_from_conjure_with_stats(
@@ -364,11 +367,11 @@ fn integration_test_inner_with_status(
         ) {
             Ok(conjure_run) => {
                 conjure_captured = true;
-                upsert_tool_status_config(&config_path, "conjure", "ok")?;
+                upsert_tool_status_stats(&stats_path, "conjure", "ok")?;
                 conjure_run
             }
             Err(err) => {
-                upsert_tool_status_config(&config_path, "conjure", "fail")?;
+                upsert_tool_status_stats(&stats_path, "conjure", "fail")?;
                 record_integration_failure(
                     path,
                     FailureRecord {
@@ -485,7 +488,7 @@ fn integration_test_inner_with_status(
 
     if accept {
         let oxide_status = if oxide_result.is_ok() { "ok" } else { "fail" };
-        upsert_tool_status_config(&config_path, "oxide", oxide_status)?;
+        upsert_tool_status_stats(&stats_path, "oxide", oxide_status)?;
     }
 
     if let Err(err) = &oxide_result {
@@ -506,16 +509,16 @@ fn integration_test_inner_with_status(
     if accept_mode.records_expected_time() {
         let observed_expected_time = round_expected_time(started_at.elapsed());
         if let Some(expected_time) =
-            accept_mode.expected_time_to_record(config.expected_time, observed_expected_time)
+            accept_mode.expected_time_to_record(run_stats.expected_time, observed_expected_time)
         {
-            upsert_expected_time_config(&config_path, expected_time)?;
+            upsert_expected_time_stats(&stats_path, expected_time)?;
         }
     }
 
     if accept && !skip_conjure_validation {
         if let Some(conjure_timings) = conjure_timings {
-            upsert_recorded_run_stats_config(
-                &config_path,
+            upsert_recorded_run_stats(
+                &stats_path,
                 RecordedRunStats {
                     oxide_translation_time: oxide_timings.translation_time_s,
                     oxide_solve_time: oxide_timings.solve_time_s,
@@ -526,6 +529,16 @@ fn integration_test_inner_with_status(
                 },
             )?;
         }
+    }
+
+    if accept && rule_trace_snapshots_enabled {
+        let aggregates =
+            collect_rule_trace_aggregates(Path::new(path), "-generated-rule-trace.txt")?;
+        let aggregates = RuleTraceAggregateStats {
+            total_rule_attempts: collect_rule_attempts(Path::new(path))?,
+            ..aggregates
+        };
+        upsert_rule_trace_aggregate_stats(&stats_path, &aggregates)?;
     }
 
     Ok(())
@@ -719,6 +732,75 @@ fn expected_integration_files_for_case(case_name: &str, solver: SolverFamily) ->
     ])
 }
 
+fn collect_rule_trace_aggregates(
+    path: &Path,
+    file_suffix: &str,
+) -> Result<RuleTraceAggregateStats, std::io::Error> {
+    let mut aggregates = RuleTraceAggregateStats::default();
+
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let file_name = entry.file_name();
+        let file_name = file_name.to_string_lossy();
+        if !file_name.ends_with(file_suffix) {
+            continue;
+        }
+
+        let trace = fs::read_to_string(entry.path())?;
+        for line in trace.lines() {
+            let Some((_, rule_and_sets)) = line.split_once("~~>") else {
+                continue;
+            };
+            let rule_name = rule_and_sets
+                .trim()
+                .split_once(' ')
+                .map_or_else(|| rule_and_sets.trim(), |(rule, _)| rule);
+
+            if rule_name.is_empty() {
+                continue;
+            }
+
+            aggregates.total_rule_applications += 1;
+            *aggregates.rules.entry(rule_name.to_string()).or_insert(0) += 1;
+        }
+    }
+
+    Ok(aggregates)
+}
+
+fn collect_rule_attempts(path: &Path) -> Result<u64, std::io::Error> {
+    let mut total = 0;
+
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let file_name = entry.file_name();
+        let file_name = file_name.to_string_lossy();
+        if !file_name.ends_with("-stats.json") || file_name.contains("-naive-") {
+            continue;
+        }
+
+        let stats: JsonValue = serde_json::from_str(&fs::read_to_string(entry.path())?)
+            .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))?;
+        let Some(rewriter_runs) = stats
+            .get("stats")
+            .and_then(|stats| stats.get("rewriterRuns"))
+            .and_then(JsonValue::as_array)
+        else {
+            continue;
+        };
+
+        total += rewriter_runs
+            .iter()
+            .filter_map(|run| {
+                run.get("rewriterRuleApplicationAttempts")
+                    .and_then(JsonValue::as_u64)
+            })
+            .sum::<u64>();
+    }
+
+    Ok(total)
+}
+
 fn clean_test_dir_for_accept(
     path: &str,
     essence_base: &str,
@@ -734,6 +816,7 @@ fn clean_test_dir_for_accept(
 
         if file_name == input_filename
             || file_name == "config.toml"
+            || file_name == "stats.toml"
             || file_name == DIAGNOSTICS_DIR
             || entry_path.extension().is_some_and(|ext| ext == "param")
         {
