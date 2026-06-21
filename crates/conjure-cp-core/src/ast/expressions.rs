@@ -1109,16 +1109,11 @@ impl Expression {
                         }
                         Some(Moo::new(index_domain))
                     } else {
-                        let value_categories = value.universe_categories();
-                        if value_categories.contains(&Category::Decision) {
-                            value
-                                .domain_of()
-                                .and_then(|value_domain| index_domain.union(&value_domain).ok())
-                                .map(Moo::new)
-                                .or_else(|| Some(Moo::new(index_domain)))
-                        } else {
-                            Some(Moo::new(index_domain))
-                        }
+                        value
+                            .domain_of()
+                            .and_then(|value_domain| index_domain.union(&value_domain).ok())
+                            .map(Moo::new)
+                            .or_else(|| Some(Moo::new(index_domain)))
                     }
                 } else {
                     let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
