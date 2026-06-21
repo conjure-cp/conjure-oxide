@@ -764,6 +764,19 @@ fn matrix_element_domain(e: &Expression) -> Option<DomainPtr> {
 
 fn empty_matrix_integer_element_domain(e: &Expression) -> Option<DomainPtr> {
     match e {
+        Expression::TypeAnnotation(_, inner, ReturnType::Matrix(elem_type)) => {
+            if !Moo::unwrap_or_clone(inner.clone())
+                .unwrap_matrix_unchecked()
+                .is_some_and(|(elems, _)| elems.is_empty())
+            {
+                return None;
+            }
+            if elem_type.as_ref() == &ReturnType::Int {
+                Some(Domain::int_ground(vec![Range::Unbounded]))
+            } else {
+                None
+            }
+        }
         Expression::DomainAnnotation(_, inner, domain) => {
             if !Moo::unwrap_or_clone(inner.clone())
                 .unwrap_matrix_unchecked()
@@ -1925,6 +1938,9 @@ impl Expression {
     /// any explicitly specified domain.
     pub fn unwrap_list(&self) -> Option<Vec<Expression>> {
         match self {
+            Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
+                expr.unwrap_list()
+            }
             Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
                 matrix.unwrap_list().cloned()
             }
@@ -1951,6 +1967,9 @@ impl Expression {
     /// reconstructed, the index domain and the number of elements in the matrix remain the same.
     pub fn unwrap_matrix_unchecked(self) -> Option<(Vec<Expression>, DomainPtr)> {
         match self {
+            Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
+                Moo::unwrap_or_clone(expr).unwrap_matrix_unchecked()
+            }
             Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain)) => {
                 Some((elems, domain))
             }

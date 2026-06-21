@@ -29,8 +29,39 @@ fn fold_constant_expression(expr: &Expr) -> Option<Expr> {
     }
 
     let folded = Expr::Atomic(Metadata::new(), Atom::Literal(constant));
+    if let Expr::TypeAnnotation(_, _, ty) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::TypeAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            ty.clone(),
+        ));
+    }
+
+    if let Expr::DomainAnnotation(_, _, domain) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain.clone(),
+        ));
+    }
+
     if let Expr::Comprehension(_, comprehension) = expr
-        && let Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) = &folded
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
         && elems.is_empty()
         && let Some(domain) = comprehension.domain_of()
     {
