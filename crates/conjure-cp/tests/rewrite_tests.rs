@@ -1,13 +1,13 @@
 use conjure_cp::{
-    Model,
     ast::{
-        Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name, Range, Reference,
-        SymbolTable, eval_constant,
+        eval_constant, Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name,
+        Range, Reference, SymbolTable,
     },
     into_matrix_expr, matrix_expr,
-    rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive},
-    settings::{QuantifiedExpander, SolverFamily, set_comprehension_expander},
-    solver::{Solver, adaptors},
+    rule_engine::{get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive, Rule},
+    settings::{set_comprehension_expander, QuantifiedExpander, SolverFamily},
+    solver::{adaptors, Solver},
+    Model,
 };
 #[allow(unused_imports)]
 #[allow(clippy::single_component_path_imports)] // ensure this is linked so we can lookup rules
@@ -132,9 +132,10 @@ fn simplify_expression(expr: Expression) -> Expression {
             } else {
                 Expression::Sum(
                     Metadata::new(),
-                    Moo::new(into_matrix_expr![
-                        expressions.into_iter().map(simplify_expression).collect()
-                    ]),
+                    Moo::new(into_matrix_expr![expressions
+                        .into_iter()
+                        .map(simplify_expression)
+                        .collect()]),
                 )
             }
         }
@@ -688,7 +689,13 @@ fn rewrite_solve_xyz() {
 
     *model.constraints_mut() = vec![nested_expr];
 
-    model = rewrite_naive(&model, &rule_sets, true).unwrap();
+    model = rewrite_naive(
+        &model,
+        &rule_sets,
+        true,
+        conjure_cp::settings::RewriteConfig::baseline(),
+    )
+    .unwrap();
     let rewritten_expr = model.constraints();
 
     // Check if the expression is in its simplest form

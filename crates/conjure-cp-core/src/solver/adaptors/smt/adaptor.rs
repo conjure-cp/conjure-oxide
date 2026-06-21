@@ -5,7 +5,7 @@ use itertools::Itertools;
 use uniplate::Uniplate;
 use versions::Versioning;
 use z3::{
-    Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate, with_z3_config,
+    with_z3_config, Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate,
 };
 
 use super::convert_model::*;
@@ -14,8 +14,8 @@ use super::theories::*;
 
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::rule_engine::rewrite_model_with_configured_rewriter;
-use crate::settings::{Rewriter, current_rewriter, set_current_rewriter};
-use crate::{Model, solver::*};
+use crate::settings::{current_rewriter, set_current_rewriter, RewriteConfig, Rewriter};
+use crate::{solver::*, Model};
 
 const MINIMUM_Z3_VERSION: &str = "4.8.12";
 
@@ -554,7 +554,7 @@ mod tests {
     fn adding_dominance_constraint_rules_out_solution_dominated_by_prior_solution() {
         let theory_config = TheoryConfig::default();
         let context = Context::new_ptr_empty(SolverFamily::Smt(theory_config));
-        set_current_rewriter(Rewriter::Naive);
+        set_current_rewriter(Rewriter::Rewrite(RewriteConfig::baseline()));
 
         let x = Name::User("x".into());
         let y = Name::User("y".into());

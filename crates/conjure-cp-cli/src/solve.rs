@@ -13,16 +13,17 @@ use anyhow::anyhow;
 use clap::ValueHint;
 use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::{
-    Model,
     context::Context,
     defaults::DEFAULT_RULE_SETS,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
-        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
+        set_comprehension_expander, set_current_parser, set_current_rewriter,
         set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
         set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
+        Rewriter,
     },
     solver::Solver,
+    Model,
 };
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
@@ -320,12 +321,13 @@ pub(crate) fn rewrite(
                 config,
             )
         }
-        Rewriter::Naive => {
-            tracing::info!("Rewriting the model using the default / naive rewriter");
+        Rewriter::Rewrite(config) => {
+            tracing::info!("Rewriting the model using the rewrite engine ({})", config);
             rewrite_naive(
                 &model,
                 &rule_sets,
                 global_args.check_equally_applicable_rules,
+                config,
             )?
         }
     };

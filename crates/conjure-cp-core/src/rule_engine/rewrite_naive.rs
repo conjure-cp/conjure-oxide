@@ -1,22 +1,22 @@
-use super::{RewriteError, RuleSet, resolve_rules::RuleData};
+use super::{resolve_rules::RuleData, RewriteError, RuleSet};
 use crate::{
-    Model,
-    ast::Expression as Expr,
+    ast::{discriminant_from_value, Expression as Expr},
     bug,
     objective::introduce_objective_auxiliary,
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{
-            RuleResult, VariableDeclarationSnapshot, log_rule_application,
-            snapshot_variable_declarations, try_rewrite_value_letting_once,
+            log_rule_application, snapshot_variable_declarations, try_rewrite_value_letting_once,
+            RuleResult, VariableDeclarationSnapshot,
         },
         submodel_zipper::expression_ctx,
     },
     settings::{
-        Rewriter, default_rule_trace_enabled, rule_trace_enabled, rule_trace_verbose_enabled,
-        set_current_rewriter,
+        default_rule_trace_enabled, rule_trace_enabled, rule_trace_verbose_enabled,
+        set_current_rewriter, RewriteConfig, Rewriter,
     },
     stats::RewriterStats,
+    Model,
 };
 
 use itertools::Itertools;
@@ -27,7 +27,7 @@ use tracing::trace;
 #[cfg(debug_assertions)]
 use {
     crate::ast::assertions::debug_assert_model_well_formed,
-    tracing::{Level, span},
+    tracing::{span, Level},
 };
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
@@ -39,8 +39,9 @@ pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
+    config: RewriteConfig,
 ) -> Result<Model, RewriteError> {
-    set_current_rewriter(Rewriter::Naive);
+    set_current_rewriter(Rewriter::Rewrite(config));
 
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -51,7 +52,7 @@ pub fn rewrite_naive<'a>(
     let mut done_something = true;
 
     let mut rewriter_stats = RewriterStats::new();
-    rewriter_stats.is_optimization_enabled = Some(false);
+    rewriter_stats.is_optimization_enabled = Some(config.prefilter);
     let run_start = Instant::now();
 
     if rule_trace_enabled() && default_rule_trace_enabled() {
@@ -76,6 +77,7 @@ pub fn rewrite_naive<'a>(
             prop_multiple_equally_applicable,
             &mut rewriter_stats,
             &run_start,
+            config,
         )
         .is_some();
     }
@@ -110,6 +112,7 @@ fn try_rewrite_model(
     stats: &mut RewriterStats,
     #[cfg(debug_assertions)] run_start: &Instant,
     #[cfg(not(debug_assertions))] _: &Instant,
+    config: RewriteConfig,
 ) -> Option<()> {
     if let Some(result) =
         try_rewrite_value_letting_once(submodel, rules_grouped, prop_multiple_equally_applicable)
@@ -127,7 +130,12 @@ fn try_rewrite_model(
             // Clone expr and ctx so they can be reused
             let expr = expr.clone();
             let ctx = ctx.clone();
+            let expr_discriminant = config.prefilter.then(|| discriminant_from_value(&expr));
             for rd in rules {
+                if expr_discriminant.is_some_and(|id| !rule_applies_to_discriminant(rd, id)) {
+                    continue;
+                }
+
                 // Count rule application attempts
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
@@ -241,6 +249,13 @@ fn try_rewrite_model(
     }
 
     Some(())
+}
+
+fn rule_applies_to_discriminant(rule_data: &RuleData<'_>, expr_discriminant: usize) -> bool {
+    rule_data
+        .rule
+        .applicable_to
+        .is_none_or(|ids| ids.contains(&expr_discriminant))
 }
 
 #[cfg(debug_assertions)]

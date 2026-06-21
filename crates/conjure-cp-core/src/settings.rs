@@ -140,9 +140,103 @@ impl Display for MorphCachingStrategy {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct RewriteConfig {
+    pub prefilter: bool,
+}
+
+impl RewriteConfig {
+    pub const fn baseline() -> Self {
+        Self { prefilter: false }
+    }
+
+    pub const fn optimised() -> Self {
+        Self { prefilter: true }
+    }
+
+    pub const fn is_baseline(self) -> bool {
+        !self.prefilter
+    }
+
+    pub const fn is_optimised(self) -> bool {
+        self.prefilter
+    }
+}
+
+impl Default for RewriteConfig {
+    fn default() -> Self {
+        Self::optimised()
+    }
+}
+
+impl Display for RewriteConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_optimised() {
+            write!(f, "optimised")
+        } else if self.is_baseline() {
+            write!(f, "baseline")
+        } else {
+            let mut options = Vec::new();
+            if self.prefilter {
+                options.push("prefilter");
+            }
+            write!(f, "{}", options.join("+"))
+        }
+    }
+}
+
+impl FromStr for RewriteConfig {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let trimmed = s.trim().to_ascii_lowercase();
+        match trimmed.as_str() {
+            "baseline" => return Ok(Self::baseline()),
+            "optimised" | "optimized" => return Ok(Self::optimised()),
+            _ => {}
+        }
+
+        let mut config = Self::baseline();
+        let mut baseline_seen = false;
+        let mut prefilter_seen = false;
+
+        for token in trimmed.split('+') {
+            match token {
+                "" => {}
+                "baseline" => {
+                    if baseline_seen {
+                        return Err("duplicate rewrite option 'baseline'".to_string());
+                    }
+                    baseline_seen = true;
+                }
+                "prefilter" => {
+                    if prefilter_seen {
+                        return Err("duplicate rewrite option 'prefilter'".to_string());
+                    }
+                    config.prefilter = true;
+                    prefilter_seen = true;
+                }
+                other => {
+                    return Err(format!(
+                        "unknown rewrite option '{other}'; expected baseline, optimised, or a '+' separated combination of: prefilter"
+                    ));
+                }
+            }
+        }
+
+        Ok(config)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
-    Naive,
+    Rewrite(RewriteConfig),
     Morph(MorphConfig),
+}
+
+impl Default for Rewriter {
+    fn default() -> Self {
+        Self::Rewrite(RewriteConfig::optimised())
+    }
 }
 
 thread_local! {
@@ -155,7 +249,7 @@ thread_local! {
 impl Display for Rewriter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Rewriter::Naive => write!(f, "naive"),
+            Rewriter::Rewrite(config) => write!(f, "{config}"),
             Rewriter::Morph(config) => write!(f, "{config}"),
         }
     }
@@ -167,17 +261,21 @@ impl FromStr for Rewriter {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let trimmed = s.trim().to_ascii_lowercase();
         match trimmed.as_str() {
-            "naive" => Ok(Rewriter::Naive),
             "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
+            "baseline" | "optimised" | "optimized" => Ok(Rewriter::Rewrite(trimmed.parse()?)),
             other => {
-                if !other.starts_with("morph-") {
-                    return Err(format!(
-                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
-                    ));
+                if other.starts_with("morph-") {
+                    let parts = other.split('-').skip(1);
+                    return Ok(Rewriter::Morph(parse_morph_config_tokens(parts)?));
                 }
 
-                let parts = other.split('-').skip(1);
-                Ok(Rewriter::Morph(parse_morph_config_tokens(parts)?))
+                if other.contains('+') {
+                    return Ok(Rewriter::Rewrite(other.parse()?));
+                }
+
+                Err(format!(
+                    "unknown rewriter: {other}; expected baseline, optimised, baseline+prefilter, morph, or morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
+                ))
             }
         }
     }

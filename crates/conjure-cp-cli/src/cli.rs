@@ -4,8 +4,8 @@ use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
-    SolverFamily,
+    Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
+    DEFAULT_MINION_DISCRETE_THRESHOLD,
 };
 use conjure_cp::solver::adaptors::MinionValueOrder;
 
@@ -121,8 +121,8 @@ pub struct GlobalArgs {
 
     /// Which rewriter to use.
     ///
-    /// Possible values: `naive`, `morph`
-    #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    /// Possible values: `baseline`, `baseline+prefilter`, `optimised`, `morph`
+    #[arg(long, default_value_t = Rewriter::default(), value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 
     /// Which strategy to use for expanding quantified variables in comprehensions.

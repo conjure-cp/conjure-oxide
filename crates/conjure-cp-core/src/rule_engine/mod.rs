@@ -84,7 +84,7 @@ pub use conjure_cp_rule_macros::register_rule;
 /// ```
 #[doc(inline)]
 pub use conjure_cp_rule_macros::register_rule_set;
-pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
+pub use resolve_rules::{get_rules, get_rules_grouped, resolve_rule_sets, RuleData};
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
 pub(crate) use rule::MorphState;
@@ -97,8 +97,8 @@ mod submodel_zipper;
 pub use submodel_zipper::SubmodelZipper;
 
 use crate::{
-    Model,
     settings::{Rewriter, SolverFamily},
+    Model,
 };
 
 mod resolve_rules;
@@ -216,7 +216,7 @@ pub fn rewrite_model_with_configured_rewriter<'a>(
 ) -> Result<Model, RewriteError> {
     match configured_rewriter {
         Rewriter::Morph(config) => Ok(rewrite_morph(model, rule_sets, false, config)),
-        Rewriter::Naive => rewrite_naive(&model, rule_sets, false),
+        Rewriter::Rewrite(config) => rewrite_naive(&model, rule_sets, false, config),
     }
 }
 
