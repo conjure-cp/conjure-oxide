@@ -1439,14 +1439,14 @@ fn constant_fold_indomain_element_id(expr: &Expr, _: &SymbolTable) -> Applicatio
         .intersect(&domain)
         .map_err(|_| RuleNotApplicable)?;
 
-    let GroundDomain::Int(expr_ranges) = expr_domain.as_ref() else {
+    let GroundDomain::Int(_) = expr_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
-    let GroundDomain::Int(inter_ranges) = &intersection else {
+    let GroundDomain::Int(_) = &intersection else {
         return Err(RuleNotApplicable);
     };
 
-    if inter_ranges == expr_ranges {
+    if normalise_int_domain(&intersection) == normalise_int_domain(expr_domain.as_ref()) {
         return Ok(Reduction::pure(true.into()));
     }
 
@@ -1457,6 +1457,18 @@ fn constant_fold_indomain_element_id(expr: &Expr, _: &SymbolTable) -> Applicatio
     }
 
     Err(RuleNotApplicable)
+}
+
+fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
+    match domain {
+        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
+            &ranges
+                .iter()
+                .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                .collect_vec(),
+        )),
+        _ => domain.clone(),
+    }
 }
 
 /// Resolves `__n =aux matrix[index]` when `index` is a constant `elementId` lookup.

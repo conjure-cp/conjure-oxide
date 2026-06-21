@@ -34,7 +34,7 @@ use super::categories::{Category, CategoryOf};
 use super::comprehension::{Comprehension, ComprehensionQualifier};
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
-use super::eval::factorial_i32;
+use super::eval::{eval_constant, factorial_i32};
 use super::pretty::{pretty_expression_domain_annotation, pretty_expression_type_annotation};
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::FieldValue;
@@ -1158,11 +1158,20 @@ impl Expression {
                         }
                         Some(Moo::new(index_domain))
                     } else {
-                        value
-                            .domain_of()
-                            .and_then(|value_domain| index_domain.union(&value_domain).ok())
-                            .map(Moo::new)
-                            .or_else(|| Some(Moo::new(index_domain)))
+                        let matrix_is_literal = matches!(
+                            matrix.as_ref(),
+                            Expression::Atomic(_, Atom::Literal(_))
+                                | Expression::AbstractLiteral(_, _)
+                        );
+                        if !matrix_is_literal || eval_constant(value.as_ref()).is_none() {
+                            value
+                                .domain_of()
+                                .and_then(|value_domain| index_domain.union(&value_domain).ok())
+                                .map(Moo::new)
+                                .or_else(|| Some(Moo::new(index_domain)))
+                        } else {
+                            Some(Moo::new(index_domain))
+                        }
                     }
                 } else {
                     let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
