@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use conjure_cp::ast::eval::vec_op;
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, Expression as Expr, Literal, Metadata, SymbolTable, eval_constant,
+    AbstractLiteral, Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable, eval_constant,
     run_partial_evaluator,
 };
 use conjure_cp::rule_engine::{
@@ -28,7 +28,20 @@ fn fold_constant_expression(expr: &Expr) -> Option<Expr> {
         return None;
     }
 
-    Some(Expr::Atomic(Metadata::new(), Atom::Literal(constant)))
+    let folded = Expr::Atomic(Metadata::new(), Atom::Literal(constant));
+    if let Expr::Comprehension(_, comprehension) = expr
+        && let Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) = &folded
+        && elems.is_empty()
+        && let Some(domain) = comprehension.domain_of()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain,
+        ));
+    }
+
+    Some(folded)
 }
 
 #[register_rule("Base", 9000)]

@@ -11,8 +11,8 @@ pub use expand_via_solver_ac::expand_via_solver_ac;
 
 use conjure_cp::{
     ast::{
-        DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Moo, Name, Range, Reference,
-        SymbolTable, UnresolvedDomain,
+        DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Metadata, Moo, Name, Range,
+        Reference, SymbolTable, UnresolvedDomain,
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
         serde::{HasId, ObjId},
@@ -140,9 +140,17 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
     }
 
     let mut symbols = symbols.clone();
+    let comprehension_domain = comprehension.domain_of();
     let results = expand_native(comprehension, &mut symbols)
         .unwrap_or_else(|e| bug!("native comprehension expansion failed: {e}"));
-    Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
+    let expanded = into_matrix_expr!(results);
+    let expanded = match comprehension_domain {
+        Some(domain) if expanded.unwrap_list().is_some_and(|elems| elems.is_empty()) => {
+            Expr::DomainAnnotation(Metadata::new(), Moo::new(expanded), domain)
+        }
+        _ => expanded,
+    };
+    Ok(Reduction::with_symbols(expanded, symbols))
 }
 
 /// Expand comprehensions using `--comprehension-expander via-solver`.

@@ -950,7 +950,10 @@ impl GroundDomain {
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix"
                     );
                     first_index_domain.push(idx);
-                    l = elems[0].clone();
+                    let Some(first_elem) = elems.first() else {
+                        break;
+                    };
+                    l = first_elem.clone();
                 }
 
                 let mut all_elems: Vec<Literal> = vec![];
@@ -964,14 +967,23 @@ impl GroundDomain {
                     all_elems.extend(elems.clone());
 
                     let mut index_domain = vec![idx.clone()];
-                    let mut l = elems[0].clone();
+                    let Some(first_elem) = elems.first() else {
+                        if index_domain != first_index_domain {
+                            return Err(DomainOpError::WrongType);
+                        }
+                        continue;
+                    };
+                    let mut l = first_elem.clone();
                     while let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = l {
                         assert!(
                             !matches!(idx.as_ref(), GroundDomain::Matrix(_, _)),
                             "n-dimensional matrix literals should be represented as a matrix inside a matrix"
                         );
                         index_domain.push(idx);
-                        l = elems[0].clone();
+                        let Some(first_elem) = elems.first() else {
+                            break;
+                        };
+                        l = first_elem.clone();
                     }
 
                     if index_domain != first_index_domain {

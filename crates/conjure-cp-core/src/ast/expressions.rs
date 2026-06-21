@@ -762,6 +762,32 @@ fn matrix_element_domain(e: &Expression) -> Option<DomainPtr> {
     Some(elem_domain)
 }
 
+fn empty_matrix_integer_element_domain(e: &Expression) -> Option<DomainPtr> {
+    match e {
+        Expression::DomainAnnotation(_, inner, domain) => {
+            if !Moo::unwrap_or_clone(inner.clone())
+                .unwrap_matrix_unchecked()
+                .is_some_and(|(elems, _)| elems.is_empty())
+            {
+                return None;
+            }
+            let (elem_domain, _) = domain.as_matrix()?;
+            elem_domain.as_ref().as_int()?;
+            Some(elem_domain)
+        }
+        _ => {
+            if !e
+                .clone()
+                .unwrap_matrix_unchecked()
+                .is_some_and(|(elems, _)| elems.is_empty())
+            {
+                return None;
+            }
+            matrix_element_domain(e)
+        }
+    }
+}
+
 // Returns none if unbounded
 fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
     let mut min = i32::MAX;
@@ -940,14 +966,24 @@ impl Expression {
             Expression::Product(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y))
             }
-            Expression::Min(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
-                Some(if x < y { x } else { y })
-            })
-            .or_else(|| matrix_element_domain(e)),
-            Expression::Max(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
-                Some(if x > y { x } else { y })
-            })
-            .or_else(|| matrix_element_domain(e)),
+            Expression::Min(_, e) => {
+                if empty_matrix_integer_element_domain(e).is_some() {
+                    return Some(Domain::empty(ReturnType::Int));
+                }
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
+                    Some(if x < y { x } else { y })
+                })
+                .or_else(|| matrix_element_domain(e))
+            }
+            Expression::Max(_, e) => {
+                if empty_matrix_integer_element_domain(e).is_some() {
+                    return Some(Domain::empty(ReturnType::Int));
+                }
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
+                    Some(if x > y { x } else { y })
+                })
+                .or_else(|| matrix_element_domain(e))
+            }
             Expression::UnsafeDiv(_, a, b) => a
                 .domain_of()?
                 .resolve()?
