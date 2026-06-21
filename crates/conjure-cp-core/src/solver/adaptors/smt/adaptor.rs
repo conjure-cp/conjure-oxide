@@ -5,7 +5,7 @@ use itertools::Itertools;
 use uniplate::Uniplate;
 use versions::Versioning;
 use z3::{
-    with_z3_config, Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate,
+    Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate, with_z3_config,
 };
 
 use super::convert_model::*;
@@ -14,8 +14,8 @@ use super::theories::*;
 
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::rule_engine::rewrite_model_with_configured_rewriter;
-use crate::settings::{current_rewriter, set_current_rewriter, RewriteConfig, Rewriter};
-use crate::{solver::*, Model};
+use crate::settings::{RewriteConfig, Rewriter, current_rewriter, set_current_rewriter};
+use crate::{Model, solver::*};
 
 const MINIMUM_Z3_VERSION: &str = "4.8.12";
 

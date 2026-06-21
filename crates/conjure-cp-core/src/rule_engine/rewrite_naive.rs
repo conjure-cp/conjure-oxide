@@ -1,22 +1,22 @@
-use super::{resolve_rules::RuleData, RewriteError, RuleSet};
+use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
-    ast::{discriminant_from_value, Expression as Expr},
+    Model,
+    ast::{Expression as Expr, discriminant_from_value},
     bug,
     objective::introduce_objective_auxiliary,
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{
-            log_rule_application, snapshot_variable_declarations, try_rewrite_value_letting_once,
-            RuleResult, VariableDeclarationSnapshot,
+            RuleResult, VariableDeclarationSnapshot, log_rule_application,
+            snapshot_variable_declarations, try_rewrite_value_letting_once,
         },
         submodel_zipper::expression_ctx,
     },
     settings::{
-        default_rule_trace_enabled, rule_trace_enabled, rule_trace_verbose_enabled,
-        set_current_rewriter, RewriteConfig, Rewriter,
+        RewriteConfig, Rewriter, default_rule_trace_enabled, rule_trace_enabled,
+        rule_trace_verbose_enabled, set_current_rewriter,
     },
     stats::RewriterStats,
-    Model,
 };
 
 use itertools::Itertools;
@@ -27,7 +27,7 @@ use tracing::trace;
 #[cfg(debug_assertions)]
 use {
     crate::ast::assertions::debug_assert_model_well_formed,
-    tracing::{span, Level},
+    tracing::{Level, span},
 };
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;

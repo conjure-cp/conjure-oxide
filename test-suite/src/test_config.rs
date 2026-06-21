@@ -1,15 +1,15 @@
 #![allow(unused)]
 
 use conjure_cp::settings::{Parser, QuantifiedExpander, Rewriter, SolverFamily};
-use serde::de::{self, Visitor};
 use serde::Deserialize;
+use serde::de::{self, Visitor};
 use std::fmt;
 use std::fs;
 use std::io;
 use std::path::Path;
 use std::str::FromStr;
 use std::time::Duration;
-use toml_edit::{value, DocumentMut, Item, Table};
+use toml_edit::{DocumentMut, Item, Table, value};
 
 use crate::text_files::write_text_with_trailing_newline;
 

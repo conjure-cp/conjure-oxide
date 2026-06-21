@@ -1015,9 +1015,12 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
     let value_expr = (**value).clone();
     let value_atom: Atom = value_expr.clone().try_into().or(Err(RuleNotApplicable))?;
 
-    let matrix_elems = matrix_expr
-        .unwrap_list()
-        .or_else(|| matrix_expr.clone().unwrap_matrix_unchecked().map(|(elems, _)| elems));
+    let matrix_elems = matrix_expr.unwrap_list().or_else(|| {
+        matrix_expr
+            .clone()
+            .unwrap_matrix_unchecked()
+            .map(|(elems, _)| elems)
+    });
 
     if let Some(elems) = matrix_elems {
         let mut atom_list = vec![];
@@ -1044,10 +1047,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
             let rows = element_id_table_rows(&value_expr, &search_values)?;
             let tuple = into_matrix_expr![vec![
                 value_expr,
-                Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(reference.clone()),
-                ),
+                Expr::Atomic(Metadata::new(), Atom::Reference(reference.clone()),),
             ]];
 
             return Ok(Reduction::pure(Expr::Table(
@@ -1201,10 +1201,13 @@ fn lit_int(lit: &Lit) -> Option<i32> {
 }
 
 fn literal_matrix_int_values(atoms: &[Atom]) -> Option<Vec<i32>> {
-    atoms.iter().map(|atom| match atom {
-        Atom::Literal(lit) => lit_int(lit),
-        _ => None,
-    }).collect()
+    atoms
+        .iter()
+        .map(|atom| match atom {
+            Atom::Literal(lit) => lit_int(lit),
+            _ => None,
+        })
+        .collect()
 }
 
 fn element_id_value_may_be_outside_matrix(value_expr: &Expr, search_values: &[i32]) -> bool {
@@ -1229,12 +1232,8 @@ fn element_id_table_rows(
         .ok_or(RuleNotApplicable)?
         .resolve()
         .ok_or(RuleNotApplicable)?;
-    let value_values = value_domain
-        .values_i32()
-        .map_err(|_| RuleNotApplicable)?;
-    let sentinel = i32::try_from(search_values.len())
-        .map_err(|_| RuleNotApplicable)?
-        + 1;
+    let value_values = value_domain.values_i32().map_err(|_| RuleNotApplicable)?;
+    let sentinel = i32::try_from(search_values.len()).map_err(|_| RuleNotApplicable)? + 1;
     let value_to_index: HashMap<i32, i32> = search_values
         .iter()
         .enumerate()

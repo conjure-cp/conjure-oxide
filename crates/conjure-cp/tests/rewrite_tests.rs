@@ -1,13 +1,13 @@
 use conjure_cp::{
+    Model,
     ast::{
-        eval_constant, Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name,
-        Range, Reference, SymbolTable,
+        Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name, Range, Reference,
+        SymbolTable, eval_constant,
     },
     into_matrix_expr, matrix_expr,
-    rule_engine::{get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive, Rule},
-    settings::{set_comprehension_expander, QuantifiedExpander, SolverFamily},
-    solver::{adaptors, Solver},
-    Model,
+    rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive},
+    settings::{QuantifiedExpander, SolverFamily, set_comprehension_expander},
+    solver::{Solver, adaptors},
 };
 #[allow(unused_imports)]
 #[allow(clippy::single_component_path_imports)] // ensure this is linked so we can lookup rules
@@ -132,10 +132,9 @@ fn simplify_expression(expr: Expression) -> Expression {
             } else {
                 Expression::Sum(
                     Metadata::new(),
-                    Moo::new(into_matrix_expr![expressions
-                        .into_iter()
-                        .map(simplify_expression)
-                        .collect()]),
+                    Moo::new(into_matrix_expr![
+                        expressions.into_iter().map(simplify_expression).collect()
+                    ]),
                 )
             }
         }

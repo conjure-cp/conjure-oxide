@@ -781,15 +781,15 @@ impl GroundDomain {
     /// Returns true if the domain is finite.
     pub fn is_finite(&self) -> bool {
         for domain in self.universe() {
-            if let GroundDomain::Int(ranges) = domain {
-                if ranges.iter().any(|range| {
+            if let GroundDomain::Int(ranges) = domain
+                && ranges.iter().any(|range| {
                     matches!(
                         range,
                         Range::UnboundedL(_) | Range::UnboundedR(_) | Range::Unbounded
                     )
-                }) {
-                    return false;
-                }
+                })
+            {
+                return false;
             }
         }
         true

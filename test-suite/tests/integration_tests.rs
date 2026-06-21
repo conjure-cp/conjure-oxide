@@ -4,11 +4,11 @@ use git_version as _;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
-use conjure_cp::solver::adaptors::*;
 use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{
-    normalize_solutions_for_comparison, read_default_rule_trace, truncate_to_first_chars,
-    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
+    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, normalize_solutions_for_comparison,
+    read_default_rule_trace, truncate_to_first_chars,
 };
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
@@ -18,7 +18,7 @@ use std::io::Read;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
-use tracing_subscriber::{filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer};
+use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -31,32 +31,32 @@ use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
-    set_comprehension_expander, set_current_parser, set_current_rewriter,
-    set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
+    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
+    set_current_parser, set_current_rewriter, set_current_solver_family,
+    set_default_rule_trace_enabled, set_minion_discrete_threshold,
     set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
-    Parser, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{
-    get_solutions, get_solutions_from_conjure_with_stats, ConjureSolveCaptureOptions,
+    ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
 };
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
+use test_suite::AcceptMode;
+use test_suite::TestConfig;
 use test_suite::diagnostics::{
-    clear_diagnostics, conjure_artifacts_dir, copy_file_if_exists, oxide_artifacts_dir,
-    write_failure_record, write_oxide_failure_text, FailureRecord, DIAGNOSTICS_DIR,
+    DIAGNOSTICS_DIR, FailureRecord, clear_diagnostics, conjure_artifacts_dir, copy_file_if_exists,
+    oxide_artifacts_dir, write_failure_record, write_oxide_failure_text,
 };
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
-    round_expected_time, upsert_expected_time_config, upsert_recorded_run_stats_config,
-    upsert_status_config, upsert_tool_status_config, RecordedRunStats,
+    RecordedRunStats, round_expected_time, upsert_expected_time_config,
+    upsert_recorded_run_stats_config, upsert_status_config, upsert_tool_status_config,
 };
 use test_suite::text_files::write_text_with_trailing_newline;
-use test_suite::AcceptMode;
-use test_suite::TestConfig;
 
 const DISABLE_TRACING_ENV: &str = "CONJURE_OXIDE_TEST_DISABLE_TRACING";
 

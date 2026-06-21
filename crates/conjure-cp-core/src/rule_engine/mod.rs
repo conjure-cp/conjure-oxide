@@ -84,7 +84,7 @@ pub use conjure_cp_rule_macros::register_rule;
 /// ```
 #[doc(inline)]
 pub use conjure_cp_rule_macros::register_rule_set;
-pub use resolve_rules::{get_rules, get_rules_grouped, resolve_rule_sets, RuleData};
+pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
 pub(crate) use rule::MorphState;
@@ -97,8 +97,8 @@ mod submodel_zipper;
 pub use submodel_zipper::SubmodelZipper;
 
 use crate::{
-    settings::{Rewriter, SolverFamily},
     Model,
+    settings::{Rewriter, SolverFamily},
 };
 
 mod resolve_rules;
