@@ -60,7 +60,7 @@ Options:
   --parser tree-sitter|via-conjure
       If set, enable only this parser in [parser]
 
-  --rewriter naive|morph
+  --rewriter baseline|baseline+prefilter|optimised|morph
       If set, enable only this rewriter in [rewriter]
 
   --comprehension-expander native|via-solver|via-solver-ac
@@ -485,7 +485,7 @@ while [[ $# -gt 0 ]]; do
     --rewriter)
       [[ $# -ge 2 ]] || err "--rewriter requires a value"
       rewriter_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-      validate_choice "rewriter" "$rewriter_opt" "naive" "morph"
+      validate_choice "rewriter" "$rewriter_opt" "baseline" "baseline+prefilter" "optimised" "morph"
       shift 2
       ;;
     --comprehension-expander)

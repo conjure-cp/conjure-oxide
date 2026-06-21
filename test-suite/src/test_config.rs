@@ -1,15 +1,15 @@
 #![allow(unused)]
 
 use conjure_cp::settings::{Parser, QuantifiedExpander, Rewriter, SolverFamily};
-use serde::Deserialize;
 use serde::de::{self, Visitor};
+use serde::Deserialize;
 use std::fmt;
 use std::fs;
 use std::io;
 use std::path::Path;
 use std::str::FromStr;
 use std::time::Duration;
-use toml_edit::{DocumentMut, Item, Table, value};
+use toml_edit::{value, DocumentMut, Item, Table};
 
 use crate::text_files::write_text_with_trailing_newline;
 
@@ -413,7 +413,7 @@ impl Default for TestConfig {
             skip: String::new(),
             expected_time: None,
             parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
-            rewriter: vec!["naive".to_string()],
+            rewriter: vec!["optimised".to_string()],
             comprehension_expander: vec![
                 "native".to_string(),
                 "via-solver".to_string(),

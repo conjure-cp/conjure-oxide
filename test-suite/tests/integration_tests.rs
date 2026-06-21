@@ -4,11 +4,11 @@ use git_version as _;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
-use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
+use conjure_cp::solver::Solver;
 use conjure_cp_cli::utils::testing::{
-    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, normalize_solutions_for_comparison,
-    read_default_rule_trace, truncate_to_first_chars,
+    normalize_solutions_for_comparison, read_default_rule_trace, truncate_to_first_chars,
+    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
 };
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
@@ -18,7 +18,7 @@ use std::io::Read;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
-use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
+use tracing_subscriber::{filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer};
 
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -31,32 +31,32 @@ use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
-    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
-    set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_default_rule_trace_enabled, set_minion_discrete_threshold,
+    set_comprehension_expander, set_current_parser, set_current_rewriter,
+    set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
     set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
+    Parser, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{
-    ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
+    get_solutions, get_solutions_from_conjure_with_stats, ConjureSolveCaptureOptions,
 };
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
-use test_suite::AcceptMode;
-use test_suite::TestConfig;
 use test_suite::diagnostics::{
-    DIAGNOSTICS_DIR, FailureRecord, clear_diagnostics, conjure_artifacts_dir, copy_file_if_exists,
-    oxide_artifacts_dir, write_failure_record, write_oxide_failure_text,
+    clear_diagnostics, conjure_artifacts_dir, copy_file_if_exists, oxide_artifacts_dir,
+    write_failure_record, write_oxide_failure_text, FailureRecord, DIAGNOSTICS_DIR,
 };
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
-    RecordedRunStats, round_expected_time, upsert_expected_time_config,
-    upsert_recorded_run_stats_config, upsert_status_config, upsert_tool_status_config,
+    round_expected_time, upsert_expected_time_config, upsert_recorded_run_stats_config,
+    upsert_status_config, upsert_tool_status_config, RecordedRunStats,
 };
 use test_suite::text_files::write_text_with_trailing_newline;
+use test_suite::AcceptMode;
+use test_suite::TestConfig;
 
 const DISABLE_TRACING_ENV: &str = "CONJURE_OXIDE_TEST_DISABLE_TRACING";
 
@@ -403,7 +403,7 @@ fn integration_test_inner_with_status(
             for rewriter in rewriters.clone() {
                 for comprehension_expander in comprehension_expanders.clone() {
                     for solver in solvers.clone() {
-                        let case_name = run_case_name(parser, rewriter, comprehension_expander);
+                        let case_name = run_case_name(parser, comprehension_expander);
                         let run_case = RunCase {
                             parser,
                             rewriter,
@@ -412,7 +412,7 @@ fn integration_test_inner_with_status(
                             case_name: case_name.as_str(),
                         };
                         let run_label = run_case_label(path, essence_base, extension, run_case);
-                        let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
+                        let default_rule_trace_enabled = matches!(rewriter, Rewriter::Rewrite(_));
                         set_rule_trace_enabled(rule_trace_snapshots_enabled);
                         set_default_rule_trace_enabled(
                             rule_trace_snapshots_enabled && default_rule_trace_enabled,
@@ -618,7 +618,7 @@ fn integration_test_inner(
     let model = parsed_model;
 
     let rewritten_model = match rewriter {
-        Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
+        Rewriter::Rewrite(config) => rewrite_naive(&model, &rule_sets, false, config)?,
         Rewriter::Morph(config) => rewrite_morph(model, &rule_sets, false, config),
     };
     let translation_time_s = translation_started_at.elapsed().as_secs_f64();
@@ -686,7 +686,7 @@ fn integration_test_inner(
     if rule_trace_snapshots_enabled {
         match rewriter {
             Rewriter::Morph(_) => {}
-            Rewriter::Naive => {
+            Rewriter::Rewrite(_) => {
                 let generated = read_default_rule_trace(path, case_name, "generated", &solver_fam)?;
                 let expected = read_default_rule_trace(path, case_name, "expected", &solver_fam)?;
 
@@ -706,12 +706,8 @@ fn integration_test_inner(
     })
 }
 
-fn run_case_name(
-    parser: Parser,
-    rewriter: Rewriter,
-    comprehension_expander: QuantifiedExpander,
-) -> String {
-    format!("{parser}-{rewriter}-{comprehension_expander}")
+fn run_case_name(parser: Parser, comprehension_expander: QuantifiedExpander) -> String {
+    format!("{parser}-{comprehension_expander}")
 }
 
 /// Returns the expected snapshot files for an executed integration run case.
@@ -941,7 +937,7 @@ fn try_capture_oxide_minion(
     let rule_sets = resolve_rule_sets(run_case.solver, &rules_to_load)?;
 
     let rewritten_model = match run_case.rewriter {
-        Rewriter::Naive => rewrite_naive(&parsed_model, &rule_sets, false)?,
+        Rewriter::Rewrite(config) => rewrite_naive(&parsed_model, &rule_sets, false, config)?,
         Rewriter::Morph(config) => rewrite_morph(parsed_model, &rule_sets, false, config),
     };
 
