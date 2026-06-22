@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, Metadata, Name, SymbolTable, discriminant_from_value},
+    ast::{Expression as Expr, Metadata, SymbolTable, discriminant_from_value},
     bug,
     objective::introduce_objective_auxiliary,
     rule_engine::{
@@ -722,7 +722,10 @@ fn try_rewrite_model<'ctx, 'rules>(
 
             let has_model_side_effects = effect_has_model_side_effects(&result.effect);
             let replacement = clear_expr_clean_rule_metadata(result.effect.new_expression.clone());
-            let pre_effect_symbol_context_hash = current_symbol_context_hash(submodel, ctx);
+            let pre_effect_symbol_context_hash = ctx
+                .cache
+                .is_some()
+                .then(|| current_symbol_context_hash(submodel, ctx));
 
             // Replace expr with new_expression
             let (new_root, mappings) = replace_focus_and_dirty_ancestors(
@@ -740,23 +743,25 @@ fn try_rewrite_model<'ctx, 'rules>(
             if has_model_side_effects {
                 ctx.symbol_context_hash = None;
             }
-            let cache_symbol_context_hash = if has_model_side_effects {
-                current_symbol_context_hash(submodel, ctx)
-            } else {
-                pre_effect_symbol_context_hash
-            };
-            let expr_hash = RewriteCache::node_hash(expr, cache_symbol_context_hash);
-            if let Some(cache) = ctx.cache.as_mut() {
-                cache.insert_from_hash(
-                    expr_hash,
-                    Some(replacement),
-                    *level,
-                    cache_symbol_context_hash,
-                );
-                ctx.dirty_trace.cache_inserts += 1;
-                let mapping_count = mappings.len();
-                insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
-                ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+            if let Some(pre_effect_symbol_context_hash) = pre_effect_symbol_context_hash {
+                let cache_symbol_context_hash = if has_model_side_effects {
+                    current_symbol_context_hash(submodel, ctx)
+                } else {
+                    pre_effect_symbol_context_hash
+                };
+                let expr_hash = RewriteCache::node_hash(expr, cache_symbol_context_hash);
+                if let Some(cache) = ctx.cache.as_mut() {
+                    cache.insert_from_hash(
+                        expr_hash,
+                        Some(replacement),
+                        *level,
+                        cache_symbol_context_hash,
+                    );
+                    ctx.dirty_trace.cache_inserts += 1;
+                    let mapping_count = mappings.len();
+                    insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
+                    ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                }
             }
             if ctx.config.dirty && has_model_side_effects {
                 ctx.dirty_trace.whole_model_clears_after_side_effects += 1;
@@ -800,13 +805,16 @@ fn current_symbol_context_hash<'ctx, 'rules>(
 /// this uses declaration content hashes instead.
 fn calculate_symbol_context_hash(symbols: &SymbolTable) -> u64 {
     let mut hasher = DefaultHasher::new();
-    let declarations: BTreeMap<Name, u64> = symbols
+    let declarations: BTreeMap<_, _> = symbols
         .clone()
         .into_iter()
         .map(|(name, declaration)| (name, declaration.content_hash()))
         .collect();
 
-    declarations.hash(&mut hasher);
+    declarations.len().hash(&mut hasher);
+    for declaration in declarations {
+        declaration.hash(&mut hasher);
+    }
     hasher.finish()
 }
 
