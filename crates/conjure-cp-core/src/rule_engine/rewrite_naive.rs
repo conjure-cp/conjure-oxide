@@ -10,7 +10,7 @@ use crate::{
             RuleResult, log_rule_application, snapshot_variable_declarations,
             try_rewrite_value_letting_once,
         },
-        submodel_zipper::expression_ctx,
+        expression_zipper::expression_ctx,
     },
     settings::{
         RewriteConfig, Rewriter, default_rule_trace_enabled, rule_trace_enabled,

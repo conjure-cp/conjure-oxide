@@ -91,10 +91,10 @@ pub(crate) use rule::MorphState;
 pub use rule::{ApplicationError, ApplicationResult, Rule, RuleEffect, RuleFn};
 pub use rule_set::RuleSet;
 
-mod submodel_zipper;
+mod expression_zipper;
 
 #[doc(hidden)]
-pub use submodel_zipper::SubmodelZipper;
+pub use expression_zipper::ExpressionZipper;
 
 use crate::{
     Model,

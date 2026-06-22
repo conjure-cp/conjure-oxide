@@ -5,29 +5,30 @@ use uniplate::zipper::Zipper;
 
 use crate::ast::Expression;
 
-/// Traverses expressions in a root expression tree, but not into nested scopes.
+/// Traverses expressions in a root expression tree, but not into comprehensions.
+///
+/// TODO: Explore whether the rewriter should traverse into comprehensions.
 ///
 /// Same types and usage as `Biplate::contexts_bi`.
 pub(super) fn expression_ctx(
     root_expression: Expression,
 ) -> impl Iterator<Item = (Expression, Arc<dyn Fn(Expression) -> Expression>)> {
     ExpressionCtx {
-        zipper: SubmodelZipper {
+        zipper: ExpressionZipper {
             inner: Zipper::new(root_expression),
         },
         done: false,
     }
 }
 
-/// A zipper that traverses over the current expression tree and does not traverse into nested
-/// scopes.
+/// A zipper that traverses over an expression tree and does not traverse into comprehensions.
 #[derive(Clone)]
 #[doc(hidden)]
-pub struct SubmodelZipper {
+pub struct ExpressionZipper {
     inner: Zipper<Expression>,
 }
 
-impl SubmodelZipper {
+impl ExpressionZipper {
     #[doc(hidden)]
     pub fn go_left(&mut self) -> Option<()> {
         self.inner.go_left()
@@ -50,7 +51,7 @@ impl SubmodelZipper {
 
     #[doc(hidden)]
     pub fn go_down(&mut self) -> Option<()> {
-        // Do not enter comprehensions, which have their own local symbol table.
+        // Do not enter comprehensions.
         if matches!(self.inner.focus(), Expression::Comprehension(_, _)) {
             None
         } else {
@@ -75,14 +76,14 @@ impl SubmodelZipper {
 
     #[doc(hidden)]
     pub fn new(root_expression: Expression) -> Self {
-        SubmodelZipper {
+        ExpressionZipper {
             inner: Zipper::new(root_expression),
         }
     }
 }
 
 pub struct ExpressionCtx {
-    zipper: SubmodelZipper,
+    zipper: ExpressionZipper,
     done: bool,
 }
 

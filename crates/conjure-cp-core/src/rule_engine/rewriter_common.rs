@@ -1,8 +1,8 @@
 //! Common utilities and types for rewriters.
 use super::{
     RuleEffect,
+    expression_zipper::expression_ctx,
     resolve_rules::{ResolveRulesError, RuleData},
-    submodel_zipper::expression_ctx,
 };
 use crate::ast::{
     DeclarationPtr, Expression, Model, Name, SymbolTable,
