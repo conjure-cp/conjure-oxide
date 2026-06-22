@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 
-CONFIG_PATHSPEC = ":(glob)test-suite/tests/**/config.toml"
+STATS_PATHSPEC = ":(glob)test-suite/tests/**/stats.toml"
 
 FIELDNAMES = [
     "test",
@@ -38,6 +38,10 @@ FIELDNAMES = [
     "old_vs_new_conjure_total_speedup",
     "old_vs_new_oxide_total_speedup",
     "new_conjure_vs_new_oxide_total_speedup",
+    "old_total_rule_attempts",
+    "new_total_rule_attempts",
+    "old_total_rule_applications",
+    "new_total_rule_applications",
     "summary",
 ]
 
@@ -51,7 +55,7 @@ def main() -> int:
 
     rows = [
         build_row(root, args.base, path)
-        for path in changed_config_paths(root, args.base)
+        for path in changed_stats_paths(root, args.base)
     ]
 
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -67,7 +71,7 @@ def main() -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Compare changed test config.toml timing stats against a Git baseline "
+            "Compare changed test stats.toml timing stats against a Git baseline "
             "and write a CSV report."
         )
     )
@@ -88,7 +92,7 @@ def git_root() -> Path:
     return Path(run_git(None, ["rev-parse", "--show-toplevel"]).strip())
 
 
-def changed_config_paths(root: Path, base: str) -> list[str]:
+def changed_stats_paths(root: Path, base: str) -> list[str]:
     diff_output = run_git(
         root,
         [
@@ -97,7 +101,7 @@ def changed_config_paths(root: Path, base: str) -> list[str]:
             "--diff-filter=ACMR",
             base,
             "--",
-            CONFIG_PATHSPEC,
+            STATS_PATHSPEC,
         ],
     )
     paths = {line.strip() for line in diff_output.splitlines() if line.strip()}
@@ -109,28 +113,30 @@ def changed_config_paths(root: Path, base: str) -> list[str]:
     paths.update(
         line.strip()
         for line in untracked_output.splitlines()
-        if line.strip().endswith("/config.toml")
+        if line.strip().endswith("/stats.toml")
     )
 
     return sorted(paths)
 
 
 def build_row(root: Path, base: str, path: str) -> dict[str, str]:
-    old_config = read_git_config(root, base, path)
-    new_config = read_worktree_config(root / path)
+    old_stats = read_git_stats(root, base, path)
+    new_stats = read_worktree_stats(root / path)
 
-    old_conjure = tool_stats(old_config, "conjure")
-    new_conjure = tool_stats(new_config, "conjure")
-    old_oxide = tool_stats(old_config, "oxide")
-    new_oxide = tool_stats(new_config, "oxide")
+    old_conjure = tool_stats(old_stats, "conjure")
+    new_conjure = tool_stats(new_stats, "conjure")
+    old_oxide = tool_stats(old_stats, "oxide")
+    new_oxide = tool_stats(new_stats, "oxide")
+    old_rule_trace = rule_trace_stats(old_stats)
+    new_rule_trace = rule_trace_stats(new_stats)
 
     old_conjure_total = total_time(old_conjure)
     new_conjure_total = total_time(new_conjure)
     old_oxide_total = total_time(old_oxide)
     new_oxide_total = total_time(new_oxide)
 
-    old_status = status_from_config(old_config)
-    new_status = status_from_config(new_config)
+    old_status = status_from_stats(old_stats)
+    new_status = status_from_stats(new_stats)
     old_conjure_status = status_from_tool(old_conjure)
     new_conjure_status = status_from_tool(new_conjure)
     old_oxide_status = status_from_tool(old_oxide)
@@ -143,7 +149,7 @@ def build_row(root: Path, base: str, path: str) -> dict[str, str]:
     )
 
     return {
-        "test": path.removesuffix("/config.toml"),
+        "test": path.removesuffix("/stats.toml"),
         "old_status": value(old_status),
         "new_status": value(new_status),
         "old_conjure_status": value(old_conjure_status),
@@ -186,6 +192,14 @@ def build_row(root: Path, base: str, path: str) -> dict[str, str]:
             new_conjure_status,
             new_oxide_status,
         ),
+        "old_total_rule_attempts": integer(old_rule_trace["total-rule-attempts"]),
+        "new_total_rule_attempts": integer(new_rule_trace["total-rule-attempts"]),
+        "old_total_rule_applications": integer(
+            old_rule_trace["total-rule-applications"]
+        ),
+        "new_total_rule_applications": integer(
+            new_rule_trace["total-rule-applications"]
+        ),
         "summary": summarize(
             old_status=old_status,
             new_status=new_status,
@@ -201,7 +215,20 @@ def build_row(root: Path, base: str, path: str) -> dict[str, str]:
     }
 
 
-def read_git_config(root: Path, base: str, path: str) -> dict[str, Any]:
+def rule_trace_stats(stats_file: dict[str, Any]) -> dict[str, int | None]:
+    table = stats_file.get("rule-trace")
+    if not isinstance(table, dict):
+        table = {}
+
+    return {
+        "total-rule-attempts": integer_value(table.get("total-rule-attempts")),
+        "total-rule-applications": integer_value(
+            table.get("total-rule-applications")
+        ),
+    }
+
+
+def read_git_stats(root: Path, base: str, path: str) -> dict[str, Any]:
     result = subprocess.run(
         ["git", "show", f"{base}:{path}"],
         cwd=root,
@@ -215,7 +242,7 @@ def read_git_config(root: Path, base: str, path: str) -> dict[str, Any]:
     return parse_toml(result.stdout, f"{base}:{path}")
 
 
-def read_worktree_config(path: Path) -> dict[str, Any]:
+def read_worktree_stats(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return parse_toml(path.read_text(), str(path))
@@ -233,11 +260,8 @@ def parse_toml(contents: str, source: str) -> dict[str, Any]:
     return data
 
 
-def tool_stats(config: dict[str, Any], tool: str) -> dict[str, float | str | None]:
-    stats = config.get("stats")
-    if not isinstance(stats, dict):
-        stats = {}
-    table = stats.get(tool)
+def tool_stats(stats_file: dict[str, Any], tool: str) -> dict[str, float | str | None]:
+    table = stats_file.get(tool)
     if not isinstance(table, dict):
         table = {}
 
@@ -248,8 +272,8 @@ def tool_stats(config: dict[str, Any], tool: str) -> dict[str, float | str | Non
     }
 
 
-def status_from_config(config: dict[str, Any]) -> str | None:
-    return string_value(config.get("status"))
+def status_from_stats(stats_file: dict[str, Any]) -> str | None:
+    return string_value(stats_file.get("status"))
 
 
 def status_from_tool(stats: dict[str, float | str | None]) -> str | None:
@@ -342,6 +366,14 @@ def numeric_value(raw: Any) -> float | None:
     return None
 
 
+def integer_value(raw: Any) -> int | None:
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, int):
+        return raw
+    return None
+
+
 def string_value(raw: Any) -> str | None:
     if isinstance(raw, str):
         return raw
@@ -379,6 +411,12 @@ def decimal(raw: float | str | None) -> str:
     if isinstance(raw, str):
         return raw
     return f"{raw:.12g}"
+
+
+def integer(raw: int | None) -> str:
+    if raw is None:
+        return ""
+    return str(raw)
 
 
 def value(raw: str | None) -> str:
