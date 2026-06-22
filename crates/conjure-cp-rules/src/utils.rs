@@ -242,7 +242,7 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
 
 fn materialise_aux_var(expr: &Expr, symbols: &SymbolTable, domain: &DomainPtr) -> ToAuxVarOutput {
     let mut symbols = symbols.clone();
-    let decl = symbols.gen_find(&domain);
+    let decl = symbols.gen_find(domain);
 
     if cfg!(debug_assertions) {
         trace!(expr=%expr, "to_auxvar() succeeded in putting expr into an auxvar");
