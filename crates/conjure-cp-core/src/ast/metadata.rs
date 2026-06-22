@@ -27,7 +27,7 @@ pub struct Metadata {
     /// Cached structural hash used by tree rewriting infrastructure.
     #[serde(default, skip_serializing)]
     pub stored_hash: AtomicU64,
-    /// Highest-priority rule group known not to rewrite this unchanged expression.
+    /// Lowest-priority rule group reached without rewriting this unchanged expression.
     ///
     /// This is runtime-only dirty/clean state and is cleared when the expression or one of its
     /// children changes.
@@ -58,16 +58,19 @@ impl Metadata {
     }
 
     /// Records that rules at `priority` have been attempted and failed for this expression.
+    /// Since rule priorities are visited from high to low, this also records that all higher
+    /// priorities already visited in this pass are clean.
     ///
     /// When a rewrite changes a child expression, the rewriter clears this mark on each ancestor
     /// while rebuilding the root from the zipper.
     pub fn mark_clean_for_rule_priority(&self, priority: u16) {
-        self.clean_rule_priority.store(priority, Ordering::Relaxed);
+        self.clean_rule_priority
+            .fetch_min(priority, Ordering::Relaxed);
     }
 
     /// Returns whether this expression is known clean for the given rule priority.
     pub fn is_clean_for_rule_priority(&self, priority: u16) -> bool {
-        self.clean_rule_priority.load(Ordering::Relaxed) == priority
+        priority >= self.clean_rule_priority.load(Ordering::Relaxed)
     }
 
     /// Clears any clean-rule marker on this expression.
