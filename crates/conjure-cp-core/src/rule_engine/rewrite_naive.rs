@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, Metadata, discriminant_from_value},
+    ast::{Expression as Expr, Metadata, Name, SymbolTable, discriminant_from_value},
     bug,
     objective::introduce_objective_auxiliary,
     rule_engine::{
@@ -179,98 +179,123 @@ impl DirtyTrace {
     }
 }
 
+/// Result of looking up an expression at a rewrite rule-group level.
 enum CacheResult {
+    /// The expression has not been cached at this level.
     Unknown,
+    /// The expression is known not to rewrite through this maximum cached level.
     Terminal(usize),
+    /// The expression rewrites to a cached replacement.
     Rewrite(CachedRewrite),
 }
 
+/// Cached rewrite target for a semantic expression/context key.
 #[derive(Clone)]
 struct CachedRewrite {
+    /// Replacement expression to splice into the tree on a cache hit.
     expr: Expr,
-    has_applied_effect: bool,
 }
 
+/// Internal stored cache value for a level-qualified expression hash.
 enum CacheEntry {
+    /// No rules apply to this expression at the stored level.
     Terminal,
+    /// Rules rewrite this expression to the stored replacement.
     Rewrite(CachedRewrite),
 }
 
+/// Rewrite cache keyed by expression hash, rule-group level, and symbol context hash.
+///
+/// Rewrite entries are transitively resolved: inserting `A -> B`, `B -> C`, then `C -> D`
+/// updates the observable cache result for `A`, `B`, and `C` to `D`.
 #[derive(Default)]
 struct RewriteCache {
+    /// Level-qualified cache map. Terminal entries are stored here for exact-level lookups.
     map: HashMap<u64, CacheEntry>,
+    /// Reverse edges used to update earlier mappings when a target later rewrites again.
     predecessors: HashMap<u64, Vec<u64>>,
+    /// Context-qualified terminal shortcut: a subtree clean through level N is clean for <= N.
     clean_levels: HashMap<u64, usize>,
 }
 
 impl RewriteCache {
-    fn node_hash(expr: &Expr) -> u64 {
-        expr.get_cached_hash()
+    /// Returns the level-independent cached content hash for an expression in a symbol context.
+    fn node_hash(expr: &Expr, symbol_context_hash: u64) -> u64 {
+        expr.get_cached_content_hash(symbol_context_hash)
     }
 
-    fn combine(node_hash: u64, level: usize) -> u64 {
+    /// Combines an expression hash, rule-group level, and symbol context hash.
+    fn combine(node_hash: u64, level: usize, symbol_context_hash: u64) -> u64 {
         let mut hasher = DefaultHasher::new();
         node_hash.hash(&mut hasher);
         level.hash(&mut hasher);
+        symbol_context_hash.hash(&mut hasher);
         hasher.finish()
     }
 
-    fn key(expr: &Expr, level: usize) -> u64 {
-        Self::combine(Self::node_hash(expr), level)
+    /// Returns the level-qualified cache key for an expression.
+    fn key(expr: &Expr, level: usize, symbol_context_hash: u64) -> u64 {
+        Self::combine(
+            Self::node_hash(expr, symbol_context_hash),
+            level,
+            symbol_context_hash,
+        )
     }
 
-    fn clear(&mut self) {
-        self.map.clear();
-        self.predecessors.clear();
-        self.clean_levels.clear();
-    }
-
-    fn clear_context_dependent(&mut self) {
-        self.map.retain(
-            |_, entry| matches!(entry, CacheEntry::Rewrite(rewrite) if rewrite.has_applied_effect),
-        );
-        self.predecessors.clear();
-        self.clean_levels.clear();
-    }
-
-    fn get(&self, subtree: &Expr, level: usize) -> CacheResult {
-        let node_hash = Self::node_hash(subtree);
-        if let Some(&max_clean) = self.clean_levels.get(&node_hash)
+    /// Looks up a subtree at a rule-group level.
+    fn get(&self, subtree: &Expr, level: usize, symbol_context_hash: u64) -> CacheResult {
+        let node_hash = Self::node_hash(subtree, symbol_context_hash);
+        let clean_key = Self::combine(node_hash, usize::MAX, symbol_context_hash);
+        if let Some(&max_clean) = self.clean_levels.get(&clean_key)
             && max_clean >= level
         {
             return CacheResult::Terminal(max_clean);
         }
 
-        match self.map.get(&Self::combine(node_hash, level)) {
+        match self
+            .map
+            .get(&Self::combine(node_hash, level, symbol_context_hash))
+        {
             None => CacheResult::Unknown,
             Some(CacheEntry::Rewrite(rewrite)) => CacheResult::Rewrite(rewrite.clone()),
             Some(CacheEntry::Terminal) => CacheResult::Terminal(level),
         }
     }
 
-    fn insert(&mut self, from: &Expr, to: Option<Expr>, level: usize, has_applied_effect: bool) {
-        self.insert_from_hash(Self::node_hash(from), to, level, has_applied_effect);
+    /// Inserts either a terminal result or a rewrite result for `from`.
+    fn insert(&mut self, from: &Expr, to: Option<Expr>, level: usize, symbol_context_hash: u64) {
+        self.insert_from_hash(
+            Self::node_hash(from, symbol_context_hash),
+            to,
+            level,
+            symbol_context_hash,
+        );
     }
 
+    /// Inserts using a pre-replacement source hash.
+    ///
+    /// This is used for ancestor mappings, where the old expression no longer exists after the
+    /// zipper has rebuilt an ancestor with the replacement child.
     fn insert_from_hash(
         &mut self,
         from_hash: u64,
         to: Option<Expr>,
         level: usize,
-        has_applied_effect: bool,
+        symbol_context_hash: u64,
     ) {
-        let from_key = Self::combine(from_hash, level);
+        let from_key = Self::combine(from_hash, level, symbol_context_hash);
 
         let Some(to_expr) = to else {
             self.map.insert(from_key, CacheEntry::Terminal);
+            let clean_key = Self::combine(from_hash, usize::MAX, symbol_context_hash);
             self.clean_levels
-                .entry(from_hash)
+                .entry(clean_key)
                 .and_modify(|l| *l = (*l).max(level))
                 .or_insert(level);
             return;
         };
 
-        let to_key = Self::key(&to_expr, level);
+        let to_key = Self::key(&to_expr, level, symbol_context_hash);
         if from_key == to_key {
             return;
         }
@@ -285,31 +310,24 @@ impl RewriteCache {
         let resolved = match self.map.get(&to_key) {
             Some(CacheEntry::Rewrite(rewrite)) => CachedRewrite {
                 expr: rewrite.expr.clone(),
-                has_applied_effect: has_applied_effect || rewrite.has_applied_effect,
             },
             Some(CacheEntry::Terminal) => {
                 self.map.insert(from_key, CacheEntry::Terminal);
                 return;
             }
-            None => CachedRewrite {
-                expr: to_expr,
-                has_applied_effect,
-            },
+            None => CachedRewrite { expr: to_expr },
         };
 
-        let resolved_key = Self::key(&resolved.expr, level);
+        let resolved_key = Self::key(&resolved.expr, level, symbol_context_hash);
         self.map
             .insert(from_key, CacheEntry::Rewrite(resolved.clone()));
 
         if let Some(mut predecessors) = self.predecessors.remove(&from_key) {
             for &predecessor in &predecessors {
-                let predecessor_had_applied_effect = matches!(self.map.get(&predecessor), Some(CacheEntry::Rewrite(rewrite)) if rewrite.has_applied_effect);
                 self.map.insert(
                     predecessor,
                     CacheEntry::Rewrite(CachedRewrite {
                         expr: resolved.expr.clone(),
-                        has_applied_effect: resolved.has_applied_effect
-                            || predecessor_had_applied_effect,
                     }),
                 );
             }
@@ -390,6 +408,7 @@ struct RewritePassContext<'ctx, 'rules> {
     stats: &'ctx mut RewriterStats,
     dirty_trace: &'ctx mut DirtyTrace,
     cache: Option<RewriteCache>,
+    symbol_context_hash: Option<u64>,
     config: RewriteConfig,
     #[cfg(debug_assertions)]
     run_start: &'ctx Instant,
@@ -445,6 +464,7 @@ pub fn rewrite_naive<'a>(
             stats: &mut rewriter_stats,
             dirty_trace: &mut dirty_trace,
             cache: config.cache.then(RewriteCache::default),
+            symbol_context_hash: None,
             config,
             #[cfg(debug_assertions)]
             run_start: &run_start,
@@ -498,10 +518,7 @@ fn try_rewrite_model<'ctx, 'rules>(
         ctx.prop_multiple_equally_applicable,
     ) {
         ctx.dirty_trace.value_letting_rewrites += 1;
-        if let Some(cache) = ctx.cache.as_mut() {
-            cache.clear();
-            ctx.dirty_trace.cache_resets += 1;
-        }
+        ctx.symbol_context_hash = None;
         if ctx.config.dirty {
             ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
             clear_model_clean_rule_metadata(submodel);
@@ -531,8 +548,10 @@ fn try_rewrite_model<'ctx, 'rules>(
                 continue;
             }
 
-            if let Some(cache) = ctx.cache.as_mut() {
-                match cache.get(&expr, level) {
+            if ctx.cache.is_some() {
+                let symbol_context_hash = current_symbol_context_hash(submodel, ctx);
+                let cache = ctx.cache.as_mut().expect("checked above");
+                match cache.get(&expr, level, symbol_context_hash) {
                     CacheResult::Terminal(clean_level) => {
                         ctx.dirty_trace.cache_hits += 1;
                         ctx.dirty_trace.cache_terminal_hits += 1;
@@ -551,14 +570,15 @@ fn try_rewrite_model<'ctx, 'rules>(
                     CacheResult::Rewrite(cached) => {
                         ctx.dirty_trace.cache_hits += 1;
                         ctx.dirty_trace.cache_rewrite_hits += 1;
-                        let new_root = replace_focus_and_dirty_ancestors(
+                        let (new_root, mappings) = replace_focus_and_dirty_ancestors(
                             &zipper,
                             clear_expr_clean_rule_metadata(cached.expr),
                             ctx.dirty_trace,
-                            Some(cache),
-                            level,
-                            cached.has_applied_effect,
+                            true,
                         );
+                        let mapping_count = mappings.len();
+                        insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
+                        ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
                         submodel.replace_root(new_root);
                         return Some(());
                     }
@@ -648,8 +668,9 @@ fn try_rewrite_model<'ctx, 'rules>(
                     .mark_clean_for_rule_priority(rule_group.priority);
             }
             if ctx.config.cache && results.len() == results_before_expr {
+                let symbol_context_hash = current_symbol_context_hash(submodel, ctx);
                 if let Some(cache) = ctx.cache.as_mut() {
-                    cache.insert(&expr, None, level, false);
+                    cache.insert(&expr, None, level, symbol_context_hash);
                     ctx.dirty_trace.cache_inserts += 1;
                 }
             }
@@ -701,28 +722,14 @@ fn try_rewrite_model<'ctx, 'rules>(
 
             let has_model_side_effects = effect_has_model_side_effects(&result.effect);
             let replacement = clear_expr_clean_rule_metadata(result.effect.new_expression.clone());
-            if let Some(cache) = ctx.cache.as_mut() {
-                if has_model_side_effects {
-                    cache.clear_context_dependent();
-                    ctx.dirty_trace.cache_resets += 1;
-                }
-                cache.insert(
-                    expr,
-                    Some(replacement.clone()),
-                    *level,
-                    has_model_side_effects,
-                );
-                ctx.dirty_trace.cache_inserts += 1;
-            }
+            let pre_effect_symbol_context_hash = current_symbol_context_hash(submodel, ctx);
 
             // Replace expr with new_expression
-            let new_root = replace_focus_and_dirty_ancestors(
+            let (new_root, mappings) = replace_focus_and_dirty_ancestors(
                 zipper,
-                replacement,
+                replacement.clone(),
                 ctx.dirty_trace,
-                ctx.cache.as_mut(),
-                *level,
-                has_model_side_effects,
+                true,
             );
             submodel.replace_root(new_root);
 
@@ -730,6 +737,27 @@ fn try_rewrite_model<'ctx, 'rules>(
             ctx.dirty_trace
                 .record_rewrite(result.rule_data.rule.name, has_model_side_effects);
             result.effect.clone().apply(submodel);
+            if has_model_side_effects {
+                ctx.symbol_context_hash = None;
+            }
+            let cache_symbol_context_hash = if has_model_side_effects {
+                current_symbol_context_hash(submodel, ctx)
+            } else {
+                pre_effect_symbol_context_hash
+            };
+            let expr_hash = RewriteCache::node_hash(expr, cache_symbol_context_hash);
+            if let Some(cache) = ctx.cache.as_mut() {
+                cache.insert_from_hash(
+                    expr_hash,
+                    Some(replacement),
+                    *level,
+                    cache_symbol_context_hash,
+                );
+                ctx.dirty_trace.cache_inserts += 1;
+                let mapping_count = mappings.len();
+                insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
+                ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+            }
             if ctx.config.dirty && has_model_side_effects {
                 ctx.dirty_trace.whole_model_clears_after_side_effects += 1;
                 clear_model_clean_rule_metadata(submodel);
@@ -751,6 +779,37 @@ fn try_rewrite_model<'ctx, 'rules>(
     Some(())
 }
 
+/// Returns a cached hash of the symbol values visible to rule applications.
+fn current_symbol_context_hash<'ctx, 'rules>(
+    submodel: &Model,
+    ctx: &mut RewritePassContext<'ctx, 'rules>,
+) -> u64 {
+    if let Some(hash) = ctx.symbol_context_hash {
+        return hash;
+    }
+
+    let hash = calculate_symbol_context_hash(&submodel.symbols());
+    ctx.symbol_context_hash = Some(hash);
+    hash
+}
+
+/// Hashes the current symbol-table contents by value rather than pointer identity.
+///
+/// Rules receive `&SymbolTable`, so cached rewrite results are only valid for equivalent visible
+/// symbol values. Declaration pointer `Hash` implementations are intentionally identity-based, so
+/// this uses declaration content hashes instead.
+fn calculate_symbol_context_hash(symbols: &SymbolTable) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    let declarations: BTreeMap<Name, u64> = symbols
+        .clone()
+        .into_iter()
+        .map(|(name, declaration)| (name, declaration.content_hash()))
+        .collect();
+
+    declarations.hash(&mut hasher);
+    hasher.finish()
+}
+
 /// Advances the zipper in preorder, respecting [`ExpressionZipper`] traversal boundaries.
 fn move_to_next_expression(zipper: &mut ExpressionZipper) -> bool {
     if zipper.go_down().is_some() {
@@ -766,19 +825,21 @@ fn move_to_next_expression(zipper: &mut ExpressionZipper) -> bool {
     true
 }
 
-/// Replaces the focused expression and clears clean-rule metadata on the changed path to root.
+type AncestorCacheMappings = Vec<(Expr, Expr)>;
+
+/// Replaces the focused expression and clears rewrite metadata on the changed path to root.
+///
+/// When `collect_cache_mappings` is true, this also returns each old ancestor hash with its rebuilt
+/// ancestor so future duplicate enclosing subtrees can jump directly to the rewritten form.
 fn replace_focus_and_dirty_ancestors(
     zipper: &ExpressionZipper,
     new_focus: Expr,
     dirty_trace: &mut DirtyTrace,
-    mut cache: Option<&mut RewriteCache>,
-    cache_level: usize,
-    has_applied_effect: bool,
-) -> Expr {
+    collect_cache_mappings: bool,
+) -> (Expr, AncestorCacheMappings) {
     let mut zipper = zipper.clone();
-    let ancestor_hashes = cache
-        .as_ref()
-        .map(|_| ancestor_hashes_to_root(&mut zipper.clone()));
+    let old_ancestors = collect_cache_mappings.then(|| ancestor_exprs_to_root(&mut zipper.clone()));
+    let mut ancestor_mappings = Vec::new();
     dirty_trace.replacement_subtree_clears += 1;
     zipper.replace_focus(new_focus);
 
@@ -787,31 +848,40 @@ fn replace_focus_and_dirty_ancestors(
         dirty_trace.ancestor_clears += 1;
         zipper.focus().meta_ref().clear_clean_rule_priority();
         zipper.focus().invalidate_cache();
-        if let Some(cache) = cache.as_deref_mut()
-            && let Some(old_hash) = ancestor_hashes
-                .as_ref()
-                .and_then(|hashes| hashes.get(ancestor_index))
+        if let Some(old_ancestor) = old_ancestors
+            .as_ref()
+            .and_then(|ancestors| ancestors.get(ancestor_index))
         {
-            cache.insert_from_hash(
-                *old_hash,
-                Some(zipper.focus().clone()),
-                cache_level,
-                has_applied_effect,
-            );
-            dirty_trace.cache_ancestor_mappings += 1;
+            ancestor_mappings.push((old_ancestor.clone(), zipper.focus().clone()));
         }
         ancestor_index += 1;
     }
 
-    zipper.rebuild_root()
+    (zipper.rebuild_root(), ancestor_mappings)
 }
 
-fn ancestor_hashes_to_root(zipper: &mut ExpressionZipper) -> Vec<u64> {
-    let mut hashes = Vec::new();
+/// Captures ancestor expressions before replacing the focused subtree.
+///
+/// The old ancestors are hashed later, once the symbol context for the cache insertion is known.
+fn ancestor_exprs_to_root(zipper: &mut ExpressionZipper) -> Vec<Expr> {
+    let mut ancestors = Vec::new();
     while zipper.go_up().is_some() {
-        hashes.push(zipper.focus().get_cached_hash());
+        ancestors.push(zipper.focus().clone());
     }
-    hashes
+    ancestors
+}
+
+/// Inserts old-ancestor-hash to rebuilt-ancestor mappings under one symbol context.
+fn insert_ancestor_mappings(
+    cache: &mut RewriteCache,
+    mappings: AncestorCacheMappings,
+    level: usize,
+    symbol_context_hash: u64,
+) {
+    for (old_ancestor, new_ancestor) in mappings {
+        let old_hash = RewriteCache::node_hash(&old_ancestor, symbol_context_hash);
+        cache.insert_from_hash(old_hash, Some(new_ancestor), level, symbol_context_hash);
+    }
 }
 
 /// Clears rewrite metadata from every expression in a subtree.
@@ -927,13 +997,14 @@ mod tests {
         let c = int_lit(3);
         let d = int_lit(4);
         let mut cache = RewriteCache::default();
+        let context = 10;
 
-        cache.insert(&a, Some(b.clone()), 0, false);
-        cache.insert(&b, Some(c.clone()), 0, false);
-        cache.insert(&c, Some(d.clone()), 0, false);
+        cache.insert(&a, Some(b.clone()), 0, context);
+        cache.insert(&b, Some(c.clone()), 0, context);
+        cache.insert(&c, Some(d.clone()), 0, context);
 
         for expr in [&a, &b, &c] {
-            match cache.get(expr, 0) {
+            match cache.get(expr, 0, context) {
                 CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, d),
                 CacheResult::Unknown | CacheResult::Terminal(_) => {
                     panic!("expected transitive rewrite cache hit")
@@ -946,33 +1017,35 @@ mod tests {
     fn rewrite_cache_tracks_terminal_levels() {
         let a = int_lit(1);
         let mut cache = RewriteCache::default();
+        let context = 10;
 
-        cache.insert(&a, None, 0, false);
-        cache.insert(&a, None, 1, false);
+        cache.insert(&a, None, 0, context);
+        cache.insert(&a, None, 1, context);
 
-        match cache.get(&a, 0) {
+        match cache.get(&a, 0, context) {
             CacheResult::Terminal(level) => assert_eq!(level, 1),
             CacheResult::Unknown | CacheResult::Rewrite(_) => panic!("expected terminal hit"),
         }
-        match cache.get(&a, 1) {
+        match cache.get(&a, 1, context) {
             CacheResult::Terminal(level) => assert_eq!(level, 1),
             CacheResult::Unknown | CacheResult::Rewrite(_) => panic!("expected terminal hit"),
         }
-        assert!(matches!(cache.get(&a, 2), CacheResult::Unknown));
+        assert!(matches!(cache.get(&a, 2, context), CacheResult::Unknown));
     }
 
     #[test]
     fn rewrite_cache_resolves_ancestor_mappings_transitively() {
         let old_parent = root(vec![int_lit(1)]);
-        let old_parent_hash = RewriteCache::node_hash(&old_parent);
         let mid_parent = root(vec![int_lit(2)]);
         let final_parent = root(vec![int_lit(3)]);
         let mut cache = RewriteCache::default();
+        let context = 10;
+        let old_parent_hash = RewriteCache::node_hash(&old_parent, context);
 
-        cache.insert_from_hash(old_parent_hash, Some(mid_parent.clone()), 0, false);
-        cache.insert(&mid_parent, Some(final_parent.clone()), 0, false);
+        cache.insert_from_hash(old_parent_hash, Some(mid_parent.clone()), 0, context);
+        cache.insert(&mid_parent, Some(final_parent.clone()), 0, context);
 
-        match cache.get(&old_parent, 0) {
+        match cache.get(&old_parent, 0, context) {
             CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, final_parent),
             CacheResult::Unknown | CacheResult::Terminal(_) => {
                 panic!("expected ancestor rewrite cache hit")
@@ -981,53 +1054,54 @@ mod tests {
     }
 
     #[test]
-    fn rewrite_cache_keeps_applied_effect_rewrites_after_context_clear() {
-        let pure_from = int_lit(1);
-        let pure_to = int_lit(2);
-        let effect_from = int_lit(3);
-        let effect_to = int_lit(4);
-        let terminal = int_lit(5);
+    fn rewrite_cache_separates_symbol_contexts() {
+        let from = int_lit(1);
+        let to = int_lit(2);
+        let terminal = int_lit(3);
         let mut cache = RewriteCache::default();
+        let old_context = 10;
+        let new_context = 20;
 
-        cache.insert(&pure_from, Some(pure_to), 0, false);
-        cache.insert(&effect_from, Some(effect_to.clone()), 0, true);
-        cache.insert(&terminal, None, 0, false);
+        cache.insert(&from, Some(to.clone()), 0, old_context);
+        cache.insert(&terminal, None, 0, old_context);
 
-        cache.clear_context_dependent();
-
-        assert!(matches!(cache.get(&pure_from, 0), CacheResult::Unknown));
-        assert!(matches!(cache.get(&terminal, 0), CacheResult::Unknown));
-        match cache.get(&effect_from, 0) {
-            CacheResult::Rewrite(rewritten) => {
-                assert_eq!(rewritten.expr, effect_to);
-                assert!(rewritten.has_applied_effect);
-            }
+        match cache.get(&from, 0, old_context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, to),
             CacheResult::Unknown | CacheResult::Terminal(_) => {
-                panic!("expected applied-effect rewrite hit")
+                panic!("expected rewrite hit in original context")
             }
         }
+        assert!(matches!(
+            cache.get(&from, 0, new_context),
+            CacheResult::Unknown
+        ));
+        assert!(matches!(
+            cache.get(&terminal, 0, new_context),
+            CacheResult::Unknown
+        ));
     }
 
     #[test]
-    fn rewrite_cache_propagates_applied_effect_marker_through_chains() {
+    fn rewrite_cache_resolves_chains_within_one_symbol_context() {
         let a = int_lit(1);
         let b = int_lit(2);
         let c = int_lit(3);
         let mut cache = RewriteCache::default();
+        let old_context = 10;
+        let new_context = 20;
 
-        cache.insert(&a, Some(b.clone()), 0, true);
-        cache.insert(&b, Some(c.clone()), 0, false);
-        cache.clear_context_dependent();
+        cache.insert(&a, Some(b.clone()), 0, old_context);
+        cache.insert(&b, Some(c.clone()), 0, old_context);
 
-        match cache.get(&a, 0) {
-            CacheResult::Rewrite(rewritten) => {
-                assert_eq!(rewritten.expr, c);
-                assert!(rewritten.has_applied_effect);
-            }
+        match cache.get(&a, 0, old_context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, c),
             CacheResult::Unknown | CacheResult::Terminal(_) => {
-                panic!("expected applied-effect rewrite hit")
+                panic!("expected rewrite hit in original context")
             }
         }
-        assert!(matches!(cache.get(&b, 0), CacheResult::Unknown));
+        assert!(matches!(
+            cache.get(&a, 0, new_context),
+            CacheResult::Unknown
+        ));
     }
 }

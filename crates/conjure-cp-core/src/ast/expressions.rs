@@ -66,8 +66,8 @@ use super::{
 // lot bigger still when we start using it for memoisation, so it should really be
 // boxed ~niklasdewally
 
-// expect size of Expression to be 120 bytes
-static_assertions::assert_eq_size!([u8; 120], Expression);
+// expect size of Expression to be 136 bytes
+static_assertions::assert_eq_size!([u8; 136], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -3055,12 +3055,19 @@ impl Expression {
 }
 
 impl Expression {
+    /// Invalidates the cached structural hash on this expression only.
     pub(crate) fn invalidate_cache(&self) {
-        self.meta_ref()
-            .stored_hash
+        let metadata = self.meta_ref();
+        metadata.stored_hash.store(NO_HASH, Ordering::Relaxed);
+        metadata
+            .stored_content_hash
+            .store(NO_HASH, Ordering::Relaxed);
+        metadata
+            .stored_content_hash_context
             .store(NO_HASH, Ordering::Relaxed);
     }
 
+    /// Invalidates cached structural hashes on this expression and all expression children.
     pub(crate) fn invalidate_cache_recursive(&self) {
         self.invalidate_cache();
         self.for_each_expr_child(&mut |child| {
@@ -3068,6 +3075,7 @@ impl Expression {
         });
     }
 
+    /// Returns the cached structural hash, computing and storing it when absent.
     pub(crate) fn get_cached_hash(&self) -> u64 {
         let stored = self.meta_ref().stored_hash.load(Ordering::Relaxed);
         if stored != NO_HASH {
@@ -3078,6 +3086,45 @@ impl Expression {
         self.calculate_hash()
     }
 
+    /// Returns the cached content-sensitive hash for this expression and symbol context.
+    ///
+    /// This is separate from [`Expression::get_cached_hash`] because normal expression hashing
+    /// preserves declaration pointer identity. Rewrite caching needs the values behind those
+    /// pointers, plus the surrounding symbol context, so side-effecting rules can be reused safely.
+    pub(crate) fn get_cached_content_hash(&self, symbol_context_hash: u64) -> u64 {
+        let metadata = self.meta_ref();
+        let stored = metadata.stored_content_hash.load(Ordering::Relaxed);
+        let stored_context = metadata.stored_content_hash_context.load(Ordering::Relaxed);
+        if stored != NO_HASH && stored_context == symbol_context_hash {
+            HASH_HITS.fetch_add(1, Ordering::Relaxed);
+            return stored;
+        }
+
+        HASH_MISSES.fetch_add(1, Ordering::Relaxed);
+        self.calculate_content_hash(symbol_context_hash)
+    }
+
+    /// Computes a content-sensitive hash, tagged by the visible symbol context.
+    pub(crate) fn calculate_content_hash(&self, symbol_context_hash: u64) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.get_cached_hash().hash(&mut hasher);
+        symbol_context_hash.hash(&mut hasher);
+        for declaration in Biplate::<DeclarationPtr>::universe_bi(self) {
+            declaration.content_hash().hash(&mut hasher);
+        }
+
+        let result = hasher.finish();
+        let metadata = self.meta_ref();
+        metadata
+            .stored_content_hash_context
+            .store(symbol_context_hash, Ordering::Relaxed);
+        metadata
+            .stored_content_hash
+            .store(result, Ordering::Relaxed);
+        result
+    }
+
+    /// Computes a structural hash that ignores metadata except for child cached hashes.
     pub(crate) fn calculate_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
         std::mem::discriminant(self).hash(&mut hasher);

@@ -27,6 +27,12 @@ pub struct Metadata {
     /// Cached structural hash used by tree rewriting infrastructure.
     #[serde(default, skip_serializing)]
     pub stored_hash: AtomicU64,
+    /// Cached content-sensitive hash used when rewrite results depend on declaration values.
+    #[serde(default, skip_serializing)]
+    pub stored_content_hash: AtomicU64,
+    /// Symbol-context hash for which `stored_content_hash` is valid.
+    #[serde(default, skip_serializing)]
+    pub stored_content_hash_context: AtomicU64,
     /// Lowest-priority rule group reached without rewriting this unchanged expression.
     ///
     /// This is runtime-only dirty/clean state and is cleared when the expression or one of its
@@ -43,6 +49,8 @@ impl Metadata {
             etype: None,
             span_id: None,
             stored_hash: AtomicU64::new(NO_HASH),
+            stored_content_hash: AtomicU64::new(NO_HASH),
+            stored_content_hash_context: AtomicU64::new(NO_HASH),
             clean_rule_priority: AtomicU16::new(NO_CLEAN_RULE_PRIORITY),
         }
     }
@@ -53,6 +61,8 @@ impl Metadata {
             etype: None,
             span_id: Some(span_id),
             stored_hash: AtomicU64::new(NO_HASH),
+            stored_content_hash: AtomicU64::new(NO_HASH),
+            stored_content_hash_context: AtomicU64::new(NO_HASH),
             clean_rule_priority: AtomicU16::new(NO_CLEAN_RULE_PRIORITY),
         }
     }
@@ -109,6 +119,10 @@ impl Clone for Metadata {
             etype: self.etype.clone(),
             span_id: self.span_id,
             stored_hash: AtomicU64::new(self.stored_hash.load(Ordering::Relaxed)),
+            stored_content_hash: AtomicU64::new(self.stored_content_hash.load(Ordering::Relaxed)),
+            stored_content_hash_context: AtomicU64::new(
+                self.stored_content_hash_context.load(Ordering::Relaxed),
+            ),
             clean_rule_priority: AtomicU16::new(self.clean_rule_priority.load(Ordering::Relaxed)),
         }
     }
@@ -131,6 +145,8 @@ impl Quine for Metadata {
                 etype: #etype,
                 span_id: #span_id,
                 stored_hash: std::sync::atomic::AtomicU64::new(0),
+                stored_content_hash: std::sync::atomic::AtomicU64::new(0),
+                stored_content_hash_context: std::sync::atomic::AtomicU64::new(0),
                 clean_rule_priority: std::sync::atomic::AtomicU16::new(u16::MAX),
             }
         }
