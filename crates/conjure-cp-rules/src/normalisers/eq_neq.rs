@@ -2,7 +2,7 @@
 
 use conjure_cp::ast::{Expression as Expr, SymbolTable, Typeable};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use conjure_cp::ast::ReturnType::{Matrix, Set};
@@ -18,7 +18,7 @@ fn negated_neq_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, a) => match a.as_ref() {
             Expr::Neq(_, b, c) if (b.is_safe() && c.is_safe()) => {
-                Ok(Reduction::pure(essence_expr!(&b = &c)))
+                Ok(RuleEffect::pure(essence_expr!(&b = &c)))
             }
             _ => Err(RuleNotApplicable),
         },
@@ -46,7 +46,7 @@ fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 if matches!(c.as_ref().return_type(), Set(_) | Matrix(_)) {
                     return Err(RuleNotApplicable);
                 }
-                Ok(Reduction::pure(essence_expr!(&b != &c)))
+                Ok(RuleEffect::pure(essence_expr!(&b != &c)))
             }
             _ => Err(RuleNotApplicable),
         },

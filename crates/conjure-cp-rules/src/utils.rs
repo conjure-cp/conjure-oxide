@@ -1,11 +1,12 @@
 use std::collections::VecDeque;
 
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Metadata, Moo, Name,
-    SymbolTable,
+    AbstractLiteral, Atom, DeclarationPtr, DomainPtr, Expression as Expr, Literal, Metadata, Moo,
+    Name, SymbolTable,
     categories::Category,
     comprehension::{Comprehension, ComprehensionQualifier},
 };
+use conjure_cp::rule_engine::RuleEffect;
 
 use tracing::{instrument, trace};
 use uniplate::{Biplate, Uniplate};
@@ -132,8 +133,11 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
 ///
 #[instrument(skip_all, fields(expr = %expr))]
 pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> {
-    let mut symbols = symbols.clone();
+    let domain = to_aux_var_domain(expr)?;
+    Some(materialise_aux_var(expr, symbols, &domain))
+}
 
+fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     // No need to put an atom in an aux_var
     if is_atom(expr) {
         if cfg!(debug_assertions) {
@@ -233,13 +237,18 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     };
 
+    Some(domain)
+}
+
+fn materialise_aux_var(expr: &Expr, symbols: &SymbolTable, domain: &DomainPtr) -> ToAuxVarOutput {
+    let mut symbols = symbols.clone();
     let decl = symbols.gen_find(&domain);
 
     if cfg!(debug_assertions) {
         trace!(expr=%expr, "to_auxvar() succeeded in putting expr into an auxvar");
     }
 
-    Some(ToAuxVarOutput {
+    ToAuxVarOutput {
         aux_declaration: decl.clone(),
         aux_expression: Expr::AuxDeclaration(
             Metadata::new(),
@@ -248,7 +257,21 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         ),
         symbols,
         _unconstructable: (),
-    })
+    }
+}
+
+/// Defers auxiliary variable allocation until a selected rule is materialised.
+pub fn defer_aux_var(
+    expr: &Expr,
+    build: impl Fn(ToAuxVarOutput) -> RuleEffect + Send + Sync + 'static,
+) -> Option<RuleEffect> {
+    let domain = to_aux_var_domain(expr)?;
+    let expr = expr.clone();
+
+    Some(RuleEffect::deferred(move |symbols| {
+        let aux = materialise_aux_var(&expr, symbols, &domain);
+        build(aux)
+    }))
 }
 
 /// Output data of `to_aux_var`.

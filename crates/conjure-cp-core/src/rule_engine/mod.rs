@@ -37,12 +37,12 @@ pub use rewrite_morph::rewrite_morph;
 /// ```rust
 /// use conjure_cp_core::ast::Expression;
 /// use conjure_cp_core::ast::SymbolTable;
-/// use conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
+/// use conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, RuleEffect};
 /// use conjure_cp_core::rule_engine::register_rule;
 ///
 /// #[register_rule("RuleSetName", 10)]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-///   Ok(Reduction::pure(expr.clone()))
+///   Ok(RuleEffect::pure(expr.clone()))
 /// }
 /// ```
 pub use conjure_cp_rule_macros::register_rule;
@@ -88,7 +88,7 @@ pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_set
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
 pub(crate) use rule::MorphState;
-pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule, RuleFn};
+pub use rule::{ApplicationError, ApplicationResult, Rule, RuleEffect, RuleFn};
 pub use rule_set::RuleSet;
 
 mod submodel_zipper;
@@ -126,14 +126,14 @@ pub mod _dependencies {
 ///
 /// # Example
 /// ```rust
-/// # use conjure_cp_core::rule_engine::{ApplicationResult, Reduction, get_all_rules};
+/// # use conjure_cp_core::rule_engine::{ApplicationResult, RuleEffect, get_all_rules};
 /// # use conjure_cp_core::ast::Expression;
 /// # use conjure_cp_core::ast::SymbolTable;
 /// # use conjure_cp_core::rule_engine::register_rule;
 ///
 /// #[register_rule]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-///   Ok(Reduction::pure(expr.clone()))
+///   Ok(RuleEffect::pure(expr.clone()))
 /// }
 ///
 /// fn main() {
@@ -156,13 +156,13 @@ pub fn get_all_rules() -> Vec<&'static Rule<'static>> {
 /// # Example
 /// ```rust
 /// use conjure_cp_core::rule_engine::register_rule;
-/// use conjure_cp_core::rule_engine::{Rule, ApplicationResult, Reduction, get_rule_by_name};
+/// use conjure_cp_core::rule_engine::{Rule, ApplicationResult, RuleEffect, get_rule_by_name};
 /// use conjure_cp_core::ast::Expression;
 /// use conjure_cp_core::ast::SymbolTable;
 ///
 /// #[register_rule]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-///  Ok(Reduction::pure(expr.clone()))
+///  Ok(RuleEffect::pure(expr.clone()))
 /// }
 ///
 /// fn main() {

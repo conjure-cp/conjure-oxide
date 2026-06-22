@@ -1,7 +1,7 @@
 use conjure_cp::rule_engine::SubmodelZipper;
 use conjure_cp::{
     ast::{Expression, SymbolTable},
-    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
 
 /// Converts the rule function `rule` to a rule that applies `rule` bottom-up to every expression
@@ -48,7 +48,7 @@ pub fn as_bottom_up(
         let root_expr = zipper.rebuild_root();
 
         if done_something {
-            Ok(Reduction::new(root_expr, new_tops, symbols))
+            Ok(RuleEffect::new(root_expr, new_tops, symbols))
         } else {
             Err(RuleNotApplicable)
         }

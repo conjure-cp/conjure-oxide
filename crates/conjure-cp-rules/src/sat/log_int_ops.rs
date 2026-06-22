@@ -1,7 +1,7 @@
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
@@ -52,7 +52,7 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         &mut new_clauses,
         &mut new_symbols,
     );
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 /// Converts a = expression between two SATInts to a boolean expression in cnf
@@ -94,7 +94,7 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         );
     }
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 /// Converts a != expression between two SATInts to a boolean expression in cnf
@@ -136,7 +136,7 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         );
     }
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 // Creates a boolean expression for > or >=
@@ -247,7 +247,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let result = exprs_bits.pop().unwrap();
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
@@ -477,7 +477,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         })
         .unwrap();
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
@@ -515,7 +515,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let result = tseytin_negate(bits, bits.len(), &mut new_clauses, &mut new_symbols);
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
@@ -599,7 +599,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let result = exprs_bits.pop().unwrap();
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
@@ -719,7 +719,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let result = exprs_bits.pop().unwrap();
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
@@ -784,7 +784,7 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         )
     }
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
@@ -940,7 +940,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         &mut new_symbols,
     );
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,

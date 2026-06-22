@@ -7,8 +7,8 @@ use crate::{
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{
-            RuleResult, VariableDeclarationSnapshot, log_rule_application,
-            snapshot_variable_declarations, try_rewrite_value_letting_once,
+            RuleResult, log_rule_application, snapshot_variable_declarations,
+            try_rewrite_value_letting_once,
         },
         submodel_zipper::expression_ctx,
     },
@@ -30,8 +30,7 @@ use {
     tracing::{Level, span},
 };
 
-type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
-type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
+type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType);
 
 #[derive(Clone)]
 struct RuleGroup<'a> {
@@ -206,9 +205,6 @@ fn try_rewrite_model(
                 #[cfg(debug_assertions)]
                 tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
-                let before_variable_snapshot = matches!(expr, Expr::Root(_, _))
-                    .then(|| snapshot_variable_declarations(&submodel.symbols()));
-
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
                         // when called a lot, this becomes very expensive!
@@ -228,22 +224,15 @@ fn try_rewrite_model(
                         stats.rewriter_rule_applications =
                             Some(stats.rewriter_rule_applications.unwrap_or(0) + 1);
 
-                        let after_variable_snapshot = before_variable_snapshot
-                            .as_ref()
-                            .map(|_| snapshot_variable_declarations(&red.symbols));
-                        let variable_snapshots =
-                            before_variable_snapshot.zip(after_variable_snapshot);
-
                         // Collect applicable rules
                         results.push((
                             RuleResult {
                                 rule_data: rd.clone(),
-                                reduction: red,
+                                effect: red,
                             },
                             rule_group.priority,
                             expr.clone(),
                             ctx.clone(),
-                            variable_snapshots,
                         ));
                     }
                     Err(_) => {
@@ -272,14 +261,26 @@ fn try_rewrite_model(
 
     match results.as_slice() {
         [] => return None, // no rules are applicable.
-        [(result, _priority, expr, ctx, variable_snapshots), ..] => {
+        [(result, _priority, expr, ctx), ..] => {
             if prop_multiple_equally_applicable {
                 assert_no_multiple_equally_applicable_rules(&results, rules_grouped);
             }
 
+            let effect = result.effect.materialize(&submodel.symbols());
+            let variable_snapshots = matches!(expr, Expr::Root(_, _)).then(|| {
+                (
+                    snapshot_variable_declarations(&submodel.symbols()),
+                    snapshot_variable_declarations(&effect.symbols),
+                )
+            });
+            let result = RuleResult {
+                rule_data: result.rule_data.clone(),
+                effect,
+            };
+
             // Extract the single applicable rule and apply it
             log_rule_application(
-                result,
+                &result,
                 expr,
                 &submodel.symbols(),
                 variable_snapshots
@@ -288,11 +289,11 @@ fn try_rewrite_model(
             );
 
             // Replace expr with new_expression
-            let new_root = ctx(result.reduction.new_expression.clone());
+            let new_root = ctx(result.effect.new_expression.clone());
             submodel.replace_root(new_root);
 
             // Apply new symbols and top level
-            result.reduction.clone().apply(submodel);
+            result.effect.clone().apply(submodel);
 
             #[cfg(debug_assertions)]
             {
@@ -358,7 +359,7 @@ fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
 
     let names: Vec<_> = results
         .iter()
-        .map(|(result, _, _, _, _)| result.rule_data.rule.name)
+        .map(|(result, _, _, _)| result.rule_data.rule.name)
         .collect();
 
     // Extract the expression from the first result

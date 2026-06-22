@@ -1,7 +1,7 @@
 use conjure_cp::ast::{AbstractLiteral, Atom, Expression as Expr, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
-    ApplicationResult, Reduction, register_rule,
+    ApplicationResult, RuleEffect, register_rule,
 };
 use conjure_cp::{ast::matrix, essence_expr};
 
@@ -58,5 +58,5 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => unreachable!(),
     };
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }

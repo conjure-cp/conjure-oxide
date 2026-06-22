@@ -6,7 +6,7 @@ use conjure_cp::{
     into_matrix_expr, matrix_expr,
     rule_engine::{
         ApplicationError::{self, RuleNotApplicable},
-        ApplicationResult, Reduction, register_rule, register_rule_set,
+        ApplicationResult, RuleEffect, register_rule, register_rule_set,
     },
 };
 use uniplate::Biplate;
@@ -28,7 +28,7 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         Expression::Bubble(_, a, b) if a.return_type() == ReturnType::Bool => {
             let a = Moo::unwrap_or_clone(Moo::clone(a));
             let b = Moo::unwrap_or_clone(Moo::clone(b));
-            Ok(Reduction::pure(Expression::And(
+            Ok(RuleEffect::pure(Expression::And(
                 Metadata::new(),
                 Moo::new(matrix_expr![a, b]),
             )))
@@ -83,9 +83,9 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
             Moo::new(bubbled_conditions[0].clone()),
         );
 
-        Ok(Reduction::pure(new_expr))
+        Ok(RuleEffect::pure(new_expr))
     } else {
-        Ok(Reduction::pure(Expression::Bubble(
+        Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             Moo::new(new_inner),
             Moo::new(Expression::And(
@@ -119,7 +119,7 @@ fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
 
-        return Ok(Reduction::pure(Expression::Bubble(
+        return Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             Moo::new(Expression::SafeDiv(Metadata::new(), a.clone(), b.clone())),
             Moo::new(Expression::Neq(
@@ -153,7 +153,7 @@ fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
 
-        return Ok(Reduction::pure(Expression::Bubble(
+        return Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             Moo::new(Expression::SafeMod(Metadata::new(), a.clone(), b.clone())),
             Moo::new(Expression::Neq(
@@ -187,7 +187,7 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
 
-        return Ok(Reduction::pure(Expression::Bubble(
+        return Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             Moo::new(Expression::SafePow(Metadata::new(), a.clone(), b.clone())),
             Moo::new(Expression::And(

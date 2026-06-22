@@ -5,7 +5,7 @@ use conjure_cp::ast::SymbolTable;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use conjure_cp::ast::Atom;
@@ -65,7 +65,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
         let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
-        Ok(Reduction::pure(subject))
+        Ok(RuleEffect::pure(subject))
     } else {
         Err(RuleNotApplicable)
     }
@@ -143,7 +143,7 @@ fn record_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Vec::from([idx]),
         ));
 
-        Ok(Reduction::pure(Expression::Bubble(
+        Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             new_expr,
             bubble_constraint,
@@ -214,7 +214,7 @@ fn record_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Moo::new(into_matrix_expr!(equality_constraints)),
         );
 
-        Ok(Reduction::pure(new_expr))
+        Ok(RuleEffect::pure(new_expr))
     } else {
         Err(RuleNotApplicable)
     }
@@ -278,7 +278,7 @@ fn record_to_const(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Metadata::new(),
             Moo::new(into_matrix_expr!(equality_constraints)),
         );
-        Ok(Reduction::pure(new_expr))
+        Ok(RuleEffect::pure(new_expr))
     } else {
         Err(RuleNotApplicable)
     }

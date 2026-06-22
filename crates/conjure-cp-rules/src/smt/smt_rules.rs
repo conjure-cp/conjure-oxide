@@ -2,7 +2,7 @@ use conjure_cp::ast::comprehension::ComprehensionQualifier;
 use conjure_cp::ast::{Expression as Expr, *};
 use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
-    ApplicationResult, Reduction, register_rule, register_rule_set,
+    ApplicationResult, RuleEffect, register_rule, register_rule_set,
 };
 use conjure_cp::settings::SolverFamily;
 use conjure_cp::{bug, essence_expr};
@@ -71,7 +71,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
         _ => Err(RuleNotApplicable),
     }?;
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Turn a matrix slice into a 1-d matrix of the slice elements
@@ -110,7 +110,7 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Expr::SafeIndex(Metadata::new(), m.clone(), new_idx)
         })
         .collect();
-    Ok(Reduction::pure(Expr::AbstractLiteral(
+    Ok(RuleEffect::pure(Expr::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::matrix_implied_indices(elements),
     )))
@@ -146,7 +146,7 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
 
         let new_child = Expr::SafeSlice(Metadata::new(), Moo::new(child.clone()), vec![None]);
-        return Ok(Reduction::pure(ctx(new_child)));
+        return Ok(RuleEffect::pure(ctx(new_child)));
     }
 
     Err(RuleNotApplicable)
@@ -183,7 +183,7 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
         Metadata::new(),
         AbstractLiteral::Matrix(elems, new_dom.into()),
     );
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Expands a sum over an "in set" comprehension to a list.
@@ -228,7 +228,7 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
             AbstractLiteral::matrix_implied_indices(list),
         )),
     );
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Unwraps a subsetEq expression into checking membership equality.
@@ -269,7 +269,7 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         )),
     );
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Unwraps equality between sets into checking membership equality.
@@ -317,5 +317,5 @@ fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         )),
     );
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }

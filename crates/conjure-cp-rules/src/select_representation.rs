@@ -3,7 +3,7 @@ use conjure_cp::{
     bug,
     representation::Representation,
     rule_engine::{
-        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
         register_rule_set,
     },
     settings::SolverFamily,
@@ -113,7 +113,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     }
 
     if has_changed.load(Ordering::Relaxed) {
-        Ok(Reduction::with_symbols(expr, symbols))
+        Ok(RuleEffect::with_symbols(expr, symbols))
     } else {
         Err(RuleNotApplicable)
     }
@@ -163,7 +163,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     let mut decl_ptr = decl.clone().into_ptr().detach();
     decl_ptr.replace_name(new_name);
 
-    Ok(Reduction::with_symbols(
+    Ok(RuleEffect::with_symbols(
         Expr::Atomic(
             Metadata::new(),
             Atom::Reference(conjure_cp::ast::Reference::new(decl_ptr)),

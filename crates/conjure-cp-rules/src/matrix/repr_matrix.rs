@@ -6,7 +6,7 @@ use conjure_cp::ast::{
 use conjure_cp::essence_expr;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 use itertools::{Itertools, chain, izip};
 use uniplate::Uniplate;
@@ -74,7 +74,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             )));
 
             let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
-            Ok(Reduction::pure(subject))
+            Ok(RuleEffect::pure(subject))
         } else {
             // indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]
 
@@ -153,7 +153,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
                     }
                 };
 
-                return Ok(Reduction::pure(Expr::SafeIndex(
+                return Ok(RuleEffect::pure(Expr::SafeIndex(
                     Metadata::new(),
                     Moo::new(new_subject),
                     vec![flat_index],
@@ -258,7 +258,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 
             let flat_matrix = into_matrix_expr![flat_elems];
 
-            Ok(Reduction::pure(Expr::SafeIndex(
+            Ok(RuleEffect::pure(Expr::SafeIndex(
                 Metadata::new(),
                 Moo::new(flat_matrix),
                 vec![flat_index],
@@ -348,7 +348,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     let new_expr = into_matrix_expr!(slice);
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Converts a reference to a 1d-matrix not contained within an indexing or slicing expression to its atoms.
@@ -405,7 +405,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                     .clone()
             })
             .collect_vec();
-        return Ok(Reduction::pure(ctx(into_matrix_expr![flat_values])));
+        return Ok(RuleEffect::pure(ctx(into_matrix_expr![flat_values])));
     }
 
     Err(RuleNotApplicable)

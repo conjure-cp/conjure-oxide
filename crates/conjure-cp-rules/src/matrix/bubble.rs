@@ -1,7 +1,7 @@
 use conjure_cp::ast::{Atom, DomainPtr, GroundDomain, Metadata, Range, eval_constant};
 use conjure_cp::ast::{Expression, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect,
     register_rule,
 };
 use conjure_cp::{bug, into_matrix_expr};
@@ -140,8 +140,8 @@ fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     ));
 
     match index_bubble_condition(index_domains, indices)? {
-        None => Ok(Reduction::pure(Moo::unwrap_or_clone(new_expr))),
-        Some(condition) => Ok(Reduction::pure(Expression::Bubble(
+        None => Ok(RuleEffect::pure(Moo::unwrap_or_clone(new_expr))),
+        Some(condition) => Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             new_expr,
             Moo::new(condition),
@@ -189,8 +189,8 @@ fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     ));
 
     match index_bubble_condition(&filtered_index_domains, &filtered_indices)? {
-        None => Ok(Reduction::pure(Moo::unwrap_or_clone(new_expr))),
-        Some(condition) => Ok(Reduction::pure(Expression::Bubble(
+        None => Ok(RuleEffect::pure(Moo::unwrap_or_clone(new_expr))),
+        Some(condition) => Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             new_expr,
             Moo::new(condition),

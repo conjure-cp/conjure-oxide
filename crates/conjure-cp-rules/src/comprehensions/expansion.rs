@@ -19,7 +19,7 @@ use conjure_cp::{
     },
     bug, into_matrix_expr,
     rule_engine::{
-        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
     },
     settings::{QuantifiedExpander, comprehension_expander},
 };
@@ -59,7 +59,7 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
     }
 
     if changed {
-        Ok(Reduction::with_symbols(
+        Ok(RuleEffect::with_symbols(
             Expr::Root(metadata.clone(), new_constraints),
             new_symbols,
         ))
@@ -110,7 +110,7 @@ fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applica
     let results = expand_native(comprehension, &mut symbols)
         .unwrap_or_else(|e| bug!("native AC comprehension expansion failed: {e}"));
 
-    Ok(Reduction::with_symbols(
+    Ok(RuleEffect::with_symbols(
         ac_operator_kind.as_expression(into_matrix_expr!(results)),
         symbols,
     ))
@@ -150,7 +150,7 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         }
         _ => expanded,
     };
-    Ok(Reduction::with_symbols(expanded, symbols))
+    Ok(RuleEffect::with_symbols(expanded, symbols))
 }
 
 /// Expand comprehensions using `--comprehension-expander via-solver`.
@@ -189,7 +189,7 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
 
     let results = expand_via_solver(comprehension)
         .unwrap_or_else(|e| bug!("via-solver comprehension expansion failed: {e}"));
-    Ok(Reduction::with_symbols(
+    Ok(RuleEffect::with_symbols(
         into_matrix_expr!(results),
         symbols.clone(),
     ))
@@ -238,7 +238,7 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
         expand_via_solver_ac(comprehension, ac_operator_kind).or(Err(RuleNotApplicable))?;
 
     let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
-    Ok(Reduction::with_symbols(new_expr, symbols.clone()))
+    Ok(RuleEffect::with_symbols(new_expr, symbols.clone()))
 }
 
 fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {

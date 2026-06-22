@@ -10,7 +10,7 @@ use std::{
 use crate::{
     extra_check,
     matrix::try_index_matrix_to_atom,
-    utils::{is_flat, rewrite_children, to_aux_var},
+    utils::{defer_aux_var, is_flat, rewrite_children, to_aux_var},
 };
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{Domain, GroundDomain, Moo, eval_constant};
@@ -22,7 +22,7 @@ use conjure_cp::{
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
-        ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+        ApplicationError, ApplicationResult, RuleEffect, register_rule, register_rule_set,
     },
     settings::SolverFamily,
 };
@@ -51,7 +51,7 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::SafeIndex(
+    Ok(RuleEffect::pure(Expr::SafeIndex(
         Metadata::new(),
         Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(constant))),
         indices.clone(),
@@ -88,7 +88,7 @@ fn inline_table_row_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Table(meta, tuple, rows) => {
             let new_rows = materialise_matrix_operand(rows).ok_or(RuleNotApplicable)?;
-            Ok(Reduction::pure(Expr::Table(
+            Ok(RuleEffect::pure(Expr::Table(
                 meta.clone(),
                 tuple.clone(),
                 Moo::new(new_rows),
@@ -96,7 +96,7 @@ fn inline_table_row_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
         Expr::NegativeTable(meta, tuple, rows) => {
             let new_rows = materialise_matrix_operand(rows).ok_or(RuleNotApplicable)?;
-            Ok(Reduction::pure(Expr::NegativeTable(
+            Ok(RuleEffect::pure(Expr::NegativeTable(
                 meta.clone(),
                 tuple.clone(),
                 Moo::new(new_rows),
@@ -203,7 +203,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         y = aux_var;
     }
 
-    Ok(Reduction::new(
+    Ok(RuleEffect::new(
         Expr::FlatProductEq(Metadata::new(), Moo::new(x), Moo::new(y), Moo::new(val)),
         new_tops,
         symbols,
@@ -451,7 +451,7 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
         (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), vars, total),
     };
 
-    Ok(Reduction::new(new_expr, new_top_exprs, symtab))
+    Ok(RuleEffect::new(new_expr, new_top_exprs, symtab))
 }
 
 /// For a term inside a weighted sum, return coefficient*variable.
@@ -719,7 +719,7 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let a: &Atom = a.as_ref().try_into().or(Err(RuleNotApplicable))?;
     let b: &Atom = b.as_ref().try_into().or(Err(RuleNotApplicable))?;
 
-    Ok(Reduction::pure(Expr::MinionDivEqUndefZero(
+    Ok(RuleEffect::pure(Expr::MinionDivEqUndefZero(
         meta,
         Moo::new(a.clone()),
         Moo::new(b.clone()),
@@ -772,7 +772,7 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let a: &Atom = a.as_ref().try_into().or(Err(RuleNotApplicable))?;
     let b: &Atom = b.as_ref().try_into().or(Err(RuleNotApplicable))?;
 
-    Ok(Reduction::pure(Expr::MinionModuloEqUndefZero(
+    Ok(RuleEffect::pure(Expr::MinionModuloEqUndefZero(
         meta,
         Moo::new(a.clone()),
         Moo::new(b.clone()),
@@ -814,7 +814,7 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let y = Moo::unwrap_or_clone(y);
     let y: Atom = y.try_into().or(Err(RuleNotApplicable))?;
 
-    Ok(Reduction::pure(Expr::FlatAbsEq(
+    Ok(RuleEffect::pure(Expr::FlatAbsEq(
         Metadata::new(),
         Moo::new(x),
         Moo::new(y),
@@ -848,7 +848,7 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .try_into()
         .or(Err(RuleNotApplicable))?;
 
-    Ok(Reduction::pure(Expr::MinionPow(
+    Ok(RuleEffect::pure(Expr::MinionPow(
         Metadata::new(),
         Moo::new(a),
         Moo::new(b),
@@ -878,7 +878,7 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         })
         .process_results(|iter| iter.collect_vec())?;
 
-    Ok(Reduction::pure(Expr::FlatAllDiff(Metadata::new(), atoms)))
+    Ok(RuleEffect::pure(Expr::FlatAllDiff(Metadata::new(), atoms)))
 }
 
 fn unwrap_flatten_operand(operand: &Moo<Expr>) -> Option<Moo<Expr>> {
@@ -896,7 +896,7 @@ fn unwrap_flatten_in_global_cardinality(expr: &Expr, _: &SymbolTable) -> Applica
             let Some(vars) = unwrap_flatten_operand(vars) else {
                 return Err(RuleNotApplicable);
             };
-            Ok(Reduction::pure(Expr::AtMost(
+            Ok(RuleEffect::pure(Expr::AtMost(
                 meta.clone(),
                 vars,
                 counts.clone(),
@@ -907,7 +907,7 @@ fn unwrap_flatten_in_global_cardinality(expr: &Expr, _: &SymbolTable) -> Applica
             let Some(vars) = unwrap_flatten_operand(vars) else {
                 return Err(RuleNotApplicable);
             };
-            Ok(Reduction::pure(Expr::AtLeast(
+            Ok(RuleEffect::pure(Expr::AtLeast(
                 meta.clone(),
                 vars,
                 counts.clone(),
@@ -918,7 +918,7 @@ fn unwrap_flatten_in_global_cardinality(expr: &Expr, _: &SymbolTable) -> Applica
             let Some(vars) = unwrap_flatten_operand(vars) else {
                 return Err(RuleNotApplicable);
             };
-            Ok(Reduction::pure(Expr::Gcc(
+            Ok(RuleEffect::pure(Expr::Gcc(
                 meta.clone(),
                 vars,
                 values.clone(),
@@ -929,7 +929,7 @@ fn unwrap_flatten_in_global_cardinality(expr: &Expr, _: &SymbolTable) -> Applica
             let Some(vars) = unwrap_flatten_operand(vars) else {
                 return Err(RuleNotApplicable);
             };
-            Ok(Reduction::pure(Expr::GccWeak(
+            Ok(RuleEffect::pure(Expr::GccWeak(
                 meta.clone(),
                 vars,
                 values.clone(),
@@ -988,7 +988,7 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
         .map(|v| Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(*v))))
         .collect_vec();
 
-    Ok(Reduction::new(
+    Ok(RuleEffect::new(
         Expr::GccWeak(
             Metadata::new(),
             Moo::new(into_matrix_expr![es]),
@@ -1036,7 +1036,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
             && element_id_value_may_be_outside_matrix(&value_expr, &search_values)
         {
             if let Ok(atom_list) = indexed_element_id_inverse_lookup(&matrix_expr, &value_expr) {
-                return Ok(Reduction::pure(Expr::MinionElementOne(
+                return Ok(RuleEffect::pure(Expr::MinionElementOne(
                     Metadata::new(),
                     atom_list,
                     Moo::new(Atom::Reference(reference.clone())),
@@ -1050,7 +1050,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
                 Expr::Atomic(Metadata::new(), Atom::Reference(reference.clone()),),
             ]];
 
-            return Ok(Reduction::pure(Expr::Table(
+            return Ok(RuleEffect::pure(Expr::Table(
                 Metadata::new(),
                 Moo::new(tuple),
                 Moo::new(rows),
@@ -1060,7 +1060,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         let atom_list =
             pad_represented_element_id_list(atom_list.clone(), reference).unwrap_or(atom_list);
 
-        return Ok(Reduction::pure(Expr::MinionElementOne(
+        return Ok(RuleEffect::pure(Expr::MinionElementOne(
             Metadata::new(),
             atom_list,
             Moo::new(Atom::Reference(reference.clone())),
@@ -1070,7 +1070,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
 
     let atom_list = indexed_element_id_inverse_lookup(&matrix_expr, &value_expr)?;
 
-    Ok(Reduction::pure(Expr::MinionElementOne(
+    Ok(RuleEffect::pure(Expr::MinionElementOne(
         Metadata::new(),
         atom_list,
         Moo::new(value_atom),
@@ -1282,7 +1282,7 @@ fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
 
 /// Introduces an auxiliary variable for `elementId` used as a matrix index.
 #[register_rule("Minion", 4300, [SafeIndex])]
-fn flatten_element_id_index(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn flatten_element_id_index(expr: &Expr, _symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeIndex(meta, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -1296,20 +1296,25 @@ fn flatten_element_id_index(expr: &Expr, symbols: &SymbolTable) -> ApplicationRe
     };
 
     if let Some(index) = fold_constant_element_id_to_index(&indices[0]) {
-        return Ok(Reduction::pure(Expr::SafeIndex(
+        return Ok(RuleEffect::pure(Expr::SafeIndex(
             meta.clone(),
             subject.clone(),
             vec![index],
         )));
     }
 
-    let aux_var_info = to_aux_var(&indices[0], symbols).ok_or(RuleNotApplicable)?;
-
-    Ok(Reduction::new(
-        Expr::SafeIndex(meta.clone(), subject.clone(), vec![aux_var_info.as_expr()]),
-        vec![aux_var_info.top_level_expr()],
-        aux_var_info.symbols(),
-    ))
+    defer_aux_var(&indices[0], {
+        let meta = meta.clone();
+        let subject = subject.clone();
+        move |aux_var_info| {
+            RuleEffect::new(
+                Expr::SafeIndex(meta.clone(), subject.clone(), vec![aux_var_info.as_expr()]),
+                vec![aux_var_info.top_level_expr()],
+                aux_var_info.symbols(),
+            )
+        }
+    })
+    .ok_or(RuleNotApplicable)
 }
 
 /// Introduces a Minion `MinusEq` constraint from `x = -y`, where x and y are atoms.
@@ -1341,7 +1346,7 @@ fn introduce_minuseq_from_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::FlatMinusEq(
+    Ok(RuleEffect::pure(Expr::FlatMinusEq(
         Metadata::new(),
         Moo::new(x),
         Moo::new(y),
@@ -1373,7 +1378,7 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationR
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::FlatMinusEq(
+    Ok(RuleEffect::pure(Expr::FlatMinusEq(
         Metadata::new(),
         Moo::new(a),
         Moo::new(b),
@@ -1401,14 +1406,14 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
     //
     // if only x is an atom, x -> y ~> reifyimply(y,x)
     if let Ok(y_atom) = TryInto::<&Atom>::try_into(y.as_ref()) {
-        Ok(Reduction::pure(Expr::FlatIneq(
+        Ok(RuleEffect::pure(Expr::FlatIneq(
             Metadata::new(),
             Moo::new(x_atom.clone()),
             Moo::new(y_atom.clone()),
             Box::new(0.into()),
         )))
     } else {
-        Ok(Reduction::pure(Expr::MinionReifyImply(
+        Ok(RuleEffect::pure(Expr::MinionReifyImply(
             Metadata::new(),
             y.clone(),
             x_atom.clone(),
@@ -1446,13 +1451,13 @@ fn constant_fold_indomain_element_id(expr: &Expr, _: &SymbolTable) -> Applicatio
     };
 
     if normalise_int_domain(&intersection) == normalise_int_domain(expr_domain.as_ref()) {
-        return Ok(Reduction::pure(true.into()));
+        return Ok(RuleEffect::pure(true.into()));
     }
 
     if let Ok(values) = intersection.values_i32()
         && values.is_empty()
     {
-        return Ok(Reduction::pure(false.into()));
+        return Ok(RuleEffect::pure(false.into()));
     }
 
     Err(RuleNotApplicable)
@@ -1487,9 +1492,9 @@ fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> Appli
 
     let index = fold_constant_element_id_to_index(&indices[0]).ok_or(RuleNotApplicable)?;
     let safeindex = Expr::SafeIndex(index_meta.clone(), subject.clone(), vec![index]);
-    let Reduction { new_expression, .. } = try_index_matrix_to_atom(&safeindex, symbols)?;
+    let RuleEffect { new_expression, .. } = try_index_matrix_to_atom(&safeindex, symbols)?;
 
-    Ok(Reduction::pure(Expr::Eq(
+    Ok(RuleEffect::pure(Expr::Eq(
         meta.clone(),
         Moo::new(Expr::Atomic(
             Metadata::new(),
@@ -1532,7 +1537,7 @@ fn drop_invalid_constant_element_id_safeindex_aux(
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(true.into()))
+    Ok(RuleEffect::pure(true.into()))
 }
 
 /// Converts `__inDomain(a,domain) to w-inintervalset.
@@ -1570,7 +1575,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
         }
     }
 
-    Ok(Reduction::pure(Expr::MinionWInIntervalSet(
+    Ok(RuleEffect::pure(Expr::MinionWInIntervalSet(
         Metadata::new(),
         atom.clone(),
         out_ranges,
@@ -1627,7 +1632,7 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         atom_list.push(elem);
     }
 
-    Ok(Reduction::pure(Expr::MinionElementOne(
+    Ok(RuleEffect::pure(Expr::MinionElementOne(
         Metadata::new(),
         atom_list,
         Moo::new(index),
@@ -1658,22 +1663,24 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 ///
 /// See [`introduce_reifyimply_ineq_from_imply`].
 #[register_rule("Minion", 4200, [Imply])]
-fn flatten_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn flatten_imply(expr: &Expr, _symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(meta, x, y) = expr else {
         return Err(RuleNotApplicable);
     };
 
     // flatten x
-    let aux_var_info = to_aux_var(x.as_ref(), symbols).ok_or(RuleNotApplicable)?;
-
-    let symbols = aux_var_info.symbols();
-    let new_x = aux_var_info.as_expr();
-
-    Ok(Reduction::new(
-        Expr::Imply(meta.clone(), Moo::new(new_x), y.clone()),
-        vec![aux_var_info.top_level_expr()],
-        symbols,
-    ))
+    defer_aux_var(x.as_ref(), {
+        let meta = meta.clone();
+        let y = y.clone();
+        move |aux_var_info| {
+            RuleEffect::new(
+                Expr::Imply(meta.clone(), Moo::new(aux_var_info.as_expr()), y.clone()),
+                vec![aux_var_info.top_level_expr()],
+                aux_var_info.symbols(),
+            )
+        }
+    })
+    .ok_or(RuleNotApplicable)
 }
 
 #[register_rule("Minion", 4200, [SafeDiv, Neq, SafeMod, SafePow, Leq, Geq, Abs, Neg, Not, SafeIndex, InDomain, ToInt])]
@@ -1713,7 +1720,7 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::new(expr, new_tops, symbols))
+    Ok(RuleEffect::new(expr, new_tops, symbols))
 }
 
 #[register_rule("Minion", 4200, [Eq])]
@@ -1740,7 +1747,7 @@ fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::new(expr, new_tops, symbols))
+    Ok(RuleEffect::new(expr, new_tops, symbols))
 }
 
 /// Flattens products containing lists.
@@ -1799,7 +1806,7 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     }
 
     let new_expr = Expr::Product(Metadata::new(), Moo::new(into_matrix_expr![new_factors]));
-    Ok(Reduction::new(new_expr, top_level_exprs, symtab))
+    Ok(RuleEffect::new(new_expr, top_level_exprs, symtab))
 }
 
 /// Flattens a matrix literal that contains expressions.
@@ -1902,7 +1909,7 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
     });
 
     if num_changed != 0 {
-        Ok(Reduction::new(expr, top_level_exprs, symbols))
+        Ok(RuleEffect::new(expr, top_level_exprs, symbols))
     } else {
         Err(RuleNotApplicable)
     }
@@ -1927,7 +1934,7 @@ fn geq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::FlatIneq(
+    Ok(RuleEffect::pure(Expr::FlatIneq(
         meta,
         Moo::new(y),
         Moo::new(x),
@@ -1954,7 +1961,7 @@ fn leq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::FlatIneq(
+    Ok(RuleEffect::pure(Expr::FlatIneq(
         meta,
         Moo::new(x),
         Moo::new(y),
@@ -1993,7 +2000,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    Ok(Reduction::pure(Expr::FlatIneq(
+    Ok(RuleEffect::pure(Expr::FlatIneq(
         meta,
         Moo::new(x),
         Moo::new(y.clone()),
@@ -2030,7 +2037,7 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    Ok(Reduction::pure(Expr::FlatIneq(
+    Ok(RuleEffect::pure(Expr::FlatIneq(
         meta,
         Moo::new(x),
         Moo::new(y.clone()),
@@ -2061,7 +2068,7 @@ fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if let Expr::Atomic(_, Atom::Reference(reference)) = (**expr).clone()
                 && reference.ptr().domain().is_some_and(|d| d.is_bool())
             {
-                return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
+                return Ok(RuleEffect::pure(Expr::FlatWatchedLiteral(
                     m.clone(),
                     reference,
                     Lit::Bool(false),
@@ -2098,7 +2105,7 @@ fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    Ok(Reduction::pure(Expr::MinionReify(
+    Ok(RuleEffect::pure(Expr::MinionReify(
         m.clone(),
         e.clone(),
         Atom::Literal(Lit::Bool(false)),
@@ -2132,7 +2139,11 @@ fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::MinionReify(Metadata::new(), e, atom)))
+    Ok(RuleEffect::pure(Expr::MinionReify(
+        Metadata::new(),
+        e,
+        atom,
+    )))
 }
 
 /// Converts an iff to an `Eq` constraint.
@@ -2147,7 +2158,7 @@ fn iff_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::Eq(
+    Ok(RuleEffect::pure(Expr::Eq(
         Metadata::new(),
         x.clone(),
         y.clone(),

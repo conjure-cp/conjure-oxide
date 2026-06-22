@@ -5,7 +5,7 @@ use conjure_cp::ast::{
     run_partial_evaluator,
 };
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
     register_rule_set,
 };
 use std::sync::Arc;
@@ -122,7 +122,7 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             });
 
             if has_changed_2.load(Ordering::Relaxed) {
-                Ok(Reduction::pure(new_expr))
+                Ok(RuleEffect::pure(new_expr))
             } else {
                 Err(RuleNotApplicable)
             }
@@ -134,7 +134,7 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => match fold_constant_expression(expr)
             .or_else(|| run_partial_evaluator(expr).ok().map(|r| r.new_expression))
         {
-            Some(new_expr) if &new_expr != expr => Ok(Reduction::pure(new_expr)),
+            Some(new_expr) if &new_expr != expr => Ok(RuleEffect::pure(new_expr)),
             _ => Err(RuleNotApplicable),
         },
     }
@@ -153,7 +153,7 @@ fn eval_root(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     match exprs.len() {
-        0 => Ok(Reduction::pure(Expr::Root(
+        0 => Ok(RuleEffect::pure(Expr::Root(
             Metadata::new(),
             vec![true.into()],
         ))),
@@ -162,7 +162,7 @@ fn eval_root(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let lit =
                 vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).ok_or(RuleNotApplicable)?;
 
-            Ok(Reduction::pure(Expr::Root(
+            Ok(RuleEffect::pure(Expr::Root(
                 Metadata::new(),
                 vec![lit.into()],
             )))

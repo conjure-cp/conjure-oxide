@@ -1,7 +1,7 @@
 // SupsetEq rule for sets
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Expression as Expr, ReturnType, SymbolTable, Typeable};
-use conjure_cp::rule_engine::Reduction;
+use conjure_cp::rule_engine::RuleEffect;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
@@ -13,7 +13,7 @@ fn supset_eq_to_subset_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if matches!(a.as_ref().return_type(), ReturnType::Set(_))
                 && matches!(b.as_ref().return_type(), ReturnType::Set(_)) =>
         {
-            Ok(Reduction::pure(Expr::SubsetEq(
+            Ok(RuleEffect::pure(Expr::SubsetEq(
                 Metadata::new(),
                 b.clone(),
                 a.clone(),

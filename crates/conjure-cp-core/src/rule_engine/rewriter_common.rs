@@ -1,6 +1,6 @@
 //! Common utilities and types for rewriters.
 use super::{
-    Reduction,
+    RuleEffect,
     resolve_rules::{ResolveRulesError, RuleData},
     submodel_zipper::expression_ctx,
 };
@@ -23,7 +23,7 @@ use tracing::{info, trace};
 #[derive(Debug, Clone)]
 pub struct RuleResult<'a> {
     pub rule_data: RuleData<'a>,
-    pub reduction: Reduction,
+    pub effect: RuleEffect,
 }
 
 pub type VariableDeclarationSnapshot = BTreeMap<Name, String>;
@@ -49,7 +49,7 @@ pub fn log_rule_application(
         &VariableDeclarationSnapshot,
     )>,
 ) {
-    let red = &result.reduction;
+    let red = &result.effect;
     let rule = result.rule_data.rule;
 
     // A reduction can only modify either constraints or clauses, not both. So the the same
@@ -200,14 +200,14 @@ pub(crate) fn try_rewrite_value_letting_once(
                 let ctx = ctx.clone();
 
                 for rd in rules {
-                    let Ok(reduction) = (rd.rule.application)(&expr, &symbols) else {
+                    let Ok(effect) = (rd.rule.application)(&expr, &symbols) else {
                         continue;
                     };
 
                     results.push((
                         RuleResult {
                             rule_data: rd.clone(),
-                            reduction,
+                            effect,
                         },
                         *priority,
                         expr.clone(),
@@ -236,10 +236,16 @@ pub(crate) fn try_rewrite_value_letting_once(
         panic!("Multiple equally applicable rules for value letting expression {expr}: {names:?}");
     }
 
-    log_rule_application(result, expr, &symbols, None);
+    let effect = result.effect.materialize(&symbols);
+    let result = RuleResult {
+        rule_data: result.rule_data.clone(),
+        effect,
+    };
 
-    let rewritten_expr = ctx(result.reduction.new_expression.clone());
-    result.reduction.clone().apply(model);
+    log_rule_application(&result, expr, &symbols, None);
+
+    let rewritten_expr = ctx(result.effect.new_expression.clone());
+    result.effect.apply(model);
 
     let mut decl = decl.clone();
     *decl

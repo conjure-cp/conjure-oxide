@@ -3,7 +3,7 @@ use conjure_cp::ast::{
     Atom, Expression as Expr, IntVal, Literal, Metadata, Moo, Range, SymbolTable,
 };
 use conjure_cp::essence_expr;
-use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule};
+use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, RuleEffect, register_rule};
 
 use ApplicationError::{DomainError, RuleNotApplicable};
 
@@ -13,12 +13,12 @@ use itertools::Itertools as _;
 #[register_rule("Base", 9000, [LexGt, LexGeq])]
 fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::LexGt(metadata, a, b) => Ok(Reduction::pure(Expr::LexLt(
+        Expr::LexGt(metadata, a, b) => Ok(RuleEffect::pure(Expr::LexLt(
             metadata.clone(),
             b.clone(),
             a.clone(),
         ))),
-        Expr::LexGeq(metadata, a, b) => Ok(Reduction::pure(Expr::LexLeq(
+        Expr::LexGeq(metadata, a, b) => Ok(RuleEffect::pure(Expr::LexLeq(
             metadata.clone(),
             b.clone(),
             a.clone(),
@@ -120,9 +120,9 @@ fn flatten_lex_lt_leq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     if tops.is_empty() {
-        Ok(Reduction::pure(new_expr))
+        Ok(RuleEffect::pure(new_expr))
     } else {
-        Ok(Reduction::new(new_expr, tops, symbols))
+        Ok(RuleEffect::new(new_expr, tops, symbols))
     }
 }
 
@@ -169,7 +169,7 @@ fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // If strict, then the base case where they are equal
     let or_eq = matches!(expr, Expr::LexLeq(..));
     let new_expr = lex_lt_to_recursive_or(a, b, &a_idxs, &b_idxs, or_eq);
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 fn lex_lt_to_recursive_or(

@@ -2,7 +2,7 @@ use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 /// Removes a dimension from a matrix indexing operation, if the subject of the indexing is a
@@ -35,7 +35,7 @@ fn remove_dimension_from_matrix_indexing(expr: &Expr, _: &SymbolTable) -> Applic
         *e = Expr::SafeIndex(Metadata::new(), Moo::new(e.clone()), inner_indices.clone());
     }
 
-    Ok(Reduction::pure(Expr::SafeIndex(
+    Ok(RuleEffect::pure(Expr::SafeIndex(
         Metadata::new(),
         Moo::new(into_matrix_expr![es;index_domain]),
         outer_indices,
