@@ -551,6 +551,10 @@ fn try_rewrite_model<'ctx, 'rules>(
         // Iterate over rules by priority in descending order.
         'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
             ctx.dirty_trace.priority_scans += 1;
+            let scan_symbol_context_hash = ctx
+                .cache
+                .is_some()
+                .then(|| current_symbol_context_hash(submodel, ctx));
             let mut zipper = ExpressionZipper::new(
                 root_expr
                     .take()
@@ -571,10 +575,9 @@ fn try_rewrite_model<'ctx, 'rules>(
                     continue;
                 }
 
-                if ctx.cache.is_some() {
-                    let symbol_context_hash = current_symbol_context_hash(submodel, ctx);
+                if let Some(symbol_context_hash) = scan_symbol_context_hash {
                     let cache = ctx.cache.as_mut().expect("checked above");
-                    match cache.get(&expr, level, symbol_context_hash) {
+                    match cache.get(expr, level, symbol_context_hash) {
                         CacheResult::Terminal(clean_level) => {
                             ctx.dirty_trace.cache_hits += 1;
                             ctx.dirty_trace.cache_terminal_hits += 1;
@@ -690,10 +693,11 @@ fn try_rewrite_model<'ctx, 'rules>(
                         .mark_clean_for_rule_priority(rule_group.priority);
                 }
                 if ctx.config.cache && results.len() == results_before_expr {
-                    let symbol_context_hash = current_symbol_context_hash(submodel, ctx);
-                    if let Some(cache) = ctx.cache.as_mut() {
-                        cache.insert(&expr, None, level, symbol_context_hash);
-                        ctx.dirty_trace.cache_inserts += 1;
+                    if let Some(symbol_context_hash) = scan_symbol_context_hash {
+                        if let Some(cache) = ctx.cache.as_mut() {
+                            cache.insert(expr, None, level, symbol_context_hash);
+                            ctx.dirty_trace.cache_inserts += 1;
+                        }
                     }
                 }
                 if attempted_rule {
@@ -747,12 +751,14 @@ fn try_rewrite_model<'ctx, 'rules>(
                         .map(|(before, after)| (before, after)),
                 );
 
-                let invalidation_names = {
+                let (invalidation_names, has_model_side_effects) = {
                     let symbols = submodel.symbols();
-                    side_effect_invalidation_names(&result.effect, &symbols)
+                    (
+                        side_effect_invalidation_names(&result.effect, &symbols),
+                        effect_has_model_side_effects(&result.effect, &symbols),
+                    )
                 };
                 let has_new_top = !result.effect.new_top.is_empty();
-                let has_model_side_effects = effect_has_model_side_effects(&result.effect);
                 let rule_name = result.rule_data.rule.name;
                 let RuleResult { effect, .. } = result;
                 let crate::rule_engine::rule::RuleEffect {
@@ -1075,10 +1081,14 @@ fn subtree_references_name(expr: &Expr, name: &Name) -> bool {
     })
 }
 
-fn effect_has_model_side_effects(effect: &crate::rule_engine::rule::RuleEffect) -> bool {
+fn effect_has_model_side_effects(
+    effect: &crate::rule_engine::rule::RuleEffect,
+    model_symbols: &crate::ast::SymbolTable,
+) -> bool {
     !effect.new_top.is_empty()
         || !effect.new_clauses.is_empty()
-        || effect.symbols.clone().into_iter_local().next().is_some()
+        || !effect.added_symbols(model_symbols).is_empty()
+        || !effect.changed_symbols(model_symbols).is_empty()
 }
 
 fn rule_applies_to_discriminant(rule_data: &RuleData<'_>, expr_discriminant: usize) -> bool {
