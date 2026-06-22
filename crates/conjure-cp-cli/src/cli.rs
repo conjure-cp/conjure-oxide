@@ -112,7 +112,7 @@ pub struct GlobalArgs {
     /// Possible values: `tree-sitter`, `via-conjure`.
     #[arg(
         long,
-        default_value_t = InputParser::ViaConjure,
+        default_value_t = InputParser::default(),
         value_parser = parse_parser,
         global = true,
         help_heading = CONFIGURATION_HELP_HEADING
