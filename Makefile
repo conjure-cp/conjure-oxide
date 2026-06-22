@@ -11,7 +11,7 @@ CARGO_FEATURES ?=
 CARGO_TARGET_DIR ?= target
 DEV_CONTAINER_IMAGE ?= conjure-oxide-dev
 DEV_CONTAINER_FILE ?= Dockerfile.dev
-CARGO_TEST_WORKSPACE = cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+CARGO_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
 # Golden files follow the test-suite convention of `.expected` or `-expected-` in the file name.
 # This intentionally ignores config.toml and stats.toml, including expected-time-only changes.
 RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED = if test -n "$$(git status --porcelain -- ':(glob)**/*.expected*' ':(glob)**/*-expected-*')"; then echo "Golden files changed; running tests without ACCEPT"; PATH="$$HOME/.cargo/bin:$$PATH" $(CARGO_TEST_WORKSPACE); else echo "No golden files changed; skipping non-accepting test run"; fi
