@@ -3086,44 +3086,6 @@ impl Expression {
         self.calculate_hash()
     }
 
-    /// Returns the cached content-sensitive hash for this expression and symbol context.
-    ///
-    /// This is separate from [`Expression::get_cached_hash`] because normal expression hashing
-    /// preserves declaration pointer identity. Rewrite caching needs the values behind those
-    /// pointers, plus the surrounding symbol context, so side-effecting rules can be reused safely.
-    pub(crate) fn get_cached_content_hash(&self, symbol_context_hash: u64) -> u64 {
-        let metadata = self.meta_ref();
-        let stored = metadata.stored_content_hash.load(Ordering::Relaxed);
-        let stored_context = metadata.stored_content_hash_context.load(Ordering::Relaxed);
-        if stored != NO_HASH && stored_context == symbol_context_hash {
-            HASH_HITS.fetch_add(1, Ordering::Relaxed);
-            return stored;
-        }
-
-        HASH_MISSES.fetch_add(1, Ordering::Relaxed);
-        self.calculate_content_hash(symbol_context_hash)
-    }
-
-    /// Computes a content-sensitive hash, tagged by the visible symbol context.
-    pub(crate) fn calculate_content_hash(&self, symbol_context_hash: u64) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        self.get_cached_hash().hash(&mut hasher);
-        symbol_context_hash.hash(&mut hasher);
-        for declaration in Biplate::<DeclarationPtr>::universe_bi(self) {
-            declaration.content_hash().hash(&mut hasher);
-        }
-
-        let result = hasher.finish();
-        let metadata = self.meta_ref();
-        metadata
-            .stored_content_hash_context
-            .store(symbol_context_hash, Ordering::Relaxed);
-        metadata
-            .stored_content_hash
-            .store(result, Ordering::Relaxed);
-        result
-    }
-
     /// Computes a structural hash that ignores metadata except for child cached hashes.
     pub(crate) fn calculate_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();

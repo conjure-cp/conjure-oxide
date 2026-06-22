@@ -195,7 +195,7 @@ pub(crate) fn try_rewrite_value_letting_once(
     model: &mut Model,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
-) -> Option<()> {
+) -> Option<Name> {
     let symbols = model.symbols().clone();
     let mut results: Vec<ApplicableLettingRule<'_>> = vec![];
 
@@ -262,7 +262,9 @@ pub(crate) fn try_rewrite_value_letting_once(
         .as_value_letting_mut()
         .expect("declaration should still be a value letting") = rewritten_expr;
 
-    Some(())
+    model.symbols_mut().refresh_local_binding_hashes();
+
+    Some(decl.name().clone())
 }
 
 /// Represents errors that can occur during the model rewriting process.

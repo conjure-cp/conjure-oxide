@@ -17,7 +17,7 @@ use std::fmt::{Debug, Display};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::mem;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use uniplate::{Biplate, Tree, Uniplate};
 
 /// Global counter of declarations.
@@ -79,6 +79,8 @@ struct DeclarationPtrInner {
 
     // The contents of the declaration itself should be mutable.
     value: RwLock<Declaration>,
+
+    stored_content_hash: AtomicU64,
 }
 
 impl DeclarationPtrInner {
@@ -89,13 +91,18 @@ impl DeclarationPtrInner {
                 object_id: DECLARATION_PTR_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
             },
             value,
+            stored_content_hash: AtomicU64::new(0),
         })
     }
 
     // SAFETY: only use if you are really really sure you arn't going to break the id invariants of
     // DeclarationPtr and HasId!
     fn new_with_id_unchecked(value: RwLock<Declaration>, id: ObjId) -> Arc<DeclarationPtrInner> {
-        Arc::new(DeclarationPtrInner { id, value })
+        Arc::new(DeclarationPtrInner {
+            id,
+            value,
+            stored_content_hash: AtomicU64::new(0),
+        })
     }
 }
 
@@ -522,6 +529,7 @@ impl DeclarationPtr {
     /// Will block the current thread until no other thread has a read or write lock.
     /// The lock is released when the returned guard goes out of scope.
     fn write(&mut self) -> RwLockWriteGuard<'_, Declaration> {
+        self.inner.stored_content_hash.store(0, Ordering::Relaxed);
         self.inner.value.write()
     }
 
@@ -591,10 +599,16 @@ impl DeclarationPtr {
     /// rewrite caches that need to be invalidated when the declaration value behind a reference
     /// changes.
     pub(crate) fn content_hash(&self) -> u64 {
+        let stored = self.inner.stored_content_hash.load(Ordering::Relaxed);
+        if stored != 0 {
+            return stored;
+        }
         let mut hasher = DefaultHasher::new();
         let mut seen = BTreeSet::new();
         self.hash_content(&mut hasher, &mut seen);
-        hasher.finish()
+        let hash = hasher.finish();
+        self.inner.stored_content_hash.store(hash, Ordering::Relaxed);
+        hash
     }
 
     /// Hashes this declaration's value into `state`, guarding against declaration-reference cycles.

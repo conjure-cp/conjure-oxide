@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, Metadata, SymbolTable, discriminant_from_value},
+    ast::{Atom, Expression as Expr, Metadata, Moo, Name, discriminant_from_value},
     bug,
     objective::introduce_objective_auxiliary,
     rule_engine::{
@@ -22,12 +22,12 @@ use crate::{
 
 use itertools::Itertools;
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     hash::{DefaultHasher, Hash, Hasher},
     time::Instant,
 };
 use tracing::trace;
-use uniplate::Biplate;
+use uniplate::{Biplate, Uniplate};
 
 // debug imports
 #[cfg(debug_assertions)]
@@ -219,9 +219,12 @@ struct RewriteCache {
 }
 
 impl RewriteCache {
-    /// Returns the level-independent cached content hash for an expression in a symbol context.
-    fn node_hash(expr: &Expr, symbol_context_hash: u64) -> u64 {
-        expr.get_cached_content_hash(symbol_context_hash)
+    /// Returns the level-independent structural hash for an expression.
+    ///
+    /// Symbol-sensitive correctness is provided by mixing `symbol_context_hash` into
+    /// [`Self::combine`], not by hashing declaration values into every node key.
+    fn node_hash(expr: &Expr, _symbol_context_hash: u64) -> u64 {
+        expr.get_cached_hash()
     }
 
     /// Combines an expression hash, rule-group level, and symbol context hash.
@@ -504,7 +507,7 @@ pub fn rewrite_naive<'a>(
     Ok(model)
 }
 
-// Tries to do a single rewrite on the model.
+// Tries to rewrite the model until a full scan finds no applicable rules.
 //
 // Returns None if no change was made.
 fn try_rewrite_model<'ctx, 'rules>(
@@ -512,276 +515,342 @@ fn try_rewrite_model<'ctx, 'rules>(
     ctx: &mut RewritePassContext<'ctx, 'rules>,
 ) -> Option<()> {
     ctx.dirty_trace.passes += 1;
-    if let Some(result) = try_rewrite_value_letting_once(
+    if let Some(letting_name) = try_rewrite_value_letting_once(
         submodel,
         ctx.rules_grouped,
         ctx.prop_multiple_equally_applicable,
     ) {
         ctx.dirty_trace.value_letting_rewrites += 1;
-        ctx.symbol_context_hash = None;
+        invalidate_symbol_context_caches(submodel, ctx);
         if ctx.config.dirty {
             ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
-            clear_model_clean_rule_metadata(submodel);
+            clear_clean_rule_metadata_for_name(submodel, &letting_name);
         }
-        return Some(result);
+        return Some(());
     }
 
-    let mut results: Vec<ApplicableRule<'_, ExpressionZipper>> = vec![];
+    let mut did_rewrite = false;
 
-    // Iterate over rules by priority in descending order.
-    'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
-        ctx.dirty_trace.priority_scans += 1;
-        // Rewrite within the current root expression tree.
-        let mut zipper = ExpressionZipper::new(submodel.root().clone());
-        loop {
-            ctx.dirty_trace.expression_visits += 1;
-            let expr = zipper.focus().clone();
-            if ctx.config.dirty
-                && expr
-                    .meta_ref()
-                    .is_clean_for_rule_priority(rule_group.priority)
-            {
-                ctx.dirty_trace.record_dirty_hit(rule_group.priority);
+    'rewrite_loop: loop {
+        let mut results: Vec<ApplicableRule<'_, ExpressionZipper>> = vec![];
+        let mut root_expr = Some(take_model_root(submodel));
+
+        // Iterate over rules by priority in descending order.
+        'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
+            ctx.dirty_trace.priority_scans += 1;
+            let mut zipper = ExpressionZipper::new(
+                root_expr
+                    .take()
+                    .expect("rewrite scan should own the current expression root"),
+            );
+            loop {
+                ctx.dirty_trace.expression_visits += 1;
+                let expr = zipper.focus();
+                if ctx.config.dirty
+                    && expr
+                        .meta_ref()
+                        .is_clean_for_rule_priority(rule_group.priority)
+                {
+                    ctx.dirty_trace.record_dirty_hit(rule_group.priority);
+                    if !move_to_next_expression(&mut zipper) {
+                        break;
+                    }
+                    continue;
+                }
+
+                if ctx.cache.is_some() {
+                    let symbol_context_hash = current_symbol_context_hash(submodel, ctx);
+                    let cache = ctx.cache.as_mut().expect("checked above");
+                    match cache.get(&expr, level, symbol_context_hash) {
+                        CacheResult::Terminal(clean_level) => {
+                            ctx.dirty_trace.cache_hits += 1;
+                            ctx.dirty_trace.cache_terminal_hits += 1;
+                            trace!(target: "rule_engine", clean_level, "Rewrite cache terminal hit");
+                            if ctx.config.dirty {
+                                zipper
+                                    .focus()
+                                    .meta_ref()
+                                    .mark_clean_for_rule_priority(rule_group.priority);
+                            }
+                            if !move_to_next_expression(&mut zipper) {
+                                break;
+                            }
+                            continue;
+                        }
+                        CacheResult::Rewrite(cached) => {
+                            ctx.dirty_trace.cache_hits += 1;
+                            ctx.dirty_trace.cache_rewrite_hits += 1;
+                            apply_cache_rewrite_hit(
+                                submodel,
+                                ctx,
+                                &zipper,
+                                cached,
+                                level,
+                                symbol_context_hash,
+                            );
+                            did_rewrite = true;
+                            continue 'rewrite_loop;
+                        }
+                        CacheResult::Unknown => {
+                            ctx.dirty_trace.cache_misses += 1;
+                        }
+                    }
+                }
+
+                let mut attempted_rule = false;
+                let results_before_expr = results.len();
+                for rd in rule_group.candidates(ctx.config, &expr) {
+                    attempted_rule = true;
+                    ctx.dirty_trace.rule_attempts += 1;
+                    *ctx.dirty_trace
+                        .rule_attempts_by_priority
+                        .entry(rule_group.priority)
+                        .or_default() += 1;
+                    // Count rule application attempts
+                    ctx.stats.rewriter_rule_application_attempts =
+                        Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
+
+                    #[cfg(debug_assertions)]
+                    let span = span!(Level::TRACE,"trying_rule_application",rule_name=rd.rule.name,rule_target_expression=%expr);
+
+                    #[cfg(debug_assertions)]
+                    let _guard = span.enter();
+
+                    #[cfg(debug_assertions)]
+                    tracing::trace!(rule_name = rd.rule.name, "Trying rule");
+
+                    let variable_snapshot_before = matches!(expr, Expr::Root(_, _))
+                        .then(|| snapshot_variable_declarations(&submodel.symbols()));
+
+                    match (rd.rule.application)(&expr, &submodel.symbols()) {
+                        Ok(red) => {
+                            // when called a lot, this becomes very expensive!
+                            #[cfg(debug_assertions)]
+                            if rule_trace_enabled() && rule_trace_verbose_enabled() {
+                                log_verbose_rule_attempt(
+                                    ctx.run_start,
+                                    &rule_group.priority,
+                                    rd.rule.name,
+                                    rd.rule_set.name,
+                                    "success",
+                                    &expr,
+                                );
+                            }
+
+                            // Count successful rule applications
+                            ctx.stats.rewriter_rule_applications =
+                                Some(ctx.stats.rewriter_rule_applications.unwrap_or(0) + 1);
+
+                            // Collect applicable rules
+                            results.push((
+                                RuleResult {
+                                    rule_data: rd.clone(),
+                                    effect: red,
+                                },
+                                level,
+                                expr.clone(),
+                                zipper.clone(),
+                                variable_snapshot_before,
+                            ));
+                        }
+                        Err(_) => {
+                            // when called a lot, this becomes very expensive!
+                            #[cfg(debug_assertions)]
+                            if rule_trace_enabled() && rule_trace_verbose_enabled() {
+                                log_verbose_rule_attempt(
+                                    ctx.run_start,
+                                    &rule_group.priority,
+                                    rd.rule.name,
+                                    rd.rule_set.name,
+                                    "fail",
+                                    &expr,
+                                );
+                            }
+                        }
+                    }
+                }
+                if ctx.config.dirty && attempted_rule && results.len() == results_before_expr {
+                    ctx.dirty_trace.record_clean_mark(rule_group.priority);
+                    zipper
+                        .focus()
+                        .meta_ref()
+                        .mark_clean_for_rule_priority(rule_group.priority);
+                }
+                if ctx.config.cache && results.len() == results_before_expr {
+                    let symbol_context_hash = current_symbol_context_hash(submodel, ctx);
+                    if let Some(cache) = ctx.cache.as_mut() {
+                        cache.insert(&expr, None, level, symbol_context_hash);
+                        ctx.dirty_trace.cache_inserts += 1;
+                    }
+                }
+                if attempted_rule {
+                    ctx.dirty_trace.attempted_expressions += 1;
+                }
+                // This expression has the highest rule priority so far, so this is what we want to
+                // rewrite.
+                if !results.is_empty() {
+                    break 'top;
+                }
+
                 if !move_to_next_expression(&mut zipper) {
                     break;
                 }
-                continue;
             }
 
-            if ctx.cache.is_some() {
-                let symbol_context_hash = current_symbol_context_hash(submodel, ctx);
-                let cache = ctx.cache.as_mut().expect("checked above");
-                match cache.get(&expr, level, symbol_context_hash) {
-                    CacheResult::Terminal(clean_level) => {
-                        ctx.dirty_trace.cache_hits += 1;
-                        ctx.dirty_trace.cache_terminal_hits += 1;
-                        trace!(target: "rule_engine", clean_level, "Rewrite cache terminal hit");
-                        if ctx.config.dirty {
-                            zipper
-                                .focus()
-                                .meta_ref()
-                                .mark_clean_for_rule_priority(rule_group.priority);
-                        }
-                        if !move_to_next_expression(&mut zipper) {
-                            break;
-                        }
-                        continue;
-                    }
-                    CacheResult::Rewrite(cached) => {
-                        ctx.dirty_trace.cache_hits += 1;
-                        ctx.dirty_trace.cache_rewrite_hits += 1;
-                        let (new_root, mappings) = replace_focus_and_dirty_ancestors(
-                            &zipper,
-                            clear_expr_clean_rule_metadata(cached.expr),
-                            ctx.dirty_trace,
-                            true,
-                        );
-                        let mapping_count = mappings.len();
-                        insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
-                        ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
-                        submodel.replace_root(new_root);
-                        return Some(());
-                    }
-                    CacheResult::Unknown => {
-                        ctx.dirty_trace.cache_misses += 1;
-                    }
-                }
-            }
+            root_expr = Some(zipper.rebuild_root());
+        }
 
-            let mut attempted_rule = false;
-            let results_before_expr = results.len();
-            for rd in rule_group.candidates(ctx.config, &expr) {
-                attempted_rule = true;
-                ctx.dirty_trace.rule_attempts += 1;
-                *ctx.dirty_trace
-                    .rule_attempts_by_priority
-                    .entry(rule_group.priority)
-                    .or_default() += 1;
-                // Count rule application attempts
-                ctx.stats.rewriter_rule_application_attempts =
-                    Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
-
-                #[cfg(debug_assertions)]
-                let span = span!(Level::TRACE,"trying_rule_application",rule_name=rd.rule.name,rule_target_expression=%expr);
-
-                #[cfg(debug_assertions)]
-                let _guard = span.enter();
-
-                #[cfg(debug_assertions)]
-                tracing::trace!(rule_name = rd.rule.name, "Trying rule");
-
-                let variable_snapshot_before = matches!(expr, Expr::Root(_, _))
-                    .then(|| snapshot_variable_declarations(&submodel.symbols()));
-
-                match (rd.rule.application)(&expr, &submodel.symbols()) {
-                    Ok(red) => {
-                        // when called a lot, this becomes very expensive!
-                        #[cfg(debug_assertions)]
-                        if rule_trace_enabled() && rule_trace_verbose_enabled() {
-                            log_verbose_rule_attempt(
-                                ctx.run_start,
-                                &rule_group.priority,
-                                rd.rule.name,
-                                rd.rule_set.name,
-                                "success",
-                                &expr,
-                            );
-                        }
-
-                        // Count successful rule applications
-                        ctx.stats.rewriter_rule_applications =
-                            Some(ctx.stats.rewriter_rule_applications.unwrap_or(0) + 1);
-
-                        // Collect applicable rules
-                        results.push((
-                            RuleResult {
-                                rule_data: rd.clone(),
-                                effect: red,
-                            },
-                            level,
-                            expr.clone(),
-                            zipper.clone(),
-                            variable_snapshot_before,
-                        ));
-                    }
-                    Err(_) => {
-                        // when called a lot, this becomes very expensive!
-                        #[cfg(debug_assertions)]
-                        if rule_trace_enabled() && rule_trace_verbose_enabled() {
-                            log_verbose_rule_attempt(
-                                ctx.run_start,
-                                &rule_group.priority,
-                                rd.rule.name,
-                                rd.rule_set.name,
-                                "fail",
-                                &expr,
-                            );
-                        }
-                    }
-                }
-            }
-            if ctx.config.dirty && attempted_rule && results.len() == results_before_expr {
-                ctx.dirty_trace.record_clean_mark(rule_group.priority);
-                zipper
-                    .focus()
-                    .meta_ref()
-                    .mark_clean_for_rule_priority(rule_group.priority);
-            }
-            if ctx.config.cache && results.len() == results_before_expr {
-                let symbol_context_hash = current_symbol_context_hash(submodel, ctx);
-                if let Some(cache) = ctx.cache.as_mut() {
-                    cache.insert(&expr, None, level, symbol_context_hash);
-                    ctx.dirty_trace.cache_inserts += 1;
-                }
-            }
-            if attempted_rule {
-                ctx.dirty_trace.attempted_expressions += 1;
-            }
-            // This expression has the highest rule priority so far, so this is what we want to
-            // rewrite.
-            if !results.is_empty() {
-                break 'top;
-            }
-
-            if !move_to_next_expression(&mut zipper) {
+        match results.as_slice() {
+            [] => {
+                submodel.replace_root(
+                    root_expr
+                        .take()
+                        .expect("rewrite scan should retain the expression root"),
+                );
                 break;
             }
-        }
-
-        if ctx.config.dirty || ctx.config.cache {
-            submodel.replace_root(zipper.rebuild_root());
-        }
-    }
-
-    match results.as_slice() {
-        [] => return None, // no rules are applicable.
-        [(result, level, expr, zipper, variable_snapshot_before), ..] => {
-            if ctx.prop_multiple_equally_applicable {
-                assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
-            }
-
-            let effect = result.effect.materialise(&submodel.symbols());
-            let variable_snapshots = variable_snapshot_before.clone().map(|before| {
-                let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect.symbols);
-                (before, after)
-            });
-            let result = RuleResult {
-                rule_data: result.rule_data.clone(),
-                effect,
-            };
-
-            // Extract the single applicable rule and apply it
-            log_rule_application(
-                &result,
-                expr,
-                &submodel.symbols(),
-                variable_snapshots
-                    .as_ref()
-                    .map(|(before, after)| (before, after)),
-            );
-
-            let has_model_side_effects = effect_has_model_side_effects(&result.effect);
-            let replacement = clear_expr_clean_rule_metadata(result.effect.new_expression.clone());
-            let pre_effect_symbol_context_hash = ctx
-                .cache
-                .is_some()
-                .then(|| current_symbol_context_hash(submodel, ctx));
-
-            // Replace expr with new_expression
-            let (new_root, mappings) = replace_focus_and_dirty_ancestors(
-                zipper,
-                replacement.clone(),
-                ctx.dirty_trace,
-                true,
-            );
-            submodel.replace_root(new_root);
-
-            // Apply new symbols and top level
-            ctx.dirty_trace
-                .record_rewrite(result.rule_data.rule.name, has_model_side_effects);
-            result.effect.clone().apply(submodel);
-            if has_model_side_effects {
-                ctx.symbol_context_hash = None;
-            }
-            if let Some(pre_effect_symbol_context_hash) = pre_effect_symbol_context_hash {
-                let cache_symbol_context_hash = if has_model_side_effects {
-                    current_symbol_context_hash(submodel, ctx)
-                } else {
-                    pre_effect_symbol_context_hash
-                };
-                let expr_hash = RewriteCache::node_hash(expr, cache_symbol_context_hash);
-                if let Some(cache) = ctx.cache.as_mut() {
-                    cache.insert_from_hash(
-                        expr_hash,
-                        Some(replacement),
-                        *level,
-                        cache_symbol_context_hash,
-                    );
-                    ctx.dirty_trace.cache_inserts += 1;
-                    let mapping_count = mappings.len();
-                    insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
-                    ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+            [(result, level, expr, zipper, variable_snapshot_before), ..] => {
+                if ctx.prop_multiple_equally_applicable {
+                    assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
                 }
-            }
-            if ctx.config.dirty && has_model_side_effects {
-                ctx.dirty_trace.whole_model_clears_after_side_effects += 1;
-                clear_model_clean_rule_metadata(submodel);
-            } else if ctx.config.cache && has_model_side_effects {
-                clear_model_clean_rule_metadata(submodel);
-            }
 
-            #[cfg(debug_assertions)]
-            {
-                let assertion_context = format!(
-                    "naive rewriter after applying rule '{}'",
-                    result.rule_data.rule.name
+                let effect = result.effect.materialise(&submodel.symbols());
+                let variable_snapshots = variable_snapshot_before.clone().map(|before| {
+                    let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect.symbols);
+                    (before, after)
+                });
+                let result = RuleResult {
+                    rule_data: result.rule_data.clone(),
+                    effect,
+                };
+
+                // Extract the single applicable rule and apply it
+                log_rule_application(
+                    &result,
+                    expr,
+                    &submodel.symbols(),
+                    variable_snapshots
+                        .as_ref()
+                        .map(|(before, after)| (before, after)),
                 );
-                debug_assert_model_well_formed(submodel, &assertion_context);
+
+                let invalidation_names = {
+                    let symbols = submodel.symbols();
+                    side_effect_invalidation_names(&result.effect, &symbols)
+                };
+                let has_new_top = !result.effect.new_top.is_empty();
+                let has_model_side_effects = effect_has_model_side_effects(&result.effect);
+                let rule_name = result.rule_data.rule.name;
+                let RuleResult { effect, .. } = result;
+                let crate::rule_engine::rule::RuleEffect {
+                    new_expression,
+                    new_top,
+                    symbols,
+                    new_clauses,
+                    ..
+                } = effect;
+                let replacement = clear_expr_clean_rule_metadata(new_expression);
+                let pre_effect_symbol_context_hash = ctx
+                    .cache
+                    .is_some()
+                    .then(|| current_symbol_context_hash(submodel, ctx));
+
+                // Replace expr with new_expression
+                let cache_mapping_context = ctx.config.cache.then(|| pre_effect_symbol_context_hash).flatten();
+                let (new_root, mappings) = replace_focus_and_dirty_ancestors(
+                    zipper,
+                    replacement.clone(),
+                    ctx.dirty_trace,
+                    cache_mapping_context,
+                );
+                submodel.replace_root(new_root);
+
+                // Apply new symbols and top level
+                ctx.dirty_trace
+                    .record_rewrite(rule_name, has_model_side_effects);
+                submodel.symbols_mut().extend(symbols);
+                submodel.add_constraints(new_top);
+                submodel.add_clauses(new_clauses);
+                if has_model_side_effects {
+                    invalidate_symbol_context_caches(submodel, ctx);
+                }
+                if let Some(pre_effect_symbol_context_hash) = pre_effect_symbol_context_hash {
+                    let cache_symbol_context_hash = if has_model_side_effects {
+                        current_symbol_context_hash(submodel, ctx)
+                    } else {
+                        pre_effect_symbol_context_hash
+                    };
+                    let expr_hash = RewriteCache::node_hash(expr, cache_symbol_context_hash);
+                    if let Some(cache) = ctx.cache.as_mut() {
+                        cache.insert_from_hash(
+                            expr_hash,
+                            Some(replacement),
+                            *level,
+                            cache_symbol_context_hash,
+                        );
+                        ctx.dirty_trace.cache_inserts += 1;
+                        let mapping_count = mappings.len();
+                        insert_ancestor_mappings(
+                            cache,
+                            mappings,
+                            *level,
+                            cache_symbol_context_hash,
+                        );
+                        ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                    }
+                }
+                if has_model_side_effects && (ctx.config.dirty || ctx.config.cache) {
+                    let mut targeted = false;
+                    if !invalidation_names.is_empty() {
+                        clear_clean_rule_metadata_for_names(submodel, &invalidation_names);
+                        targeted = true;
+                    }
+                    if has_new_top {
+                        clear_root_clean_rule_metadata(submodel);
+                        targeted = true;
+                    }
+                    if !targeted {
+                        ctx.dirty_trace.whole_model_clears_after_side_effects += 1;
+                        clear_model_clean_rule_metadata(submodel);
+                    }
+                }
+
+                #[cfg(debug_assertions)]
+                {
+                    let assertion_context = format!(
+                        "naive rewriter after applying rule '{rule_name}'"
+                    );
+                    debug_assert_model_well_formed(submodel, &assertion_context);
+                }
+
+                did_rewrite = true;
+                continue 'rewrite_loop;
             }
         }
     }
 
-    Some(())
+    did_rewrite.then_some(())
+}
+
+fn apply_cache_rewrite_hit<'ctx, 'rules>(
+    submodel: &mut Model,
+    ctx: &mut RewritePassContext<'ctx, 'rules>,
+    zipper: &ExpressionZipper,
+    cached: CachedRewrite,
+    level: usize,
+    symbol_context_hash: u64,
+) {
+    let cache = ctx.cache.as_mut().expect("cache enabled");
+    let (new_root, mappings) = replace_focus_and_dirty_ancestors(
+        zipper,
+        cached.expr,
+        ctx.dirty_trace,
+        Some(symbol_context_hash),
+    );
+    let mapping_count = mappings.len();
+    insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
+    ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+    submodel.replace_root(new_root);
 }
 
 /// Returns a cached hash of the symbol values visible to rule applications.
@@ -793,29 +862,17 @@ fn current_symbol_context_hash<'ctx, 'rules>(
         return hash;
     }
 
-    let hash = calculate_symbol_context_hash(&submodel.symbols());
+    let hash = submodel.symbols().context_hash();
     ctx.symbol_context_hash = Some(hash);
     hash
 }
 
-/// Hashes the current symbol-table contents by value rather than pointer identity.
-///
-/// Rules receive `&SymbolTable`, so cached rewrite results are only valid for equivalent visible
-/// symbol values. Declaration pointer `Hash` implementations are intentionally identity-based, so
-/// this uses declaration content hashes instead.
-fn calculate_symbol_context_hash(symbols: &SymbolTable) -> u64 {
-    let mut hasher = DefaultHasher::new();
-    let declarations: BTreeMap<_, _> = symbols
-        .clone()
-        .into_iter()
-        .map(|(name, declaration)| (name, declaration.content_hash()))
-        .collect();
-
-    declarations.len().hash(&mut hasher);
-    for declaration in declarations {
-        declaration.hash(&mut hasher);
-    }
-    hasher.finish()
+fn invalidate_symbol_context_caches<'ctx, 'rules>(
+    submodel: &mut Model,
+    ctx: &mut RewritePassContext<'ctx, 'rules>,
+) {
+    ctx.symbol_context_hash = None;
+    submodel.symbols_mut().invalidate_context_hash_cache();
 }
 
 /// Advances the zipper in preorder, respecting [`ExpressionZipper`] traversal boundaries.
@@ -833,20 +890,21 @@ fn move_to_next_expression(zipper: &mut ExpressionZipper) -> bool {
     true
 }
 
-type AncestorCacheMappings = Vec<(Expr, Expr)>;
+type AncestorCacheMappings = Vec<(u64, Expr)>;
 
 /// Replaces the focused expression and clears rewrite metadata on the changed path to root.
 ///
-/// When `collect_cache_mappings` is true, this also returns each old ancestor hash with its rebuilt
-/// ancestor so future duplicate enclosing subtrees can jump directly to the rewritten form.
+/// When `cache_mapping_context` is `Some`, this also returns each old ancestor hash with its
+/// rebuilt ancestor so future duplicate enclosing subtrees can jump directly to the rewritten form.
 fn replace_focus_and_dirty_ancestors(
     zipper: &ExpressionZipper,
     new_focus: Expr,
     dirty_trace: &mut DirtyTrace,
-    collect_cache_mappings: bool,
+    cache_mapping_context: Option<u64>,
 ) -> (Expr, AncestorCacheMappings) {
     let mut zipper = zipper.clone();
-    let old_ancestors = collect_cache_mappings.then(|| ancestor_exprs_to_root(&mut zipper.clone()));
+    let old_ancestor_hashes = cache_mapping_context
+        .map(|symbol_context_hash| ancestor_hashes_to_root(&zipper, symbol_context_hash));
     let mut ancestor_mappings = Vec::new();
     dirty_trace.replacement_subtree_clears += 1;
     zipper.replace_focus(new_focus);
@@ -856,11 +914,10 @@ fn replace_focus_and_dirty_ancestors(
         dirty_trace.ancestor_clears += 1;
         zipper.focus().meta_ref().clear_clean_rule_priority();
         zipper.focus().invalidate_cache();
-        if let Some(old_ancestor) = old_ancestors
-            .as_ref()
-            .and_then(|ancestors| ancestors.get(ancestor_index))
+        if let Some(hashes) = old_ancestor_hashes.as_ref()
+            && let Some(&old_hash) = hashes.get(ancestor_index)
         {
-            ancestor_mappings.push((old_ancestor.clone(), zipper.focus().clone()));
+            ancestor_mappings.push((old_hash, zipper.focus().clone()));
         }
         ancestor_index += 1;
     }
@@ -868,15 +925,14 @@ fn replace_focus_and_dirty_ancestors(
     (zipper.rebuild_root(), ancestor_mappings)
 }
 
-/// Captures ancestor expressions before replacing the focused subtree.
-///
-/// The old ancestors are hashed later, once the symbol context for the cache insertion is known.
-fn ancestor_exprs_to_root(zipper: &mut ExpressionZipper) -> Vec<Expr> {
-    let mut ancestors = Vec::new();
+/// Captures ancestor content hashes before replacing the focused subtree.
+fn ancestor_hashes_to_root(zipper: &ExpressionZipper, symbol_context_hash: u64) -> Vec<u64> {
+    let mut zipper = zipper.clone();
+    let mut hashes = Vec::new();
     while zipper.go_up().is_some() {
-        ancestors.push(zipper.focus().clone());
+        hashes.push(RewriteCache::node_hash(zipper.focus(), symbol_context_hash));
     }
-    ancestors
+    hashes
 }
 
 /// Inserts old-ancestor-hash to rebuilt-ancestor mappings under one symbol context.
@@ -886,8 +942,7 @@ fn insert_ancestor_mappings(
     level: usize,
     symbol_context_hash: u64,
 ) {
-    for (old_ancestor, new_ancestor) in mappings {
-        let old_hash = RewriteCache::node_hash(&old_ancestor, symbol_context_hash);
+    for (old_hash, new_ancestor) in mappings {
         cache.insert_from_hash(old_hash, Some(new_ancestor), level, symbol_context_hash);
     }
 }
@@ -904,7 +959,107 @@ fn clear_expr_clean_rule_metadata(expr: Expr) -> Expr {
 
 /// Clears clean-rule metadata from the model root expression tree.
 fn clear_model_clean_rule_metadata(model: &mut Model) {
-    model.replace_root(clear_expr_clean_rule_metadata(model.root().clone()));
+    let root = take_model_root(model);
+    model.replace_root(clear_expr_clean_rule_metadata(root));
+}
+
+/// Clears clean-rule metadata only in subtrees that reference a changed letting.
+fn clear_clean_rule_metadata_for_name(model: &mut Model, name: &Name) {
+    let root = take_model_root(model);
+    model.replace_root(clear_expr_clean_rule_metadata_for_name(root, name));
+}
+
+/// Clears clean-rule metadata only in subtrees that reference one of the given symbols.
+fn clear_clean_rule_metadata_for_names(model: &mut Model, names: &[Name]) {
+    if names.is_empty() {
+        return;
+    }
+    let root = take_model_root(model);
+    model.replace_root(clear_expr_clean_rule_metadata_for_names(root, names));
+}
+
+fn clear_root_clean_rule_metadata(model: &mut Model) {
+    let root = take_model_root(model);
+    let cleared = match root {
+        Expr::Root(metadata, constraints) => {
+            metadata.clear_clean_rule_priority();
+            let root = Expr::Root(metadata, constraints);
+            root.invalidate_cache();
+            root
+        }
+        other => other,
+    };
+    model.replace_root(cleared);
+}
+
+fn take_model_root(model: &mut Model) -> Expr {
+    model.replace_root(Expr::Root(Metadata::new(), Vec::new()))
+}
+
+fn side_effect_invalidation_names(
+    effect: &crate::rule_engine::rule::RuleEffect,
+    symbols: &crate::ast::SymbolTable,
+) -> Vec<Name> {
+    let mut names: BTreeSet<Name> = effect.added_symbols(symbols);
+    names.extend(
+        effect
+            .changed_symbols(symbols)
+            .into_iter()
+            .map(|(name, _, _)| name),
+    );
+    names.into_iter().collect()
+}
+
+fn clear_expr_clean_rule_metadata_for_name(expr: Expr, name: &Name) -> Expr {
+    clear_expr_clean_rule_metadata_for_names(expr, std::slice::from_ref(name))
+}
+
+fn clear_expr_clean_rule_metadata_for_names(expr: Expr, names: &[Name]) -> Expr {
+    if !subtree_references_any(&expr, names) {
+        return expr;
+    }
+
+    match expr {
+        Expr::Root(metadata, constraints) => {
+            metadata.clear_clean_rule_priority();
+            let constraints = constraints
+                .into_iter()
+                .map(|child| clear_expr_clean_rule_metadata_for_names(child, names))
+                .collect();
+            let root = Expr::Root(metadata, constraints);
+            root.invalidate_cache();
+            root
+        }
+        Expr::Eq(metadata, left, right) => {
+            metadata.clear_clean_rule_priority();
+            let left = clear_expr_clean_rule_metadata_for_names(left.as_ref().clone(), names);
+            let right = clear_expr_clean_rule_metadata_for_names(right.as_ref().clone(), names);
+            let eq = Expr::Eq(metadata, Moo::new(left), Moo::new(right));
+            eq.invalidate_cache();
+            eq
+        }
+        Expr::Sum(metadata, matrix) => {
+            metadata.clear_clean_rule_priority();
+            let matrix = clear_expr_clean_rule_metadata_for_names(matrix.as_ref().clone(), names);
+            let sum = Expr::Sum(metadata, Moo::new(matrix));
+            sum.invalidate_cache();
+            sum
+        }
+        other => clear_expr_clean_rule_metadata(other),
+    }
+}
+
+fn subtree_references_any(expr: &Expr, names: &[Name]) -> bool {
+    names.iter().any(|name| subtree_references_name(expr, name))
+}
+
+fn subtree_references_name(expr: &Expr, name: &Name) -> bool {
+    expr.universe().into_iter().any(|subexpr| {
+        matches!(
+            subexpr,
+            Expr::Atomic(_, Atom::Reference(reference)) if &*reference.name() == name
+        )
+    })
 }
 
 fn effect_has_model_side_effects(effect: &crate::rule_engine::rule::RuleEffect) -> bool {
@@ -986,7 +1141,9 @@ fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::{Atom, Literal};
+    use crate::ast::{Atom, DeclarationPtr, Literal, Moo};
+    use crate::matrix_expr;
+    use crate::rule_engine::expression_zipper::ExpressionZipper;
 
     use super::*;
 
@@ -1111,5 +1268,157 @@ mod tests {
             cache.get(&a, 0, new_context),
             CacheResult::Unknown
         ));
+    }
+
+    fn assert_clean_at(expr: &Expr, priority: u16) {
+        assert!(
+            expr.meta_ref().is_clean_for_rule_priority(priority),
+            "expected expression {expr} to remain clean at priority {priority}"
+        );
+    }
+
+    fn assert_not_clean_at(expr: &Expr, priority: u16) {
+        assert!(
+            !expr.meta_ref().is_clean_for_rule_priority(priority),
+            "expected expression {expr} to require re-check from the top at priority {priority}"
+        );
+    }
+
+    /// After a rewrite, only the replaced node and its ancestors are invalidated; siblings keep
+    /// their clean marks and must not be re-scanned from the top.
+    #[test]
+    fn rewrite_dirty_invalidation_preserves_root_sibling_clean_marks() {
+        let priority = 5u16;
+
+        let sib2 = int_lit(2);
+        let sib3 = int_lit(3);
+        sib2.meta_ref().mark_clean_for_rule_priority(priority);
+        sib3.meta_ref().mark_clean_for_rule_priority(priority);
+
+        let tree = root(vec![int_lit(1), sib2, sib3]);
+        let mut zipper = ExpressionZipper::new(tree);
+        assert!(zipper.go_down().is_some());
+
+        let mut dirty_trace = DirtyTrace::default();
+        let (new_root, _) = replace_focus_and_dirty_ancestors(
+            &zipper,
+            clear_expr_clean_rule_metadata(int_lit(10)),
+            &mut dirty_trace,
+            None,
+        );
+
+        let Expr::Root(_, constraints) = &new_root else {
+            panic!("expected root expression");
+        };
+
+        assert_not_clean_at(&new_root, priority);
+        assert_not_clean_at(&constraints[0], priority);
+        assert_clean_at(&constraints[1], priority);
+        assert_clean_at(&constraints[2], priority);
+    }
+
+    /// Invalidation walks up the parent chain only; the other side of a binary node is a sibling.
+    #[test]
+    fn rewrite_dirty_invalidation_preserves_binary_sibling_clean_marks() {
+        let priority = 5u16;
+
+        let right = int_lit(2);
+        right.meta_ref().mark_clean_for_rule_priority(priority);
+        let eq = Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(right));
+        let tree = root(vec![eq]);
+
+        let mut zipper = ExpressionZipper::new(tree);
+        assert!(zipper.go_down().is_some());
+        assert!(zipper.go_down().is_some());
+
+        let mut dirty_trace = DirtyTrace::default();
+        let (new_root, _) = replace_focus_and_dirty_ancestors(
+            &zipper,
+            clear_expr_clean_rule_metadata(int_lit(10)),
+            &mut dirty_trace,
+            None,
+        );
+
+        let Expr::Root(_, constraints) = &new_root else {
+            panic!("expected root expression");
+        };
+        let Expr::Eq(_, _, right) = &constraints[0] else {
+            panic!("expected equality at root child");
+        };
+
+        assert_not_clean_at(&new_root, priority);
+        assert_not_clean_at(&constraints[0], priority);
+        assert_clean_at(right.as_ref(), priority);
+    }
+
+    /// Cousins inside a shared parent container must also keep their clean marks.
+    #[test]
+    fn rewrite_dirty_invalidation_preserves_matrix_sibling_clean_marks() {
+        let priority = 5u16;
+
+        let sibling = int_lit(2);
+        sibling.meta_ref().mark_clean_for_rule_priority(priority);
+        let sum = Expr::Sum(Metadata::new(), Moo::new(matrix_expr![int_lit(1), sibling]));
+        let tree = root(vec![sum]);
+
+        let mut zipper = ExpressionZipper::new(tree);
+        assert!(zipper.go_down().is_some());
+        assert!(zipper.go_down().is_some());
+        assert!(zipper.go_down().is_some());
+
+        let mut dirty_trace = DirtyTrace::default();
+        let (new_root, _) = replace_focus_and_dirty_ancestors(
+            &zipper,
+            clear_expr_clean_rule_metadata(int_lit(10)),
+            &mut dirty_trace,
+            None,
+        );
+
+        let Expr::Root(_, constraints) = &new_root else {
+            panic!("expected root expression");
+        };
+        let Expr::Sum(_, matrix) = &constraints[0] else {
+            panic!("expected sum at root child");
+        };
+        let Expr::AbstractLiteral(_, matrix_lit) = matrix.as_ref() else {
+            panic!("expected matrix literal in sum");
+        };
+        let crate::ast::AbstractLiteral::Matrix(elements, _) = matrix_lit else {
+            panic!("expected matrix literal");
+        };
+
+        assert_not_clean_at(&new_root, priority);
+        assert_not_clean_at(&constraints[0], priority);
+        assert_not_clean_at(&elements[0], priority);
+        assert_clean_at(&elements[1], priority);
+    }
+
+    #[test]
+    fn targeted_symbol_invalidation_preserves_unrelated_sibling_clean_marks() {
+        use crate::ast::{Domain, Range, Reference};
+
+        let priority = 5u16;
+        let unrelated = int_lit(2);
+        unrelated.meta_ref().mark_clean_for_rule_priority(priority);
+
+        let x = Name::user("x");
+        let ref_x = Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                x.clone(),
+                Domain::int(vec![Range::Bounded(1, 3)]),
+            ))),
+        );
+        ref_x.meta_ref().mark_clean_for_rule_priority(priority);
+
+        let tree = root(vec![ref_x, unrelated]);
+        let cleared = clear_expr_clean_rule_metadata_for_names(tree, std::slice::from_ref(&x));
+
+        let Expr::Root(_, constraints) = cleared else {
+            panic!("expected root expression");
+        };
+
+        assert_not_clean_at(&constraints[0], priority);
+        assert_clean_at(&constraints[1], priority);
     }
 }
