@@ -38,6 +38,16 @@ pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarat
         .collect()
 }
 
+/// Snapshots variable declarations after applying a rule's symbol-table changes.
+pub fn snapshot_symbols_after_effect(
+    symbols: &SymbolTable,
+    effect_symbols: &SymbolTable,
+) -> VariableDeclarationSnapshot {
+    let mut merged = symbols.clone();
+    merged.extend(effect_symbols.clone());
+    snapshot_variable_declarations(&merged)
+}
+
 /// Logs, to the main log, and the human readable traces used by the integration tester, that the
 /// rule has been applied to the expression
 pub fn log_rule_application(
