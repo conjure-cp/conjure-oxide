@@ -72,6 +72,7 @@ struct DirtyTrace {
     rule_attempts_by_priority: BTreeMap<u16, usize>,
     rewrites_by_rule: BTreeMap<String, usize>,
     side_effect_rewrites_by_rule: BTreeMap<String, usize>,
+    whole_model_clears_by_rule: BTreeMap<String, usize>,
 }
 
 impl DirtyTrace {
@@ -104,6 +105,14 @@ impl DirtyTrace {
                 .entry(rule_name.to_owned())
                 .or_default() += 1;
         }
+    }
+
+    fn record_whole_model_clear(&mut self, rule_name: &str) {
+        self.whole_model_clears_after_side_effects += 1;
+        *self
+            .whole_model_clears_by_rule
+            .entry(rule_name.to_owned())
+            .or_default() += 1;
     }
 
     fn finish(&self, stats: &RewriterStats) {
@@ -159,6 +168,10 @@ impl DirtyTrace {
         eprintln!(
             "[dirty-trace] side_effect_rewrites_by_rule={:?}",
             self.side_effect_rewrites_by_rule
+        );
+        eprintln!(
+            "[dirty-trace] whole_model_clears_by_rule={:?}",
+            self.whole_model_clears_by_rule
         );
         eprintln!("[dirty-trace] cache_hits={}", self.cache_hits);
         eprintln!("[dirty-trace] cache_misses={}", self.cache_misses);
@@ -810,7 +823,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                         targeted = true;
                     }
                     if !targeted {
-                        ctx.dirty_trace.whole_model_clears_after_side_effects += 1;
+                        ctx.dirty_trace.record_whole_model_clear(rule_name);
                         clear_model_clean_rule_metadata(submodel);
                     }
                 }
