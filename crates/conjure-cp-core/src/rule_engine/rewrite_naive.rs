@@ -1,16 +1,16 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, discriminant_from_value},
+    ast::{Expression as Expr, Metadata, discriminant_from_value},
     bug,
     objective::introduce_objective_auxiliary,
     rule_engine::{
+        expression_zipper::ExpressionZipper,
         get_rules_grouped,
         rewriter_common::{
             RuleResult, log_rule_application, snapshot_variable_declarations,
             try_rewrite_value_letting_once,
         },
-        expression_zipper::expression_ctx,
     },
     settings::{
         RewriteConfig, Rewriter, default_rule_trace_enabled, rule_trace_enabled,
@@ -20,8 +20,9 @@ use crate::{
 };
 
 use itertools::Itertools;
-use std::{collections::HashMap, sync::Arc, time::Instant};
+use std::{collections::HashMap, time::Instant};
 use tracing::trace;
+use uniplate::Biplate;
 
 // debug imports
 #[cfg(debug_assertions)]
@@ -111,7 +112,7 @@ pub fn rewrite_naive<'a>(
     let mut done_something = true;
 
     let mut rewriter_stats = RewriterStats::new();
-    rewriter_stats.is_optimization_enabled = Some(config.prefilter);
+    rewriter_stats.is_optimization_enabled = Some(!config.is_baseline());
     let run_start = Instant::now();
 
     if rule_trace_enabled() && default_rule_trace_enabled() {
@@ -178,20 +179,35 @@ fn try_rewrite_model(
     if let Some(result) =
         try_rewrite_value_letting_once(submodel, rules_grouped, prop_multiple_equally_applicable)
     {
+        if config.dirty {
+            clear_model_clean_rule_metadata(submodel);
+        }
         return Some(result);
     }
 
-    type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
-    let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
+    let mut results: Vec<ApplicableRule<'_, ExpressionZipper>> = vec![];
 
     // Iterate over rules by priority in descending order.
     'top: for rule_group in bucketed_rules.iter() {
         // Rewrite within the current root expression tree.
-        for (expr, ctx) in expression_ctx(submodel.root().clone()) {
-            // Clone expr and ctx so they can be reused
-            let expr = expr.clone();
-            let ctx = ctx.clone();
+        let mut zipper = ExpressionZipper::new(submodel.root().clone());
+        loop {
+            let expr = zipper.focus().clone();
+            if config.dirty
+                && expr
+                    .meta_ref()
+                    .is_clean_for_rule_priority(rule_group.priority)
+            {
+                if !move_to_next_expression(&mut zipper) {
+                    break;
+                }
+                continue;
+            }
+
+            let mut attempted_rule = false;
+            let results_before_expr = results.len();
             for rd in rule_group.candidates(config, &expr) {
+                attempted_rule = true;
                 // Count rule application attempts
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
@@ -232,7 +248,7 @@ fn try_rewrite_model(
                             },
                             rule_group.priority,
                             expr.clone(),
-                            ctx.clone(),
+                            zipper.clone(),
                         ));
                     }
                     Err(_) => {
@@ -251,17 +267,31 @@ fn try_rewrite_model(
                     }
                 }
             }
+            if config.dirty && attempted_rule && results.len() == results_before_expr {
+                zipper
+                    .focus()
+                    .meta_ref()
+                    .mark_clean_for_rule_priority(rule_group.priority);
+            }
             // This expression has the highest rule priority so far, so this is what we want to
             // rewrite.
             if !results.is_empty() {
                 break 'top;
             }
+
+            if !move_to_next_expression(&mut zipper) {
+                break;
+            }
+        }
+
+        if config.dirty {
+            submodel.replace_root(zipper.rebuild_root());
         }
     }
 
     match results.as_slice() {
         [] => return None, // no rules are applicable.
-        [(result, _priority, expr, ctx), ..] => {
+        [(result, _priority, expr, zipper), ..] => {
             if prop_multiple_equally_applicable {
                 assert_no_multiple_equally_applicable_rules(&results, rules_grouped);
             }
@@ -289,11 +319,16 @@ fn try_rewrite_model(
             );
 
             // Replace expr with new_expression
-            let new_root = ctx(result.effect.new_expression.clone());
+            let new_root =
+                replace_focus_and_dirty_ancestors(zipper, result.effect.new_expression.clone());
             submodel.replace_root(new_root);
 
             // Apply new symbols and top level
+            let has_model_side_effects = effect_has_model_side_effects(&result.effect);
             result.effect.clone().apply(submodel);
+            if config.dirty && has_model_side_effects {
+                clear_model_clean_rule_metadata(submodel);
+            }
 
             #[cfg(debug_assertions)]
             {
@@ -307,6 +342,52 @@ fn try_rewrite_model(
     }
 
     Some(())
+}
+
+/// Advances the zipper in preorder, respecting [`ExpressionZipper`] traversal boundaries.
+fn move_to_next_expression(zipper: &mut ExpressionZipper) -> bool {
+    if zipper.go_down().is_some() {
+        return true;
+    }
+
+    while zipper.go_right().is_none() {
+        if zipper.go_up().is_none() {
+            return false;
+        };
+    }
+
+    true
+}
+
+/// Replaces the focused expression and clears clean-rule metadata on the changed path to root.
+fn replace_focus_and_dirty_ancestors(zipper: &ExpressionZipper, new_focus: Expr) -> Expr {
+    let mut zipper = zipper.clone();
+    zipper.replace_focus(clear_expr_clean_rule_metadata(new_focus));
+
+    while zipper.go_up().is_some() {
+        zipper.focus().meta_ref().clear_clean_rule_priority();
+    }
+
+    zipper.rebuild_root()
+}
+
+/// Clears clean-rule metadata from every expression in a subtree.
+fn clear_expr_clean_rule_metadata(expr: Expr) -> Expr {
+    expr.transform_bi(&|metadata: Metadata| {
+        metadata.clear_clean_rule_priority();
+        metadata
+    })
+}
+
+/// Clears clean-rule metadata from the model root expression tree.
+fn clear_model_clean_rule_metadata(model: &mut Model) {
+    model.replace_root(clear_expr_clean_rule_metadata(model.root().clone()));
+}
+
+fn effect_has_model_side_effects(effect: &crate::rule_engine::rule::RuleEffect) -> bool {
+    !effect.new_top.is_empty()
+        || !effect.new_clauses.is_empty()
+        || effect.symbols.clone().into_iter_local().next().is_some()
 }
 
 fn rule_applies_to_discriminant(rule_data: &RuleData<'_>, expr_discriminant: usize) -> bool {
