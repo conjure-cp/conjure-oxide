@@ -8,7 +8,8 @@ use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    DeclarationPtr, Domain, DomainPtr, FieldEntry, IntVal, Moo, Name, Range, Reference, SetAttr,
+    Atom, DeclarationPtr, Domain, DomainPtr, Expression, FieldEntry, IntVal, Moo, Name, Range,
+    Reference, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -257,7 +258,14 @@ fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, F
     let Some(expr) = expr else {
         return Ok(None);
     };
-    Ok(Some(IntVal::Expr(Moo::new(expr))))
+
+    if let Expression::Atomic(_, Atom::Reference(reference)) = &expr
+        && let Some(reference_val) = IntVal::new_ref(reference)
+    {
+        return Ok(Some(reference_val));
+    }
+
+    Ok(IntVal::new_expr(Moo::new(expr)))
 }
 
 fn parse_tuple_domain(

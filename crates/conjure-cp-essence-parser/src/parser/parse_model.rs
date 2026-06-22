@@ -304,6 +304,18 @@ mod test {
     }
 
     #[test]
+    pub fn test_pretty_int_domain_reference_bound_without_extra_parentheses() {
+        let src = "
+        given n : int
+        find x : int(1..n)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+
+        assert!(model.to_string().contains("find x: int(1..n)\n"));
+    }
+
+    #[test]
     pub fn test_parse_letting_index() {
         let src = "
         letting a be [ [ 1,2,3 ; int(1,2,4) ], [ 1,3,2 ; int(1,2,4) ], [ 3,2,1 ; int(1,2,4) ] ; int(-2..0) ]
