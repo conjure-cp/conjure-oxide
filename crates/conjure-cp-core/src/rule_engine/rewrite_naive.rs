@@ -20,7 +20,10 @@ use crate::{
 };
 
 use itertools::Itertools;
-use std::{collections::HashMap, time::Instant};
+use std::{
+    collections::{BTreeMap, HashMap},
+    time::Instant,
+};
 use tracing::trace;
 use uniplate::Biplate;
 
@@ -32,6 +35,118 @@ use {
 };
 
 type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType);
+
+#[derive(Default)]
+struct DirtyTrace {
+    enabled: bool,
+    passes: usize,
+    priority_scans: usize,
+    expression_visits: usize,
+    dirty_hits: usize,
+    clean_marks: usize,
+    attempted_expressions: usize,
+    rule_attempts: usize,
+    rewrites: usize,
+    value_letting_rewrites: usize,
+    whole_model_clears_after_value_letting: usize,
+    whole_model_clears_after_side_effects: usize,
+    replacement_subtree_clears: usize,
+    ancestor_clears: usize,
+    dirty_hits_by_priority: BTreeMap<u16, usize>,
+    clean_marks_by_priority: BTreeMap<u16, usize>,
+    rule_attempts_by_priority: BTreeMap<u16, usize>,
+    rewrites_by_rule: BTreeMap<String, usize>,
+    side_effect_rewrites_by_rule: BTreeMap<String, usize>,
+}
+
+impl DirtyTrace {
+    fn from_env() -> Self {
+        Self {
+            enabled: std::env::var_os("CONJURE_DIRTY_TRACE").is_some(),
+            ..Self::default()
+        }
+    }
+
+    fn record_dirty_hit(&mut self, priority: u16) {
+        self.dirty_hits += 1;
+        *self.dirty_hits_by_priority.entry(priority).or_default() += 1;
+    }
+
+    fn record_clean_mark(&mut self, priority: u16) {
+        self.clean_marks += 1;
+        *self.clean_marks_by_priority.entry(priority).or_default() += 1;
+    }
+
+    fn record_rewrite(&mut self, rule_name: &str, side_effects: bool) {
+        self.rewrites += 1;
+        *self
+            .rewrites_by_rule
+            .entry(rule_name.to_owned())
+            .or_default() += 1;
+        if side_effects {
+            *self
+                .side_effect_rewrites_by_rule
+                .entry(rule_name.to_owned())
+                .or_default() += 1;
+        }
+    }
+
+    fn finish(&self, stats: &RewriterStats) {
+        if !self.enabled {
+            return;
+        }
+
+        eprintln!("[dirty-trace] passes={}", self.passes);
+        eprintln!("[dirty-trace] priority_scans={}", self.priority_scans);
+        eprintln!("[dirty-trace] expression_visits={}", self.expression_visits);
+        eprintln!(
+            "[dirty-trace] attempted_expressions={}",
+            self.attempted_expressions
+        );
+        eprintln!("[dirty-trace] rule_attempts_counted={}", self.rule_attempts);
+        eprintln!(
+            "[dirty-trace] stats_rule_attempts={}",
+            stats.rewriter_rule_application_attempts.unwrap_or(0)
+        );
+        eprintln!("[dirty-trace] clean_marks={}", self.clean_marks);
+        eprintln!("[dirty-trace] dirty_hits={}", self.dirty_hits);
+        eprintln!("[dirty-trace] rewrites={}", self.rewrites);
+        eprintln!(
+            "[dirty-trace] value_letting_rewrites={}",
+            self.value_letting_rewrites
+        );
+        eprintln!(
+            "[dirty-trace] whole_model_clears_after_value_letting={}",
+            self.whole_model_clears_after_value_letting
+        );
+        eprintln!(
+            "[dirty-trace] whole_model_clears_after_side_effects={}",
+            self.whole_model_clears_after_side_effects
+        );
+        eprintln!(
+            "[dirty-trace] replacement_subtree_clears={}",
+            self.replacement_subtree_clears
+        );
+        eprintln!("[dirty-trace] ancestor_clears={}", self.ancestor_clears);
+        eprintln!(
+            "[dirty-trace] dirty_hits_by_priority={:?}",
+            self.dirty_hits_by_priority
+        );
+        eprintln!(
+            "[dirty-trace] clean_marks_by_priority={:?}",
+            self.clean_marks_by_priority
+        );
+        eprintln!(
+            "[dirty-trace] rule_attempts_by_priority={:?}",
+            self.rule_attempts_by_priority
+        );
+        eprintln!("[dirty-trace] rewrites_by_rule={:?}", self.rewrites_by_rule);
+        eprintln!(
+            "[dirty-trace] side_effect_rewrites_by_rule={:?}",
+            self.side_effect_rewrites_by_rule
+        );
+    }
+}
 
 #[derive(Clone)]
 struct RuleGroup<'a> {
@@ -89,6 +204,17 @@ impl<'a> RuleGroup<'a> {
     }
 }
 
+struct RewritePassContext<'ctx, 'rules> {
+    rules_grouped: &'ctx Vec<(u16, Vec<RuleData<'rules>>)>,
+    bucketed_rules: &'ctx Vec<RuleGroup<'rules>>,
+    prop_multiple_equally_applicable: bool,
+    stats: &'ctx mut RewriterStats,
+    dirty_trace: &'ctx mut DirtyTrace,
+    config: RewriteConfig,
+    #[cfg(debug_assertions)]
+    run_start: &'ctx Instant,
+}
+
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.
 pub fn rewrite_naive<'a>(
@@ -113,6 +239,7 @@ pub fn rewrite_naive<'a>(
 
     let mut rewriter_stats = RewriterStats::new();
     rewriter_stats.is_optimization_enabled = Some(!config.is_baseline());
+    let mut dirty_trace = DirtyTrace::from_env();
     let run_start = Instant::now();
 
     if rule_trace_enabled() && default_rule_trace_enabled() {
@@ -130,17 +257,20 @@ pub fn rewrite_naive<'a>(
     }
 
     // Rewrite until there are no more rules left to apply.
-    while done_something {
-        done_something = try_rewrite_model(
-            &mut model,
-            &rules_grouped,
-            &bucketed_rules,
+    {
+        let mut pass_ctx = RewritePassContext {
+            rules_grouped: &rules_grouped,
+            bucketed_rules: &bucketed_rules,
             prop_multiple_equally_applicable,
-            &mut rewriter_stats,
-            &run_start,
+            stats: &mut rewriter_stats,
+            dirty_trace: &mut dirty_trace,
             config,
-        )
-        .is_some();
+            #[cfg(debug_assertions)]
+            run_start: &run_start,
+        };
+        while done_something {
+            done_something = try_rewrite_model(&mut model, &mut pass_ctx).is_some();
+        }
     }
 
     let run_end = Instant::now();
@@ -152,6 +282,16 @@ pub fn rewrite_naive<'a>(
         .unwrap()
         .stats
         .add_rewriter_run(rewriter_stats);
+    dirty_trace.finish(
+        model
+            .context
+            .read()
+            .unwrap()
+            .stats
+            .rewriter_runs
+            .last()
+            .expect("rewriter stats were just added"),
+    );
 
     if rule_trace_enabled() && default_rule_trace_enabled() {
         trace!(
@@ -166,20 +306,19 @@ pub fn rewrite_naive<'a>(
 // Tries to do a single rewrite on the model.
 //
 // Returns None if no change was made.
-fn try_rewrite_model(
+fn try_rewrite_model<'ctx, 'rules>(
     submodel: &mut Model,
-    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
-    bucketed_rules: &Vec<RuleGroup<'_>>,
-    prop_multiple_equally_applicable: bool,
-    stats: &mut RewriterStats,
-    #[cfg(debug_assertions)] run_start: &Instant,
-    #[cfg(not(debug_assertions))] _: &Instant,
-    config: RewriteConfig,
+    ctx: &mut RewritePassContext<'ctx, 'rules>,
 ) -> Option<()> {
-    if let Some(result) =
-        try_rewrite_value_letting_once(submodel, rules_grouped, prop_multiple_equally_applicable)
-    {
-        if config.dirty {
+    ctx.dirty_trace.passes += 1;
+    if let Some(result) = try_rewrite_value_letting_once(
+        submodel,
+        ctx.rules_grouped,
+        ctx.prop_multiple_equally_applicable,
+    ) {
+        ctx.dirty_trace.value_letting_rewrites += 1;
+        if ctx.config.dirty {
+            ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
             clear_model_clean_rule_metadata(submodel);
         }
         return Some(result);
@@ -188,16 +327,19 @@ fn try_rewrite_model(
     let mut results: Vec<ApplicableRule<'_, ExpressionZipper>> = vec![];
 
     // Iterate over rules by priority in descending order.
-    'top: for rule_group in bucketed_rules.iter() {
+    'top: for rule_group in ctx.bucketed_rules.iter() {
+        ctx.dirty_trace.priority_scans += 1;
         // Rewrite within the current root expression tree.
         let mut zipper = ExpressionZipper::new(submodel.root().clone());
         loop {
+            ctx.dirty_trace.expression_visits += 1;
             let expr = zipper.focus().clone();
-            if config.dirty
+            if ctx.config.dirty
                 && expr
                     .meta_ref()
                     .is_clean_for_rule_priority(rule_group.priority)
             {
+                ctx.dirty_trace.record_dirty_hit(rule_group.priority);
                 if !move_to_next_expression(&mut zipper) {
                     break;
                 }
@@ -206,11 +348,16 @@ fn try_rewrite_model(
 
             let mut attempted_rule = false;
             let results_before_expr = results.len();
-            for rd in rule_group.candidates(config, &expr) {
+            for rd in rule_group.candidates(ctx.config, &expr) {
                 attempted_rule = true;
+                ctx.dirty_trace.rule_attempts += 1;
+                *ctx.dirty_trace
+                    .rule_attempts_by_priority
+                    .entry(rule_group.priority)
+                    .or_default() += 1;
                 // Count rule application attempts
-                stats.rewriter_rule_application_attempts =
-                    Some(stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
+                ctx.stats.rewriter_rule_application_attempts =
+                    Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
 
                 #[cfg(debug_assertions)]
                 let span = span!(Level::TRACE,"trying_rule_application",rule_name=rd.rule.name,rule_target_expression=%expr);
@@ -227,7 +374,7 @@ fn try_rewrite_model(
                         #[cfg(debug_assertions)]
                         if rule_trace_enabled() && rule_trace_verbose_enabled() {
                             log_verbose_rule_attempt(
-                                run_start,
+                                ctx.run_start,
                                 &rule_group.priority,
                                 rd.rule.name,
                                 rd.rule_set.name,
@@ -237,8 +384,8 @@ fn try_rewrite_model(
                         }
 
                         // Count successful rule applications
-                        stats.rewriter_rule_applications =
-                            Some(stats.rewriter_rule_applications.unwrap_or(0) + 1);
+                        ctx.stats.rewriter_rule_applications =
+                            Some(ctx.stats.rewriter_rule_applications.unwrap_or(0) + 1);
 
                         // Collect applicable rules
                         results.push((
@@ -256,7 +403,7 @@ fn try_rewrite_model(
                         #[cfg(debug_assertions)]
                         if rule_trace_enabled() && rule_trace_verbose_enabled() {
                             log_verbose_rule_attempt(
-                                run_start,
+                                ctx.run_start,
                                 &rule_group.priority,
                                 rd.rule.name,
                                 rd.rule_set.name,
@@ -267,11 +414,15 @@ fn try_rewrite_model(
                     }
                 }
             }
-            if config.dirty && attempted_rule && results.len() == results_before_expr {
+            if ctx.config.dirty && attempted_rule && results.len() == results_before_expr {
+                ctx.dirty_trace.record_clean_mark(rule_group.priority);
                 zipper
                     .focus()
                     .meta_ref()
                     .mark_clean_for_rule_priority(rule_group.priority);
+            }
+            if attempted_rule {
+                ctx.dirty_trace.attempted_expressions += 1;
             }
             // This expression has the highest rule priority so far, so this is what we want to
             // rewrite.
@@ -284,7 +435,7 @@ fn try_rewrite_model(
             }
         }
 
-        if config.dirty {
+        if ctx.config.dirty {
             submodel.replace_root(zipper.rebuild_root());
         }
     }
@@ -292,8 +443,8 @@ fn try_rewrite_model(
     match results.as_slice() {
         [] => return None, // no rules are applicable.
         [(result, _priority, expr, zipper), ..] => {
-            if prop_multiple_equally_applicable {
-                assert_no_multiple_equally_applicable_rules(&results, rules_grouped);
+            if ctx.prop_multiple_equally_applicable {
+                assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
             }
 
             let effect = result.effect.materialise(&submodel.symbols());
@@ -319,14 +470,20 @@ fn try_rewrite_model(
             );
 
             // Replace expr with new_expression
-            let new_root =
-                replace_focus_and_dirty_ancestors(zipper, result.effect.new_expression.clone());
+            let new_root = replace_focus_and_dirty_ancestors(
+                zipper,
+                result.effect.new_expression.clone(),
+                ctx.dirty_trace,
+            );
             submodel.replace_root(new_root);
 
             // Apply new symbols and top level
             let has_model_side_effects = effect_has_model_side_effects(&result.effect);
+            ctx.dirty_trace
+                .record_rewrite(result.rule_data.rule.name, has_model_side_effects);
             result.effect.clone().apply(submodel);
-            if config.dirty && has_model_side_effects {
+            if ctx.config.dirty && has_model_side_effects {
+                ctx.dirty_trace.whole_model_clears_after_side_effects += 1;
                 clear_model_clean_rule_metadata(submodel);
             }
 
@@ -360,11 +517,17 @@ fn move_to_next_expression(zipper: &mut ExpressionZipper) -> bool {
 }
 
 /// Replaces the focused expression and clears clean-rule metadata on the changed path to root.
-fn replace_focus_and_dirty_ancestors(zipper: &ExpressionZipper, new_focus: Expr) -> Expr {
+fn replace_focus_and_dirty_ancestors(
+    zipper: &ExpressionZipper,
+    new_focus: Expr,
+    dirty_trace: &mut DirtyTrace,
+) -> Expr {
     let mut zipper = zipper.clone();
+    dirty_trace.replacement_subtree_clears += 1;
     zipper.replace_focus(clear_expr_clean_rule_metadata(new_focus));
 
     while zipper.go_up().is_some() {
+        dirty_trace.ancestor_clears += 1;
         zipper.focus().meta_ref().clear_clean_rule_priority();
     }
 
