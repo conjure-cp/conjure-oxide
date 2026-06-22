@@ -296,7 +296,7 @@ fn try_rewrite_model(
                 assert_no_multiple_equally_applicable_rules(&results, rules_grouped);
             }
 
-            let effect = result.effect.materialize(&submodel.symbols());
+            let effect = result.effect.materialise(&submodel.symbols());
             let variable_snapshots = matches!(expr, Expr::Root(_, _)).then(|| {
                 (
                     snapshot_variable_declarations(&submodel.symbols()),

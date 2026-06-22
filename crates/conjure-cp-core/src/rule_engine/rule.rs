@@ -71,8 +71,11 @@ pub struct RuleEffect {
     pub new_top: Vec<Expression>,
     pub symbols: SymbolTable,
     pub new_clauses: Vec<CnfClause>,
-    materialize: Option<Arc<dyn Fn(&SymbolTable) -> RuleEffect + Send + Sync>>,
+    materialise: Option<DeferredRuleEffect>,
 }
+
+/// Deferred constructor for a concrete rule effect.
+type DeferredRuleEffect = Arc<dyn Fn(&SymbolTable) -> RuleEffect + Send + Sync>;
 
 /// The result of applying a rule to an expression.
 /// Contains either a set of rule effects or an error.
@@ -85,7 +88,7 @@ impl Debug for RuleEffect {
             .field("new_top", &self.new_top)
             .field("symbols", &self.symbols)
             .field("new_clauses", &self.new_clauses)
-            .field("is_deferred", &self.materialize.is_some())
+            .field("is_deferred", &self.materialise.is_some())
             .finish()
     }
 }
@@ -97,7 +100,7 @@ impl RuleEffect {
             new_top,
             symbols,
             new_clauses: Vec::new(),
-            materialize: None,
+            materialise: None,
         }
     }
 
@@ -108,7 +111,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
-            materialize: None,
+            materialise: None,
         }
     }
 
@@ -119,7 +122,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols,
             new_clauses: Vec::new(),
-            materialize: None,
+            materialise: None,
         }
     }
 
@@ -130,7 +133,7 @@ impl RuleEffect {
             new_top,
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
-            materialize: None,
+            materialise: None,
         }
     }
 
@@ -145,7 +148,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols,
             new_clauses,
-            materialize: None,
+            materialise: None,
         }
     }
 
@@ -153,33 +156,33 @@ impl RuleEffect {
     ///
     /// This is intended for rule effects that allocate fresh names or otherwise depend on global
     /// model state. Applicability checks can return a deferred effect without consuming those
-    /// effects; the rewriter calls [`RuleEffect::materialize`] only for the selected rule.
+    /// effects; the rewriter calls [`RuleEffect::materialise`] only for the selected rule.
     pub fn deferred(
-        materialize: impl Fn(&SymbolTable) -> RuleEffect + Send + Sync + 'static,
+        materialise: impl Fn(&SymbolTable) -> RuleEffect + Send + Sync + 'static,
     ) -> Self {
         Self {
             new_expression: Expression::Root(Metadata::new(), Vec::new()),
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
-            materialize: Some(Arc::new(materialize)),
+            materialise: Some(Arc::new(materialise)),
         }
     }
 
     /// Returns the concrete effect for the current symbol table.
-    pub fn materialize(&self, symbols: &SymbolTable) -> Self {
-        let Some(materialize) = &self.materialize else {
+    pub fn materialise(&self, symbols: &SymbolTable) -> Self {
+        let Some(materialise) = &self.materialise else {
             return self.clone();
         };
 
-        materialize(symbols).materialize(symbols)
+        materialise(symbols).materialise(symbols)
     }
 
     /// Applies side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut Model) {
         debug_assert!(
-            self.materialize.is_none(),
-            "deferred rule effects must be materialized before being applied"
+            self.materialise.is_none(),
+            "deferred rule effects must be materialised before being applied"
         );
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top.clone());
@@ -297,7 +300,7 @@ impl MorphRule<Expression, MorphState> for Rule<'_> {
         let effect = self
             .apply(subtree, &meta.symbols)
             .ok()?
-            .materialize(&meta.symbols);
+            .materialise(&meta.symbols);
         let new_expression = effect.new_expression;
         let new_top = effect.new_top;
         let added_symbols = effect.symbols;
@@ -330,7 +333,7 @@ impl MorphRule<Expression, MorphState> for &Rule<'_> {
     ) -> Option<Expression> {
         let effect = Rule::apply(self, subtree, &meta.symbols)
             .ok()?
-            .materialize(&meta.symbols);
+            .materialise(&meta.symbols);
         let new_expression = effect.new_expression;
         let new_top = effect.new_top;
         let added_symbols = effect.symbols;
@@ -361,7 +364,7 @@ impl MorphRule<Expression, Rc<RefCell<MorphState>>> for Rule<'_> {
         let effect = self
             .apply(subtree, &state.symbols)
             .ok()?
-            .materialize(&state.symbols);
+            .materialise(&state.symbols);
         let new_expression = effect.new_expression;
         let new_top = effect.new_top;
         let added_symbols = effect.symbols;
@@ -395,7 +398,7 @@ impl MorphRule<Expression, MorphState> for RuleData<'_> {
             .rule
             .apply(subtree, &meta.symbols)
             .ok()?
-            .materialize(&meta.symbols);
+            .materialise(&meta.symbols);
         let result = RuleResult {
             rule_data: self.clone(),
             effect: effect.clone(),

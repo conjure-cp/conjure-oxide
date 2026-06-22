@@ -236,7 +236,7 @@ pub(crate) fn try_rewrite_value_letting_once(
         panic!("Multiple equally applicable rules for value letting expression {expr}: {names:?}");
     }
 
-    let effect = result.effect.materialize(&symbols);
+    let effect = result.effect.materialise(&symbols);
     let result = RuleResult {
         rule_data: result.rule_data.clone(),
         effect,
