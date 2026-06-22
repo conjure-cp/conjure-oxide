@@ -46,7 +46,7 @@ Which shows the average wall-clock time, as well as providing some information o
 ``criterion`` is usually the right tool for most benchmarks, although there are issues. Due to the statistics-driven ethos of ``criterion``, there is currently no one-shot support, with 10 samples being the minimum number of samples for a benchmark. Wall-clock time also gives little insight into where things are slowing in your code, and will not catch things like poor memory locality. Even more crucially, however, is how ``criterion`` performs in CI pipelines. The developer’s themselves say the following:
 
 _”You probably shouldn’t (or, if you do, don’t rely on the results). The virtualization used by_
-_Cloud-CI providers like Travis-CI and Github Actions introduces a great deal of noise into the_
+_Cloud-CI providers like Travis-CI and GitHub Actions introduces a great deal of noise into the_
 _benchmarking process, and Criterion.rs’ statistical analysis can only do so much to mitigate_
 _that. This can result in the appearance of large changes in the measured performance even_
 _if the actual performance of the code is not changing."_
