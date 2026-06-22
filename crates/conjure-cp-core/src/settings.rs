@@ -141,24 +141,33 @@ impl Display for MorphCachingStrategy {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct RewriteConfig {
+    /// Skip rules whose declared expression discriminants cannot match.
     pub prefilter: bool,
+    /// Skip repeated attempts on unchanged expressions that have already failed at the same priority.
+    pub dirty: bool,
 }
 
 impl RewriteConfig {
     pub const fn baseline() -> Self {
-        Self { prefilter: false }
+        Self {
+            prefilter: false,
+            dirty: false,
+        }
     }
 
     pub const fn optimised() -> Self {
-        Self { prefilter: true }
+        Self {
+            prefilter: true,
+            dirty: true,
+        }
     }
 
     pub const fn is_baseline(self) -> bool {
-        !self.prefilter
+        !self.prefilter && !self.dirty
     }
 
     pub const fn is_optimised(self) -> bool {
-        self.prefilter
+        self.prefilter && self.dirty
     }
 }
 
@@ -175,9 +184,12 @@ impl Display for RewriteConfig {
         } else if self.is_baseline() {
             write!(f, "baseline")
         } else {
-            let mut options = Vec::new();
+            let mut options = vec!["baseline"];
             if self.prefilter {
                 options.push("prefilter");
+            }
+            if self.dirty {
+                options.push("dirty");
             }
             write!(f, "{}", options.join("+"))
         }
@@ -198,6 +210,7 @@ impl FromStr for RewriteConfig {
         let mut config = Self::baseline();
         let mut baseline_seen = false;
         let mut prefilter_seen = false;
+        let mut dirty_seen = false;
 
         for token in trimmed.split('+') {
             match token {
@@ -215,9 +228,16 @@ impl FromStr for RewriteConfig {
                     config.prefilter = true;
                     prefilter_seen = true;
                 }
+                "dirty" => {
+                    if dirty_seen {
+                        return Err("duplicate rewrite option 'dirty'".to_string());
+                    }
+                    config.dirty = true;
+                    dirty_seen = true;
+                }
                 other => {
                     return Err(format!(
-                        "unknown rewrite option '{other}'; expected baseline, optimised, or a '+' separated combination of: prefilter"
+                        "unknown rewrite option '{other}'; expected baseline, optimised, or a '+' separated combination of: prefilter, dirty"
                     ));
                 }
             }
@@ -274,7 +294,7 @@ impl FromStr for Rewriter {
                 }
 
                 Err(format!(
-                    "unknown rewriter: {other}; expected baseline, optimised, baseline+prefilter, morph, or morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
+                    "unknown rewriter: {other}; expected baseline, optimised, baseline+prefilter, baseline+dirty, baseline+prefilter+dirty, morph, or morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
                 ))
             }
         }
@@ -633,4 +653,87 @@ impl SolverFamily {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct SolverArgs {
     pub timeout_ms: Option<u64>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{RewriteConfig, Rewriter};
+    use std::str::FromStr;
+
+    #[test]
+    fn parses_rewrite_option_combinations() {
+        assert_eq!(
+            RewriteConfig::from_str("baseline").unwrap(),
+            RewriteConfig {
+                prefilter: false,
+                dirty: false
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+prefilter").unwrap(),
+            RewriteConfig {
+                prefilter: true,
+                dirty: false
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+dirty").unwrap(),
+            RewriteConfig {
+                prefilter: false,
+                dirty: true
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+prefilter+dirty").unwrap(),
+            RewriteConfig::optimised()
+        );
+    }
+
+    #[test]
+    fn optimised_rewrite_config_enables_all_options() {
+        assert_eq!(
+            RewriteConfig::from_str("optimised").unwrap(),
+            RewriteConfig {
+                prefilter: true,
+                dirty: true
+            }
+        );
+    }
+
+    #[test]
+    fn displays_rewrite_option_combinations() {
+        assert_eq!(RewriteConfig::baseline().to_string(), "baseline");
+        assert_eq!(
+            RewriteConfig {
+                prefilter: true,
+                dirty: false
+            }
+            .to_string(),
+            "baseline+prefilter"
+        );
+        assert_eq!(
+            RewriteConfig {
+                prefilter: false,
+                dirty: true
+            }
+            .to_string(),
+            "baseline+dirty"
+        );
+        assert_eq!(RewriteConfig::optimised().to_string(), "optimised");
+    }
+
+    #[test]
+    fn parses_rewriter_option_combinations() {
+        assert_eq!(
+            Rewriter::from_str("baseline+dirty").unwrap(),
+            Rewriter::Rewrite(RewriteConfig {
+                prefilter: false,
+                dirty: true
+            })
+        );
+        assert_eq!(
+            Rewriter::from_str("baseline+prefilter+dirty").unwrap(),
+            Rewriter::Rewrite(RewriteConfig::optimised())
+        );
+    }
 }
