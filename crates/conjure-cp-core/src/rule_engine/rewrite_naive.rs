@@ -23,6 +23,7 @@ use crate::{
 use itertools::Itertools;
 use std::{
     collections::{BTreeMap, HashMap},
+    hash::{DefaultHasher, Hash, Hasher},
     time::Instant,
 };
 use tracing::trace;
@@ -37,7 +38,7 @@ use {
 
 type ApplicableRule<'a, CtxFnType> = (
     RuleResult<'a>,
-    u16,
+    usize,
     Expr,
     CtxFnType,
     Option<VariableDeclarationSnapshot>,
@@ -59,6 +60,13 @@ struct DirtyTrace {
     whole_model_clears_after_side_effects: usize,
     replacement_subtree_clears: usize,
     ancestor_clears: usize,
+    cache_hits: usize,
+    cache_misses: usize,
+    cache_terminal_hits: usize,
+    cache_rewrite_hits: usize,
+    cache_inserts: usize,
+    cache_ancestor_mappings: usize,
+    cache_resets: usize,
     dirty_hits_by_priority: BTreeMap<u16, usize>,
     clean_marks_by_priority: BTreeMap<u16, usize>,
     rule_attempts_by_priority: BTreeMap<u16, usize>,
@@ -152,6 +160,133 @@ impl DirtyTrace {
             "[dirty-trace] side_effect_rewrites_by_rule={:?}",
             self.side_effect_rewrites_by_rule
         );
+        eprintln!("[dirty-trace] cache_hits={}", self.cache_hits);
+        eprintln!("[dirty-trace] cache_misses={}", self.cache_misses);
+        eprintln!(
+            "[dirty-trace] cache_terminal_hits={}",
+            self.cache_terminal_hits
+        );
+        eprintln!(
+            "[dirty-trace] cache_rewrite_hits={}",
+            self.cache_rewrite_hits
+        );
+        eprintln!("[dirty-trace] cache_inserts={}", self.cache_inserts);
+        eprintln!(
+            "[dirty-trace] cache_ancestor_mappings={}",
+            self.cache_ancestor_mappings
+        );
+        eprintln!("[dirty-trace] cache_resets={}", self.cache_resets);
+    }
+}
+
+enum CacheResult {
+    Unknown,
+    Terminal(usize),
+    Rewrite(Expr),
+}
+
+#[derive(Default)]
+struct RewriteCache {
+    map: HashMap<u64, Option<Expr>>,
+    predecessors: HashMap<u64, Vec<u64>>,
+    clean_levels: HashMap<u64, usize>,
+}
+
+impl RewriteCache {
+    fn node_hash(expr: &Expr) -> u64 {
+        expr.get_cached_hash()
+    }
+
+    fn combine(node_hash: u64, level: usize) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        node_hash.hash(&mut hasher);
+        level.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn key(expr: &Expr, level: usize) -> u64 {
+        Self::combine(Self::node_hash(expr), level)
+    }
+
+    fn clear(&mut self) {
+        self.map.clear();
+        self.predecessors.clear();
+        self.clean_levels.clear();
+    }
+
+    fn get(&self, subtree: &Expr, level: usize) -> CacheResult {
+        let node_hash = Self::node_hash(subtree);
+        if let Some(&max_clean) = self.clean_levels.get(&node_hash)
+            && max_clean >= level
+        {
+            return CacheResult::Terminal(max_clean);
+        }
+
+        match self.map.get(&Self::combine(node_hash, level)) {
+            None => CacheResult::Unknown,
+            Some(Some(rewritten)) => CacheResult::Rewrite(rewritten.clone()),
+            Some(None) => CacheResult::Terminal(level),
+        }
+    }
+
+    fn insert(&mut self, from: &Expr, to: Option<Expr>, level: usize) {
+        self.insert_from_hash(Self::node_hash(from), to, level);
+    }
+
+    fn insert_from_hash(&mut self, from_hash: u64, to: Option<Expr>, level: usize) {
+        let from_key = Self::combine(from_hash, level);
+
+        let Some(to_expr) = to else {
+            self.map.insert(from_key, None);
+            self.clean_levels
+                .entry(from_hash)
+                .and_modify(|l| *l = (*l).max(level))
+                .or_insert(level);
+            return;
+        };
+
+        let to_key = Self::key(&to_expr, level);
+        if from_key == to_key {
+            return;
+        }
+
+        if let Some(existing) = self.map.get(&from_key) {
+            if existing.is_some() {
+                return;
+            }
+            self.map.remove(&from_key);
+        }
+
+        let resolved = self
+            .map
+            .get(&to_key)
+            .cloned()
+            .unwrap_or_else(|| Some(to_expr));
+
+        let Some(resolved_expr) = resolved else {
+            self.map.insert(from_key, None);
+            return;
+        };
+
+        let resolved_key = Self::key(&resolved_expr, level);
+        let resolved = Some(resolved_expr);
+        self.map.insert(from_key, resolved.clone());
+
+        if let Some(mut predecessors) = self.predecessors.remove(&from_key) {
+            for &predecessor in &predecessors {
+                self.map.insert(predecessor, resolved.clone());
+            }
+
+            self.predecessors
+                .entry(resolved_key)
+                .or_default()
+                .append(&mut predecessors);
+        }
+
+        self.predecessors
+            .entry(resolved_key)
+            .or_default()
+            .push(from_key);
     }
 }
 
@@ -217,6 +352,7 @@ struct RewritePassContext<'ctx, 'rules> {
     prop_multiple_equally_applicable: bool,
     stats: &'ctx mut RewriterStats,
     dirty_trace: &'ctx mut DirtyTrace,
+    cache: Option<RewriteCache>,
     config: RewriteConfig,
     #[cfg(debug_assertions)]
     run_start: &'ctx Instant,
@@ -271,6 +407,7 @@ pub fn rewrite_naive<'a>(
             prop_multiple_equally_applicable,
             stats: &mut rewriter_stats,
             dirty_trace: &mut dirty_trace,
+            cache: config.cache.then(RewriteCache::default),
             config,
             #[cfg(debug_assertions)]
             run_start: &run_start,
@@ -324,6 +461,10 @@ fn try_rewrite_model<'ctx, 'rules>(
         ctx.prop_multiple_equally_applicable,
     ) {
         ctx.dirty_trace.value_letting_rewrites += 1;
+        if let Some(cache) = ctx.cache.as_mut() {
+            cache.clear();
+            ctx.dirty_trace.cache_resets += 1;
+        }
         if ctx.config.dirty {
             ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
             clear_model_clean_rule_metadata(submodel);
@@ -334,7 +475,7 @@ fn try_rewrite_model<'ctx, 'rules>(
     let mut results: Vec<ApplicableRule<'_, ExpressionZipper>> = vec![];
 
     // Iterate over rules by priority in descending order.
-    'top: for rule_group in ctx.bucketed_rules.iter() {
+    'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
         ctx.dirty_trace.priority_scans += 1;
         // Rewrite within the current root expression tree.
         let mut zipper = ExpressionZipper::new(submodel.root().clone());
@@ -351,6 +492,42 @@ fn try_rewrite_model<'ctx, 'rules>(
                     break;
                 }
                 continue;
+            }
+
+            if let Some(cache) = ctx.cache.as_mut() {
+                match cache.get(&expr, level) {
+                    CacheResult::Terminal(clean_level) => {
+                        ctx.dirty_trace.cache_hits += 1;
+                        ctx.dirty_trace.cache_terminal_hits += 1;
+                        trace!(target: "rule_engine", clean_level, "Rewrite cache terminal hit");
+                        if ctx.config.dirty {
+                            zipper
+                                .focus()
+                                .meta_ref()
+                                .mark_clean_for_rule_priority(rule_group.priority);
+                        }
+                        if !move_to_next_expression(&mut zipper) {
+                            break;
+                        }
+                        continue;
+                    }
+                    CacheResult::Rewrite(cached) => {
+                        ctx.dirty_trace.cache_hits += 1;
+                        ctx.dirty_trace.cache_rewrite_hits += 1;
+                        let new_root = replace_focus_and_dirty_ancestors(
+                            &zipper,
+                            clear_expr_clean_rule_metadata(cached),
+                            ctx.dirty_trace,
+                            Some(cache),
+                            level,
+                        );
+                        submodel.replace_root(new_root);
+                        return Some(());
+                    }
+                    CacheResult::Unknown => {
+                        ctx.dirty_trace.cache_misses += 1;
+                    }
+                }
             }
 
             let mut attempted_rule = false;
@@ -403,7 +580,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                                 rule_data: rd.clone(),
                                 effect: red,
                             },
-                            rule_group.priority,
+                            level,
                             expr.clone(),
                             zipper.clone(),
                             variable_snapshot_before,
@@ -432,6 +609,12 @@ fn try_rewrite_model<'ctx, 'rules>(
                     .meta_ref()
                     .mark_clean_for_rule_priority(rule_group.priority);
             }
+            if ctx.config.cache && results.len() == results_before_expr {
+                if let Some(cache) = ctx.cache.as_mut() {
+                    cache.insert(&expr, None, level);
+                    ctx.dirty_trace.cache_inserts += 1;
+                }
+            }
             if attempted_rule {
                 ctx.dirty_trace.attempted_expressions += 1;
             }
@@ -446,14 +629,14 @@ fn try_rewrite_model<'ctx, 'rules>(
             }
         }
 
-        if ctx.config.dirty {
+        if ctx.config.dirty || ctx.config.cache {
             submodel.replace_root(zipper.rebuild_root());
         }
     }
 
     match results.as_slice() {
         [] => return None, // no rules are applicable.
-        [(result, _priority, expr, zipper, variable_snapshot_before), ..] => {
+        [(result, level, expr, zipper, variable_snapshot_before), ..] => {
             if ctx.prop_multiple_equally_applicable {
                 assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
             }
@@ -478,21 +661,41 @@ fn try_rewrite_model<'ctx, 'rules>(
                     .map(|(before, after)| (before, after)),
             );
 
+            let has_model_side_effects = effect_has_model_side_effects(&result.effect);
+            let replacement = clear_expr_clean_rule_metadata(result.effect.new_expression.clone());
+            if !has_model_side_effects {
+                if let Some(cache) = ctx.cache.as_mut() {
+                    cache.insert(expr, Some(replacement.clone()), *level);
+                    ctx.dirty_trace.cache_inserts += 1;
+                }
+            }
+
             // Replace expr with new_expression
             let new_root = replace_focus_and_dirty_ancestors(
                 zipper,
-                result.effect.new_expression.clone(),
+                replacement,
                 ctx.dirty_trace,
+                (!has_model_side_effects)
+                    .then_some(())
+                    .and_then(|_| ctx.cache.as_mut()),
+                *level,
             );
             submodel.replace_root(new_root);
 
             // Apply new symbols and top level
-            let has_model_side_effects = effect_has_model_side_effects(&result.effect);
             ctx.dirty_trace
                 .record_rewrite(result.rule_data.rule.name, has_model_side_effects);
             result.effect.clone().apply(submodel);
+            if has_model_side_effects {
+                if let Some(cache) = ctx.cache.as_mut() {
+                    cache.clear();
+                    ctx.dirty_trace.cache_resets += 1;
+                }
+            }
             if ctx.config.dirty && has_model_side_effects {
                 ctx.dirty_trace.whole_model_clears_after_side_effects += 1;
+                clear_model_clean_rule_metadata(submodel);
+            } else if ctx.config.cache && has_model_side_effects {
                 clear_model_clean_rule_metadata(submodel);
             }
 
@@ -530,25 +733,51 @@ fn replace_focus_and_dirty_ancestors(
     zipper: &ExpressionZipper,
     new_focus: Expr,
     dirty_trace: &mut DirtyTrace,
+    mut cache: Option<&mut RewriteCache>,
+    cache_level: usize,
 ) -> Expr {
     let mut zipper = zipper.clone();
+    let ancestor_hashes = cache
+        .as_ref()
+        .map(|_| ancestor_hashes_to_root(&mut zipper.clone()));
     dirty_trace.replacement_subtree_clears += 1;
-    zipper.replace_focus(clear_expr_clean_rule_metadata(new_focus));
+    zipper.replace_focus(new_focus);
 
+    let mut ancestor_index = 0;
     while zipper.go_up().is_some() {
         dirty_trace.ancestor_clears += 1;
         zipper.focus().meta_ref().clear_clean_rule_priority();
+        zipper.focus().invalidate_cache();
+        if let Some(cache) = cache.as_deref_mut()
+            && let Some(old_hash) = ancestor_hashes
+                .as_ref()
+                .and_then(|hashes| hashes.get(ancestor_index))
+        {
+            cache.insert_from_hash(*old_hash, Some(zipper.focus().clone()), cache_level);
+            dirty_trace.cache_ancestor_mappings += 1;
+        }
+        ancestor_index += 1;
     }
 
     zipper.rebuild_root()
 }
 
-/// Clears clean-rule metadata from every expression in a subtree.
+fn ancestor_hashes_to_root(zipper: &mut ExpressionZipper) -> Vec<u64> {
+    let mut hashes = Vec::new();
+    while zipper.go_up().is_some() {
+        hashes.push(zipper.focus().get_cached_hash());
+    }
+    hashes
+}
+
+/// Clears rewrite metadata from every expression in a subtree.
 fn clear_expr_clean_rule_metadata(expr: Expr) -> Expr {
-    expr.transform_bi(&|metadata: Metadata| {
+    let expr = expr.transform_bi(&|metadata: Metadata| {
         metadata.clear_clean_rule_priority();
         metadata
-    })
+    });
+    expr.invalidate_cache_recursive();
+    expr
 }
 
 /// Clears clean-rule metadata from the model root expression tree.
@@ -631,4 +860,79 @@ fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
         }
     }
     bug!("Multiple equally applicable rules for {expr}: {names:#?}\n\n{rules_by_priority_string}");
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::ast::{Atom, Literal};
+
+    use super::*;
+
+    fn int_lit(value: i32) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(value)))
+    }
+
+    fn root(exprs: Vec<Expr>) -> Expr {
+        Expr::Root(Metadata::new(), exprs)
+    }
+
+    #[test]
+    fn rewrite_cache_resolves_transitive_rewrites() {
+        let a = int_lit(1);
+        let b = int_lit(2);
+        let c = int_lit(3);
+        let d = int_lit(4);
+        let mut cache = RewriteCache::default();
+
+        cache.insert(&a, Some(b.clone()), 0);
+        cache.insert(&b, Some(c.clone()), 0);
+        cache.insert(&c, Some(d.clone()), 0);
+
+        for expr in [&a, &b, &c] {
+            match cache.get(expr, 0) {
+                CacheResult::Rewrite(rewritten) => assert_eq!(rewritten, d),
+                CacheResult::Unknown | CacheResult::Terminal(_) => {
+                    panic!("expected transitive rewrite cache hit")
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn rewrite_cache_tracks_terminal_levels() {
+        let a = int_lit(1);
+        let mut cache = RewriteCache::default();
+
+        cache.insert(&a, None, 0);
+        cache.insert(&a, None, 1);
+
+        match cache.get(&a, 0) {
+            CacheResult::Terminal(level) => assert_eq!(level, 1),
+            CacheResult::Unknown | CacheResult::Rewrite(_) => panic!("expected terminal hit"),
+        }
+        match cache.get(&a, 1) {
+            CacheResult::Terminal(level) => assert_eq!(level, 1),
+            CacheResult::Unknown | CacheResult::Rewrite(_) => panic!("expected terminal hit"),
+        }
+        assert!(matches!(cache.get(&a, 2), CacheResult::Unknown));
+    }
+
+    #[test]
+    fn rewrite_cache_resolves_ancestor_mappings_transitively() {
+        let old_parent = root(vec![int_lit(1)]);
+        let old_parent_hash = RewriteCache::node_hash(&old_parent);
+        let mid_parent = root(vec![int_lit(2)]);
+        let final_parent = root(vec![int_lit(3)]);
+        let mut cache = RewriteCache::default();
+
+        cache.insert_from_hash(old_parent_hash, Some(mid_parent.clone()), 0);
+        cache.insert(&mid_parent, Some(final_parent.clone()), 0);
+
+        match cache.get(&old_parent, 0) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten, final_parent),
+            CacheResult::Unknown | CacheResult::Terminal(_) => {
+                panic!("expected ancestor rewrite cache hit")
+            }
+        }
+    }
 }

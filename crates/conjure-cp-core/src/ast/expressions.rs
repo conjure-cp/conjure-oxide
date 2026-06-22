@@ -3054,21 +3054,21 @@ impl Expression {
     }
 }
 
-impl CacheHashable for Expression {
-    fn invalidate_cache(&self) {
+impl Expression {
+    pub(crate) fn invalidate_cache(&self) {
         self.meta_ref()
             .stored_hash
             .store(NO_HASH, Ordering::Relaxed);
     }
 
-    fn invalidate_cache_recursive(&self) {
+    pub(crate) fn invalidate_cache_recursive(&self) {
         self.invalidate_cache();
         self.for_each_expr_child(&mut |child| {
             child.invalidate_cache_recursive();
         });
     }
 
-    fn get_cached_hash(&self) -> u64 {
+    pub(crate) fn get_cached_hash(&self) -> u64 {
         let stored = self.meta_ref().stored_hash.load(Ordering::Relaxed);
         if stored != NO_HASH {
             HASH_HITS.fetch_add(1, Ordering::Relaxed);
@@ -3078,7 +3078,7 @@ impl CacheHashable for Expression {
         self.calculate_hash()
     }
 
-    fn calculate_hash(&self) -> u64 {
+    pub(crate) fn calculate_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
         std::mem::discriminant(self).hash(&mut hasher);
         match self {
@@ -3380,6 +3380,24 @@ impl CacheHashable for Expression {
         let result = hasher.finish();
         self.meta_ref().stored_hash.swap(result, Ordering::Relaxed);
         result
+    }
+}
+
+impl CacheHashable for Expression {
+    fn invalidate_cache(&self) {
+        Expression::invalidate_cache(self);
+    }
+
+    fn invalidate_cache_recursive(&self) {
+        Expression::invalidate_cache_recursive(self);
+    }
+
+    fn get_cached_hash(&self) -> u64 {
+        Expression::get_cached_hash(self)
+    }
+
+    fn calculate_hash(&self) -> u64 {
+        Expression::calculate_hash(self)
     }
 }
 

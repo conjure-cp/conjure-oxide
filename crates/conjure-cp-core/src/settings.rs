@@ -145,6 +145,8 @@ pub struct RewriteConfig {
     pub prefilter: bool,
     /// Skip repeated attempts on unchanged expressions that have already failed at the same priority.
     pub dirty: bool,
+    /// Cache rewrite results for structurally identical expression subtrees.
+    pub cache: bool,
 }
 
 impl RewriteConfig {
@@ -152,6 +154,7 @@ impl RewriteConfig {
         Self {
             prefilter: false,
             dirty: false,
+            cache: false,
         }
     }
 
@@ -159,15 +162,16 @@ impl RewriteConfig {
         Self {
             prefilter: true,
             dirty: true,
+            cache: true,
         }
     }
 
     pub const fn is_baseline(self) -> bool {
-        !self.prefilter && !self.dirty
+        !self.prefilter && !self.dirty && !self.cache
     }
 
     pub const fn is_optimised(self) -> bool {
-        self.prefilter && self.dirty
+        self.prefilter && self.dirty && self.cache
     }
 }
 
@@ -191,6 +195,9 @@ impl Display for RewriteConfig {
             if self.dirty {
                 options.push("dirty");
             }
+            if self.cache {
+                options.push("cache");
+            }
             write!(f, "{}", options.join("+"))
         }
     }
@@ -211,6 +218,7 @@ impl FromStr for RewriteConfig {
         let mut baseline_seen = false;
         let mut prefilter_seen = false;
         let mut dirty_seen = false;
+        let mut cache_seen = false;
 
         for token in trimmed.split('+') {
             match token {
@@ -235,9 +243,16 @@ impl FromStr for RewriteConfig {
                     config.dirty = true;
                     dirty_seen = true;
                 }
+                "cache" => {
+                    if cache_seen {
+                        return Err("duplicate rewrite option 'cache'".to_string());
+                    }
+                    config.cache = true;
+                    cache_seen = true;
+                }
                 other => {
                     return Err(format!(
-                        "unknown rewrite option '{other}'; expected baseline, optimised, or a '+' separated combination of: prefilter, dirty"
+                        "unknown rewrite option '{other}'; expected baseline, optimised, or a '+' separated combination of: prefilter, dirty, cache"
                     ));
                 }
             }
@@ -294,7 +309,7 @@ impl FromStr for Rewriter {
                 }
 
                 Err(format!(
-                    "unknown rewriter: {other}; expected baseline, optimised, baseline+prefilter, baseline+dirty, baseline+prefilter+dirty, morph, or morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
+                    "unknown rewriter: {other}; expected baseline, optimised, baseline plus '+' separated prefilter/dirty/cache options, morph, or morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
                 ))
             }
         }
@@ -666,25 +681,44 @@ mod tests {
             RewriteConfig::from_str("baseline").unwrap(),
             RewriteConfig {
                 prefilter: false,
-                dirty: false
+                dirty: false,
+                cache: false
             }
         );
         assert_eq!(
             RewriteConfig::from_str("baseline+prefilter").unwrap(),
             RewriteConfig {
                 prefilter: true,
-                dirty: false
+                dirty: false,
+                cache: false
             }
         );
         assert_eq!(
             RewriteConfig::from_str("baseline+dirty").unwrap(),
             RewriteConfig {
                 prefilter: false,
-                dirty: true
+                dirty: true,
+                cache: false
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+cache").unwrap(),
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: true
             }
         );
         assert_eq!(
             RewriteConfig::from_str("baseline+prefilter+dirty").unwrap(),
+            RewriteConfig {
+                prefilter: true,
+                dirty: true,
+                cache: false
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+prefilter+dirty+cache").unwrap(),
             RewriteConfig::optimised()
         );
     }
@@ -695,7 +729,8 @@ mod tests {
             RewriteConfig::from_str("optimised").unwrap(),
             RewriteConfig {
                 prefilter: true,
-                dirty: true
+                dirty: true,
+                cache: true
             }
         );
     }
@@ -706,7 +741,8 @@ mod tests {
         assert_eq!(
             RewriteConfig {
                 prefilter: true,
-                dirty: false
+                dirty: false,
+                cache: false
             }
             .to_string(),
             "baseline+prefilter"
@@ -714,10 +750,20 @@ mod tests {
         assert_eq!(
             RewriteConfig {
                 prefilter: false,
-                dirty: true
+                dirty: true,
+                cache: false
             }
             .to_string(),
             "baseline+dirty"
+        );
+        assert_eq!(
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: true
+            }
+            .to_string(),
+            "baseline+cache"
         );
         assert_eq!(RewriteConfig::optimised().to_string(), "optimised");
     }
@@ -728,11 +774,20 @@ mod tests {
             Rewriter::from_str("baseline+dirty").unwrap(),
             Rewriter::Rewrite(RewriteConfig {
                 prefilter: false,
-                dirty: true
+                dirty: true,
+                cache: false
             })
         );
         assert_eq!(
             Rewriter::from_str("baseline+prefilter+dirty").unwrap(),
+            Rewriter::Rewrite(RewriteConfig {
+                prefilter: true,
+                dirty: true,
+                cache: false
+            })
+        );
+        assert_eq!(
+            Rewriter::from_str("baseline+prefilter+dirty+cache").unwrap(),
             Rewriter::Rewrite(RewriteConfig::optimised())
         );
     }
