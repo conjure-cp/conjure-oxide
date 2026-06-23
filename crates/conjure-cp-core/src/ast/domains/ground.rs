@@ -2,7 +2,8 @@ use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RelAttr, SetAttr, Typeable,
+    AbstractLiteral, DomainOpError, FuncAttr, HasDomain, Literal, Moo, Name, RelAttr, SetAttr,
+    Typeable,
     domains::{domain::Int, range::Range},
     matrix,
     records::Field,
@@ -15,7 +16,7 @@ use itertools::{Itertools, izip};
 use num_traits::ToPrimitive;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use uniplate::Uniplate;
@@ -92,9 +93,6 @@ impl GroundDomain {
             (GroundDomain::Matrix(_, _), _) | (_, GroundDomain::Matrix(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
-            (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
-                Err(DomainOpError::WrongType)
-            }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
                 let mut inners = Vec::new();
                 for (in1, in2) in zip(in1s, in2s) {
@@ -105,20 +103,25 @@ impl GroundDomain {
             (GroundDomain::Tuple(_), _) | (_, GroundDomain::Tuple(_)) => {
                 Err(DomainOpError::WrongType)
             }
-            // TODO: Eventually we may define semantics for joining record domains. This day is not today.
-            #[allow(unreachable_patterns)]
-            // Technically redundant but logically clearer to have both
+            (GroundDomain::Record(in1s), GroundDomain::Record(in2s))
+                if in1s.len() == in2s.len() =>
+            {
+                let lhs_fields: BTreeMap<&Name, &Moo<GroundDomain>> =
+                    in1s.iter().map(|x| (&x.name, &x.value)).collect();
+                let rhs_fields: BTreeMap<&Name, &Moo<GroundDomain>> =
+                    in2s.iter().map(|x| (&x.name, &x.value)).collect();
+                let mut new_fields = Vec::with_capacity(in1s.len());
+                for (n, d) in lhs_fields {
+                    let d2 = rhs_fields.get(&n).ok_or(DomainOpError::WrongType)?;
+                    let dom = d.union(d2)?;
+                    new_fields.push(Field {
+                        name: n.clone(),
+                        value: dom.into(),
+                    });
+                }
+                Ok(GroundDomain::Record(new_fields))
+            }
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
-                Err(DomainOpError::WrongType)
-            }
-            #[allow(unreachable_patterns)]
-            // Technically redundant but logically clearer to have both
-            (GroundDomain::Variant(_), _) | (_, GroundDomain::Variant(_)) => {
-                Err(DomainOpError::WrongType)
-            }
-            #[allow(unreachable_patterns)]
-            // Technically redundant but logically clearer to have both
-            (GroundDomain::Function(_, _, _), _) | (_, GroundDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
             (GroundDomain::Relation(_, in1s), GroundDomain::Relation(_, in2s)) => {
@@ -128,12 +131,24 @@ impl GroundDomain {
                 }
                 Ok(GroundDomain::Tuple(inners))
             }
-            (GroundDomain::Relation(_, _), _) | (_, GroundDomain::Relation(_, _)) => {
+            (GroundDomain::Relation(..), _) | (_, GroundDomain::Relation(..)) => {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
-            (GroundDomain::Partition(_, _), _) | (_, GroundDomain::Partition(_, _)) => {
-                Err(DomainOpError::WrongType)
+            (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
+                todo!("union sequence domains")
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Variant(_), _) | (_, GroundDomain::Variant(_)) => {
+                todo!("union variant domains")
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Function(..), _) | (_, GroundDomain::Function(..)) => {
+                todo!("union function domains")
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Partition(..), _) | (_, GroundDomain::Partition(..)) => {
+                todo!("union partition domains")
             }
         }
     }
