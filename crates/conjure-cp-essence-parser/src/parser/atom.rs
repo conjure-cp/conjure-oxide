@@ -379,7 +379,7 @@ fn typecheck_variable(
 
     // Get the variable's domain and resolve it
     let domain = decl.domain()?;
-    let ground_domain = domain.resolve()?;
+    let ground_domain = domain.resolve().ok()?;
 
     // Determine what type is expected
     let expected = match context {

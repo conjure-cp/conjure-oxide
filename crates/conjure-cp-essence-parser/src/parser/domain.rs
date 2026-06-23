@@ -215,15 +215,14 @@ fn parse_int_domain(
     if all_resolved {
         let ranges: Vec<Range<i32>> = ranges_unresolved
             .into_iter()
-            .map(|r| match r {
-                Range::Single(IntVal::Const(v)) => Range::Single(v),
-                Range::Bounded(IntVal::Const(l), IntVal::Const(u)) => Range::Bounded(l, u),
-                Range::UnboundedR(IntVal::Const(l)) => Range::UnboundedR(l),
-                Range::UnboundedL(IntVal::Const(u)) => Range::UnboundedL(u),
-                Range::Unbounded => Range::Unbounded,
-                _ => unreachable!("all_resolved should be true only if all are Const"),
-            })
-            .collect();
+            .map(|r| r.resolve())
+            .collect::<Result<_, _>>()
+            .map_err(|e| {
+                FatalParseError::internal_error(
+                    format!("could not resolve range: {e}"),
+                    Some(int_domain.range()),
+                )
+            })?;
 
         ctx.add_span_and_doc_hover(&int_keyword_node, "L_int", SymbolKind::Domain, None, None);
         Ok(Some(Domain::int(ranges)))
@@ -243,11 +242,11 @@ fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, F
     if node.kind() == "atom" {
         let text = &ctx.source_code[node.start_byte()..node.end_byte()];
         if let Ok(integer) = text.parse::<i32>() {
-            return Ok(Some(IntVal::Const(integer)));
+            return Ok(Some(IntVal::new_const(integer)));
         }
         // Otherwise, check if it's an identifier reference
         let Some(decl) = get_declaration_ptr_from_identifier(ctx, node)? else {
-            // If identifier isn't defined, its a semantic error
+            // If identifier isn't defined, it's a semantic error
             return Ok(None);
         };
         return Ok(Some(IntVal::Reference(Reference::new(decl))));

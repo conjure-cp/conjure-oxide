@@ -854,7 +854,11 @@ fn eval_comprehension_qualifiers(
     match &comprehension.qualifiers[qualifier_index] {
         ComprehensionQualifier::Generator { ptr } => {
             let domain = ptr.domain()?;
-            let generator_values = domain.resolve()?.values().ok()?.collect_vec();
+            let generator_values = domain
+                .resolve()
+                .and_then(|x| x.values())
+                .ok()?
+                .collect_vec();
 
             for value in generator_values {
                 with_temporary_quantified_binding(ptr, &value, || {

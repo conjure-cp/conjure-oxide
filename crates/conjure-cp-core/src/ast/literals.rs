@@ -857,7 +857,7 @@ impl AbstractLiteral<Expression> {
                     literals.push(literal);
                 }
 
-                Some(AbstractLiteral::Matrix(literals, domain.resolve()?))
+                Some(AbstractLiteral::Matrix(literals, domain.resolve().ok()?))
             }
             AbstractLiteral::Sequence(elements) => {
                 let literals = elements

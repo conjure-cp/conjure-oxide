@@ -42,7 +42,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     let matrix_vars = symbols.clone().into_iter_local().filter_map(|(n, decl)| {
         let id = decl.id();
         let var = decl.as_find()?.clone();
-        let resolved_domain = var.domain.resolve()?;
+        let resolved_domain = var.domain.resolve().ok()?;
 
         let GroundDomain::Matrix(valdom, indexdoms) = resolved_domain.as_ref() else {
             return None;
