@@ -13,8 +13,8 @@ use crate::bug;
 use crate::representation::{Representation, get_repr_rule};
 use std::any::TypeId;
 
-use std::collections::{BTreeMap, BTreeSet};
 use std::collections::VecDeque;
+use std::collections::{BTreeMap, BTreeSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
@@ -338,12 +338,9 @@ impl SymbolTable {
     }
 
     fn recompute_local_bindings_xor(&mut self) {
-        self.local_bindings_xor = self
-            .table
-            .iter()
-            .fold(0u64, |acc, (name, declaration)| {
-                acc ^ Self::binding_contribution(name, declaration)
-            });
+        self.local_bindings_xor = self.table.iter().fold(0u64, |acc, (name, declaration)| {
+            acc ^ Self::binding_contribution(name, declaration)
+        });
     }
 
     pub(crate) fn refresh_local_binding_hashes(&mut self) {
@@ -379,8 +376,7 @@ impl SymbolTable {
         } else {
             self.compute_scoped_context_hash()
         };
-        self.context_hash_cache
-            .store(hash, Ordering::Relaxed);
+        self.context_hash_cache.store(hash, Ordering::Relaxed);
         hash
     }
 
@@ -393,14 +389,14 @@ impl SymbolTable {
         }
 
         let mut parent = self.parent.clone();
-        while let Some(parent_ptr) = parent {
+        while let Some(parent_ptr) = parent.take() {
             let guard = parent_ptr.read();
             for (name, declaration) in guard.iter_local() {
                 declarations
                     .entry(name.clone())
                     .or_insert_with(|| declaration.content_hash());
             }
-            parent = guard.parent().clone();
+            parent.clone_from(guard.parent());
         }
 
         declarations.len().hash(&mut hasher);
