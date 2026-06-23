@@ -218,7 +218,10 @@ impl<A: Num + Ord + Clone> Range<A> {
     pub fn join(&self, other: &Range<A>) -> Option<Range<A>> {
         if self.joins(other) {
             let lo = Ord::min(self.low(), other.low());
-            let hi = Ord::max(self.high(), other.high());
+            let hi = match (self.high(), other.high()) {
+                (Some(a), Some(b)) => Some(Ord::max(a, b)),
+                _ => None,
+            };
             return Some(Range::new(lo.cloned(), hi.cloned()));
         }
         None
@@ -464,5 +467,17 @@ mod test {
             Range::spanning(&[range!(..0), range!(2..)]),
             Range::Unbounded
         );
+    }
+
+    #[test]
+    pub fn test_range_join() {
+        assert_eq!(range!(1..3).join(&range!(2..4)), Some(range!(1..4)));
+        assert_eq!(range!(1..3).join(&range!(3..4)), Some(range!(1..4)));
+        assert_eq!(range!(1..3).join(&range!(4..5)), Some(range!(1..5)));
+        assert_eq!(range!(..3).join(&range!(4..5)), Some(range!(..5)));
+        assert_eq!(range!(1..3).join(&range!(4..)), Some(range!(1..)));
+        assert_eq!(range!(4..).join(&range!(1..3)), Some(range!(1..)));
+        assert_eq!(range!(..3).join(&range!(4..)), Some(Range::Unbounded));
+        assert_eq!(range!(1..3).join(&range!(5..6)), None);
     }
 }
