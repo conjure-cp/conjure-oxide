@@ -281,12 +281,43 @@ impl<A: Num + Ord + Clone> Range<A> {
         }
     }
 
+    /// Lazily iterate all values in a list of ranges
     pub fn values(rngs: &[Range<A>]) -> Option<impl Iterator<Item = A>> {
         let itrs = rngs
             .iter()
             .map(Range::iter)
             .collect::<Option<Vec<RangeIterator<A>>>>()?;
         Some(itrs.into_iter().flatten())
+    }
+
+    /// True if the list of ranges is contiguous
+    pub fn is_contiguous(rngs: &[Range<A>]) -> bool {
+        Self::squeeze(rngs).len() <= 1
+    }
+
+    /// Lowest value from a sequence of ranges
+    pub fn low_of(rngs: &[Range<A>]) -> Option<&A> {
+        let mut low = rngs.first()?.low()?;
+        for rng in rngs {
+            low = Ord::min(low, rng.low()?);
+        }
+        Some(low)
+    }
+
+    /// Lowest value from a sequence of ranges
+    pub fn high_of(rngs: &[Range<A>]) -> Option<&A> {
+        let mut hi = rngs.first()?.high()?;
+        for rng in rngs {
+            hi = Ord::min(hi, rng.low()?);
+        }
+        Some(hi)
+    }
+
+    /// Total number of values across a slice of ranges.
+    /// Returns `None` if any range is unbounded.
+    pub fn total_length(rngs: &[Range<A>]) -> Option<A> {
+        rngs.iter()
+            .try_fold(A::zero(), |acc, r| Some(acc + r.length()?))
     }
 }
 
