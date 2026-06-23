@@ -365,7 +365,8 @@ impl RewriteCache {
 struct RuleGroup<'a> {
     priority: u16,
     rules: Vec<RuleData<'a>>,
-    rules_by_discriminant: HashMap<usize, Vec<RuleData<'a>>>,
+    /// Indexed by discriminant id for O(1) lookup (ids are small and dense; see `Rule::applicable_to`).
+    rules_by_discriminant: Vec<Option<Vec<RuleData<'a>>>>,
     universal_rules: Vec<RuleData<'a>>,
 }
 
@@ -378,18 +379,20 @@ impl<'a> RuleGroup<'a> {
             .copied()
             .collect_vec();
 
-        let rules_by_discriminant = discriminants
-            .into_iter()
-            .unique()
-            .map(|discriminant| {
-                let bucket = rules
+        let mut rules_by_discriminant = Vec::new();
+        if let Some(max_discriminant) = discriminants.iter().copied().max() {
+            rules_by_discriminant.resize_with(max_discriminant + 1, || None);
+        }
+
+        for discriminant in discriminants.into_iter().unique() {
+            rules_by_discriminant[discriminant] = Some(
+                rules
                     .iter()
                     .filter(|rd| rule_applies_to_discriminant(rd, discriminant))
                     .cloned()
-                    .collect();
-                (discriminant, bucket)
-            })
-            .collect();
+                    .collect(),
+            );
+        }
 
         let universal_rules = rules
             .iter()
@@ -412,7 +415,8 @@ impl<'a> RuleGroup<'a> {
 
         let discriminant = discriminant_from_value(expr);
         self.rules_by_discriminant
-            .get(&discriminant)
+            .get(discriminant)
+            .and_then(Option::as_deref)
             .unwrap_or(&self.universal_rules)
     }
 }

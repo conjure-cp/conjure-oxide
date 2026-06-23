@@ -2,7 +2,7 @@
 //!
 //! See the [`Rule`] trait for more information.
 
-use std::{collections::HashMap, marker::PhantomData};
+use std::marker::PhantomData;
 
 use crate::prelude::{Commands, Update};
 use uniplate::Uniplate;
@@ -105,6 +105,9 @@ pub trait Rule<T: Uniplate, M> {
 
     /// None -> Rule applies to all nodes
     /// Some(ids) -> Rule only applies to nodes with these discriminant ids
+    ///
+    /// Ids should be small and densely assigned: prefilter buckets are stored in a vector indexed
+    /// by id for efficient lookup.
     fn applicable_to(&self) -> Option<Vec<usize>> {
         None
     }
@@ -245,10 +248,10 @@ where
     /// Priority -> Rules
     universal_rules: Vec<Vec<R>>,
 
-    /// Priority -> discriminant id -> Rules
-    filtered_rules: Option<Vec<HashMap<usize, Vec<R>>>>,
+    /// Priority -> discriminant id -> Rules (vector-indexed for O(1) lookup by id).
+    filtered_rules: Option<Vec<Vec<Vec<R>>>>,
 
-    /// Function to compute a unique usize id for a node, used for prefiltering.
+    /// Function to compute a small, dense usize id for a node, used for prefiltering.
     /// None means prefiltering is disabled.
     pub discriminant_fn: Option<fn(&T) -> usize>,
 
@@ -275,7 +278,7 @@ where
         let mut universal_rules = Vec::with_capacity(rule_group.len());
 
         for rules in rule_group {
-            let mut filtered: HashMap<usize, Vec<R>> = HashMap::new();
+            let mut filtered: Vec<Vec<R>> = Vec::new();
             let mut universal = Vec::new();
 
             for rule in rules {
@@ -283,7 +286,10 @@ where
                     None => universal.push(rule),
                     Some(ids) => {
                         for id in ids {
-                            filtered.entry(id).or_default().push(rule.clone());
+                            if id >= filtered.len() {
+                                filtered.resize_with(id + 1, Vec::new);
+                            }
+                            filtered[id].push(rule.clone());
                         }
                     }
                 };
@@ -311,7 +317,7 @@ where
             .and_then(|id| {
                 self.filtered_rules
                     .as_ref()
-                    .and_then(|filter_map| filter_map[level].get(&id))
+                    .and_then(|filter_map| filter_map[level].get(id))
             })
             .map(|f| f.as_slice())
             .unwrap_or(&[]);
