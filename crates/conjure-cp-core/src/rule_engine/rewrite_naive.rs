@@ -619,7 +619,7 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 let mut attempted_rule = false;
                 let results_before_expr = results.len();
-                for rd in rule_group.candidates(ctx.config, &expr) {
+                for rd in rule_group.candidates(ctx.config, expr) {
                     attempted_rule = true;
                     ctx.dirty_trace.rule_attempts += 1;
                     *ctx.dirty_trace
@@ -642,7 +642,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                     let variable_snapshot_before = matches!(expr, Expr::Root(_, _))
                         .then(|| snapshot_variable_declarations(&submodel.symbols()));
 
-                    match (rd.rule.application)(&expr, &submodel.symbols()) {
+                    match (rd.rule.application)(expr, &submodel.symbols()) {
                         Ok(red) => {
                             // when called a lot, this becomes very expensive!
                             #[cfg(debug_assertions)]
@@ -653,7 +653,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                                     rd.rule.name,
                                     rd.rule_set.name,
                                     "success",
-                                    &expr,
+                                    expr,
                                 );
                             }
 
@@ -683,7 +683,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                                     rd.rule.name,
                                     rd.rule_set.name,
                                     "fail",
-                                    &expr,
+                                    expr,
                                 );
                             }
                         }
@@ -696,13 +696,13 @@ fn try_rewrite_model<'ctx, 'rules>(
                         .meta_ref()
                         .mark_clean_for_rule_priority(rule_group.priority);
                 }
-                if ctx.config.cache && results.len() == results_before_expr {
-                    if let Some(symbol_context_hash) = scan_symbol_context_hash {
-                        if let Some(cache) = ctx.cache.as_mut() {
-                            cache.insert(expr, None, level, symbol_context_hash);
-                            ctx.dirty_trace.cache_inserts += 1;
-                        }
-                    }
+                if ctx.config.cache
+                    && results.len() == results_before_expr
+                    && let Some(symbol_context_hash) = scan_symbol_context_hash
+                    && let Some(cache) = ctx.cache.as_mut()
+                {
+                    cache.insert(expr, None, level, symbol_context_hash);
+                    ctx.dirty_trace.cache_inserts += 1;
                 }
                 if attempted_rule {
                     ctx.dirty_trace.attempted_expressions += 1;
@@ -779,7 +779,11 @@ fn try_rewrite_model<'ctx, 'rules>(
                     .then(|| current_symbol_context_hash(submodel, ctx));
 
                 // Replace expr with new_expression
-                let cache_mapping_context = ctx.config.cache.then(|| pre_effect_symbol_context_hash).flatten();
+                let cache_mapping_context = ctx
+                    .config
+                    .cache
+                    .then_some(pre_effect_symbol_context_hash)
+                    .flatten();
                 let (new_root, mappings) = replace_focus_and_dirty_ancestors(
                     zipper,
                     replacement.clone(),
@@ -840,9 +844,8 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 #[cfg(debug_assertions)]
                 {
-                    let assertion_context = format!(
-                        "naive rewriter after applying rule '{rule_name}'"
-                    );
+                    let assertion_context =
+                        format!("naive rewriter after applying rule '{rule_name}'");
                     debug_assert_model_well_formed(submodel, &assertion_context);
                 }
 
