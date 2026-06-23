@@ -295,7 +295,19 @@ impl GroundDomain {
 
                 Ok(Box::new(iter))
             }
-            GroundDomain::Set(..) => todo!("Enumerating set domains is not yet supported"),
+            GroundDomain::Set(attrs, inner_dom) => {
+                let n: Int = inner_dom.len_usize()?.try_into()?;
+                let min_sz = attrs.size.low().copied().unwrap_or(0);
+                let max_sz = attrs.size.high().copied().unwrap_or(n);
+
+                let pool = inner_dom.values()?.collect_vec();
+
+                Ok(Box::new(
+                    (min_sz..=max_sz)
+                        .flat_map(move |sz| pool.clone().into_iter().combinations(sz as usize))
+                        .map(|elems| Literal::AbstractLiteral(AbstractLiteral::Set(elems))),
+                ))
+            }
             GroundDomain::MSet(..) => todo!("Enumerating multi-set domains is not yet supported"),
             GroundDomain::Function(..) => {
                 todo!("Enumerating function domains is not yet supported")
@@ -1496,6 +1508,67 @@ mod tests {
                 value: Moo::new(GroundDomain::Bool),
             },
         ]);
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+        assert_eq!(count as u64, length);
+    }
+
+    fn set_lit(elems: Vec<i32>) -> Literal {
+        Literal::AbstractLiteral(AbstractLiteral::Set(
+            elems.into_iter().map(Literal::Int).collect(),
+        ))
+    }
+
+    #[test]
+    fn set_values_unbounded() {
+        // set of int(1..3) => all 2^3 = 8 subsets, in order of ascending size
+        let dom = GroundDomain::Set(SetAttr::default(), domain_int_ground!(1..3));
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 8);
+        assert_eq!(values[0], set_lit(vec![])); // size 0
+        assert_eq!(values[1], set_lit(vec![1])); // size 1
+        assert_eq!(values[2], set_lit(vec![2]));
+        assert_eq!(values[3], set_lit(vec![3]));
+        assert_eq!(values[4], set_lit(vec![1, 2])); // size 2
+        assert_eq!(values[5], set_lit(vec![1, 3]));
+        assert_eq!(values[6], set_lit(vec![2, 3]));
+        assert_eq!(values[7], set_lit(vec![1, 2, 3])); // size 3
+    }
+
+    #[test]
+    fn set_values_fixed_size() {
+        // set (size 2) of int(1..3) => the 3 two-element subsets
+        let dom = GroundDomain::Set(SetAttr::new_size(2), domain_int_ground!(1..3));
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 3);
+        assert_eq!(values[0], set_lit(vec![1, 2]));
+        assert_eq!(values[1], set_lit(vec![1, 3]));
+        assert_eq!(values[2], set_lit(vec![2, 3]));
+    }
+
+    #[test]
+    fn set_values_bounded_size() {
+        // set (minSize 1, maxSize 2) of int(1..3) => subsets of size 1 and 2
+        let dom = GroundDomain::Set(SetAttr::new_min_max_size(1, 2), domain_int_ground!(1..3));
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 6);
+        assert_eq!(values[0], set_lit(vec![1]));
+        assert_eq!(values[1], set_lit(vec![2]));
+        assert_eq!(values[2], set_lit(vec![3]));
+        assert_eq!(values[3], set_lit(vec![1, 2]));
+        assert_eq!(values[4], set_lit(vec![1, 3]));
+        assert_eq!(values[5], set_lit(vec![2, 3]));
+    }
+
+    #[test]
+    fn set_values_count_matches_length() {
+        let dom = GroundDomain::Set(SetAttr::default(), domain_int_ground!(1..4));
         let count = dom.values().unwrap().count();
         let length = dom.length().unwrap();
         assert_eq!(count as u64, length);
