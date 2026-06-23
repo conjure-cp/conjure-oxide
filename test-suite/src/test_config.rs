@@ -269,6 +269,18 @@ pub struct RuleTraceAggregateStats {
     pub rules: std::collections::BTreeMap<String, u64>,
 }
 
+fn rule_trace_rules_by_count_desc(
+    rules: &std::collections::BTreeMap<String, u64>,
+) -> Vec<(&String, u64)> {
+    let mut sorted_rules: Vec<_> = rules.iter().map(|(rule, count)| (rule, *count)).collect();
+    sorted_rules.sort_by(|(name_a, count_a), (name_b, count_b)| {
+        count_b
+            .cmp(count_a)
+            .then_with(|| name_a.cmp(name_b))
+    });
+    sorted_rules
+}
+
 /// Replaces the recorded rule trace aggregates in a test `stats.toml`.
 pub fn upsert_rule_trace_aggregate_stats(
     path: &Path,
@@ -299,8 +311,8 @@ pub fn upsert_rule_trace_aggregate_stats(
         .expect("rule trace rules table exists");
     rules.clear();
 
-    for (rule, count) in &aggregates.rules {
-        rules[rule] = value(i64::try_from(*count).map_err(|err| {
+    for (rule, count) in rule_trace_rules_by_count_desc(&aggregates.rules) {
+        rules[rule.as_str()] = value(i64::try_from(count).map_err(|err| {
             io::Error::new(
                 io::ErrorKind::InvalidInput,
                 format!("rule trace count for '{rule}' is too large to write to TOML: {err}"),
