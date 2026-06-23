@@ -91,11 +91,7 @@ fn integration_test(
         }
         None
     };
-    let file = File::create(format!(
-        "{path}/{}-{}-generated-rule-trace.txt",
-        case_name,
-        runcase.clone().solver.as_str()
-    ))?;
+    let file = File::create(format!("{path}/{}-generated-rule-trace.txt", case_name,))?;
     let subscriber = Arc::new(
         tracing_subscriber::registry().with(
             fmt::layer()
@@ -238,12 +234,17 @@ fn integration_test_inner(
         SolverFamily::Smt(_) => Solver::new(Smt::default()),
     };
 
+    println!("integration_tests | meow1:1");
+
     let solutions = {
+        println!("integration_tests | meow1:2");
         let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
+        println!("integration_tests | meow1:3");
         save_solutions_json(&solved, path, &case_name, solver_fam)?;
         solved
     };
 
+    println!("integration_tests | meow2:1");
     // Stage 3b: Check solutions against Conjure when accept mode is enabled and validation is enabled.
     if accept && conjure_solutions.is_some() {
         let conjure_solutions = conjure_solutions
@@ -265,6 +266,7 @@ fn integration_test_inner(
         );
     }
 
+    println!("integration_tests | meow3:1");
     // When accept mode is enabled, copy all generated files to expected
     if accept {
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
@@ -332,10 +334,12 @@ fn copy_human_trace_generated_to_expected(
 ) -> Result<(), std::io::Error> {
     let solver_name = solver.as_str();
 
-    std::fs::copy(
-        format!("{path}/{test_name}-{solver_name}-generated-rule-trace.txt"),
-        format!("{path}/{test_name}-{solver_name}-expected-rule-trace.txt"),
-    )?;
+    let src = format!("{path}/{test_name}-generated-rule-trace.txt");
+    let dest = format!("{path}/{test_name}-expected-rule-trace.txt");
+    println!("copying: {src} to {dest}");
+
+    std::fs::copy(src, dest)?;
+    println!("ret: copy_human");
     Ok(())
 }
 
@@ -352,10 +356,13 @@ fn copy_generated_to_expected(
     //     format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
     //     format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
     // )?;
-    std::fs::copy(
-        format!("{path}/{test_name}.generated-{stage}.{extension}"),
-        format!("{path}/{test_name}.expected-{stage}.{extension}"),
-    )?;
+
+    let src = format!("{path}/{test_name}.generated-{stage}.{extension}");
+    let dest = format!("{path}/{test_name}.expected-{stage}.{extension}");
+    eprintln!("copying: {src} to {dest}");
+
+    std::fs::copy(src, dest)?;
+    println!("ret: copy_gen_to_ex");
     Ok(())
 }
 

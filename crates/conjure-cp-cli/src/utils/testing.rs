@@ -258,8 +258,8 @@ pub fn save_solutions_json(
     let json_solutions = solutions_to_json(solutions);
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
-    let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
+    // let solver_name = solver.as_str();
+    let filename = format!("{path}/{test_name}.generated-solutions.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
@@ -272,7 +272,7 @@ pub fn read_solutions_json(
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}.{prefix}-solutions.json");
+    let filename = format!("{path}/{test_name}.{prefix}-solutions.json");
     let expected_json_str = read_with_path(filename)?;
 
     let expected_solutions: JsonValue =
@@ -289,7 +289,7 @@ pub fn read_default_rule_trace(
     solver: &SolverFamily,
 ) -> Result<Vec<String>, std::io::Error> {
     let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}-{prefix}-rule-trace.txt");
+    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.txt");
     let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()
         .map(String::from)

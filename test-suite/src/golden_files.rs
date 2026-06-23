@@ -13,6 +13,11 @@ pub fn find_redundant_expected_files(
     path: &Path,
     allowed_expected_files: &BTreeSet<String>,
 ) -> Result<Vec<String>, std::io::Error> {
+    println!(
+        "running redundant golden file test. Allowed: {:#?}",
+        allowed_expected_files
+    );
+
     let mut redundant = Vec::new();
 
     for entry in std::fs::read_dir(path)? {
@@ -25,6 +30,7 @@ pub fn find_redundant_expected_files(
         let file_name = file_name.to_string_lossy().to_string();
 
         if is_expected_golden_file(&file_name) && !allowed_expected_files.contains(&file_name) {
+            println!("unexpected: {}", file_name);
             redundant.push(file_name);
         }
     }
