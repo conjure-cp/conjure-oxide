@@ -274,9 +274,7 @@ fn rule_trace_rules_by_count_desc(
 ) -> Vec<(&String, u64)> {
     let mut sorted_rules: Vec<_> = rules.iter().map(|(rule, count)| (rule, *count)).collect();
     sorted_rules.sort_by(|(name_a, count_a), (name_b, count_b)| {
-        count_b
-            .cmp(count_a)
-            .then_with(|| name_a.cmp(name_b))
+        count_b.cmp(count_a).then_with(|| name_a.cmp(name_b))
     });
     sorted_rules
 }
