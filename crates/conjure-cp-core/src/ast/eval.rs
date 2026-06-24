@@ -889,6 +889,10 @@ fn eval_comprehension_qualifiers(
     Some(())
 }
 
+/// Values for a constant collection expression used during constant folding.
+///
+/// This does not enumerate decision-variable domains; quantification over decisions is not
+/// unrolled here.
 pub fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
     generator_values_from_constant_collection(&eval_constant(expr)?)
 }

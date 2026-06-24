@@ -117,6 +117,10 @@ fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applica
 }
 
 /// Expand comprehensions using `--comprehension-expander native`.
+///
+/// Does not unroll expression generators (`i <- expr`): quantification over decision variables
+/// is handled by representation-specific vertical rules, not by enumerating values here.
+/// Constant quantifier collections are constant-folded via [`eval_constant`] instead.
 #[register_rule("Base", 2000, [Comprehension])]
 fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if comprehension_expander() != QuantifiedExpander::Native {

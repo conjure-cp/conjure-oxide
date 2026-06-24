@@ -96,6 +96,7 @@ fn expand_qualifiers(
             }
         },
         ComprehensionQualifier::ExpressionGenerator { .. } => {
+            // See `expand_comprehension_native`: expression generators are not unrolled natively.
             bug!(
                 "Comprehension expander should not be called on comprehensions containing ExpressionGenerator"
             );
