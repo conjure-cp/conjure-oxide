@@ -129,12 +129,6 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 
     let comprehension = comprehension.as_ref().clone();
 
-    for qual in &comprehension.qualifiers {
-        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
-            return Err(RuleNotApplicable);
-        }
-    }
-
     if comprehension_has_symbolic_guards(&comprehension) {
         return Err(RuleNotApplicable);
     }

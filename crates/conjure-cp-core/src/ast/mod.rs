@@ -36,6 +36,7 @@ pub use domains::{
     RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
 };
 pub use eval::eval_constant;
+pub use eval::generator_values_from_expr;
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
 pub use literals::AbstractLiteral;
 pub use literals::Literal;

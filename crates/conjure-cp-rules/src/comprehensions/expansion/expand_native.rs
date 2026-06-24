@@ -4,9 +4,9 @@ use conjure_cp::{
         SymbolTable,
         ac_operators::ACOperatorKind,
         comprehension::{Comprehension, ComprehensionQualifier},
-        eval_constant,
+        eval_constant, generator_values_from_expr,
     },
-    bug, into_matrix_expr,
+    into_matrix_expr,
     solver::SolverError,
 };
 use uniplate::Biplate as _;
@@ -95,10 +95,36 @@ fn expand_qualifiers(
                 apply_guard_to_suffix(condition, suffix, ac_operator)?
             }
         },
-        ComprehensionQualifier::ExpressionGenerator { .. } => {
-            bug!(
-                "Comprehension expander should not be called on comprehensions containing ExpressionGenerator"
-            );
+        ComprehensionQualifier::ExpressionGenerator { ptr } => {
+            // TODO: This only works when the collection expression is constant. Native expansion
+            // will not be possible if the expression generator references decision variables;
+            // check and improve this later.
+            let name = ptr.name().clone();
+            let collection = ptr.as_quantified_expr().ok_or_else(|| {
+                SolverError::ModelFeatureNotSupported(format!(
+                    "expression generator '{name}' is missing collection expression"
+                ))
+            })?;
+            let values = generator_values_from_expr(&collection).ok_or_else(|| {
+                SolverError::ModelFeatureNotSupported(format!(
+                    "expression generator '{name}' collection is not a constant enumerable collection: {collection}"
+                ))
+            })?;
+            let mut expanded = Vec::new();
+
+            for literal in values {
+                let mut suffix = with_temporary_quantified_binding(ptr, &literal, || {
+                    expand_qualifiers(
+                        comprehension,
+                        qualifier_index + 1,
+                        parent_symbols,
+                        ac_operator,
+                    )
+                })?;
+                expanded.append(&mut suffix);
+            }
+
+            expanded
         }
     };
 

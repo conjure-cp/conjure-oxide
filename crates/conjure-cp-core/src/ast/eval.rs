@@ -889,11 +889,16 @@ fn eval_comprehension_qualifiers(
     Some(())
 }
 
-fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
-    match eval_constant(expr)? {
+pub fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
+    generator_values_from_constant_collection(&eval_constant(expr)?)
+}
+
+pub(crate) fn generator_values_from_constant_collection(lit: &Lit) -> Option<Vec<Lit>> {
+    match lit {
         Lit::AbstractLiteral(AbstractLiteral::Set(values))
         | Lit::AbstractLiteral(AbstractLiteral::MSet(values))
-        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values),
+        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values.clone()),
+        Lit::AbstractLiteral(AbstractLiteral::Matrix(values, _)) => Some(values.clone()),
         Lit::AbstractLiteral(list) => list.unwrap_list().cloned(),
         _ => None,
     }
