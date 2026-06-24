@@ -2,20 +2,20 @@ Model before rewriting:
 
 letting k be 3
 letting two_k be 6
-letting positionDomain be domain int(1..(two_k))
+letting positionDomain be domain int(1..two_k)
 find position: matrix indexed by [positionDomain] of positionDomain
 
 such that
 
-and([ position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)]) | i : int(1..(k)) ]),
+and([ position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]),
 allDifferent(position)
 
 --
 
-and([ position#matrix_to_atom[sum([i,k;int(1..)])] = sum([sum([position#matrix_to_atom[i],i;int(1..)]),1;int(1..)]) | i : int(1..(k)) ]),
+and([ position#matrix_to_atom[sum([i,k;int(1..)])] = sum([sum([position#matrix_to_atom[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]),
 allDifferent(position#matrix_to_atom)
    ~~> select_representation_matrix ([("Representations", 8001)])
-and([ position#matrix_to_atom[sum([i,k;int(1..)])] = sum([sum([position#matrix_to_atom[i],i;int(1..)]),1;int(1..)]) | i : int(1..(k)) ]),
+and([ position#matrix_to_atom[sum([i,k;int(1..)])] = sum([sum([position#matrix_to_atom[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]),
 allDifferent(position#matrix_to_atom)
 new variables:
   find position#matrix_to_atom_1: int(1..6)
@@ -27,7 +27,7 @@ new variables:
 
 --
 
-[ position#matrix_to_atom[sum([i,k;int(1..)])] = sum([sum([position#matrix_to_atom[i],i;int(1..)]),1;int(1..)]) | i : int(1..(k)) ]
+[ position#matrix_to_atom[sum([i,k;int(1..)])] = sum([sum([position#matrix_to_atom[i],i;int(1..)]),1;int(1..)]) | i : int(1..k) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [position#matrix_to_atom[4] = sum([sum([position#matrix_to_atom[1],1;int(1..)]),1;int(1..)]),position#matrix_to_atom[5] = sum([sum([position#matrix_to_atom[2],2;int(1..)]),1;int(1..)]),position#matrix_to_atom[6] = sum([sum([position#matrix_to_atom[3],3;int(1..)]),1;int(1..)]);int(1..)]
 
@@ -224,7 +224,7 @@ Final model:
 
 letting k be 3
 letting two_k be 6
-letting positionDomain be domain int(1..(two_k))
+letting positionDomain be domain int(1..two_k)
 find position: matrix indexed by [positionDomain] of positionDomain
 find position#matrix_to_atom_1: int(1..6)
 find position#matrix_to_atom_2: int(1..6)

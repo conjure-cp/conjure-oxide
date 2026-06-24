@@ -4,13 +4,13 @@ letting nItems be 10
 letting capacity be 11
 letting weights be [1,7,2,2,2,6,8,5,8,4;int(1..10)]
 letting values be [1,7,2,2,2,6,8,5,8,4;int(1..10)]
-find packed: matrix indexed by [int(1..(nItems))] of bool
+find packed: matrix indexed by [int(1..nItems)] of bool
 find __0: int(0..80)
 
 such that
 
-sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..(nItems)) ]) <= capacity,
-__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..(nItems)) ])
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= capacity,
+__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ])
 
 --
 
@@ -20,11 +20,11 @@ capacity
 
 --
 
-sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..(nItems)) ]) <= 11,
-__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..(nItems)) ])
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
+__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ])
    ~~> select_representation_matrix ([("Representations", 8001)])
-sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..(nItems)) ]) <= 11,
-__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..(nItems)) ])
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
+__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ])
 new variables:
   find packed#matrix_to_atom_1: bool
   find packed#matrix_to_atom_10: bool
@@ -39,7 +39,7 @@ new variables:
 
 --
 
-[ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..(nItems)) ]
+[ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([toInt(packed[1]),1;int(1..)]),product([toInt(packed[2]),7;int(1..)]),product([toInt(packed[3]),2;int(1..)]),product([toInt(packed[4]),2;int(1..)]),product([toInt(packed[5]),2;int(1..)]),product([toInt(packed[6]),6;int(1..)]),product([toInt(packed[7]),8;int(1..)]),product([toInt(packed[8]),5;int(1..)]),product([toInt(packed[9]),8;int(1..)]),product([toInt(packed[10]),4;int(1..)]);int(1..)]
 
@@ -112,10 +112,10 @@ product([4,toInt(packed[10]);int(1..)])
 --
 
 sum([toInt(packed#matrix_to_atom[1]),product([7,toInt(packed#matrix_to_atom[2]);int(1..)]),product([2,toInt(packed#matrix_to_atom[3]);int(1..)]),product([2,toInt(packed#matrix_to_atom[4]);int(1..)]),product([2,toInt(packed#matrix_to_atom[5]);int(1..)]),product([6,toInt(packed#matrix_to_atom[6]);int(1..)]),product([8,toInt(packed#matrix_to_atom[7]);int(1..)]),product([5,toInt(packed#matrix_to_atom[8]);int(1..)]),product([8,toInt(packed#matrix_to_atom[9]);int(1..)]),product([4,toInt(packed#matrix_to_atom[10]);int(1..)]);int(1..)]) <= 11,
-__0 =aux sum([ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..(nItems)) ])
+__0 =aux sum([ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..nItems) ])
    ~~> select_representation_matrix ([("Representations", 8001)])
 sum([toInt(packed#matrix_to_atom[1]),product([7,toInt(packed#matrix_to_atom[2]);int(1..)]),product([2,toInt(packed#matrix_to_atom[3]);int(1..)]),product([2,toInt(packed#matrix_to_atom[4]);int(1..)]),product([2,toInt(packed#matrix_to_atom[5]);int(1..)]),product([6,toInt(packed#matrix_to_atom[6]);int(1..)]),product([8,toInt(packed#matrix_to_atom[7]);int(1..)]),product([5,toInt(packed#matrix_to_atom[8]);int(1..)]),product([8,toInt(packed#matrix_to_atom[9]);int(1..)]),product([4,toInt(packed#matrix_to_atom[10]);int(1..)]);int(1..)]) <= 11,
-__0 =aux sum([ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..(nItems)) ])
+__0 =aux sum([ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..nItems) ])
 
 --
 
@@ -180,10 +180,10 @@ SafeIndex(packed#matrix_to_atom,[10])
 --
 
 sum([toInt(SafeIndex(packed#matrix_to_atom,[1])),product([7,toInt(SafeIndex(packed#matrix_to_atom,[2]));int(1..)]),product([2,toInt(SafeIndex(packed#matrix_to_atom,[3]));int(1..)]),product([2,toInt(SafeIndex(packed#matrix_to_atom,[4]));int(1..)]),product([2,toInt(SafeIndex(packed#matrix_to_atom,[5]));int(1..)]),product([6,toInt(SafeIndex(packed#matrix_to_atom,[6]));int(1..)]),product([8,toInt(SafeIndex(packed#matrix_to_atom,[7]));int(1..)]),product([5,toInt(SafeIndex(packed#matrix_to_atom,[8]));int(1..)]),product([8,toInt(SafeIndex(packed#matrix_to_atom,[9]));int(1..)]),product([4,toInt(SafeIndex(packed#matrix_to_atom,[10]));int(1..)]);int(1..)]) <= 11,
-__0 =aux sum([ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..(nItems)) ])
+__0 =aux sum([ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..nItems) ])
    ~~> index_matrix_to_atom ([("Base", 5000)])
 sum([toInt(packed#matrix_to_atom_1),product([7,toInt(packed#matrix_to_atom_2);int(1..)]),product([2,toInt(packed#matrix_to_atom_3);int(1..)]),product([2,toInt(packed#matrix_to_atom_4);int(1..)]),product([2,toInt(packed#matrix_to_atom_5);int(1..)]),product([6,toInt(packed#matrix_to_atom_6);int(1..)]),product([8,toInt(packed#matrix_to_atom_7);int(1..)]),product([5,toInt(packed#matrix_to_atom_8);int(1..)]),product([8,toInt(packed#matrix_to_atom_9);int(1..)]),product([4,toInt(packed#matrix_to_atom_10);int(1..)]);int(1..)]) <= 11,
-__0 =aux sum([ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..(nItems)) ])
+__0 =aux sum([ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..nItems) ])
 
 --
 
@@ -269,7 +269,7 @@ toInt(packed#matrix_to_atom_10)
 
 --
 
-[ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..(nItems)) ]
+[ product([toInt(packed#matrix_to_atom[i]),values[i];int(1..)]) | i : int(1..nItems) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([toInt(packed#matrix_to_atom[1]),1;int(1..)]),product([toInt(packed#matrix_to_atom[2]),7;int(1..)]),product([toInt(packed#matrix_to_atom[3]),2;int(1..)]),product([toInt(packed#matrix_to_atom[4]),2;int(1..)]),product([toInt(packed#matrix_to_atom[5]),2;int(1..)]),product([toInt(packed#matrix_to_atom[6]),6;int(1..)]),product([toInt(packed#matrix_to_atom[7]),8;int(1..)]),product([toInt(packed#matrix_to_atom[8]),5;int(1..)]),product([toInt(packed#matrix_to_atom[9]),8;int(1..)]),product([toInt(packed#matrix_to_atom[10]),4;int(1..)]);int(1..)]
 
@@ -566,7 +566,7 @@ letting nItems be 10
 letting capacity be 11
 letting weights be [1,7,2,2,2,6,8,5,8,4;int(1..10)]
 letting values be [1,7,2,2,2,6,8,5,8,4;int(1..10)]
-find packed: matrix indexed by [int(1..(nItems))] of bool
+find packed: matrix indexed by [int(1..nItems)] of bool
 find __0: int(0..80)
 find packed#matrix_to_atom_1: bool
 find packed#matrix_to_atom_2: bool

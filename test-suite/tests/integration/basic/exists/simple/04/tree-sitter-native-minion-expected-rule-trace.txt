@@ -1,17 +1,17 @@
 Model before rewriting:
 
 letting n be 3
-find S: matrix indexed by [int(1..2), int(1..(n))] of int(0..1)
+find S: matrix indexed by [int(1..2), int(1..n)] of int(0..1)
 
 such that
 
-or([ S[1, k1] < S[2, k1] | k1 : int(1..(n)) ])
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
 
 --
 
-or([ S[1, k1] < S[2, k1] | k1 : int(1..(n)) ])
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
    ~~> select_representation_matrix ([("Representations", 8001)])
-or([ S[1, k1] < S[2, k1] | k1 : int(1..(n)) ])
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
 new variables:
   find S#matrix_to_atom_1_1: int(0..1)
   find S#matrix_to_atom_1_2: int(0..1)
@@ -22,11 +22,11 @@ new variables:
 
 --
 
-or([ S[1, k1] < S[2, k1] | k1 : int(1..(n)) ])
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
    ~~> exists_quantified_to_finds ([("Base", 2003)])
 S[1, __0] < S[2, __0]
 new variables:
-  find __0: int(1..(n))
+  find __0: int(1..n)
 
 --
 
@@ -78,18 +78,6 @@ product([(__0 - 1);int(1..)])
 
 --
 
-product([1,(__0 - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(__0 - 1);int(1..)])
-
---
-
-product([(__0 - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(__0 - 1)
-
---
-
 (__0 - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([__0,-(1);int(1..)])
@@ -117,12 +105,6 @@ SafeIndex([S#matrix_to_atom_1_1,S#matrix_to_atom_1_2,S#matrix_to_atom_1_3,S#matr
 sum([__0;int(1..)])
    ~~> remove_unit_vector_sum ([("Base", 8800)])
 __0
-
---
-
-(__0 - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([__0,-(1);int(1..)])
 
 --
 
@@ -235,14 +217,14 @@ Ineq(__1, __2, 0)
 Final model:
 
 letting n be 3
-find S: matrix indexed by [int(1..2), int(1..(n))] of int(0..1)
+find S: matrix indexed by [int(1..2), int(1..n)] of int(0..1)
 find S#matrix_to_atom_1_1: int(0..1)
 find S#matrix_to_atom_1_2: int(0..1)
 find S#matrix_to_atom_1_3: int(0..1)
 find S#matrix_to_atom_2_1: int(0..1)
 find S#matrix_to_atom_2_2: int(0..1)
 find S#matrix_to_atom_2_3: int(0..1)
-find __0: int(1..(n))
+find __0: int(1..n)
 find __1: int(0..1)
 find __2: int(-1..0)
 find __3: int(4..6)

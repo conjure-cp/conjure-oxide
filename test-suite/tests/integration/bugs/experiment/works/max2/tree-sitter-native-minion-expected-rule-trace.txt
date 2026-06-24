@@ -84,30 +84,6 @@ max([a,b;int(1..)])
 
 --
 
-max([a,b;int(1..)])
-   ~~> max_to_var ([("Base", 6000)])
-__3
-new variables:
-  find __3: int(1..4)
-new constraints:
-  __3 >= a
-  __3 >= b
-  or([__3 = a,__3 = b;int(1..)])
-
---
-
-__3 >= a
-   ~~> geq_to_ineq ([("Minion", 4100)])
-Ineq(a, __3, 0)
-
---
-
-__3 >= b
-   ~~> geq_to_ineq ([("Minion", 4100)])
-Ineq(b, __3, 0)
-
---
-
 Final model:
 
 find a: int(1..4)
@@ -116,7 +92,6 @@ find x: int(1..4)
 find __0: int(1..4)
 find __1: int(1..4)
 find __2: int(1..4)
-find __3: int(1..4)
 
 such that
 
@@ -124,11 +99,8 @@ Ineq(2, __1, 0),
 SumLeq([1, __0], x),
 SumGeq([1, __0], x),
 __0 =aux __2,
-__1 =aux __3,
+__1 =aux __2,
 Ineq(a, __2, 0),
 Ineq(b, __2, 0),
-or([__2 = a,__2 = b;int(1..)]),
-Ineq(a, __3, 0),
-Ineq(b, __3, 0),
-or([__3 = a,__3 = b;int(1..)])
+or([__2 = a,__2 = b;int(1..)])
 
