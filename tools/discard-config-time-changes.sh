@@ -8,7 +8,7 @@
 # Usage:
 #   ./tools/discard-config-time-changes.sh            # modified config.toml/stats.toml only
 #   ./tools/discard-config-time-changes.sh --all      # every tracked config.toml/stats.toml
-#                     (skips files whose top-level status changed to ok)
+#                     (only when *-time fields are the sole diff from HEAD)
 #   ./tools/discard-config-time-changes.sh --dry-run  # show what would change
 #
 set -euo pipefail
@@ -28,7 +28,7 @@ to their values in HEAD. Other lines in each config.toml or stats.toml are left 
 
 Options:
   --all       Process every tracked config.toml and stats.toml (default: only modified files).
-              Skips a file when its top-level status= changed to ok since HEAD.
+              With --all, only reverts *-time fields when those are the sole diff from HEAD.
   --dry-run   Print paths and diffs; do not write files
   -h, --help  Show this help
 EOF
@@ -52,27 +52,6 @@ file_ends_with_newline() {
 ensure_trailing_newline() {
   local file="$1"
   file_ends_with_newline "$file" || printf '\n' >>"$file"
-}
-
-# Top-level status= only (before the first [section]); empty if absent.
-top_level_status() {
-  local file="$1"
-  awk '
-    BEGIN { in_section = 0 }
-    /^[[:space:]]*\[/ { in_section = 1 }
-    !in_section && /^[[:space:]]*status[[:space:]]*=/ {
-      line = $0
-      sub(/^[[:space:]]*status[[:space:]]*=[[:space:]]*/, "", line)
-      sub(/[[:space:]]*#.*$/, "", line)
-      gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
-      if (line ~ /^"/) {
-        sub(/^"/, "", line)
-        sub(/".*$/, "", line)
-      }
-      print line
-      exit
-    }
-  ' "$file"
 }
 
 restore_time_fields() {
@@ -173,19 +152,15 @@ while IFS= read -r rel || [[ -n "$rel" ]]; do
 
   git show "HEAD:$rel" > "$head_tmp"
 
-  if [[ "$all_files" == true ]]; then
-    head_status="$(top_level_status "$head_tmp")"
-    work_status="$(top_level_status "$rel")"
-    if [[ "$work_status" == "ok" && "$head_status" != "ok" ]]; then
-      echo "SKIP (status changed to ok: '${head_status:-<none>}' -> '${work_status}'): $rel" >&2
-      ((skipped+=1))
-      rm -f "$head_tmp" "$out_tmp"
-      trap - RETURN
-      continue
-    fi
-  fi
-
   restore_time_fields "$head_tmp" "$rel" "$out_tmp"
+
+  if [[ "$all_files" == true ]] && ! cmp -s "$head_tmp" "$out_tmp"; then
+    echo "SKIP (non-time changes present): $rel" >&2
+    ((skipped+=1))
+    rm -f "$head_tmp" "$out_tmp"
+    trap - RETURN
+    continue
+  fi
 
   if cmp -s "$rel" "$out_tmp"; then
     ((skipped+=1))
