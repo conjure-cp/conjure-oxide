@@ -2,6 +2,7 @@ use conjure_cp::{
     ast::Metadata,
     ast::{
         Atom, DeclarationKind, Expression, Literal, Moo, Name, ReturnType, SymbolTable, Typeable,
+        eval_constant,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
@@ -11,7 +12,7 @@ use conjure_cp::{
 };
 use uniplate::Biplate;
 
-use super::utils::{is_all_constant, rewrite_children};
+use super::utils::rewrite_children;
 
 register_rule_set!("Bubble", ("Base"));
 
@@ -110,7 +111,7 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
 
 #[register_rule("Bubble", 6000, [UnsafeDiv])]
 fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    if is_all_constant(expr) {
+    if eval_constant(expr).is_some() {
         return Err(RuleNotApplicable);
     }
     if let Expression::UnsafeDiv(_, a, b) = expr {
@@ -144,7 +145,7 @@ fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 ///
 #[register_rule("Bubble", 6000, [UnsafeMod])]
 fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    if is_all_constant(expr) {
+    if eval_constant(expr).is_some() {
         return Err(RuleNotApplicable);
     }
     if let Expression::UnsafeMod(_, a, b) = expr {
@@ -178,7 +179,7 @@ fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 ///
 #[register_rule("Bubble", 6000, [UnsafePow])]
 fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    if is_all_constant(expr) {
+    if eval_constant(expr).is_some() {
         return Err(RuleNotApplicable);
     }
     if let Expression::UnsafePow(_, a, b) = expr.clone() {

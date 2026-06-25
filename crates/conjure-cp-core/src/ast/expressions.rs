@@ -1049,6 +1049,8 @@ impl Expression {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
                     Some(Domain::int(ranges))
+                } else if matches!(domain, GroundDomain::Empty(ReturnType::Int)) {
+                    Some(Domain::int(vec![Range::Single(0)]))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -1078,6 +1080,8 @@ impl Expression {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
                     Some(Domain::int(ranges))
+                } else if matches!(domain, GroundDomain::Empty(ReturnType::Int)) {
+                    Some(Domain::int(vec![Range::Single(0)]))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }

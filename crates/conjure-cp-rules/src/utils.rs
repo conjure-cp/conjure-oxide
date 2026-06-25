@@ -93,14 +93,6 @@ pub fn constant_record_names(expr: &Expr) -> Option<Vec<Name>> {
     }
 }
 
-/// True if the entire AST is constants.
-pub fn is_all_constant(expression: &Expr) -> bool {
-    expression
-        .universe_bi()
-        .into_iter()
-        .all(|atom| matches!(atom, Atom::Literal(_)))
-}
-
 /// Converts a vector of expressions to a vector of atoms.
 ///
 /// # Returns
