@@ -221,6 +221,10 @@ enum CacheEntry {
 ///
 /// Rewrite entries are transitively resolved: inserting `A -> B`, `B -> C`, then `C -> D`
 /// updates the observable cache result for `A`, `B`, and `C` to `D`.
+///
+/// A terminal entry describes its source expression only. In particular, `A -> B` followed by
+/// terminal `B` must remain a rewrite from `A` to `B`; terminality of the target never makes the
+/// source terminal.
 #[derive(Default)]
 struct RewriteCache {
     /// Level-qualified cache map. Terminal entries are stored here for exact-level lookups.
@@ -256,6 +260,15 @@ impl RewriteCache {
             level,
             symbol_context_hash,
         )
+    }
+
+    /// Removes terminal evidence for a source when stronger rewrite evidence is installed.
+    ///
+    /// This is needed for ancestor mappings: changing a child proves that the old ancestor maps to
+    /// a rebuilt ancestor even if that old shape was previously cached as terminal.
+    fn clear_terminal_fact(&mut self, node_hash: u64, symbol_context_hash: u64) {
+        let clean_key = Self::combine(node_hash, usize::MAX, symbol_context_hash);
+        self.clean_levels.remove(&clean_key);
     }
 
     /// Looks up a subtree at a rule-group level.
@@ -322,15 +335,15 @@ impl RewriteCache {
             }
             self.map.remove(&from_key);
         }
+        self.clear_terminal_fact(from_hash, symbol_context_hash);
 
         let resolved = match self.map.get(&to_key) {
             Some(CacheEntry::Rewrite(rewrite)) => CachedRewrite {
                 expr: rewrite.expr.clone(),
             },
-            Some(CacheEntry::Terminal) => {
-                self.map.insert(from_key, CacheEntry::Terminal);
-                return;
-            }
+            // Terminality belongs to `to_expr`, not to the source. The source still has to be
+            // replaced once before the terminal target can be reused.
+            Some(CacheEntry::Terminal) => CachedRewrite { expr: to_expr },
             None => CachedRewrite { expr: to_expr },
         };
 
@@ -1204,6 +1217,90 @@ mod tests {
                 CacheResult::Unknown | CacheResult::Terminal(_) => {
                     panic!("expected transitive rewrite cache hit")
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn rewrite_cache_preserves_rewrite_to_terminal_target() {
+        let a = int_lit(1);
+        let b = int_lit(2);
+        let mut cache = RewriteCache::default();
+        let context = 10;
+
+        cache.insert(&b, None, 0, context);
+        cache.insert(&a, Some(b.clone()), 0, context);
+
+        match cache.get(&a, 0, context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, b),
+            CacheResult::Unknown | CacheResult::Terminal(_) => {
+                panic!("terminal target must not make its source terminal")
+            }
+        }
+        assert!(matches!(
+            cache.get(&b, 0, context),
+            CacheResult::Terminal(0)
+        ));
+    }
+
+    #[test]
+    fn rewrite_cache_terminal_target_does_not_terminalise_existing_predecessor() {
+        let a = int_lit(1);
+        let b = int_lit(2);
+        let mut cache = RewriteCache::default();
+        let context = 10;
+
+        cache.insert(&a, Some(b.clone()), 0, context);
+        cache.insert(&b, None, 0, context);
+
+        match cache.get(&a, 0, context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, b),
+            CacheResult::Unknown | CacheResult::Terminal(_) => {
+                panic!("terminal target must not make its predecessor terminal")
+            }
+        }
+    }
+
+    #[test]
+    fn rewrite_cache_compresses_chain_ending_at_terminal_target() {
+        let a = int_lit(1);
+        let b = int_lit(2);
+        let c = int_lit(3);
+        let mut cache = RewriteCache::default();
+        let context = 10;
+
+        cache.insert(&c, None, 0, context);
+        cache.insert(&b, Some(c.clone()), 0, context);
+        cache.insert(&a, Some(b.clone()), 0, context);
+
+        for expr in [&a, &b] {
+            match cache.get(expr, 0, context) {
+                CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, c),
+                CacheResult::Unknown | CacheResult::Terminal(_) => {
+                    panic!("expected rewrite to terminal target")
+                }
+            }
+        }
+        assert!(matches!(
+            cache.get(&c, 0, context),
+            CacheResult::Terminal(0)
+        ));
+    }
+
+    #[test]
+    fn rewrite_cache_rewrite_overrides_stale_terminal_fact() {
+        let a = int_lit(1);
+        let b = int_lit(2);
+        let mut cache = RewriteCache::default();
+        let context = 10;
+
+        cache.insert(&a, None, 0, context);
+        cache.insert(&a, Some(b.clone()), 0, context);
+
+        match cache.get(&a, 0, context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, b),
+            CacheResult::Unknown | CacheResult::Terminal(_) => {
+                panic!("new rewrite evidence must override a stale terminal fact")
             }
         }
     }
