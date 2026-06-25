@@ -1272,7 +1272,14 @@ impl Display for GroundDomain {
                     write!(f, "int")
                 }
             }
-            GroundDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
+            GroundDomain::Set(attrs, inner_dom) => {
+                let attrs = attrs.to_string();
+                if attrs.is_empty() {
+                    write!(f, "set of {inner_dom}")
+                } else {
+                    write!(f, "set {attrs} of {inner_dom}")
+                }
+            }
             GroundDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
             GroundDomain::Sequence(attrs, inner_dom) => {
                 write!(f, "sequence {attrs} of {inner_dom}")

@@ -311,7 +311,14 @@ impl Display for UnresolvedDomain {
                     write!(f, "int")
                 }
             }
-            UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
+            UnresolvedDomain::Set(attrs, inner_dom) => {
+                let attrs = attrs.to_string();
+                if attrs.is_empty() {
+                    write!(f, "set of {inner_dom}")
+                } else {
+                    write!(f, "set {attrs} of {inner_dom}")
+                }
+            }
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
             UnresolvedDomain::Partition(attrs, inner_dom) => {
                 write!(f, "partition {attrs} from {inner_dom}")
