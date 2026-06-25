@@ -893,14 +893,8 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
-            Expression::Union(_, a, b) => Some(Domain::set(
-                SetAttr::<IntVal>::default(),
-                a.domain_of()?.union(&b.domain_of()?).ok()?,
-            )),
-            Expression::Intersect(_, a, b) => Some(Domain::set(
-                SetAttr::<IntVal>::default(),
-                a.domain_of()?.intersect(&b.domain_of()?).ok()?,
-            )),
+            Expression::Union(_, a, b) => a.domain_of()?.union(&b.domain_of()?).ok(),
+            Expression::Intersect(_, a, b) => a.domain_of()?.intersect(&b.domain_of()?).ok(),
             Expression::In(_, _, _) => Some(Domain::bool()),
             Expression::Supset(_, _, _) => Some(Domain::bool()),
             Expression::SupsetEq(_, _, _) => Some(Domain::bool()),
@@ -2576,9 +2570,8 @@ fn minus_operand_return_type(expr: &Expression) -> ReturnType {
 impl Typeable for Expression {
     fn return_type(&self) -> ReturnType {
         match self {
-            Expression::Union(_, subject, _) => ReturnType::Set(Box::new(subject.return_type())),
-            Expression::Intersect(_, subject, _) => {
-                ReturnType::Set(Box::new(subject.return_type()))
+            Expression::Union(_, subject, _) | Expression::Intersect(_, subject, _) => {
+                subject.return_type()
             }
             Expression::In(_, _, _) => ReturnType::Bool,
             Expression::Supset(_, _, _) => ReturnType::Bool,
