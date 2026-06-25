@@ -774,17 +774,18 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::Flatten(_, _, _) => Err(RuleNotApplicable), // TODO: check if anything can be done here
         Expr::AllDiff(m, e) => {
-            let Some(vec) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
+            let Some((vec, _)) = Moo::unwrap_or_clone(e.clone()).unwrap_matrix_unchecked() else {
                 return Err(RuleNotApplicable);
             };
 
-            let mut consts: HashSet<i32> = HashSet::new();
+            let mut consts: HashSet<Lit> = HashSet::new();
 
-            // check for duplicate constant values which would fail the constraint
+            // A fully constant allDiff can be decided immediately.
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr
-                    && !consts.insert(x)
-                {
+                let Expr::Atomic(_, Atom::Literal(lit)) = expr else {
+                    return Err(RuleNotApplicable);
+                };
+                if !consts.insert(lit) {
                     return Ok(RuleEffect::pure(Expr::Atomic(
                         m.clone(),
                         Atom::Literal(Lit::Bool(false)),
@@ -792,8 +793,10 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 }
             }
 
-            // nothing has changed
-            Err(RuleNotApplicable)
+            Ok(RuleEffect::pure(Expr::Atomic(
+                m.clone(),
+                Atom::Literal(Lit::Bool(true)),
+            )))
         }
         Expr::Neg(_, _) => Err(RuleNotApplicable),
         Expr::Factorial(_, _) => Err(RuleNotApplicable),
