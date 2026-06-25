@@ -326,13 +326,43 @@ fn replace_declaration_ptrs_in_expr(
     replacements_by_id: &HashMap<ObjId, DeclarationPtr>,
     replacements_by_name: &HashMap<Name, DeclarationPtr>,
 ) -> Expr {
-    expr.transform_bi(&|decl: DeclarationPtr| {
-        if let Some(replacement) = replacements_by_id.get(&decl.id()) {
-            return replacement.clone();
+    let rewritten = expr
+        .transform_bi(&|decl: DeclarationPtr| {
+            if let Some(replacement) = replacements_by_id.get(&decl.id()) {
+                return replacement.clone();
+            }
+
+            let name = decl.name().clone();
+            replacements_by_name.get(&name).cloned().unwrap_or(decl)
+        })
+        .transform_bi(&|reference: Reference| {
+            replace_reference(reference, replacements_by_id, replacements_by_name)
+        });
+
+    rewritten.transform_bi(&|mut comprehension: Comprehension| {
+        let shadowed_names = comprehension.quantified_vars();
+        let visible_replacements_by_name = replacements_by_name
+            .iter()
+            .filter(|(name, _)| !shadowed_names.contains(name))
+            .map(|(name, declaration)| (name.clone(), declaration.clone()))
+            .collect();
+
+        comprehension.return_expression = replace_declaration_ptrs_in_expr(
+            comprehension.return_expression,
+            replacements_by_id,
+            &visible_replacements_by_name,
+        );
+        for qualifier in &mut comprehension.qualifiers {
+            if let ComprehensionQualifier::Condition(condition) = qualifier {
+                *condition = replace_declaration_ptrs_in_expr(
+                    condition.clone(),
+                    replacements_by_id,
+                    &visible_replacements_by_name,
+                );
+            }
         }
 
-        let name = decl.name().clone();
-        replacements_by_name.get(&name).cloned().unwrap_or(decl)
+        comprehension
     })
 }
 
@@ -516,5 +546,51 @@ fn rewrite_int_value(
             replacements_by_name,
         );
         *expr = Moo::new(rewritten);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use conjure_cp::ast::{
+        Atom, Domain, Literal, SymbolTablePtr, comprehension::ComprehensionBuilder,
+    };
+
+    use super::*;
+
+    #[test]
+    fn replaces_references_in_expressions() {
+        let quantified = DeclarationPtr::new_quantified(Name::user("matrix_bools"), Domain::bool());
+        let replacement = DeclarationPtr::new_find(Name::Machine(0), Domain::bool());
+        let safe_index = Expr::SafeIndex(
+            Metadata::new(),
+            Moo::new(Expr::Atomic(
+                Metadata::new(),
+                Atom::new_ref(quantified.clone()),
+            )),
+            vec![Expr::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Int(1)),
+            )],
+        );
+        let inner_comprehension =
+            ComprehensionBuilder::new(SymbolTablePtr::new()).with_return_value(safe_index);
+        let expr = Expr::Comprehension(Metadata::new(), Moo::new(inner_comprehension));
+
+        let replacements_by_id = HashMap::from([(quantified.id(), replacement.clone())]);
+        let replacements_by_name =
+            HashMap::from([(quantified.name().clone(), replacement.clone())]);
+        let rewritten =
+            replace_declaration_ptrs_in_expr(expr, &replacements_by_id, &replacements_by_name);
+
+        let Expr::Comprehension(_, comprehension) = rewritten else {
+            panic!("expected a comprehension expression");
+        };
+        let Expr::SafeIndex(_, subject, _) = &comprehension.return_expression else {
+            panic!("expected a safe index return expression");
+        };
+        let Expr::Atomic(_, Atom::Reference(reference)) = subject.as_ref() else {
+            panic!("expected a reference subject");
+        };
+        assert_eq!(reference.id(), replacement.id());
     }
 }
