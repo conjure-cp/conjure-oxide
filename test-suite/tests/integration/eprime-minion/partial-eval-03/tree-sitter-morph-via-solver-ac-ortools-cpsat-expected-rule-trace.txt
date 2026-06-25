@@ -1,0 +1,93 @@
+Model before rewriting:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+find a: bool
+
+such that
+
+(sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([sum([z,x;int(1..)]),5;int(1..)]),50;int(1..4)]);int(1..)]) <= 40),
+(a = allDiff([x,y,z;int(1..3)])),
+(y <= z),
+(x <= y)
+
+--
+
+Final model:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+find a: bool
+find __0: int(2..10)
+find __1: int(2..10)
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+
+such that
+
+SumLeq([25, __0, x, y], 40),
+(a = __flat_alldiff([x, y, z])),
+(y <= z),
+(x <= y),
+__0 =aux __1,
+SumGeq([y, z], __1),
+SumGeq([x, y], __1),
+SumGeq([5, x, z], __1),
+(__1 <= 50),
+or([__2,__3,__4;int(1..)]),
+or([__5,__6,__7;int(1..)]),
+or([__8,__9,__10;int(1..)]),
+or([__11,__12,__13;int(1..)]),
+or([__14,__15,__16;int(1..)]),
+or([__17,__18,__19;int(1..)]),
+or([__20,__21,__22;int(1..)]),
+or([__23,__24,__25;int(1..)]),
+__2 =aux SumLeq([y, z], __1),
+__3 =aux SumLeq([x, y], __1),
+__4 =aux SumLeq([5, x, z], __1),
+__5 =aux SumLeq([y, z], __1),
+__6 =aux SumLeq([x, y], __1),
+__7 =aux SumGeq([5, x, z], __1),
+__8 =aux SumLeq([y, z], __1),
+__9 =aux SumGeq([x, y], __1),
+__10 =aux SumLeq([5, x, z], __1),
+__11 =aux SumLeq([y, z], __1),
+__12 =aux SumGeq([x, y], __1),
+__13 =aux SumGeq([5, x, z], __1),
+__14 =aux SumGeq([y, z], __1),
+__15 =aux SumLeq([x, y], __1),
+__16 =aux SumLeq([5, x, z], __1),
+__17 =aux SumGeq([y, z], __1),
+__18 =aux SumLeq([x, y], __1),
+__19 =aux SumGeq([5, x, z], __1),
+__20 =aux SumGeq([y, z], __1),
+__21 =aux SumGeq([x, y], __1),
+__22 =aux SumLeq([5, x, z], __1),
+__23 =aux SumGeq([y, z], __1),
+__24 =aux SumGeq([x, y], __1),
+__25 =aux SumGeq([5, x, z], __1)
+

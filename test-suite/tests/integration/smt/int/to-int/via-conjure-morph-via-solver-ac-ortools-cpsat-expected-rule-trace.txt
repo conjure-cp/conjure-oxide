@@ -1,0 +1,24 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+(product([toInt(x),toInt(y);int(1..2)]) = 1)
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find __0: int(0..1)
+find __1: int(0..1)
+
+such that
+
+FlatProductEq(__1,__0,1),
+__0 =aux toInt(x),
+__1 =aux toInt(y)
+

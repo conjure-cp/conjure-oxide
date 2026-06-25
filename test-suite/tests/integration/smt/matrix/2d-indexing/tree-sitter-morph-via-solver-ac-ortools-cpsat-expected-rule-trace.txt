@@ -1,0 +1,25 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+
+such that
+
+(sum([m[0, 0],m[1, 1];int(1..)]) = 2),
+(m[0, 1] = m[1, 0])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+find m#matrix_to_atom_0_0: int(0..1)
+find m#matrix_to_atom_0_1: int(0..1)
+find m#matrix_to_atom_1_0: int(0..1)
+find m#matrix_to_atom_1_1: int(0..1)
+
+such that
+
+SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
+SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
+(m#matrix_to_atom_0_1 = m#matrix_to_atom_1_0)
+

@@ -1,0 +1,47 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find g: bool
+find h: bool
+find x: bool
+find y: bool
+
+such that
+
+!((!(x)) -> (!(y))),
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find g: bool
+find h: bool
+find x: bool
+find y: bool
+find __0: bool
+find __1: bool
+
+such that
+
+!(x),
+y,
+(b) -> (a),
+(__0) -> (e),
+(__1) -> (g),
+__0 =aux and([c,d;int(1..)]),
+__1 =aux and([h,f;int(1..)])
+

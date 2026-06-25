@@ -1,0 +1,70 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+or([a,b;int(1..2)]),
+or([!(c),and([b,d;int(1..2)]);int(1..2)]),
+b,
+or([d,c;int(1..2)])
+
+--
+
+or([!(c),and([b,d;int(1..2)]);int(1..2)]), 
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__0,__1;int(1..2)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux !(c)
+  __1 =aux and([b,d;int(1..2)])
+
+--
+
+or([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([a,b;int(1..)])
+
+--
+
+or([__0,__1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([__0,__1;int(1..)])
+
+--
+
+or([d,c;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([d,c;int(1..)])
+
+--
+
+and([b,d;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([b,d;int(1..)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find __0: bool
+find __1: bool
+
+such that
+
+or([a,b;int(1..)]),
+or([__0,__1;int(1..)]),
+b,
+or([d,c;int(1..)]),
+__0 =aux !(c),
+__1 =aux and([b,d;int(1..)])
+

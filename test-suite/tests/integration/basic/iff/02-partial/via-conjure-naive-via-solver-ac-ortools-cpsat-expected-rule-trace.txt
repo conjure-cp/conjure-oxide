@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+and([(x) <-> (x),(false) <-> (y);int(1..2)])
+
+--
+
+and([(x) <-> (x),(false) <-> (y);int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([true,!(y);int(1..2)])
+
+--
+
+and([true,!(y);int(1..2)]), 
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([true,__0;int(1..2)])
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux !(y)
+
+--
+
+and([true,__0;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([true,__0;int(1..)])
+
+--
+
+and([true,__0;int(1..)]),
+__0 =aux !(y), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__0,
+__0 =aux !(y)
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find __0: bool
+
+such that
+
+__0,
+__0 =aux !(y)
+

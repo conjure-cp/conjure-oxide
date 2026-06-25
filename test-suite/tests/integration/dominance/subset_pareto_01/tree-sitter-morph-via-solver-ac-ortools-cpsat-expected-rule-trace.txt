@@ -1,0 +1,42 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+
+such that
+
+or([or([a,b;int(1..)]),c;int(1..)]),
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+
+such that
+
+or([a,b,c;int(1..)]),
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+or([__0,__1;int(1..)]),
+or([__2,__3;int(1..)]),
+__0 =aux !(a),
+__1 =aux !(d),
+__2 =aux !(b),
+__3 =aux !(e)
+

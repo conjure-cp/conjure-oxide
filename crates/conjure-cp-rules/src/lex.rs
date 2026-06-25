@@ -90,12 +90,19 @@ fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// If they are the same length, then the strictness of the comparison comes into effect.
 ///
 /// Must be applied before matrix_to_list since this enumerates over operand indices.
-#[register_rule("Smt", 2001, [LexLt, LexLeq])]
+#[register_rule(["Smt", "OrToolsCpSat"], 2001, [LexLt, LexLeq])]
 fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),
         _ => return Err(RuleNotApplicable),
     };
+
+    let or_eq = matches!(expr, Expr::LexLeq(..));
+
+    if let (Some(a_elems), Some(b_elems)) = (a.unwrap_list(), b.unwrap_list()) {
+        let new_expr = lex_lt_to_recursive_or_elems(&a_elems, &b_elems, or_eq);
+        return Ok(Reduction::pure(new_expr));
+    }
 
     let dom_a = a.domain_of().ok_or(RuleNotApplicable)?;
     let dom_b = b.domain_of().ok_or(RuleNotApplicable)?;
@@ -121,8 +128,6 @@ fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             .collect_vec(),
     );
 
-    // If strict, then the base case where they are equal
-    let or_eq = matches!(expr, Expr::LexLeq(..));
     let new_expr = lex_lt_to_recursive_or(a, b, &a_idxs, &b_idxs, or_eq);
     Ok(Reduction::pure(new_expr))
 }
@@ -145,6 +150,22 @@ fn lex_lt_to_recursive_or(
             let tail = lex_lt_to_recursive_or(a, b, a_tail, b_tail, allow_eq);
 
             essence_expr!(r"&a_at_idx < &b_at_idx \/ (&a_at_idx = &b_at_idx /\ &tail)")
+        }
+    }
+}
+
+fn lex_lt_to_recursive_or_elems(
+    a_elems: &[Expr],
+    b_elems: &[Expr],
+    allow_eq: bool,
+) -> Expr {
+    match (a_elems, b_elems) {
+        ([], []) => allow_eq.into(),
+        ([..], []) => false.into(),
+        ([], [..]) => true.into(),
+        ([a_val, a_tail @ ..], [b_val, b_tail @ ..]) => {
+            let tail = lex_lt_to_recursive_or_elems(a_tail, b_tail, allow_eq);
+            essence_expr!(r"&a_val < &b_val \/ (&a_val = &b_val /\ &tail)")
         }
     }
 }

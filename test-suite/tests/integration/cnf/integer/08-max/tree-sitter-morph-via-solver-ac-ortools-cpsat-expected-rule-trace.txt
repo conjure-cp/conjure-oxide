@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find a: int(1..5)
+find b: int(2..4)
+
+such that
+
+(max([a,b;int(1..2)]) >= 4)
+
+--
+
+Final model:
+
+find a: int(1..5)
+find b: int(2..4)
+find __0: int(2..5)
+find __1: int(2..5)
+find __2: bool
+find __3: bool
+
+such that
+
+(__0 >= 4),
+__0 =aux __1,
+(__1 >= a),
+(__1 >= b),
+or([__2,__3;int(1..)]),
+__2 =aux (__1 = a),
+__3 =aux (__1 = b)
+

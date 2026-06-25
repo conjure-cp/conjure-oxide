@@ -1,0 +1,43 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+find m2: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+
+such that
+
+(m = m2)
+
+--
+
+(m#matrix_to_atom = m2#matrix_to_atom), 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(m#matrix_to_atom = m2#matrix_to_atom)
+new variables:
+  find m#matrix_to_atom_0_0: int(0..1)
+  find m#matrix_to_atom_0_1: int(0..1)
+  find m#matrix_to_atom_1_0: int(0..1)
+  find m#matrix_to_atom_1_1: int(0..1)
+  find m2#matrix_to_atom_0_0: int(0..1)
+  find m2#matrix_to_atom_0_1: int(0..1)
+  find m2#matrix_to_atom_1_0: int(0..1)
+  find m2#matrix_to_atom_1_1: int(0..1)
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+find m2: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+find m#matrix_to_atom_0_0: int(0..1)
+find m#matrix_to_atom_0_1: int(0..1)
+find m#matrix_to_atom_1_0: int(0..1)
+find m#matrix_to_atom_1_1: int(0..1)
+find m2#matrix_to_atom_0_0: int(0..1)
+find m2#matrix_to_atom_0_1: int(0..1)
+find m2#matrix_to_atom_1_0: int(0..1)
+find m2#matrix_to_atom_1_1: int(0..1)
+
+such that
+
+(m#matrix_to_atom = m2#matrix_to_atom)
+

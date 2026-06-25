@@ -1,0 +1,28 @@
+Model before rewriting:
+
+find x: tuple (int(1..2), int(1..5))
+find y: tuple (int(2..5), int(1..5))
+
+such that
+
+(x != y)
+
+--
+
+Final model:
+
+find x: tuple (int(1..2), int(1..5))
+find y: tuple (int(2..5), int(1..5))
+find x#tuple_to_atom_1: int(1..2)
+find x#tuple_to_atom_2: int(1..5)
+find y#tuple_to_atom_1: int(2..5)
+find y#tuple_to_atom_2: int(1..5)
+find __0: bool
+find __1: bool
+
+such that
+
+or([__0,__1;int(1..)]),
+__0 =aux (x#tuple_to_atom_1 != y#tuple_to_atom_1),
+__1 =aux (x#tuple_to_atom_2 != y#tuple_to_atom_2)
+

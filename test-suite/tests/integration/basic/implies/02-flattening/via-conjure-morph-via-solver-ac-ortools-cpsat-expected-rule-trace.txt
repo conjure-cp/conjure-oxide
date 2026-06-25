@@ -1,0 +1,36 @@
+Model before rewriting:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+
+such that
+
+((x < 3)) -> ((y >= 5)),
+((sum([y,z;int(1..2)]) = 8)) -> ((sum([x,2;int(1..2)]) = 3))
+
+--
+
+Final model:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+
+such that
+
+(__0) -> ((y >= 5)),
+(__1) -> (and([__2,__3;int(1..)])),
+__0 =aux (x <= 2),
+__1 =aux and([__4,__5;int(1..)]),
+__2 =aux SumLeq([2, x], 3),
+__3 =aux SumGeq([2, x], 3),
+__4 =aux SumLeq([y, z], 8),
+__5 =aux SumGeq([y, z], 8)
+

@@ -777,7 +777,7 @@ impl Expression {
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, index) | Expression::SafeIndex(_, matrix, index) => {
-                let dom = matrix.domain_of()?;
+                let dom = DomainPtr::from(matrix.domain_of()?.resolve()?);
                 if let Some((elem_domain, _)) = dom.as_matrix() {
                     return Some(elem_domain);
                 }
@@ -793,10 +793,12 @@ impl Expression {
                     let index_expr = index.first()?;
                     return match index_expr {
                         Expression::Atomic(_, atom) => {
-                            let decl = atom.clone().into_declaration();
-                            for inner_dom in doms {
-                                if *decl.name() == inner_dom.name {
-                                    return Some(inner_dom.domain);
+                            if let crate::ast::Atom::Reference(reference) = atom {
+                                let decl = reference.clone().into_ptr();
+                                for inner_dom in doms {
+                                    if *decl.name() == inner_dom.name {
+                                        return Some(inner_dom.domain.clone());
+                                    }
                                 }
                             }
                             None
@@ -1814,10 +1816,15 @@ impl Expression {
 
     /// Returns the categories of all sub-expressions of self.
     pub fn universe_categories(&self) -> HashSet<Category> {
-        self.universe()
-            .into_iter()
-            .map(|x| x.category_of())
-            .collect()
+        let mut categories = HashSet::new();
+        categories.insert(self.category_of());
+        for atom in uniplate::Biplate::<Atom>::universe_bi(self) {
+            categories.insert(atom.category_of());
+        }
+        for decl in uniplate::Biplate::<DeclarationPtr>::universe_bi(self) {
+            categories.insert(decl.category_of());
+        }
+        categories
     }
 }
 

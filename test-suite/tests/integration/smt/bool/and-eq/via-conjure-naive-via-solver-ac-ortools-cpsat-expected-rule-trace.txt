@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(and([x,y;int(1..2)]) = and([y,z;int(1..2)]))
+
+--
+
+(and([x,y;int(1..2)]) = and([y,z;int(1..2)])), 
+   ~~> flatten_eq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__0 = __1)
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux and([x,y;int(1..2)])
+  __1 =aux and([y,z;int(1..2)])
+
+--
+
+and([x,y;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([x,y;int(1..)])
+
+--
+
+and([y,z;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([y,z;int(1..)])
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+find __1: bool
+
+such that
+
+(__0 = __1),
+__0 =aux and([x,y;int(1..)]),
+__1 =aux and([y,z;int(1..)])
+

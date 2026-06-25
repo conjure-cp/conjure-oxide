@@ -35,7 +35,7 @@ register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
 
 /// Inlines constant matrix references just for Minion so Base matrix rules can lower them
 /// without affecting other backends.
-#[register_rule("Minion", 9000, [SafeIndex])]
+#[register_rule(["Minion", "OrToolsCpSat"], 9000, [SafeIndex])]
 fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
@@ -686,7 +686,7 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// Introduces a `MinionPowEq` constraint from a `SafePow`
-#[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [Eq, AuxDeclaration])]
 fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b, total) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
@@ -890,7 +890,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
 ///
 /// 1. the subject is a list literal
 /// 2. the subject is one dimensional
-#[register_rule("Minion", 4400, [Eq, AuxDeclaration])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4400, [Eq, AuxDeclaration])]
 fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (equalto, subject, indices) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
@@ -966,7 +966,7 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```
 ///
 /// See [`introduce_reifyimply_ineq_from_imply`].
-#[register_rule("Minion", 4200, [Imply])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [Imply])]
 fn flatten_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(meta, x, y) = expr else {
         return Err(RuleNotApplicable);
@@ -985,7 +985,7 @@ fn flatten_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
-#[register_rule(["Minion", "OrToolsCpSat"], 4200, [SafeDiv, Neq, SafeMod, SafePow, Leq, Geq, Abs, Neg, Not, SafeIndex, InDomain, ToInt])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [SafeDiv, Neq, SafeMod, SafePow, Leq, Geq, Abs, Neg, Not, SafeIndex, InDomain, ToInt, Lt, Gt])]
 fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(
         expr,
@@ -1001,6 +1001,8 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             | Expr::SafeIndex(_, _, _)
             | Expr::InDomain(_, _, _)
             | Expr::ToInt(_, _)
+            | Expr::Lt(_, _, _)
+            | Expr::Gt(_, _, _)
     ) {
         return Err(RuleNotApplicable);
     }

@@ -1,0 +1,36 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
+
+such that
+
+allDiff(flatten(a)),
+(flatten(a)[1] = b[1]),
+(flatten(a)[2] = b[2]),
+(flatten(a)[3] = b[3]),
+(flatten(a)[4] = b[4])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
+find a#matrix_to_atom_1_1: int(1..4)
+find a#matrix_to_atom_1_2: int(1..4)
+find a#matrix_to_atom_2_1: int(1..4)
+find a#matrix_to_atom_2_2: int(1..4)
+find b#matrix_to_atom_1: int(1..4)
+find b#matrix_to_atom_2: int(1..4)
+find b#matrix_to_atom_3: int(1..4)
+find b#matrix_to_atom_4: int(1..4)
+
+such that
+
+__flat_alldiff([a#matrix_to_atom_1_1, a#matrix_to_atom_1_2, a#matrix_to_atom_2_1, a#matrix_to_atom_2_2]),
+(a#matrix_to_atom_1_1 = b#matrix_to_atom_1),
+(a#matrix_to_atom_1_2 = b#matrix_to_atom_2),
+(a#matrix_to_atom_2_1 = b#matrix_to_atom_3),
+(a#matrix_to_atom_2_2 = b#matrix_to_atom_4)
+

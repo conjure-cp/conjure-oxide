@@ -1,0 +1,91 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+
+such that
+
+(sum([m[0, 0],m[1, 1];int(1..2)]) = 2),
+(m[0, 1] = m[1, 0])
+
+--
+
+(sum([m#matrix_to_atom[0, 0],m#matrix_to_atom[1, 1];int(1..2)]) = 2),
+(m#matrix_to_atom[0, 1] = m#matrix_to_atom[1, 0]), 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(sum([m#matrix_to_atom[0, 0],m#matrix_to_atom[1, 1];int(1..2)]) = 2),
+(m#matrix_to_atom[0, 1] = m#matrix_to_atom[1, 0])
+new variables:
+  find m#matrix_to_atom_0_0: int(0..1)
+  find m#matrix_to_atom_0_1: int(0..1)
+  find m#matrix_to_atom_1_0: int(0..1)
+  find m#matrix_to_atom_1_1: int(0..1)
+
+--
+
+m#matrix_to_atom[0, 0], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[0, 0])
+
+--
+
+m#matrix_to_atom[1, 1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[1, 1])
+
+--
+
+m#matrix_to_atom[0, 1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[0, 1])
+
+--
+
+m#matrix_to_atom[1, 0], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[1, 0])
+
+--
+
+(sum([SafeIndex(m#matrix_to_atom,[0, 0]),SafeIndex(m#matrix_to_atom,[1, 1]);int(1..2)]) = 2),
+(SafeIndex(m#matrix_to_atom,[0, 1]) = SafeIndex(m#matrix_to_atom,[1, 0])), 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+(sum([m#matrix_to_atom_0_0,m#matrix_to_atom_1_1;int(1..2)]) = 2),
+(m#matrix_to_atom_0_1 = m#matrix_to_atom_1_0)
+
+--
+
+sum([m#matrix_to_atom_0_0,m#matrix_to_atom_1_1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([m#matrix_to_atom_0_0,m#matrix_to_atom_1_1;int(1..)])
+
+--
+
+(sum([m#matrix_to_atom_0_0,m#matrix_to_atom_1_1;int(1..)]) = 2), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2);int(1..)])
+
+--
+
+and([SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2);int(1..)]),
+(m#matrix_to_atom_0_1 = m#matrix_to_atom_1_0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
+SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
+(m#matrix_to_atom_0_1 = m#matrix_to_atom_1_0)
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+find m#matrix_to_atom_0_0: int(0..1)
+find m#matrix_to_atom_0_1: int(0..1)
+find m#matrix_to_atom_1_0: int(0..1)
+find m#matrix_to_atom_1_1: int(0..1)
+
+such that
+
+SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
+SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
+(m#matrix_to_atom_0_1 = m#matrix_to_atom_1_0)
+

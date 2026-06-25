@@ -63,3 +63,66 @@ fn flatten_logical(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::new(new_expr, new_tops, symbols))
 }
+
+/// Matrix a = b iff every index in the union of their indices has the same value.
+#[register_rule("OrToolsCpSat", 3000, [Eq, Neq])]
+fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    use conjure_cp::rule_engine::ApplicationError;
+    use conjure_cp::essence_expr;
+    use conjure_cp::ast::matrix;
+    use conjure_cp::ast::Atom;
+    use conjure_cp::ast::Expression;
+
+    let (a, b) = match expr {
+        Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
+        _ => return Err(ApplicationError::RuleNotApplicable),
+    };
+
+    let a_idx_domains = matrix::bound_index_domains_of_expr(a.as_ref()).ok_or(ApplicationError::RuleNotApplicable)?;
+    let b_idx_domains = matrix::bound_index_domains_of_expr(b.as_ref()).ok_or(ApplicationError::RuleNotApplicable)?;
+
+    // Only apply if the index domains are actually different, to avoid unnecessary expansion
+    // for standard same-domain matrix equality.
+    if a_idx_domains == b_idx_domains {
+        return Err(ApplicationError::RuleNotApplicable);
+    }
+
+    let pairs = matrix::enumerate_index_union_indices(&a_idx_domains, &b_idx_domains)
+        .map_err(|_| ApplicationError::DomainError)?
+        .map(|idx_lits| {
+            let idx_vec: Vec<_> = idx_lits
+                .into_iter()
+                .map(|lit| Atom::Literal(lit).into())
+                .collect();
+            (
+                Expression::UnsafeIndex(Metadata::new(), a.clone(), idx_vec.clone()),
+                Expression::UnsafeIndex(Metadata::new(), b.clone(), idx_vec),
+            )
+        });
+
+    let new_expr = match expr {
+        Expr::Eq(..) => {
+            let eqs: Vec<_> = pairs.map(|(a, b)| essence_expr!("&a = &b")).collect();
+            Expr::And(
+                Metadata::new(),
+                Moo::new(Expr::AbstractLiteral(
+                    Metadata::new(),
+                    AbstractLiteral::matrix_implied_indices(eqs),
+                )),
+            )
+        }
+        Expr::Neq(..) => {
+            let neqs: Vec<_> = pairs.map(|(a, b)| essence_expr!("&a != &b")).collect();
+            Expr::Or(
+                Metadata::new(),
+                Moo::new(Expr::AbstractLiteral(
+                    Metadata::new(),
+                    AbstractLiteral::matrix_implied_indices(neqs),
+                )),
+            )
+        }
+        _ => unreachable!(),
+    };
+
+    Ok(Reduction::pure(new_expr))
+}

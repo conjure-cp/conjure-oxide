@@ -1,0 +1,33 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(m >lex m2)
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+find m#matrix_to_atom_1: int(1..2)
+find m#matrix_to_atom_2: int(1..2)
+find m2#matrix_to_atom_1: int(1..2)
+find m2#matrix_to_atom_2: int(1..2)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+
+such that
+
+or([__0,__1;int(1..)]),
+or([__2,__3;int(1..)]),
+__0 =aux SumGeq([-1, m#matrix_to_atom_1], m2#matrix_to_atom_1),
+__1 =aux (m2#matrix_to_atom_1 = m#matrix_to_atom_1),
+__2 =aux SumGeq([-1, m#matrix_to_atom_1], m2#matrix_to_atom_1),
+__3 =aux SumGeq([-1, m#matrix_to_atom_2], m2#matrix_to_atom_2)
+

@@ -62,7 +62,7 @@ fn expand_qualifiers(
             let values = resolve_generator_values(&name, &domain)?;
 
             for literal in values {
-                with_temporary_quantified_binding(ptr, &literal, || {
+                with_temporary_quantified_binding(comprehension, ptr, &literal, || {
                     expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)
                 })?;
             }
@@ -97,15 +97,36 @@ fn resolve_generator_values(name: &Name, domain: &DomainPtr) -> Result<Vec<Liter
 }
 
 fn with_temporary_quantified_binding<T>(
+    comprehension: &Comprehension,
     quantified: &DeclarationPtr,
     value: &Literal,
     f: impl FnOnce() -> Result<T, SolverError>,
 ) -> Result<T, SolverError> {
+    use conjure_cp::ast::serde::HasId;
+    let target_name = quantified.name().clone();
     let mut targets = vec![quantified.clone()];
     if let DeclarationKind::Quantified(inner) = &*quantified.kind()
         && let Some(generator) = inner.generator()
     {
         targets.push(generator.clone());
+    }
+
+    for decl in uniplate::Biplate::<DeclarationPtr>::universe_bi(&comprehension.return_expression) {
+        if *decl.name() == target_name {
+            if !targets.iter().any(|t| t.id() == decl.id()) {
+                targets.push(decl.clone());
+            }
+        }
+    }
+
+    for qual in &comprehension.qualifiers {
+        for decl in uniplate::Biplate::<DeclarationPtr>::universe_bi(qual) {
+            if *decl.name() == target_name {
+                if !targets.iter().any(|t| t.id() == decl.id()) {
+                    targets.push(decl.clone());
+                }
+            }
+        }
     }
 
     let mut originals = Vec::with_capacity(targets.len());
@@ -139,10 +160,64 @@ fn evaluate_guard(guard: &Expression) -> Result<bool, SolverError> {
 }
 
 fn concretise_resolved_reference_atoms(expr: Expression) -> Expression {
+    let expr = transform_nested_comprehensions(expr);
     expr.transform_bi(&|atom: Atom| match atom {
         Atom::Reference(reference) => reference
             .resolve_constant()
             .map_or_else(|| Atom::Reference(reference), Atom::Literal),
         other => other,
     })
+}
+
+fn transform_nested_comprehensions(expr: Expression) -> Expression {
+    use conjure_cp::ast::{Moo, abstract_comprehension::{Qualifier, Generator}};
+    match expr {
+        Expression::Comprehension(meta, comp) => {
+            let mut comp_val = comp.as_ref().clone();
+            comp_val.return_expression = concretise_resolved_reference_atoms(comp_val.return_expression);
+            for qualifier in &mut comp_val.qualifiers {
+                match qualifier {
+                    ComprehensionQualifier::Condition(cond) => {
+                        *cond = concretise_resolved_reference_atoms(cond.clone());
+                    }
+                    _ => {}
+                }
+            }
+            Expression::Comprehension(meta, Moo::new(comp_val))
+        }
+        Expression::AbstractComprehension(meta, comp) => {
+            let mut comp_val = comp.as_ref().clone();
+            comp_val.return_expr = concretise_resolved_reference_atoms(comp_val.return_expr);
+            for qualifier in &mut comp_val.qualifiers {
+                match qualifier {
+                    Qualifier::Condition(cond) => {
+                        *cond = concretise_resolved_reference_atoms(cond.clone());
+                    }
+                    Qualifier::ComprehensionLetting(letting) => {
+                        letting.expression = concretise_resolved_reference_atoms(letting.expression.clone());
+                    }
+                    Qualifier::Generator(Generator::ExpressionGenerator(generator)) => {
+                        generator.expression = concretise_resolved_reference_atoms(generator.expression.clone());
+                    }
+                    _ => {}
+                }
+            }
+            Expression::AbstractComprehension(meta, Moo::new(comp_val))
+        }
+        other => {
+            let (tree, recons) = uniplate::Uniplate::uniplate(&other);
+            let mapped_tree = map_tree(tree, &transform_nested_comprehensions);
+            recons(mapped_tree)
+        }
+    }
+}
+
+fn map_tree(tree: uniplate::Tree<Expression>, f: &dyn Fn(Expression) -> Expression) -> uniplate::Tree<Expression> {
+    match tree {
+        uniplate::Tree::Zero => uniplate::Tree::Zero,
+        uniplate::Tree::One(val) => uniplate::Tree::One(f(val)),
+        uniplate::Tree::Many(children) => uniplate::Tree::Many(
+            children.into_iter().map(|child| map_tree(child, f)).collect()
+        ),
+    }
 }

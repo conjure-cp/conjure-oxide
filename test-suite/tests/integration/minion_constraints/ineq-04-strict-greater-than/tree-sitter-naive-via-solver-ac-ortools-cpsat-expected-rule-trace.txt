@@ -9,6 +9,18 @@ such that
 
 --
 
+(y > x), 
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+(sum([y,-1;int(1..)]) >= x)
+
+--
+
+(sum([y,-1;int(1..)]) >= x), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, y], x)
+
+--
+
 Final model:
 
 find x: int(1..4)
@@ -16,5 +28,5 @@ find y: int(1..4)
 
 such that
 
-(y > x)
+SumGeq([-1, y], x)
 

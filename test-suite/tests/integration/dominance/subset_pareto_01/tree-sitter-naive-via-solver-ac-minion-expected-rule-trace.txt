@@ -1,0 +1,76 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+
+such that
+
+or([or([a,b;int(1..)]),c;int(1..)]),
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+
+--
+
+or([or([a,b;int(1..)]),c;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([a,b,c;int(1..)])
+
+--
+
+!(and([a,d;int(1..)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(a),!(d);int(1..)])
+
+--
+
+!(and([b,e;int(1..)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(b),!(e);int(1..)])
+
+--
+
+!(a), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(a,false)
+
+--
+
+!(d), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(d,false)
+
+--
+
+!(b), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(b,false)
+
+--
+
+!(e), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(e,false)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+
+such that
+
+or([a,b,c;int(1..)]),
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+or([WatchedLiteral(a,false),WatchedLiteral(d,false);int(1..)]),
+or([WatchedLiteral(b,false),WatchedLiteral(e,false);int(1..)])
+

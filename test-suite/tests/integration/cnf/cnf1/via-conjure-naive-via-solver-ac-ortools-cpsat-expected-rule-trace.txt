@@ -1,0 +1,80 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)])
+
+--
+
+and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)]), 
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..2)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux or([a,b;int(1..2)])
+  __1 =aux or([!(a),b;int(1..2)])
+
+--
+
+or([!(a),b;int(1..2)]), 
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__2,b;int(1..2)])
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux !(a)
+
+--
+
+and([__0,__1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([__0,__1;int(1..)])
+
+--
+
+and([__0,__1;int(1..)]),
+__0 =aux or([a,b;int(1..2)]),
+__1 =aux or([__2,b;int(1..2)]),
+__2 =aux !(a), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__0,
+__1,
+__0 =aux or([a,b;int(1..2)]),
+__1 =aux or([__2,b;int(1..2)]),
+__2 =aux !(a)
+
+--
+
+or([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([a,b;int(1..)])
+
+--
+
+or([__2,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([__2,b;int(1..)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find __0: bool
+find __1: bool
+find __2: bool
+
+such that
+
+__0,
+__1,
+__0 =aux or([a,b;int(1..)]),
+__1 =aux or([__2,b;int(1..)]),
+__2 =aux !(a)
+

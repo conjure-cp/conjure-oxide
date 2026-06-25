@@ -1,0 +1,45 @@
+Model before rewriting:
+
+find a: int(1..4)
+find b: int(1..4)
+find x: int(1..4)
+
+such that
+
+(max([a,b;int(1..2)]) >= 2),
+(x = sum([max([a,b;int(1..2)]),1;int(1..2)]))
+
+--
+
+Final model:
+
+find a: int(1..4)
+find b: int(1..4)
+find x: int(1..4)
+find __0: int(1..4)
+find __1: int(1..4)
+find __2: int(1..4)
+find __3: bool
+find __4: bool
+find __5: int(1..4)
+find __6: bool
+find __7: bool
+
+such that
+
+(__0 >= 2),
+SumLeq([1, __1], x),
+SumGeq([1, __1], x),
+__0 =aux __2,
+__1 =aux __5,
+(__2 >= a),
+(__2 >= b),
+or([__3,__4;int(1..)]),
+__3 =aux (__2 = a),
+__4 =aux (__2 = b),
+(__5 >= a),
+(__5 >= b),
+or([__6,__7;int(1..)]),
+__6 =aux (__5 = a),
+__7 =aux (__5 = b)
+

@@ -1,0 +1,80 @@
+Model before rewriting:
+
+find a: int(-3..3)
+find c: int(-1..5)
+
+such that
+
+and([(sum([a,2;int(1..2)]) = c),(sum([2,0;int(1..2)]) = 2);int(1..2)])
+
+--
+
+and([(sum([a,2;int(1..2)]) = c),(sum([2,0;int(1..2)]) = 2);int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([(sum([a,2;int(1..2)]) = c),true;int(1..2)])
+
+--
+
+and([(sum([a,2;int(1..2)]) = c),true;int(1..2)]), 
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,true;int(1..2)])
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux (sum([a,2;int(1..2)]) = c)
+
+--
+
+and([__0,true;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([__0,true;int(1..)])
+
+--
+
+and([__0,true;int(1..)]),
+__0 =aux (sum([a,2;int(1..2)]) = c), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__0,
+__0 =aux (sum([a,2;int(1..2)]) = c)
+
+--
+
+sum([a,2;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([a,2;int(1..)])
+
+--
+
+(sum([a,2;int(1..)]) = c), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([2, a], c),SumGeq([2, a], c);int(1..)])
+
+--
+
+and([SumLeq([2, a], c),SumGeq([2, a], c);int(1..)]), 
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__1,__2;int(1..)])
+new variables:
+  find __1: bool
+  find __2: bool
+new constraints:
+  __1 =aux SumLeq([2, a], c)
+  __2 =aux SumGeq([2, a], c)
+
+--
+
+Final model:
+
+find a: int(-3..3)
+find c: int(-1..5)
+find __0: bool
+find __1: bool
+find __2: bool
+
+such that
+
+__0,
+__0 =aux and([__1,__2;int(1..)]),
+__1 =aux SumLeq([2, a], c),
+__2 =aux SumGeq([2, a], c)
+

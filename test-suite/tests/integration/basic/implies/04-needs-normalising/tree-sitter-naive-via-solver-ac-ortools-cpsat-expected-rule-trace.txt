@@ -1,0 +1,116 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find g: bool
+find h: bool
+find x: bool
+find y: bool
+
+such that
+
+!((!(x)) -> (!(y))),
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+
+--
+
+!((!(x)) -> (!(y))), 
+   ~~> normalise_implies_negation ([("Base", 8800)])
+and([!(x),!(!(y));int(1..)])
+
+--
+
+and([!(x),!(!(y));int(1..)]),
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+!(x),
+!(!(y)),
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+
+--
+
+(!(a)) -> (!(b)), 
+   ~~> normalise_implies_contrapositive ([("Base", 8800)])
+(b) -> (a)
+
+--
+
+((h) -> (f)) -> ((h) -> (g)), 
+   ~~> normalise_implies_left_distributivity ([("Base", 8800)])
+(h) -> ((f) -> (g))
+
+--
+
+!(!(y)), 
+   ~~> remove_double_negation ([("Base", 8400)])
+y
+
+--
+
+(c) -> ((d) -> (e)), 
+   ~~> normalise_implies_uncurry ([("Base", 8400)])
+(and([c,d;int(1..)])) -> (e)
+
+--
+
+(h) -> ((f) -> (g)), 
+   ~~> normalise_implies_uncurry ([("Base", 8400)])
+(and([h,f;int(1..)])) -> (g)
+
+--
+
+(and([c,d;int(1..)])) -> (e), 
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__0) -> (e)
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux and([c,d;int(1..)])
+
+--
+
+(and([h,f;int(1..)])) -> (g), 
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__1) -> (g)
+new variables:
+  find __1: bool
+new constraints:
+  __1 =aux and([h,f;int(1..)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find g: bool
+find h: bool
+find x: bool
+find y: bool
+find __0: bool
+find __1: bool
+
+such that
+
+!(x),
+y,
+(b) -> (a),
+(__0) -> (e),
+(__1) -> (g),
+__0 =aux and([c,d;int(1..)]),
+__1 =aux and([h,f;int(1..)])
+
