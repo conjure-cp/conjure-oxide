@@ -1100,7 +1100,7 @@ fn indexed_element_id_inverse_lookup(
     let GroundDomain::Int(value_ranges) = value_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
-    let value_values = Range::values(&value_ranges)
+    let value_values = Range::values(value_ranges)
         .ok_or(RuleNotApplicable)?
         .collect_vec();
     let max_value = value_values
