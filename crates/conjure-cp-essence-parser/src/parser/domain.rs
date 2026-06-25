@@ -8,7 +8,7 @@ use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Domain, DomainPtr, Expression, FieldEntry, IntVal, Moo, Name, Range,
+    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, Moo, Name, Range,
     Reference, SetAttr,
 };
 use tree_sitter::Node;
@@ -207,15 +207,16 @@ fn parse_int_domain(
     if all_resolved {
         let ranges: Vec<Range<i32>> = ranges_unresolved
             .into_iter()
-            .filter_map(|r| match r {
-                Range::Single(IntVal::Const(v)) => Some(Range::Single(v)),
-                Range::Bounded(IntVal::Const(l), IntVal::Const(u)) if l > u => None,
-                Range::Bounded(IntVal::Const(l), IntVal::Const(u)) => Some(Range::Bounded(l, u)),
-                Range::UnboundedR(IntVal::Const(l)) => Some(Range::UnboundedR(l)),
-                Range::UnboundedL(IntVal::Const(u)) => Some(Range::UnboundedL(u)),
-                Range::Unbounded => Some(Range::Unbounded),
-                _ => unreachable!("all_resolved should be true only if all are Const"),
-            })
+            .map(|r| r.resolve())
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| {
+                FatalParseError::internal_error(
+                    format!("could not resolve range: {e}"),
+                    Some(int_domain.range()),
+                )
+            })?
+            .into_iter()
+            .filter(|range| !matches!(range, Range::Bounded(lower, upper) if lower > upper))
             .collect();
 
         ctx.add_span_and_doc_hover(&int_keyword_node, "L_int", SymbolKind::Domain, None, None);
@@ -235,7 +236,7 @@ fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, F
     if matches!(node.kind(), "atom" | "integer") {
         let text = &ctx.source_code[node.start_byte()..node.end_byte()];
         if let Ok(integer) = text.parse::<i32>() {
-            return Ok(Some(IntVal::Const(integer)));
+            return Ok(Some(IntVal::new_const(integer)));
         }
     }
 
@@ -260,12 +261,12 @@ fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, F
     };
 
     if let Expression::Atomic(_, Atom::Reference(reference)) = &expr
-        && let Some(reference_val) = IntVal::new_ref(reference)
+        && let Ok(reference_val) = IntVal::new_ref(reference)
     {
         return Ok(Some(reference_val));
     }
 
-    Ok(IntVal::new_expr(Moo::new(expr)))
+    Ok(IntVal::new_expr(Moo::new(expr)).ok())
 }
 
 fn parse_tuple_domain(
@@ -328,7 +329,7 @@ fn parse_record_domain(
     ctx: &mut ParseContext,
     record_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
-    let mut record_entries: Vec<FieldEntry> = Vec::new();
+    let mut record_entries: Vec<Field<DomainPtr>> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let Some(name_node) = field!(recover, ctx, record_entry, "name") else {
             return Ok(None);
@@ -337,10 +338,10 @@ fn parse_record_domain(
         let Some(domain_node) = field!(recover, ctx, record_entry, "domain") else {
             return Ok(None);
         };
-        let Some(domain) = parse_domain(ctx, domain_node)? else {
+        let Some(value) = parse_domain(ctx, domain_node)? else {
             return Ok(None);
         };
-        record_entries.push(FieldEntry { name, domain });
+        record_entries.push(Field { name, value });
     }
 
     // Adding record keyword to the source map with hover info from documentation

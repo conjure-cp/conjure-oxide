@@ -26,7 +26,7 @@ fn unwrap_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     let dom = m.domain_of().ok_or(RuleNotApplicable)?;
-    let Some(GroundDomain::Matrix(val_domain, index_domains)) =
+    let Ok(GroundDomain::Matrix(val_domain, index_domains)) =
         dom.resolve().map(Moo::unwrap_or_clone)
     else {
         return Err(RuleNotApplicable);

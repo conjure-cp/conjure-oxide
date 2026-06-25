@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
@@ -9,9 +11,12 @@ use crate::parser::dominance::parse_pareto_expression;
 use crate::parser::global_constraints::ELEMENT_ID;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
+
 use conjure_cp_core::ast::{
     Atom, DeclarationKind, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+    ReturnType, Typeable,
 };
+
 use tree_sitter::Node;
 use ustr::Ustr;
 
@@ -281,18 +286,43 @@ fn parse_index_or_slice(
     // Save current context and temporarily set to Unknown for the collection
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
-    let Some(collection_node) = field!(recover, ctx, node, "collection") else {
-        return Ok(None);
-    };
-    let Some(collection) = parse_atom(ctx, &collection_node)? else {
-        return Ok(None);
-    };
+    let mut collection: Expression;
+    match parse_atom(ctx, &field!(node, "collection"))? {
+        Some(expr) => collection = expr,
+        None => return Ok(None),
+    }
     ctx.typechecking_context = saved_context;
+
+    let indices_field = field!(node, "indices");
+    let mut idx_nodes = named_children(&indices_field).collect::<VecDeque<_>>();
+
+    // If LHS is a record, parse first index as a record field
+    if let ReturnType::Record(ents) = collection.return_type() {
+        let idx = idx_nodes
+            .pop_front()
+            .ok_or(FatalParseError::internal_error(
+                "Expected at least one indexing expression".into(),
+                Some(indices_field.range()),
+            ))?;
+        let name = Name::user(ctx.source_code[idx.start_byte()..idx.end_byte()].trim());
+        let has_name = ents.iter().any(|e| e.name == name);
+        if !has_name {
+            return Err(FatalParseError::internal_error(
+                format!("`{name}` is not a valid field name for `{collection}`"),
+                Some(idx.range()),
+            ));
+        }
+        collection = Expression::RecordField(Metadata::new(), Moo::new(collection), name);
+
+        // If there are no more indices, return the record field directly
+        if idx_nodes.is_empty() {
+            return Ok(Some(collection));
+        }
+    }
+
+    // Parse the rest of the indices as normal
     let mut indices = Vec::new();
-    let Some(indices_node) = field!(recover, ctx, node, "indices") else {
-        return Ok(None);
-    };
-    for idx_node in named_children(&indices_node) {
+    for idx_node in idx_nodes {
         indices.push(parse_index(ctx, &idx_node)?);
     }
 
@@ -364,7 +394,6 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
                 DeclarationKind::DomainLetting(_) => SymbolKind::LettingVar,
                 DeclarationKind::Quantified(..) => SymbolKind::FindVar,
                 DeclarationKind::QuantifiedExpr(..) => SymbolKind::FindVar,
-                DeclarationKind::Field(_) => SymbolKind::Decimal,
                 &_ => todo!(),
             };
 
@@ -416,7 +445,7 @@ fn typecheck_variable(
 
     // Get the variable's domain and resolve it
     let domain = decl.domain()?;
-    let ground_domain = domain.resolve()?;
+    let ground_domain = domain.resolve().ok()?;
 
     // Determine what type is expected
     let expected = match context {

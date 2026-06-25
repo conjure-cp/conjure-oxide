@@ -3,7 +3,6 @@ use conjure_cp::ast::GroundDomain;
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::SymbolTable;
 use conjure_cp::into_matrix_expr;
-use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
@@ -16,21 +15,16 @@ use conjure_cp::ast::Name;
 use conjure_cp::rule_engine::ApplicationError;
 use itertools::izip;
 
-//takes a safe index expression and converts it to an atom via the representation rules
-#[register_rule("Base", 2000, [SafeIndex])]
+// takes a record field access and converts it to an atom via the representation rules
+#[register_rule("Base", 2000, [RecordField])]
 fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // annoyingly, let chaining only works in if-lets, not let-elses,otherwise I could avoid the
+    // annoyingly, let chaining only works in if-lets, not let-elses, otherwise I could avoid the
     // indentation here!
-    if let Expr::SafeIndex(_, subject, indices) = expr
+    if let Expr::RecordField(_, subject, field_name) = expr
         && let Expr::Atomic(_, Atom::Reference(decl)) = &**subject
         && let Name::WithRepresentation(name, reprs) = &decl.name() as &Name
     {
         if reprs.first().is_none_or(|x| x.as_str() != "record_to_atom") {
-            return Err(RuleNotApplicable);
-        }
-
-        // tuples are always one dimensional
-        if indices.len() != 1 {
             return Err(RuleNotApplicable);
         }
 
@@ -39,23 +33,19 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
             .unwrap()[0]
             .clone();
 
-        let Some(GroundDomain::Record(_)) = decl.resolved_domain().as_deref() else {
+        // bind the domain to a variable so the borrowed entries outlive this statement
+        let domain = decl.resolved_domain();
+        let Some(GroundDomain::Record(entries)) = domain.as_deref() else {
             return Err(RuleNotApplicable);
         };
 
-        assert_eq!(
-            indices.len(),
-            1,
-            "record indexing is always one dimensional"
-        );
-
-        let index = indices[0].clone();
-
-        // during the conversion from unsafe index to safe index in bubbling
-        // we convert the field name to a literal integer for direct access
-        let Some(index) = index.into_literal() else {
-            return Err(RuleNotApplicable); // we don't support non-literal indices
+        // find the numerical index of the field name in the record, and convert it to an integer
+        // literal for direct access (the representation indexes its variables by integer)
+        let Some(idx) = entries.iter().position(|entry| &entry.name == field_name) else {
+            return Err(RuleNotApplicable);
         };
+
+        let index = Literal::Int(idx as i32 + 1);
 
         let indices_as_name = Name::Represented(Box::new((
             name.as_ref().clone(),
@@ -66,88 +56,6 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
         Ok(RuleEffect::pure(subject))
-    } else {
-        Err(RuleNotApplicable)
-    }
-}
-
-#[register_rule("Bubble", 8000, [UnsafeIndex])]
-fn record_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // annoyingly, let chaining only works in if-lets, not let-elses,otherwise I could avoid the
-    // indentation here!
-    if let Expr::UnsafeIndex(_, subject, indices) = expr
-        && let Expr::Atomic(_, Atom::Reference(decl)) = &**subject
-        && let Name::WithRepresentation(_, reprs) = &decl.name() as &Name
-    {
-        if reprs.first().is_none_or(|x| x.as_str() != "record_to_atom") {
-            return Err(RuleNotApplicable);
-        }
-
-        let domain = subject
-            .domain_of()
-            .ok_or(ApplicationError::DomainError)?
-            .resolve()
-            .ok_or(ApplicationError::DomainError)?;
-
-        let GroundDomain::Record(elems) = domain.as_ref() else {
-            return Err(RuleNotApplicable);
-        };
-
-        assert_eq!(
-            indices.len(),
-            1,
-            "record indexing is always one dimensional"
-        );
-
-        let index = indices[0].clone();
-
-        let Expr::Atomic(_, Atom::Reference(decl)) = index else {
-            return Err(RuleNotApplicable);
-        };
-
-        let name: &Name = &decl.name();
-
-        // find what numerical index in elems matches the entry name
-        let Some(idx) = elems.iter().position(|x| &x.name == name) else {
-            return Err(RuleNotApplicable);
-        };
-
-        // converting to an integer for direct access
-        let idx = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(idx as i32 + 1)));
-
-        let bubble_constraint = Moo::new(Expression::And(
-            Metadata::new(),
-            Moo::new(matrix_expr![
-                Expression::Leq(
-                    Metadata::new(),
-                    Moo::new(idx.clone()),
-                    Moo::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Literal(Literal::Int(elems.len() as i32))
-                    ))
-                ),
-                Expression::Geq(
-                    Metadata::new(),
-                    Moo::new(idx.clone()),
-                    Moo::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Literal(Literal::Int(1))
-                    ))
-                )
-            ]),
-        ));
-
-        let new_expr = Moo::new(Expression::SafeIndex(
-            Metadata::new(),
-            subject.clone(),
-            Vec::from([idx]),
-        ));
-
-        Ok(RuleEffect::pure(Expression::Bubble(
-            Metadata::new(),
-            new_expr,
-            bubble_constraint,
-        )))
     } else {
         Err(RuleNotApplicable)
     }
@@ -184,23 +92,11 @@ fn record_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     {
         let mut equality_constraints = vec![];
         // unroll the equality into equality constraints for each field
-        for i in 0..entries.len() {
-            let left_elem = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::clone(left),
-                vec![Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int((i + 1) as i32)),
-                )],
-            );
-            let right_elem = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::clone(right),
-                vec![Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int((i + 1) as i32)),
-                )],
-            );
+        for entry in entries {
+            let left_elem =
+                Expression::RecordField(Metadata::new(), Moo::clone(left), entry.name.clone());
+            let right_elem =
+                Expression::RecordField(Metadata::new(), Moo::clone(right), entry.name.clone());
 
             equality_constraints.push(Expression::Eq(
                 Metadata::new(),
@@ -250,23 +146,11 @@ fn record_to_const(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             }
         }
         let mut equality_constraints = vec![];
-        for i in 0..entries.len() {
-            let left_elem = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::clone(left),
-                vec![Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int((i + 1) as i32)),
-                )],
-            );
-            let right_elem = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::clone(right),
-                vec![Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int((i + 1) as i32)),
-                )],
-            );
+        for entry in entries {
+            let left_elem =
+                Expression::RecordField(Metadata::new(), Moo::clone(left), entry.name.clone());
+            let right_elem =
+                Expression::RecordField(Metadata::new(), Moo::clone(right), entry.name.clone());
 
             equality_constraints.push(Expression::Eq(
                 Metadata::new(),

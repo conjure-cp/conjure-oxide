@@ -488,7 +488,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
         UnresolvedDomain::Record(entries) => {
             for entry in entries {
                 rewrite_int_ranges_in_domain_ptr(
-                    &mut entry.domain,
+                    &mut entry.value,
                     replacements_by_id,
                     replacements_by_name,
                 );
@@ -502,7 +502,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
         UnresolvedDomain::Variant(entries) => {
             for entry in entries {
                 rewrite_int_ranges_in_domain_ptr(
-                    &mut entry.domain,
+                    &mut entry.value,
                     replacements_by_id,
                     replacements_by_name,
                 );

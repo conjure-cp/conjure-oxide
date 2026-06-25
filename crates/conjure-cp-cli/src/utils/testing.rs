@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::path::Path;
 use std::{io, mem, vec};
 
-use conjure_cp::ast::records::FieldValue;
+use conjure_cp::ast::records::Field;
 use conjure_cp::ast::serde::ObjId;
 use conjure_cp::bug;
 use itertools::Itertools as _;
@@ -383,14 +383,14 @@ pub fn normalize_solutions_for_comparison(
                                 let entries = entries
                                     .into_iter()
                                     .map(|x| {
-                                        let FieldValue { name, value } = x;
+                                        let Field { name, value } = x;
                                         {
                                             let value = match value {
                                                 Literal::Bool(false) => Literal::Int(0),
                                                 Literal::Bool(true) => Literal::Int(1),
                                                 x => x,
                                             };
-                                            FieldValue { name, value }
+                                            Field { name, value }
                                         }
                                     })
                                     .collect_vec();

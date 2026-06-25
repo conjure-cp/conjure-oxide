@@ -895,7 +895,7 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
     let Some(domain) = expr.domain_of() else {
         return TypecheckingContext::Unknown;
     };
-    let Some(ground) = domain.resolve() else {
+    let Ok(ground) = domain.resolve() else {
         return TypecheckingContext::Unknown;
     };
 

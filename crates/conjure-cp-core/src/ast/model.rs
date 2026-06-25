@@ -445,9 +445,6 @@ impl Display for Model {
                 DeclarationKind::QuantifiedExpr(expr) => {
                     writeln!(f, "quantified expr {name} <- {}", expr)?;
                 }
-                DeclarationKind::Field(_) => {
-                    // We do not want to print anything, as it will be in the domains
-                }
             }
         }
 

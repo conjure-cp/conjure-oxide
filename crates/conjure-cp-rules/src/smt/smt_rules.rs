@@ -19,7 +19,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let dom = domain.resolve().ok_or(RuleNotApplicable)?;
+    let dom = domain.resolve().map_err(|_| RuleNotApplicable)?;
     let new_expr = match dom.as_ref() {
         // Bool values are always in the bool domain
         GroundDomain::Bool => Ok(Expr::Atomic(
@@ -240,8 +240,14 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let dom_a = a.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
-    let dom_b = b.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+    let dom_a = a
+        .domain_of()
+        .and_then(|d| d.resolve().ok())
+        .ok_or(DomainError)?;
+    let dom_b = b
+        .domain_of()
+        .and_then(|d| d.resolve().ok())
+        .ok_or(DomainError)?;
 
     let GroundDomain::Set(_, elem_dom_a) = dom_a.as_ref() else {
         return Err(RuleNotApplicable);
@@ -282,8 +288,14 @@ fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let dom_a = a.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
-    let dom_b = b.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+    let dom_a = a
+        .domain_of()
+        .and_then(|d| d.resolve().ok())
+        .ok_or(DomainError)?;
+    let dom_b = b
+        .domain_of()
+        .and_then(|d| d.resolve().ok())
+        .ok_or(DomainError)?;
 
     let GroundDomain::Set(_, elem_dom_a) = dom_a.as_ref() else {
         return Err(RuleNotApplicable);

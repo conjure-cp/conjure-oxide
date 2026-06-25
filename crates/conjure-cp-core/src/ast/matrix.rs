@@ -254,7 +254,7 @@ pub fn resolved_index_domains(
 ) -> Result<Vec<Moo<GroundDomain>>, DomainOpError> {
     index_domains(matrix)
         .into_iter()
-        .map(|d| d.resolve().ok_or(DomainOpError::NotGround))
+        .map(|d| d.resolve())
         .try_collect()
 }
 
@@ -384,7 +384,7 @@ pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64)
 /// the literal's realised size in that dimension. For non-literals, this falls back to the
 /// expression's resolved domain.
 pub fn bound_index_domains_of_expr(expr: &Expr) -> Option<Vec<Moo<GroundDomain>>> {
-    let dom = expr.domain_of().and_then(|dom| dom.resolve())?;
+    let dom = expr.domain_of().and_then(|dom| dom.resolve().ok())?;
     let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
         return None;
     };

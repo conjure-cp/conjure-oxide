@@ -2,51 +2,26 @@ use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FieldEntry, FuncAttr, HasDomain, Literal, Moo, RelAttr,
-    SetAttr, Typeable,
+    AbstractLiteral, DomainOpError, FuncAttr, HasDomain, Literal, Moo, Name, RelAttr, SetAttr,
+    Typeable,
     domains::{domain::Int, range::Range},
+    matrix,
+    records::Field,
 };
 use crate::range;
 use crate::utils::count_combinations;
-use conjure_cp_core::ast::{Name, ReturnType};
+use conjure_cp_core::ast::ReturnType;
+use funcmap::FuncMap;
 use itertools::{Itertools, izip};
 use num_traits::ToPrimitive;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use uniplate::Uniplate;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
-#[path_prefix(conjure_cp::ast)]
-pub struct FieldEntryGround {
-    pub name: Name,
-    pub domain: Moo<GroundDomain>,
-}
-
-impl From<FieldEntryGround> for FieldEntry {
-    fn from(value: FieldEntryGround) -> Self {
-        FieldEntry {
-            name: value.name,
-            domain: value.domain.into(),
-        }
-    }
-}
-
-impl TryFrom<FieldEntry> for FieldEntryGround {
-    type Error = DomainOpError;
-
-    fn try_from(value: FieldEntry) -> Result<Self, Self::Error> {
-        match value.domain.as_ref() {
-            Domain::Ground(gd) => Ok(FieldEntryGround {
-                name: value.name,
-                domain: gd.clone(),
-            }),
-            Domain::Unresolved(_) => Err(DomainOpError::NotGround),
-        }
-    }
-}
+pub(super) type FieldGround = Field<Moo<GroundDomain>>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
 #[path_prefix(conjure_cp::ast)]
@@ -67,7 +42,7 @@ pub enum GroundDomain {
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
-    Record(Vec<FieldEntryGround>),
+    Record(Vec<FieldGround>),
     /// A Partition
     Partition(PartitionAttr, Moo<GroundDomain>),
     /// A sequence of elements drawn from the inner domain
@@ -77,7 +52,7 @@ pub enum GroundDomain {
     /// A relation as a set of tuples
     Relation(RelAttr, Vec<Moo<GroundDomain>>),
     /// A variant domain with its domain options (reusing field entries)
-    Variant(Vec<FieldEntryGround>),
+    Variant(Vec<FieldGround>),
 }
 
 impl GroundDomain {
@@ -118,9 +93,6 @@ impl GroundDomain {
             (GroundDomain::Matrix(_, _), _) | (_, GroundDomain::Matrix(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
-            (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
-                Err(DomainOpError::WrongType)
-            }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
                 let mut inners = Vec::new();
                 for (in1, in2) in zip(in1s, in2s) {
@@ -131,20 +103,25 @@ impl GroundDomain {
             (GroundDomain::Tuple(_), _) | (_, GroundDomain::Tuple(_)) => {
                 Err(DomainOpError::WrongType)
             }
-            // TODO: Eventually we may define semantics for joining record domains. This day is not today.
-            #[allow(unreachable_patterns)]
-            // Technically redundant but logically clearer to have both
+            (GroundDomain::Record(in1s), GroundDomain::Record(in2s))
+                if in1s.len() == in2s.len() =>
+            {
+                let lhs_fields: BTreeMap<&Name, &Moo<GroundDomain>> =
+                    in1s.iter().map(|x| (&x.name, &x.value)).collect();
+                let rhs_fields: BTreeMap<&Name, &Moo<GroundDomain>> =
+                    in2s.iter().map(|x| (&x.name, &x.value)).collect();
+                let mut new_fields = Vec::with_capacity(in1s.len());
+                for (n, d) in lhs_fields {
+                    let d2 = rhs_fields.get(&n).ok_or(DomainOpError::WrongType)?;
+                    let dom = d.union(d2)?;
+                    new_fields.push(Field {
+                        name: n.clone(),
+                        value: dom.into(),
+                    });
+                }
+                Ok(GroundDomain::Record(new_fields))
+            }
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
-                Err(DomainOpError::WrongType)
-            }
-            #[allow(unreachable_patterns)]
-            // Technically redundant but logically clearer to have both
-            (GroundDomain::Variant(_), _) | (_, GroundDomain::Variant(_)) => {
-                Err(DomainOpError::WrongType)
-            }
-            #[allow(unreachable_patterns)]
-            // Technically redundant but logically clearer to have both
-            (GroundDomain::Function(_, _, _), _) | (_, GroundDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
             (GroundDomain::Relation(_, in1s), GroundDomain::Relation(_, in2s)) => {
@@ -154,12 +131,24 @@ impl GroundDomain {
                 }
                 Ok(GroundDomain::Tuple(inners))
             }
-            (GroundDomain::Relation(_, _), _) | (_, GroundDomain::Relation(_, _)) => {
+            (GroundDomain::Relation(..), _) | (_, GroundDomain::Relation(..)) => {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
-            (GroundDomain::Partition(_, _), _) | (_, GroundDomain::Partition(_, _)) => {
-                Err(DomainOpError::WrongType)
+            (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
+                todo!("union sequence domains")
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Variant(_), _) | (_, GroundDomain::Variant(_)) => {
+                todo!("union variant domains")
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Function(..), _) | (_, GroundDomain::Function(..)) => {
+                todo!("union function domains")
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Partition(..), _) | (_, GroundDomain::Partition(..)) => {
+                todo!("union partition domains")
             }
         }
     }
@@ -236,7 +225,7 @@ impl GroundDomain {
         match self {
             GroundDomain::Empty(_) => Ok(Box::new(vec![].into_iter())),
             GroundDomain::Bool => Ok(Box::new(
-                vec![Literal::from(true), Literal::from(false)].into_iter(),
+                vec![Literal::from(false), Literal::from(true)].into_iter(),
             )),
             GroundDomain::Int(rngs) => {
                 let rng_iters = rngs
@@ -248,10 +237,93 @@ impl GroundDomain {
                     rng_iters.into_iter().flat_map(|ri| ri.map(Literal::from)),
                 ))
             }
-            GroundDomain::Matrix(elem_domain, index_domains) => Ok(Box::new(
-                enumerate_matrix_values(elem_domain.as_ref(), index_domains)?.into_iter(),
-            )),
-            _ => todo!("Enumerating nested domains is not yet supported"),
+            GroundDomain::Matrix(elem_dom, idx_doms) => {
+                let shape = matrix::shape_of_dom(self)?;
+                let idx_doms = idx_doms.clone();
+
+                // Collect all possible element values
+                let elem_values: Vec<Literal> = elem_dom.values()?.collect();
+
+                // Generate all possible cell assignments in lexicographic order
+                let iter = std::iter::repeat_n(elem_values, shape.size)
+                    .multi_cartesian_product()
+                    .map(move |flat_elems| {
+                        matrix::unflatten_matrix::<Literal>(&flat_elems, &idx_doms, &shape.strides)
+                    });
+
+                Ok(Box::new(iter))
+            }
+            GroundDomain::Tuple(elem_doms) => {
+                // Collect the possible values for each element
+                let elem_value_pools: Vec<Vec<Literal>> = elem_doms
+                    .iter()
+                    .map(|d| d.values().map(|it| it.collect()))
+                    .collect::<Result<_, _>>()?;
+
+                // Generate all combinations in lexicographic order
+                let iter = elem_value_pools
+                    .into_iter()
+                    .multi_cartesian_product()
+                    .map(|elems| Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)));
+
+                Ok(Box::new(iter))
+            }
+            GroundDomain::Record(entries) => {
+                // Sort entries by name
+                let mut sorted: Vec<&_> = entries.iter().collect();
+                sorted.sort_by(|a, b| a.name.cmp(&b.name));
+
+                let names: Vec<_> = sorted.iter().map(|e| e.name.clone()).collect();
+                let value_pools: Vec<Vec<Literal>> = sorted
+                    .iter()
+                    .map(|e| e.value.values().map(|it| it.collect()))
+                    .collect::<Result<_, _>>()?;
+
+                // Generate all combinations in lexicographic order
+                let iter = value_pools
+                    .into_iter()
+                    .multi_cartesian_product()
+                    .map(move |vals| {
+                        let record_entries = names
+                            .iter()
+                            .cloned()
+                            .zip(vals)
+                            .map(|(name, value)| Field { name, value })
+                            .collect();
+                        Literal::AbstractLiteral(AbstractLiteral::Record(record_entries))
+                    });
+
+                Ok(Box::new(iter))
+            }
+            GroundDomain::Set(attrs, inner_dom) => {
+                let n: Int = inner_dom.len_usize()?.try_into()?;
+                let min_sz = attrs.size.low().copied().unwrap_or(0);
+                let max_sz = attrs.size.high().copied().unwrap_or(n);
+
+                let pool = inner_dom.values()?.collect_vec();
+
+                Ok(Box::new(
+                    (min_sz..=max_sz)
+                        .flat_map(move |sz| pool.clone().into_iter().combinations(sz as usize))
+                        .map(|elems| Literal::AbstractLiteral(AbstractLiteral::Set(elems))),
+                ))
+            }
+            GroundDomain::MSet(..) => todo!("Enumerating multi-set domains is not yet supported"),
+            GroundDomain::Function(..) => {
+                todo!("Enumerating function domains is not yet supported")
+            }
+            GroundDomain::Partition(..) => {
+                todo!("Enumerating partition domains is not yet supported")
+            }
+            GroundDomain::Relation(..) => {
+                todo!("Enumerating relation domains is not yet supported")
+            }
+            GroundDomain::Sequence(..) => {
+                todo!("Enumerating sequence domains is not yet supported")
+            }
+            GroundDomain::Variant(..) => {
+                todo!("Enumerating variant domains is not yet supported")
+            }
         }
     }
 
@@ -331,7 +403,7 @@ impl GroundDomain {
                 // A record is just a named tuple
                 let mut ans = 1u64;
                 for entry in entries {
-                    let sz = entry.domain.length()?;
+                    let sz = entry.value.length()?;
                     ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)
@@ -350,7 +422,7 @@ impl GroundDomain {
             GroundDomain::Variant(entries) => {
                 let mut ans = 1u64;
                 for entry in entries {
-                    let sz = entry.domain.length()?;
+                    let sz = entry.value.length()?;
                     // Only one field can be in the variant at once
                     ans = ans.checked_add(sz).ok_or(DomainOpError::TooLarge)?;
                 }
@@ -520,7 +592,7 @@ impl GroundDomain {
 
                     for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
                         if entry.name != lit_entry.name
-                            || !(entry.domain.contains(&lit_entry.value)?)
+                            || !(entry.value.contains(&lit_entry.value)?)
                         {
                             return Ok(false);
                         }
@@ -553,7 +625,7 @@ impl GroundDomain {
                 Literal::AbstractLiteral(AbstractLiteral::Variant(lit_entry)) => {
                     for entry in entries {
                         if entry.name == lit_entry.name
-                            && !(entry.domain.contains(&lit_entry.value)?)
+                            && !(entry.value.contains(&lit_entry.value)?)
                         {
                             return Ok(true);
                         }
@@ -1084,7 +1156,7 @@ impl GroundDomain {
 
                 Ok(GroundDomain::Record(
                     izip!(field_names, elem_domains)
-                        .map(|(name, domain)| FieldEntryGround { name, domain })
+                        .map(|(name, value)| FieldGround { name, value })
                         .collect(),
                 ))
             }
@@ -1152,22 +1224,22 @@ impl Typeable for GroundDomain {
                 }
                 ReturnType::Tuple(inner_types)
             }
+            GroundDomain::Function(_, dom, cdom) => {
+                ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
+            }
             GroundDomain::Record(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.return_type());
+                    entry_types.push(entry.clone().func_map(|x| x.return_type()));
                 }
                 ReturnType::Record(entry_types)
-            }
-            GroundDomain::Function(_, dom, cdom) => {
-                ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
             GroundDomain::Variant(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.return_type());
+                    entry_types.push(entry.clone().func_map(|x| x.return_type()));
                 }
-                ReturnType::Record(entry_types)
+                ReturnType::Variant(entry_types)
             }
             GroundDomain::Relation(_, inners) => {
                 let mut inner_types = Vec::new();
@@ -1178,6 +1250,12 @@ impl Typeable for GroundDomain {
             }
             GroundDomain::Partition(_, inner) => ReturnType::Set(Box::new(inner.return_type())),
         }
+    }
+}
+
+impl Display for FieldGround {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.name, self.value)
     }
 }
 
@@ -1210,27 +1288,15 @@ impl Display for GroundDomain {
                 write!(f, "tuple ({})", &domains.iter().join(", "))
             }
             GroundDomain::Record(entries) => {
-                write!(
-                    f,
-                    "record {{{}}}",
-                    entries
-                        .iter()
-                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
-                        .join(", ")
-                )
+                let inners = entries.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "record {{{inners}}}",)
+            }
+            GroundDomain::Variant(entries) => {
+                let inners = entries.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "variant {{{inners}}}",)
             }
             GroundDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
-            }
-            GroundDomain::Variant(entries) => {
-                write!(
-                    f,
-                    "variant {{{}}}",
-                    entries
-                        .iter()
-                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
-                        .join(", ")
-                )
             }
             GroundDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
@@ -1242,28 +1308,284 @@ impl Display for GroundDomain {
     }
 }
 
-fn enumerate_matrix_values(
-    elem_domain: &GroundDomain,
-    index_domains: &[Moo<GroundDomain>],
-) -> Result<Vec<Literal>, DomainOpError> {
-    let Some((current_index_domain, remaining_index_domains)) = index_domains.split_first() else {
-        panic!("a matrix should have at least one index domain");
-    };
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::Name;
+    use crate::{domain_int_ground, matrix_lit};
 
-    let current_dimension_len =
-        usize::try_from(current_index_domain.length()?).map_err(|_| DomainOpError::TooLarge)?;
+    #[test]
+    fn matrix_values_1d_bool_of_bool() {
+        // matrix indexed by [bool] of bool
+        // 2 cells, 2 possible values => 2^2 = 4 matrices
+        let dom = GroundDomain::Matrix(
+            Moo::new(GroundDomain::Bool),
+            vec![Moo::new(GroundDomain::Bool)],
+        );
 
-    let entry_values = if remaining_index_domains.is_empty() {
-        elem_domain.values()?.collect_vec()
-    } else {
-        enumerate_matrix_values(elem_domain, remaining_index_domains)?
-    };
+        let values: Vec<Literal> = dom.values().unwrap().collect();
 
-    Ok((0..current_dimension_len)
-        .map(|_| entry_values.iter().cloned())
-        .multi_cartesian_product()
-        .map(|elems| {
-            Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, current_index_domain.clone()))
-        })
-        .collect())
+        assert_eq!(values.len(), 4);
+        assert_eq!(
+            values[0],
+            matrix_lit![false, false; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[1],
+            matrix_lit![false, true; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[2],
+            matrix_lit![true, false; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[3],
+            matrix_lit![true, true; Moo::new(GroundDomain::Bool)]
+        );
+    }
+
+    #[test]
+    fn matrix_values_1d_int() {
+        // matrix indexed by [int(1..2)] of int(0..1)
+        // 2 cells, 2 possible values => 4 matrices
+        let dom = GroundDomain::Matrix(domain_int_ground!(0..1), vec![domain_int_ground!(1..2)]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 4);
+        assert_eq!(values[0], matrix_lit![0, 0; domain_int_ground!(1..2)]);
+        assert_eq!(values[1], matrix_lit![0, 1; domain_int_ground!(1..2)]);
+        assert_eq!(values[2], matrix_lit![1, 0; domain_int_ground!(1..2)]);
+        assert_eq!(values[3], matrix_lit![1, 1; domain_int_ground!(1..2)]);
+    }
+
+    #[test]
+    fn matrix_values_2d_lexicographic() {
+        // matrix indexed by [int(1..2), int(1..2)] of int(0..1)
+        // 4 cells, 2 possible values => 2^4 = 16 matrices
+        let dom = GroundDomain::Matrix(
+            domain_int_ground!(0..1),
+            vec![domain_int_ground!(1..2), domain_int_ground!(1..2)],
+        );
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 16);
+
+        // First: [[0,0],[0,0]]
+        assert_eq!(
+            values[0],
+            matrix_lit![[0, 0], [0, 0]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Second: [[0,0],[0,1]]
+        assert_eq!(
+            values[1],
+            matrix_lit![[0, 0], [0, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Third: [[0,0],[1,0]]
+        assert_eq!(
+            values[2],
+            matrix_lit![[0, 0], [1, 0]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Fourth: [[0,0],[1,1]]
+        assert_eq!(
+            values[3],
+            matrix_lit![[0, 0], [1, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Last: [[1,1],[1,1]]
+        assert_eq!(
+            values[15],
+            matrix_lit![[1, 1], [1, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+    }
+
+    #[test]
+    fn matrix_values_count_matches_length() {
+        // matrix indexed by [int(1..3)] of int(0..1)
+        // 3 cells, 2 possible values => 2^3 = 8 matrices
+        let dom = GroundDomain::Matrix(domain_int_ground!(0..1), vec![domain_int_ground!(1..3)]);
+
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+
+        assert_eq!(count as u64, length);
+    }
+
+    #[test]
+    fn tuple_values_two_bools() {
+        // tuple of (bool, bool) => 2*2 = 4 values
+        let dom = GroundDomain::Tuple(vec![
+            Moo::new(GroundDomain::Bool),
+            Moo::new(GroundDomain::Bool),
+        ]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 4);
+        let t = |a, b| {
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                Literal::Bool(a),
+                Literal::Bool(b),
+            ]))
+        };
+        assert_eq!(values[0], t(false, false));
+        assert_eq!(values[1], t(false, true));
+        assert_eq!(values[2], t(true, false));
+        assert_eq!(values[3], t(true, true));
+    }
+
+    #[test]
+    fn tuple_values_mixed_domains() {
+        // tuple of (bool, int(0..2)) => 2*3 = 6 values, lexicographic
+        let dom = GroundDomain::Tuple(vec![Moo::new(GroundDomain::Bool), domain_int_ground!(0..2)]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 6);
+        let t = |b: bool, i: i32| {
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                Literal::Bool(b),
+                Literal::Int(i),
+            ]))
+        };
+        // bool false first, then ints 0,1,2
+        assert_eq!(values[0], t(false, 0));
+        assert_eq!(values[1], t(false, 1));
+        assert_eq!(values[2], t(false, 2));
+        // then bool true
+        assert_eq!(values[3], t(true, 0));
+        assert_eq!(values[4], t(true, 1));
+        assert_eq!(values[5], t(true, 2));
+    }
+
+    #[test]
+    fn tuple_values_count_matches_length() {
+        let dom = GroundDomain::Tuple(vec![
+            domain_int_ground!(1..3),
+            Moo::new(GroundDomain::Bool),
+            domain_int_ground!(0..1),
+        ]);
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+        assert_eq!(count as u64, length);
+    }
+
+    #[test]
+    fn record_values_lexicographic_by_name() {
+        // record {b: bool, a: int(0..1)}
+        // Entries should be ordered by name: a first, then b
+        let dom = GroundDomain::Record(vec![
+            Field {
+                name: Name::user("b"),
+                value: Moo::new(GroundDomain::Bool),
+            },
+            Field {
+                name: Name::user("a"),
+                value: domain_int_ground!(0..1),
+            },
+        ]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        // 2 * 2 = 4 values
+        assert_eq!(values.len(), 4);
+
+        // Entries should be sorted by name: "a" before "b"
+        let r = |a_val: i32, b_val: bool| {
+            Literal::AbstractLiteral(AbstractLiteral::Record(vec![
+                Field {
+                    name: Name::user("a"),
+                    value: Literal::Int(a_val),
+                },
+                Field {
+                    name: Name::user("b"),
+                    value: Literal::Bool(b_val),
+                },
+            ]))
+        };
+
+        // "a" (int) varies slowest, "b" (bool) varies fastest
+        assert_eq!(values[0], r(0, false));
+        assert_eq!(values[1], r(0, true));
+        assert_eq!(values[2], r(1, false));
+        assert_eq!(values[3], r(1, true));
+    }
+
+    #[test]
+    fn record_values_count_matches_length() {
+        let dom = GroundDomain::Record(vec![
+            Field {
+                name: Name::user("x"),
+                value: domain_int_ground!(1..3),
+            },
+            Field {
+                name: Name::user("y"),
+                value: Moo::new(GroundDomain::Bool),
+            },
+        ]);
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+        assert_eq!(count as u64, length);
+    }
+
+    fn set_lit(elems: Vec<i32>) -> Literal {
+        Literal::AbstractLiteral(AbstractLiteral::Set(
+            elems.into_iter().map(Literal::Int).collect(),
+        ))
+    }
+
+    #[test]
+    fn set_values_unbounded() {
+        // set of int(1..3) => all 2^3 = 8 subsets, in order of ascending size
+        let dom = GroundDomain::Set(SetAttr::default(), domain_int_ground!(1..3));
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 8);
+        assert_eq!(values[0], set_lit(vec![])); // size 0
+        assert_eq!(values[1], set_lit(vec![1])); // size 1
+        assert_eq!(values[2], set_lit(vec![2]));
+        assert_eq!(values[3], set_lit(vec![3]));
+        assert_eq!(values[4], set_lit(vec![1, 2])); // size 2
+        assert_eq!(values[5], set_lit(vec![1, 3]));
+        assert_eq!(values[6], set_lit(vec![2, 3]));
+        assert_eq!(values[7], set_lit(vec![1, 2, 3])); // size 3
+    }
+
+    #[test]
+    fn set_values_fixed_size() {
+        // set (size 2) of int(1..3) => the 3 two-element subsets
+        let dom = GroundDomain::Set(SetAttr::new_size(2), domain_int_ground!(1..3));
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 3);
+        assert_eq!(values[0], set_lit(vec![1, 2]));
+        assert_eq!(values[1], set_lit(vec![1, 3]));
+        assert_eq!(values[2], set_lit(vec![2, 3]));
+    }
+
+    #[test]
+    fn set_values_bounded_size() {
+        // set (minSize 1, maxSize 2) of int(1..3) => subsets of size 1 and 2
+        let dom = GroundDomain::Set(SetAttr::new_min_max_size(1, 2), domain_int_ground!(1..3));
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 6);
+        assert_eq!(values[0], set_lit(vec![1]));
+        assert_eq!(values[1], set_lit(vec![2]));
+        assert_eq!(values[2], set_lit(vec![3]));
+        assert_eq!(values[3], set_lit(vec![1, 2]));
+        assert_eq!(values[4], set_lit(vec![1, 3]));
+        assert_eq!(values[5], set_lit(vec![2, 3]));
+    }
+
+    #[test]
+    fn set_values_count_matches_length() {
+        let dom = GroundDomain::Set(SetAttr::default(), domain_int_ground!(1..4));
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+        assert_eq!(count as u64, length);
+    }
 }

@@ -1,10 +1,11 @@
 use crate::ast::{DomainOpError, domains::Int};
+use funcmap::{FuncMap, TryFuncMap};
 use num_traits::Num;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Range<A = Int> {
     Single(A),
@@ -218,7 +219,10 @@ impl<A: Num + Ord + Clone> Range<A> {
     pub fn join(&self, other: &Range<A>) -> Option<Range<A>> {
         if self.joins(other) {
             let lo = Ord::min(self.low(), other.low());
-            let hi = Ord::max(self.high(), other.high());
+            let hi = match (self.high(), other.high()) {
+                (Some(a), Some(b)) => Some(Ord::max(a, b)),
+                _ => None,
+            };
             return Some(Range::new(lo.cloned(), hi.cloned()));
         }
         None
@@ -278,12 +282,43 @@ impl<A: Num + Ord + Clone> Range<A> {
         }
     }
 
+    /// Lazily iterate all values in a list of ranges
     pub fn values(rngs: &[Range<A>]) -> Option<impl Iterator<Item = A>> {
         let itrs = rngs
             .iter()
             .map(Range::iter)
             .collect::<Option<Vec<RangeIterator<A>>>>()?;
         Some(itrs.into_iter().flatten())
+    }
+
+    /// True if the list of ranges is contiguous
+    pub fn is_contiguous(rngs: &[Range<A>]) -> bool {
+        Self::squeeze(rngs).len() <= 1
+    }
+
+    /// Lowest value from a sequence of ranges
+    pub fn low_of(rngs: &[Range<A>]) -> Option<&A> {
+        let mut low = rngs.first()?.low()?;
+        for rng in rngs {
+            low = Ord::min(low, rng.low()?);
+        }
+        Some(low)
+    }
+
+    /// Lowest value from a sequence of ranges
+    pub fn high_of(rngs: &[Range<A>]) -> Option<&A> {
+        let mut hi = rngs.first()?.high()?;
+        for rng in rngs {
+            hi = Ord::min(hi, rng.low()?);
+        }
+        Some(hi)
+    }
+
+    /// Total number of values across a slice of ranges.
+    /// Returns `None` if any range is unbounded.
+    pub fn total_length(rngs: &[Range<A>]) -> Option<A> {
+        rngs.iter()
+            .try_fold(A::zero(), |acc, r| Some(acc + r.length()?))
     }
 }
 
@@ -464,5 +499,17 @@ mod test {
             Range::spanning(&[range!(..0), range!(2..)]),
             Range::Unbounded
         );
+    }
+
+    #[test]
+    pub fn test_range_join() {
+        assert_eq!(range!(1..3).join(&range!(2..4)), Some(range!(1..4)));
+        assert_eq!(range!(1..3).join(&range!(3..4)), Some(range!(1..4)));
+        assert_eq!(range!(1..3).join(&range!(4..5)), Some(range!(1..5)));
+        assert_eq!(range!(..3).join(&range!(4..5)), Some(range!(..5)));
+        assert_eq!(range!(1..3).join(&range!(4..)), Some(range!(1..)));
+        assert_eq!(range!(4..).join(&range!(1..3)), Some(range!(1..)));
+        assert_eq!(range!(..3).join(&range!(4..)), Some(Range::Unbounded));
+        assert_eq!(range!(1..3).join(&range!(5..6)), None);
     }
 }

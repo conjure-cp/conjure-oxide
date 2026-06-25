@@ -960,7 +960,7 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
         .domain_of()
         .ok_or(RuleNotApplicable)?
         .resolve()
-        .ok_or(RuleNotApplicable)?;
+        .map_err(|_| RuleNotApplicable)?;
     let GroundDomain::Int(_) = domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
@@ -1096,11 +1096,11 @@ fn indexed_element_id_inverse_lookup(
     }
 
     let value_domain = value_expr.domain_of().ok_or(RuleNotApplicable)?;
-    let value_domain = value_domain.resolve().ok_or(RuleNotApplicable)?;
+    let value_domain = value_domain.resolve().map_err(|_| RuleNotApplicable)?;
     let GroundDomain::Int(value_ranges) = value_domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
-    let value_values = Range::values(value_ranges)
+    let value_values = Range::values(&value_ranges)
         .ok_or(RuleNotApplicable)?
         .collect_vec();
     let max_value = value_values
@@ -1128,7 +1128,7 @@ fn indexed_element_id_inverse_lookup(
 }
 
 fn pad_represented_element_id_list(atom_list: Vec<Atom>, result: &Reference) -> Option<Vec<Atom>> {
-    let result_domain = result.domain()?.resolve()?;
+    let result_domain = result.domain()?.resolve().ok()?;
     let GroundDomain::Int(result_ranges) = result_domain.as_ref() else {
         return None;
     };
@@ -1173,7 +1173,7 @@ fn indexed_element_id_literal_parts(matrix_expr: &Expr) -> Option<(Vec<i32>, Moo
     match matrix_expr {
         Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elems, index_domain)) => Some((
             elems.iter().map(expr_int_literal).collect::<Option<_>>()?,
-            index_domain.resolve()?,
+            index_domain.resolve().ok()?,
         )),
         Expr::Atomic(
             _,
@@ -1211,7 +1211,10 @@ fn literal_matrix_int_values(atoms: &[Atom]) -> Option<Vec<i32>> {
 }
 
 fn element_id_value_may_be_outside_matrix(value_expr: &Expr, search_values: &[i32]) -> bool {
-    let Some(value_domain) = value_expr.domain_of().and_then(|domain| domain.resolve()) else {
+    let Some(value_domain) = value_expr
+        .domain_of()
+        .and_then(|domain| domain.resolve().ok())
+    else {
         return true;
     };
     let Ok(value_values) = value_domain.values_i32() else {
@@ -1231,7 +1234,7 @@ fn element_id_table_rows(
         .domain_of()
         .ok_or(RuleNotApplicable)?
         .resolve()
-        .ok_or(RuleNotApplicable)?;
+        .map_err(|_| RuleNotApplicable)?;
     let value_values = value_domain.values_i32().map_err(|_| RuleNotApplicable)?;
     let sentinel = i32::try_from(search_values.len()).map_err(|_| RuleNotApplicable)? + 1;
     let value_to_index: HashMap<i32, i32> = search_values
@@ -1437,8 +1440,8 @@ fn constant_fold_indomain_element_id(expr: &Expr, _: &SymbolTable) -> Applicatio
         .domain_of()
         .ok_or(RuleNotApplicable)?
         .resolve()
-        .ok_or(RuleNotApplicable)?;
-    let domain = domain.resolve().ok_or(RuleNotApplicable)?;
+        .map_err(|_| RuleNotApplicable)?;
+    let domain = domain.resolve().map_err(|_| RuleNotApplicable)?;
     let intersection = expr_domain
         .intersect(&domain)
         .map_err(|_| RuleNotApplicable)?;

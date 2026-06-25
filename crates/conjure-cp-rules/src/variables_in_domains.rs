@@ -7,6 +7,7 @@ use conjure_cp::{
         Atom, DecisionVariable, DeclarationKind, Domain, DomainPtr, Expression as Expr, HasDomain,
         IntVal, Literal as Lit, Metadata, Moo, Name, Range, Reference, SymbolTable,
     },
+    bug,
     rule_engine::{ApplicationError, ApplicationResult, RuleEffect, register_rule},
 };
 use uniplate::Biplate;
@@ -51,7 +52,7 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
             known_int_bounds.insert(decl.name().clone(), bounds);
         }
 
-        if domain.resolve().is_some() {
+        if domain.resolve().is_ok() {
             continue;
         }
 
@@ -108,7 +109,7 @@ fn symbols_have_decision_variable_references(symbols: &SymbolTable) -> bool {
                     })
         }) || declaration.as_find().is_some_and(|find| {
             let domain = find.domain_of();
-            domain.resolve().is_none() && domain.as_ref().as_int().is_some()
+            domain.resolve().is_ok() && domain.as_ref().as_int().is_some()
         })
     })
 }
@@ -121,7 +122,7 @@ fn resolve_or_widen_int_domain(
     known_int_bounds: &mut IntBoundsCache,
     visiting: &mut VisitingStack,
 ) -> Option<DomainPtr> {
-    if let Some(resolved) = domain.resolve() {
+    if let Ok(resolved) = domain.resolve() {
         return Some(resolved.into());
     }
 
@@ -180,12 +181,12 @@ fn int_val_bounds(
     known_int_bounds: &mut IntBoundsCache,
     visiting: &mut VisitingStack,
 ) -> Option<(i32, i32)> {
-    if let Some(v) = value.resolve() {
+    if let Ok(v) = value.resolve() {
         return Some((v, v));
     }
 
     match value {
-        IntVal::Const(v) => Some((*v, *v)),
+        IntVal::Const(v) => Some((*v as i32, *v as i32)),
         IntVal::Reference(reference) => {
             let name = reference.name().clone();
             int_bounds_for_name(&name, symbols, known_int_bounds, visiting)
@@ -245,7 +246,7 @@ fn domain_consistency_constraints(
     declaration: &conjure_cp::ast::DeclarationPtr,
     original_domain: &DomainPtr,
 ) -> Option<Vec<Expr>> {
-    if original_domain.resolve().is_some() {
+    if original_domain.resolve().is_ok() {
         return Some(Vec::new());
     }
 
@@ -260,23 +261,26 @@ fn domain_consistency_constraints(
     );
     let mut allowed_intervals = Vec::new();
 
+    let make_expr =
+        |iv: IntVal| Expr::try_from(iv).unwrap_or_else(|e| bug!("invalid int domain range: {e}"));
+
     for range in ranges {
         let interval = match range {
             Range::Single(v) => Expr::Eq(
                 Metadata::new(),
                 Moo::new(var_expr.clone()),
-                Moo::new(Expr::from(v)),
+                Moo::new(make_expr(v)),
             ),
             Range::Bounded(l, r) => {
                 let geq = Expr::Geq(
                     Metadata::new(),
                     Moo::new(var_expr.clone()),
-                    Moo::new(Expr::from(l)),
+                    Moo::new(make_expr(l)),
                 );
                 let leq = Expr::Leq(
                     Metadata::new(),
                     Moo::new(var_expr.clone()),
-                    Moo::new(Expr::from(r)),
+                    Moo::new(make_expr(r)),
                 );
                 Expr::And(
                     Metadata::new(),
