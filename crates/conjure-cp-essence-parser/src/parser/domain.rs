@@ -121,7 +121,10 @@ fn parse_int_domain(
         ctx.add_span_and_doc_hover(&int_keyword_node, "L_int", SymbolKind::Domain, None, None);
         let int_text = ctx.source_code[int_domain.start_byte()..int_domain.end_byte()].trim();
         return if int_text == "int" {
-            Ok(Some(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])))
+            Ok(Some(Domain::int(vec![Range::Bounded(
+                conjure_cp_core::ast::OXIDE_INT_MIN,
+                conjure_cp_core::ast::OXIDE_INT_MAX,
+            )])))
         } else {
             Ok(Some(Domain::int_ground(vec![])))
         };

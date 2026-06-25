@@ -11,7 +11,7 @@ pub use attrs::{
     BinaryAttr, FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, PartitionAttr, RelAttr,
     SequenceAttr, SetAttr,
 };
-pub use domain::{Domain, DomainPtr, HasDomain, Int};
+pub use domain::{Domain, DomainPtr, HasDomain, Int, OXIDE_INT_MAX, OXIDE_INT_MIN};
 pub use error::DomainOpError;
 pub use ground::GroundDomain;
 pub use int_val::IntVal;

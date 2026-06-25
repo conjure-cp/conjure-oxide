@@ -201,7 +201,7 @@ mod test {
         let terms = (*terms).clone().unwrap_list().unwrap();
         assert_eq!(terms.len(), 2);
         assert!(matches!(terms[1], Expression::DomainAnnotation(_, _, _)));
-        assert_eq!(terms[1].to_string(), "1 : int(-2147483648..2147483647)");
+        assert_eq!(terms[1].to_string(), "1 : int(-2147483647..2147483647)");
 
         let symbols = SymbolTablePtr::new();
         let x = DeclarationPtr::new_find(

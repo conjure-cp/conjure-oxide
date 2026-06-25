@@ -227,7 +227,9 @@ mod test {
     #[allow(unused_imports)]
     use crate::parse_essence;
     #[allow(unused_imports)]
-    use conjure_cp_core::ast::{Atom, Expression, Metadata, Moo, Name};
+    use conjure_cp_core::ast::{
+        Atom, Expression, Metadata, Moo, Name, OXIDE_INT_MAX, OXIDE_INT_MIN,
+    };
     #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
     #[allow(unused_imports)]
@@ -290,7 +292,7 @@ mod test {
 
         let st = model.symbols();
         let a = st.lookup(&Name::user("a")).unwrap();
-        assert_eq!(a.domain(), Some(domain_int!(i32::MIN..i32::MAX)));
+        assert_eq!(a.domain(), Some(domain_int!(OXIDE_INT_MIN..OXIDE_INT_MAX)));
     }
 
     #[test]

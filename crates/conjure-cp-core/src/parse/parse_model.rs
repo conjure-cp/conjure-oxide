@@ -692,7 +692,10 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
         .as_array()
         .ok_or(error!("DomainInt[1] is not an array".to_owned()))?;
     if arr.is_empty() {
-        return Ok(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]));
+        return Ok(Domain::int(vec![Range::Bounded(
+            crate::ast::OXIDE_INT_MIN,
+            crate::ast::OXIDE_INT_MAX,
+        )]));
     }
     for range in arr {
         let range = range
