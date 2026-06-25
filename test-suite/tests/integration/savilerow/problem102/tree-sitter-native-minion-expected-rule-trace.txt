@@ -1,0 +1,66 @@
+Model before rewriting:
+
+find unused: bool
+
+such that
+
+[false,false;int(1..2)][5 % 1 % 0]
+
+--
+
+[false,false;int(1..2)][5 % 1 % 0]
+   ~~> constant_evaluator ([("Constant", 9001)])
+[false,false;int(1..2)][5 % 1 % 0]
+
+--
+
+[false,false;int(1..2)][5 % 1 % 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([false,false;int(1..2)],[5 % 1 % 0])
+
+--
+
+1 % 0
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(1,0) @ 0 != 0}
+
+--
+
+SafeIndex([false,false;int(1..2)],[5 % {SafeMod(1,0) @ 0 != 0}])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeIndex([false,false;int(1..2)],[5 % {SafeMod(1,0) @ false}])
+
+--
+
+5 % {SafeMod(1,0) @ false}
+   ~~> bubble_up ([("Bubble", 8800)])
+{5 % SafeMod(1,0) @ false}
+
+--
+
+SafeIndex([false,false;int(1..2)],[{5 % SafeMod(1,0) @ false}])
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex([false,false;int(1..2)],[5 % SafeMod(1,0)]) @ false}
+
+--
+
+{SafeIndex([false,false;int(1..2)],[5 % SafeMod(1,0)]) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex([false,false;int(1..2)],[5 % SafeMod(1,0)]),false;int(1..)])
+
+--
+
+and([SafeIndex([false,false;int(1..2)],[5 % SafeMod(1,0)]),false;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
+Final model:
+
+find unused: bool
+
+such that
+
+false
+
