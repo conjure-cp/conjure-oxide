@@ -1,8 +1,10 @@
-use super::attrs::SetAttr;
-use super::ground::{FieldGround, GroundDomain};
-use super::range::Range;
-use super::unresolved::{FieldUnresolved, IntVal, UnresolvedDomain};
-use crate::ast::domains::attrs::{MSetAttr, PartitionAttr};
+use crate::ast::domains::{
+    attrs::{MSetAttr, PartitionAttr, SetAttr},
+    ground::{FieldGround, GroundDomain},
+    int_val::IntVal,
+    range::Range,
+    unresolved::{FieldUnresolved, UnresolvedDomain},
+};
 use crate::ast::{
     DeclarationPtr, DomainOpError, Expression, Field, FuncAttr, Literal, Moo, Reference, RelAttr,
     ReturnType, SequenceAttr, Typeable,
@@ -20,7 +22,7 @@ pub type Int = i32;
 pub type DomainPtr = Moo<Domain>;
 
 impl DomainPtr {
-    pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
+    pub fn resolve(&self) -> Result<Moo<GroundDomain>, DomainOpError> {
         self.as_ref().resolve()
     }
 
@@ -298,9 +300,9 @@ impl Domain {
     /// Otherwise, try to resolve it; Return None if this is not yet possible.
     /// Domains which contain references to givens cannot be resolved until these
     /// givens are substituted for their concrete values.
-    pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
+    pub fn resolve(&self) -> Result<Moo<GroundDomain>, DomainOpError> {
         match self {
-            Domain::Ground(gd) => Some(gd.clone()),
+            Domain::Ground(gd) => Ok(gd.clone()),
             Domain::Unresolved(ud) => ud.resolve().map(Moo::new),
         }
     }

@@ -29,6 +29,20 @@ pub enum ReturnType {
     Unknown,
 }
 
+impl ReturnType {
+    /// If this is a collection of elements of the same type (e.g. matrix / set),
+    /// get the element type. Otherwise, returns None.
+    pub fn elem_type(&self) -> Option<ReturnType> {
+        match self {
+            ReturnType::Matrix(e)
+            | ReturnType::Set(e)
+            | ReturnType::MSet(e)
+            | ReturnType::Sequence(e) => Some(*e.clone()),
+            _ => None,
+        }
+    }
+}
+
 /// Guaranteed to always typecheck
 pub trait Typeable {
     fn return_type(&self) -> ReturnType;

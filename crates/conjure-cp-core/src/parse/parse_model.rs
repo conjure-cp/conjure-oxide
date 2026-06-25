@@ -734,16 +734,17 @@ fn parse_expression_to_int_val(obj: &JsonValue, scope: &SymbolTablePtr) -> Resul
     let expr = parse_expression(obj, scope)?;
 
     if let Some(Literal::Int(i)) = expr.clone().into_literal() {
-        return Ok(IntVal::Const(i));
+        return Ok(IntVal::Const(i as i64));
     }
 
     if let Expression::Atomic(_, Atom::Reference(reference)) = &expr
-        && let Some(reference_val) = IntVal::new_ref(reference)
+        && let Ok(reference_val) = IntVal::new_ref(reference)
     {
         return Ok(reference_val);
     }
 
-    IntVal::new_expr(Moo::new(expr)).ok_or(error!("Could not parse integer expression"))
+    IntVal::new_expr(Moo::new(expr))
+        .map_err(|e| error!(format!("Could not parse integer expression: {e}")))
 }
 
 type BinOp = fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression;

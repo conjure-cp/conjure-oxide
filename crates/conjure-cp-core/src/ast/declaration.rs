@@ -292,7 +292,7 @@ impl DeclarationPtr {
 
     /// Gets the domain of the declaration and fully resolve it
     pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
-        self.domain()?.resolve()
+        self.domain()?.resolve().ok()
     }
 
     /// Gets the kind of the declaration.
