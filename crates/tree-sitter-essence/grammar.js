@@ -44,8 +44,7 @@ module.exports = grammar ({
       field("false", $.FALSE)
     ),
 
-    integer: $ => choice(/[0-9]+/, /-[0-9]+/),
-    //integer: $ => token(/[0-9]+/),
+    integer: $ => /[0-9]+/,
 
     TRUE: $ => choice("true", "TRUE"),
 
