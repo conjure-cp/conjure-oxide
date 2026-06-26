@@ -5,7 +5,7 @@ use conjure_cp::defaults::DEFAULT_RULE_SETS;
 /// The model is `test-suite/tests/integration/basic/div/05/div-05.essence`
 use conjure_cp::{
     ast::{Literal, Name},
-    rule_engine::rewrite_naive,
+    rule_engine::rewrite_model,
     solver::states::ExecutionSuccess,
 };
 use itertools::Itertools;
@@ -25,7 +25,7 @@ pub fn main() {
     // TODO: We will have a nicer way to do this in the future
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS).unwrap();
 
-    let model = rewrite_naive(&model, &rule_sets, true, RewriteConfig::optimised()).unwrap();
+    let model = rewrite_model(&model, &rule_sets, true, RewriteConfig::optimised()).unwrap();
     println!("Rewritten model: \n {model} \n",);
 
     // To tell the `Solver` type what solver to use, you pass it a `SolverAdaptor`.

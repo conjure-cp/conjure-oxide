@@ -3,7 +3,7 @@ use git_version as _;
 
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
-use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::rule_engine::rewrite_model;
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{
@@ -631,7 +631,7 @@ fn integration_test_inner(
     let model = parsed_model;
 
     let Rewriter::Rewrite(config) = rewriter;
-    let rewritten_model = rewrite_naive(&model, &rule_sets, false, config)?;
+    let rewritten_model = rewrite_model(&model, &rule_sets, false, config)?;
     let translation_time_s = translation_started_at.elapsed().as_secs_f64();
 
     let solver_input_file = None;
@@ -767,7 +767,7 @@ fn collect_rule_attempts(path: &Path) -> Result<u64, std::io::Error> {
         let entry = entry?;
         let file_name = entry.file_name();
         let file_name = file_name.to_string_lossy();
-        if !file_name.ends_with("-stats.json") || file_name.contains("-naive-") {
+        if !file_name.ends_with("-stats.json") {
             continue;
         }
 
@@ -1012,7 +1012,7 @@ fn try_capture_oxide_minion(
     let rule_sets = resolve_rule_sets(run_case.solver, &rules_to_load)?;
 
     let Rewriter::Rewrite(config) = run_case.rewriter;
-    let rewritten_model = rewrite_naive(&parsed_model, &rule_sets, false, config)?;
+    let rewritten_model = rewrite_model(&parsed_model, &rule_sets, false, config)?;
 
     let minion_path = oxide_artifacts_dir(Path::new(path)).join(format!(
         "{}-{}.minion",

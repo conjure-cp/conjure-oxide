@@ -87,7 +87,7 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // I break the rules a bit here: this is a global rule on roots.
     //
     // This rule is really really hot when expanding comprehensions.. Also, at time of writing, we
-    // have the naive rewriter, which is slow on large trees....
+    // have the rule engine rewriter, which is slow on large trees....
     //
     // Also, constant_evaluating bottom up vs top down does things in less passes: the rewriter,
     // however, favour doing this top-down!

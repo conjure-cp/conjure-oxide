@@ -81,7 +81,7 @@ pub use conjure_cp_rule_macros::register_rule;
 #[doc(inline)]
 pub use conjure_cp_rule_macros::register_rule_set;
 pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
-pub use rewrite_naive::rewrite_naive;
+pub use rewrite::rewrite_model;
 pub use rewriter_common::RewriteError;
 pub use rule::{ApplicationError, ApplicationResult, Rule, RuleEffect, RuleFn};
 pub use rule_set::RuleSet;
@@ -97,7 +97,7 @@ use crate::{
 };
 
 mod resolve_rules;
-mod rewrite_naive;
+mod rewrite;
 mod rewriter_common;
 mod rule;
 mod rule_set;
@@ -210,7 +210,7 @@ pub fn rewrite_model_with_configured_rewriter<'a>(
     configured_rewriter: Rewriter,
 ) -> Result<Model, RewriteError> {
     match configured_rewriter {
-        Rewriter::Rewrite(config) => rewrite_naive(&model, rule_sets, false, config),
+        Rewriter::Rewrite(config) => rewrite_model(&model, rule_sets, false, config),
     }
 }
 

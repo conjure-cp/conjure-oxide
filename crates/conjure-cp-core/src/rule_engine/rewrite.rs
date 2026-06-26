@@ -447,9 +447,9 @@ struct RewritePassContext<'ctx, 'rules> {
     run_start: &'ctx Instant,
 }
 
-/// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
+/// Rewrites a model by applying rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.
-pub fn rewrite_naive<'a>(
+pub fn rewrite_model<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
@@ -857,8 +857,7 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 #[cfg(debug_assertions)]
                 {
-                    let assertion_context =
-                        format!("naive rewriter after applying rule '{rule_name}'");
+                    let assertion_context = format!("rewriter after applying rule '{rule_name}'");
                     debug_assert_model_well_formed(submodel, &assertion_context);
                 }
 

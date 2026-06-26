@@ -16,7 +16,7 @@ use conjure_cp::{
     Model,
     context::Context,
     defaults::DEFAULT_RULE_SETS,
-    rule_engine::{resolve_rule_sets, rewrite_naive},
+    rule_engine::{resolve_rule_sets, rewrite_model},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
         set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
@@ -312,7 +312,7 @@ pub(crate) fn rewrite(
 
     let Rewriter::Rewrite(config) = rewriter;
     tracing::info!("Rewriting the model using the rewrite engine ({})", config);
-    let new_model = rewrite_naive(
+    let new_model = rewrite_model(
         &model,
         &rule_sets,
         global_args.check_equally_applicable_rules,
