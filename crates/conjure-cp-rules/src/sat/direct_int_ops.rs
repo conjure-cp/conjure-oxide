@@ -111,7 +111,7 @@ pub fn validate_direct_int_operands(
 /// NOTE: This rule reduces to AND_i (a[i] ≡ b[i]) and does not enforce one-hotness.
 #[register_rule("SAT_Direct", 9100, [Eq])]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
+    // TODO: this could be optimised by just going over the sections of both vectors where the ranges intersect
     // this does require enforcing structure separately
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);

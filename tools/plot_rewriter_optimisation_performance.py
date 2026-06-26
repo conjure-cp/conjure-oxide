@@ -15,7 +15,7 @@ def plot_performance_gain(data):
     plt.plot(x, y, marker="o")
     plt.xlabel("Number of OR Clauses")
     plt.ylabel("Performance Gain (%)")
-    plt.title("Performance Gain between Optimized and Unoptimized Versions")
+    plt.title("Performance Gain between Optimised and Unoptimised Versions")
     plt.grid(True)
     plt.savefig("performance_gain.png")
     plt.close()
@@ -29,7 +29,7 @@ def plot_rule_application_savings(data):
     plt.plot(x, y, marker="o", color="g")
     plt.xlabel("Number of OR Clauses")
     plt.ylabel("Rule Application Savings (%)")
-    plt.title("Rule Application Savings between Optimized and Unoptimized Versions")
+    plt.title("Rule Application Savings between Optimised and Unoptimised Versions")
     plt.grid(True)
     plt.savefig("rule_application_savings.png")
     plt.close()
@@ -37,51 +37,51 @@ def plot_rule_application_savings(data):
 
 def main():
     output_files = [
-        "rewrite_solve_xyz_optimized_1-stats.json",
-        "rewrite_solve_xyz_optimized_2-stats.json",
-        "rewrite_solve_xyz_optimized_3-stats.json",
-        "rewrite_solve_xyz_optimized_4-stats.json",
-        "rewrite_solve_xyz_unoptimized_1-stats.json",
-        "rewrite_solve_xyz_unoptimized_2-stats.json",
-        "rewrite_solve_xyz_unoptimized_3-stats.json",
-        "rewrite_solve_xyz_unoptimized_4-stats.json",
+        "rewrite_solve_xyz_optimised_1-stats.json",
+        "rewrite_solve_xyz_optimised_2-stats.json",
+        "rewrite_solve_xyz_optimised_3-stats.json",
+        "rewrite_solve_xyz_optimised_4-stats.json",
+        "rewrite_solve_xyz_unoptimised_1-stats.json",
+        "rewrite_solve_xyz_unoptimised_2-stats.json",
+        "rewrite_solve_xyz_unoptimised_3-stats.json",
+        "rewrite_solve_xyz_unoptimised_4-stats.json",
     ]
 
     results = {}
-    optimized_performance = []
-    unoptimized_performance = []
-    optimized_rule_applications = []
-    unoptimized_rule_applications = []
+    optimised_performance = []
+    unoptimised_performance = []
+    optimised_rule_applications = []
+    unoptimised_rule_applications = []
 
     for file_name in output_files:
         with open(file_name, "r") as file:
             data = json.load(file)
-            if "unoptimized" in file_name:
-                unoptimized_performance.append(
+            if "unoptimised" in file_name:
+                unoptimised_performance.append(
                     data["stats"]["rewriterRuns"][0]["rewriterRunTime"]["nanos"]
                     + data["stats"]["rewriterRuns"][0]["rewriterRunTime"]["secs"] * 1e9
                 )
-                unoptimized_rule_applications.append(
+                unoptimised_rule_applications.append(
                     data["stats"]["rewriterRuns"][0]["rewriterRuleApplicationAttempts"]
                 )
             else:
-                optimized_performance.append(
+                optimised_performance.append(
                     data["stats"]["rewriterRuns"][0]["rewriterRunTime"]["nanos"]
                     + data["stats"]["rewriterRuns"][0]["rewriterRunTime"]["secs"] * 1e9
                 )
-                optimized_rule_applications.append(
+                optimised_rule_applications.append(
                     data["stats"]["rewriterRuns"][0]["rewriterRuleApplicationAttempts"]
                 )
 
     for i in range(4):
         performance_gain = (
-            (unoptimized_performance[i] - optimized_performance[i])
-            / optimized_performance[i]
+            (unoptimised_performance[i] - optimised_performance[i])
+            / optimised_performance[i]
             * 100
         )
         rule_application_savings = (
-            (unoptimized_rule_applications[i] - optimized_rule_applications[i])
-            / unoptimized_rule_applications[i]
+            (unoptimised_rule_applications[i] - optimised_rule_applications[i])
+            / unoptimised_rule_applications[i]
             * 100
         )
         results[i + 1] = {

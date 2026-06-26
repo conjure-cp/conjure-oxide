@@ -323,7 +323,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
     };
-    //TODO: Adding constant optimization to all int operations should hopefully make this rule redundant
+    //TODO: Adding constant optimisation to all int operations should hopefully make this rule redundant
 
     let mut binary_encoding = vec![];
 

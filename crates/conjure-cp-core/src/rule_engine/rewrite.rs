@@ -470,7 +470,7 @@ pub fn rewrite_model<'a>(
     let mut done_something = true;
 
     let mut rewriter_stats = RewriterStats::new();
-    rewriter_stats.is_optimization_enabled = Some(!config.is_baseline());
+    rewriter_stats.is_optimisation_enabled = Some(!config.is_baseline());
     let mut dirty_trace = DirtyTrace::from_env();
     let run_start = Instant::now();
 

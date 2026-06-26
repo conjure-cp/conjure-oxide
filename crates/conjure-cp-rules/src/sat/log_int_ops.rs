@@ -160,7 +160,7 @@ fn inequality_boolean(
         output = tseytin_imply(b[0].clone(), a[0].clone(), clauses, symbols);
     }
 
-    //TODO: There may be room for simplification, and constant optimization
+    //TODO: There may be room for simplification, and constant optimisation
 
     let bit_count = a.len();
 
