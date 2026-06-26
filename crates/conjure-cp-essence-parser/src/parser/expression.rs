@@ -12,7 +12,7 @@ use crate::parser::global_constraints::{
 use crate::util::TypecheckingContext;
 use crate::{child, field, named_child};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
-use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo, Typeable};
+use conjure_cp_core::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Typeable};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
@@ -452,7 +452,16 @@ fn parse_unary_expression(
     };
 
     match node.kind() {
-        "negative_expr" => Ok(Some(Expression::Neg(Metadata::new(), Moo::new(inner)))),
+        "negative_expr" => {
+            if let Expression::Atomic(_, Atom::Literal(Literal::Int(value))) = inner {
+                Ok(Some(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Literal::Int(-value)),
+                )))
+            } else {
+                Ok(Some(Expression::Neg(Metadata::new(), Moo::new(inner))))
+            }
+        }
         "abs_value" => Ok(Some(Expression::Abs(Metadata::new(), Moo::new(inner)))),
         "not_expr" => Ok(Some(Expression::Not(Metadata::new(), Moo::new(inner)))),
         "toInt_expr" => {
