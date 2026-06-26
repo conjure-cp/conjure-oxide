@@ -101,10 +101,10 @@ As you can see, ``iai`` is lightweight, fast and can provide some really accurat
 
 # Workflows
 
-Once benchmarking is established, workflows are not too difficult to add too. As discussed before, for CI workflows ``iai`` should be used, and not ``criterion``. Take the following example from the ``tree-morph`` crate. I will put the code below and then briefly explain each portion. It should not be too difficult to adapt to other benchmarks.
+Once benchmarking is established, workflows are not too difficult to add too. As discussed before, for CI workflows ``iai`` should be used, and not ``criterion``. Take the following example workflow. It should not be too difficult to adapt to other benchmarks.
 
 ```yaml
-name: "iai tree-morph Benchmarks"
+name: "iai Benchmarks"
 
 on:
   push:
@@ -117,7 +117,7 @@ on:
       - crates/**
       - Cargo.*
       - conjure_oxide/tests/**
-      - .github/workflows/iai-tree-morph-benches.yml
+      - .github/workflows/iai-benches.yml
   pull_request:
     paths:
       - conjure_oxide/**
@@ -125,14 +125,14 @@ on:
       - crates/**
       - Cargo.*
       - conjure_oxide/tests/**
-      - .github/workflows/iai-tree-morph-benches.yml
+      - .github/workflows/iai-benches.yml
   workflow_dispatch:
 
 
 
 jobs:
   benches:
-    name: "Run iai tree-morph benchmarks"
+    name: "Run iai benchmarks"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -166,8 +166,8 @@ jobs:
       - name: Install iai-callgrind-runner
         run: cargo install --version 0.14.0 iai-callgrind-runner
 
-      - name: Run tree-morph benchmarks with iai-callgrind
-        run: cargo bench --manifest-path crates/tree_morph/Cargo.toml --bench iai-factorial --bench iai-identity --bench iai-modify_leafs > iai_callgrind_output.txt
+      - name: Run benchmarks with iai-callgrind
+        run: cargo bench --bench iai-bench > iai_callgrind_output.txt
 
       - name: Upload artefact
         uses: actions/upload-artifact@v4

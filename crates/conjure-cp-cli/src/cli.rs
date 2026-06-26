@@ -121,7 +121,7 @@ pub struct GlobalArgs {
 
     /// Which rewriter to use.
     ///
-    /// Possible values: `baseline`, `baseline` plus `prefilter`/`dirty`/`cache` options, `optimised`, `morph`
+    /// Possible values: `baseline`, `optimised`, or baseline plus options such as `baseline+dirty`, `baseline+cache`, `baseline+prefilter`
     #[arg(long, default_value_t = Rewriter::default(), value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 

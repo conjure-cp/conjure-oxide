@@ -60,7 +60,7 @@ Options:
   --parser tree-sitter|via-conjure
       If set, enable only this parser in [parser]
 
-  --rewriter baseline|baseline+prefilter|baseline+dirty|baseline+cache|baseline+prefilter+dirty|baseline+prefilter+cache|baseline+dirty+cache|baseline+prefilter+dirty+cache|optimised|morph
+  --rewriter baseline|optimised|baseline+prefilter|baseline+dirty|baseline+cache
       If set, enable only this rewriter in [rewriter]
 
   --comprehension-expander native|via-solver|via-solver-ac
@@ -111,6 +111,49 @@ validate_choice() {
     fi
   done
   [[ "$ok" -eq 1 ]] || err "Invalid $name: '$value' (allowed: ${allowed[*]})"
+}
+
+validate_rewriter() {
+  local value="$1"
+  case "$value" in
+    baseline|optimised) return 0 ;;
+  esac
+
+  [[ "$value" == baseline+* ]] || err "Invalid rewriter: '$value' (allowed: baseline, optimised, baseline+prefilter, baseline+dirty, baseline+cache and combinations)"
+
+  local seen_baseline=0
+  local seen_prefilter=0
+  local seen_dirty=0
+  local seen_cache=0
+  local token
+  local tokens
+  IFS='+' read -ra tokens <<< "$value"
+  for token in "${tokens[@]}"; do
+    case "$token" in
+      baseline)
+        [[ "$seen_baseline" -eq 0 ]] || err "Invalid rewriter: duplicate 'baseline'"
+        seen_baseline=1
+        ;;
+      prefilter)
+        [[ "$seen_prefilter" -eq 0 ]] || err "Invalid rewriter: duplicate 'prefilter'"
+        seen_prefilter=1
+        ;;
+      dirty)
+        [[ "$seen_dirty" -eq 0 ]] || err "Invalid rewriter: duplicate 'dirty'"
+        seen_dirty=1
+        ;;
+      cache)
+        [[ "$seen_cache" -eq 0 ]] || err "Invalid rewriter: duplicate 'cache'"
+        seen_cache=1
+        ;;
+      *)
+        err "Invalid rewriter option: '$token' (allowed: baseline, prefilter, dirty, cache)"
+        ;;
+    esac
+  done
+
+  [[ "$seen_baseline" -eq 1 ]] || err "Invalid rewriter: '$value' must start with baseline"
+  [[ "$seen_prefilter$seen_dirty$seen_cache" != "000" ]] || err "Invalid rewriter: '$value' has no options"
 }
 
 prepend_comment() {
@@ -485,7 +528,7 @@ while [[ $# -gt 0 ]]; do
     --rewriter)
       [[ $# -ge 2 ]] || err "--rewriter requires a value"
       rewriter_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-      validate_choice "rewriter" "$rewriter_opt" "baseline" "baseline+prefilter" "baseline+dirty" "baseline+cache" "baseline+prefilter+dirty" "baseline+prefilter+cache" "baseline+dirty+cache" "baseline+prefilter+dirty+cache" "optimised" "morph"
+      validate_rewriter "$rewriter_opt"
       shift 2
       ;;
     --comprehension-expander)

@@ -59,87 +59,6 @@ pub fn current_parser() -> Parser {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct MorphConfig {
-    pub cache: MorphCachingStrategy,
-    pub prefilter: bool,
-    /// Use naive (no-levels) traversal (`morph_naive`). Enabled with `levelsoff`, disabled with `levelson`.
-    pub naive: bool,
-    pub fixedpoint: bool,
-}
-
-impl Default for MorphConfig {
-    fn default() -> Self {
-        Self {
-            cache: MorphCachingStrategy::NoCache,
-            prefilter: false,
-            naive: true,
-            fixedpoint: false,
-        }
-    }
-}
-
-impl Display for MorphConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "morph")?;
-
-        let mut features = Vec::new();
-        if !self.naive {
-            features.push("levelson");
-        }
-        match self.cache {
-            MorphCachingStrategy::NoCache => {}
-            MorphCachingStrategy::Cache => features.push("cache"),
-            MorphCachingStrategy::IncrementalCache => features.push("inccache"),
-        }
-        if self.prefilter {
-            features.push("prefilteron");
-        }
-        if self.fixedpoint {
-            features.push("fixedpoint");
-        }
-
-        if !features.is_empty() {
-            write!(f, "-{}", features.join("-"))?;
-        }
-
-        Ok(())
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub enum MorphCachingStrategy {
-    NoCache,
-    Cache,
-    #[default]
-    IncrementalCache,
-}
-
-impl FromStr for MorphCachingStrategy {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim().to_ascii_lowercase().as_str() {
-            "no-cache" => Ok(Self::NoCache),
-            "cache" => Ok(Self::Cache),
-            "inc-cache" => Ok(Self::IncrementalCache),
-            other => Err(format!(
-                "unknown cache strategy: {other}; expected one of: no-cache, cahce, inc-cache"
-            )),
-        }
-    }
-}
-
-impl Display for MorphCachingStrategy {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MorphCachingStrategy::NoCache => write!(f, "nocache"),
-            MorphCachingStrategy::Cache => write!(f, "cache"),
-            MorphCachingStrategy::IncrementalCache => write!(f, "inccache"),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct RewriteConfig {
     /// Skip rules whose declared expression discriminants cannot match.
     pub prefilter: bool,
@@ -210,8 +129,14 @@ impl FromStr for RewriteConfig {
         let trimmed = s.trim().to_ascii_lowercase();
         match trimmed.as_str() {
             "baseline" => return Ok(Self::baseline()),
-            "optimised" | "optimized" => return Ok(Self::optimised()),
+            "optimised" => return Ok(Self::optimised()),
             _ => {}
+        }
+
+        if !trimmed.starts_with("baseline+") {
+            return Err(format!(
+                "unknown rewrite config: {trimmed}; expected baseline, optimised, or baseline plus '+' separated prefilter/dirty/cache options"
+            ));
         }
 
         let mut config = Self::baseline();
@@ -219,6 +144,7 @@ impl FromStr for RewriteConfig {
         let mut prefilter_seen = false;
         let mut dirty_seen = false;
         let mut cache_seen = false;
+        let mut option_seen = false;
 
         for token in trimmed.split('+') {
             match token {
@@ -235,6 +161,7 @@ impl FromStr for RewriteConfig {
                     }
                     config.prefilter = true;
                     prefilter_seen = true;
+                    option_seen = true;
                 }
                 "dirty" => {
                     if dirty_seen {
@@ -242,6 +169,7 @@ impl FromStr for RewriteConfig {
                     }
                     config.dirty = true;
                     dirty_seen = true;
+                    option_seen = true;
                 }
                 "cache" => {
                     if cache_seen {
@@ -249,6 +177,7 @@ impl FromStr for RewriteConfig {
                     }
                     config.cache = true;
                     cache_seen = true;
+                    option_seen = true;
                 }
                 other => {
                     return Err(format!(
@@ -258,6 +187,13 @@ impl FromStr for RewriteConfig {
             }
         }
 
+        if !option_seen {
+            return Err(
+                "rewrite config 'baseline+' must include at least one of: prefilter, dirty, cache"
+                    .to_string(),
+            );
+        }
+
         Ok(config)
     }
 }
@@ -265,7 +201,6 @@ impl FromStr for RewriteConfig {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Rewrite(RewriteConfig),
-    Morph(MorphConfig),
 }
 
 impl Default for Rewriter {
@@ -285,7 +220,6 @@ impl Display for Rewriter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Rewriter::Rewrite(config) => write!(f, "{config}"),
-            Rewriter::Morph(config) => write!(f, "{config}"),
         }
     }
 }
@@ -296,83 +230,18 @@ impl FromStr for Rewriter {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let trimmed = s.trim().to_ascii_lowercase();
         match trimmed.as_str() {
-            "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
-            "baseline" | "optimised" | "optimized" => Ok(Rewriter::Rewrite(trimmed.parse()?)),
+            "baseline" | "optimised" => Ok(Rewriter::Rewrite(trimmed.parse()?)),
             other => {
-                if other.starts_with("morph-") {
-                    let parts = other.split('-').skip(1);
-                    return Ok(Rewriter::Morph(parse_morph_config_tokens(parts)?));
-                }
-
                 if other.contains('+') {
                     return Ok(Rewriter::Rewrite(other.parse()?));
                 }
 
                 Err(format!(
-                    "unknown rewriter: {other}; expected baseline, optimised, baseline plus '+' separated prefilter/dirty/cache options, morph, or morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
+                    "unknown rewriter: {other}; expected baseline, optimised, or baseline plus '+' separated prefilter/dirty/cache options"
                 ))
             }
         }
     }
-}
-
-fn parse_morph_config_tokens<'a>(
-    tokens: impl IntoIterator<Item = &'a str>,
-) -> Result<MorphConfig, String> {
-    let mut config = MorphConfig::default();
-    let mut cache_set = false;
-    let mut levels_set = false;
-    let mut prefilter_set = false;
-
-    for token in tokens {
-        match token {
-            "" => (),
-            "levelson" => {
-                if levels_set {
-                    return Err(
-                        "conflicting levels options: only one levels setting is allowed"
-                            .to_string(),
-                    );
-                }
-                config.naive = false;
-                levels_set = true;
-            }
-            "cache" | "inccache" => {
-                if cache_set {
-                    return Err(
-                        "conflicting cache options: only one of cache|inccache is allowed"
-                            .to_string(),
-                    );
-                }
-                config.cache = match token {
-                    "cache" => MorphCachingStrategy::Cache,
-                    "inccache" => MorphCachingStrategy::IncrementalCache,
-                    _ => unreachable!(),
-                };
-                cache_set = true;
-            }
-            "prefilteron" => {
-                if prefilter_set {
-                    return Err(
-                        "conflicting prefilter options: only one prefilter setting is allowed"
-                            .to_string(),
-                    );
-                }
-                config.prefilter = true;
-                prefilter_set = true;
-            }
-            "fixedpoint" => {
-                config.fixedpoint = true;
-            }
-            other_token => {
-                return Err(format!(
-                    "unknown morph option '{other_token}', must be one of levelson|cache|inccache|prefilteron|fixedpoint"
-                ));
-            }
-        }
-    }
-
-    Ok(config)
 }
 
 pub fn set_current_rewriter(rewriter: Rewriter) {
@@ -721,6 +590,7 @@ mod tests {
             RewriteConfig::from_str("baseline+prefilter+dirty+cache").unwrap(),
             RewriteConfig::optimised()
         );
+        assert!(RewriteConfig::from_str("+dirty").is_err());
     }
 
     #[test]
@@ -790,5 +660,7 @@ mod tests {
             Rewriter::from_str("baseline+prefilter+dirty+cache").unwrap(),
             Rewriter::Rewrite(RewriteConfig::optimised())
         );
+        assert!(Rewriter::from_str("+dirty").is_err());
+        assert!(Rewriter::from_str("dirty").is_err());
     }
 }

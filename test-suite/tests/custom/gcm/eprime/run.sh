@@ -25,7 +25,7 @@ run_case() {
 
     conjure-oxide-debug solve \
         --parser tree-sitter \
-        --rewriter morph-levelson-fixedpoint \
+        --rewriter optimised \
         --solver smt-lia-arrays \
         --no-run-solver \
         --rule-trace-aggregates "$aggregate_path" \

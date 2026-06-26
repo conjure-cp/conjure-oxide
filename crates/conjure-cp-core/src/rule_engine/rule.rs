@@ -1,24 +1,12 @@
-use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::Hash;
-use std::rc::Rc;
 use std::sync::Arc;
 
 use thiserror::Error;
 
 use crate::Model;
 use crate::ast::{CnfClause, DeclarationPtr, Expression, Metadata, Name, SymbolTable};
-use crate::rule_engine::RuleData;
-use crate::rule_engine::rewriter_common::{RuleResult, log_rule_application};
-use tree_morph::prelude::Commands;
-use tree_morph::prelude::Rule as MorphRule;
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct MorphState {
-    pub symbols: SymbolTable,
-    pub clauses: Vec<CnfClause>,
-}
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -287,145 +275,5 @@ impl Eq for Rule<'_> {}
 impl Hash for Rule<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
-    }
-}
-
-impl MorphRule<Expression, MorphState> for Rule<'_> {
-    fn apply(
-        &self,
-        commands: &mut Commands<Expression, MorphState>,
-        subtree: &Expression,
-        meta: &MorphState,
-    ) -> Option<Expression> {
-        let effect = self
-            .apply(subtree, &meta.symbols)
-            .ok()?
-            .materialise(&meta.symbols);
-        let new_expression = effect.new_expression;
-        let new_top = effect.new_top;
-        let added_symbols = effect.symbols;
-        let added_clauses = effect.new_clauses;
-        commands.mut_meta(Box::new(move |m: &mut MorphState| {
-            m.symbols.extend(added_symbols);
-            m.clauses.extend(added_clauses);
-        }));
-        if !new_top.is_empty() {
-            commands.transform(Box::new(move |m| m.extend_root(new_top)));
-        }
-        Some(new_expression)
-    }
-
-    fn name(&self) -> &str {
-        self.name
-    }
-
-    fn applicable_to(&self) -> Option<Vec<usize>> {
-        self.applicable_to.map(|s| s.to_vec())
-    }
-}
-
-impl MorphRule<Expression, MorphState> for &Rule<'_> {
-    fn apply(
-        &self,
-        commands: &mut Commands<Expression, MorphState>,
-        subtree: &Expression,
-        meta: &MorphState,
-    ) -> Option<Expression> {
-        let effect = Rule::apply(self, subtree, &meta.symbols)
-            .ok()?
-            .materialise(&meta.symbols);
-        let new_expression = effect.new_expression;
-        let new_top = effect.new_top;
-        let added_symbols = effect.symbols;
-        let added_clauses = effect.new_clauses;
-        commands.mut_meta(Box::new(move |m: &mut MorphState| {
-            m.symbols.extend(added_symbols);
-            m.clauses.extend(added_clauses);
-        }));
-        if !new_top.is_empty() {
-            commands.transform(Box::new(move |m| m.extend_root(new_top)));
-        }
-        Some(new_expression)
-    }
-
-    fn name(&self) -> &str {
-        self.name
-    }
-}
-
-impl MorphRule<Expression, Rc<RefCell<MorphState>>> for Rule<'_> {
-    fn apply(
-        &self,
-        commands: &mut Commands<Expression, Rc<RefCell<MorphState>>>,
-        subtree: &Expression,
-        meta: &Rc<RefCell<MorphState>>,
-    ) -> Option<Expression> {
-        let state = meta.borrow();
-        let effect = self
-            .apply(subtree, &state.symbols)
-            .ok()?
-            .materialise(&state.symbols);
-        let new_expression = effect.new_expression;
-        let new_top = effect.new_top;
-        let added_symbols = effect.symbols;
-        let added_clauses = effect.new_clauses;
-        commands.mut_meta(Box::new(move |m| {
-            let mut state = m.borrow_mut();
-            state.symbols.extend(added_symbols);
-            state.clauses.extend(added_clauses);
-        }));
-
-        if !new_top.is_empty() {
-            commands.transform(Box::new(move |m| m.extend_root(new_top)));
-        }
-
-        Some(new_expression)
-    }
-
-    fn name(&self) -> &str {
-        self.name
-    }
-}
-
-impl MorphRule<Expression, MorphState> for RuleData<'_> {
-    fn apply(
-        &self,
-        commands: &mut Commands<Expression, MorphState>,
-        subtree: &Expression,
-        meta: &MorphState,
-    ) -> Option<Expression> {
-        let effect = self
-            .rule
-            .apply(subtree, &meta.symbols)
-            .ok()?
-            .materialise(&meta.symbols);
-        let result = RuleResult {
-            rule_data: self.clone(),
-            effect: effect.clone(),
-        };
-
-        log_rule_application(&result, subtree, &meta.symbols, None);
-
-        let new_expression = effect.new_expression;
-        let new_top = effect.new_top;
-        let added_symbols = effect.symbols;
-        let added_clauses = effect.new_clauses;
-        commands.mut_meta(Box::new(move |m: &mut MorphState| {
-            m.symbols.extend(added_symbols);
-            m.clauses.extend(added_clauses);
-        }));
-
-        if !new_top.is_empty() {
-            commands.transform(Box::new(move |m| m.extend_root(new_top)));
-        }
-        Some(new_expression)
-    }
-
-    fn name(&self) -> &str {
-        self.rule.name
-    }
-
-    fn applicable_to(&self) -> Option<Vec<usize>> {
-        self.rule.applicable_to.map(|s| s.to_vec())
     }
 }

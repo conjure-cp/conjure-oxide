@@ -18,7 +18,6 @@ use tracing::trace;
 use conjure_cp_enum_compatibility_macro::{document_compatibility, generate_discriminants};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use tree_morph::cache::CacheHashable;
 use ustr::Ustr;
 
 use polyquine::Quine;
@@ -3427,24 +3426,6 @@ impl Expression {
         let result = hasher.finish();
         self.meta_ref().stored_hash.swap(result, Ordering::Relaxed);
         result
-    }
-}
-
-impl CacheHashable for Expression {
-    fn invalidate_cache(&self) {
-        Expression::invalidate_cache(self);
-    }
-
-    fn invalidate_cache_recursive(&self) {
-        Expression::invalidate_cache_recursive(self);
-    }
-
-    fn get_cached_hash(&self) -> u64 {
-        Expression::get_cached_hash(self)
-    }
-
-    fn calculate_hash(&self) -> u64 {
-        Expression::calculate_hash(self)
     }
 }
 

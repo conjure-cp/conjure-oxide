@@ -3,7 +3,7 @@ use git_version as _;
 
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
-use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
+use conjure_cp::rule_engine::rewrite_naive;
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{
@@ -630,10 +630,8 @@ fn integration_test_inner(
 
     let model = parsed_model;
 
-    let rewritten_model = match rewriter {
-        Rewriter::Rewrite(config) => rewrite_naive(&model, &rule_sets, false, config)?,
-        Rewriter::Morph(config) => rewrite_morph(model, &rule_sets, false, config),
-    };
+    let Rewriter::Rewrite(config) = rewriter;
+    let rewritten_model = rewrite_naive(&model, &rule_sets, false, config)?;
     let translation_time_s = translation_started_at.elapsed().as_secs_f64();
 
     let solver_input_file = None;
@@ -695,20 +693,14 @@ fn integration_test_inner(
     let username_solutions_json = solutions_to_json(&solutions);
     assert_eq!(username_solutions_json, expected_solutions_json);
 
-    // TODO: Implement rule trace validation for morph
     if rule_trace_snapshots_enabled {
-        match rewriter {
-            Rewriter::Morph(_) => {}
-            Rewriter::Rewrite(_) => {
-                let generated = read_default_rule_trace(path, case_name, "generated", &solver_fam)?;
-                let expected = read_default_rule_trace(path, case_name, "expected", &solver_fam)?;
+        let generated = read_default_rule_trace(path, case_name, "generated", &solver_fam)?;
+        let expected = read_default_rule_trace(path, case_name, "expected", &solver_fam)?;
 
-                assert_eq!(
-                    expected, generated,
-                    "Generated rule trace does not match the expected trace!"
-                );
-            }
-        }
+        assert_eq!(
+            expected, generated,
+            "Generated rule trace does not match the expected trace!"
+        );
     }
 
     save_stats_json(context, path, case_name, solver_fam)?;
@@ -1019,10 +1011,8 @@ fn try_capture_oxide_minion(
     rules_to_load.extend(extra_rules);
     let rule_sets = resolve_rule_sets(run_case.solver, &rules_to_load)?;
 
-    let rewritten_model = match run_case.rewriter {
-        Rewriter::Rewrite(config) => rewrite_naive(&parsed_model, &rule_sets, false, config)?,
-        Rewriter::Morph(config) => rewrite_morph(parsed_model, &rule_sets, false, config),
-    };
+    let Rewriter::Rewrite(config) = run_case.rewriter;
+    let rewritten_model = rewrite_naive(&parsed_model, &rule_sets, false, config)?;
 
     let minion_path = oxide_artifacts_dir(Path::new(path)).join(format!(
         "{}-{}.minion",
