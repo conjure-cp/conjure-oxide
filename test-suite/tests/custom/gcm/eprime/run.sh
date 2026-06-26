@@ -23,7 +23,7 @@ run_case() {
     fi
     first_case=0
 
-    conjure-oxide-debug solve \
+    conjure-oxide solve \
         --parser tree-sitter \
         --rewriter optimised \
         --solver smt-lia-arrays \
