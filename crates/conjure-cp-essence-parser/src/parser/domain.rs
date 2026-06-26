@@ -8,7 +8,7 @@ use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, Moo, Name, Range,
+    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, Literal, Moo, Name, Range,
     Reference, SetAttr,
 };
 use tree_sitter::Node;
@@ -267,6 +267,10 @@ fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, F
         && let Ok(reference_val) = IntVal::new_ref(reference)
     {
         return Ok(Some(reference_val));
+    }
+
+    if let Expression::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
+        return Ok(Some(IntVal::new_const(value)));
     }
 
     Ok(IntVal::new_expr(Moo::new(expr)).ok())
