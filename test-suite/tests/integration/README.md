@@ -13,7 +13,7 @@ The `config.toml` file is used for selecting parser(s), rewriter(s), comprehensi
 | `cnf/` | CNF / SAT-oriented models |
 | `dominance/` | Dominance-relation models (oxide-specific) |
 | `eprime-minion/` | Essence' models targeting Minion via the Conjure pipeline |
-| `hakank-eprime/` | Models from Hakank's Essence' collection |
+| `hakank-eprime/` | Models from Hakan's Essence' collection |
 | `mildly-interesting/` | Larger puzzles and examples |
 | `minion-constraints/` | Individual Minion constraint tests |
 | `optimisations/` | Rewriter / optimisation behaviour |

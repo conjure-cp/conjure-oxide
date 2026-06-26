@@ -59,8 +59,3 @@ aggregate rule trace application counts derived from the expected rule trace sna
 For timing-only runs where rule trace generation overhead is unwanted, set
 `CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file
 generation and rule trace snapshot validation; solution checks and timing recording still run.
-
-### Licence
-
-This project is licenced under the [Mozilla Public Licence
-2.0](https://www.mozilla.org/en-US/MPL/2.0/).
