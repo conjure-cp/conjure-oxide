@@ -510,7 +510,7 @@ mod tests {
         );
         let dominance_expression = Expression::Imply(
             Metadata::new(),
-            Moo::new(x_ref.clone()),
+            Moo::new(x_ref),
             Moo::new(Expression::FromSolution(
                 Metadata::new(),
                 Moo::new(Atom::Reference(Reference::new(DeclarationPtr::new_find(
@@ -523,7 +523,7 @@ mod tests {
         let mut sol_true = BTreeMap::new();
         sol_true.insert(x.clone(), Literal::Int(1));
         let mut sol_false = BTreeMap::new();
-        sol_false.insert(x.clone(), Literal::Int(0));
+        sol_false.insert(x, Literal::Int(0));
 
         let pruned =
             retroactively_prune_dominated(vec![sol_true, sol_false.clone()], &dominance_expression);
