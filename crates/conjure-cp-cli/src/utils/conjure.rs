@@ -3,6 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Instant;
 
 use conjure_cp::ast::{Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Name};
 use conjure_cp::bug;
@@ -382,7 +383,9 @@ pub fn get_solutions_from_conjure_with_stats(
         cmd.arg(file);
     }
 
+    let conjure_solve_start = Instant::now();
     let output = cmd.output()?;
+    let conjure_solve_wall_time_s = conjure_solve_start.elapsed().as_secs_f64();
 
     if !output.status.success() {
         let stderr =
@@ -422,7 +425,7 @@ pub fn get_solutions_from_conjure_with_stats(
         })
         .collect();
 
-    let timings = read_conjure_timings(output_dir.path())?;
+    let timings = read_conjure_timings(output_dir.path(), conjure_solve_wall_time_s)?;
 
     Ok(ConjureSolutions {
         solutions: solutions_set
@@ -435,6 +438,7 @@ pub fn get_solutions_from_conjure_with_stats(
 
 fn read_conjure_timings(
     path: &std::path::Path,
+    conjure_solve_wall_time_s: f64,
 ) -> Result<Option<ConjureRunTimings>, anyhow::Error> {
     let stats_files: Vec<_> = glob(&format!("{}/*.stats.json", path.display()))?.collect();
     if stats_files.is_empty() {
@@ -445,10 +449,6 @@ fn read_conjure_timings(
     for stats_file in stats_files {
         let stats_file = stats_file?;
         let stats: JsonValue = serde_json::from_str(&fs::read_to_string(&stats_file)?)?;
-        let total_time = stats
-            .get("totalTime")
-            .and_then(JsonValue::as_f64)
-            .unwrap_or_default();
         let savilerow_total_time = stats
             .pointer("/savilerowInfo/SavileRowTotalTime")
             .and_then(JsonValue::as_str)
@@ -466,14 +466,15 @@ fn read_conjure_timings(
             })
             .unwrap_or_default();
 
-        let conjure_translation_time = (total_time - savilerow_total_time).max(0.0);
-        let savilerow_translation_time = (savilerow_total_time - solve_time).max(0.0);
-
-        timings.conjure_translation_time_s += conjure_translation_time;
-        timings.savilerow_translation_time_s += savilerow_translation_time;
-        timings.translation_time_s += conjure_translation_time + savilerow_translation_time;
+        timings.savilerow_translation_time_s += savilerow_total_time;
         timings.solve_time_s += solve_time;
     }
+
+    timings.conjure_translation_time_s =
+        (conjure_solve_wall_time_s - timings.savilerow_translation_time_s - timings.solve_time_s)
+            .max(0.0);
+    timings.translation_time_s =
+        timings.conjure_translation_time_s + timings.savilerow_translation_time_s;
 
     Ok(Some(timings))
 }
