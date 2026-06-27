@@ -112,6 +112,11 @@ pub fn detect_syntactic_errors(
                 continue;
             }
 
+            if let Some(missing_expression) = classify_such_that_missing_expression(&node, source) {
+                errors.push(missing_expression);
+                continue;
+            }
+
             if is_malformed_line_error(&node, source) {
                 malformed_lines_reported.insert(line);
                 let start_byte = node.start_byte();
@@ -167,6 +172,24 @@ fn classify_int_domain_missing_rparen(
     Some(RecoverableParseError::new(
         "Missing )".to_string(),
         Some(point_range_at(source, start.row, insertion_col)),
+    ))
+}
+
+fn classify_such_that_missing_expression(
+    node: &tree_sitter::Node,
+    source: &str,
+) -> Option<RecoverableParseError> {
+    let line = source.lines().nth(node.start_position().row)?;
+    if source[node.start_byte()..node.end_byte()].trim() != "such that" {
+        return None;
+    }
+    Some(RecoverableParseError::new(
+        "Missing Expression".to_string(),
+        Some(point_range_at(
+            source,
+            node.start_position().row,
+            line.trim_end().len(),
+        )),
     ))
 }
 

@@ -1,0 +1,48 @@
+Model before rewriting:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+and([and([t,z = x;int(1..)]),y;int(1..)])
+
+--
+
+and([and([t,z = x;int(1..)]),y;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([t,z = x;int(1..)]),
+y
+
+--
+
+and([t,z = x;int(1..)]),
+y
+   ~~> constant_evaluator ([("Constant", 9001)])
+t,
+z = x,
+y
+
+--
+
+z = x
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x, z)
+
+--
+
+Final model:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+t,
+Reify(x, z),
+y
+

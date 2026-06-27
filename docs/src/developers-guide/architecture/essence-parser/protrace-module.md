@@ -288,7 +288,7 @@ fn display_message(message: String, file_path: Option<String>, kind: Kind)
 
 # Tracing in integration tests
 
-Similar to how a `Consumer` is created in solve.rs for `cargo run solve`, a `combined_consumer` is manually constructed for each integration test, with its fields explicitly set rather than being derived from command-line arguments. This consumer is configured to log successful rule applications to two separate files—one in a human-readable format and the other in JSON. It is then passed to the `rewrite_naive` function. By establishing a uniform internal interface for tracing in both `cargo run` and `cargo test`, we were able to significantly reduce code duplication and streamline the overall tracing logic.
+Similar to how a `Consumer` is created in solve.rs for `cargo run solve`, a `combined_consumer` is manually constructed for each integration test, with its fields explicitly set rather than being derived from command-line arguments. This consumer is configured to log successful rule applications to two separate files—one in a human-readable format and the other in JSON. It is then passed to the `rewrite_model` function. By establishing a uniform internal interface for tracing in both `cargo run` and `cargo test`, we were able to significantly reduce code duplication and streamline the overall tracing logic.
 
 ```rust
    let combined_consumer = create_consumer(

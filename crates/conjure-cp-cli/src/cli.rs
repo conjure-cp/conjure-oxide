@@ -112,7 +112,7 @@ pub struct GlobalArgs {
     /// Possible values: `tree-sitter`, `via-conjure`.
     #[arg(
         long,
-        default_value_t = InputParser::ViaConjure,
+        default_value_t = InputParser::default(),
         value_parser = parse_parser,
         global = true,
         help_heading = CONFIGURATION_HELP_HEADING
@@ -121,8 +121,8 @@ pub struct GlobalArgs {
 
     /// Which rewriter to use.
     ///
-    /// Possible values: `naive`, `morph`
-    #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    /// Possible values: `baseline`, `optimised`, or baseline plus options such as `baseline+dirty`, `baseline+cache`, `baseline+prefilter`
+    #[arg(long, default_value_t = Rewriter::default(), value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 
     /// Which strategy to use for expanding quantified variables in comprehensions.

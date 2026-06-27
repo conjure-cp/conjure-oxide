@@ -9,10 +9,11 @@ use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::hash::Hash;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
+use conjure_cp::ast::pretty::pretty_expression_domain_annotation;
 use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
@@ -22,6 +23,7 @@ use conjure_cp::error::Error;
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
+use crate::utils::text_files::write_text_with_trailing_newline;
 use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
@@ -29,6 +31,9 @@ use conjure_cp::settings::SolverFamily;
 
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
+
+/// Limit how many characters we persist/compare for large text snapshots.
+pub const DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT: usize = 1_000_000;
 
 /// Converts a SerdeModel to JSON with stable IDs.
 ///
@@ -129,7 +134,8 @@ fn serialize_domains_expr(expr: &Expression, depth: usize, output: &mut String) 
         .map(|domain| domain.to_string())
         .unwrap_or_else(|| "<unknown>".to_owned());
     output.push_str(&" ".repeat(depth));
-    output.push_str(&format!("{expr} :: {domain}\n"));
+    output.push_str(&pretty_expression_domain_annotation(expr, domain));
+    output.push('\n');
 
     for child in expr.children() {
         serialize_domains_expr(&child, depth + 1, output);
@@ -148,7 +154,7 @@ pub fn save_model_json(
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{test_name}-{marker}.generated-{test_stage}.serialised.json");
     println!("saving: {filename}");
-    File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
+    write_text_with_trailing_newline(Path::new(&filename), &generated_json_str)?;
     Ok(())
 }
 
@@ -167,8 +173,10 @@ pub fn save_stats_json(
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
 
-    File::create(format!("{path}/{test_name}-{solver_name}-stats.json"))?
-        .write_all(generated_json_str.as_bytes())?;
+    write_text_with_trailing_newline(
+        Path::new(&format!("{path}/{test_name}-{solver_name}-stats.json")),
+        &generated_json_str,
+    )?;
 
     Ok(())
 }
@@ -260,7 +268,7 @@ pub fn save_solutions_json(
 
     let solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
-    File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
+    write_text_with_trailing_newline(Path::new(&filename), &generated_json_str)?;
 
     Ok(json_solutions)
 }
@@ -287,15 +295,13 @@ pub fn read_default_rule_trace(
     test_name: &str,
     prefix: &str,
     solver: &SolverFamily,
-) -> Result<Vec<String>, std::io::Error> {
+) -> Result<String, std::io::Error> {
     let solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}-{solver_name}-{prefix}-rule-trace.txt");
-    let rules_trace: Vec<String> = read_with_path(filename)?
-        .lines()
-        .map(String::from)
-        .collect();
-
-    Ok(rules_trace)
+    Ok(truncate_to_first_chars(
+        &read_with_path(filename)?,
+        DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
+    ))
 }
 
 #[doc(hidden)]
@@ -438,6 +444,13 @@ fn maybe_truncate_serialised_json(serialised: String, test_stage: &str) -> Strin
 
 fn truncate_to_first_lines(content: &str, max_lines: usize) -> String {
     content.lines().take(max_lines).join("\n")
+}
+
+pub fn truncate_to_first_chars(content: &str, max_chars: usize) -> String {
+    match content.char_indices().nth(max_chars) {
+        Some((idx, _)) => content[..idx].to_owned(),
+        None => content.to_owned(),
+    }
 }
 
 fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<String> {

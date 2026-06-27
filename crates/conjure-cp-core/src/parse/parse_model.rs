@@ -691,6 +691,12 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
         .ok_or(error!("DomainInt is not an array".to_owned()))?[1]
         .as_array()
         .ok_or(error!("DomainInt[1] is not an array".to_owned()))?;
+    if arr.is_empty() {
+        return Ok(Domain::int(vec![Range::Bounded(
+            crate::ast::OXIDE_INT_MIN,
+            crate::ast::OXIDE_INT_MAX,
+        )]));
+    }
     for range in arr {
         let range = range
             .as_object()
@@ -889,7 +895,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
             }
         }
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
-            parse_comprehension(comprehension, scope.clone(), None)
+            parse_comprehension(comprehension, scope.clone())
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let user_name = parse_reference_name(obj)?;
@@ -1162,7 +1168,6 @@ fn parse_abs_relation(abs_relation: &Value, scope: &SymbolTablePtr) -> Result<Ex
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: SymbolTablePtr,
-    comprehension_kind: Option<ACOperatorKind>,
 ) -> Result<Expression> {
     let fail = |stage: &str| -> Error {
         Error::Parse(format!("Could not parse comprehension at stage `{stage}`"))
@@ -1260,8 +1265,34 @@ fn parse_comprehension(
 
     Ok(Expression::Comprehension(
         Metadata::new(),
-        Moo::new(comprehension.with_return_value(expr, comprehension_kind)),
+        Moo::new(comprehension.with_return_value(expr)),
     ))
+}
+
+fn unary_skip_operator(op_name: &str) -> Option<ACOperatorKind> {
+    match op_name {
+        "MkOpAnd" => Some(ACOperatorKind::And),
+        "MkOpOr" => Some(ACOperatorKind::Or),
+        "MkOpSum" | "MkOpMin" | "MkOpMax" => Some(ACOperatorKind::Sum),
+        "MkOpProduct" => Some(ACOperatorKind::Product),
+        _ => None,
+    }
+}
+
+fn set_comprehension_skip_operator(
+    expr: Expression,
+    skip_operator: Option<ACOperatorKind>,
+) -> Expression {
+    let Expression::Comprehension(meta, comprehension) = expr else {
+        return expr;
+    };
+    if let Some(skip_operator) = skip_operator {
+        let mut comprehension = Moo::unwrap_or_clone(comprehension);
+        comprehension.skip_operator = Some(skip_operator);
+        Expression::Comprehension(meta, Moo::new(comprehension))
+    } else {
+        Expression::Comprehension(meta, comprehension)
+    }
 }
 
 fn parse_bin_op(
@@ -1585,19 +1616,15 @@ fn parse_unary_op(
     // if the current expr is a quantifier like and/or/sum and it contains a comprehension, let the comprehension know what it is inside.
     let arg = match value {
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
-            let comprehension_kind = match key.as_str() {
-                "MkOpOr" => Some(ACOperatorKind::Or),
-                "MkOpAnd" => Some(ACOperatorKind::And),
-                "MkOpSum" => Some(ACOperatorKind::Sum),
-                "MkOpProduct" => Some(ACOperatorKind::Product),
-                _ => None,
-            };
-            parse_comprehension(comprehension, scope.clone(), comprehension_kind)
+            parse_comprehension(comprehension, scope.clone())
                 .map_err(|_| fail("value.Comprehension.parse_comprehension"))
         }
         _ => parse_expression(value, scope).map_err(|_| fail("value.parse_expression")),
     }
     .map_err(|_| fail("arg"))?;
+
+    let skip_operator = unary_skip_operator(key.as_str());
+    let arg = set_comprehension_skip_operator(arg, skip_operator);
 
     let constructor =
         unary_operator(key.as_str(), Some(&arg)).ok_or_else(|| fail("unary_operator"))?;

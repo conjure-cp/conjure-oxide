@@ -60,7 +60,8 @@ mod test {
     use conjure_cp_core::ast::SymbolTablePtr;
     #[allow(unused)]
     use conjure_cp_core::ast::{
-        Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name, SymbolTable,
+        Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name, ReturnType,
+        SymbolTable,
     };
     #[allow(unused)]
     use std::collections::HashMap;
@@ -146,5 +147,76 @@ mod test {
                 ))
             )
         );
+    }
+
+    #[test]
+    pub fn test_parse_expression_annotations() {
+        let symbols = SymbolTablePtr::new();
+        let x = DeclarationPtr::new_find(
+            Name::User("x".into()),
+            Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
+        );
+        symbols
+            .write()
+            .insert(x.clone())
+            .expect("x should not exist in the symbol-table yet, so we should be able to add it");
+
+        let domain_annotation = parse_expr("x : int(1..3)", symbols.clone())
+            .unwrap()
+            .unwrap();
+        assert!(matches!(
+            domain_annotation,
+            Expression::DomainAnnotation(_, _, _)
+        ));
+        assert_eq!(domain_annotation.to_string(), "x : int(1..3)");
+
+        let type_annotation = parse_expr("x :: int", symbols.clone()).unwrap().unwrap();
+        assert_eq!(
+            type_annotation,
+            Expression::TypeAnnotation(
+                Metadata::new(),
+                Moo::new(Expression::Atomic(Metadata::new(), Atom::new_ref(x))),
+                ReturnType::Int
+            )
+        );
+        assert_eq!(type_annotation.to_string(), "x :: int");
+    }
+
+    #[test]
+    pub fn test_expression_annotations_bind_tighter_than_addition() {
+        let symbols = SymbolTablePtr::new();
+        let x = DeclarationPtr::new_find(
+            Name::User("x".into()),
+            Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
+        );
+        symbols
+            .write()
+            .insert(x)
+            .expect("x should not exist in the symbol-table yet, so we should be able to add it");
+
+        let expr = parse_expr("x + 1 : int", symbols).unwrap().unwrap();
+        let Expression::Sum(_, terms) = expr else {
+            panic!("expected a sum expression");
+        };
+        let terms = (*terms).clone().unwrap_list().unwrap();
+        assert_eq!(terms.len(), 2);
+        assert!(matches!(terms[1], Expression::DomainAnnotation(_, _, _)));
+        assert_eq!(terms[1].to_string(), "1 : int(-2147483647..2147483647)");
+
+        let symbols = SymbolTablePtr::new();
+        let x = DeclarationPtr::new_find(
+            Name::User("x".into()),
+            Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
+        );
+        symbols
+            .write()
+            .insert(x)
+            .expect("x should not exist in the symbol-table yet, so we should be able to add it");
+
+        let expr = parse_expr("(x + 1) : int", symbols).unwrap().unwrap();
+        let Expression::DomainAnnotation(_, inner, _) = expr else {
+            panic!("expected a domain annotation");
+        };
+        assert!(matches!(*inner, Expression::Sum(_, _)));
     }
 }

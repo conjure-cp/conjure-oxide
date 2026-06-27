@@ -1,7 +1,7 @@
 use conjure_cp::ast::{Expression as Expr, GroundDomain};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect,
     register_rule,
 };
 
@@ -158,11 +158,11 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
             }
         }
 
-        let mut reduction = Reduction::cnf(cnf_int, clauses, symbols);
+        let mut reduction = RuleEffect::cnf(cnf_int, clauses, symbols);
         reduction.new_top = constraints;
         Ok(reduction)
     } else {
-        Ok(Reduction::pure(cnf_int))
+        Ok(RuleEffect::pure(cnf_int))
     }
 }
 
@@ -231,11 +231,11 @@ fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> 
             clauses.push(conjure_cp::ast::CnfClause::new(vec![bits[0].clone()]));
         }
 
-        let mut reduction = Reduction::cnf(cnf_int, clauses, symbols);
+        let mut reduction = RuleEffect::cnf(cnf_int, clauses, symbols);
         reduction.new_top = constraints;
         Ok(reduction)
     } else {
-        Ok(Reduction::pure(cnf_int))
+        Ok(RuleEffect::pure(cnf_int))
     }
 }
 
@@ -296,13 +296,13 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
 
     if !repr_exists {
         // add domain ranges as constraints if this is the first time the representation is added
-        Ok(Reduction::new(
+        Ok(RuleEffect::new(
             cnf_int.clone(),
             vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
             symbols,
         ))
     } else {
-        Ok(Reduction::pure(cnf_int))
+        Ok(RuleEffect::pure(cnf_int))
     }
 }
 
@@ -323,7 +323,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
     };
-    //TODO: Adding constant optimization to all int operations should hopefully make this rule redundant
+    //TODO: Adding constant optimisation to all int operations should hopefully make this rule redundant
 
     let mut binary_encoding = vec![];
 
@@ -339,7 +339,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         value_mut >>= 1;
     }
 
-    Ok(Reduction::pure(Expr::SATInt(
+    Ok(RuleEffect::pure(Expr::SATInt(
         Metadata::new(),
         SATIntEncoding::Log,
         Moo::new(into_matrix_expr!(binary_encoding)),

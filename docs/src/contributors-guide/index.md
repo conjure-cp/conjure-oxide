@@ -15,8 +15,8 @@ We love your input! We want to make contributing to this project as easy and tra
 ## Contributing
 
 This project is open-source: you can find the source code on
-[Github](https://github.com/conjure-cp/conjure-oxide), and issues, questions,
-or feature requests can be posted on the [Github issue
+[GitHub](https://github.com/conjure-cp/conjure-oxide), and issues, questions,
+or feature requests can be posted on the [GitHub issue
 tracker](https://github.com/conjure-cp/conjure-oxide/issues). 
 
 Currently, Conjure Oxide has been primarily developed by students and staff at the [University of St Andrews](https://www.st-andrews.ac.uk/). That being said, we welcome and encourage contributions from individuals outside the University. Over the course of this section, we will expand further into **how** you can contribute.

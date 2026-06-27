@@ -1,0 +1,77 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(a >=lex b),
+a[1] = 1
+
+--
+
+(a >=lex b)
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(b <=lex a)
+
+--
+
+(b#matrix_to_atom <=lex a#matrix_to_atom),
+a#matrix_to_atom[1] = 1
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(b#matrix_to_atom <=lex a#matrix_to_atom),
+a#matrix_to_atom[1] = 1
+new variables:
+  find a#matrix_to_atom_1: int(1..2)
+  find a#matrix_to_atom_2: int(1..2)
+  find b#matrix_to_atom_1: int(1..2)
+  find b#matrix_to_atom_2: int(1..2)
+
+--
+
+a#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[1])
+
+--
+
+(b#matrix_to_atom <=lex a#matrix_to_atom),
+SafeIndex(a#matrix_to_atom,[1]) = 1
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+(b#matrix_to_atom <=lex a#matrix_to_atom),
+a#matrix_to_atom_1 = 1
+
+--
+
+(b#matrix_to_atom <=lex a#matrix_to_atom)
+   ~~> matrix_ref_to_atom ([("Base", 2000)])
+([b#matrix_to_atom_1,b#matrix_to_atom_2;int(1..)] <=lex a#matrix_to_atom)
+
+--
+
+([b#matrix_to_atom_1,b#matrix_to_atom_2;int(1..)] <=lex a#matrix_to_atom)
+   ~~> matrix_ref_to_atom ([("Base", 2000)])
+([b#matrix_to_atom_1,b#matrix_to_atom_2;int(1..)] <=lex [a#matrix_to_atom_1,a#matrix_to_atom_2;int(1..)])
+
+--
+
+([b#matrix_to_atom_1,b#matrix_to_atom_2;int(1..)] <=lex [a#matrix_to_atom_1,a#matrix_to_atom_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([b#matrix_to_atom_1, b#matrix_to_atom_2], [a#matrix_to_atom_1, a#matrix_to_atom_2])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+find a#matrix_to_atom_1: int(1..2)
+find a#matrix_to_atom_2: int(1..2)
+find b#matrix_to_atom_1: int(1..2)
+find b#matrix_to_atom_2: int(1..2)
+
+such that
+
+FlatLexLeq([b#matrix_to_atom_1, b#matrix_to_atom_2], [a#matrix_to_atom_1, a#matrix_to_atom_2]),
+a#matrix_to_atom_1 = 1
+

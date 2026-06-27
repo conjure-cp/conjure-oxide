@@ -1,11 +1,12 @@
 use std::collections::VecDeque;
 
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Metadata, Moo, Name,
-    SymbolTable,
+    AbstractLiteral, Atom, DeclarationPtr, DomainPtr, Expression as Expr, Literal, Metadata, Moo,
+    Name, SymbolTable,
     categories::Category,
     comprehension::{Comprehension, ComprehensionQualifier},
 };
+use conjure_cp::rule_engine::RuleEffect;
 
 use tracing::{instrument, trace};
 use uniplate::{Biplate, Uniplate};
@@ -92,14 +93,6 @@ pub fn constant_record_names(expr: &Expr) -> Option<Vec<Name>> {
     }
 }
 
-/// True if the entire AST is constants.
-pub fn is_all_constant(expression: &Expr) -> bool {
-    expression
-        .universe_bi()
-        .into_iter()
-        .all(|atom| matches!(atom, Atom::Literal(_)))
-}
-
 /// Converts a vector of expressions to a vector of atoms.
 ///
 /// # Returns
@@ -132,8 +125,11 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
 ///
 #[instrument(skip_all, fields(expr = %expr))]
 pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> {
-    let mut symbols = symbols.clone();
+    let domain = to_aux_var_domain(expr)?;
+    Some(materialise_aux_var(expr, symbols, &domain))
+}
 
+fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     // No need to put an atom in an aux_var
     if is_atom(expr) {
         if cfg!(debug_assertions) {
@@ -181,23 +177,44 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
             && categories.contains(&Category::Decision)
             && categories.contains(&Category::Constant))
     {
-        if cfg!(debug_assertions) {
-            trace!(
-                why = "expression has sub-expressions that are not in the decision category",
-                "to_aux_var() failed"
-            );
+        if let Expr::ElementId(_, _, value) = expr {
+            let value_categories = value.universe_categories();
+            if !(value_categories.len() == 1 && value_categories.contains(&Category::Decision)
+                || value_categories.len() == 2
+                    && value_categories.contains(&Category::Decision)
+                    && value_categories.contains(&Category::Constant))
+            {
+                if cfg!(debug_assertions) {
+                    trace!(
+                        why =
+                            "expression has sub-expressions that are not in the decision category",
+                        "to_aux_var() failed"
+                    );
+                }
+                return None;
+            }
+        } else {
+            if cfg!(debug_assertions) {
+                trace!(
+                    why = "expression has sub-expressions that are not in the decision category",
+                    "to_aux_var() failed"
+                );
+            }
+            return None;
         }
-        return None;
     }
 
     // Avoid introducing auxvars for generic matrix indexing (can create many redundant auxvars
     // before comprehension expansion). However, keep list indexing eligible so Minion lowering
     // can introduce `element` constraints in non-equality contexts.
     if let Expr::SafeIndex(_, subject, indices) = expr {
+        let index_has_element_id = indices
+            .iter()
+            .any(|index| matches!(index, Expr::ElementId(..)));
         let can_lower_via_element = subject.clone().unwrap_list().is_some()
             && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
 
-        if !can_lower_via_element {
+        if !can_lower_via_element && !index_has_element_id {
             if cfg!(debug_assertions) {
                 trace!(expr=%expr, why = "matrix indexing is not element-lowerable", "to_aux_var() failed");
             }
@@ -212,13 +229,18 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     };
 
-    let decl = symbols.gen_find(&domain);
+    Some(domain)
+}
+
+fn materialise_aux_var(expr: &Expr, symbols: &SymbolTable, domain: &DomainPtr) -> ToAuxVarOutput {
+    let mut symbols = symbols.clone();
+    let decl = symbols.gen_find(domain);
 
     if cfg!(debug_assertions) {
         trace!(expr=%expr, "to_auxvar() succeeded in putting expr into an auxvar");
     }
 
-    Some(ToAuxVarOutput {
+    ToAuxVarOutput {
         aux_declaration: decl.clone(),
         aux_expression: Expr::AuxDeclaration(
             Metadata::new(),
@@ -227,7 +249,21 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         ),
         symbols,
         _unconstructable: (),
-    })
+    }
+}
+
+/// Defers auxiliary variable allocation until a selected rule is materialised.
+pub fn defer_aux_var(
+    expr: &Expr,
+    build: impl Fn(ToAuxVarOutput) -> RuleEffect + Send + Sync + 'static,
+) -> Option<RuleEffect> {
+    let domain = to_aux_var_domain(expr)?;
+    let expr = expr.clone();
+
+    Some(RuleEffect::deferred(move |symbols| {
+        let aux = materialise_aux_var(&expr, symbols, &domain);
+        build(aux)
+    }))
 }
 
 /// Output data of `to_aux_var`.

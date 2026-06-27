@@ -10,4 +10,3 @@ cd $(git rev-parse --show-superproject-working-tree --show-toplevel | head -n 1)
 
 # https://stackoverflow.com/questions/12641469/list-submodules-in-a-git-repository
 git config --file .gitmodules --get-regexp path | awk '{print $2}'
-

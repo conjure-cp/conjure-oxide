@@ -63,6 +63,7 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
         solver,
         rewritten_model,
         0,
+        false,
         &global_args.save_solver_input_file,
         global_args.rule_trace_cdp,
     )?;

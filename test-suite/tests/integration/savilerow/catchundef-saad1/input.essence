@@ -1,0 +1,19 @@
+language ESSENCE' 1.0
+
+letting weights be [0,1,2,3,4,5; int(0..5)]
+$set explicit containing values 1..5
+$padded with dummy 0s
+
+find setSize : int(1..5)
+find setValues : matrix indexed by [int(1..5)] of int(0..5)
+find setWeight : int(0..sum(weights))
+such that
+
+forAll i : int(1..5) .
+    (i > setSize <-> setValues[i] = 0) /\
+    (i < setSize -> setValues[i] < setValues[i+1]),
+
+setSize  > 1,
+
+setWeight = sum i : int(1..5) .
+catchUndef(weights[setValues[i]], 0) * toInt(i <= setSize)

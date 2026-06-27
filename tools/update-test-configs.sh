@@ -29,7 +29,7 @@ Input:
     - test names, e.g. tests_integration_basic_div_04
     - globbed test names, e.g. tests_integration_cnf*
     - paths (absolute or relative to repo root), e.g.
-      ./test-suite/tests/integration/basic/comprehension-01-1
+      ./test-suite/tests/integration/basic/comprehension/set-fixed-size-sum
   Paths outside <repo root>/test-suite/tests/{integration,roundtrip} are ignored.
   If no input is given, your default editor will be opened so you can type in the paths;
   This behaviour is disabled when the script is not ran interactively (e.g input is piped from another command)
@@ -49,9 +49,9 @@ Options:
       For regex, prefix with re:, e.g.
       "re:^# TODO\(repr\):"
 
-  --skip [true|false]
-      true    - ensure "skip = true" exists  (default)
-      false   - remove any "skip = ..." line
+  --skip [REASON|false]
+      REASON  - set skip = "REASON" (non-empty string giving why the test is ignored)
+      false   - remove any skip = ... line
       omitted - do not touch skip
 
   --create-if-empty
@@ -60,7 +60,7 @@ Options:
   --parser tree-sitter|via-conjure
       If set, enable only this parser in [parser]
 
-  --rewriter naive|morph
+  --rewriter baseline|optimised|baseline+prefilter|baseline+dirty|baseline+cache
       If set, enable only this rewriter in [rewriter]
 
   --comprehension-expander native|via-solver|via-solver-ac
@@ -77,6 +77,12 @@ EOF
 err() {
   echo "ERROR: $*" >&2
   exit 1
+}
+
+ensure_trailing_newline() {
+  local file="$1"
+  [[ -s "$file" ]] || return 0
+  [[ "$(tail -c 1 "$file" | xxd -p)" == "0a" ]] || printf '\n' >>"$file"
 }
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -107,6 +113,49 @@ validate_choice() {
   [[ "$ok" -eq 1 ]] || err "Invalid $name: '$value' (allowed: ${allowed[*]})"
 }
 
+validate_rewriter() {
+  local value="$1"
+  case "$value" in
+    baseline|optimised) return 0 ;;
+  esac
+
+  [[ "$value" == baseline+* ]] || err "Invalid rewriter: '$value' (allowed: baseline, optimised, baseline+prefilter, baseline+dirty, baseline+cache and combinations)"
+
+  local seen_baseline=0
+  local seen_prefilter=0
+  local seen_dirty=0
+  local seen_cache=0
+  local token
+  local tokens
+  IFS='+' read -ra tokens <<< "$value"
+  for token in "${tokens[@]}"; do
+    case "$token" in
+      baseline)
+        [[ "$seen_baseline" -eq 0 ]] || err "Invalid rewriter: duplicate 'baseline'"
+        seen_baseline=1
+        ;;
+      prefilter)
+        [[ "$seen_prefilter" -eq 0 ]] || err "Invalid rewriter: duplicate 'prefilter'"
+        seen_prefilter=1
+        ;;
+      dirty)
+        [[ "$seen_dirty" -eq 0 ]] || err "Invalid rewriter: duplicate 'dirty'"
+        seen_dirty=1
+        ;;
+      cache)
+        [[ "$seen_cache" -eq 0 ]] || err "Invalid rewriter: duplicate 'cache'"
+        seen_cache=1
+        ;;
+      *)
+        err "Invalid rewriter option: '$token' (allowed: baseline, prefilter, dirty, cache)"
+        ;;
+    esac
+  done
+
+  [[ "$seen_baseline" -eq 1 ]] || err "Invalid rewriter: '$value' must start with baseline"
+  [[ "$seen_prefilter$seen_dirty$seen_cache" != "000" ]] || err "Invalid rewriter: '$value' has no options"
+}
+
 prepend_comment() {
   local file="$1"
   local text="$2"
@@ -119,22 +168,24 @@ prepend_comment() {
   mv "$tmp" "$file"
 }
 
-set_skip_true() {
+set_skip_reason() {
   local file="$1"
+  local reason="$2"
+  [[ -n "$reason" ]] || err "skip reason must be non-empty"
   local tmp
   tmp="$(mktemp)"
-  awk '
-    BEGIN { done=0 }
+  SKIP_REASON="$reason" awk '
+    BEGIN { reason = ENVIRON["SKIP_REASON"]; gsub(/\\/, "\\\\", reason); gsub(/"/, "\\\"", reason); done = 0 }
     /^[[:space:]]*skip[[:space:]]*=/ {
       if (!done) {
-        print "skip = true"
-        done=1
+        printf "skip = \"%s\"\n", reason
+        done = 1
       }
       next
     }
     { print }
     END {
-      if (!done) print "skip = true"
+      if (!done) printf "skip = \"%s\"\n", reason
     }
   ' "$file" > "$tmp"
   mv "$tmp" "$file"
@@ -452,14 +503,16 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --skip)
-      # Optional value: --skip => true, --skip false => false
       if [[ $# -ge 2 && "$2" != --* ]]; then
-        skip_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-        [[ "$skip_opt" == "true" || "$skip_opt" == "false" ]] || err "--skip must be true or false"
+        skip_opt="$2"
+        if [[ "$(printf '%s' "$skip_opt" | tr '[:upper:]' '[:lower:]')" == "false" ]]; then
+          skip_opt="false"
+        elif [[ -z "$skip_opt" ]]; then
+          err "--skip requires a non-empty reason string, or false to clear"
+        fi
         shift 2
       else
-        skip_opt="true"
-        shift
+        err "--skip requires a reason string, or false to clear"
       fi
       ;;
     --create-if-empty)
@@ -475,7 +528,7 @@ while [[ $# -gt 0 ]]; do
     --rewriter)
       [[ $# -ge 2 ]] || err "--rewriter requires a value"
       rewriter_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-      validate_choice "rewriter" "$rewriter_opt" "naive" "morph"
+      validate_rewriter "$rewriter_opt"
       shift 2
       ;;
     --comprehension-expander)
@@ -597,10 +650,10 @@ for t in "${test_names[@]}"; do
     fi
 
     if [[ -n "$skip_opt" ]]; then
-      if [[ "$skip_opt" == "true" ]]; then
-        set_skip_true "$work_file"
-      else
+      if [[ "$skip_opt" == "false" ]]; then
         set_skip_false "$work_file"
+      else
+        set_skip_reason "$work_file" "$skip_opt"
       fi
     fi
 
@@ -649,6 +702,7 @@ for t in "${test_names[@]}"; do
       [[ -n "$baseline_tmp" ]] && rm -f "$baseline_tmp"
     else
       mv "$work_file" "$config_path"
+      ensure_trailing_newline "$config_path"
       if [[ "$created_missing_config" -eq 1 ]]; then
         echo "Created: $config_path"
       else

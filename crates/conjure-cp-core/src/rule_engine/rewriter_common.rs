@@ -1,8 +1,8 @@
 //! Common utilities and types for rewriters.
 use super::{
-    Reduction,
+    RuleEffect,
+    expression_zipper::expression_ctx,
     resolve_rules::{ResolveRulesError, RuleData},
-    submodel_zipper::expression_ctx,
 };
 use crate::ast::{
     DeclarationPtr, Expression, Model, Name, SymbolTable,
@@ -23,7 +23,7 @@ use tracing::{info, trace};
 #[derive(Debug, Clone)]
 pub struct RuleResult<'a> {
     pub rule_data: RuleData<'a>,
-    pub reduction: Reduction,
+    pub effect: RuleEffect,
 }
 
 pub type VariableDeclarationSnapshot = BTreeMap<Name, String>;
@@ -38,6 +38,16 @@ pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarat
         .collect()
 }
 
+/// Snapshots variable declarations after applying a rule's symbol-table changes.
+pub fn snapshot_symbols_after_effect(
+    symbols: &SymbolTable,
+    effect_symbols: &SymbolTable,
+) -> VariableDeclarationSnapshot {
+    let mut merged = symbols.clone();
+    merged.extend(effect_symbols.clone());
+    snapshot_variable_declarations(&merged)
+}
+
 /// Logs, to the main log, and the human readable traces used by the integration tester, that the
 /// rule has been applied to the expression
 pub fn log_rule_application(
@@ -49,7 +59,7 @@ pub fn log_rule_application(
         &VariableDeclarationSnapshot,
     )>,
 ) {
-    let red = &result.reduction;
+    let red = &result.effect;
     let rule = result.rule_data.rule;
 
     // A reduction can only modify either constraints or clauses, not both. So the the same
@@ -137,7 +147,7 @@ pub fn log_rule_application(
 
         trace!(
             target: "rule_engine_rule_trace",
-            "{}, \n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
+            "{}\n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
             initial_expression,
             rule.name,
             rule.rule_sets,
@@ -185,7 +195,7 @@ pub(crate) fn try_rewrite_value_letting_once(
     model: &mut Model,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
-) -> Option<()> {
+) -> Option<Name> {
     let symbols = model.symbols().clone();
     let mut results: Vec<ApplicableLettingRule<'_>> = vec![];
 
@@ -200,14 +210,14 @@ pub(crate) fn try_rewrite_value_letting_once(
                 let ctx = ctx.clone();
 
                 for rd in rules {
-                    let Ok(reduction) = (rd.rule.application)(&expr, &symbols) else {
+                    let Ok(effect) = (rd.rule.application)(&expr, &symbols) else {
                         continue;
                     };
 
                     results.push((
                         RuleResult {
                             rule_data: rd.clone(),
-                            reduction,
+                            effect,
                         },
                         *priority,
                         expr.clone(),
@@ -236,17 +246,25 @@ pub(crate) fn try_rewrite_value_letting_once(
         panic!("Multiple equally applicable rules for value letting expression {expr}: {names:?}");
     }
 
-    log_rule_application(result, expr, &symbols, None);
+    let effect = result.effect.materialise(&symbols);
+    let result = RuleResult {
+        rule_data: result.rule_data.clone(),
+        effect,
+    };
 
-    let rewritten_expr = ctx(result.reduction.new_expression.clone());
-    result.reduction.clone().apply(model);
+    log_rule_application(&result, expr, &symbols, None);
+
+    let rewritten_expr = ctx(result.effect.new_expression.clone());
+    result.effect.apply(model);
 
     let mut decl = decl.clone();
     *decl
         .as_value_letting_mut()
         .expect("declaration should still be a value letting") = rewritten_expr;
 
-    Some(())
+    model.symbols_mut().refresh_local_binding_hashes();
+
+    Some(decl.name().clone())
 }
 
 /// Represents errors that can occur during the model rewriting process.

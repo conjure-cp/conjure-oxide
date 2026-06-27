@@ -16,7 +16,7 @@ use conjure_cp::{
     Model,
     context::Context,
     defaults::DEFAULT_RULE_SETS,
-    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    rule_engine::{resolve_rule_sets, rewrite_model},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
         set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
@@ -33,6 +33,7 @@ use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
+use conjure_cp_cli::utils::text_files::write_text_with_trailing_newline;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NumberOfSolutions {
@@ -99,6 +100,11 @@ pub struct Args {
     /// Save solutions to the given JSON file
     #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
     pub output: Option<PathBuf>,
+
+    /// When optimising, retain every improving solution Minion reports instead of only the last
+    /// one.
+    #[arg(long, default_value_t = false)]
+    pub keep_intermediate_solutions: bool,
 }
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
@@ -152,7 +158,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         let context_obj = context.read().unwrap().clone();
         let generated_json = &serde_json::to_value(context_obj)?;
         let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
+        write_text_with_trailing_newline(path, &pretty_json)?;
     }
     Ok(())
 }
@@ -304,25 +310,14 @@ pub(crate) fn rewrite(
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = match rewriter {
-        Rewriter::Morph(config) => {
-            tracing::info!("Rewriting the model using the morph rewriter ({})", config);
-            rewrite_morph(
-                model,
-                &rule_sets,
-                global_args.check_equally_applicable_rules,
-                config,
-            )
-        }
-        Rewriter::Naive => {
-            tracing::info!("Rewriting the model using the default / naive rewriter");
-            rewrite_naive(
-                &model,
-                &rule_sets,
-                global_args.check_equally_applicable_rules,
-            )?
-        }
-    };
+    let Rewriter::Rewrite(config) = rewriter;
+    tracing::info!("Rewriting the model using the rewrite engine ({})", config);
+    let new_model = rewrite_model(
+        &model,
+        &rule_sets,
+        global_args.check_equally_applicable_rules,
+        config,
+    )?;
 
     tracing::info!("Rewritten model: \n{}\n", new_model);
     Ok(new_model)
@@ -349,6 +344,7 @@ fn run_solver(
         solver,
         model,
         cmd_args.number_of_solutions.as_solver_limit(),
+        cmd_args.keep_intermediate_solutions,
         &global_args.save_solver_input_file,
         global_args.rule_trace_cdp,
     )?;

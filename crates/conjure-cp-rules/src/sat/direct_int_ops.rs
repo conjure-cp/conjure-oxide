@@ -2,7 +2,7 @@ use conjure_cp::ast::{Atom, Expression as Expr, Literal};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use conjure_cp::ast::Metadata;
@@ -30,7 +30,7 @@ fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    Ok(Reduction::pure(Expr::SATInt(
+    Ok(RuleEffect::pure(Expr::SATInt(
         Metadata::new(),
         SATIntEncoding::Direct,
         Moo::new(into_matrix_expr!(vec![Expr::Atomic(
@@ -111,7 +111,7 @@ pub fn validate_direct_int_operands(
 /// NOTE: This rule reduces to AND_i (a[i] ≡ b[i]) and does not enforce one-hotness.
 #[register_rule("SAT_Direct", 9100, [Eq])]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
+    // TODO: this could be optimised by just going over the sections of both vectors where the ranges intersect
     // this does require enforcing structure separately
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -144,7 +144,7 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         );
     }
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 /// Converts a != expression between two direct SATInts to a boolean expression in cnf
@@ -188,7 +188,7 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         );
     }
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 /// Converts a </>/<=/>= expression between two direct SATInts to a boolean expression in cnf
@@ -232,7 +232,7 @@ fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
     }
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 /// Encodes a < b for one-hot direct integers using prefix OR logic.
@@ -283,7 +283,7 @@ fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let mut out = val_bits.clone();
     out.reverse();
 
-    Ok(Reduction::pure(Expr::SATInt(
+    Ok(RuleEffect::pure(Expr::SATInt(
         Metadata::new(),
         SATIntEncoding::Direct,
         Moo::new(into_matrix_expr!(out)),
@@ -392,7 +392,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         (quot_min, quot_max),
     );
 
-    Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(quot_int, new_clauses, new_symbols))
 }
 
 #[register_rule("SAT_Direct", 9100, [Sum])]
@@ -407,7 +407,7 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // There are no expressions to sum, this is a degenerate case that we can handle by returning a constant 0
     if exprs.is_empty() {
-        return Ok(Reduction::pure(Expr::SATInt(
+        return Ok(RuleEffect::pure(Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Direct,
             Moo::new(into_matrix_expr!(vec![Expr::Atomic(
@@ -464,7 +464,7 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         acc_max = new_max;
     }
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Direct,
@@ -531,5 +531,5 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         (new_min, new_max),
     );
 
-    Ok(Reduction::cnf(abs_int, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(abs_int, new_clauses, new_symbols))
 }

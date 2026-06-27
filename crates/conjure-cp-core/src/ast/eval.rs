@@ -9,12 +9,23 @@ use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
 
+pub(crate) fn factorial_i32(n: i32) -> Option<i32> {
+    if n < 0 {
+        return None;
+    }
+
+    (1..=n).try_fold(1_i32, i32::checked_mul)
+}
+
 /// Simplify an expression to a constant if possible
 /// Returns:
 /// `None` if the expression cannot be simplified to a constant (e.g. if it contains a variable)
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
+        Expr::TypeAnnotation(_, expr, _) | Expr::DomainAnnotation(_, expr, _) => {
+            eval_constant(expr)
+        }
         Expr::Supset(_, a, b) => match (a.as_ref(), b.as_ref()) {
             (
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
@@ -269,6 +280,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Table(_, _, _) => None,
         Expr::NegativeTable(_, _, _) => None,
+        Expr::AtLeast(_, _, _, _) => None,
+        Expr::AtMost(_, _, _, _) => None,
+        Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => None,
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead
@@ -534,7 +548,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Lit::Int(a) => Some(Lit::Int(-a)),
             _ => None,
         },
-        Expr::Factorial(_, _) => None,
+        Expr::Factorial(_, a) => match eval_constant(a.as_ref())? {
+            Lit::Int(a) => factorial_i32(a).map(Lit::Int),
+            _ => None,
+        },
         Expr::Minus(_, a, b) => bin_op::<i32, i32>(|a, b| a - b, a, b).map(Lit::Int),
         Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
@@ -703,6 +720,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             })?;
             Some(lt.into())
         }
+        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => None,
     }
 }
 
@@ -889,11 +907,20 @@ fn eval_comprehension_qualifiers(
     Some(())
 }
 
-fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
-    match eval_constant(expr)? {
+/// Values for a constant collection expression used during constant folding.
+///
+/// This does not enumerate decision-variable domains; quantification over decisions is not
+/// unrolled here.
+pub fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
+    generator_values_from_constant_collection(&eval_constant(expr)?)
+}
+
+pub(crate) fn generator_values_from_constant_collection(lit: &Lit) -> Option<Vec<Lit>> {
+    match lit {
         Lit::AbstractLiteral(AbstractLiteral::Set(values))
         | Lit::AbstractLiteral(AbstractLiteral::MSet(values))
-        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values),
+        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values.clone()),
+        Lit::AbstractLiteral(AbstractLiteral::Matrix(values, _)) => Some(values.clone()),
         Lit::AbstractLiteral(list) => list.unwrap_list().cloned(),
         _ => None,
     }

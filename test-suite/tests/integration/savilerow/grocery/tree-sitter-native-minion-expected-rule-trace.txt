@@ -1,0 +1,40 @@
+Model before rewriting:
+
+letting RANGE be domain int(0..711)
+find item1: RANGE
+find item2: RANGE
+find item3: RANGE
+find item4: RANGE
+
+such that
+
+sum([sum([sum([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)]) = 711,
+product([product([product([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)]) = product([product([product([711,100;int(1..)]),100;int(1..)]),100;int(1..)]),
+item1 >= item2,
+item2 >= item3,
+item3 >= item4
+
+--
+
+sum([sum([sum([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)]) = 711,
+product([product([product([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)]) = product([product([product([711,100;int(1..)]),100;int(1..)]),100;int(1..)]),
+item1 >= item2,
+item2 >= item3,
+item3 >= item4
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
+Final model:
+
+letting RANGE be domain int(0..711)
+find item1: RANGE
+find item2: RANGE
+find item3: RANGE
+find item4: RANGE
+
+such that
+
+false
+

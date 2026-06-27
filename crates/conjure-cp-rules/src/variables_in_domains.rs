@@ -8,7 +8,7 @@ use conjure_cp::{
         IntVal, Literal as Lit, Metadata, Moo, Name, Range, Reference, SymbolTable,
     },
     bug,
-    rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule},
+    rule_engine::{ApplicationError, ApplicationResult, RuleEffect, register_rule},
 };
 use uniplate::Biplate;
 
@@ -75,7 +75,11 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::new(expr.clone(), domain_guards, symbols.clone()))
+    Ok(RuleEffect::new(
+        expr.clone(),
+        domain_guards,
+        symbols.clone(),
+    ))
 }
 
 /// Returns true iff at least one local symbol contains a reference to a decision variable.

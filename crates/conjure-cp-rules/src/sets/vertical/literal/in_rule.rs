@@ -1,5 +1,5 @@
 use conjure_cp::ast::Metadata;
-use conjure_cp::rule_engine::Reduction;
+use conjure_cp::rule_engine::RuleEffect;
 
 use conjure_cp::ast::AbstractLiteral;
 use conjure_cp::ast::Atom;
@@ -31,7 +31,7 @@ fn in_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 .map_err(|_| RuleNotApplicable)?;
 
             if let Expr::Atomic(_, a) = a.as_ref() {
-                Ok(Reduction::pure(Expr::MinionWInSet(
+                Ok(RuleEffect::pure(Expr::MinionWInSet(
                     Metadata::new(),
                     a.clone(),
                     literals,

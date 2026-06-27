@@ -4,7 +4,7 @@ use conjure_cp::{
     ast::{Atom, Expression as Expr, Moo, SymbolTable},
     into_matrix_expr,
     rule_engine::{
-        ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+        ApplicationError, ApplicationResult, RuleEffect, register_rule, register_rule_set,
     },
 };
 use uniplate::Uniplate;
@@ -52,6 +52,12 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | Expr::Min(_, _)
             | Expr::Max(_, _)
             | Expr::AllDiff(_, _)
+            | Expr::AllDifferentExcept(_, _, _)
+            | Expr::ElementId(_, _, _)
+            | Expr::AtLeast(_, _, _, _)
+            | Expr::AtMost(_, _, _, _)
+            | Expr::Gcc(_, _, _, _)
+            | Expr::GccWeak(_, _, _, _)
             | Expr::FlatAllDiff(_, _)
             | Expr::AbstractLiteral(_, _)
     ) {
@@ -70,7 +76,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         } // _ => And(Metadata::new(), Box::new(matrix_expr![])),
     };
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /**
@@ -108,7 +114,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Moo::new(into_matrix_expr![disjunction]),
     ));
 
-    Ok(Reduction::new(
+    Ok(RuleEffect::new(
         // Return the Expr::Atomic
         essence_expr!(&atom_expr),
         new_top,
@@ -150,5 +156,5 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Moo::new(into_matrix_expr![disjunction]),
     ));
 
-    Ok(Reduction::new(essence_expr!(&atom_expr), new_top, symbols))
+    Ok(RuleEffect::new(essence_expr!(&atom_expr), new_top, symbols))
 }

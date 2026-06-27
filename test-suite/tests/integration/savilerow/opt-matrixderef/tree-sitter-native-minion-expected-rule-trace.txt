@@ -1,0 +1,105 @@
+Model before rewriting:
+
+letting ticks be 3
+letting TICKS be domain int(1..ticks)
+find x: int(1..ticks)
+find ruler: matrix indexed by [TICKS] of int(0..((ticks ** 2)))
+find __0: int(0..((ticks ** 2)))
+
+such that
+
+1 = 1,
+__0 =aux ruler[x]
+
+--
+
+1 = 1,
+__0 =aux ruler[x]
+   ~~> constant_evaluator ([("Constant", 9001)])
+__0 =aux ruler[x]
+
+--
+
+__0 =aux ruler#matrix_to_atom[x]
+   ~~> select_representation_matrix ([("Representations", 8001)])
+__0 =aux ruler#matrix_to_atom[x]
+new variables:
+  find ruler#matrix_to_atom_1: int(0..9)
+  find ruler#matrix_to_atom_2: int(0..9)
+  find ruler#matrix_to_atom_3: int(0..9)
+
+--
+
+ruler#matrix_to_atom[x]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(ruler#matrix_to_atom,[x])
+
+--
+
+__0 =aux SafeIndex(ruler#matrix_to_atom,[x])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+__0 =aux SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[(x - 0)])
+
+--
+
+(x - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x,-(0);int(1..)])
+
+--
+
+__0 =aux SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[sum([x,-(0);int(1..)])])
+   ~~> constant_evaluator ([("Constant", 9001)])
+__0 =aux SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[sum([x,0;int(1..)])])
+
+--
+
+SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[sum([x,0;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[__1])
+new variables:
+  find __1: int(1..3)
+new constraints:
+  __1 =aux sum([x,0;int(1..)])
+
+--
+
+__1 =aux sum([x,0;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([0, x], __1),SumGeq([0, x], __1);int(1..)])
+
+--
+
+__0 =aux SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[__1]),
+and([SumLeq([0, x], __1),SumGeq([0, x], __1);int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+__0 =aux SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[__1]),
+SumLeq([0, x], __1),
+SumGeq([0, x], __1)
+
+--
+
+__0 =aux SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[__1])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3],__1,__0)
+
+--
+
+Final model:
+
+letting ticks be 3
+letting TICKS be domain int(1..ticks)
+find x: int(1..ticks)
+find ruler: matrix indexed by [TICKS] of int(0..((ticks ** 2)))
+find __0: int(0..((ticks ** 2)))
+find ruler#matrix_to_atom_1: int(0..9)
+find ruler#matrix_to_atom_2: int(0..9)
+find ruler#matrix_to_atom_3: int(0..9)
+find __1: int(1..3)
+
+such that
+
+__minion_element_one([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3],__1,__0),
+SumLeq([0, x], __1),
+SumGeq([0, x], __1)
+

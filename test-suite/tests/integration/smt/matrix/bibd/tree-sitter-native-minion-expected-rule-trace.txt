@@ -1,0 +1,1333 @@
+Model before rewriting:
+
+letting v be 3
+letting k be 2
+letting l be 1
+letting b be (product([product([l,v;int(1..)]),(v - 1);int(1..)]) / product([k,(k - 1);int(1..)]))
+letting r be (product([l,(v - 1);int(1..)]) / (k - 1))
+find bibd: matrix indexed by [int(1..3), int(1..3)] of int(0..1)
+
+such that
+
+and([ sum([ bibd[object, block] | object : int(1..3) ]) = k | block : int(1..3) ]),
+and([ sum([ bibd[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ and([ (object1 < object2) -> (sum([ product([bibd[object1, block],bibd[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object2 : int(1..3) ]) | object1 : int(1..3) ]),
+and([ (bibd[row,..] <=lex bibd[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd[..,col] <=lex bibd[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+(product([product([l,v;int(1..)]),(v - 1);int(1..)]) / product([k,(k - 1);int(1..)]))
+   ~~> constant_evaluator ([("Constant", 9001)])
+3
+
+--
+
+(product([l,(v - 1);int(1..)]) / (k - 1))
+   ~~> constant_evaluator ([("Constant", 9001)])
+2
+
+--
+
+and([ and([ (object1 < object2) -> (sum([ product([bibd[object1, block],bibd[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object2 : int(1..3) ]) | object1 : int(1..3) ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (object1 < object2) -> (sum([ product([bibd[object1, block],bibd[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ])
+
+--
+
+and([ sum([ bibd[object, block] | object : int(1..3) ]) = k | block : int(1..3) ]),
+and([ sum([ bibd[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd[object1, block],bibd[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd[row,..] <=lex bibd[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd[..,col] <=lex bibd[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([ sum([ bibd[object, block] | object : int(1..3) ]) = k | block : int(1..3) ]),
+and([ sum([ bibd[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd[object1, block],bibd[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd[row,..] <=lex bibd[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd[..,col] <=lex bibd[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+new variables:
+  find bibd#matrix_to_atom_1_1: int(0..1)
+  find bibd#matrix_to_atom_1_2: int(0..1)
+  find bibd#matrix_to_atom_1_3: int(0..1)
+  find bibd#matrix_to_atom_2_1: int(0..1)
+  find bibd#matrix_to_atom_2_2: int(0..1)
+  find bibd#matrix_to_atom_2_3: int(0..1)
+  find bibd#matrix_to_atom_3_1: int(0..1)
+  find bibd#matrix_to_atom_3_2: int(0..1)
+  find bibd#matrix_to_atom_3_3: int(0..1)
+
+--
+
+[ sum([ bibd[object, block] | object : int(1..3) ]) = k | block : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[sum([ bibd[object, 1] | object : int(1..3) ]) = 2,sum([ bibd[object, 2] | object : int(1..3) ]) = 2,sum([ bibd[object, 3] | object : int(1..3) ]) = 2;int(1..)]
+
+--
+
+and([sum([ bibd[object, 1] | object : int(1..3) ]) = 2,sum([ bibd[object, 2] | object : int(1..3) ]) = 2,sum([ bibd[object, 3] | object : int(1..3) ]) = 2;int(1..)]),
+and([ sum([ bibd[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd[object1, block],bibd[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd[row,..] <=lex bibd[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd[..,col] <=lex bibd[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+sum([ bibd[object, 1] | object : int(1..3) ]) = 2,
+sum([ bibd[object, 2] | object : int(1..3) ]) = 2,
+sum([ bibd[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd[object1, block],bibd[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd[row,..] <=lex bibd[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd[..,col] <=lex bibd[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ bibd[object, 1] | object : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[bibd[1, 1],bibd[2, 1],bibd[3, 1];int(1..)]
+
+--
+
+sum([bibd#matrix_to_atom[1, 1],bibd#matrix_to_atom[2, 1],bibd#matrix_to_atom[3, 1];int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[object, 2] | object : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+sum([bibd#matrix_to_atom[1, 1],bibd#matrix_to_atom[2, 1],bibd#matrix_to_atom[3, 1];int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[object, 2] | object : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+bibd#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[1, 1])
+
+--
+
+bibd#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[2, 1])
+
+--
+
+bibd#matrix_to_atom[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 1])
+
+--
+
+sum([SafeIndex(bibd#matrix_to_atom,[1, 1]),SafeIndex(bibd#matrix_to_atom,[2, 1]),SafeIndex(bibd#matrix_to_atom,[3, 1]);int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[object, 2] | object : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1;int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[object, 2] | object : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+sum([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2);int(1..)])
+
+--
+
+and([SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2);int(1..)]),
+sum([ bibd#matrix_to_atom[object, 2] | object : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+sum([ bibd#matrix_to_atom[object, 2] | object : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ bibd#matrix_to_atom[object, 2] | object : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[bibd#matrix_to_atom[1, 2],bibd#matrix_to_atom[2, 2],bibd#matrix_to_atom[3, 2];int(1..)]
+
+--
+
+bibd#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[1, 2])
+
+--
+
+bibd#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[2, 2])
+
+--
+
+bibd#matrix_to_atom[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 2])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+sum([SafeIndex(bibd#matrix_to_atom,[1, 2]),SafeIndex(bibd#matrix_to_atom,[2, 2]),SafeIndex(bibd#matrix_to_atom,[3, 2]);int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+sum([bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2;int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+sum([bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2);int(1..)])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+and([SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2);int(1..)]),
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+sum([ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ bibd#matrix_to_atom[object, 3] | object : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[bibd#matrix_to_atom[1, 3],bibd#matrix_to_atom[2, 3],bibd#matrix_to_atom[3, 3];int(1..)]
+
+--
+
+bibd#matrix_to_atom[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[1, 3])
+
+--
+
+bibd#matrix_to_atom[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[2, 3])
+
+--
+
+bibd#matrix_to_atom[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 3])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+sum([SafeIndex(bibd#matrix_to_atom,[1, 3]),SafeIndex(bibd#matrix_to_atom,[2, 3]),SafeIndex(bibd#matrix_to_atom,[3, 3]);int(1..)]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+sum([bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3;int(1..)]) = 2,
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+sum([bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2);int(1..)])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+and([SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2);int(1..)]),
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+and([ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ sum([ bibd#matrix_to_atom[object, block] | block : int(1..3) ]) = r | object : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[sum([ bibd#matrix_to_atom[1, block] | block : int(1..3) ]) = 2,sum([ bibd#matrix_to_atom[2, block] | block : int(1..3) ]) = 2,sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2;int(1..)]
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+and([sum([ bibd#matrix_to_atom[1, block] | block : int(1..3) ]) = 2,sum([ bibd#matrix_to_atom[2, block] | block : int(1..3) ]) = 2,sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2;int(1..)]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+sum([ bibd#matrix_to_atom[1, block] | block : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[2, block] | block : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ bibd#matrix_to_atom[1, block] | block : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[bibd#matrix_to_atom[1, 1],bibd#matrix_to_atom[1, 2],bibd#matrix_to_atom[1, 3];int(1..)]
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+sum([SafeIndex(bibd#matrix_to_atom,[1, 1]),SafeIndex(bibd#matrix_to_atom,[1, 2]),SafeIndex(bibd#matrix_to_atom,[1, 3]);int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[2, block] | block : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+sum([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_1_3;int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[2, block] | block : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+sum([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_1_3;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2);int(1..)])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+and([SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2);int(1..)]),
+sum([ bibd#matrix_to_atom[2, block] | block : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+sum([ bibd#matrix_to_atom[2, block] | block : int(1..3) ]) = 2,
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ bibd#matrix_to_atom[2, block] | block : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[bibd#matrix_to_atom[2, 1],bibd#matrix_to_atom[2, 2],bibd#matrix_to_atom[2, 3];int(1..)]
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+sum([SafeIndex(bibd#matrix_to_atom,[2, 1]),SafeIndex(bibd#matrix_to_atom,[2, 2]),SafeIndex(bibd#matrix_to_atom,[2, 3]);int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+sum([bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3;int(1..)]) = 2,
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+sum([bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2);int(1..)])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+and([SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2);int(1..)]),
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+sum([ bibd#matrix_to_atom[3, block] | block : int(1..3) ]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ bibd#matrix_to_atom[3, block] | block : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[bibd#matrix_to_atom[3, 1],bibd#matrix_to_atom[3, 2],bibd#matrix_to_atom[3, 3];int(1..)]
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+sum([SafeIndex(bibd#matrix_to_atom,[3, 1]),SafeIndex(bibd#matrix_to_atom,[3, 2]),SafeIndex(bibd#matrix_to_atom,[3, 3]);int(1..)]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+sum([bibd#matrix_to_atom_3_1,bibd#matrix_to_atom_3_2,bibd#matrix_to_atom_3_3;int(1..)]) = 2,
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+sum([bibd#matrix_to_atom_3_1,bibd#matrix_to_atom_3_2,bibd#matrix_to_atom_3_3;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2);int(1..)])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+and([SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2);int(1..)]),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+and([ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ (object1 < object2) -> (sum([ product([bibd#matrix_to_atom[object1, block],bibd#matrix_to_atom[object2, block];int(1..)]) | block : int(1..3) ]) = l) | object1 : int(1..3), object2 : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true,sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[2, block];int(1..)]) | block : int(1..3) ]) = 1,sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,true,true,sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,true,true,true;int(1..)]
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+and([true,sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[2, block];int(1..)]) | block : int(1..3) ]) = 1,sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,true,true,sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,true,true,true;int(1..)]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[2, block];int(1..)]) | block : int(1..3) ]) = 1,
+sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+[ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[2, block];int(1..)]) | block : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([bibd#matrix_to_atom[1, 1],bibd#matrix_to_atom[2, 1];int(1..)]),product([bibd#matrix_to_atom[1, 2],bibd#matrix_to_atom[2, 2];int(1..)]),product([bibd#matrix_to_atom[1, 3],bibd#matrix_to_atom[2, 3];int(1..)]);int(1..)]
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+sum([product([SafeIndex(bibd#matrix_to_atom,[1, 1]),SafeIndex(bibd#matrix_to_atom,[2, 1]);int(1..)]),product([SafeIndex(bibd#matrix_to_atom,[1, 2]),SafeIndex(bibd#matrix_to_atom,[2, 2]);int(1..)]),product([SafeIndex(bibd#matrix_to_atom,[1, 3]),SafeIndex(bibd#matrix_to_atom,[2, 3]);int(1..)]);int(1..)]) = 1,
+sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+sum([product([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1;int(1..)]),product([bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2;int(1..)]),product([bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3;int(1..)]);int(1..)]) = 1,
+sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ])
+
+--
+
+sum([product([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1;int(1..)]),product([bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2;int(1..)]),product([bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3;int(1..)]);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__0, __1, __2], 1),SumGeq([__0, __1, __2], 1);int(1..)])
+new variables:
+  find __0: int(0..1)
+  find __1: int(0..1)
+  find __2: int(0..1)
+new constraints:
+  FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0)
+  FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1)
+  FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2)
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+and([SumLeq([__0, __1, __2], 1),SumGeq([__0, __1, __2], 1);int(1..)]),
+sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2)
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+sum([ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2)
+
+--
+
+[ product([bibd#matrix_to_atom[1, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([bibd#matrix_to_atom[1, 1],bibd#matrix_to_atom[3, 1];int(1..)]),product([bibd#matrix_to_atom[1, 2],bibd#matrix_to_atom[3, 2];int(1..)]),product([bibd#matrix_to_atom[1, 3],bibd#matrix_to_atom[3, 3];int(1..)]);int(1..)]
+
+--
+
+bibd#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[1, 1])
+
+--
+
+bibd#matrix_to_atom[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 1])
+
+--
+
+bibd#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[1, 2])
+
+--
+
+bibd#matrix_to_atom[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 2])
+
+--
+
+bibd#matrix_to_atom[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[1, 3])
+
+--
+
+bibd#matrix_to_atom[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 3])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+sum([product([SafeIndex(bibd#matrix_to_atom,[1, 1]),SafeIndex(bibd#matrix_to_atom,[3, 1]);int(1..)]),product([SafeIndex(bibd#matrix_to_atom,[1, 2]),SafeIndex(bibd#matrix_to_atom,[3, 2]);int(1..)]),product([SafeIndex(bibd#matrix_to_atom,[1, 3]),SafeIndex(bibd#matrix_to_atom,[3, 3]);int(1..)]);int(1..)]) = 1,
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2)
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+sum([product([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1;int(1..)]),product([bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2;int(1..)]),product([bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3;int(1..)]);int(1..)]) = 1,
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2)
+
+--
+
+sum([product([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1;int(1..)]),product([bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2;int(1..)]),product([bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3;int(1..)]);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__3, __4, __5], 1),SumGeq([__3, __4, __5], 1);int(1..)])
+new variables:
+  find __3: int(0..1)
+  find __4: int(0..1)
+  find __5: int(0..1)
+new constraints:
+  FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3)
+  FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4)
+  FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5)
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+and([SumLeq([__3, __4, __5], 1),SumGeq([__3, __4, __5], 1);int(1..)]),
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5)
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+sum([ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5)
+
+--
+
+[ product([bibd#matrix_to_atom[2, block],bibd#matrix_to_atom[3, block];int(1..)]) | block : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([bibd#matrix_to_atom[2, 1],bibd#matrix_to_atom[3, 1];int(1..)]),product([bibd#matrix_to_atom[2, 2],bibd#matrix_to_atom[3, 2];int(1..)]),product([bibd#matrix_to_atom[2, 3],bibd#matrix_to_atom[3, 3];int(1..)]);int(1..)]
+
+--
+
+bibd#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[2, 1])
+
+--
+
+bibd#matrix_to_atom[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 1])
+
+--
+
+bibd#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[2, 2])
+
+--
+
+bibd#matrix_to_atom[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 2])
+
+--
+
+bibd#matrix_to_atom[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[2, 3])
+
+--
+
+bibd#matrix_to_atom[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(bibd#matrix_to_atom,[3, 3])
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+sum([product([SafeIndex(bibd#matrix_to_atom,[2, 1]),SafeIndex(bibd#matrix_to_atom,[3, 1]);int(1..)]),product([SafeIndex(bibd#matrix_to_atom,[2, 2]),SafeIndex(bibd#matrix_to_atom,[3, 2]);int(1..)]),product([SafeIndex(bibd#matrix_to_atom,[2, 3]),SafeIndex(bibd#matrix_to_atom,[3, 3]);int(1..)]);int(1..)]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5)
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+sum([product([bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1;int(1..)]),product([bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2;int(1..)]),product([bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3;int(1..)]);int(1..)]) = 1,
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5)
+
+--
+
+sum([product([bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1;int(1..)]),product([bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2;int(1..)]),product([bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3;int(1..)]);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__6, __7, __8], 1),SumGeq([__6, __7, __8], 1);int(1..)])
+new variables:
+  find __6: int(0..1)
+  find __7: int(0..1)
+  find __8: int(0..1)
+new constraints:
+  FlatProductEq(bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1,__6)
+  FlatProductEq(bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2,__7)
+  FlatProductEq(bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3,__8)
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+and([SumLeq([__6, __7, __8], 1),SumGeq([__6, __7, __8], 1);int(1..)]),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5),
+FlatProductEq(bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1,__6),
+FlatProductEq(bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2,__7),
+FlatProductEq(bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3,__8)
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+SumLeq([__6, __7, __8], 1),
+SumGeq([__6, __7, __8], 1),
+and([ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5),
+FlatProductEq(bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1,__6),
+FlatProductEq(bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2,__7),
+FlatProductEq(bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3,__8)
+
+--
+
+[ (bibd#matrix_to_atom[row,..] <=lex bibd#matrix_to_atom[sum([row,1;int(1..)]),..]) | row : int(1..2) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(bibd#matrix_to_atom[1,..] <=lex bibd#matrix_to_atom[2,..]),(bibd#matrix_to_atom[2,..] <=lex bibd#matrix_to_atom[3,..]);int(1..)]
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+SumLeq([__6, __7, __8], 1),
+SumGeq([__6, __7, __8], 1),
+and([(bibd#matrix_to_atom[1,..] <=lex bibd#matrix_to_atom[2,..]),(bibd#matrix_to_atom[2,..] <=lex bibd#matrix_to_atom[3,..]);int(1..)]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5),
+FlatProductEq(bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1,__6),
+FlatProductEq(bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2,__7),
+FlatProductEq(bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3,__8)
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+SumLeq([__6, __7, __8], 1),
+SumGeq([__6, __7, __8], 1),
+(bibd#matrix_to_atom[1,..] <=lex bibd#matrix_to_atom[2,..]),
+(bibd#matrix_to_atom[2,..] <=lex bibd#matrix_to_atom[3,..]),
+and([ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5),
+FlatProductEq(bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1,__6),
+FlatProductEq(bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2,__7),
+FlatProductEq(bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3,__8)
+
+--
+
+bibd#matrix_to_atom[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(bibd#matrix_to_atom,[1,..])
+
+--
+
+bibd#matrix_to_atom[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(bibd#matrix_to_atom,[2,..])
+
+--
+
+bibd#matrix_to_atom[3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(bibd#matrix_to_atom,[3,..])
+
+--
+
+SafeSlice(bibd#matrix_to_atom,[1,..])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_1_3;int(1..)]
+
+--
+
+SafeSlice(bibd#matrix_to_atom,[2,..])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3;int(1..)]
+
+--
+
+([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_1_3;int(1..)] <=lex [bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], [bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3])
+
+--
+
+SafeSlice(bibd#matrix_to_atom,[3,..])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[bibd#matrix_to_atom_3_1,bibd#matrix_to_atom_3_2,bibd#matrix_to_atom_3_3;int(1..)]
+
+--
+
+([bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_2_3;int(1..)] <=lex [bibd#matrix_to_atom_3_1,bibd#matrix_to_atom_3_2,bibd#matrix_to_atom_3_3;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], [bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3])
+
+--
+
+[ (bibd#matrix_to_atom[..,col] <=lex bibd#matrix_to_atom[..,sum([col,1;int(1..)])]) | col : int(1..2) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(bibd#matrix_to_atom[..,1] <=lex bibd#matrix_to_atom[..,2]),(bibd#matrix_to_atom[..,2] <=lex bibd#matrix_to_atom[..,3]);int(1..)]
+
+--
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+SumLeq([__6, __7, __8], 1),
+SumGeq([__6, __7, __8], 1),
+FlatLexLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], [bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3]),
+FlatLexLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], [bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3]),
+and([(bibd#matrix_to_atom[..,1] <=lex bibd#matrix_to_atom[..,2]),(bibd#matrix_to_atom[..,2] <=lex bibd#matrix_to_atom[..,3]);int(1..)]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5),
+FlatProductEq(bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1,__6),
+FlatProductEq(bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2,__7),
+FlatProductEq(bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3,__8)
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+SumLeq([__6, __7, __8], 1),
+SumGeq([__6, __7, __8], 1),
+FlatLexLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], [bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3]),
+FlatLexLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], [bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3]),
+(bibd#matrix_to_atom[..,1] <=lex bibd#matrix_to_atom[..,2]),
+(bibd#matrix_to_atom[..,2] <=lex bibd#matrix_to_atom[..,3]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5),
+FlatProductEq(bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1,__6),
+FlatProductEq(bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2,__7),
+FlatProductEq(bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3,__8)
+
+--
+
+bibd#matrix_to_atom[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(bibd#matrix_to_atom,[..,1])
+
+--
+
+bibd#matrix_to_atom[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(bibd#matrix_to_atom,[..,2])
+
+--
+
+bibd#matrix_to_atom[..,3]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(bibd#matrix_to_atom,[..,3])
+
+--
+
+SafeSlice(bibd#matrix_to_atom,[..,1])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1;int(1..)]
+
+--
+
+SafeSlice(bibd#matrix_to_atom,[..,2])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2;int(1..)]
+
+--
+
+([bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1;int(1..)] <=lex [bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], [bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2])
+
+--
+
+SafeSlice(bibd#matrix_to_atom,[..,3])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3;int(1..)]
+
+--
+
+([bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2;int(1..)] <=lex [bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], [bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3])
+
+--
+
+Final model:
+
+letting v be 3
+letting k be 2
+letting l be 1
+letting b be 3
+letting r be 2
+find bibd: matrix indexed by [int(1..3), int(1..3)] of int(0..1)
+find bibd#matrix_to_atom_1_1: int(0..1)
+find bibd#matrix_to_atom_1_2: int(0..1)
+find bibd#matrix_to_atom_1_3: int(0..1)
+find bibd#matrix_to_atom_2_1: int(0..1)
+find bibd#matrix_to_atom_2_2: int(0..1)
+find bibd#matrix_to_atom_2_3: int(0..1)
+find bibd#matrix_to_atom_3_1: int(0..1)
+find bibd#matrix_to_atom_3_2: int(0..1)
+find bibd#matrix_to_atom_3_3: int(0..1)
+find __0: int(0..1)
+find __1: int(0..1)
+find __2: int(0..1)
+find __3: int(0..1)
+find __4: int(0..1)
+find __5: int(0..1)
+find __6: int(0..1)
+find __7: int(0..1)
+find __8: int(0..1)
+
+such that
+
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], 2),
+SumLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumGeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], 2),
+SumLeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3], 2),
+SumLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumGeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], 2),
+SumLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumGeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], 2),
+SumLeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumGeq([bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3], 2),
+SumLeq([__0, __1, __2], 1),
+SumGeq([__0, __1, __2], 1),
+SumLeq([__3, __4, __5], 1),
+SumGeq([__3, __4, __5], 1),
+SumLeq([__6, __7, __8], 1),
+SumGeq([__6, __7, __8], 1),
+FlatLexLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_1_3], [bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3]),
+FlatLexLeq([bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_2_3], [bibd#matrix_to_atom_3_1, bibd#matrix_to_atom_3_2, bibd#matrix_to_atom_3_3]),
+FlatLexLeq([bibd#matrix_to_atom_1_1, bibd#matrix_to_atom_2_1, bibd#matrix_to_atom_3_1], [bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2]),
+FlatLexLeq([bibd#matrix_to_atom_1_2, bibd#matrix_to_atom_2_2, bibd#matrix_to_atom_3_2], [bibd#matrix_to_atom_1_3, bibd#matrix_to_atom_2_3, bibd#matrix_to_atom_3_3]),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_2_1,__0),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_2_2,__1),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_2_3,__2),
+FlatProductEq(bibd#matrix_to_atom_1_1,bibd#matrix_to_atom_3_1,__3),
+FlatProductEq(bibd#matrix_to_atom_1_2,bibd#matrix_to_atom_3_2,__4),
+FlatProductEq(bibd#matrix_to_atom_1_3,bibd#matrix_to_atom_3_3,__5),
+FlatProductEq(bibd#matrix_to_atom_2_1,bibd#matrix_to_atom_3_1,__6),
+FlatProductEq(bibd#matrix_to_atom_2_2,bibd#matrix_to_atom_3_2,__7),
+FlatProductEq(bibd#matrix_to_atom_2_3,bibd#matrix_to_atom_3_3,__8)
+

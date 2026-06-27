@@ -2,15 +2,22 @@
 //!
 //! See the item documentation for [`SymbolTable`] for more details.
 
+/// Sentinel for an uncached symbol-table context hash.
+const NO_CONTEXT_HASH: u64 = 0;
+
+fn default_context_hash_cache() -> AtomicU64 {
+    AtomicU64::new(NO_CONTEXT_HASH)
+}
+
 use crate::bug;
 use crate::representation::{Representation, get_repr_rule};
 use std::any::TypeId;
 
-use std::collections::BTreeSet;
 use std::collections::VecDeque;
-use std::hash::{Hash, Hasher};
+use std::collections::{BTreeMap, BTreeSet};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 use super::comprehension::Comprehension;
 use super::serde::{AsId, DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
@@ -249,7 +256,7 @@ impl Eq for SymbolTablePtrInner {}
 /// Unless otherwise stated, these follow the semantics specified in section 2.2.2 of the Savile
 /// Row manual (version 1.9.1 at time of writing).
 #[serde_as]
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SymbolTable {
     #[serde_as(as = "Vec<(_,PtrAsInner)>")]
     table: IndexMap<Name, DeclarationPtr>,
@@ -258,7 +265,35 @@ pub struct SymbolTable {
     parent: Option<SymbolTablePtr>,
 
     next_machine_name: i32,
+
+    #[serde(default, skip_serializing)]
+    local_bindings_xor: u64,
+
+    #[serde(default = "default_context_hash_cache", skip_serializing)]
+    context_hash_cache: AtomicU64,
 }
+
+impl Clone for SymbolTable {
+    fn clone(&self) -> Self {
+        Self {
+            table: self.table.clone(),
+            parent: self.parent.clone(),
+            next_machine_name: self.next_machine_name,
+            local_bindings_xor: self.local_bindings_xor,
+            context_hash_cache: AtomicU64::new(NO_CONTEXT_HASH),
+        }
+    }
+}
+
+impl PartialEq for SymbolTable {
+    fn eq(&self, other: &Self) -> bool {
+        self.table == other.table
+            && self.parent == other.parent
+            && self.next_machine_name == other.next_machine_name
+    }
+}
+
+impl Eq for SymbolTable {}
 
 impl SymbolTable {
     /// Creates an empty symbol table.
@@ -284,7 +319,91 @@ impl SymbolTable {
             table: IndexMap::new(),
             next_machine_name: 0,
             parent,
+            local_bindings_xor: 0,
+            context_hash_cache: AtomicU64::new(NO_CONTEXT_HASH),
         }
+    }
+
+    fn binding_contribution(name: &Name, declaration: &DeclarationPtr) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        (name.clone(), declaration.content_hash()).hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn finalize_context_hash(bindings_xor: u64, binding_count: usize) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        binding_count.hash(&mut hasher);
+        bindings_xor.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn recompute_local_bindings_xor(&mut self) {
+        self.local_bindings_xor = self.table.iter().fold(0u64, |acc, (name, declaration)| {
+            acc ^ Self::binding_contribution(name, declaration)
+        });
+    }
+
+    pub(crate) fn refresh_local_binding_hashes(&mut self) {
+        self.recompute_local_bindings_xor();
+        self.invalidate_context_hash_cache();
+    }
+
+    fn xor_binding_in(&mut self, name: &Name, declaration: &DeclarationPtr) {
+        self.local_bindings_xor ^= Self::binding_contribution(name, declaration);
+    }
+
+    fn xor_binding_out(&mut self, name: &Name, declaration: &DeclarationPtr) {
+        self.local_bindings_xor ^= Self::binding_contribution(name, declaration);
+    }
+
+    pub(crate) fn invalidate_context_hash_cache(&mut self) {
+        self.context_hash_cache
+            .store(NO_CONTEXT_HASH, Ordering::Relaxed);
+    }
+
+    /// Returns a cached hash of all declarations visible from this scope.
+    ///
+    /// This hashes declaration values, not pointer identity, so rewrite caches remain valid across
+    /// equivalent symbol states.
+    pub fn context_hash(&self) -> u64 {
+        let cached = self.context_hash_cache.load(Ordering::Relaxed);
+        if cached != NO_CONTEXT_HASH {
+            return cached;
+        }
+
+        let hash = if self.parent.is_none() {
+            Self::finalize_context_hash(self.local_bindings_xor, self.table.len())
+        } else {
+            self.compute_scoped_context_hash()
+        };
+        self.context_hash_cache.store(hash, Ordering::Relaxed);
+        hash
+    }
+
+    fn compute_scoped_context_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        let mut declarations: BTreeMap<Name, u64> = BTreeMap::new();
+
+        for (name, declaration) in self.iter_local() {
+            declarations.insert(name.clone(), declaration.content_hash());
+        }
+
+        let mut parent = self.parent.clone();
+        while let Some(parent_ptr) = parent.take() {
+            let guard = parent_ptr.read();
+            for (name, declaration) in guard.iter_local() {
+                declarations
+                    .entry(name.clone())
+                    .or_insert_with(|| declaration.content_hash());
+            }
+            parent.clone_from(guard.parent());
+        }
+
+        declarations.len().hash(&mut hasher);
+        for declaration in declarations {
+            declaration.hash(&mut hasher);
+        }
+        hasher.finish()
     }
 
     /// Looks up the declaration with the given name in the current scope only.
@@ -310,8 +429,11 @@ impl SymbolTable {
     /// Returns `None` if there is already a symbol with this name in the local scope.
     pub fn insert(&mut self, declaration: DeclarationPtr) -> Option<()> {
         let name = declaration.name().clone();
+        let contribution = Self::binding_contribution(&name, &declaration);
         if let Entry::Vacant(e) = self.table.entry(name) {
+            self.local_bindings_xor ^= contribution;
             e.insert(declaration);
+            self.invalidate_context_hash_cache();
             Some(())
         } else {
             None
@@ -321,7 +443,12 @@ impl SymbolTable {
     /// Updates or adds a declaration in the immediate local scope.
     pub fn update_insert(&mut self, declaration: DeclarationPtr) {
         let name = declaration.name().clone();
+        if let Some(existing) = self.table.get(&name).cloned() {
+            self.xor_binding_out(&name, &existing);
+        }
+        self.xor_binding_in(&name, &declaration);
         self.table.insert(name, declaration);
+        self.invalidate_context_hash_cache();
     }
 
     /// Looks up the return type for name if it has one and is in scope.
@@ -385,7 +512,14 @@ impl SymbolTable {
             }
         }
 
+        for (name, declaration) in &other.table {
+            if let Some(existing) = self.table.get(name).cloned() {
+                self.xor_binding_out(name, &existing);
+            }
+            self.xor_binding_in(name, declaration);
+        }
         self.table.extend(other.table);
+        self.invalidate_context_hash_cache();
     }
 
     /// Creates a new find declaration in this symbol table with a unique name, and returns its

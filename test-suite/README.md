@@ -18,6 +18,7 @@ Each test runs `conjure-oxide` on an `input.essence` file and checks that the re
 
 1. Create a new directory under `test-suite/tests/integration/<folder>`.
 2. Add your `input.essence` file and (optionally) a `config.toml` to configure the solver.
+   Integration run metadata is tracked separately in `stats.toml`.
 3. Run the following to generate the expected solution and JSON files:
 
 ```sh
@@ -40,12 +41,21 @@ Instead of comparing against the existing JSON files, the test harness will:
 
 `ACCEPT=true` lets you update expected outputs, while still guarding correctness by checking against old Conjure.
 
-To update `expected-time` entries, use `make test-accept-with-slower-times`. This only
+When a test fails, the harness writes debugging artifacts under `diagnostics/` in that
+test's directory (gitignored): `failure.json`, Conjure/Savile Row `conjure/*.eprime-minion`,
+and oxide generated traces / Minion snapshots when available. Diagnostics are captured as
+each stage runs; on timeout the partial snapshot is kept and `stats.toml` is set to
+`timeout(N)`.
+
+To update `stats.toml` `expected-time` entries, use `make test-accept-with-slower-times`. This only
 writes a new time when the rounded runtime is slower than the current value, so speedups
 remain visible as diffs. Use `make test-accept-with-exact-times` to overwrite times with
-the current observed runtime.
+the current observed runtime. The exact-times target also writes a Git-diff-based timing
+comparison CSV to `target/accept-times-diff.csv`.
 
-### Licence
+`stats.toml` also records the last accepted status, Conjure and oxide timing stats, and
+aggregate rule trace application counts derived from the expected rule trace snapshots.
 
-This project is licenced under the [Mozilla Public Licence
-2.0](https://www.mozilla.org/en-US/MPL/2.0/).
+For timing-only runs where rule trace generation overhead is unwanted, set
+`CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file
+generation and rule trace snapshot validation; solution checks and timing recording still run.

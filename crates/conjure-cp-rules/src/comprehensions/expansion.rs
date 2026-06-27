@@ -11,19 +11,22 @@ pub use expand_via_solver_ac::expand_via_solver_ac;
 
 use conjure_cp::{
     ast::{
-        DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Moo, Name, Range, Reference,
-        SymbolTable, UnresolvedDomain,
+        DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Metadata, Moo, Name, Range,
+        Reference, SymbolTable, UnresolvedDomain,
         comprehension::{Comprehension, ComprehensionQualifier},
+        eval_constant,
         serde::{HasId, ObjId},
     },
     bug, into_matrix_expr,
     rule_engine::{
-        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
     },
     settings::{QuantifiedExpander, comprehension_expander},
 };
 use std::collections::HashMap;
 use uniplate::{Biplate, Uniplate};
+
+use via_solver_common::simplify_expression;
 
 /// Rewrite top-level `exists` comprehensions into constraints over fresh machine `find`s.
 ///
@@ -56,7 +59,7 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
     }
 
     if changed {
-        Ok(Reduction::with_symbols(
+        Ok(RuleEffect::with_symbols(
             Expr::Root(metadata.clone(), new_constraints),
             new_symbols,
         ))
@@ -65,7 +68,59 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
     }
 }
 
+/// Expand comprehensions inside AC operators using `--comprehension-expander native`.
+///
+/// Guarded comprehensions with symbolic guards are expanded here (not by
+/// [`expand_comprehension_native`]) so matrix representation can run first.
+/// Skip semantics come from [`Comprehension::skip_operator`].
+#[register_rule("Base", 1999)]
+fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    if comprehension_expander() != QuantifiedExpander::Native {
+        return Err(RuleNotApplicable);
+    }
+
+    let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
+    let children = expr.children();
+    debug_assert_eq!(
+        children.len(),
+        1,
+        "AC expressions should have exactly one child."
+    );
+
+    let comprehension = children
+        .front()
+        .and_then(as_single_comprehension)
+        .ok_or(RuleNotApplicable)?;
+
+    if comprehension.skip_operator.is_none() {
+        return Err(RuleNotApplicable);
+    }
+
+    if !comprehension_has_symbolic_guards(&comprehension) {
+        return Err(RuleNotApplicable);
+    }
+
+    for qual in &comprehension.qualifiers {
+        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
+            return Err(RuleNotApplicable);
+        }
+    }
+
+    let mut symbols = symbols.clone();
+    let results = expand_native(comprehension, &mut symbols)
+        .unwrap_or_else(|e| bug!("native AC comprehension expansion failed: {e}"));
+
+    Ok(RuleEffect::with_symbols(
+        ac_operator_kind.as_expression(into_matrix_expr!(results)),
+        symbols,
+    ))
+}
+
 /// Expand comprehensions using `--comprehension-expander native`.
+///
+/// Does not unroll expression generators (`i <- expr`): quantification over decision variables
+/// is handled by representation-specific vertical rules, not by enumerating values here.
+/// Constant quantifier collections are constant-folded via [`eval_constant`] instead.
 #[register_rule("Base", 2000, [Comprehension])]
 fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if comprehension_expander() != QuantifiedExpander::Native {
@@ -84,10 +139,22 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         }
     }
 
+    if comprehension_has_symbolic_guards(&comprehension) {
+        return Err(RuleNotApplicable);
+    }
+
     let mut symbols = symbols.clone();
+    let comprehension_domain = comprehension.domain_of();
     let results = expand_native(comprehension, &mut symbols)
         .unwrap_or_else(|e| bug!("native comprehension expansion failed: {e}"));
-    Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
+    let expanded = into_matrix_expr!(results);
+    let expanded = match comprehension_domain {
+        Some(domain) if expanded.unwrap_list().is_some_and(|elems| elems.is_empty()) => {
+            Expr::DomainAnnotation(Metadata::new(), Moo::new(expanded), domain)
+        }
+        _ => expanded,
+    };
+    Ok(RuleEffect::with_symbols(expanded, symbols))
 }
 
 /// Expand comprehensions using `--comprehension-expander via-solver`.
@@ -126,7 +193,7 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
 
     let results = expand_via_solver(comprehension)
         .unwrap_or_else(|e| bug!("via-solver comprehension expansion failed: {e}"));
-    Ok(Reduction::with_symbols(
+    Ok(RuleEffect::with_symbols(
         into_matrix_expr!(results),
         symbols.clone(),
     ))
@@ -175,7 +242,7 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
         expand_via_solver_ac(comprehension, ac_operator_kind).or(Err(RuleNotApplicable))?;
 
     let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
-    Ok(Reduction::with_symbols(new_expr, symbols.clone()))
+    Ok(RuleEffect::with_symbols(new_expr, symbols.clone()))
 }
 
 fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
@@ -197,6 +264,15 @@ fn as_exists_comprehension(expr: &Expr) -> Option<Comprehension> {
     };
 
     as_single_comprehension(or_child.as_ref())
+}
+
+fn comprehension_has_symbolic_guards(comprehension: &Comprehension) -> bool {
+    comprehension.qualifiers.iter().any(|qualifier| {
+        let ComprehensionQualifier::Condition(condition) = qualifier else {
+            return false;
+        };
+        eval_constant(&simplify_expression(condition.clone())).is_none()
+    })
 }
 
 fn rewrite_exists_comprehension_to_constraints(
@@ -250,13 +326,43 @@ fn replace_declaration_ptrs_in_expr(
     replacements_by_id: &HashMap<ObjId, DeclarationPtr>,
     replacements_by_name: &HashMap<Name, DeclarationPtr>,
 ) -> Expr {
-    expr.transform_bi(&|decl: DeclarationPtr| {
-        if let Some(replacement) = replacements_by_id.get(&decl.id()) {
-            return replacement.clone();
+    let rewritten = expr
+        .transform_bi(&|decl: DeclarationPtr| {
+            if let Some(replacement) = replacements_by_id.get(&decl.id()) {
+                return replacement.clone();
+            }
+
+            let name = decl.name().clone();
+            replacements_by_name.get(&name).cloned().unwrap_or(decl)
+        })
+        .transform_bi(&|reference: Reference| {
+            replace_reference(reference, replacements_by_id, replacements_by_name)
+        });
+
+    rewritten.transform_bi(&|mut comprehension: Comprehension| {
+        let shadowed_names = comprehension.quantified_vars();
+        let visible_replacements_by_name = replacements_by_name
+            .iter()
+            .filter(|(name, _)| !shadowed_names.contains(name))
+            .map(|(name, declaration)| (name.clone(), declaration.clone()))
+            .collect();
+
+        comprehension.return_expression = replace_declaration_ptrs_in_expr(
+            comprehension.return_expression,
+            replacements_by_id,
+            &visible_replacements_by_name,
+        );
+        for qualifier in &mut comprehension.qualifiers {
+            if let ComprehensionQualifier::Condition(condition) = qualifier {
+                *condition = replace_declaration_ptrs_in_expr(
+                    condition.clone(),
+                    replacements_by_id,
+                    &visible_replacements_by_name,
+                );
+            }
         }
 
-        let name = decl.name().clone();
-        replacements_by_name.get(&name).cloned().unwrap_or(decl)
+        comprehension
     })
 }
 
@@ -440,5 +546,51 @@ fn rewrite_int_value(
             replacements_by_name,
         );
         *expr = Moo::new(rewritten);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use conjure_cp::ast::{
+        Atom, Domain, Literal, SymbolTablePtr, comprehension::ComprehensionBuilder,
+    };
+
+    use super::*;
+
+    #[test]
+    fn replaces_references_in_expressions() {
+        let quantified = DeclarationPtr::new_quantified(Name::user("matrix_bools"), Domain::bool());
+        let replacement = DeclarationPtr::new_find(Name::Machine(0), Domain::bool());
+        let safe_index = Expr::SafeIndex(
+            Metadata::new(),
+            Moo::new(Expr::Atomic(
+                Metadata::new(),
+                Atom::new_ref(quantified.clone()),
+            )),
+            vec![Expr::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Int(1)),
+            )],
+        );
+        let inner_comprehension =
+            ComprehensionBuilder::new(SymbolTablePtr::new()).with_return_value(safe_index);
+        let expr = Expr::Comprehension(Metadata::new(), Moo::new(inner_comprehension));
+
+        let replacements_by_id = HashMap::from([(quantified.id(), replacement.clone())]);
+        let replacements_by_name =
+            HashMap::from([(quantified.name().clone(), replacement.clone())]);
+        let rewritten =
+            replace_declaration_ptrs_in_expr(expr, &replacements_by_id, &replacements_by_name);
+
+        let Expr::Comprehension(_, comprehension) = rewritten else {
+            panic!("expected a comprehension expression");
+        };
+        let Expr::SafeIndex(_, subject, _) = &comprehension.return_expression else {
+            panic!("expected a safe index return expression");
+        };
+        let Expr::Atomic(_, Atom::Reference(reference)) = subject.as_ref() else {
+            panic!("expected a reference subject");
+        };
+        assert_eq!(reference.id(), replacement.id());
     }
 }

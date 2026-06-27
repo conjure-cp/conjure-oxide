@@ -3,7 +3,7 @@ use conjure_cp::essence_expr;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Atom, CnfClause, Expression as Expr, Literal, Moo};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
@@ -282,7 +282,7 @@ fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let new_expr = Expr::Root(Metadata::new(), new_children);
 
-    Ok(Reduction::cnf(new_expr, new_clauses, symbols.clone()))
+    Ok(RuleEffect::cnf(new_expr, new_clauses, symbols.clone()))
 }
 
 /// Converts an and/or expression to an aux variable, using the tseytin transformation
@@ -349,7 +349,7 @@ fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         _ => return Err(RuleNotApplicable),
     };
 
-    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
 }
 
 /// Converts a not expression to an aux variable, using the tseytin transformation
@@ -385,7 +385,7 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let new_expr = tseytin_not(x.as_ref().clone(), &mut new_clauses, &mut new_symbols);
 
-    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
 }
 
 /// Converts an iff/boolean equality expression to an aux variable, using the tseytin transformation
@@ -427,7 +427,7 @@ fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         &mut new_symbols,
     );
 
-    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
 }
 
 /// Converts an implication expression to an aux variable, using the tseytin transformation
@@ -466,7 +466,7 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         &mut new_symbols,
     );
 
-    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
 }
 
 /// Converts a boolean != expression to an aux variable, using the tseytin transformation
@@ -506,5 +506,5 @@ fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         &mut new_symbols,
     );
 
-    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(new_expr, new_clauses, new_symbols))
 }

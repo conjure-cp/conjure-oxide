@@ -1,11 +1,18 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::parser::ParseContext;
-use crate::parser::atom::parse_atom;
+use crate::parser::atom::{parse_atom, parse_table_operand};
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
+use crate::parser::domain::parse_domain;
+use crate::parser::global_constraints::{
+    ALL_DIFFERENT, ALL_DIFFERENT_EXCEPT, AT_LEAST, AT_MOST, GLOBAL_CARDINALITY,
+    is_all_different_except_operator, is_all_different_operator, is_at_least_operator,
+    is_at_most_operator, is_global_cardinality_operator,
+};
 use crate::util::TypecheckingContext;
 use crate::{child, field, named_child};
-use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
+use conjure_cp_core::ast::ac_operators::ACOperatorKind;
+use conjure_cp_core::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Typeable};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
@@ -14,7 +21,9 @@ pub fn parse_expression(
     node: Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" => parse_atom(ctx, &node),
+        "atom" | "primary_atom" | "constant" | "identifier" | "metavar" | "matrix" | "record"
+        | "tuple" | "set_literal" | "comprehension" | "index_or_slice" | "flatten"
+        | "element_id" | "table" | "negative_table" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
@@ -64,6 +73,30 @@ pub fn parse_expression(
             }
             ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &node)
+        }
+        "all_different_except_comparison" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            ctx.typechecking_context = TypecheckingContext::Matrix;
+            parse_all_different_except_comparison(ctx, &node)
+        }
+        "global_cardinality_comparison" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            parse_global_cardinality_comparison(ctx, &node)
+        }
+        "annotation_expr" | "type_annotation" | "domain_annotation" => {
+            parse_annotation_expression(ctx, &node)
         }
         _ => {
             ctx.record_error(RecoverableParseError::new(
@@ -149,6 +182,11 @@ fn parse_comparison_expression(
             ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &inner)
         }
+        "all_different_except_comparison" => {
+            ctx.typechecking_context = TypecheckingContext::Matrix;
+            parse_all_different_except_comparison(ctx, &inner)
+        }
+        "global_cardinality_comparison" => parse_global_cardinality_comparison(ctx, &inner),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected comparison expression, found '{}'", inner.kind()),
@@ -169,7 +207,7 @@ fn parse_boolean_expression(
         return Ok(None);
     };
     match inner.kind() {
-        "atom" => parse_atom(ctx, &inner),
+        "atom" | "table" | "negative_table" => parse_atom(ctx, &inner),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_bool" => {
@@ -205,9 +243,12 @@ fn parse_list_combining_expression(
     };
     // While parsing inner, the typechecking context is SetOrMatrix
     // The inner context is either Boolean or Arithmetic so the elements of the set/matrix are typechecked correctly.
-    let Some(inner) = parse_atom(ctx, &arg_node)? else {
+    let Some(inner) = parse_expression(ctx, arg_node)? else {
         return Ok(None);
     };
+
+    let skip_operator = list_combining_skip_operator(operator_str);
+    let inner = set_comprehension_skip_operator(inner, skip_operator);
 
     let expr = match operator_str {
         "and" => Ok(Some(Expression::And(Metadata::new(), Moo::new(inner)))),
@@ -249,15 +290,154 @@ fn parse_all_diff_comparison(
         return Ok(None);
     };
 
-    let all_diff_keyword_node = child!(node, 0, "allDiff");
+    let operator_node = node
+        .child_by_field_name("operator")
+        .unwrap_or_else(|| node.child(0).unwrap());
+    let operator_str =
+        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
+    if !is_all_different_operator(&operator_str) {
+        ctx.record_error(RecoverableParseError::new(
+            format!("Invalid operator: '{operator_str}'"),
+            Some(operator_node.range()),
+        ));
+        return Ok(None);
+    }
+
     ctx.add_span_and_doc_hover(
-        &all_diff_keyword_node,
-        "allDiff",
+        &operator_node,
+        ALL_DIFFERENT,
         SymbolKind::Function,
         None,
         None,
     );
     Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner))))
+}
+
+fn parse_all_different_except_comparison(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let operator_node = node
+        .child_by_field_name("operator")
+        .unwrap_or_else(|| node.child(0).unwrap());
+    let operator_str =
+        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
+    if !is_all_different_except_operator(&operator_str) {
+        ctx.record_error(RecoverableParseError::new(
+            format!("Invalid operator: '{operator_str}'"),
+            Some(operator_node.range()),
+        ));
+        return Ok(None);
+    }
+
+    let Some(matrix_node) = field!(recover, ctx, node, "matrix") else {
+        return Ok(None);
+    };
+    let Some(except_node) = field!(recover, ctx, node, "except") else {
+        return Ok(None);
+    };
+
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let Some(matrix) = parse_table_operand(ctx, &matrix_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(except) = parse_table_operand(ctx, &except_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    ctx.typechecking_context = saved_context;
+
+    ctx.add_span_and_doc_hover(
+        &operator_node,
+        ALL_DIFFERENT_EXCEPT,
+        SymbolKind::Function,
+        None,
+        None,
+    );
+    Ok(Some(Expression::AllDifferentExcept(
+        Metadata::new(),
+        Moo::new(matrix),
+        Moo::new(except),
+    )))
+}
+
+fn parse_global_cardinality_comparison(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let Some(operator_node) = field!(recover, ctx, node, "operator") else {
+        return Ok(None);
+    };
+    let operator_str =
+        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
+
+    let Some(variables_node) = field!(recover, ctx, node, "variables") else {
+        return Ok(None);
+    };
+    let Some(arg2_node) = field!(recover, ctx, node, "arg2") else {
+        return Ok(None);
+    };
+    let Some(arg3_node) = field!(recover, ctx, node, "arg3") else {
+        return Ok(None);
+    };
+
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let Some(variables) = parse_expression(ctx, variables_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(arg2) = parse_expression(ctx, arg2_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(arg3) = parse_expression(ctx, arg3_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    ctx.typechecking_context = saved_context;
+
+    ctx.add_span_and_doc_hover(
+        &operator_node,
+        match operator_str.as_str() {
+            op if is_at_least_operator(op) => AT_LEAST,
+            op if is_at_most_operator(op) => AT_MOST,
+            _ => GLOBAL_CARDINALITY,
+        },
+        SymbolKind::Function,
+        None,
+        None,
+    );
+
+    match operator_str.as_str() {
+        op if is_at_least_operator(op) => Ok(Some(Expression::AtLeast(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(arg2),
+            Moo::new(arg3),
+        ))),
+        op if is_at_most_operator(op) => Ok(Some(Expression::AtMost(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(arg2),
+            Moo::new(arg3),
+        ))),
+        op if is_global_cardinality_operator(op) => Ok(Some(Expression::Gcc(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(arg2),
+            Moo::new(arg3),
+        ))),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Invalid operator: '{operator_str}'"),
+                Some(operator_node.range()),
+            ));
+            Ok(None)
+        }
+    }
 }
 
 fn parse_unary_expression(
@@ -272,7 +452,16 @@ fn parse_unary_expression(
     };
 
     match node.kind() {
-        "negative_expr" => Ok(Some(Expression::Neg(Metadata::new(), Moo::new(inner)))),
+        "negative_expr" => {
+            if let Expression::Atomic(_, Atom::Literal(Literal::Int(value))) = inner {
+                Ok(Some(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Literal::Int(-value)),
+                )))
+            } else {
+                Ok(Some(Expression::Neg(Metadata::new(), Moo::new(inner))))
+            }
+        }
         "abs_value" => Ok(Some(Expression::Abs(Metadata::new(), Moo::new(inner)))),
         "not_expr" => Ok(Some(Expression::Not(Metadata::new(), Moo::new(inner)))),
         "toInt_expr" => {
@@ -599,6 +788,110 @@ pub fn parse_binary_expression(
     expr
 }
 
+pub fn parse_annotation_expression(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let annotation_node = if node.kind() == "annotation_expr" {
+        let Some(inner) = named_child!(recover, ctx, node) else {
+            return Ok(None);
+        };
+        inner
+    } else {
+        *node
+    };
+
+    let Some(left_node) = field!(recover, ctx, &annotation_node, "left") else {
+        return Ok(None);
+    };
+    let left_node = if left_node.kind() == "annotation_subject" {
+        let Some(inner) = named_child!(recover, ctx, &left_node) else {
+            return Ok(None);
+        };
+        inner
+    } else {
+        left_node
+    };
+    let left_node = match left_node.kind() {
+        "sub_arith_expr" | "sub_bool_expr" | "sub_atom_expr" => {
+            let Some(inner) = field!(recover, ctx, &left_node, "expression") else {
+                return Ok(None);
+            };
+            inner
+        }
+        _ => left_node,
+    };
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let left = match left_node.kind() {
+        "constant" | "identifier" | "metavar" => parse_atom(ctx, &left_node)?,
+        _ => parse_expression(ctx, left_node)?,
+    };
+    let Some(left) = left else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    ctx.typechecking_context = saved_context;
+
+    let Some(operator_node) = field!(recover, ctx, &annotation_node, "operator") else {
+        return Ok(None);
+    };
+    let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
+
+    match annotation_node.kind() {
+        "type_annotation" => {
+            let Some(type_node) = field!(recover, ctx, &annotation_node, "type") else {
+                return Ok(None);
+            };
+            let Some(domain) = parse_domain(ctx, type_node)? else {
+                return Ok(None);
+            };
+            ctx.add_span_and_doc_hover(
+                &operator_node,
+                operator_str,
+                SymbolKind::Function,
+                None,
+                None,
+            );
+            Ok(Some(Expression::TypeAnnotation(
+                Metadata::new(),
+                Moo::new(left),
+                domain.return_type(),
+            )))
+        }
+        "domain_annotation" => {
+            let Some(domain_node) = field!(recover, ctx, &annotation_node, "domain") else {
+                return Ok(None);
+            };
+            let Some(domain) = parse_domain(ctx, domain_node)? else {
+                return Ok(None);
+            };
+            ctx.add_span_and_doc_hover(
+                &operator_node,
+                operator_str,
+                SymbolKind::Function,
+                None,
+                None,
+            );
+            Ok(Some(Expression::DomainAnnotation(
+                Metadata::new(),
+                Moo::new(left),
+                domain,
+            )))
+        }
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Unrecognised annotation expression: '{}'",
+                    annotation_node.kind()
+                ),
+                Some(annotation_node.range()),
+            ));
+            Ok(None)
+        }
+    }
+}
+
 fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
     // TODO: typechecking for index/slice expressions
     if matches!(
@@ -629,5 +922,31 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
         | GroundDomain::Variant(_)
         | GroundDomain::Relation(_, _)
         | GroundDomain::Empty(_) => TypecheckingContext::Unknown,
+    }
+}
+
+fn list_combining_skip_operator(operator_str: &str) -> Option<ACOperatorKind> {
+    match operator_str {
+        "and" => Some(ACOperatorKind::And),
+        "or" => Some(ACOperatorKind::Or),
+        "sum" | "min" | "max" => Some(ACOperatorKind::Sum),
+        "product" => Some(ACOperatorKind::Product),
+        _ => None,
+    }
+}
+
+fn set_comprehension_skip_operator(
+    inner: Expression,
+    skip_operator: Option<ACOperatorKind>,
+) -> Expression {
+    let Expression::Comprehension(meta, comprehension) = inner else {
+        return inner;
+    };
+    if let Some(skip_operator) = skip_operator {
+        let mut comprehension = Moo::unwrap_or_clone(comprehension);
+        comprehension.skip_operator = Some(skip_operator);
+        Expression::Comprehension(meta, Moo::new(comprehension))
+    } else {
+        Expression::Comprehension(meta, comprehension)
     }
 }
