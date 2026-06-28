@@ -3114,8 +3114,21 @@ impl Expression {
         self.calculate_content_hash()
     }
 
-    /// Computes an expression content hash that ignores metadata except for child content hashes.
-    pub(crate) fn calculate_content_hash(&self) -> u64 {
+    /// Computes an expression content hash from precomputed child node hashes.
+    ///
+    /// Child hashes must be supplied in the same order as [`Uniplate::children`] for this
+    /// expression.
+    #[allow(unused_variables)]
+    pub(crate) fn content_hash_from_child_hashes(
+        &self,
+        child_hashes: &mut impl Iterator<Item = u64>,
+    ) -> u64 {
+        fn child_hash(child_hashes: &mut impl Iterator<Item = u64>) -> u64 {
+            child_hashes
+                .next()
+                .expect("expression content hash missing child hash")
+        }
+
         let mut hasher = DefaultHasher::new();
         std::mem::discriminant(self).hash(&mut hasher);
         match self {
@@ -3126,49 +3139,49 @@ impl Expression {
                 | AbstractLiteral::Tuple(v)
                 | AbstractLiteral::Sequence(v) => {
                     for expr in v {
-                        expr.cached_content_hash().hash(&mut hasher);
+                        child_hash(child_hashes).hash(&mut hasher);
                     }
                 }
                 AbstractLiteral::Matrix(v, domain) => {
                     domain.hash(&mut hasher);
                     for expr in v {
-                        expr.cached_content_hash().hash(&mut hasher);
+                        child_hash(child_hashes).hash(&mut hasher);
                     }
                 }
                 AbstractLiteral::Record(rs) => {
                     for r in rs {
                         r.name.hash(&mut hasher);
-                        r.value.cached_content_hash().hash(&mut hasher);
+                        child_hash(child_hashes).hash(&mut hasher);
                     }
                 }
                 AbstractLiteral::Function(vs) => {
                     for (a, b) in vs {
-                        a.cached_content_hash().hash(&mut hasher);
-                        b.cached_content_hash().hash(&mut hasher);
+                        child_hash(child_hashes).hash(&mut hasher);
+                        child_hash(child_hashes).hash(&mut hasher);
                     }
                 }
                 AbstractLiteral::Variant(v) => {
                     v.name.hash(&mut hasher);
-                    v.value.cached_content_hash().hash(&mut hasher);
+                    child_hash(child_hashes).hash(&mut hasher);
                 }
                 AbstractLiteral::Relation(v) => {
                     for exprs in v {
                         for expr in exprs {
-                            expr.cached_content_hash().hash(&mut hasher);
+                            child_hash(child_hashes).hash(&mut hasher);
                         }
                     }
                 }
                 AbstractLiteral::Partition(v) => {
                     for exprs in v {
                         for expr in exprs {
-                            expr.cached_content_hash().hash(&mut hasher);
+                            child_hash(child_hashes).hash(&mut hasher);
                         }
                     }
                 }
             },
             Expression::Root(_, vs) => {
                 for expr in vs {
-                    expr.cached_content_hash().hash(&mut hasher);
+                    child_hash(child_hashes).hash(&mut hasher);
                 }
             }
 
@@ -3194,14 +3207,14 @@ impl Expression {
             | Expression::ToMSet(_, m1)
             | Expression::ToRelation(_, m1)
             | Expression::Card(_, m1) => {
-                m1.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
             }
             Expression::TypeAnnotation(_, m1, ty) => {
-                m1.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
                 ty.hash(&mut hasher);
             }
             Expression::DomainAnnotation(_, m1, domain) => {
-                m1.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
                 domain.hash(&mut hasher);
             }
 
@@ -3247,14 +3260,14 @@ impl Expression {
             | Expression::LexGeq(_, m1, m2)
             | Expression::Subsequence(_, m1, m2)
             | Expression::Substring(_, m1, m2) => {
-                m1.cached_content_hash().hash(&mut hasher);
-                m2.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
             }
             // Moo<Expression> + Vec<Expression>
             Expression::UnsafeIndex(_, m, vs) | Expression::SafeIndex(_, m, vs) => {
-                m.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
                 for v in vs {
-                    v.cached_content_hash().hash(&mut hasher);
+                    child_hash(child_hashes).hash(&mut hasher);
                 }
             }
 
@@ -3262,10 +3275,10 @@ impl Expression {
             Expression::UnsafeSlice(_, m, vs)
             | Expression::SafeSlice(_, m, vs)
             | Expression::RelationProj(_, m, vs) => {
-                m.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
                 for v in vs {
                     match v {
-                        Some(e) => e.cached_content_hash().hash(&mut hasher),
+                        Some(e) => child_hash(child_hashes).hash(&mut hasher),
                         None => 0u64.hash(&mut hasher),
                     }
                 }
@@ -3276,53 +3289,53 @@ impl Expression {
             | Expression::AtMost(_, m1, m2, m3)
             | Expression::Gcc(_, m1, m2, m3)
             | Expression::GccWeak(_, m1, m2, m3) => {
-                m1.cached_content_hash().hash(&mut hasher);
-                m2.cached_content_hash().hash(&mut hasher);
-                m3.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
             }
 
             // Moo<Expression> + Moo<Expression> (two-arg globals)
             Expression::AllDifferentExcept(_, m1, m2) | Expression::ElementId(_, m1, m2) => {
-                m1.cached_content_hash().hash(&mut hasher);
-                m2.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
             }
 
             // Moo<Expression> + Name
             Expression::RecordField(_, m, n) | Expression::Active(_, m, n) => {
-                m.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
                 n.hash(&mut hasher);
             }
 
             // Moo<Expression> + DomainPtr
             Expression::InDomain(_, m, d) => {
-                m.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
                 d.hash(&mut hasher);
             }
 
             // Option<Moo<Expression>> + Moo<Expression>
             Expression::Flatten(_, opt, m) => {
                 if let Some(e) = opt {
-                    e.cached_content_hash().hash(&mut hasher);
+                    child_hash(child_hashes).hash(&mut hasher);
                 }
-                m.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
             }
 
             // Moo<Expression> + Atom
             Expression::MinionReify(_, m, a) | Expression::MinionReifyImply(_, m, a) => {
-                m.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
                 a.hash(&mut hasher);
             }
 
             // Reference + Moo<Expression>
             Expression::AuxDeclaration(_, r, m) => {
                 r.hash(&mut hasher);
-                m.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
             }
 
             // SATIntEncoding + Moo<Expression> + (i32, i32)
             Expression::SATInt(_, enc, m, bounds) => {
                 enc.hash(&mut hasher);
-                m.cached_content_hash().hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
                 bounds.hash(&mut hasher);
             }
 
@@ -3419,10 +3432,19 @@ impl Expression {
             }
         };
 
-        let result = hasher.finish();
+        hasher.finish()
+    }
+
+    /// Computes an expression content hash that ignores metadata except for child content hashes.
+    pub(crate) fn calculate_content_hash(&self) -> u64 {
+        let mut child_hashes = self
+            .children()
+            .into_iter()
+            .map(|child| child.cached_content_hash());
+        let result = self.content_hash_from_child_hashes(&mut child_hashes);
         self.meta_ref()
             .cached_content_hash
-            .swap(result, Ordering::Relaxed);
+            .store(result, Ordering::Relaxed);
         result
     }
 }
