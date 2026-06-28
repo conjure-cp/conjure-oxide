@@ -566,7 +566,6 @@ fn try_rewrite_model<'ctx, 'rules>(
                 .then(|| current_symbol_context_hash(submodel, ctx));
             for node_id in preorder_ids.iter().copied() {
                 ctx.dirty_trace.expression_visits += 1;
-                let expr = arena.expression(node_id).clone();
                 if ctx.config.dirty
                     && arena.is_clean_for_rule_priority(node_id, rule_group.priority)
                 {
@@ -575,8 +574,12 @@ fn try_rewrite_model<'ctx, 'rules>(
                 }
 
                 if let Some(symbol_context_hash) = scan_symbol_context_hash {
-                    let cache = ctx.cache.as_mut().expect("checked above");
-                    match cache.get(&expr, level, symbol_context_hash) {
+                    let cache_result = {
+                        let expr = arena.expression(node_id);
+                        let cache = ctx.cache.as_mut().expect("checked above");
+                        cache.get(expr, level, symbol_context_hash)
+                    };
+                    match cache_result {
                         CacheResult::Terminal(clean_level) => {
                             ctx.dirty_trace.cache_hits += 1;
                             ctx.dirty_trace.cache_terminal_hits += 1;
@@ -611,87 +614,90 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 let mut attempted_rule = false;
                 let results_before_expr = results.len();
-                for rd in rule_group.candidates(ctx.config, &expr) {
-                    attempted_rule = true;
-                    ctx.dirty_trace.rule_attempts += 1;
-                    *ctx.dirty_trace
-                        .rule_attempts_by_priority
-                        .entry(rule_group.priority)
-                        .or_default() += 1;
-                    // Count rule application attempts
-                    ctx.stats.rewriter_rule_application_attempts =
-                        Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
+                {
+                    let expr = arena.expression(node_id);
+                    for rd in rule_group.candidates(ctx.config, expr) {
+                        attempted_rule = true;
+                        ctx.dirty_trace.rule_attempts += 1;
+                        *ctx.dirty_trace
+                            .rule_attempts_by_priority
+                            .entry(rule_group.priority)
+                            .or_default() += 1;
+                        // Count rule application attempts
+                        ctx.stats.rewriter_rule_application_attempts =
+                            Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
 
-                    #[cfg(debug_assertions)]
-                    let span = span!(Level::TRACE,"trying_rule_application",rule_name=rd.rule.name,rule_target_expression=%expr);
+                        #[cfg(debug_assertions)]
+                        let span = span!(Level::TRACE,"trying_rule_application",rule_name=rd.rule.name,rule_target_expression=%expr);
 
-                    #[cfg(debug_assertions)]
-                    let _guard = span.enter();
+                        #[cfg(debug_assertions)]
+                        let _guard = span.enter();
 
-                    #[cfg(debug_assertions)]
-                    tracing::trace!(rule_name = rd.rule.name, "Trying rule");
+                        #[cfg(debug_assertions)]
+                        tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
-                    let variable_snapshot_before = matches!(&expr, Expr::Root(_, _))
-                        .then(|| snapshot_variable_declarations(&submodel.symbols()));
+                        let variable_snapshot_before = matches!(expr, Expr::Root(_, _))
+                            .then(|| snapshot_variable_declarations(&submodel.symbols()));
 
-                    match (rd.rule.application)(&expr, &submodel.symbols()) {
-                        Ok(red) => {
-                            // when called a lot, this becomes very expensive!
-                            #[cfg(debug_assertions)]
-                            if rule_trace_enabled() && rule_trace_verbose_enabled() {
-                                log_verbose_rule_attempt(
-                                    ctx.run_start,
-                                    &rule_group.priority,
-                                    rd.rule.name,
-                                    rd.rule_set.name,
-                                    "success",
-                                    &expr,
-                                );
+                        match (rd.rule.application)(expr, &submodel.symbols()) {
+                            Ok(red) => {
+                                // when called a lot, this becomes very expensive!
+                                #[cfg(debug_assertions)]
+                                if rule_trace_enabled() && rule_trace_verbose_enabled() {
+                                    log_verbose_rule_attempt(
+                                        ctx.run_start,
+                                        &rule_group.priority,
+                                        rd.rule.name,
+                                        rd.rule_set.name,
+                                        "success",
+                                        expr,
+                                    );
+                                }
+
+                                // Count successful rule applications
+                                ctx.stats.rewriter_rule_applications =
+                                    Some(ctx.stats.rewriter_rule_applications.unwrap_or(0) + 1);
+
+                                // Collect applicable rules
+                                results.push((
+                                    RuleResult {
+                                        rule_data: rd.clone(),
+                                        effect: red,
+                                    },
+                                    level,
+                                    expr.clone(),
+                                    node_id,
+                                    variable_snapshot_before,
+                                ));
                             }
-
-                            // Count successful rule applications
-                            ctx.stats.rewriter_rule_applications =
-                                Some(ctx.stats.rewriter_rule_applications.unwrap_or(0) + 1);
-
-                            // Collect applicable rules
-                            results.push((
-                                RuleResult {
-                                    rule_data: rd.clone(),
-                                    effect: red,
-                                },
-                                level,
-                                expr.clone(),
-                                node_id,
-                                variable_snapshot_before,
-                            ));
-                        }
-                        Err(_) => {
-                            // when called a lot, this becomes very expensive!
-                            #[cfg(debug_assertions)]
-                            if rule_trace_enabled() && rule_trace_verbose_enabled() {
-                                log_verbose_rule_attempt(
-                                    ctx.run_start,
-                                    &rule_group.priority,
-                                    rd.rule.name,
-                                    rd.rule_set.name,
-                                    "fail",
-                                    &expr,
-                                );
+                            Err(_) => {
+                                // when called a lot, this becomes very expensive!
+                                #[cfg(debug_assertions)]
+                                if rule_trace_enabled() && rule_trace_verbose_enabled() {
+                                    log_verbose_rule_attempt(
+                                        ctx.run_start,
+                                        &rule_group.priority,
+                                        rd.rule.name,
+                                        rd.rule_set.name,
+                                        "fail",
+                                        expr,
+                                    );
+                                }
                             }
                         }
+                    }
+                    if ctx.config.cache
+                        && results.len() == results_before_expr
+                        && let Some(symbol_context_hash) = scan_symbol_context_hash
+                        && let Some(cache) = ctx.cache.as_mut()
+                    {
+                        cache.insert(expr, None, level, symbol_context_hash);
+                        ctx.dirty_trace.cache_inserts += 1;
                     }
                 }
                 if ctx.config.dirty && attempted_rule && results.len() == results_before_expr {
                     ctx.dirty_trace.record_clean_mark(rule_group.priority);
                     arena.mark_clean_for_rule_priority(node_id, rule_group.priority);
-                }
-                if ctx.config.cache
-                    && results.len() == results_before_expr
-                    && let Some(symbol_context_hash) = scan_symbol_context_hash
-                    && let Some(cache) = ctx.cache.as_mut()
-                {
-                    cache.insert(&expr, None, level, symbol_context_hash);
-                    ctx.dirty_trace.cache_inserts += 1;
                 }
                 if attempted_rule {
                     ctx.dirty_trace.attempted_expressions += 1;
