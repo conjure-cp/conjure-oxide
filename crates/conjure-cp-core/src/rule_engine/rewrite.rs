@@ -95,43 +95,47 @@ impl DirtyTrace {
     }
 
     fn record_dirty_hit(&mut self, priority: u16) {
-        self.dirty_hits += 1;
-        if self.enabled {
-            *self.dirty_hits_by_priority.entry(priority).or_default() += 1;
+        if !self.enabled {
+            return;
         }
+        self.dirty_hits += 1;
+        *self.dirty_hits_by_priority.entry(priority).or_default() += 1;
     }
 
     fn record_clean_mark(&mut self, priority: u16) {
-        self.clean_marks += 1;
-        if self.enabled {
-            *self.clean_marks_by_priority.entry(priority).or_default() += 1;
+        if !self.enabled {
+            return;
         }
+        self.clean_marks += 1;
+        *self.clean_marks_by_priority.entry(priority).or_default() += 1;
     }
 
     fn record_rewrite(&mut self, rule_name: &str, side_effects: bool) {
+        if !self.enabled {
+            return;
+        }
         self.rewrites += 1;
-        if self.enabled {
+        *self
+            .rewrites_by_rule
+            .entry(rule_name.to_owned())
+            .or_default() += 1;
+        if side_effects {
             *self
-                .rewrites_by_rule
+                .side_effect_rewrites_by_rule
                 .entry(rule_name.to_owned())
                 .or_default() += 1;
-            if side_effects {
-                *self
-                    .side_effect_rewrites_by_rule
-                    .entry(rule_name.to_owned())
-                    .or_default() += 1;
-            }
         }
     }
 
     fn record_whole_model_clear(&mut self, rule_name: &str) {
-        self.whole_model_clears_after_side_effects += 1;
-        if self.enabled {
-            *self
-                .whole_model_clears_by_rule
-                .entry(rule_name.to_owned())
-                .or_default() += 1;
+        if !self.enabled {
+            return;
         }
+        self.whole_model_clears_after_side_effects += 1;
+        *self
+            .whole_model_clears_by_rule
+            .entry(rule_name.to_owned())
+            .or_default() += 1;
     }
 
     fn record_arena_content_hash(&mut self, hit: bool) {
