@@ -24,6 +24,7 @@ use crate::{
 
 use itertools::Itertools;
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, BTreeSet, HashMap},
     hash::{DefaultHasher, Hash, Hasher},
     time::Instant,
@@ -74,6 +75,10 @@ struct DirtyTrace {
     arena_content_hash_misses: usize,
     ancestor_hash_capture_runs: usize,
     ancestor_hash_captured_nodes: usize,
+    candidate_index_scans: usize,
+    candidate_index_full_scans: usize,
+    candidate_index_filtered_scans: usize,
+    candidate_index_skipped_nodes: usize,
     dirty_hits_by_priority: BTreeMap<u16, usize>,
     clean_marks_by_priority: BTreeMap<u16, usize>,
     rule_attempts_by_priority: BTreeMap<u16, usize>,
@@ -128,6 +133,16 @@ impl DirtyTrace {
             self.arena_content_hash_hits += 1;
         } else {
             self.arena_content_hash_misses += 1;
+        }
+    }
+
+    fn record_candidate_index_scan(&mut self, total_nodes: usize, scanned_nodes: usize) {
+        self.candidate_index_scans += 1;
+        if scanned_nodes == total_nodes {
+            self.candidate_index_full_scans += 1;
+        } else {
+            self.candidate_index_filtered_scans += 1;
+            self.candidate_index_skipped_nodes += total_nodes - scanned_nodes;
         }
     }
 
@@ -224,6 +239,22 @@ impl DirtyTrace {
         eprintln!(
             "[dirty-trace] ancestor_hash_captured_nodes={}",
             self.ancestor_hash_captured_nodes
+        );
+        eprintln!(
+            "[dirty-trace] candidate_index_scans={}",
+            self.candidate_index_scans
+        );
+        eprintln!(
+            "[dirty-trace] candidate_index_full_scans={}",
+            self.candidate_index_full_scans
+        );
+        eprintln!(
+            "[dirty-trace] candidate_index_filtered_scans={}",
+            self.candidate_index_filtered_scans
+        );
+        eprintln!(
+            "[dirty-trace] candidate_index_skipped_nodes={}",
+            self.candidate_index_skipped_nodes
         );
     }
 }
@@ -418,6 +449,7 @@ struct RuleGroup<'a> {
     /// Indexed by discriminant id for O(1) lookup (ids are small and dense; see `Rule::applicable_to`).
     rules_by_discriminant: Vec<Option<Vec<RuleData<'a>>>>,
     universal_rules: Vec<RuleData<'a>>,
+    target_discriminants: Vec<usize>,
 }
 
 impl<'a> RuleGroup<'a> {
@@ -434,7 +466,9 @@ impl<'a> RuleGroup<'a> {
             rules_by_discriminant.resize_with(max_discriminant + 1, || None);
         }
 
-        for discriminant in discriminants.into_iter().unique() {
+        let target_discriminants = discriminants.into_iter().unique().collect_vec();
+
+        for &discriminant in &target_discriminants {
             rules_by_discriminant[discriminant] = Some(
                 rules
                     .iter()
@@ -444,17 +478,23 @@ impl<'a> RuleGroup<'a> {
             );
         }
 
-        let universal_rules = rules
+        let universal_rules: Vec<RuleData<'a>> = rules
             .iter()
             .filter(|rd| rd.rule.applicable_to.is_none())
             .cloned()
             .collect();
+        let target_discriminants = if universal_rules.is_empty() {
+            target_discriminants
+        } else {
+            Vec::new()
+        };
 
         Self {
             priority,
             rules,
             rules_by_discriminant,
             universal_rules,
+            target_discriminants,
         }
     }
 
@@ -468,6 +508,63 @@ impl<'a> RuleGroup<'a> {
             .get(discriminant)
             .and_then(Option::as_deref)
             .unwrap_or(&self.universal_rules)
+    }
+}
+
+struct CandidateNodeIndex {
+    nodes_by_discriminant: Vec<Vec<ExpressionNodeId>>,
+    preorder_positions: HashMap<ExpressionNodeId, usize>,
+}
+
+impl CandidateNodeIndex {
+    fn new(arena: &ExpressionArena, preorder_ids: &[ExpressionNodeId]) -> Self {
+        let mut nodes_by_discriminant: Vec<Vec<ExpressionNodeId>> = Vec::new();
+        let mut preorder_positions = HashMap::with_capacity(preorder_ids.len());
+
+        for (position, &node_id) in preorder_ids.iter().enumerate() {
+            preorder_positions.insert(node_id, position);
+            let discriminant = discriminant_from_value(arena.expression(node_id));
+            if discriminant >= nodes_by_discriminant.len() {
+                nodes_by_discriminant.resize_with(discriminant + 1, Vec::new);
+            }
+            nodes_by_discriminant[discriminant].push(node_id);
+        }
+
+        Self {
+            nodes_by_discriminant,
+            preorder_positions,
+        }
+    }
+
+    fn nodes_for_rule_group<'a>(
+        &'a self,
+        rule_group: &RuleGroup<'_>,
+        preorder_ids: &'a [ExpressionNodeId],
+    ) -> Cow<'a, [ExpressionNodeId]> {
+        if !rule_group.universal_rules.is_empty() {
+            return Cow::Borrowed(preorder_ids);
+        }
+
+        match rule_group.target_discriminants.as_slice() {
+            [] => Cow::Borrowed(preorder_ids),
+            [discriminant] => self
+                .nodes_by_discriminant
+                .get(*discriminant)
+                .map(|nodes| Cow::Borrowed(nodes.as_slice()))
+                .unwrap_or_else(|| Cow::Owned(Vec::new())),
+            discriminants => Cow::Owned(self.nodes_for_discriminants(discriminants)),
+        }
+    }
+
+    fn nodes_for_discriminants(&self, discriminants: &[usize]) -> Vec<ExpressionNodeId> {
+        let mut nodes = discriminants
+            .iter()
+            .filter_map(|discriminant| self.nodes_by_discriminant.get(*discriminant))
+            .flat_map(|nodes| nodes.iter().copied())
+            .collect_vec();
+
+        nodes.sort_by_key(|node_id| self.preorder_positions[node_id]);
+        nodes
     }
 }
 
@@ -602,15 +699,25 @@ fn try_rewrite_model<'ctx, 'rules>(
     'rewrite_loop: loop {
         let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
         let preorder_ids = rewriter_preorder_ids(&arena);
+        let candidate_node_index = ctx
+            .config
+            .prefilter
+            .then(|| CandidateNodeIndex::new(&arena, &preorder_ids));
 
         // Iterate over rules by priority in descending order.
         'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
             ctx.dirty_trace.priority_scans += 1;
+            let candidate_node_ids = candidate_node_index
+                .as_ref()
+                .map(|index| index.nodes_for_rule_group(rule_group, &preorder_ids))
+                .unwrap_or_else(|| Cow::Borrowed(preorder_ids.as_slice()));
+            ctx.dirty_trace
+                .record_candidate_index_scan(preorder_ids.len(), candidate_node_ids.len());
             let scan_symbol_context_hash = ctx
                 .cache
                 .is_some()
                 .then(|| current_symbol_context_hash(submodel, ctx));
-            for node_id in preorder_ids.iter().copied() {
+            for node_id in candidate_node_ids.iter().copied() {
                 ctx.dirty_trace.expression_visits += 1;
                 if ctx.config.dirty
                     && arena.is_clean_for_rule_priority(node_id, rule_group.priority)
