@@ -701,9 +701,7 @@ fn try_rewrite_model<'ctx, 'rules>(
     'rewrite_loop: loop {
         let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
         let preorder_ids = rewriter_preorder_ids(&arena);
-        let candidate_node_index = ctx
-            .config
-            .prefilter
+        let candidate_node_index = candidate_node_index_enabled(ctx.config)
             .then(|| CandidateNodeIndex::new(&arena, &preorder_ids));
 
         // Iterate over rules by priority in descending order.
@@ -1035,6 +1033,10 @@ fn invalidate_symbol_context_caches<'ctx, 'rules>(
 ) {
     ctx.symbol_context_hash = None;
     submodel.symbols_mut().invalidate_context_hash_cache();
+}
+
+fn candidate_node_index_enabled(config: RewriteConfig) -> bool {
+    config.prefilter && std::env::var_os("CONJURE_CANDIDATE_NODE_INDEX").is_some()
 }
 
 fn traced_arena_content_hash(
