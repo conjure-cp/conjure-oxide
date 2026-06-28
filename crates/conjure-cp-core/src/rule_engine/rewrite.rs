@@ -24,7 +24,6 @@ use crate::{
 
 use itertools::Itertools;
 use std::{
-    borrow::Cow,
     collections::{BTreeMap, BTreeSet, HashMap},
     hash::{DefaultHasher, Hash, Hasher},
     time::Instant,
@@ -450,6 +449,7 @@ struct RuleGroup<'a> {
     rules_by_discriminant: Vec<Option<Vec<RuleData<'a>>>>,
     universal_rules: Vec<RuleData<'a>>,
     target_discriminants: Vec<usize>,
+    target_discriminant_mask: Vec<bool>,
 }
 
 impl<'a> RuleGroup<'a> {
@@ -488,6 +488,13 @@ impl<'a> RuleGroup<'a> {
         } else {
             Vec::new()
         };
+        let mut target_discriminant_mask = Vec::new();
+        if let Some(max_discriminant) = target_discriminants.iter().copied().max() {
+            target_discriminant_mask.resize(max_discriminant + 1, false);
+            for &discriminant in &target_discriminants {
+                target_discriminant_mask[discriminant] = true;
+            }
+        }
 
         Self {
             priority,
@@ -495,6 +502,7 @@ impl<'a> RuleGroup<'a> {
             rules_by_discriminant,
             universal_rules,
             target_discriminants,
+            target_discriminant_mask,
         }
     }
 
@@ -512,59 +520,53 @@ impl<'a> RuleGroup<'a> {
 }
 
 struct CandidateNodeIndex {
-    nodes_by_discriminant: Vec<Vec<ExpressionNodeId>>,
-    preorder_positions: HashMap<ExpressionNodeId, usize>,
+    preorder_discriminants: Vec<usize>,
+    node_counts_by_discriminant: Vec<usize>,
 }
 
 impl CandidateNodeIndex {
     fn new(arena: &ExpressionArena, preorder_ids: &[ExpressionNodeId]) -> Self {
-        let mut nodes_by_discriminant: Vec<Vec<ExpressionNodeId>> = Vec::new();
-        let mut preorder_positions = HashMap::with_capacity(preorder_ids.len());
+        let mut preorder_discriminants = Vec::with_capacity(preorder_ids.len());
+        let mut node_counts_by_discriminant = Vec::new();
 
-        for (position, &node_id) in preorder_ids.iter().enumerate() {
-            preorder_positions.insert(node_id, position);
+        for &node_id in preorder_ids {
             let discriminant = discriminant_from_value(arena.expression(node_id));
-            if discriminant >= nodes_by_discriminant.len() {
-                nodes_by_discriminant.resize_with(discriminant + 1, Vec::new);
+            preorder_discriminants.push(discriminant);
+            if discriminant >= node_counts_by_discriminant.len() {
+                node_counts_by_discriminant.resize(discriminant + 1, 0);
             }
-            nodes_by_discriminant[discriminant].push(node_id);
+            node_counts_by_discriminant[discriminant] += 1;
         }
 
         Self {
-            nodes_by_discriminant,
-            preorder_positions,
+            preorder_discriminants,
+            node_counts_by_discriminant,
         }
     }
 
-    fn nodes_for_rule_group<'a>(
-        &'a self,
-        rule_group: &RuleGroup<'_>,
-        preorder_ids: &'a [ExpressionNodeId],
-    ) -> Cow<'a, [ExpressionNodeId]> {
-        if !rule_group.universal_rules.is_empty() {
-            return Cow::Borrowed(preorder_ids);
+    fn should_scan_position(&self, rule_group: &RuleGroup<'_>, preorder_position: usize) -> bool {
+        if rule_group.target_discriminants.is_empty() {
+            return true;
         }
 
-        match rule_group.target_discriminants.as_slice() {
-            [] => Cow::Borrowed(preorder_ids),
-            [discriminant] => self
-                .nodes_by_discriminant
-                .get(*discriminant)
-                .map(|nodes| Cow::Borrowed(nodes.as_slice()))
-                .unwrap_or_else(|| Cow::Owned(Vec::new())),
-            discriminants => Cow::Owned(self.nodes_for_discriminants(discriminants)),
-        }
+        let discriminant = self.preorder_discriminants[preorder_position];
+        rule_group
+            .target_discriminant_mask
+            .get(discriminant)
+            .copied()
+            .unwrap_or(false)
     }
 
-    fn nodes_for_discriminants(&self, discriminants: &[usize]) -> Vec<ExpressionNodeId> {
-        let mut nodes = discriminants
+    fn scan_count_for_rule_group(&self, rule_group: &RuleGroup<'_>, total_nodes: usize) -> usize {
+        if rule_group.target_discriminants.is_empty() {
+            return total_nodes;
+        }
+
+        rule_group
+            .target_discriminants
             .iter()
-            .filter_map(|discriminant| self.nodes_by_discriminant.get(*discriminant))
-            .flat_map(|nodes| nodes.iter().copied())
-            .collect_vec();
-
-        nodes.sort_by_key(|node_id| self.preorder_positions[node_id]);
-        nodes
+            .filter_map(|discriminant| self.node_counts_by_discriminant.get(*discriminant))
+            .sum()
     }
 }
 
@@ -707,17 +709,23 @@ fn try_rewrite_model<'ctx, 'rules>(
         // Iterate over rules by priority in descending order.
         'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
             ctx.dirty_trace.priority_scans += 1;
-            let candidate_node_ids = candidate_node_index
+            let candidate_scan_count = candidate_node_index
                 .as_ref()
-                .map(|index| index.nodes_for_rule_group(rule_group, &preorder_ids))
-                .unwrap_or_else(|| Cow::Borrowed(preorder_ids.as_slice()));
+                .map(|index| index.scan_count_for_rule_group(rule_group, preorder_ids.len()))
+                .unwrap_or(preorder_ids.len());
             ctx.dirty_trace
-                .record_candidate_index_scan(preorder_ids.len(), candidate_node_ids.len());
+                .record_candidate_index_scan(preorder_ids.len(), candidate_scan_count);
             let scan_symbol_context_hash = ctx
                 .cache
                 .is_some()
                 .then(|| current_symbol_context_hash(submodel, ctx));
-            for node_id in candidate_node_ids.iter().copied() {
+            for (preorder_position, node_id) in preorder_ids.iter().copied().enumerate() {
+                if let Some(index) = candidate_node_index.as_ref()
+                    && !index.should_scan_position(rule_group, preorder_position)
+                {
+                    continue;
+                }
+
                 ctx.dirty_trace.expression_visits += 1;
                 if ctx.config.dirty
                     && arena.is_clean_for_rule_priority(node_id, rule_group.priority)
