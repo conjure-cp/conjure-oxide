@@ -11,6 +11,13 @@ const NO_CLEAN_RULE_PRIORITY: u16 = u16::MAX;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ExpressionNodeId(usize);
 
+impl ExpressionNodeId {
+    /// Returns the arena slot index for this node id.
+    pub fn index(self) -> usize {
+        self.0
+    }
+}
+
 /// Arena-backed representation of an [`Expression`] tree.
 ///
 /// The arena keeps direct parent/child links so callers can jump to known nodes without walking
@@ -29,6 +36,8 @@ struct ExpressionArenaNode {
     children: Vec<ExpressionNodeId>,
     clean_rule_priority: u16,
     cached_content_hash: Option<u64>,
+    /// Incremented when this node's rewrite-relevant content changes.
+    generation: u32,
 }
 
 impl ExpressionArena {
@@ -118,6 +127,18 @@ impl ExpressionArena {
         self.node_mut(id).clean_rule_priority = NO_CLEAN_RULE_PRIORITY;
     }
 
+    /// Returns the generation counter for `id`.
+    pub fn generation(&self, id: ExpressionNodeId) -> u32 {
+        self.node(id).generation
+    }
+
+    /// Records that rewrite-relevant content at `id` has changed.
+    pub fn bump_generation(&mut self, id: ExpressionNodeId) {
+        let node = self.node_mut(id);
+        node.generation = node.generation.wrapping_add(1);
+        node.cached_content_hash = None;
+    }
+
     /// Replaces the subtree at `id` while preserving `id` itself.
     pub fn replace_subtree(&mut self, id: ExpressionNodeId, replacement: Expression) {
         self.assert_valid_id(id);
@@ -133,6 +154,7 @@ impl ExpressionArena {
         node.children = children;
         node.clean_rule_priority = NO_CLEAN_RULE_PRIORITY;
         node.cached_content_hash = None;
+        node.generation = node.generation.wrapping_add(1);
     }
 
     /// Appends top-level constraints to the root expression.
@@ -181,6 +203,7 @@ impl ExpressionArena {
         let node = self.node_mut(id);
         node.expr = rebuilt;
         node.cached_content_hash = None;
+        node.generation = node.generation.wrapping_add(1);
     }
 
     /// Clears cached arena content hashes from `id` through the root.
@@ -248,6 +271,7 @@ impl ExpressionArena {
             children: Vec::new(),
             clean_rule_priority,
             cached_content_hash: None,
+            generation: 0,
         });
 
         let children = child_exprs

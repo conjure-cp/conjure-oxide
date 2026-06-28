@@ -24,7 +24,7 @@ use crate::{
 
 use itertools::Itertools;
 use std::{
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     hash::{DefaultHasher, Hash, Hasher},
     time::Instant,
 };
@@ -78,6 +78,7 @@ struct DirtyTrace {
     candidate_index_full_scans: usize,
     candidate_index_filtered_scans: usize,
     candidate_index_skipped_nodes: usize,
+    rule_memo_hits: usize,
     dirty_hits_by_priority: BTreeMap<u16, usize>,
     clean_marks_by_priority: BTreeMap<u16, usize>,
     rule_attempts_by_priority: BTreeMap<u16, usize>,
@@ -163,6 +164,13 @@ impl DirtyTrace {
         }
     }
 
+    fn record_rule_memo_hit(&mut self) {
+        if !self.enabled {
+            return;
+        }
+        self.rule_memo_hits += 1;
+    }
+
     fn finish(&self, stats: &RewriterStats) {
         if !self.enabled {
             return;
@@ -176,6 +184,7 @@ impl DirtyTrace {
             self.attempted_expressions
         );
         eprintln!("[dirty-trace] rule_attempts_counted={}", self.rule_attempts);
+        eprintln!("[dirty-trace] rule_memo_hits={}", self.rule_memo_hits);
         eprintln!(
             "[dirty-trace] stats_rule_attempts={}",
             stats.rewriter_rule_application_attempts.unwrap_or(0)
@@ -636,6 +645,53 @@ impl DirtyNodeQueues {
     }
 }
 
+#[derive(Default)]
+struct RuleApplicabilityMemo {
+    failures: HashSet<(usize, u64, u32, u32)>,
+}
+
+impl RuleApplicabilityMemo {
+    fn rule_name_hash(rule_name: &str) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        rule_name.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn is_known_failure(
+        &self,
+        node_id: ExpressionNodeId,
+        rule_name: &str,
+        node_generation: u32,
+        symbol_generation: u32,
+    ) -> bool {
+        self.failures.contains(&(
+            node_id.index(),
+            Self::rule_name_hash(rule_name),
+            node_generation,
+            symbol_generation,
+        ))
+    }
+
+    fn record_failure(
+        &mut self,
+        node_id: ExpressionNodeId,
+        rule_name: &str,
+        node_generation: u32,
+        symbol_generation: u32,
+    ) {
+        self.failures.insert((
+            node_id.index(),
+            Self::rule_name_hash(rule_name),
+            node_generation,
+            symbol_generation,
+        ));
+    }
+
+    fn clear(&mut self) {
+        self.failures.clear();
+    }
+}
+
 struct RewritePassContext<'ctx, 'rules> {
     rules_grouped: &'ctx Vec<(u16, Vec<RuleData<'rules>>)>,
     bucketed_rules: &'ctx Vec<RuleGroup<'rules>>,
@@ -644,6 +700,8 @@ struct RewritePassContext<'ctx, 'rules> {
     dirty_trace: &'ctx mut DirtyTrace,
     cache: Option<RewriteCache>,
     symbol_context_hash: Option<u64>,
+    symbol_generation: u32,
+    rule_applicability_memo: Option<RuleApplicabilityMemo>,
     config: RewriteConfig,
     #[cfg(debug_assertions)]
     run_start: &'ctx Instant,
@@ -700,6 +758,8 @@ pub fn rewrite_model<'a>(
             dirty_trace: &mut dirty_trace,
             cache: config.cache.then(RewriteCache::default),
             symbol_context_hash: None,
+            symbol_generation: 0,
+            rule_applicability_memo: config.rule_memo.then(RuleApplicabilityMemo::default),
             config,
             #[cfg(debug_assertions)]
             run_start: &run_start,
@@ -859,10 +919,26 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 let mut attempted_rule = false;
                 let results_before_expr = results.len();
+                let node_generation = arena.generation(node_id);
+                let symbol_generation = ctx.symbol_generation;
                 {
                     let expr = arena.expression(node_id);
                     for rd in rule_group.candidates(ctx.config, expr) {
                         attempted_rule = true;
+                        if ctx.config.rule_memo
+                            && ctx.rule_applicability_memo.as_ref().is_some_and(|memo| {
+                                memo.is_known_failure(
+                                    node_id,
+                                    rd.rule.name,
+                                    node_generation,
+                                    symbol_generation,
+                                )
+                            })
+                        {
+                            ctx.dirty_trace.record_rule_memo_hit();
+                            continue;
+                        }
+
                         ctx.dirty_trace.rule_attempts += 1;
                         if ctx.dirty_trace.enabled {
                             *ctx.dirty_trace
@@ -918,6 +994,16 @@ fn try_rewrite_model<'ctx, 'rules>(
                                 ));
                             }
                             Err(_) => {
+                                if ctx.config.rule_memo
+                                    && let Some(memo) = ctx.rule_applicability_memo.as_mut()
+                                {
+                                    memo.record_failure(
+                                        node_id,
+                                        rd.rule.name,
+                                        node_generation,
+                                        symbol_generation,
+                                    );
+                                }
                                 // when called a lot, this becomes very expensive!
                                 #[cfg(debug_assertions)]
                                 if rule_trace_enabled() && rule_trace_verbose_enabled() {
@@ -1079,6 +1165,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                         clear_model_clean_rule_metadata(submodel);
                     }
                     arena = ExpressionArena::from_root(take_model_root(submodel));
+                    reset_rule_applicability_memo(ctx);
                 }
 
                 #[cfg(debug_assertions)]
@@ -1087,6 +1174,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                     let assertion_context = format!("rewriter after applying rule '{rule_name}'");
                     debug_assert_model_well_formed(submodel, &assertion_context);
                     arena = ExpressionArena::from_root(take_model_root(submodel));
+                    reset_rule_applicability_memo(ctx);
                 }
 
                 did_rewrite = true;
@@ -1117,7 +1205,14 @@ fn invalidate_symbol_context_caches<'ctx, 'rules>(
     ctx: &mut RewritePassContext<'ctx, 'rules>,
 ) {
     ctx.symbol_context_hash = None;
+    ctx.symbol_generation = ctx.symbol_generation.wrapping_add(1);
     submodel.symbols_mut().invalidate_context_hash_cache();
+}
+
+fn reset_rule_applicability_memo<'ctx, 'rules>(ctx: &mut RewritePassContext<'ctx, 'rules>) {
+    if let Some(memo) = ctx.rule_applicability_memo.as_mut() {
+        memo.clear();
+    }
 }
 
 fn candidate_node_index_enabled(config: RewriteConfig) -> bool {
@@ -1836,5 +1931,23 @@ mod tests {
 
         assert_not_clean_at(&constraints[0], priority);
         assert_clean_at(&constraints[1], priority);
+    }
+
+    #[test]
+    fn rule_applicability_memo_is_scoped_to_node_and_context_generations() {
+        let mut memo = RuleApplicabilityMemo::default();
+        let (arena, node_id) = arena_with_preorder_focus(int_lit(1), 0);
+        let generation = arena.generation(node_id);
+
+        assert!(!memo.is_known_failure(node_id, "constant_evaluator", generation, 0));
+        memo.record_failure(node_id, "constant_evaluator", generation, 0);
+        assert!(memo.is_known_failure(node_id, "constant_evaluator", generation, 0));
+        assert!(!memo.is_known_failure(
+            node_id,
+            "constant_evaluator",
+            generation.wrapping_add(1),
+            0
+        ));
+        assert!(!memo.is_known_failure(node_id, "constant_evaluator", generation, 1));
     }
 }
