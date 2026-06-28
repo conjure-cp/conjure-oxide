@@ -96,37 +96,48 @@ impl DirtyTrace {
 
     fn record_dirty_hit(&mut self, priority: u16) {
         self.dirty_hits += 1;
-        *self.dirty_hits_by_priority.entry(priority).or_default() += 1;
+        if self.enabled {
+            *self.dirty_hits_by_priority.entry(priority).or_default() += 1;
+        }
     }
 
     fn record_clean_mark(&mut self, priority: u16) {
         self.clean_marks += 1;
-        *self.clean_marks_by_priority.entry(priority).or_default() += 1;
+        if self.enabled {
+            *self.clean_marks_by_priority.entry(priority).or_default() += 1;
+        }
     }
 
     fn record_rewrite(&mut self, rule_name: &str, side_effects: bool) {
         self.rewrites += 1;
-        *self
-            .rewrites_by_rule
-            .entry(rule_name.to_owned())
-            .or_default() += 1;
-        if side_effects {
+        if self.enabled {
             *self
-                .side_effect_rewrites_by_rule
+                .rewrites_by_rule
                 .entry(rule_name.to_owned())
                 .or_default() += 1;
+            if side_effects {
+                *self
+                    .side_effect_rewrites_by_rule
+                    .entry(rule_name.to_owned())
+                    .or_default() += 1;
+            }
         }
     }
 
     fn record_whole_model_clear(&mut self, rule_name: &str) {
         self.whole_model_clears_after_side_effects += 1;
-        *self
-            .whole_model_clears_by_rule
-            .entry(rule_name.to_owned())
-            .or_default() += 1;
+        if self.enabled {
+            *self
+                .whole_model_clears_by_rule
+                .entry(rule_name.to_owned())
+                .or_default() += 1;
+        }
     }
 
     fn record_arena_content_hash(&mut self, hit: bool) {
+        if !self.enabled {
+            return;
+        }
         self.arena_content_hash_requests += 1;
         if hit {
             self.arena_content_hash_hits += 1;
@@ -136,6 +147,9 @@ impl DirtyTrace {
     }
 
     fn record_candidate_index_scan(&mut self, total_nodes: usize, scanned_nodes: usize) {
+        if !self.enabled {
+            return;
+        }
         self.candidate_index_scans += 1;
         if scanned_nodes == total_nodes {
             self.candidate_index_full_scans += 1;
@@ -781,10 +795,12 @@ fn try_rewrite_model<'ctx, 'rules>(
                     for rd in rule_group.candidates(ctx.config, expr) {
                         attempted_rule = true;
                         ctx.dirty_trace.rule_attempts += 1;
-                        *ctx.dirty_trace
-                            .rule_attempts_by_priority
-                            .entry(rule_group.priority)
-                            .or_default() += 1;
+                        if ctx.dirty_trace.enabled {
+                            *ctx.dirty_trace
+                                .rule_attempts_by_priority
+                                .entry(rule_group.priority)
+                                .or_default() += 1;
+                        }
                         // Count rule application attempts
                         ctx.stats.rewriter_rule_application_attempts =
                             Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
