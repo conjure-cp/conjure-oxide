@@ -207,31 +207,21 @@ enum CacheResult {
 struct CachedRewrite {
     /// Replacement expression to splice into the tree on a cache hit.
     expr: Expr,
+    /// Earliest rule-group index at which this rewrite chain is known valid.
+    valid_from_rule_group_index: usize,
 }
 
-/// Internal stored cache value for a level-qualified expression hash.
-enum CacheEntry {
-    /// No rules apply to this expression at the stored level.
-    Terminal,
-    /// Rules rewrite this expression to the stored replacement.
-    Rewrite(CachedRewrite),
-}
-
-/// Rewrite cache keyed by expression hash, rule-group level, and symbol context hash.
+/// Rewrite cache keyed by expression content hash and symbol context hash.
 ///
 /// Rewrite entries are transitively resolved: inserting `A -> B`, `B -> C`, then `C -> D`
 /// updates the observable cache result for `A`, `B`, and `C` to `D`.
-///
-/// A terminal entry describes its source expression only. In particular, `A -> B` followed by
-/// terminal `B` must remain a rewrite from `A` to `B`; terminality of the target never makes the
-/// source terminal.
 #[derive(Default)]
 struct RewriteCache {
-    /// Level-qualified cache map. Terminal entries are stored here for exact-level lookups.
-    map: HashMap<u64, CacheEntry>,
+    /// Rewrite map. Each entry records the earliest rule-group index where the chain is valid.
+    rewrites: HashMap<u64, CachedRewrite>,
     /// Reverse edges used to update earlier mappings when a target later rewrites again.
     predecessors: HashMap<u64, Vec<u64>>,
-    /// Context-qualified terminal shortcut: a subtree clean through level N is clean for <= N.
+    /// Context-qualified terminal shortcut: a subtree clean through rule group N is clean for <= N.
     clean_levels: HashMap<u64, usize>,
 }
 
@@ -244,20 +234,18 @@ impl RewriteCache {
         expr.cached_content_hash()
     }
 
-    /// Combines an expression hash, rule-group level, and symbol context hash.
-    fn combine(expression_content_hash: u64, level: usize, symbol_context_hash: u64) -> u64 {
+    /// Combines an expression hash and symbol context hash.
+    fn combine(expression_content_hash: u64, symbol_context_hash: u64) -> u64 {
         let mut hasher = DefaultHasher::new();
         expression_content_hash.hash(&mut hasher);
-        level.hash(&mut hasher);
         symbol_context_hash.hash(&mut hasher);
         hasher.finish()
     }
 
-    /// Returns the level-qualified cache key for an expression.
-    fn key(expr: &Expr, level: usize, symbol_context_hash: u64) -> u64 {
+    /// Returns the context-qualified cache key for an expression.
+    fn key(expr: &Expr, symbol_context_hash: u64) -> u64 {
         Self::combine(
             Self::expression_content_hash(expr, symbol_context_hash),
-            level,
             symbol_context_hash,
         )
     }
@@ -267,28 +255,28 @@ impl RewriteCache {
     /// This is needed for ancestor mappings: changing a child proves that the old ancestor maps to
     /// a rebuilt ancestor even if that old shape was previously cached as terminal.
     fn clear_terminal_fact(&mut self, expression_content_hash: u64, symbol_context_hash: u64) {
-        let clean_key = Self::combine(expression_content_hash, usize::MAX, symbol_context_hash);
+        let clean_key = Self::combine(expression_content_hash, symbol_context_hash);
         self.clean_levels.remove(&clean_key);
     }
 
     /// Looks up a subtree at a rule-group level.
     fn get(&self, subtree: &Expr, level: usize, symbol_context_hash: u64) -> CacheResult {
         let expression_content_hash = Self::expression_content_hash(subtree, symbol_context_hash);
-        let clean_key = Self::combine(expression_content_hash, usize::MAX, symbol_context_hash);
+        let clean_key = Self::combine(expression_content_hash, symbol_context_hash);
         if let Some(&max_clean) = self.clean_levels.get(&clean_key)
             && max_clean >= level
         {
             return CacheResult::Terminal(max_clean);
         }
 
-        match self.map.get(&Self::combine(
-            expression_content_hash,
-            level,
-            symbol_context_hash,
-        )) {
-            None => CacheResult::Unknown,
-            Some(CacheEntry::Rewrite(rewrite)) => CacheResult::Rewrite(rewrite.clone()),
-            Some(CacheEntry::Terminal) => CacheResult::Terminal(level),
+        match self
+            .rewrites
+            .get(&Self::combine(expression_content_hash, symbol_context_hash))
+        {
+            Some(rewrite) if rewrite.valid_from_rule_group_index <= level => {
+                CacheResult::Rewrite(rewrite.clone())
+            }
+            Some(_) | None => CacheResult::Unknown,
         }
     }
 
@@ -313,11 +301,10 @@ impl RewriteCache {
         level: usize,
         symbol_context_hash: u64,
     ) {
-        let from_key = Self::combine(from_content_hash, level, symbol_context_hash);
+        let from_key = Self::combine(from_content_hash, symbol_context_hash);
 
         let Some(to_expr) = to else {
-            self.map.insert(from_key, CacheEntry::Terminal);
-            let clean_key = Self::combine(from_content_hash, usize::MAX, symbol_context_hash);
+            let clean_key = Self::combine(from_content_hash, symbol_context_hash);
             self.clean_levels
                 .entry(clean_key)
                 .and_modify(|l| *l = (*l).max(level))
@@ -325,41 +312,42 @@ impl RewriteCache {
             return;
         };
 
-        let to_key = Self::key(&to_expr, level, symbol_context_hash);
+        let to_key = Self::key(&to_expr, symbol_context_hash);
         if from_key == to_key {
             return;
         }
 
-        if let Some(existing) = self.map.get(&from_key) {
-            if matches!(existing, CacheEntry::Rewrite(_)) {
-                return;
-            }
-            self.map.remove(&from_key);
-        }
+        let valid_from_rule_group_index = self.rewrites.get(&from_key).map_or(level, |rewrite| {
+            rewrite.valid_from_rule_group_index.min(level)
+        });
         self.clear_terminal_fact(from_content_hash, symbol_context_hash);
 
-        let resolved = match self.map.get(&to_key) {
-            Some(CacheEntry::Rewrite(rewrite)) => CachedRewrite {
+        let resolved = match self.rewrites.get(&to_key) {
+            Some(rewrite) => CachedRewrite {
                 expr: rewrite.expr.clone(),
+                valid_from_rule_group_index,
             },
-            // Terminality belongs to `to_expr`, not to the source. The source still has to be
-            // replaced once before the terminal target can be reused.
-            Some(CacheEntry::Terminal) => CachedRewrite { expr: to_expr },
-            None => CachedRewrite { expr: to_expr },
+            None => CachedRewrite {
+                expr: to_expr,
+                valid_from_rule_group_index,
+            },
         };
 
-        let resolved_key = Self::key(&resolved.expr, level, symbol_context_hash);
-        self.map
-            .insert(from_key, CacheEntry::Rewrite(resolved.clone()));
+        let resolved_key = Self::key(&resolved.expr, symbol_context_hash);
+        self.rewrites.insert(from_key, resolved.clone());
 
         if let Some(mut predecessors) = self.predecessors.remove(&from_key) {
             for &predecessor in &predecessors {
-                self.map.insert(
-                    predecessor,
-                    CacheEntry::Rewrite(CachedRewrite {
-                        expr: resolved.expr.clone(),
-                    }),
-                );
+                if let Some(predecessor_rewrite) = self.rewrites.get(&predecessor).cloned() {
+                    self.rewrites.insert(
+                        predecessor,
+                        CachedRewrite {
+                            expr: resolved.expr.clone(),
+                            valid_from_rule_group_index: predecessor_rewrite
+                                .valid_from_rule_group_index,
+                        },
+                    );
+                }
             }
 
             self.predecessors
@@ -1224,6 +1212,52 @@ mod tests {
                 CacheResult::Unknown | CacheResult::Terminal(_) => {
                     panic!("expected transitive rewrite cache hit")
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn rewrite_cache_does_not_rewrite_before_proven_rule_group() {
+        let a = int_lit(1);
+        let b = int_lit(2);
+        let mut cache = RewriteCache::default();
+        let context = 10;
+
+        cache.insert(&a, Some(b.clone()), 2, context);
+
+        assert!(matches!(cache.get(&a, 1, context), CacheResult::Unknown));
+        match cache.get(&a, 2, context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, b),
+            CacheResult::Unknown | CacheResult::Terminal(_) => {
+                panic!("expected rewrite at proven rule group")
+            }
+        }
+    }
+
+    #[test]
+    fn rewrite_cache_compresses_transitive_rewrites_across_rule_groups() {
+        let a = int_lit(1);
+        let b = int_lit(2);
+        let c = int_lit(3);
+        let d = int_lit(4);
+        let mut cache = RewriteCache::default();
+        let context = 10;
+
+        cache.insert(&a, Some(b.clone()), 0, context);
+        cache.insert(&b, Some(c.clone()), 1, context);
+        cache.insert(&c, Some(d.clone()), 2, context);
+
+        match cache.get(&a, 0, context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, d),
+            CacheResult::Unknown | CacheResult::Terminal(_) => {
+                panic!("expected compressed rewrite chain")
+            }
+        }
+        assert!(matches!(cache.get(&b, 0, context), CacheResult::Unknown));
+        match cache.get(&b, 1, context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, d),
+            CacheResult::Unknown | CacheResult::Terminal(_) => {
+                panic!("expected compressed suffix chain")
             }
         }
     }
