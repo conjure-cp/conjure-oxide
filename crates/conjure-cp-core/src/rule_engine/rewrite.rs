@@ -69,6 +69,11 @@ struct DirtyTrace {
     cache_inserts: usize,
     cache_ancestor_mappings: usize,
     cache_resets: usize,
+    arena_content_hash_requests: usize,
+    arena_content_hash_hits: usize,
+    arena_content_hash_misses: usize,
+    ancestor_hash_capture_runs: usize,
+    ancestor_hash_captured_nodes: usize,
     dirty_hits_by_priority: BTreeMap<u16, usize>,
     clean_marks_by_priority: BTreeMap<u16, usize>,
     rule_attempts_by_priority: BTreeMap<u16, usize>,
@@ -115,6 +120,15 @@ impl DirtyTrace {
             .whole_model_clears_by_rule
             .entry(rule_name.to_owned())
             .or_default() += 1;
+    }
+
+    fn record_arena_content_hash(&mut self, hit: bool) {
+        self.arena_content_hash_requests += 1;
+        if hit {
+            self.arena_content_hash_hits += 1;
+        } else {
+            self.arena_content_hash_misses += 1;
+        }
     }
 
     fn finish(&self, stats: &RewriterStats) {
@@ -191,6 +205,26 @@ impl DirtyTrace {
             self.cache_ancestor_mappings
         );
         eprintln!("[dirty-trace] cache_resets={}", self.cache_resets);
+        eprintln!(
+            "[dirty-trace] arena_content_hash_requests={}",
+            self.arena_content_hash_requests
+        );
+        eprintln!(
+            "[dirty-trace] arena_content_hash_hits={}",
+            self.arena_content_hash_hits
+        );
+        eprintln!(
+            "[dirty-trace] arena_content_hash_misses={}",
+            self.arena_content_hash_misses
+        );
+        eprintln!(
+            "[dirty-trace] ancestor_hash_capture_runs={}",
+            self.ancestor_hash_capture_runs
+        );
+        eprintln!(
+            "[dirty-trace] ancestor_hash_captured_nodes={}",
+            self.ancestor_hash_captured_nodes
+        );
     }
 }
 
@@ -588,8 +622,9 @@ fn try_rewrite_model<'ctx, 'rules>(
                 let mut node_content_hash = None;
                 if let Some(symbol_context_hash) = scan_symbol_context_hash {
                     let cache_result = {
-                        let expression_content_hash =
-                            *node_content_hash.get_or_insert_with(|| arena.content_hash(node_id));
+                        let expression_content_hash = *node_content_hash.get_or_insert_with(|| {
+                            traced_arena_content_hash(&mut arena, node_id, ctx.dirty_trace)
+                        });
                         let cache = ctx.cache.as_mut().expect("checked above");
                         cache.get_from_hash(expression_content_hash, level, symbol_context_hash)
                     };
@@ -887,6 +922,16 @@ fn invalidate_symbol_context_caches<'ctx, 'rules>(
     submodel.symbols_mut().invalidate_context_hash_cache();
 }
 
+fn traced_arena_content_hash(
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+) -> u64 {
+    let (hash, hit) = arena.content_hash_with_cache_status(node_id);
+    dirty_trace.record_arena_content_hash(hit);
+    hash
+}
+
 /// Returns expression node ids in rewriter preorder, without entering comprehensions.
 fn rewriter_preorder_ids(arena: &ExpressionArena) -> Vec<ExpressionNodeId> {
     fn collect(
@@ -923,7 +968,7 @@ fn replace_focus_and_dirty_ancestors(
     cache_mapping_context: Option<u64>,
 ) -> AncestorCacheMappings {
     let old_ancestor_content_hashes =
-        cache_mapping_context.map(|_| ancestor_content_hashes_to_root(arena, node_id));
+        cache_mapping_context.map(|_| ancestor_content_hashes_to_root(arena, node_id, dirty_trace));
     let mut ancestor_mappings = Vec::new();
     dirty_trace.replacement_subtree_clears += 1;
     arena.replace_subtree(node_id, new_focus);
@@ -950,11 +995,14 @@ fn replace_focus_and_dirty_ancestors(
 fn ancestor_content_hashes_to_root(
     arena: &mut ExpressionArena,
     node_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
 ) -> Vec<u64> {
+    dirty_trace.ancestor_hash_capture_runs += 1;
     let mut hashes = Vec::new();
     let mut ancestor = arena.parent(node_id);
     while let Some(ancestor_id) = ancestor {
-        hashes.push(arena.content_hash(ancestor_id));
+        hashes.push(traced_arena_content_hash(arena, ancestor_id, dirty_trace));
+        dirty_trace.ancestor_hash_captured_nodes += 1;
         ancestor = arena.parent(ancestor_id);
     }
     hashes

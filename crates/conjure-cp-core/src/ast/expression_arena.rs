@@ -66,13 +66,18 @@ impl ExpressionArena {
     /// This is currently an arena-side cache around the expression content hash. The next
     /// optimisation step can make it structurally incremental by composing hashes from child nodes.
     pub fn content_hash(&mut self, id: ExpressionNodeId) -> u64 {
+        self.content_hash_with_cache_status(id).0
+    }
+
+    /// Returns the cached content hash for `id` and whether it was already cached.
+    pub fn content_hash_with_cache_status(&mut self, id: ExpressionNodeId) -> (u64, bool) {
         if let Some(hash) = self.node(id).cached_content_hash {
-            return hash;
+            return (hash, true);
         }
 
         let hash = self.expression(id).cached_content_hash();
         self.node_mut(id).cached_content_hash = Some(hash);
-        hash
+        (hash, false)
     }
 
     /// Returns the parent of `id`, or `None` for the root.
