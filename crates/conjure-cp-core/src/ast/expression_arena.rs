@@ -101,6 +101,11 @@ impl ExpressionArena {
         priority >= self.node(id).clean_rule_priority
     }
 
+    /// Returns the highest-priority clean marker currently stored on `id`.
+    pub fn clean_rule_priority(&self, id: ExpressionNodeId) -> u16 {
+        self.node(id).clean_rule_priority
+    }
+
     /// Clears any clean-rule marker on `id`.
     pub fn clear_clean_rule_priority(&mut self, id: ExpressionNodeId) {
         self.node_mut(id).clean_rule_priority = NO_CLEAN_RULE_PRIORITY;

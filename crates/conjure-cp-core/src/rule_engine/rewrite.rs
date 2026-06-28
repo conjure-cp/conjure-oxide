@@ -588,6 +588,54 @@ impl CandidateNodeIndex {
     }
 }
 
+struct DirtyNodeQueues {
+    nodes_by_level: Vec<Vec<(usize, ExpressionNodeId)>>,
+}
+
+impl DirtyNodeQueues {
+    fn new(
+        arena: &ExpressionArena,
+        preorder_ids: &[ExpressionNodeId],
+        rule_groups: &[RuleGroup<'_>],
+    ) -> Option<Self> {
+        if preorder_ids.is_empty() || rule_groups.is_empty() {
+            return None;
+        }
+
+        let mut first_dirty_levels = Vec::with_capacity(preorder_ids.len());
+        let mut queued_nodes = 0usize;
+        for &node_id in preorder_ids {
+            let clean_priority = arena.clean_rule_priority(node_id);
+            let first_dirty_level =
+                rule_groups.partition_point(|rule_group| rule_group.priority >= clean_priority);
+            first_dirty_levels.push(first_dirty_level);
+            queued_nodes += rule_groups.len() - first_dirty_level;
+        }
+
+        let full_scan_nodes = preorder_ids.len() * rule_groups.len();
+        if queued_nodes >= full_scan_nodes {
+            return None;
+        }
+
+        let mut nodes_by_level = vec![Vec::new(); rule_groups.len()];
+        for (preorder_position, (&node_id, first_dirty_level)) in preorder_ids
+            .iter()
+            .zip(first_dirty_levels.iter().copied())
+            .enumerate()
+        {
+            for nodes in &mut nodes_by_level[first_dirty_level..] {
+                nodes.push((preorder_position, node_id));
+            }
+        }
+
+        Some(Self { nodes_by_level })
+    }
+
+    fn nodes_for_level(&self, level: usize) -> &[(usize, ExpressionNodeId)] {
+        &self.nodes_by_level[level]
+    }
+}
+
 struct RewritePassContext<'ctx, 'rules> {
     rules_grouped: &'ctx Vec<(u16, Vec<RuleData<'rules>>)>,
     bucketed_rules: &'ctx Vec<RuleGroup<'rules>>,
@@ -721,21 +769,38 @@ fn try_rewrite_model<'ctx, 'rules>(
         let preorder_ids = rewriter_preorder_ids(&arena);
         let candidate_node_index = candidate_node_index_enabled(ctx.config)
             .then(|| CandidateNodeIndex::new(&arena, &preorder_ids));
+        let dirty_node_queues = dirty_node_queues_enabled(ctx.config, ctx.dirty_trace)
+            .then(|| DirtyNodeQueues::new(&arena, &preorder_ids, ctx.bucketed_rules))
+            .flatten();
 
         // Iterate over rules by priority in descending order.
         'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
             ctx.dirty_trace.priority_scans += 1;
+            let full_scan_count = dirty_node_queues
+                .as_ref()
+                .map(|queues| queues.nodes_for_level(level).len())
+                .unwrap_or(preorder_ids.len());
             let candidate_scan_count = candidate_node_index
                 .as_ref()
-                .map(|index| index.scan_count_for_rule_group(rule_group, preorder_ids.len()))
-                .unwrap_or(preorder_ids.len());
+                .map(|index| index.scan_count_for_rule_group(rule_group, full_scan_count))
+                .unwrap_or(full_scan_count);
             ctx.dirty_trace
-                .record_candidate_index_scan(preorder_ids.len(), candidate_scan_count);
+                .record_candidate_index_scan(full_scan_count, candidate_scan_count);
             let scan_symbol_context_hash = ctx
                 .cache
                 .is_some()
                 .then(|| current_symbol_context_hash(submodel, ctx));
-            for (preorder_position, node_id) in preorder_ids.iter().copied().enumerate() {
+            let queued_nodes = dirty_node_queues
+                .as_ref()
+                .map(|queues| queues.nodes_for_level(level));
+            let node_scan = queued_nodes.into_iter().flatten().copied().chain(
+                dirty_node_queues
+                    .is_none()
+                    .then(|| preorder_ids.iter().copied().enumerate())
+                    .into_iter()
+                    .flatten(),
+            );
+            for (preorder_position, node_id) in node_scan {
                 if let Some(index) = candidate_node_index.as_ref()
                     && !index.should_scan_position(rule_group, preorder_position)
                 {
@@ -1057,6 +1122,12 @@ fn invalidate_symbol_context_caches<'ctx, 'rules>(
 
 fn candidate_node_index_enabled(config: RewriteConfig) -> bool {
     config.prefilter && std::env::var_os("CONJURE_CANDIDATE_NODE_INDEX").is_some()
+}
+
+fn dirty_node_queues_enabled(config: RewriteConfig, dirty_trace: &DirtyTrace) -> bool {
+    config.dirty
+        && !dirty_trace.enabled
+        && std::env::var_os("CONJURE_DISABLE_DIRTY_NODE_QUEUES").is_none()
 }
 
 fn traced_arena_content_hash(
