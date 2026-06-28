@@ -1125,9 +1125,7 @@ fn candidate_node_index_enabled(config: RewriteConfig) -> bool {
 }
 
 fn dirty_node_queues_enabled(config: RewriteConfig, dirty_trace: &DirtyTrace) -> bool {
-    config.dirty
-        && !dirty_trace.enabled
-        && std::env::var_os("CONJURE_DISABLE_DIRTY_NODE_QUEUES").is_none()
+    config.dirty && !dirty_trace.enabled && std::env::var_os("CONJURE_DIRTY_NODE_QUEUES").is_some()
 }
 
 fn traced_arena_content_hash(
