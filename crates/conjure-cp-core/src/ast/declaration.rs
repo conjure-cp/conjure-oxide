@@ -71,6 +71,8 @@ where
 // The bits of a declaration that are shared between all pointers.
 #[derive(Debug)]
 struct DeclarationPtrInner {
+    // Identity hash/order key. Declaration content is mutable and is hashed separately by
+    // `DeclarationPtr::content_hash`.
     // We don't want this to be mutable, as `HashMap` and `BTreeMap` rely on the hash or order of
     // keys to be unchanging.
     //
@@ -932,11 +934,11 @@ impl DeclarationKind {
             }
             DeclarationKind::QuantifiedExpr(expr)
             | DeclarationKind::TemporaryValueLetting(expr) => {
-                expr.get_cached_hash().hash(state);
+                expr.cached_content_hash().hash(state);
                 expr.to_string().hash(state);
             }
             DeclarationKind::ValueLetting(expr, domain) => {
-                expr.get_cached_hash().hash(state);
+                expr.cached_content_hash().hash(state);
                 expr.to_string().hash(state);
                 domain.hash(state);
             }

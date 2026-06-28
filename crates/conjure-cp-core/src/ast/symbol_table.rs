@@ -209,6 +209,7 @@ struct SymbolTablePtrInner {
 
 impl Hash for SymbolTablePtrInner {
     fn hash<H: Hasher>(&self, state: &mut H) {
+        // Identity hash. Symbol table content is mutable and is hashed by `SymbolTable::context_hash`.
         self.id.hash(state);
     }
 }

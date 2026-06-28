@@ -236,18 +236,18 @@ struct RewriteCache {
 }
 
 impl RewriteCache {
-    /// Returns the level-independent structural hash for an expression.
+    /// Returns the level-independent content hash for an expression.
     ///
     /// Symbol-sensitive correctness is provided by mixing `symbol_context_hash` into
     /// [`Self::combine`], not by hashing declaration values into every node key.
-    fn node_hash(expr: &Expr, _symbol_context_hash: u64) -> u64 {
-        expr.get_cached_hash()
+    fn expression_content_hash(expr: &Expr, _symbol_context_hash: u64) -> u64 {
+        expr.cached_content_hash()
     }
 
     /// Combines an expression hash, rule-group level, and symbol context hash.
-    fn combine(node_hash: u64, level: usize, symbol_context_hash: u64) -> u64 {
+    fn combine(expression_content_hash: u64, level: usize, symbol_context_hash: u64) -> u64 {
         let mut hasher = DefaultHasher::new();
-        node_hash.hash(&mut hasher);
+        expression_content_hash.hash(&mut hasher);
         level.hash(&mut hasher);
         symbol_context_hash.hash(&mut hasher);
         hasher.finish()
@@ -256,7 +256,7 @@ impl RewriteCache {
     /// Returns the level-qualified cache key for an expression.
     fn key(expr: &Expr, level: usize, symbol_context_hash: u64) -> u64 {
         Self::combine(
-            Self::node_hash(expr, symbol_context_hash),
+            Self::expression_content_hash(expr, symbol_context_hash),
             level,
             symbol_context_hash,
         )
@@ -266,25 +266,26 @@ impl RewriteCache {
     ///
     /// This is needed for ancestor mappings: changing a child proves that the old ancestor maps to
     /// a rebuilt ancestor even if that old shape was previously cached as terminal.
-    fn clear_terminal_fact(&mut self, node_hash: u64, symbol_context_hash: u64) {
-        let clean_key = Self::combine(node_hash, usize::MAX, symbol_context_hash);
+    fn clear_terminal_fact(&mut self, expression_content_hash: u64, symbol_context_hash: u64) {
+        let clean_key = Self::combine(expression_content_hash, usize::MAX, symbol_context_hash);
         self.clean_levels.remove(&clean_key);
     }
 
     /// Looks up a subtree at a rule-group level.
     fn get(&self, subtree: &Expr, level: usize, symbol_context_hash: u64) -> CacheResult {
-        let node_hash = Self::node_hash(subtree, symbol_context_hash);
-        let clean_key = Self::combine(node_hash, usize::MAX, symbol_context_hash);
+        let expression_content_hash = Self::expression_content_hash(subtree, symbol_context_hash);
+        let clean_key = Self::combine(expression_content_hash, usize::MAX, symbol_context_hash);
         if let Some(&max_clean) = self.clean_levels.get(&clean_key)
             && max_clean >= level
         {
             return CacheResult::Terminal(max_clean);
         }
 
-        match self
-            .map
-            .get(&Self::combine(node_hash, level, symbol_context_hash))
-        {
+        match self.map.get(&Self::combine(
+            expression_content_hash,
+            level,
+            symbol_context_hash,
+        )) {
             None => CacheResult::Unknown,
             Some(CacheEntry::Rewrite(rewrite)) => CacheResult::Rewrite(rewrite.clone()),
             Some(CacheEntry::Terminal) => CacheResult::Terminal(level),
@@ -294,7 +295,7 @@ impl RewriteCache {
     /// Inserts either a terminal result or a rewrite result for `from`.
     fn insert(&mut self, from: &Expr, to: Option<Expr>, level: usize, symbol_context_hash: u64) {
         self.insert_from_hash(
-            Self::node_hash(from, symbol_context_hash),
+            Self::expression_content_hash(from, symbol_context_hash),
             to,
             level,
             symbol_context_hash,
@@ -307,16 +308,16 @@ impl RewriteCache {
     /// zipper has rebuilt an ancestor with the replacement child.
     fn insert_from_hash(
         &mut self,
-        from_hash: u64,
+        from_content_hash: u64,
         to: Option<Expr>,
         level: usize,
         symbol_context_hash: u64,
     ) {
-        let from_key = Self::combine(from_hash, level, symbol_context_hash);
+        let from_key = Self::combine(from_content_hash, level, symbol_context_hash);
 
         let Some(to_expr) = to else {
             self.map.insert(from_key, CacheEntry::Terminal);
-            let clean_key = Self::combine(from_hash, usize::MAX, symbol_context_hash);
+            let clean_key = Self::combine(from_content_hash, usize::MAX, symbol_context_hash);
             self.clean_levels
                 .entry(clean_key)
                 .and_modify(|l| *l = (*l).max(level))
@@ -335,7 +336,7 @@ impl RewriteCache {
             }
             self.map.remove(&from_key);
         }
-        self.clear_terminal_fact(from_hash, symbol_context_hash);
+        self.clear_terminal_fact(from_content_hash, symbol_context_hash);
 
         let resolved = match self.map.get(&to_key) {
             Some(CacheEntry::Rewrite(rewrite)) => CachedRewrite {
@@ -820,7 +821,8 @@ fn try_rewrite_model<'ctx, 'rules>(
                     } else {
                         pre_effect_symbol_context_hash
                     };
-                    let expr_hash = RewriteCache::node_hash(expr, cache_symbol_context_hash);
+                    let expr_hash =
+                        RewriteCache::expression_content_hash(expr, cache_symbol_context_hash);
                     if let Some(cache) = ctx.cache.as_mut() {
                         cache.insert_from_hash(
                             expr_hash,
@@ -941,8 +943,8 @@ fn replace_focus_and_dirty_ancestors(
     cache_mapping_context: Option<u64>,
 ) -> (Expr, AncestorCacheMappings) {
     let mut zipper = zipper.clone();
-    let old_ancestor_hashes = cache_mapping_context
-        .map(|symbol_context_hash| ancestor_hashes_to_root(&zipper, symbol_context_hash));
+    let old_ancestor_content_hashes = cache_mapping_context
+        .map(|symbol_context_hash| ancestor_content_hashes_to_root(&zipper, symbol_context_hash));
     let mut ancestor_mappings = Vec::new();
     dirty_trace.replacement_subtree_clears += 1;
     zipper.replace_focus(new_focus);
@@ -951,8 +953,8 @@ fn replace_focus_and_dirty_ancestors(
     while zipper.go_up().is_some() {
         dirty_trace.ancestor_clears += 1;
         zipper.focus().meta_ref().clear_clean_rule_priority();
-        zipper.focus().invalidate_cache();
-        if let Some(hashes) = old_ancestor_hashes.as_ref()
+        zipper.focus().invalidate_cached_content_hash();
+        if let Some(hashes) = old_ancestor_content_hashes.as_ref()
             && let Some(&old_hash) = hashes.get(ancestor_index)
         {
             ancestor_mappings.push((old_hash, zipper.focus().clone()));
@@ -964,11 +966,17 @@ fn replace_focus_and_dirty_ancestors(
 }
 
 /// Captures ancestor content hashes before replacing the focused subtree.
-fn ancestor_hashes_to_root(zipper: &ExpressionZipper, symbol_context_hash: u64) -> Vec<u64> {
+fn ancestor_content_hashes_to_root(
+    zipper: &ExpressionZipper,
+    symbol_context_hash: u64,
+) -> Vec<u64> {
     let mut zipper = zipper.clone();
     let mut hashes = Vec::new();
     while zipper.go_up().is_some() {
-        hashes.push(RewriteCache::node_hash(zipper.focus(), symbol_context_hash));
+        hashes.push(RewriteCache::expression_content_hash(
+            zipper.focus(),
+            symbol_context_hash,
+        ));
     }
     hashes
 }
@@ -991,7 +999,7 @@ fn clear_expr_clean_rule_metadata(expr: Expr) -> Expr {
         metadata.clear_clean_rule_priority();
         metadata
     });
-    expr.invalidate_cache_recursive();
+    expr.invalidate_cached_content_hash_recursive();
     expr
 }
 
@@ -1022,7 +1030,7 @@ fn clear_root_clean_rule_metadata(model: &mut Model) {
         Expr::Root(metadata, constraints) => {
             metadata.clear_clean_rule_priority();
             let root = Expr::Root(metadata, constraints);
-            root.invalidate_cache();
+            root.invalidate_cached_content_hash();
             root
         }
         other => other,
@@ -1065,7 +1073,7 @@ fn clear_expr_clean_rule_metadata_for_names(expr: Expr, names: &[Name]) -> Expr 
                 .map(|child| clear_expr_clean_rule_metadata_for_names(child, names))
                 .collect();
             let root = Expr::Root(metadata, constraints);
-            root.invalidate_cache();
+            root.invalidate_cached_content_hash();
             root
         }
         Expr::Eq(metadata, left, right) => {
@@ -1073,14 +1081,14 @@ fn clear_expr_clean_rule_metadata_for_names(expr: Expr, names: &[Name]) -> Expr 
             let left = clear_expr_clean_rule_metadata_for_names(left.as_ref().clone(), names);
             let right = clear_expr_clean_rule_metadata_for_names(right.as_ref().clone(), names);
             let eq = Expr::Eq(metadata, Moo::new(left), Moo::new(right));
-            eq.invalidate_cache();
+            eq.invalidate_cached_content_hash();
             eq
         }
         Expr::Sum(metadata, matrix) => {
             metadata.clear_clean_rule_priority();
             let matrix = clear_expr_clean_rule_metadata_for_names(matrix.as_ref().clone(), names);
             let sum = Expr::Sum(metadata, Moo::new(matrix));
-            sum.invalidate_cache();
+            sum.invalidate_cached_content_hash();
             sum
         }
         other => clear_expr_clean_rule_metadata(other),
@@ -1331,7 +1339,7 @@ mod tests {
         let final_parent = root(vec![int_lit(3)]);
         let mut cache = RewriteCache::default();
         let context = 10;
-        let old_parent_hash = RewriteCache::node_hash(&old_parent, context);
+        let old_parent_hash = RewriteCache::expression_content_hash(&old_parent, context);
 
         cache.insert_from_hash(old_parent_hash, Some(mid_parent.clone()), 0, context);
         cache.insert(&mid_parent, Some(final_parent.clone()), 0, context);

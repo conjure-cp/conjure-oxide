@@ -8,7 +8,7 @@ static HASH_MISSES: AtomicU64 = AtomicU64::new(0);
 
 pub fn print_hash_stats() {
     println!(
-        "Expression hash stats: hits={}, misses={}",
+        "Expression content hash stats: hits={}, misses={}",
         HASH_HITS.load(Ordering::Relaxed),
         HASH_MISSES.load(Ordering::Relaxed)
     );
@@ -65,8 +65,8 @@ use super::{
 // lot bigger still when we start using it for memoisation, so it should really be
 // boxed ~niklasdewally
 
-// expect size of Expression to be 136 bytes
-static_assertions::assert_eq_size!([u8; 136], Expression);
+// expect size of Expression to be 120 bytes
+static_assertions::assert_eq_size!([u8; 120], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -3087,39 +3087,35 @@ impl Expression {
 }
 
 impl Expression {
-    /// Invalidates the cached structural hash on this expression only.
-    pub(crate) fn invalidate_cache(&self) {
+    /// Invalidates the cached content hash on this expression only.
+    pub(crate) fn invalidate_cached_content_hash(&self) {
         let metadata = self.meta_ref();
-        metadata.stored_hash.store(NO_HASH, Ordering::Relaxed);
         metadata
-            .stored_content_hash
-            .store(NO_HASH, Ordering::Relaxed);
-        metadata
-            .stored_content_hash_context
+            .cached_content_hash
             .store(NO_HASH, Ordering::Relaxed);
     }
 
-    /// Invalidates cached structural hashes on this expression and all expression children.
-    pub(crate) fn invalidate_cache_recursive(&self) {
-        self.invalidate_cache();
+    /// Invalidates cached content hashes on this expression and all expression children.
+    pub(crate) fn invalidate_cached_content_hash_recursive(&self) {
+        self.invalidate_cached_content_hash();
         self.for_each_expr_child(&mut |child| {
-            child.invalidate_cache_recursive();
+            child.invalidate_cached_content_hash_recursive();
         });
     }
 
-    /// Returns the cached structural hash, computing and storing it when absent.
-    pub(crate) fn get_cached_hash(&self) -> u64 {
-        let stored = self.meta_ref().stored_hash.load(Ordering::Relaxed);
+    /// Returns the cached expression content hash, computing and storing it when absent.
+    pub(crate) fn cached_content_hash(&self) -> u64 {
+        let stored = self.meta_ref().cached_content_hash.load(Ordering::Relaxed);
         if stored != NO_HASH {
             HASH_HITS.fetch_add(1, Ordering::Relaxed);
             return stored;
         }
         HASH_MISSES.fetch_add(1, Ordering::Relaxed);
-        self.calculate_hash()
+        self.calculate_content_hash()
     }
 
-    /// Computes a structural hash that ignores metadata except for child cached hashes.
-    pub(crate) fn calculate_hash(&self) -> u64 {
+    /// Computes an expression content hash that ignores metadata except for child content hashes.
+    pub(crate) fn calculate_content_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
         std::mem::discriminant(self).hash(&mut hasher);
         match self {
@@ -3130,49 +3126,49 @@ impl Expression {
                 | AbstractLiteral::Tuple(v)
                 | AbstractLiteral::Sequence(v) => {
                     for expr in v {
-                        expr.get_cached_hash().hash(&mut hasher);
+                        expr.cached_content_hash().hash(&mut hasher);
                     }
                 }
                 AbstractLiteral::Matrix(v, domain) => {
                     domain.hash(&mut hasher);
                     for expr in v {
-                        expr.get_cached_hash().hash(&mut hasher);
+                        expr.cached_content_hash().hash(&mut hasher);
                     }
                 }
                 AbstractLiteral::Record(rs) => {
                     for r in rs {
                         r.name.hash(&mut hasher);
-                        r.value.get_cached_hash().hash(&mut hasher);
+                        r.value.cached_content_hash().hash(&mut hasher);
                     }
                 }
                 AbstractLiteral::Function(vs) => {
                     for (a, b) in vs {
-                        a.get_cached_hash().hash(&mut hasher);
-                        b.get_cached_hash().hash(&mut hasher);
+                        a.cached_content_hash().hash(&mut hasher);
+                        b.cached_content_hash().hash(&mut hasher);
                     }
                 }
                 AbstractLiteral::Variant(v) => {
                     v.name.hash(&mut hasher);
-                    v.value.get_cached_hash().hash(&mut hasher);
+                    v.value.cached_content_hash().hash(&mut hasher);
                 }
                 AbstractLiteral::Relation(v) => {
                     for exprs in v {
                         for expr in exprs {
-                            expr.get_cached_hash().hash(&mut hasher);
+                            expr.cached_content_hash().hash(&mut hasher);
                         }
                     }
                 }
                 AbstractLiteral::Partition(v) => {
                     for exprs in v {
                         for expr in exprs {
-                            expr.get_cached_hash().hash(&mut hasher);
+                            expr.cached_content_hash().hash(&mut hasher);
                         }
                     }
                 }
             },
             Expression::Root(_, vs) => {
                 for expr in vs {
-                    expr.get_cached_hash().hash(&mut hasher);
+                    expr.cached_content_hash().hash(&mut hasher);
                 }
             }
 
@@ -3198,14 +3194,14 @@ impl Expression {
             | Expression::ToMSet(_, m1)
             | Expression::ToRelation(_, m1)
             | Expression::Card(_, m1) => {
-                m1.get_cached_hash().hash(&mut hasher);
+                m1.cached_content_hash().hash(&mut hasher);
             }
             Expression::TypeAnnotation(_, m1, ty) => {
-                m1.get_cached_hash().hash(&mut hasher);
+                m1.cached_content_hash().hash(&mut hasher);
                 ty.hash(&mut hasher);
             }
             Expression::DomainAnnotation(_, m1, domain) => {
-                m1.get_cached_hash().hash(&mut hasher);
+                m1.cached_content_hash().hash(&mut hasher);
                 domain.hash(&mut hasher);
             }
 
@@ -3251,14 +3247,14 @@ impl Expression {
             | Expression::LexGeq(_, m1, m2)
             | Expression::Subsequence(_, m1, m2)
             | Expression::Substring(_, m1, m2) => {
-                m1.get_cached_hash().hash(&mut hasher);
-                m2.get_cached_hash().hash(&mut hasher);
+                m1.cached_content_hash().hash(&mut hasher);
+                m2.cached_content_hash().hash(&mut hasher);
             }
             // Moo<Expression> + Vec<Expression>
             Expression::UnsafeIndex(_, m, vs) | Expression::SafeIndex(_, m, vs) => {
-                m.get_cached_hash().hash(&mut hasher);
+                m.cached_content_hash().hash(&mut hasher);
                 for v in vs {
-                    v.get_cached_hash().hash(&mut hasher);
+                    v.cached_content_hash().hash(&mut hasher);
                 }
             }
 
@@ -3266,10 +3262,10 @@ impl Expression {
             Expression::UnsafeSlice(_, m, vs)
             | Expression::SafeSlice(_, m, vs)
             | Expression::RelationProj(_, m, vs) => {
-                m.get_cached_hash().hash(&mut hasher);
+                m.cached_content_hash().hash(&mut hasher);
                 for v in vs {
                     match v {
-                        Some(e) => e.get_cached_hash().hash(&mut hasher),
+                        Some(e) => e.cached_content_hash().hash(&mut hasher),
                         None => 0u64.hash(&mut hasher),
                     }
                 }
@@ -3280,53 +3276,53 @@ impl Expression {
             | Expression::AtMost(_, m1, m2, m3)
             | Expression::Gcc(_, m1, m2, m3)
             | Expression::GccWeak(_, m1, m2, m3) => {
-                m1.get_cached_hash().hash(&mut hasher);
-                m2.get_cached_hash().hash(&mut hasher);
-                m3.get_cached_hash().hash(&mut hasher);
+                m1.cached_content_hash().hash(&mut hasher);
+                m2.cached_content_hash().hash(&mut hasher);
+                m3.cached_content_hash().hash(&mut hasher);
             }
 
             // Moo<Expression> + Moo<Expression> (two-arg globals)
             Expression::AllDifferentExcept(_, m1, m2) | Expression::ElementId(_, m1, m2) => {
-                m1.get_cached_hash().hash(&mut hasher);
-                m2.get_cached_hash().hash(&mut hasher);
+                m1.cached_content_hash().hash(&mut hasher);
+                m2.cached_content_hash().hash(&mut hasher);
             }
 
             // Moo<Expression> + Name
             Expression::RecordField(_, m, n) | Expression::Active(_, m, n) => {
-                m.get_cached_hash().hash(&mut hasher);
+                m.cached_content_hash().hash(&mut hasher);
                 n.hash(&mut hasher);
             }
 
             // Moo<Expression> + DomainPtr
             Expression::InDomain(_, m, d) => {
-                m.get_cached_hash().hash(&mut hasher);
+                m.cached_content_hash().hash(&mut hasher);
                 d.hash(&mut hasher);
             }
 
             // Option<Moo<Expression>> + Moo<Expression>
             Expression::Flatten(_, opt, m) => {
                 if let Some(e) = opt {
-                    e.get_cached_hash().hash(&mut hasher);
+                    e.cached_content_hash().hash(&mut hasher);
                 }
-                m.get_cached_hash().hash(&mut hasher);
+                m.cached_content_hash().hash(&mut hasher);
             }
 
             // Moo<Expression> + Atom
             Expression::MinionReify(_, m, a) | Expression::MinionReifyImply(_, m, a) => {
-                m.get_cached_hash().hash(&mut hasher);
+                m.cached_content_hash().hash(&mut hasher);
                 a.hash(&mut hasher);
             }
 
             // Reference + Moo<Expression>
             Expression::AuxDeclaration(_, r, m) => {
                 r.hash(&mut hasher);
-                m.get_cached_hash().hash(&mut hasher);
+                m.cached_content_hash().hash(&mut hasher);
             }
 
             // SATIntEncoding + Moo<Expression> + (i32, i32)
             Expression::SATInt(_, enc, m, bounds) => {
                 enc.hash(&mut hasher);
-                m.get_cached_hash().hash(&mut hasher);
+                m.cached_content_hash().hash(&mut hasher);
                 bounds.hash(&mut hasher);
             }
 
@@ -3424,7 +3420,9 @@ impl Expression {
         };
 
         let result = hasher.finish();
-        self.meta_ref().stored_hash.swap(result, Ordering::Relaxed);
+        self.meta_ref()
+            .cached_content_hash
+            .swap(result, Ordering::Relaxed);
         result
     }
 }
