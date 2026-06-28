@@ -1,11 +1,13 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Atom, Expression as Expr, Metadata, Moo, Name, discriminant_from_value},
+    ast::{
+        Atom, Expression as Expr, ExpressionArena, ExpressionNodeId, Metadata, Moo, Name,
+        discriminant_from_value,
+    },
     bug,
     objective::introduce_objective_auxiliary,
     rule_engine::{
-        expression_zipper::ExpressionZipper,
         get_rules_grouped,
         rewriter_common::{
             RuleResult, VariableDeclarationSnapshot, log_rule_application,
@@ -551,8 +553,8 @@ fn try_rewrite_model<'ctx, 'rules>(
     let mut did_rewrite = false;
 
     'rewrite_loop: loop {
-        let mut results: Vec<ApplicableRule<'_, ExpressionZipper>> = vec![];
-        let mut root_expr = Some(take_model_root(submodel));
+        let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
+        let mut arena = ExpressionArena::from_root(take_model_root(submodel));
 
         // Iterate over rules by priority in descending order.
         'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
@@ -561,23 +563,15 @@ fn try_rewrite_model<'ctx, 'rules>(
                 .cache
                 .is_some()
                 .then(|| current_symbol_context_hash(submodel, ctx));
-            let mut zipper = ExpressionZipper::new(
-                root_expr
-                    .take()
-                    .expect("rewrite scan should own the current expression root"),
-            );
-            loop {
+            for node_id in rewriter_preorder_ids(&arena) {
                 ctx.dirty_trace.expression_visits += 1;
-                let expr = zipper.focus();
+                let expr = arena.expression(node_id);
                 if ctx.config.dirty
                     && expr
                         .meta_ref()
                         .is_clean_for_rule_priority(rule_group.priority)
                 {
                     ctx.dirty_trace.record_dirty_hit(rule_group.priority);
-                    if !move_to_next_expression(&mut zipper) {
-                        break;
-                    }
                     continue;
                 }
 
@@ -589,13 +583,10 @@ fn try_rewrite_model<'ctx, 'rules>(
                             ctx.dirty_trace.cache_terminal_hits += 1;
                             trace!(target: "rule_engine", clean_level, "Rewrite cache terminal hit");
                             if ctx.config.dirty {
-                                zipper
-                                    .focus()
+                                arena
+                                    .expression(node_id)
                                     .meta_ref()
                                     .mark_clean_for_rule_priority(rule_group.priority);
-                            }
-                            if !move_to_next_expression(&mut zipper) {
-                                break;
                             }
                             continue;
                         }
@@ -605,7 +596,8 @@ fn try_rewrite_model<'ctx, 'rules>(
                             apply_cache_rewrite_hit(
                                 submodel,
                                 ctx,
-                                &zipper,
+                                arena,
+                                node_id,
                                 cached,
                                 level,
                                 symbol_context_hash,
@@ -671,7 +663,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                                 },
                                 level,
                                 expr.clone(),
-                                zipper.clone(),
+                                node_id,
                                 variable_snapshot_before,
                             ));
                         }
@@ -693,8 +685,8 @@ fn try_rewrite_model<'ctx, 'rules>(
                 }
                 if ctx.config.dirty && attempted_rule && results.len() == results_before_expr {
                     ctx.dirty_trace.record_clean_mark(rule_group.priority);
-                    zipper
-                        .focus()
+                    arena
+                        .expression(node_id)
                         .meta_ref()
                         .mark_clean_for_rule_priority(rule_group.priority);
                 }
@@ -714,25 +706,15 @@ fn try_rewrite_model<'ctx, 'rules>(
                 if !results.is_empty() {
                     break 'top;
                 }
-
-                if !move_to_next_expression(&mut zipper) {
-                    break;
-                }
             }
-
-            root_expr = Some(zipper.rebuild_root());
         }
 
         match results.as_slice() {
             [] => {
-                submodel.replace_root(
-                    root_expr
-                        .take()
-                        .expect("rewrite scan should retain the expression root"),
-                );
+                submodel.replace_root(arena.into_root_expression());
                 break;
             }
-            [(result, level, expr, zipper, variable_snapshot_before), ..] => {
+            [(result, level, expr, node_id, variable_snapshot_before), ..] => {
                 if ctx.prop_multiple_equally_applicable {
                     assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
                 }
@@ -787,7 +769,8 @@ fn try_rewrite_model<'ctx, 'rules>(
                     .then_some(pre_effect_symbol_context_hash)
                     .flatten();
                 let (new_root, mappings) = replace_focus_and_dirty_ancestors(
-                    zipper,
+                    &mut arena,
+                    *node_id,
                     replacement.clone(),
                     ctx.dirty_trace,
                     cache_mapping_context,
@@ -863,19 +846,21 @@ fn try_rewrite_model<'ctx, 'rules>(
 fn apply_cache_rewrite_hit<'ctx, 'rules>(
     submodel: &mut Model,
     ctx: &mut RewritePassContext<'ctx, 'rules>,
-    zipper: &ExpressionZipper,
+    mut arena: ExpressionArena,
+    node_id: ExpressionNodeId,
     cached: CachedRewrite,
     level: usize,
     symbol_context_hash: u64,
 ) {
-    let cache = ctx.cache.as_mut().expect("cache enabled");
     let (new_root, mappings) = replace_focus_and_dirty_ancestors(
-        zipper,
+        &mut arena,
+        node_id,
         cached.expr,
         ctx.dirty_trace,
         Some(symbol_context_hash),
     );
     let mapping_count = mappings.len();
+    let cache = ctx.cache.as_mut().expect("cache enabled");
     insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
     ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
     submodel.replace_root(new_root);
@@ -903,19 +888,26 @@ fn invalidate_symbol_context_caches<'ctx, 'rules>(
     submodel.symbols_mut().invalidate_context_hash_cache();
 }
 
-/// Advances the zipper in preorder, respecting [`ExpressionZipper`] traversal boundaries.
-fn move_to_next_expression(zipper: &mut ExpressionZipper) -> bool {
-    if zipper.go_down().is_some() {
-        return true;
+/// Returns expression node ids in rewriter preorder, without entering comprehensions.
+fn rewriter_preorder_ids(arena: &ExpressionArena) -> Vec<ExpressionNodeId> {
+    fn collect(
+        arena: &ExpressionArena,
+        node_id: ExpressionNodeId,
+        nodes: &mut Vec<ExpressionNodeId>,
+    ) {
+        nodes.push(node_id);
+        if matches!(arena.expression(node_id), Expr::Comprehension(_, _)) {
+            return;
+        }
+
+        for child in arena.children(node_id) {
+            collect(arena, *child, nodes);
+        }
     }
 
-    while zipper.go_right().is_none() {
-        if zipper.go_up().is_none() {
-            return false;
-        };
-    }
-
-    true
+    let mut nodes = Vec::new();
+    collect(arena, arena.root(), &mut nodes);
+    nodes
 }
 
 type AncestorCacheMappings = Vec<(u64, Expr)>;
@@ -925,46 +917,52 @@ type AncestorCacheMappings = Vec<(u64, Expr)>;
 /// When `cache_mapping_context` is `Some`, this also returns each old ancestor hash with its
 /// rebuilt ancestor so future duplicate enclosing subtrees can jump directly to the rewritten form.
 fn replace_focus_and_dirty_ancestors(
-    zipper: &ExpressionZipper,
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
     new_focus: Expr,
     dirty_trace: &mut DirtyTrace,
     cache_mapping_context: Option<u64>,
 ) -> (Expr, AncestorCacheMappings) {
-    let mut zipper = zipper.clone();
-    let old_ancestor_content_hashes = cache_mapping_context
-        .map(|symbol_context_hash| ancestor_content_hashes_to_root(&zipper, symbol_context_hash));
+    let old_ancestor_content_hashes = cache_mapping_context.map(|symbol_context_hash| {
+        ancestor_content_hashes_to_root(arena, node_id, symbol_context_hash)
+    });
     let mut ancestor_mappings = Vec::new();
     dirty_trace.replacement_subtree_clears += 1;
-    zipper.replace_focus(new_focus);
+    arena.replace_subtree(node_id, new_focus);
 
     let mut ancestor_index = 0;
-    while zipper.go_up().is_some() {
+    let mut ancestor = arena.parent(node_id);
+    while let Some(ancestor_id) = ancestor {
         dirty_trace.ancestor_clears += 1;
-        zipper.focus().meta_ref().clear_clean_rule_priority();
-        zipper.focus().invalidate_cached_content_hash();
+        let ancestor_expr = arena.expression_mut(ancestor_id);
+        ancestor_expr.meta_ref().clear_clean_rule_priority();
+        ancestor_expr.invalidate_cached_content_hash();
         if let Some(hashes) = old_ancestor_content_hashes.as_ref()
             && let Some(&old_hash) = hashes.get(ancestor_index)
         {
-            ancestor_mappings.push((old_hash, zipper.focus().clone()));
+            ancestor_mappings.push((old_hash, arena.expression_from(ancestor_id)));
         }
+        ancestor = arena.parent(ancestor_id);
         ancestor_index += 1;
     }
 
-    (zipper.rebuild_root(), ancestor_mappings)
+    (arena.expression_from(arena.root()), ancestor_mappings)
 }
 
 /// Captures ancestor content hashes before replacing the focused subtree.
 fn ancestor_content_hashes_to_root(
-    zipper: &ExpressionZipper,
+    arena: &ExpressionArena,
+    node_id: ExpressionNodeId,
     symbol_context_hash: u64,
 ) -> Vec<u64> {
-    let mut zipper = zipper.clone();
     let mut hashes = Vec::new();
-    while zipper.go_up().is_some() {
+    let mut ancestor = arena.parent(node_id);
+    while let Some(ancestor_id) = ancestor {
         hashes.push(RewriteCache::expression_content_hash(
-            zipper.focus(),
+            arena.expression(ancestor_id),
             symbol_context_hash,
         ));
+        ancestor = arena.parent(ancestor_id);
     }
     hashes
 }
@@ -1179,9 +1177,8 @@ fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::{Atom, DeclarationPtr, Literal, Moo};
+    use crate::ast::{Atom, DeclarationPtr, ExpressionArena, Literal, Moo};
     use crate::matrix_expr;
-    use crate::rule_engine::expression_zipper::ExpressionZipper;
 
     use super::*;
 
@@ -1452,6 +1449,12 @@ mod tests {
         );
     }
 
+    fn arena_with_preorder_focus(tree: Expr, index: usize) -> (ExpressionArena, ExpressionNodeId) {
+        let arena = ExpressionArena::from_root(tree);
+        let node_id = rewriter_preorder_ids(&arena)[index];
+        (arena, node_id)
+    }
+
     /// After a rewrite, only the replaced node and its ancestors are invalidated; siblings keep
     /// their clean marks and must not be re-scanned from the top.
     #[test]
@@ -1464,12 +1467,12 @@ mod tests {
         sib3.meta_ref().mark_clean_for_rule_priority(priority);
 
         let tree = root(vec![int_lit(1), sib2, sib3]);
-        let mut zipper = ExpressionZipper::new(tree);
-        assert!(zipper.go_down().is_some());
+        let (mut arena, node_id) = arena_with_preorder_focus(tree, 1);
 
         let mut dirty_trace = DirtyTrace::default();
         let (new_root, _) = replace_focus_and_dirty_ancestors(
-            &zipper,
+            &mut arena,
+            node_id,
             clear_expr_clean_rule_metadata(int_lit(10)),
             &mut dirty_trace,
             None,
@@ -1494,14 +1497,12 @@ mod tests {
         right.meta_ref().mark_clean_for_rule_priority(priority);
         let eq = Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(right));
         let tree = root(vec![eq]);
-
-        let mut zipper = ExpressionZipper::new(tree);
-        assert!(zipper.go_down().is_some());
-        assert!(zipper.go_down().is_some());
+        let (mut arena, node_id) = arena_with_preorder_focus(tree, 2);
 
         let mut dirty_trace = DirtyTrace::default();
         let (new_root, _) = replace_focus_and_dirty_ancestors(
-            &zipper,
+            &mut arena,
+            node_id,
             clear_expr_clean_rule_metadata(int_lit(10)),
             &mut dirty_trace,
             None,
@@ -1528,15 +1529,12 @@ mod tests {
         sibling.meta_ref().mark_clean_for_rule_priority(priority);
         let sum = Expr::Sum(Metadata::new(), Moo::new(matrix_expr![int_lit(1), sibling]));
         let tree = root(vec![sum]);
-
-        let mut zipper = ExpressionZipper::new(tree);
-        assert!(zipper.go_down().is_some());
-        assert!(zipper.go_down().is_some());
-        assert!(zipper.go_down().is_some());
+        let (mut arena, node_id) = arena_with_preorder_focus(tree, 3);
 
         let mut dirty_trace = DirtyTrace::default();
         let (new_root, _) = replace_focus_and_dirty_ancestors(
-            &zipper,
+            &mut arena,
+            node_id,
             clear_expr_clean_rule_metadata(int_lit(10)),
             &mut dirty_trace,
             None,
