@@ -1,8 +1,11 @@
 use std::collections::VecDeque;
+use std::sync::atomic::Ordering;
 
 use uniplate::Uniplate;
 
 use super::Expression;
+
+const NO_CLEAN_RULE_PRIORITY: u16 = u16::MAX;
 
 /// Stable handle for an expression node stored in an [`ExpressionArena`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -24,6 +27,7 @@ struct ExpressionArenaNode {
     expr: Expression,
     parent: Option<ExpressionNodeId>,
     children: Vec<ExpressionNodeId>,
+    clean_rule_priority: u16,
 }
 
 impl ExpressionArena {
@@ -66,6 +70,22 @@ impl ExpressionArena {
         &self.node(id).children
     }
 
+    /// Records that rules at `priority` and higher have been attempted and failed for `id`.
+    pub fn mark_clean_for_rule_priority(&mut self, id: ExpressionNodeId, priority: u16) {
+        let node = self.node_mut(id);
+        node.clean_rule_priority = node.clean_rule_priority.min(priority);
+    }
+
+    /// Returns whether `id` is known clean for the given rule priority.
+    pub fn is_clean_for_rule_priority(&self, id: ExpressionNodeId, priority: u16) -> bool {
+        priority >= self.node(id).clean_rule_priority
+    }
+
+    /// Clears any clean-rule marker on `id`.
+    pub fn clear_clean_rule_priority(&mut self, id: ExpressionNodeId) {
+        self.node_mut(id).clean_rule_priority = NO_CLEAN_RULE_PRIORITY;
+    }
+
     /// Replaces the subtree at `id` while preserving `id` itself.
     pub fn replace_subtree(&mut self, id: ExpressionNodeId, replacement: Expression) {
         self.assert_valid_id(id);
@@ -80,6 +100,32 @@ impl ExpressionArena {
         node.expr = replacement;
         node.expr.invalidate_cached_content_hash();
         node.children = children;
+        node.clean_rule_priority = NO_CLEAN_RULE_PRIORITY;
+    }
+
+    /// Appends top-level constraints to the root expression.
+    pub fn add_root_children(&mut self, children: Vec<Expression>) {
+        let root = self.root;
+        let Expression::Root(metadata, _) = self.expression(root) else {
+            panic!("arena root is not an Expression::Root");
+        };
+        let metadata = metadata.clone();
+
+        let new_children = children
+            .into_iter()
+            .map(|child| self.push_subtree(child, Some(root)))
+            .collect::<Vec<_>>();
+        self.node_mut(root).children.extend(new_children);
+
+        let rebuilt_children = self
+            .children(root)
+            .iter()
+            .map(|child| self.expression_from(*child))
+            .collect();
+        let root_expr = Expression::Root(metadata, rebuilt_children);
+        root_expr.invalidate_cached_content_hash();
+        self.node_mut(root).expr = root_expr;
+        self.clear_clean_rule_priority(root);
     }
 
     /// Rebuilds the expression tree reachable from the arena root.
@@ -97,6 +143,12 @@ impl ExpressionArena {
             .collect::<VecDeque<_>>();
 
         let rebuilt = node.expr.with_children(children);
+        rebuilt.meta_ref().clear_clean_rule_priority();
+        if node.clean_rule_priority != NO_CLEAN_RULE_PRIORITY {
+            rebuilt
+                .meta_ref()
+                .mark_clean_for_rule_priority(node.clean_rule_priority);
+        }
         rebuilt.invalidate_cached_content_hash();
         rebuilt
     }
@@ -120,11 +172,13 @@ impl ExpressionArena {
     ) -> ExpressionNodeId {
         let id = ExpressionNodeId(self.nodes.len());
         let child_exprs = expr.children();
+        let clean_rule_priority = expr.meta_ref().clean_rule_priority.load(Ordering::Relaxed);
 
         self.nodes.push(ExpressionArenaNode {
             expr,
             parent,
             children: Vec::new(),
+            clean_rule_priority,
         });
 
         let children = child_exprs
@@ -166,6 +220,10 @@ mod tests {
         Expression::Eq(Metadata::new(), Moo::new(left), Moo::new(right))
     }
 
+    fn root(exprs: Vec<Expression>) -> Expression {
+        Expression::Root(Metadata::new(), exprs)
+    }
+
     #[test]
     fn round_trips_expression_tree() {
         let expr = eq(int(1), eq(int(2), int(3)));
@@ -197,5 +255,44 @@ mod tests {
         assert_eq!(arena.children(root)[0], left);
         assert_eq!(arena.parent(arena.children(left)[0]), Some(left));
         assert_eq!(arena.into_root_expression(), eq(eq(int(3), int(4)), int(2)));
+    }
+
+    #[test]
+    fn clean_rule_state_is_arena_side_and_exported() {
+        let mut arena = ExpressionArena::from_root(eq(int(1), int(2)));
+        let root = arena.root();
+
+        arena.mark_clean_for_rule_priority(root, 5);
+
+        assert!(arena.is_clean_for_rule_priority(root, 5));
+        assert!(
+            arena
+                .into_root_expression()
+                .meta_ref()
+                .is_clean_for_rule_priority(5)
+        );
+    }
+
+    #[test]
+    fn replacing_subtree_clears_arena_clean_rule_state() {
+        let mut arena = ExpressionArena::from_root(eq(int(1), int(2)));
+        let root = arena.root();
+
+        arena.mark_clean_for_rule_priority(root, 5);
+        arena.replace_subtree(root, eq(int(3), int(4)));
+
+        assert!(!arena.is_clean_for_rule_priority(root, 5));
+    }
+
+    #[test]
+    fn appends_root_children() {
+        let mut arena = ExpressionArena::from_root(root(vec![int(1)]));
+
+        arena.add_root_children(vec![int(2), int(3)]);
+
+        assert_eq!(
+            arena.into_root_expression(),
+            root(vec![int(1), int(2), int(3)])
+        );
     }
 }

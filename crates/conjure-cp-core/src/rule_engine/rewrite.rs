@@ -551,10 +551,11 @@ fn try_rewrite_model<'ctx, 'rules>(
     }
 
     let mut did_rewrite = false;
+    let mut arena = ExpressionArena::from_root(take_model_root(submodel));
 
     'rewrite_loop: loop {
         let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
-        let mut arena = ExpressionArena::from_root(take_model_root(submodel));
+        let preorder_ids = rewriter_preorder_ids(&arena);
 
         // Iterate over rules by priority in descending order.
         'top: for (level, rule_group) in ctx.bucketed_rules.iter().enumerate() {
@@ -563,13 +564,11 @@ fn try_rewrite_model<'ctx, 'rules>(
                 .cache
                 .is_some()
                 .then(|| current_symbol_context_hash(submodel, ctx));
-            for node_id in rewriter_preorder_ids(&arena) {
+            for node_id in preorder_ids.iter().copied() {
                 ctx.dirty_trace.expression_visits += 1;
-                let expr = arena.expression(node_id);
+                let expr = arena.expression(node_id).clone();
                 if ctx.config.dirty
-                    && expr
-                        .meta_ref()
-                        .is_clean_for_rule_priority(rule_group.priority)
+                    && arena.is_clean_for_rule_priority(node_id, rule_group.priority)
                 {
                     ctx.dirty_trace.record_dirty_hit(rule_group.priority);
                     continue;
@@ -577,31 +576,30 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 if let Some(symbol_context_hash) = scan_symbol_context_hash {
                     let cache = ctx.cache.as_mut().expect("checked above");
-                    match cache.get(expr, level, symbol_context_hash) {
+                    match cache.get(&expr, level, symbol_context_hash) {
                         CacheResult::Terminal(clean_level) => {
                             ctx.dirty_trace.cache_hits += 1;
                             ctx.dirty_trace.cache_terminal_hits += 1;
                             trace!(target: "rule_engine", clean_level, "Rewrite cache terminal hit");
                             if ctx.config.dirty {
-                                arena
-                                    .expression(node_id)
-                                    .meta_ref()
-                                    .mark_clean_for_rule_priority(rule_group.priority);
+                                arena.mark_clean_for_rule_priority(node_id, rule_group.priority);
                             }
                             continue;
                         }
                         CacheResult::Rewrite(cached) => {
                             ctx.dirty_trace.cache_hits += 1;
                             ctx.dirty_trace.cache_rewrite_hits += 1;
-                            apply_cache_rewrite_hit(
-                                submodel,
-                                ctx,
-                                arena,
+                            let mappings = replace_focus_and_dirty_ancestors(
+                                &mut arena,
                                 node_id,
-                                cached,
-                                level,
-                                symbol_context_hash,
+                                cached.expr,
+                                ctx.dirty_trace,
+                                Some(symbol_context_hash),
                             );
+                            let mapping_count = mappings.len();
+                            let cache = ctx.cache.as_mut().expect("cache enabled");
+                            insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
+                            ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
                             did_rewrite = true;
                             continue 'rewrite_loop;
                         }
@@ -613,7 +611,7 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 let mut attempted_rule = false;
                 let results_before_expr = results.len();
-                for rd in rule_group.candidates(ctx.config, expr) {
+                for rd in rule_group.candidates(ctx.config, &expr) {
                     attempted_rule = true;
                     ctx.dirty_trace.rule_attempts += 1;
                     *ctx.dirty_trace
@@ -633,10 +631,10 @@ fn try_rewrite_model<'ctx, 'rules>(
                     #[cfg(debug_assertions)]
                     tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
-                    let variable_snapshot_before = matches!(expr, Expr::Root(_, _))
+                    let variable_snapshot_before = matches!(&expr, Expr::Root(_, _))
                         .then(|| snapshot_variable_declarations(&submodel.symbols()));
 
-                    match (rd.rule.application)(expr, &submodel.symbols()) {
+                    match (rd.rule.application)(&expr, &submodel.symbols()) {
                         Ok(red) => {
                             // when called a lot, this becomes very expensive!
                             #[cfg(debug_assertions)]
@@ -647,7 +645,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                                     rd.rule.name,
                                     rd.rule_set.name,
                                     "success",
-                                    expr,
+                                    &expr,
                                 );
                             }
 
@@ -677,7 +675,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                                     rd.rule.name,
                                     rd.rule_set.name,
                                     "fail",
-                                    expr,
+                                    &expr,
                                 );
                             }
                         }
@@ -685,17 +683,14 @@ fn try_rewrite_model<'ctx, 'rules>(
                 }
                 if ctx.config.dirty && attempted_rule && results.len() == results_before_expr {
                     ctx.dirty_trace.record_clean_mark(rule_group.priority);
-                    arena
-                        .expression(node_id)
-                        .meta_ref()
-                        .mark_clean_for_rule_priority(rule_group.priority);
+                    arena.mark_clean_for_rule_priority(node_id, rule_group.priority);
                 }
                 if ctx.config.cache
                     && results.len() == results_before_expr
                     && let Some(symbol_context_hash) = scan_symbol_context_hash
                     && let Some(cache) = ctx.cache.as_mut()
                 {
-                    cache.insert(expr, None, level, symbol_context_hash);
+                    cache.insert(&expr, None, level, symbol_context_hash);
                     ctx.dirty_trace.cache_inserts += 1;
                 }
                 if attempted_rule {
@@ -768,20 +763,21 @@ fn try_rewrite_model<'ctx, 'rules>(
                     .cache
                     .then_some(pre_effect_symbol_context_hash)
                     .flatten();
-                let (new_root, mappings) = replace_focus_and_dirty_ancestors(
+                let mappings = replace_focus_and_dirty_ancestors(
                     &mut arena,
                     *node_id,
                     replacement.clone(),
                     ctx.dirty_trace,
                     cache_mapping_context,
                 );
-                submodel.replace_root(new_root);
 
                 // Apply new symbols and top level
                 ctx.dirty_trace
                     .record_rewrite(rule_name, has_model_side_effects);
                 submodel.symbols_mut().extend(symbols);
-                submodel.add_constraints(new_top);
+                if has_new_top {
+                    arena.add_root_children(new_top);
+                }
                 submodel.add_clauses(new_clauses);
                 if has_model_side_effects {
                     invalidate_symbol_context_caches(submodel, ctx);
@@ -813,6 +809,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                     }
                 }
                 if has_model_side_effects && (ctx.config.dirty || ctx.config.cache) {
+                    submodel.replace_root(arena.into_root_expression());
                     let mut targeted = false;
                     if !invalidation_names.is_empty() {
                         clear_clean_rule_metadata_for_names(submodel, &invalidation_names);
@@ -826,12 +823,15 @@ fn try_rewrite_model<'ctx, 'rules>(
                         ctx.dirty_trace.record_whole_model_clear(rule_name);
                         clear_model_clean_rule_metadata(submodel);
                     }
+                    arena = ExpressionArena::from_root(take_model_root(submodel));
                 }
 
                 #[cfg(debug_assertions)]
                 {
+                    submodel.replace_root(arena.clone().into_root_expression());
                     let assertion_context = format!("rewriter after applying rule '{rule_name}'");
                     debug_assert_model_well_formed(submodel, &assertion_context);
+                    arena = ExpressionArena::from_root(take_model_root(submodel));
                 }
 
                 did_rewrite = true;
@@ -841,29 +841,6 @@ fn try_rewrite_model<'ctx, 'rules>(
     }
 
     did_rewrite.then_some(())
-}
-
-fn apply_cache_rewrite_hit<'ctx, 'rules>(
-    submodel: &mut Model,
-    ctx: &mut RewritePassContext<'ctx, 'rules>,
-    mut arena: ExpressionArena,
-    node_id: ExpressionNodeId,
-    cached: CachedRewrite,
-    level: usize,
-    symbol_context_hash: u64,
-) {
-    let (new_root, mappings) = replace_focus_and_dirty_ancestors(
-        &mut arena,
-        node_id,
-        cached.expr,
-        ctx.dirty_trace,
-        Some(symbol_context_hash),
-    );
-    let mapping_count = mappings.len();
-    let cache = ctx.cache.as_mut().expect("cache enabled");
-    insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
-    ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
-    submodel.replace_root(new_root);
 }
 
 /// Returns a cached hash of the symbol values visible to rule applications.
@@ -922,7 +899,7 @@ fn replace_focus_and_dirty_ancestors(
     new_focus: Expr,
     dirty_trace: &mut DirtyTrace,
     cache_mapping_context: Option<u64>,
-) -> (Expr, AncestorCacheMappings) {
+) -> AncestorCacheMappings {
     let old_ancestor_content_hashes = cache_mapping_context.map(|symbol_context_hash| {
         ancestor_content_hashes_to_root(arena, node_id, symbol_context_hash)
     });
@@ -934,9 +911,10 @@ fn replace_focus_and_dirty_ancestors(
     let mut ancestor = arena.parent(node_id);
     while let Some(ancestor_id) = ancestor {
         dirty_trace.ancestor_clears += 1;
-        let ancestor_expr = arena.expression_mut(ancestor_id);
-        ancestor_expr.meta_ref().clear_clean_rule_priority();
-        ancestor_expr.invalidate_cached_content_hash();
+        arena.clear_clean_rule_priority(ancestor_id);
+        arena
+            .expression_mut(ancestor_id)
+            .invalidate_cached_content_hash();
         if let Some(hashes) = old_ancestor_content_hashes.as_ref()
             && let Some(&old_hash) = hashes.get(ancestor_index)
         {
@@ -946,7 +924,7 @@ fn replace_focus_and_dirty_ancestors(
         ancestor_index += 1;
     }
 
-    (arena.expression_from(arena.root()), ancestor_mappings)
+    ancestor_mappings
 }
 
 /// Captures ancestor content hashes before replacing the focused subtree.
@@ -1470,13 +1448,14 @@ mod tests {
         let (mut arena, node_id) = arena_with_preorder_focus(tree, 1);
 
         let mut dirty_trace = DirtyTrace::default();
-        let (new_root, _) = replace_focus_and_dirty_ancestors(
+        replace_focus_and_dirty_ancestors(
             &mut arena,
             node_id,
             clear_expr_clean_rule_metadata(int_lit(10)),
             &mut dirty_trace,
             None,
         );
+        let new_root = arena.into_root_expression();
 
         let Expr::Root(_, constraints) = &new_root else {
             panic!("expected root expression");
@@ -1500,13 +1479,14 @@ mod tests {
         let (mut arena, node_id) = arena_with_preorder_focus(tree, 2);
 
         let mut dirty_trace = DirtyTrace::default();
-        let (new_root, _) = replace_focus_and_dirty_ancestors(
+        replace_focus_and_dirty_ancestors(
             &mut arena,
             node_id,
             clear_expr_clean_rule_metadata(int_lit(10)),
             &mut dirty_trace,
             None,
         );
+        let new_root = arena.into_root_expression();
 
         let Expr::Root(_, constraints) = &new_root else {
             panic!("expected root expression");
@@ -1532,13 +1512,14 @@ mod tests {
         let (mut arena, node_id) = arena_with_preorder_focus(tree, 3);
 
         let mut dirty_trace = DirtyTrace::default();
-        let (new_root, _) = replace_focus_and_dirty_ancestors(
+        replace_focus_and_dirty_ancestors(
             &mut arena,
             node_id,
             clear_expr_clean_rule_metadata(int_lit(10)),
             &mut dirty_trace,
             None,
         );
+        let new_root = arena.into_root_expression();
 
         let Expr::Root(_, constraints) = &new_root else {
             panic!("expected root expression");
