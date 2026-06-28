@@ -8,6 +8,7 @@ pub mod comprehension;
 pub mod declaration;
 mod domains;
 pub mod eval;
+mod expression_arena;
 mod expressions;
 mod literals;
 pub mod matrix;
@@ -37,6 +38,7 @@ pub use domains::{
 };
 pub use eval::eval_constant;
 pub use eval::generator_values_from_expr;
+pub use expression_arena::{ExpressionArena, ExpressionNodeId};
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
