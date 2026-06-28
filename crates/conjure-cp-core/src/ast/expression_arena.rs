@@ -128,6 +128,12 @@ impl ExpressionArena {
         self.clear_clean_rule_priority(root);
     }
 
+    /// Rebuilds the stored expression payload at `id` from the current arena children.
+    pub fn rebuild_payload_from_children(&mut self, id: ExpressionNodeId) {
+        let rebuilt = self.expression_from(id);
+        self.node_mut(id).expr = rebuilt;
+    }
+
     /// Rebuilds the expression tree reachable from the arena root.
     pub fn into_root_expression(self) -> Expression {
         self.expression_from(self.root)
@@ -255,6 +261,21 @@ mod tests {
         assert_eq!(arena.children(root)[0], left);
         assert_eq!(arena.parent(arena.children(left)[0]), Some(left));
         assert_eq!(arena.into_root_expression(), eq(eq(int(3), int(4)), int(2)));
+    }
+
+    #[test]
+    fn rebuilds_ancestor_payload_after_child_replacement() {
+        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2))]));
+        let root_id = arena.root();
+        let eq_id = arena.children(root_id)[0];
+        let left = arena.children(eq_id)[0];
+
+        arena.replace_subtree(left, int(3));
+        arena.rebuild_payload_from_children(eq_id);
+        arena.rebuild_payload_from_children(root_id);
+
+        assert_eq!(arena.expression(eq_id), &eq(int(3), int(2)));
+        assert_eq!(arena.expression(root_id), &root(vec![eq(int(3), int(2))]));
     }
 
     #[test]

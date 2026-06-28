@@ -912,13 +912,11 @@ fn replace_focus_and_dirty_ancestors(
     while let Some(ancestor_id) = ancestor {
         dirty_trace.ancestor_clears += 1;
         arena.clear_clean_rule_priority(ancestor_id);
-        arena
-            .expression_mut(ancestor_id)
-            .invalidate_cached_content_hash();
+        arena.rebuild_payload_from_children(ancestor_id);
         if let Some(hashes) = old_ancestor_content_hashes.as_ref()
             && let Some(&old_hash) = hashes.get(ancestor_index)
         {
-            ancestor_mappings.push((old_hash, arena.expression_from(ancestor_id)));
+            ancestor_mappings.push((old_hash, arena.expression(ancestor_id).clone()));
         }
         ancestor = arena.parent(ancestor_id);
         ancestor_index += 1;
