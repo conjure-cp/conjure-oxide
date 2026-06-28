@@ -262,8 +262,19 @@ impl RewriteCache {
     }
 
     /// Looks up a subtree at a rule-group level.
+    #[cfg(test)]
     fn get(&self, subtree: &Expr, level: usize, symbol_context_hash: u64) -> CacheResult {
         let expression_content_hash = Self::expression_content_hash(subtree, symbol_context_hash);
+        self.get_from_hash(expression_content_hash, level, symbol_context_hash)
+    }
+
+    /// Looks up a subtree by precomputed content hash at a rule-group level.
+    fn get_from_hash(
+        &self,
+        expression_content_hash: u64,
+        level: usize,
+        symbol_context_hash: u64,
+    ) -> CacheResult {
         let clean_key = Self::combine(expression_content_hash, symbol_context_hash);
         if let Some(&max_clean) = self.clean_levels.get(&clean_key)
             && max_clean >= level
@@ -283,6 +294,7 @@ impl RewriteCache {
     }
 
     /// Inserts either a terminal result or a rewrite result for `from`.
+    #[cfg(test)]
     fn insert(&mut self, from: &Expr, to: Option<Expr>, level: usize, symbol_context_hash: u64) {
         self.insert_from_hash(
             Self::expression_content_hash(from, symbol_context_hash),
@@ -573,11 +585,13 @@ fn try_rewrite_model<'ctx, 'rules>(
                     continue;
                 }
 
+                let mut node_content_hash = None;
                 if let Some(symbol_context_hash) = scan_symbol_context_hash {
                     let cache_result = {
-                        let expr = arena.expression(node_id);
+                        let expression_content_hash =
+                            *node_content_hash.get_or_insert_with(|| arena.content_hash(node_id));
                         let cache = ctx.cache.as_mut().expect("checked above");
-                        cache.get(expr, level, symbol_context_hash)
+                        cache.get_from_hash(expression_content_hash, level, symbol_context_hash)
                     };
                     match cache_result {
                         CacheResult::Terminal(clean_level) => {
@@ -691,7 +705,9 @@ fn try_rewrite_model<'ctx, 'rules>(
                         && let Some(symbol_context_hash) = scan_symbol_context_hash
                         && let Some(cache) = ctx.cache.as_mut()
                     {
-                        cache.insert(expr, None, level, symbol_context_hash);
+                        let hash = node_content_hash
+                            .expect("cache lookup computed the arena node content hash");
+                        cache.insert_from_hash(hash, None, level, symbol_context_hash);
                         ctx.dirty_trace.cache_inserts += 1;
                     }
                 }
@@ -906,9 +922,8 @@ fn replace_focus_and_dirty_ancestors(
     dirty_trace: &mut DirtyTrace,
     cache_mapping_context: Option<u64>,
 ) -> AncestorCacheMappings {
-    let old_ancestor_content_hashes = cache_mapping_context.map(|symbol_context_hash| {
-        ancestor_content_hashes_to_root(arena, node_id, symbol_context_hash)
-    });
+    let old_ancestor_content_hashes =
+        cache_mapping_context.map(|_| ancestor_content_hashes_to_root(arena, node_id));
     let mut ancestor_mappings = Vec::new();
     dirty_trace.replacement_subtree_clears += 1;
     arena.replace_subtree(node_id, new_focus);
@@ -933,17 +948,13 @@ fn replace_focus_and_dirty_ancestors(
 
 /// Captures ancestor content hashes before replacing the focused subtree.
 fn ancestor_content_hashes_to_root(
-    arena: &ExpressionArena,
+    arena: &mut ExpressionArena,
     node_id: ExpressionNodeId,
-    symbol_context_hash: u64,
 ) -> Vec<u64> {
     let mut hashes = Vec::new();
     let mut ancestor = arena.parent(node_id);
     while let Some(ancestor_id) = ancestor {
-        hashes.push(RewriteCache::expression_content_hash(
-            arena.expression(ancestor_id),
-            symbol_context_hash,
-        ));
+        hashes.push(arena.content_hash(ancestor_id));
         ancestor = arena.parent(ancestor_id);
     }
     hashes
