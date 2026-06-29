@@ -24,7 +24,7 @@ use crate::{
 
 use itertools::Itertools;
 use std::{
-    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
     hash::{DefaultHasher, Hash, Hasher},
     time::Instant,
 };
@@ -60,6 +60,8 @@ struct DirtyTrace {
     value_letting_rewrites: usize,
     whole_model_clears_after_value_letting: usize,
     whole_model_clears_after_side_effects: usize,
+    side_effect_arena_reimports: usize,
+    side_effects_kept_in_arena: usize,
     replacement_subtree_clears: usize,
     ancestor_clears: usize,
     cache_hits: usize,
@@ -139,6 +141,20 @@ impl DirtyTrace {
             .or_default() += 1;
     }
 
+    fn record_side_effect_arena_reimport(&mut self) {
+        if !self.enabled {
+            return;
+        }
+        self.side_effect_arena_reimports += 1;
+    }
+
+    fn record_side_effect_kept_in_arena(&mut self) {
+        if !self.enabled {
+            return;
+        }
+        self.side_effects_kept_in_arena += 1;
+    }
+
     fn record_arena_content_hash(&mut self, hit: bool) {
         if !self.enabled {
             return;
@@ -203,6 +219,14 @@ impl DirtyTrace {
         eprintln!(
             "[dirty-trace] whole_model_clears_after_side_effects={}",
             self.whole_model_clears_after_side_effects
+        );
+        eprintln!(
+            "[dirty-trace] side_effect_arena_reimports={}",
+            self.side_effect_arena_reimports
+        );
+        eprintln!(
+            "[dirty-trace] side_effects_kept_in_arena={}",
+            self.side_effects_kept_in_arena
         );
         eprintln!(
             "[dirty-trace] replacement_subtree_clears={}",
@@ -692,6 +716,46 @@ impl RuleApplicabilityMemo {
     }
 }
 
+struct RuleEffectImpact {
+    added_names: Vec<Name>,
+    changed_names: Vec<Name>,
+    has_new_top: bool,
+    has_new_clauses: bool,
+}
+
+impl RuleEffectImpact {
+    fn new(
+        effect: &crate::rule_engine::rule::RuleEffect,
+        symbols: &crate::ast::SymbolTable,
+    ) -> Self {
+        Self {
+            added_names: effect.added_symbols(symbols).into_iter().collect(),
+            changed_names: effect
+                .changed_symbols(symbols)
+                .into_iter()
+                .map(|(name, _, _)| name)
+                .collect(),
+            has_new_top: !effect.new_top.is_empty(),
+            has_new_clauses: !effect.new_clauses.is_empty(),
+        }
+    }
+
+    fn has_model_side_effects(&self) -> bool {
+        self.has_new_top
+            || self.has_new_clauses
+            || !self.added_names.is_empty()
+            || !self.changed_names.is_empty()
+    }
+
+    fn changes_symbol_context(&self) -> bool {
+        !self.added_names.is_empty() || !self.changed_names.is_empty()
+    }
+
+    fn requires_arena_reimport_for_invalidation(&self) -> bool {
+        self.has_new_clauses || !self.changed_names.is_empty()
+    }
+}
+
 struct RewritePassContext<'ctx, 'rules> {
     rules_grouped: &'ctx Vec<(u16, Vec<RuleData<'rules>>)>,
     bucketed_rules: &'ctx Vec<RuleGroup<'rules>>,
@@ -1075,14 +1139,9 @@ fn try_rewrite_model<'ctx, 'rules>(
                         .map(|(before, after)| (before, after)),
                 );
 
-                let (invalidation_names, has_model_side_effects) = {
-                    let symbols = submodel.symbols();
-                    (
-                        side_effect_invalidation_names(&result.effect, &symbols),
-                        effect_has_model_side_effects(&result.effect, &symbols),
-                    )
-                };
-                let has_new_top = !result.effect.new_top.is_empty();
+                let effect_impact = RuleEffectImpact::new(&result.effect, &submodel.symbols());
+                let has_model_side_effects = effect_impact.has_model_side_effects();
+                let changes_symbol_context = effect_impact.changes_symbol_context();
                 let rule_name = result.rule_data.rule.name;
                 let RuleResult { effect, .. } = result;
                 let crate::rule_engine::rule::RuleEffect {
@@ -1116,15 +1175,15 @@ fn try_rewrite_model<'ctx, 'rules>(
                 ctx.dirty_trace
                     .record_rewrite(rule_name, has_model_side_effects);
                 submodel.symbols_mut().extend(symbols);
-                if has_new_top {
+                if effect_impact.has_new_top {
                     arena.add_root_children(new_top);
                 }
                 submodel.add_clauses(new_clauses);
-                if has_model_side_effects {
+                if changes_symbol_context {
                     invalidate_symbol_context_caches(submodel, ctx);
                 }
                 if let Some(pre_effect_symbol_context_hash) = pre_effect_symbol_context_hash {
-                    let cache_symbol_context_hash = if has_model_side_effects {
+                    let cache_symbol_context_hash = if changes_symbol_context {
                         current_symbol_context_hash(submodel, ctx)
                     } else {
                         pre_effect_symbol_context_hash
@@ -1149,14 +1208,17 @@ fn try_rewrite_model<'ctx, 'rules>(
                         ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
                     }
                 }
-                if has_model_side_effects && (ctx.config.dirty || ctx.config.cache) {
+                if effect_impact.requires_arena_reimport_for_invalidation()
+                    && (ctx.config.dirty || ctx.config.cache)
+                {
+                    ctx.dirty_trace.record_side_effect_arena_reimport();
                     submodel.replace_root(arena.into_root_expression());
                     let mut targeted = false;
-                    if !invalidation_names.is_empty() {
-                        clear_clean_rule_metadata_for_names(submodel, &invalidation_names);
+                    if !effect_impact.changed_names.is_empty() {
+                        clear_clean_rule_metadata_for_names(submodel, &effect_impact.changed_names);
                         targeted = true;
                     }
-                    if has_new_top {
+                    if effect_impact.has_new_top {
                         clear_root_clean_rule_metadata(submodel);
                         targeted = true;
                     }
@@ -1166,6 +1228,8 @@ fn try_rewrite_model<'ctx, 'rules>(
                     }
                     arena = ExpressionArena::from_root(take_model_root(submodel));
                     reset_rule_applicability_memo(ctx);
+                } else if has_model_side_effects {
+                    ctx.dirty_trace.record_side_effect_kept_in_arena();
                 }
 
                 #[cfg(debug_assertions)]
@@ -1370,20 +1434,6 @@ fn take_model_root(model: &mut Model) -> Expr {
     model.replace_root(Expr::Root(Metadata::new(), Vec::new()))
 }
 
-fn side_effect_invalidation_names(
-    effect: &crate::rule_engine::rule::RuleEffect,
-    symbols: &crate::ast::SymbolTable,
-) -> Vec<Name> {
-    let mut names: BTreeSet<Name> = effect.added_symbols(symbols);
-    names.extend(
-        effect
-            .changed_symbols(symbols)
-            .into_iter()
-            .map(|(name, _, _)| name),
-    );
-    names.into_iter().collect()
-}
-
 fn clear_expr_clean_rule_metadata_for_name(expr: Expr, name: &Name) -> Expr {
     clear_expr_clean_rule_metadata_for_names(expr, std::slice::from_ref(name))
 }
@@ -1434,16 +1484,6 @@ fn subtree_references_name(expr: &Expr, name: &Name) -> bool {
             Expr::Atomic(_, Atom::Reference(reference)) if &*reference.name() == name
         )
     })
-}
-
-fn effect_has_model_side_effects(
-    effect: &crate::rule_engine::rule::RuleEffect,
-    model_symbols: &crate::ast::SymbolTable,
-) -> bool {
-    !effect.new_top.is_empty()
-        || !effect.new_clauses.is_empty()
-        || !effect.added_symbols(model_symbols).is_empty()
-        || !effect.changed_symbols(model_symbols).is_empty()
 }
 
 fn rule_applies_to_discriminant(rule_data: &RuleData<'_>, expr_discriminant: usize) -> bool {
@@ -1931,6 +1971,71 @@ mod tests {
 
         assert_not_clean_at(&constraints[0], priority);
         assert_clean_at(&constraints[1], priority);
+    }
+
+    #[test]
+    fn fresh_symbol_effects_do_not_require_arena_reimport() {
+        use crate::ast::{Domain, Range, SymbolTable};
+        use crate::rule_engine::RuleEffect;
+
+        let symbols = SymbolTable::new();
+        let mut effect_symbols = symbols.clone();
+        effect_symbols.gen_find(&Domain::int(vec![Range::Bounded(1, 3)]));
+
+        let effect = RuleEffect::new(int_lit(1), vec![int_lit(2)], effect_symbols);
+        let impact = RuleEffectImpact::new(&effect, &symbols);
+
+        assert!(impact.has_model_side_effects());
+        assert!(impact.changes_symbol_context());
+        assert_eq!(impact.added_names.len(), 1);
+        assert!(impact.changed_names.is_empty());
+        assert!(!impact.requires_arena_reimport_for_invalidation());
+    }
+
+    #[test]
+    fn changed_symbol_effects_still_require_arena_reimport() {
+        use crate::ast::{Domain, Range, SymbolTable};
+        use crate::rule_engine::RuleEffect;
+
+        let x = Name::user("x");
+        let mut symbols = SymbolTable::new();
+        symbols
+            .insert(DeclarationPtr::new_find(
+                x.clone(),
+                Domain::int(vec![Range::Bounded(1, 3)]),
+            ))
+            .expect("fresh symbol should insert");
+
+        let mut effect_symbols = symbols.clone();
+        effect_symbols.update_insert(DeclarationPtr::new_find(
+            x.clone(),
+            Domain::int(vec![Range::Bounded(1, 4)]),
+        ));
+
+        let effect = RuleEffect::with_symbols(int_lit(1), effect_symbols);
+        let impact = RuleEffectImpact::new(&effect, &symbols);
+
+        assert!(impact.has_model_side_effects());
+        assert!(impact.changes_symbol_context());
+        assert!(impact.added_names.is_empty());
+        assert_eq!(impact.changed_names, vec![x]);
+        assert!(impact.requires_arena_reimport_for_invalidation());
+    }
+
+    #[test]
+    fn new_top_without_symbol_changes_stays_in_arena() {
+        use crate::ast::SymbolTable;
+        use crate::rule_engine::RuleEffect;
+
+        let symbols = SymbolTable::new();
+        let effect = RuleEffect::with_top(int_lit(1), vec![int_lit(2)]);
+        let impact = RuleEffectImpact::new(&effect, &symbols);
+
+        assert!(impact.has_model_side_effects());
+        assert!(!impact.changes_symbol_context());
+        assert!(impact.added_names.is_empty());
+        assert!(impact.changed_names.is_empty());
+        assert!(!impact.requires_arena_reimport_for_invalidation());
     }
 
     #[test]
