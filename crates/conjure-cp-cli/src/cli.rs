@@ -121,7 +121,18 @@ pub struct GlobalArgs {
 
     /// Which rewriter to use.
     ///
-    /// Possible values: `baseline`, `optimised`, or baseline plus options such as `baseline+dirty`, `baseline+cache`, `baseline+prefilter`
+    /// Possible values: `baseline`, `optimised`, or baseline plus options such as
+    /// `baseline+dirty`, `baseline+cache`, `baseline+prefilter`, `baseline+worklist`,
+    /// `baseline+candidateindex`, or `baseline+dirtyqueues`.
+    ///
+    /// Option meanings:
+    /// - `prefilter`: skip rules whose declared expression kinds cannot match.
+    /// - `dirty`: remember unchanged expressions that have failed at a rule priority.
+    /// - `cache`: reuse rewrite results for structurally identical expression subtrees.
+    /// - `rulememo`: skip rule calls already known to fail for the same node and symbol context.
+    /// - `worklist`: drive rewriting from persistent dirty queues instead of repeated full scans.
+    /// - `candidateindex`: restrict full scans to expression kinds targeted by each rule group.
+    /// - `dirtyqueues`: build per-priority dirty node queues from clean metadata during full scans.
     #[arg(long, default_value_t = Rewriter::default(), value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 

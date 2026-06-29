@@ -68,6 +68,12 @@ pub struct RewriteConfig {
     pub cache: bool,
     /// Skip rule calls already known to fail for the current node and symbol context.
     pub rule_memo: bool,
+    /// Drive rewriting from persistent dirty node queues instead of repeated full scans.
+    pub worklist: bool,
+    /// Restrict full scans to expression kinds targeted by each rule group.
+    pub candidate_index: bool,
+    /// Rebuild per-pass dirty queues from clean metadata during full scans.
+    pub dirty_node_queues: bool,
 }
 
 impl RewriteConfig {
@@ -77,6 +83,9 @@ impl RewriteConfig {
             dirty: false,
             cache: false,
             rule_memo: false,
+            worklist: false,
+            candidate_index: false,
+            dirty_node_queues: false,
         }
     }
 
@@ -86,15 +95,30 @@ impl RewriteConfig {
             dirty: true,
             cache: true,
             rule_memo: true,
+            worklist: true,
+            candidate_index: false,
+            dirty_node_queues: false,
         }
     }
 
     pub const fn is_baseline(self) -> bool {
-        !self.prefilter && !self.dirty && !self.cache && !self.rule_memo
+        !self.prefilter
+            && !self.dirty
+            && !self.cache
+            && !self.rule_memo
+            && !self.worklist
+            && !self.candidate_index
+            && !self.dirty_node_queues
     }
 
     pub const fn is_optimised(self) -> bool {
-        self.prefilter && self.dirty && self.cache && self.rule_memo
+        self.prefilter
+            && self.dirty
+            && self.cache
+            && self.rule_memo
+            && self.worklist
+            && !self.candidate_index
+            && !self.dirty_node_queues
     }
 }
 
@@ -122,7 +146,16 @@ impl Display for RewriteConfig {
                 options.push("cache");
             }
             if self.rule_memo {
-                options.push("rule-memo");
+                options.push("rulememo");
+            }
+            if self.worklist {
+                options.push("worklist");
+            }
+            if self.candidate_index {
+                options.push("candidateindex");
+            }
+            if self.dirty_node_queues {
+                options.push("dirtyqueues");
             }
             write!(f, "{}", options.join("+"))
         }
@@ -142,7 +175,7 @@ impl FromStr for RewriteConfig {
 
         if !trimmed.starts_with("baseline+") {
             return Err(format!(
-                "unknown rewrite config: {trimmed}; expected baseline, optimised, or baseline plus '+' separated prefilter/dirty/cache/rule-memo options"
+                "unknown rewrite config: {trimmed}; expected baseline, optimised, or baseline plus '+' separated prefilter/dirty/cache/rulememo/worklist/candidateindex/dirtyqueues options"
             ));
         }
 
@@ -152,6 +185,9 @@ impl FromStr for RewriteConfig {
         let mut dirty_seen = false;
         let mut cache_seen = false;
         let mut rule_memo_seen = false;
+        let mut worklist_seen = false;
+        let mut candidate_index_seen = false;
+        let mut dirty_node_queues_seen = false;
         let mut option_seen = false;
 
         for token in trimmed.split('+') {
@@ -187,17 +223,41 @@ impl FromStr for RewriteConfig {
                     cache_seen = true;
                     option_seen = true;
                 }
-                "rule-memo" => {
+                "rulememo" => {
                     if rule_memo_seen {
-                        return Err("duplicate rewrite option 'rule-memo'".to_string());
+                        return Err("duplicate rewrite option 'rulememo'".to_string());
                     }
                     config.rule_memo = true;
                     rule_memo_seen = true;
                     option_seen = true;
                 }
+                "worklist" => {
+                    if worklist_seen {
+                        return Err("duplicate rewrite option 'worklist'".to_string());
+                    }
+                    config.worklist = true;
+                    worklist_seen = true;
+                    option_seen = true;
+                }
+                "candidateindex" => {
+                    if candidate_index_seen {
+                        return Err("duplicate rewrite option 'candidateindex'".to_string());
+                    }
+                    config.candidate_index = true;
+                    candidate_index_seen = true;
+                    option_seen = true;
+                }
+                "dirtyqueues" => {
+                    if dirty_node_queues_seen {
+                        return Err("duplicate rewrite option 'dirtyqueues'".to_string());
+                    }
+                    config.dirty_node_queues = true;
+                    dirty_node_queues_seen = true;
+                    option_seen = true;
+                }
                 other => {
                     return Err(format!(
-                        "unknown rewrite option '{other}'; expected baseline, optimised, or a '+' separated combination of: prefilter, dirty, cache, rule-memo"
+                        "unknown rewrite option '{other}'; expected baseline, optimised, or a '+' separated combination of: prefilter, dirty, cache, rulememo, worklist, candidateindex, dirtyqueues"
                     ));
                 }
             }
@@ -205,7 +265,7 @@ impl FromStr for RewriteConfig {
 
         if !option_seen {
             return Err(
-                "rewrite config 'baseline+' must include at least one of: prefilter, dirty, cache, rule-memo"
+                "rewrite config 'baseline+' must include at least one of: prefilter, dirty, cache, rulememo, worklist, candidateindex, dirtyqueues"
                     .to_string(),
             );
         }
@@ -253,7 +313,7 @@ impl FromStr for Rewriter {
                 }
 
                 Err(format!(
-                    "unknown rewriter: {other}; expected baseline, optimised, or baseline plus '+' separated prefilter/dirty/cache/rule-memo options"
+                    "unknown rewriter: {other}; expected baseline, optimised, or baseline plus '+' separated prefilter/dirty/cache/rulememo/worklist/candidateindex/dirtyqueues options"
                 ))
             }
         }
@@ -569,6 +629,9 @@ mod tests {
                 dirty: false,
                 cache: false,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
         );
         assert_eq!(
@@ -578,6 +641,9 @@ mod tests {
                 dirty: false,
                 cache: false,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
         );
         assert_eq!(
@@ -587,6 +653,9 @@ mod tests {
                 dirty: true,
                 cache: false,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
         );
         assert_eq!(
@@ -596,6 +665,9 @@ mod tests {
                 dirty: false,
                 cache: true,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
         );
         assert_eq!(
@@ -605,13 +677,32 @@ mod tests {
                 dirty: true,
                 cache: false,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
         );
         assert_eq!(
-            RewriteConfig::from_str("baseline+prefilter+dirty+cache+rule-memo").unwrap(),
+            RewriteConfig::from_str("baseline+prefilter+dirty+cache+rulememo+worklist").unwrap(),
             RewriteConfig::optimised()
         );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+candidateindex+dirtyqueues").unwrap(),
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: true,
+                dirty_node_queues: true,
+            }
+        );
         assert!(RewriteConfig::from_str("+dirty").is_err());
+        assert!(RewriteConfig::from_str("baseline+rule-memo").is_err());
+        assert!(RewriteConfig::from_str("baseline+candidate-index").is_err());
+        assert!(RewriteConfig::from_str("baseline+candidate-node-index").is_err());
+        assert!(RewriteConfig::from_str("baseline+dirty-node-queues").is_err());
     }
 
     #[test]
@@ -623,6 +714,9 @@ mod tests {
                 dirty: true,
                 cache: true,
                 rule_memo: true,
+                worklist: true,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
         );
     }
@@ -636,6 +730,9 @@ mod tests {
                 dirty: false,
                 cache: false,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
             .to_string(),
             "baseline+prefilter"
@@ -646,6 +743,9 @@ mod tests {
                 dirty: true,
                 cache: false,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
             .to_string(),
             "baseline+dirty"
@@ -656,9 +756,25 @@ mod tests {
                 dirty: false,
                 cache: true,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             }
             .to_string(),
             "baseline+cache"
+        );
+        assert_eq!(
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
+                worklist: true,
+                candidate_index: true,
+                dirty_node_queues: true,
+            }
+            .to_string(),
+            "baseline+worklist+candidateindex+dirtyqueues"
         );
         assert_eq!(RewriteConfig::optimised().to_string(), "optimised");
     }
@@ -672,6 +788,9 @@ mod tests {
                 dirty: true,
                 cache: false,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             })
         );
         assert_eq!(
@@ -681,10 +800,13 @@ mod tests {
                 dirty: true,
                 cache: false,
                 rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
             })
         );
         assert_eq!(
-            Rewriter::from_str("baseline+prefilter+dirty+cache+rule-memo").unwrap(),
+            Rewriter::from_str("baseline+prefilter+dirty+cache+rulememo+worklist").unwrap(),
             Rewriter::Rewrite(RewriteConfig::optimised())
         );
         assert!(Rewriter::from_str("+dirty").is_err());
