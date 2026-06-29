@@ -1,12 +1,12 @@
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{
-    Atom, Expression as Expr, GroundDomain, Literal, Metadata, Moo, Name, Range, SymbolTable,
-    matrix,
+    Atom, DomainPtr, Expression as Expr, GroundDomain, Literal, Metadata, Moo, Name, Range,
+    SymbolTable, matrix,
 };
 use conjure_cp::essence_expr;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 use itertools::{Itertools, chain, izip};
 use uniplate::Uniplate;
@@ -17,6 +17,10 @@ use crate::bottom_up_adaptor::as_bottom_up;
 #[register_rule("Base", 5000)]
 fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     (as_bottom_up(index_matrix_to_atom_impl))(expr, symbols)
+}
+
+pub(crate) fn try_index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    index_matrix_to_atom_impl(expr, symbols)
 }
 
 fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -70,7 +74,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             )));
 
             let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
-            Ok(Reduction::pure(subject))
+            Ok(RuleEffect::pure(subject))
         } else {
             // indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]
 
@@ -123,17 +127,36 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
                     return Err(RuleNotApplicable);
                 };
 
-                let &[Range::Bounded(from, _)] = &ranges[..] else {
-                    return Err(RuleNotApplicable);
+                let flat_index = match &ranges[..] {
+                    [Range::Bounded(from, _)] => {
+                        let offset = Expr::Atomic(Metadata::new(), Literal::Int(from - 1).into());
+                        let old_index = indices[0].clone();
+                        essence_expr!(&old_index - &offset)
+                    }
+                    _ => {
+                        let index_value_exprs: Vec<Expr> = old_index_domain
+                            .values()
+                            .map_err(|_| RuleNotApplicable)?
+                            .map(|lit| Expr::Atomic(Metadata::new(), Atom::Literal(lit)))
+                            .collect();
+
+                        let index_labels = into_matrix_expr![
+                            index_value_exprs;
+                            DomainPtr::from(old_index_domain.clone())
+                        ];
+
+                        Expr::ElementId(
+                            Metadata::new(),
+                            Moo::new(index_labels),
+                            Moo::new(indices[0].clone()),
+                        )
+                    }
                 };
 
-                let offset = Expr::Atomic(Metadata::new(), Literal::Int(from - 1).into());
-                let old_index = &indices[0].clone();
-
-                return Ok(Reduction::pure(Expr::SafeIndex(
+                return Ok(RuleEffect::pure(Expr::SafeIndex(
                     Metadata::new(),
                     Moo::new(new_subject),
-                    vec![essence_expr!(&old_index - &offset)],
+                    vec![flat_index],
                 )));
             }
 
@@ -235,7 +258,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 
             let flat_matrix = into_matrix_expr![flat_elems];
 
-            Ok(Reduction::pure(Expr::SafeIndex(
+            Ok(RuleEffect::pure(Expr::SafeIndex(
                 Metadata::new(),
                 Moo::new(flat_matrix),
                 vec![flat_index],
@@ -277,37 +300,45 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     };
 
     let mut indices_as_lits: Vec<Option<Literal>> = vec![];
-    let mut hole_dim: i32 = -1;
-    for (i, index) in indices.iter().enumerate() {
+    for index in indices {
         match index {
             Some(e) => {
                 let lit = e.clone().into_literal().ok_or(RuleNotApplicable)?;
-                indices_as_lits.push(Some(lit.clone()));
+                indices_as_lits.push(Some(lit));
             }
-            None => {
-                indices_as_lits.push(None);
-                assert_eq!(hole_dim, -1);
-                hole_dim = i as _;
-            }
+            None => indices_as_lits.push(None),
         }
     }
 
-    assert_ne!(hole_dim, -1);
+    let hole_dims: Vec<usize> = indices_as_lits
+        .iter()
+        .enumerate()
+        .filter_map(|(i, index)| index.is_none().then_some(i))
+        .collect();
+
+    if hole_dims.is_empty() {
+        return Err(RuleNotApplicable);
+    }
+
+    let hole_index_domains: Vec<_> = hole_dims
+        .iter()
+        .map(|&dim| index_domains[dim].clone())
+        .collect();
 
     let repr_values = repr.expression_down(symbols)?;
 
-    let slice = index_domains[hole_dim as usize]
-        .values()
-        .expect("index domain should be finite and enumerable")
-        .map(|i| {
-            let mut indices_as_lits = indices_as_lits.clone();
-            indices_as_lits[hole_dim as usize] = Some(i);
+    let slice = matrix::enumerate_indices(hole_index_domains)
+        .map(|hole_values| {
+            let mut full_indices = indices_as_lits.clone();
+            for (&dim, value) in hole_dims.iter().zip(hole_values) {
+                full_indices[dim] = Some(value);
+            }
             let name = Name::Represented(Box::new((
                 name.as_ref().clone(),
                 "matrix_to_atom".into(),
-                indices_as_lits
+                full_indices
                     .into_iter()
-                    .map(|x| x.unwrap())
+                    .map(|index| index.expect("all slice holes should be filled"))
                     .join("_")
                     .into(),
             )));
@@ -317,7 +348,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     let new_expr = into_matrix_expr!(slice);
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Converts a reference to a 1d-matrix not contained within an indexing or slicing expression to its atoms.
@@ -374,7 +405,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                     .clone()
             })
             .collect_vec();
-        return Ok(Reduction::pure(ctx(into_matrix_expr![flat_values])));
+        return Ok(RuleEffect::pure(ctx(into_matrix_expr![flat_values])));
     }
 
     Err(RuleNotApplicable)

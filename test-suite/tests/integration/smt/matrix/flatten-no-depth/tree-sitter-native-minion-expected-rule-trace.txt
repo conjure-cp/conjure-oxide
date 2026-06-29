@@ -1,0 +1,157 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
+
+such that
+
+allDifferent(flatten(a)),
+flatten(a)[1] = b[1],
+flatten(a)[2] = b[2],
+flatten(a)[3] = b[3],
+flatten(a)[4] = b[4]
+
+--
+
+allDifferent(flatten(a#matrix_to_atom)),
+flatten(a#matrix_to_atom)[1] = b#matrix_to_atom[1],
+flatten(a#matrix_to_atom)[2] = b#matrix_to_atom[2],
+flatten(a#matrix_to_atom)[3] = b#matrix_to_atom[3],
+flatten(a#matrix_to_atom)[4] = b#matrix_to_atom[4]
+   ~~> select_representation_matrix ([("Representations", 8001)])
+allDifferent(flatten(a#matrix_to_atom)),
+flatten(a#matrix_to_atom)[1] = b#matrix_to_atom[1],
+flatten(a#matrix_to_atom)[2] = b#matrix_to_atom[2],
+flatten(a#matrix_to_atom)[3] = b#matrix_to_atom[3],
+flatten(a#matrix_to_atom)[4] = b#matrix_to_atom[4]
+new variables:
+  find a#matrix_to_atom_1_1: int(1..4)
+  find a#matrix_to_atom_1_2: int(1..4)
+  find a#matrix_to_atom_2_1: int(1..4)
+  find a#matrix_to_atom_2_2: int(1..4)
+  find b#matrix_to_atom_1: int(1..4)
+  find b#matrix_to_atom_2: int(1..4)
+  find b#matrix_to_atom_3: int(1..4)
+  find b#matrix_to_atom_4: int(1..4)
+
+--
+
+flatten(a#matrix_to_atom)[1]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#matrix_to_atom[1, 1]
+
+--
+
+flatten(a#matrix_to_atom)[2]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#matrix_to_atom[1, 2]
+
+--
+
+flatten(a#matrix_to_atom)[3]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#matrix_to_atom[2, 1]
+
+--
+
+flatten(a#matrix_to_atom)[4]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#matrix_to_atom[2, 2]
+
+--
+
+flatten(a#matrix_to_atom)
+   ~~> flatten_matrix ([("Base", 8000)])
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)]
+
+--
+
+a#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[1, 1])
+
+--
+
+b#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(b#matrix_to_atom,[1])
+
+--
+
+a#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[1, 2])
+
+--
+
+b#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(b#matrix_to_atom,[2])
+
+--
+
+a#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[2, 1])
+
+--
+
+b#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(b#matrix_to_atom,[3])
+
+--
+
+a#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[2, 2])
+
+--
+
+b#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(b#matrix_to_atom,[4])
+
+--
+
+allDifferent([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)]),
+SafeIndex(a#matrix_to_atom,[1, 1]) = SafeIndex(b#matrix_to_atom,[1]),
+SafeIndex(a#matrix_to_atom,[1, 2]) = SafeIndex(b#matrix_to_atom,[2]),
+SafeIndex(a#matrix_to_atom,[2, 1]) = SafeIndex(b#matrix_to_atom,[3]),
+SafeIndex(a#matrix_to_atom,[2, 2]) = SafeIndex(b#matrix_to_atom,[4])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+allDifferent([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)]),
+a#matrix_to_atom_1_1 = b#matrix_to_atom_1,
+a#matrix_to_atom_1_2 = b#matrix_to_atom_2,
+a#matrix_to_atom_2_1 = b#matrix_to_atom_3,
+a#matrix_to_atom_2_2 = b#matrix_to_atom_4
+
+--
+
+allDifferent([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([a#matrix_to_atom_1_1, a#matrix_to_atom_1_2, a#matrix_to_atom_2_1, a#matrix_to_atom_2_2])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
+find a#matrix_to_atom_1_1: int(1..4)
+find a#matrix_to_atom_1_2: int(1..4)
+find a#matrix_to_atom_2_1: int(1..4)
+find a#matrix_to_atom_2_2: int(1..4)
+find b#matrix_to_atom_1: int(1..4)
+find b#matrix_to_atom_2: int(1..4)
+find b#matrix_to_atom_3: int(1..4)
+find b#matrix_to_atom_4: int(1..4)
+
+such that
+
+__flat_alldiff([a#matrix_to_atom_1_1, a#matrix_to_atom_1_2, a#matrix_to_atom_2_1, a#matrix_to_atom_2_2]),
+a#matrix_to_atom_1_1 = b#matrix_to_atom_1,
+a#matrix_to_atom_1_2 = b#matrix_to_atom_2,
+a#matrix_to_atom_2_1 = b#matrix_to_atom_3,
+a#matrix_to_atom_2_2 = b#matrix_to_atom_4
+

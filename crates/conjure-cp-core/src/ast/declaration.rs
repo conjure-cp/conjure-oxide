@@ -11,8 +11,10 @@ use parking_lot::{
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::any::TypeId;
+use std::collections::BTreeSet;
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::mem;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -69,6 +71,8 @@ where
 // The bits of a declaration that are shared between all pointers.
 #[derive(Debug)]
 struct DeclarationPtrInner {
+    // Identity hash/order key. Declaration content is mutable and is hashed separately by
+    // `DeclarationPtr::content_hash`.
     // We don't want this to be mutable, as `HashMap` and `BTreeMap` rely on the hash or order of
     // keys to be unchanging.
     //
@@ -286,7 +290,7 @@ impl DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
-            DeclarationKind::QuantifiedExpr(expr) => expr.domain_of(),
+            DeclarationKind::QuantifiedExpr(expr) => expr.domain_of()?.element_domain(),
         }
     }
 
@@ -559,6 +563,32 @@ impl DeclarationPtr {
         let ans = mem::replace(&mut *guard, declaration);
         drop(guard);
         ans
+    }
+
+    /// Hashes the declaration contents rather than the stable declaration pointer id.
+    ///
+    /// Pointer hashing intentionally remains id-based for map/set invariants. This helper is for
+    /// rewrite caches that need to be invalidated when the declaration value behind a reference
+    /// changes.
+    pub(crate) fn content_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        let mut seen = BTreeSet::new();
+        self.hash_content(&mut hasher, &mut seen);
+        hasher.finish()
+    }
+
+    /// Hashes this declaration's value into `state`, guarding against declaration-reference cycles.
+    fn hash_content<H: Hasher>(&self, state: &mut H, seen: &mut BTreeSet<ObjId>) {
+        let id = self.id();
+        if !seen.insert(id.clone()) {
+            "recursive-declaration".hash(state);
+            return;
+        }
+
+        let declaration = self.read();
+        declaration.name.hash(state);
+        declaration.kind.hash_content(state, seen);
+        seen.remove(&id);
     }
 }
 
@@ -871,6 +901,49 @@ pub enum DeclarationKind {
     ///
     /// Unlike `ValueLetting`, this is not intended to represent a user-visible top-level `letting`.
     TemporaryValueLetting(Expression),
+}
+
+impl DeclarationKind {
+    /// Hashes declaration-kind contents without using declaration pointer identity.
+    fn hash_content<H: Hasher>(&self, state: &mut H, seen: &mut BTreeSet<ObjId>) {
+        mem::discriminant(self).hash(state);
+        match self {
+            DeclarationKind::Find(var) => {
+                var.domain.hash(state);
+                for representation in &var.representations {
+                    for repr in representation {
+                        repr.repr_name().hash(state);
+                        if let Ok(declarations) = repr.declaration_down() {
+                            for declaration in declarations {
+                                declaration.hash_content(state, seen);
+                            }
+                        } else {
+                            "unavailable-representation-declarations".hash(state);
+                        }
+                    }
+                }
+            }
+            DeclarationKind::Given(domain) | DeclarationKind::DomainLetting(domain) => {
+                domain.hash(state);
+            }
+            DeclarationKind::Quantified(quantified) => {
+                quantified.domain.hash(state);
+                if let Some(generator) = quantified.generator() {
+                    generator.hash_content(state, seen);
+                }
+            }
+            DeclarationKind::QuantifiedExpr(expr)
+            | DeclarationKind::TemporaryValueLetting(expr) => {
+                expr.cached_content_hash().hash(state);
+                expr.to_string().hash(state);
+            }
+            DeclarationKind::ValueLetting(expr, domain) => {
+                expr.cached_content_hash().hash(state);
+                expr.to_string().hash(state);
+                domain.hash(state);
+            }
+        }
+    }
 }
 
 #[serde_as]

@@ -174,7 +174,7 @@ pub fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> 
 pub fn node_is_expression(node: &Node) -> bool {
     matches!(
         node.kind(),
-        "bool_expr" | "arithmetic_expr" | "comparison_expr" | "atom"
+        "bool_expr" | "arithmetic_expr" | "comparison_expr" | "annotation_expr" | "atom"
     )
 }
 

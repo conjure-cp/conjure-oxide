@@ -9,7 +9,9 @@ use walkdir::WalkDir;
 // (build.rs cannot depend on the crate it's building)
 #[path = "src/test_config.rs"]
 mod test_config;
-use test_config::TestConfig;
+#[path = "src/text_files.rs"]
+mod text_files;
+use test_config::{TestConfig, TestRunStats, stats_path};
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
@@ -211,30 +213,53 @@ fn read_config_or_default(path: &str) -> TestConfig {
     }
 }
 
+fn read_stats_or_default(path: &str) -> TestRunStats {
+    let stats_path = stats_path(Path::new(path));
+    if let Ok(contents) = std::fs::read_to_string(&stats_path) {
+        toml::from_str(&contents)
+            .unwrap_or_else(|err| panic!("failed to parse {}: {err}", stats_path.display()))
+    } else {
+        TestRunStats::default()
+    }
+}
+
 fn max_expected_time_limit() -> io::Result<Option<u64>> {
     match std::env::var("MAX_EXPECTED_TIME") {
-        Ok(value) => value.parse::<u64>().map(Some).map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("invalid MAX_EXPECTED_TIME value '{value}': {err}"),
-            )
-        }),
+        Ok(value) => {
+            let limit = value.parse::<u64>().map_err(|err| {
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("invalid MAX_EXPECTED_TIME value '{value}': {err}"),
+                )
+            })?;
+            Ok((limit != 0).then_some(limit))
+        }
         Err(std::env::VarError::NotPresent) => Ok(None),
         Err(err) => Err(io::Error::other(err)),
     }
 }
 
-fn get_ignore_attr(cfg: &TestConfig, include_expected_time: bool) -> io::Result<String> {
-    if cfg.skip {
-        Ok(String::from(
-            "#[ignore = \"this test has been disabled ('skip=true' in its config.toml)\"]\n",
+fn escape_ignore_reason(reason: &str) -> String {
+    reason.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+fn get_ignore_attr(
+    cfg: &TestConfig,
+    stats: &TestRunStats,
+    include_expected_time: bool,
+) -> io::Result<String> {
+    if let Some(reason) = cfg.skip_reason() {
+        Ok(format!(
+            "#[ignore = \"{}\"]\n",
+            escape_ignore_reason(reason)
         ))
     } else if include_expected_time
-        && let (Some(expected_time), Some(limit)) = (cfg.expected_time, max_expected_time_limit()?)
+        && let (Some(expected_time), Some(limit)) =
+            (stats.expected_time, max_expected_time_limit()?)
     {
         if expected_time > limit {
             Ok(format!(
-                "#[ignore = \"this test declares 'expected-time={expected_time}' in its config.toml, which exceeds MAX_EXPECTED_TIME={limit}\"]\n",
+                "#[ignore = \"this test declares 'expected-time={expected_time}' in its stats.toml, which exceeds MAX_EXPECTED_TIME={limit}\"]\n",
             ))
         } else {
             Ok(String::new())
@@ -252,7 +277,8 @@ fn write_integration_test(
     // TODO: Consider supporting multiple Essence files?
     if essence_files.len() == 1 {
         let cfg = read_config_or_default(&path);
-        let ignore = get_ignore_attr(&cfg, true)?;
+        let stats = read_stats_or_default(&path);
+        let ignore = get_ignore_attr(&cfg, &stats, true)?;
 
         write!(
             file,
@@ -271,7 +297,11 @@ fn write_integration_test(
 
 fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
     let cfg = read_config_or_default(&path);
-    let ignore = get_ignore_attr(&cfg, true)?;
+    let stats = TestRunStats {
+        expected_time: cfg.expected_time,
+        ..TestRunStats::default()
+    };
+    let ignore = get_ignore_attr(&cfg, &stats, true)?;
 
     write!(
         file,
@@ -288,7 +318,8 @@ fn write_roundtrip_test(
     essence_file: (String, String),
 ) -> io::Result<()> {
     let cfg = read_config_or_default(&path);
-    let ignore = get_ignore_attr(&cfg, false)?;
+    let stats = TestRunStats::default();
+    let ignore = get_ignore_attr(&cfg, &stats, false)?;
 
     write!(
         file,

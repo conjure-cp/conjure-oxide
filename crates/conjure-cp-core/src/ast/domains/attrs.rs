@@ -315,10 +315,10 @@ impl Display for BinaryAttr {
 fn fmt_size<A: Display>(suffix: &str, sz: &Range<A>) -> String {
     let cap_suffix = capitalize(suffix);
     match sz {
-        Range::Single(x) => format!("{suffix}({x})"),
-        Range::Bounded(l, r) => format!("min{cap_suffix}({l}), max{cap_suffix}({r})"),
-        Range::UnboundedL(r) => format!("max{cap_suffix}({r})"),
-        Range::UnboundedR(l) => format!("min{cap_suffix}({l})"),
+        Range::Single(x) => format!("{suffix} {x}"),
+        Range::Bounded(l, r) => format!("min{cap_suffix} {l}, max{cap_suffix} {r}"),
+        Range::UnboundedL(r) => format!("max{cap_suffix} {r}"),
+        Range::UnboundedR(l) => format!("min{cap_suffix} {l}"),
         Range::Unbounded => "".to_string(),
     }
 }

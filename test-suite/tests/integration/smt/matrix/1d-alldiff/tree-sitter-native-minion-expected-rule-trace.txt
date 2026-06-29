@@ -1,0 +1,109 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..3)] of int(1..3)
+
+such that
+
+allDifferent(a),
+allDifferent(a[..]),
+a[1] <= a[2],
+a[2] <= a[3]
+
+--
+
+allDifferent(a#matrix_to_atom),
+allDifferent(a#matrix_to_atom[..]),
+a#matrix_to_atom[1] <= a#matrix_to_atom[2],
+a#matrix_to_atom[2] <= a#matrix_to_atom[3]
+   ~~> select_representation_matrix ([("Representations", 8001)])
+allDifferent(a#matrix_to_atom),
+allDifferent(a#matrix_to_atom[..]),
+a#matrix_to_atom[1] <= a#matrix_to_atom[2],
+a#matrix_to_atom[2] <= a#matrix_to_atom[3]
+new variables:
+  find a#matrix_to_atom_1: int(1..3)
+  find a#matrix_to_atom_2: int(1..3)
+  find a#matrix_to_atom_3: int(1..3)
+
+--
+
+a#matrix_to_atom[..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(a#matrix_to_atom,[..])
+
+--
+
+a#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[1])
+
+--
+
+a#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[2])
+
+--
+
+a#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[3])
+
+--
+
+allDifferent(a#matrix_to_atom),
+allDifferent(SafeSlice(a#matrix_to_atom,[..])),
+SafeIndex(a#matrix_to_atom,[1]) <= SafeIndex(a#matrix_to_atom,[2]),
+SafeIndex(a#matrix_to_atom,[2]) <= SafeIndex(a#matrix_to_atom,[3])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+allDifferent(a#matrix_to_atom),
+allDifferent(SafeSlice(a#matrix_to_atom,[..])),
+a#matrix_to_atom_1 <= a#matrix_to_atom_2,
+a#matrix_to_atom_2 <= a#matrix_to_atom_3
+
+--
+
+a#matrix_to_atom_1 <= a#matrix_to_atom_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(a#matrix_to_atom_1, a#matrix_to_atom_2, 0)
+
+--
+
+a#matrix_to_atom_2 <= a#matrix_to_atom_3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(a#matrix_to_atom_2, a#matrix_to_atom_3, 0)
+
+--
+
+allDifferent(a#matrix_to_atom)
+   ~~> matrix_ref_to_atom ([("Base", 2000)])
+allDifferent([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)])
+
+--
+
+allDifferent([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([a#matrix_to_atom_1, a#matrix_to_atom_2, a#matrix_to_atom_3])
+
+--
+
+SafeSlice(a#matrix_to_atom,[..])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)]
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..3)] of int(1..3)
+find a#matrix_to_atom_1: int(1..3)
+find a#matrix_to_atom_2: int(1..3)
+find a#matrix_to_atom_3: int(1..3)
+
+such that
+
+__flat_alldiff([a#matrix_to_atom_1, a#matrix_to_atom_2, a#matrix_to_atom_3]),
+__flat_alldiff([a#matrix_to_atom_1, a#matrix_to_atom_2, a#matrix_to_atom_3]),
+Ineq(a#matrix_to_atom_1, a#matrix_to_atom_2, 0),
+Ineq(a#matrix_to_atom_2, a#matrix_to_atom_3, 0)
+

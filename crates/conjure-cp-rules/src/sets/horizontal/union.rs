@@ -2,7 +2,7 @@ use conjure_cp::ast::comprehension::ComprehensionQualifier;
 use conjure_cp::ast::{Atom, Metadata};
 use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
 use conjure_cp::into_matrix_expr;
-use conjure_cp::rule_engine::Reduction;
+use conjure_cp::rule_engine::RuleEffect;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
@@ -53,7 +53,7 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                             )),
                         )));
 
-                    return Ok(Reduction::pure(Expr::Flatten(
+                    return Ok(RuleEffect::pure(Expr::Flatten(
                         Metadata::new(),
                         None,
                         Moo::new(into_matrix_expr!(vec![

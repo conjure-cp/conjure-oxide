@@ -19,6 +19,15 @@ use uniplate::Uniplate;
 /// The integer type used in all domain code (int ranges, set sizes, etc)
 pub type Int = i32;
 
+/// Lower bound of the default fully-bounded integer domain used by Conjure Oxide.
+///
+/// One greater than [`i32::MIN`] so the magnitude of `OXIDE_INT_MIN` is representable as a
+/// positive [`i32`].
+pub const OXIDE_INT_MIN: Int = Int::MIN + 1;
+
+/// Upper bound of the default fully-bounded integer domain used by Conjure Oxide.
+pub const OXIDE_INT_MAX: Int = Int::MAX;
+
 pub type DomainPtr = Moo<Domain>;
 
 impl DomainPtr {
@@ -958,6 +967,21 @@ mod tests {
     use super::*;
     use crate::ast::Name;
     use crate::{domain_int, range};
+
+    #[test]
+    fn unresolved_int_domain_resolve_squeezes_ranges() {
+        let domain = UnresolvedDomain::Int(vec![
+            Range::Single(IntVal::Const(5)),
+            Range::Bounded(IntVal::Const(3), IntVal::Const(7)),
+            Range::Bounded(IntVal::Const(5), IntVal::Const(3)),
+            Range::Single(IntVal::Const(7)),
+        ]);
+
+        assert_eq!(
+            domain.resolve(),
+            Ok(GroundDomain::Int(vec![Range::Bounded(3, 7)]))
+        );
+    }
 
     #[test]
     fn test_negative_product() {

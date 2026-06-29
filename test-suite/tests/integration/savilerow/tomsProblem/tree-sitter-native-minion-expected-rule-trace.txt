@@ -1,0 +1,1617 @@
+Model before rewriting:
+
+letting n be 3
+letting abelian be true
+letting rank3 be true
+letting D be domain int(1..n)
+letting diagonal be [1,1,1;int(1..3)]
+find M: matrix indexed by [D, D] of D
+find occurrences: matrix indexed by [D] of int(1..(product([n,n;int(1..)])))
+find __0: int(1..(product([n,n;int(1..)])))
+
+such that
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+(rank3) -> (and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ])),
+(abelian) -> (and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])),
+__0 =aux occurrences[(n - 1)]
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+(rank3) -> (and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ])),
+(abelian) -> (and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])),
+__0 =aux occurrences[(n - 1)]
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+(rank3) -> (and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ])),
+(abelian) -> (and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])),
+__0 =aux occurrences[2]
+
+--
+
+rank3
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+(true) -> (and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ])),
+(abelian) -> (and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])),
+__0 =aux occurrences[2]
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+(abelian) -> (and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])),
+__0 =aux occurrences[2]
+
+--
+
+abelian
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+(true) -> (and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ])),
+__0 =aux occurrences[2]
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences[2]
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom[2]
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom[2]
+new variables:
+  find M#matrix_to_atom_1_1: int(1..3)
+  find M#matrix_to_atom_1_2: int(1..3)
+  find M#matrix_to_atom_1_3: int(1..3)
+  find M#matrix_to_atom_2_1: int(1..3)
+  find M#matrix_to_atom_2_2: int(1..3)
+  find M#matrix_to_atom_2_3: int(1..3)
+  find M#matrix_to_atom_3_1: int(1..3)
+  find M#matrix_to_atom_3_2: int(1..3)
+  find M#matrix_to_atom_3_3: int(1..3)
+  find occurrences#matrix_to_atom_1: int(1..9)
+  find occurrences#matrix_to_atom_2: int(1..9)
+  find occurrences#matrix_to_atom_3: int(1..9)
+
+--
+
+occurrences#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(occurrences#matrix_to_atom,[2])
+
+--
+
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux SafeIndex(occurrences#matrix_to_atom,[2])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+and([ M[i, i] = diagonal[i] | i : D ]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+[ M[i, i] = diagonal[i] | i : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M[1, 1] = 1,M[2, 2] = 1,M[3, 3] = 1;int(1..)]
+
+--
+
+and([M[1, 1] = 1,M[2, 2] = 1,M[3, 3] = 1;int(1..)]),
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+   ~~> constant_evaluator ([("Constant", 9001)])
+M[1, 1] = 1,
+M[2, 2] = 1,
+M[3, 3] = 1,
+and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+M#matrix_to_atom[1, 1] = 1,
+M#matrix_to_atom[2, 2] = 1,
+M#matrix_to_atom[3, 3] = 1,
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = product([a,M#matrix_to_atom[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+   ~~> select_representation_matrix ([("Representations", 8001)])
+M#matrix_to_atom[1, 1] = 1,
+M#matrix_to_atom[2, 2] = 1,
+M#matrix_to_atom[3, 3] = 1,
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = product([a,M#matrix_to_atom[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+M#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 1])
+
+--
+
+M#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 2])
+
+--
+
+M#matrix_to_atom[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[3, 3])
+
+--
+
+SafeIndex(M#matrix_to_atom,[1, 1]) = 1,
+SafeIndex(M#matrix_to_atom,[2, 2]) = 1,
+SafeIndex(M#matrix_to_atom,[3, 3]) = 1,
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = product([a,M#matrix_to_atom[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = product([a,M#matrix_to_atom[b, c];int(1..)]) | a : D, b : D, c : D ]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+[ product([M#matrix_to_atom[a, b],c;int(1..)]) = product([a,M#matrix_to_atom[b, c];int(1..)]) | a : D, b : D, c : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#matrix_to_atom[1, 1],1;int(1..)]) = product([1,M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[1, 1],2;int(1..)]) = product([1,M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[1, 1],3;int(1..)]) = product([1,M#matrix_to_atom[1, 3];int(1..)]),product([M#matrix_to_atom[1, 2],1;int(1..)]) = product([1,M#matrix_to_atom[2, 1];int(1..)]),product([M#matrix_to_atom[1, 2],2;int(1..)]) = product([1,M#matrix_to_atom[2, 2];int(1..)]),product([M#matrix_to_atom[1, 2],3;int(1..)]) = product([1,M#matrix_to_atom[2, 3];int(1..)]),product([M#matrix_to_atom[1, 3],1;int(1..)]) = product([1,M#matrix_to_atom[3, 1];int(1..)]),product([M#matrix_to_atom[1, 3],2;int(1..)]) = product([1,M#matrix_to_atom[3, 2];int(1..)]),product([M#matrix_to_atom[1, 3],3;int(1..)]) = product([1,M#matrix_to_atom[3, 3];int(1..)]),product([M#matrix_to_atom[2, 1],1;int(1..)]) = product([2,M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[2, 1],2;int(1..)]) = product([2,M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[2, 1],3;int(1..)]) = product([2,M#matrix_to_atom[1, 3];int(1..)]),product([M#matrix_to_atom[2, 2],1;int(1..)]) = product([2,M#matrix_to_atom[2, 1];int(1..)]),product([M#matrix_to_atom[2, 2],2;int(1..)]) = product([2,M#matrix_to_atom[2, 2];int(1..)]),product([M#matrix_to_atom[2, 2],3;int(1..)]) = product([2,M#matrix_to_atom[2, 3];int(1..)]),product([M#matrix_to_atom[2, 3],1;int(1..)]) = product([2,M#matrix_to_atom[3, 1];int(1..)]),product([M#matrix_to_atom[2, 3],2;int(1..)]) = product([2,M#matrix_to_atom[3, 2];int(1..)]),product([M#matrix_to_atom[2, 3],3;int(1..)]) = product([2,M#matrix_to_atom[3, 3];int(1..)]),product([M#matrix_to_atom[3, 1],1;int(1..)]) = product([3,M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[3, 1],2;int(1..)]) = product([3,M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[3, 1],3;int(1..)]) = product([3,M#matrix_to_atom[1, 3];int(1..)]),product([M#matrix_to_atom[3, 2],1;int(1..)]) = product([3,M#matrix_to_atom[2, 1];int(1..)]),product([M#matrix_to_atom[3, 2],2;int(1..)]) = product([3,M#matrix_to_atom[2, 2];int(1..)]),product([M#matrix_to_atom[3, 2],3;int(1..)]) = product([3,M#matrix_to_atom[2, 3];int(1..)]),product([M#matrix_to_atom[3, 3],1;int(1..)]) = product([3,M#matrix_to_atom[3, 1];int(1..)]),product([M#matrix_to_atom[3, 3],2;int(1..)]) = product([3,M#matrix_to_atom[3, 2];int(1..)]),product([M#matrix_to_atom[3, 3],3;int(1..)]) = product([3,M#matrix_to_atom[3, 3];int(1..)]);int(1..)]
+
+--
+
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+and([product([M#matrix_to_atom[1, 1],1;int(1..)]) = product([1,M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[1, 1],2;int(1..)]) = product([1,M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[1, 1],3;int(1..)]) = product([1,M#matrix_to_atom[1, 3];int(1..)]),product([M#matrix_to_atom[1, 2],1;int(1..)]) = product([1,M#matrix_to_atom[2, 1];int(1..)]),product([M#matrix_to_atom[1, 2],2;int(1..)]) = product([1,M#matrix_to_atom[2, 2];int(1..)]),product([M#matrix_to_atom[1, 2],3;int(1..)]) = product([1,M#matrix_to_atom[2, 3];int(1..)]),product([M#matrix_to_atom[1, 3],1;int(1..)]) = product([1,M#matrix_to_atom[3, 1];int(1..)]),product([M#matrix_to_atom[1, 3],2;int(1..)]) = product([1,M#matrix_to_atom[3, 2];int(1..)]),product([M#matrix_to_atom[1, 3],3;int(1..)]) = product([1,M#matrix_to_atom[3, 3];int(1..)]),product([M#matrix_to_atom[2, 1],1;int(1..)]) = product([2,M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[2, 1],2;int(1..)]) = product([2,M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[2, 1],3;int(1..)]) = product([2,M#matrix_to_atom[1, 3];int(1..)]),product([M#matrix_to_atom[2, 2],1;int(1..)]) = product([2,M#matrix_to_atom[2, 1];int(1..)]),product([M#matrix_to_atom[2, 2],2;int(1..)]) = product([2,M#matrix_to_atom[2, 2];int(1..)]),product([M#matrix_to_atom[2, 2],3;int(1..)]) = product([2,M#matrix_to_atom[2, 3];int(1..)]),product([M#matrix_to_atom[2, 3],1;int(1..)]) = product([2,M#matrix_to_atom[3, 1];int(1..)]),product([M#matrix_to_atom[2, 3],2;int(1..)]) = product([2,M#matrix_to_atom[3, 2];int(1..)]),product([M#matrix_to_atom[2, 3],3;int(1..)]) = product([2,M#matrix_to_atom[3, 3];int(1..)]),product([M#matrix_to_atom[3, 1],1;int(1..)]) = product([3,M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[3, 1],2;int(1..)]) = product([3,M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[3, 1],3;int(1..)]) = product([3,M#matrix_to_atom[1, 3];int(1..)]),product([M#matrix_to_atom[3, 2],1;int(1..)]) = product([3,M#matrix_to_atom[2, 1];int(1..)]),product([M#matrix_to_atom[3, 2],2;int(1..)]) = product([3,M#matrix_to_atom[2, 2];int(1..)]),product([M#matrix_to_atom[3, 2],3;int(1..)]) = product([3,M#matrix_to_atom[2, 3];int(1..)]),product([M#matrix_to_atom[3, 3],1;int(1..)]) = product([3,M#matrix_to_atom[3, 1];int(1..)]),product([M#matrix_to_atom[3, 3],2;int(1..)]) = product([3,M#matrix_to_atom[3, 2];int(1..)]),product([M#matrix_to_atom[3, 3],3;int(1..)]) = product([3,M#matrix_to_atom[3, 3];int(1..)]);int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+   ~~> constant_evaluator ([("Constant", 9001)])
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+product([M#matrix_to_atom[1, 1],1;int(1..)]) = product([1,M#matrix_to_atom[1, 1];int(1..)]),
+product([M#matrix_to_atom[1, 1],2;int(1..)]) = product([1,M#matrix_to_atom[1, 2];int(1..)]),
+product([M#matrix_to_atom[1, 1],3;int(1..)]) = product([1,M#matrix_to_atom[1, 3];int(1..)]),
+product([M#matrix_to_atom[1, 2],1;int(1..)]) = product([1,M#matrix_to_atom[2, 1];int(1..)]),
+product([M#matrix_to_atom[1, 2],2;int(1..)]) = product([1,M#matrix_to_atom[2, 2];int(1..)]),
+product([M#matrix_to_atom[1, 2],3;int(1..)]) = product([1,M#matrix_to_atom[2, 3];int(1..)]),
+product([M#matrix_to_atom[1, 3],1;int(1..)]) = product([1,M#matrix_to_atom[3, 1];int(1..)]),
+product([M#matrix_to_atom[1, 3],2;int(1..)]) = product([1,M#matrix_to_atom[3, 2];int(1..)]),
+product([M#matrix_to_atom[1, 3],3;int(1..)]) = product([1,M#matrix_to_atom[3, 3];int(1..)]),
+product([M#matrix_to_atom[2, 1],1;int(1..)]) = product([2,M#matrix_to_atom[1, 1];int(1..)]),
+product([M#matrix_to_atom[2, 1],2;int(1..)]) = product([2,M#matrix_to_atom[1, 2];int(1..)]),
+product([M#matrix_to_atom[2, 1],3;int(1..)]) = product([2,M#matrix_to_atom[1, 3];int(1..)]),
+product([M#matrix_to_atom[2, 2],1;int(1..)]) = product([2,M#matrix_to_atom[2, 1];int(1..)]),
+product([M#matrix_to_atom[2, 2],2;int(1..)]) = product([2,M#matrix_to_atom[2, 2];int(1..)]),
+product([M#matrix_to_atom[2, 2],3;int(1..)]) = product([2,M#matrix_to_atom[2, 3];int(1..)]),
+product([M#matrix_to_atom[2, 3],1;int(1..)]) = product([2,M#matrix_to_atom[3, 1];int(1..)]),
+product([M#matrix_to_atom[2, 3],2;int(1..)]) = product([2,M#matrix_to_atom[3, 2];int(1..)]),
+product([M#matrix_to_atom[2, 3],3;int(1..)]) = product([2,M#matrix_to_atom[3, 3];int(1..)]),
+product([M#matrix_to_atom[3, 1],1;int(1..)]) = product([3,M#matrix_to_atom[1, 1];int(1..)]),
+product([M#matrix_to_atom[3, 1],2;int(1..)]) = product([3,M#matrix_to_atom[1, 2];int(1..)]),
+product([M#matrix_to_atom[3, 1],3;int(1..)]) = product([3,M#matrix_to_atom[1, 3];int(1..)]),
+product([M#matrix_to_atom[3, 2],1;int(1..)]) = product([3,M#matrix_to_atom[2, 1];int(1..)]),
+product([M#matrix_to_atom[3, 2],2;int(1..)]) = product([3,M#matrix_to_atom[2, 2];int(1..)]),
+product([M#matrix_to_atom[3, 2],3;int(1..)]) = product([3,M#matrix_to_atom[2, 3];int(1..)]),
+product([M#matrix_to_atom[3, 3],1;int(1..)]) = product([3,M#matrix_to_atom[3, 1];int(1..)]),
+product([M#matrix_to_atom[3, 3],2;int(1..)]) = product([3,M#matrix_to_atom[3, 2];int(1..)]),
+product([M#matrix_to_atom[3, 3],3;int(1..)]) = product([3,M#matrix_to_atom[3, 3];int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+product([M#matrix_to_atom[1, 1],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 1];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[1, 1]
+
+--
+
+product([1,M#matrix_to_atom[1, 1];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 1],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[1, 1];int(1..)])
+
+--
+
+product([1,M#matrix_to_atom[1, 2];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 2];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[1, 2]
+
+--
+
+product([M#matrix_to_atom[1, 1],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[1, 1];int(1..)])
+
+--
+
+product([1,M#matrix_to_atom[1, 3];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 3];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[1, 3]
+
+--
+
+product([M#matrix_to_atom[1, 2],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 2];int(1..)])
+
+--
+
+product([1,M#matrix_to_atom[2, 1];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 1];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[2, 1]
+
+--
+
+product([M#matrix_to_atom[1, 2],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[1, 2];int(1..)])
+
+--
+
+product([1,M#matrix_to_atom[2, 2];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 2];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[2, 2]
+
+--
+
+product([M#matrix_to_atom[1, 2],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[1, 2];int(1..)])
+
+--
+
+product([1,M#matrix_to_atom[2, 3];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 3];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[2, 3]
+
+--
+
+product([M#matrix_to_atom[1, 3],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 3];int(1..)])
+
+--
+
+product([1,M#matrix_to_atom[3, 1];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 1];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[3, 1]
+
+--
+
+product([M#matrix_to_atom[1, 3],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[1, 3];int(1..)])
+
+--
+
+product([1,M#matrix_to_atom[3, 2];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 2];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[3, 2]
+
+--
+
+product([M#matrix_to_atom[1, 3],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[1, 3];int(1..)])
+
+--
+
+product([1,M#matrix_to_atom[3, 3];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 3];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[3, 3]
+
+--
+
+product([M#matrix_to_atom[2, 1],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 1],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 1],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 2],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 2],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 2],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 3],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 3],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[2, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 3],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[2, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 1],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 1],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[3, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 1],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[3, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 2],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 2],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[3, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 2],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[3, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 3],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 3],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[3, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 3],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[3, 3];int(1..)])
+
+--
+
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+SafeIndex(M#matrix_to_atom,[1, 1]) = SafeIndex(M#matrix_to_atom,[1, 1]),
+product([2,M#matrix_to_atom[1, 1];int(1..)]) = M#matrix_to_atom[1, 2],
+product([3,M#matrix_to_atom[1, 1];int(1..)]) = M#matrix_to_atom[1, 3],
+M#matrix_to_atom[1, 2] = M#matrix_to_atom[2, 1],
+product([2,M#matrix_to_atom[1, 2];int(1..)]) = M#matrix_to_atom[2, 2],
+product([3,M#matrix_to_atom[1, 2];int(1..)]) = M#matrix_to_atom[2, 3],
+M#matrix_to_atom[1, 3] = M#matrix_to_atom[3, 1],
+product([2,M#matrix_to_atom[1, 3];int(1..)]) = M#matrix_to_atom[3, 2],
+product([3,M#matrix_to_atom[1, 3];int(1..)]) = M#matrix_to_atom[3, 3],
+M#matrix_to_atom[2, 1] = product([2,M#matrix_to_atom[1, 1];int(1..)]),
+product([2,M#matrix_to_atom[2, 1];int(1..)]) = product([2,M#matrix_to_atom[1, 2];int(1..)]),
+product([3,M#matrix_to_atom[2, 1];int(1..)]) = product([2,M#matrix_to_atom[1, 3];int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 2]) = product([2,M#matrix_to_atom[2, 1];int(1..)]),
+product([2,M#matrix_to_atom[2, 2];int(1..)]) = product([2,M#matrix_to_atom[2, 2];int(1..)]),
+product([3,M#matrix_to_atom[2, 2];int(1..)]) = product([2,M#matrix_to_atom[2, 3];int(1..)]),
+M#matrix_to_atom[2, 3] = product([2,M#matrix_to_atom[3, 1];int(1..)]),
+product([2,M#matrix_to_atom[2, 3];int(1..)]) = product([2,M#matrix_to_atom[3, 2];int(1..)]),
+product([3,M#matrix_to_atom[2, 3];int(1..)]) = product([2,M#matrix_to_atom[3, 3];int(1..)]),
+M#matrix_to_atom[3, 1] = product([3,M#matrix_to_atom[1, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 1];int(1..)]) = product([3,M#matrix_to_atom[1, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 1];int(1..)]) = product([3,M#matrix_to_atom[1, 3];int(1..)]),
+M#matrix_to_atom[3, 2] = product([3,M#matrix_to_atom[2, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 2];int(1..)]) = product([3,M#matrix_to_atom[2, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 2];int(1..)]) = product([3,M#matrix_to_atom[2, 3];int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 3]) = product([3,M#matrix_to_atom[3, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 3];int(1..)]) = product([3,M#matrix_to_atom[3, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 3];int(1..)]) = product([3,M#matrix_to_atom[3, 3];int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+   ~~> constant_evaluator ([("Constant", 9001)])
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+product([2,M#matrix_to_atom[1, 1];int(1..)]) = M#matrix_to_atom[1, 2],
+product([3,M#matrix_to_atom[1, 1];int(1..)]) = M#matrix_to_atom[1, 3],
+M#matrix_to_atom[1, 2] = M#matrix_to_atom[2, 1],
+product([2,M#matrix_to_atom[1, 2];int(1..)]) = M#matrix_to_atom[2, 2],
+product([3,M#matrix_to_atom[1, 2];int(1..)]) = M#matrix_to_atom[2, 3],
+M#matrix_to_atom[1, 3] = M#matrix_to_atom[3, 1],
+product([2,M#matrix_to_atom[1, 3];int(1..)]) = M#matrix_to_atom[3, 2],
+product([3,M#matrix_to_atom[1, 3];int(1..)]) = M#matrix_to_atom[3, 3],
+M#matrix_to_atom[2, 1] = product([2,M#matrix_to_atom[1, 1];int(1..)]),
+product([2,M#matrix_to_atom[2, 1];int(1..)]) = product([2,M#matrix_to_atom[1, 2];int(1..)]),
+product([3,M#matrix_to_atom[2, 1];int(1..)]) = product([2,M#matrix_to_atom[1, 3];int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 2]) = product([2,M#matrix_to_atom[2, 1];int(1..)]),
+product([2,M#matrix_to_atom[2, 2];int(1..)]) = product([2,M#matrix_to_atom[2, 2];int(1..)]),
+product([3,M#matrix_to_atom[2, 2];int(1..)]) = product([2,M#matrix_to_atom[2, 3];int(1..)]),
+M#matrix_to_atom[2, 3] = product([2,M#matrix_to_atom[3, 1];int(1..)]),
+product([2,M#matrix_to_atom[2, 3];int(1..)]) = product([2,M#matrix_to_atom[3, 2];int(1..)]),
+product([3,M#matrix_to_atom[2, 3];int(1..)]) = product([2,M#matrix_to_atom[3, 3];int(1..)]),
+M#matrix_to_atom[3, 1] = product([3,M#matrix_to_atom[1, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 1];int(1..)]) = product([3,M#matrix_to_atom[1, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 1];int(1..)]) = product([3,M#matrix_to_atom[1, 3];int(1..)]),
+M#matrix_to_atom[3, 2] = product([3,M#matrix_to_atom[2, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 2];int(1..)]) = product([3,M#matrix_to_atom[2, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 2];int(1..)]) = product([3,M#matrix_to_atom[2, 3];int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 3]) = product([3,M#matrix_to_atom[3, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 3];int(1..)]) = product([3,M#matrix_to_atom[3, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 3];int(1..)]) = product([3,M#matrix_to_atom[3, 3];int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+M#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 2])
+
+--
+
+M#matrix_to_atom[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 3])
+
+--
+
+M#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 1])
+
+--
+
+M#matrix_to_atom[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 3])
+
+--
+
+M#matrix_to_atom[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[3, 1])
+
+--
+
+M#matrix_to_atom[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[3, 2])
+
+--
+
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 3]),
+SafeIndex(M#matrix_to_atom,[1, 2]) = SafeIndex(M#matrix_to_atom,[2, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 3]),
+SafeIndex(M#matrix_to_atom,[1, 3]) = SafeIndex(M#matrix_to_atom,[3, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 3]),
+SafeIndex(M#matrix_to_atom,[2, 1]) = product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 2]) = product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]),
+product([3,M#matrix_to_atom[2, 2];int(1..)]) = product([2,M#matrix_to_atom[2, 3];int(1..)]),
+M#matrix_to_atom[2, 3] = product([2,M#matrix_to_atom[3, 1];int(1..)]),
+product([2,M#matrix_to_atom[2, 3];int(1..)]) = product([2,M#matrix_to_atom[3, 2];int(1..)]),
+product([3,M#matrix_to_atom[2, 3];int(1..)]) = product([2,M#matrix_to_atom[3, 3];int(1..)]),
+M#matrix_to_atom[3, 1] = product([3,M#matrix_to_atom[1, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 1];int(1..)]) = product([3,M#matrix_to_atom[1, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 1];int(1..)]) = product([3,M#matrix_to_atom[1, 3];int(1..)]),
+M#matrix_to_atom[3, 2] = product([3,M#matrix_to_atom[2, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 2];int(1..)]) = product([3,M#matrix_to_atom[2, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 2];int(1..)]) = product([3,M#matrix_to_atom[2, 3];int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 3]) = product([3,M#matrix_to_atom[3, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 3];int(1..)]) = product([3,M#matrix_to_atom[3, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 3];int(1..)]) = product([3,M#matrix_to_atom[3, 3];int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+   ~~> constant_evaluator ([("Constant", 9001)])
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 3]),
+SafeIndex(M#matrix_to_atom,[1, 2]) = SafeIndex(M#matrix_to_atom,[2, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 3]),
+SafeIndex(M#matrix_to_atom,[1, 3]) = SafeIndex(M#matrix_to_atom,[3, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 3]),
+SafeIndex(M#matrix_to_atom,[2, 1]) = product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 2]) = product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),
+product([3,M#matrix_to_atom[2, 2];int(1..)]) = product([2,M#matrix_to_atom[2, 3];int(1..)]),
+M#matrix_to_atom[2, 3] = product([2,M#matrix_to_atom[3, 1];int(1..)]),
+product([2,M#matrix_to_atom[2, 3];int(1..)]) = product([2,M#matrix_to_atom[3, 2];int(1..)]),
+product([3,M#matrix_to_atom[2, 3];int(1..)]) = product([2,M#matrix_to_atom[3, 3];int(1..)]),
+M#matrix_to_atom[3, 1] = product([3,M#matrix_to_atom[1, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 1];int(1..)]) = product([3,M#matrix_to_atom[1, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 1];int(1..)]) = product([3,M#matrix_to_atom[1, 3];int(1..)]),
+M#matrix_to_atom[3, 2] = product([3,M#matrix_to_atom[2, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 2];int(1..)]) = product([3,M#matrix_to_atom[2, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 2];int(1..)]) = product([3,M#matrix_to_atom[2, 3];int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 3]) = product([3,M#matrix_to_atom[3, 1];int(1..)]),
+product([2,M#matrix_to_atom[3, 3];int(1..)]) = product([3,M#matrix_to_atom[3, 2];int(1..)]),
+product([3,M#matrix_to_atom[3, 3];int(1..)]) = product([3,M#matrix_to_atom[3, 3];int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 3]),
+SafeIndex(M#matrix_to_atom,[1, 2]) = SafeIndex(M#matrix_to_atom,[2, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 3]),
+SafeIndex(M#matrix_to_atom,[1, 3]) = SafeIndex(M#matrix_to_atom,[3, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 3]),
+SafeIndex(M#matrix_to_atom,[2, 1]) = product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 2]) = product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 3]) = product([2,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[3, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 1]) = product([3,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 2]) = product([3,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 3]) = product([3,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 3]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[3, 3]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[3, 3]);int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+   ~~> constant_evaluator ([("Constant", 9001)])
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 3]),
+SafeIndex(M#matrix_to_atom,[1, 2]) = SafeIndex(M#matrix_to_atom,[2, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 3]),
+SafeIndex(M#matrix_to_atom,[1, 3]) = SafeIndex(M#matrix_to_atom,[3, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 3]),
+SafeIndex(M#matrix_to_atom,[2, 1]) = product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 2]) = product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 3]) = product([2,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[3, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 1]) = product([3,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 2]) = product([3,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 3]) = product([3,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 3]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]) = SafeIndex(M#matrix_to_atom,[1, 3]),
+SafeIndex(M#matrix_to_atom,[1, 2]) = SafeIndex(M#matrix_to_atom,[2, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]) = SafeIndex(M#matrix_to_atom,[2, 3]),
+SafeIndex(M#matrix_to_atom,[1, 3]) = SafeIndex(M#matrix_to_atom,[3, 1]),
+product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 2]),
+product([3,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]) = SafeIndex(M#matrix_to_atom,[3, 3]),
+SafeIndex(M#matrix_to_atom,[2, 1]) = product([2,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 2]) = product([2,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[2, 3]) = product([2,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]) = product([2,SafeIndex(M#matrix_to_atom,[3, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 1]) = product([3,SafeIndex(M#matrix_to_atom,[1, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[1, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[1, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 2]) = product([3,SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]),
+product([3,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[2, 3]);int(1..)]),
+SafeIndex(M#matrix_to_atom,[3, 3]) = product([3,SafeIndex(M#matrix_to_atom,[3, 1]);int(1..)]),
+product([2,SafeIndex(M#matrix_to_atom,[3, 3]);int(1..)]) = product([3,SafeIndex(M#matrix_to_atom,[3, 2]);int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+product([2,M#matrix_to_atom_1_1;int(1..)]) = M#matrix_to_atom_1_2,
+product([3,M#matrix_to_atom_1_1;int(1..)]) = M#matrix_to_atom_1_3,
+M#matrix_to_atom_1_2 = M#matrix_to_atom_2_1,
+product([2,M#matrix_to_atom_1_2;int(1..)]) = M#matrix_to_atom_2_2,
+product([3,M#matrix_to_atom_1_2;int(1..)]) = M#matrix_to_atom_2_3,
+M#matrix_to_atom_1_3 = M#matrix_to_atom_3_1,
+product([2,M#matrix_to_atom_1_3;int(1..)]) = M#matrix_to_atom_3_2,
+product([3,M#matrix_to_atom_1_3;int(1..)]) = M#matrix_to_atom_3_3,
+M#matrix_to_atom_2_1 = product([2,M#matrix_to_atom_1_1;int(1..)]),
+product([2,M#matrix_to_atom_2_1;int(1..)]) = product([2,M#matrix_to_atom_1_2;int(1..)]),
+product([3,M#matrix_to_atom_2_1;int(1..)]) = product([2,M#matrix_to_atom_1_3;int(1..)]),
+M#matrix_to_atom_2_2 = product([2,M#matrix_to_atom_2_1;int(1..)]),
+product([3,M#matrix_to_atom_2_2;int(1..)]) = product([2,M#matrix_to_atom_2_3;int(1..)]),
+M#matrix_to_atom_2_3 = product([2,M#matrix_to_atom_3_1;int(1..)]),
+product([2,M#matrix_to_atom_2_3;int(1..)]) = product([2,M#matrix_to_atom_3_2;int(1..)]),
+product([3,M#matrix_to_atom_2_3;int(1..)]) = product([2,M#matrix_to_atom_3_3;int(1..)]),
+M#matrix_to_atom_3_1 = product([3,M#matrix_to_atom_1_1;int(1..)]),
+product([2,M#matrix_to_atom_3_1;int(1..)]) = product([3,M#matrix_to_atom_1_2;int(1..)]),
+product([3,M#matrix_to_atom_3_1;int(1..)]) = product([3,M#matrix_to_atom_1_3;int(1..)]),
+M#matrix_to_atom_3_2 = product([3,M#matrix_to_atom_2_1;int(1..)]),
+product([2,M#matrix_to_atom_3_2;int(1..)]) = product([3,M#matrix_to_atom_2_2;int(1..)]),
+product([3,M#matrix_to_atom_3_2;int(1..)]) = product([3,M#matrix_to_atom_2_3;int(1..)]),
+M#matrix_to_atom_3_3 = product([3,M#matrix_to_atom_3_1;int(1..)]),
+product([2,M#matrix_to_atom_3_3;int(1..)]) = product([3,M#matrix_to_atom_3_2;int(1..)]),
+and([ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2
+
+--
+
+product([2,M#matrix_to_atom_1_1;int(1..)]) = M#matrix_to_atom_1_2
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_1,2,M#matrix_to_atom_1_2)
+
+--
+
+product([3,M#matrix_to_atom_1_1;int(1..)]) = M#matrix_to_atom_1_3
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_1,3,M#matrix_to_atom_1_3)
+
+--
+
+product([2,M#matrix_to_atom_1_2;int(1..)]) = M#matrix_to_atom_2_2
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_2,2,M#matrix_to_atom_2_2)
+
+--
+
+product([3,M#matrix_to_atom_1_2;int(1..)]) = M#matrix_to_atom_2_3
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_2,3,M#matrix_to_atom_2_3)
+
+--
+
+product([2,M#matrix_to_atom_1_3;int(1..)]) = M#matrix_to_atom_3_2
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_3,2,M#matrix_to_atom_3_2)
+
+--
+
+product([3,M#matrix_to_atom_1_3;int(1..)]) = M#matrix_to_atom_3_3
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_3,3,M#matrix_to_atom_3_3)
+
+--
+
+M#matrix_to_atom_2_1 = product([2,M#matrix_to_atom_1_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_1,2,M#matrix_to_atom_2_1)
+
+--
+
+product([2,M#matrix_to_atom_2_1;int(1..)]) = product([2,M#matrix_to_atom_1_2;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__1 = __2
+new variables:
+  find __1: int(2..6)
+  find __2: int(2..6)
+new constraints:
+  __1 =aux product([2,M#matrix_to_atom_2_1;int(1..)])
+  __2 =aux product([2,M#matrix_to_atom_1_2;int(1..)])
+
+--
+
+product([3,M#matrix_to_atom_2_1;int(1..)]) = product([2,M#matrix_to_atom_1_3;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__3 = __4
+new variables:
+  find __3: int(3..9)
+  find __4: int(2..6)
+new constraints:
+  __3 =aux product([3,M#matrix_to_atom_2_1;int(1..)])
+  __4 =aux product([2,M#matrix_to_atom_1_3;int(1..)])
+
+--
+
+M#matrix_to_atom_2_2 = product([2,M#matrix_to_atom_2_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_1,2,M#matrix_to_atom_2_2)
+
+--
+
+product([3,M#matrix_to_atom_2_2;int(1..)]) = product([2,M#matrix_to_atom_2_3;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__5 = __6
+new variables:
+  find __5: int(3..9)
+  find __6: int(2..6)
+new constraints:
+  __5 =aux product([3,M#matrix_to_atom_2_2;int(1..)])
+  __6 =aux product([2,M#matrix_to_atom_2_3;int(1..)])
+
+--
+
+M#matrix_to_atom_2_3 = product([2,M#matrix_to_atom_3_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_1,2,M#matrix_to_atom_2_3)
+
+--
+
+product([2,M#matrix_to_atom_2_3;int(1..)]) = product([2,M#matrix_to_atom_3_2;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__7 = __8
+new variables:
+  find __7: int(2..6)
+  find __8: int(2..6)
+new constraints:
+  __7 =aux product([2,M#matrix_to_atom_2_3;int(1..)])
+  __8 =aux product([2,M#matrix_to_atom_3_2;int(1..)])
+
+--
+
+product([3,M#matrix_to_atom_2_3;int(1..)]) = product([2,M#matrix_to_atom_3_3;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__9 = __10
+new variables:
+  find __9: int(3..9)
+  find __10: int(2..6)
+new constraints:
+  __9 =aux product([3,M#matrix_to_atom_2_3;int(1..)])
+  __10 =aux product([2,M#matrix_to_atom_3_3;int(1..)])
+
+--
+
+M#matrix_to_atom_3_1 = product([3,M#matrix_to_atom_1_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_1,3,M#matrix_to_atom_3_1)
+
+--
+
+product([2,M#matrix_to_atom_3_1;int(1..)]) = product([3,M#matrix_to_atom_1_2;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__11 = __12
+new variables:
+  find __11: int(2..6)
+  find __12: int(3..9)
+new constraints:
+  __11 =aux product([2,M#matrix_to_atom_3_1;int(1..)])
+  __12 =aux product([3,M#matrix_to_atom_1_2;int(1..)])
+
+--
+
+product([3,M#matrix_to_atom_3_1;int(1..)]) = product([3,M#matrix_to_atom_1_3;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__13 = __14
+new variables:
+  find __13: int(3..9)
+  find __14: int(3..9)
+new constraints:
+  __13 =aux product([3,M#matrix_to_atom_3_1;int(1..)])
+  __14 =aux product([3,M#matrix_to_atom_1_3;int(1..)])
+
+--
+
+M#matrix_to_atom_3_2 = product([3,M#matrix_to_atom_2_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_1,3,M#matrix_to_atom_3_2)
+
+--
+
+product([2,M#matrix_to_atom_3_2;int(1..)]) = product([3,M#matrix_to_atom_2_2;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__15 = __16
+new variables:
+  find __15: int(2..6)
+  find __16: int(3..9)
+new constraints:
+  __15 =aux product([2,M#matrix_to_atom_3_2;int(1..)])
+  __16 =aux product([3,M#matrix_to_atom_2_2;int(1..)])
+
+--
+
+product([3,M#matrix_to_atom_3_2;int(1..)]) = product([3,M#matrix_to_atom_2_3;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__17 = __18
+new variables:
+  find __17: int(3..9)
+  find __18: int(3..9)
+new constraints:
+  __17 =aux product([3,M#matrix_to_atom_3_2;int(1..)])
+  __18 =aux product([3,M#matrix_to_atom_2_3;int(1..)])
+
+--
+
+M#matrix_to_atom_3_3 = product([3,M#matrix_to_atom_3_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_1,3,M#matrix_to_atom_3_3)
+
+--
+
+product([2,M#matrix_to_atom_3_3;int(1..)]) = product([3,M#matrix_to_atom_3_2;int(1..)])
+   ~~> flatten_eq ([("Minion", 4200)])
+__19 = __20
+new variables:
+  find __19: int(2..6)
+  find __20: int(3..9)
+new constraints:
+  __19 =aux product([2,M#matrix_to_atom_3_3;int(1..)])
+  __20 =aux product([3,M#matrix_to_atom_3_2;int(1..)])
+
+--
+
+__1 =aux product([2,M#matrix_to_atom_2_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_1,2,__1)
+
+--
+
+__2 =aux product([2,M#matrix_to_atom_1_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_2,2,__2)
+
+--
+
+__3 =aux product([3,M#matrix_to_atom_2_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_1,3,__3)
+
+--
+
+__4 =aux product([2,M#matrix_to_atom_1_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_3,2,__4)
+
+--
+
+__5 =aux product([3,M#matrix_to_atom_2_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_2,3,__5)
+
+--
+
+__6 =aux product([2,M#matrix_to_atom_2_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_3,2,__6)
+
+--
+
+__7 =aux product([2,M#matrix_to_atom_2_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_3,2,__7)
+
+--
+
+__8 =aux product([2,M#matrix_to_atom_3_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_2,2,__8)
+
+--
+
+__9 =aux product([3,M#matrix_to_atom_2_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_3,3,__9)
+
+--
+
+__10 =aux product([2,M#matrix_to_atom_3_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_3,2,__10)
+
+--
+
+__11 =aux product([2,M#matrix_to_atom_3_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_1,2,__11)
+
+--
+
+__12 =aux product([3,M#matrix_to_atom_1_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_2,3,__12)
+
+--
+
+__13 =aux product([3,M#matrix_to_atom_3_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_1,3,__13)
+
+--
+
+__14 =aux product([3,M#matrix_to_atom_1_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_1_3,3,__14)
+
+--
+
+__15 =aux product([2,M#matrix_to_atom_3_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_2,2,__15)
+
+--
+
+__16 =aux product([3,M#matrix_to_atom_2_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_2,3,__16)
+
+--
+
+__17 =aux product([3,M#matrix_to_atom_3_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_2,3,__17)
+
+--
+
+__18 =aux product([3,M#matrix_to_atom_2_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_2_3,3,__18)
+
+--
+
+__19 =aux product([2,M#matrix_to_atom_3_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_3,2,__19)
+
+--
+
+__20 =aux product([3,M#matrix_to_atom_3_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#matrix_to_atom_3_2,3,__20)
+
+--
+
+[ product([M#matrix_to_atom[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#matrix_to_atom[1, 1],1;int(1..)]) = 0,product([M#matrix_to_atom[1, 1],2;int(1..)]) = 0,product([M#matrix_to_atom[1, 1],3;int(1..)]) = 0,product([M#matrix_to_atom[1, 2],1;int(1..)]) = 0,product([M#matrix_to_atom[1, 2],2;int(1..)]) = 0,product([M#matrix_to_atom[1, 2],3;int(1..)]) = 0,product([M#matrix_to_atom[1, 3],1;int(1..)]) = 0,product([M#matrix_to_atom[1, 3],2;int(1..)]) = 0,product([M#matrix_to_atom[1, 3],3;int(1..)]) = 0,product([M#matrix_to_atom[2, 1],1;int(1..)]) = 0,product([M#matrix_to_atom[2, 1],2;int(1..)]) = 0,product([M#matrix_to_atom[2, 1],3;int(1..)]) = 0,product([M#matrix_to_atom[2, 2],1;int(1..)]) = 0,product([M#matrix_to_atom[2, 2],2;int(1..)]) = 0,product([M#matrix_to_atom[2, 2],3;int(1..)]) = 0,product([M#matrix_to_atom[2, 3],1;int(1..)]) = 0,product([M#matrix_to_atom[2, 3],2;int(1..)]) = 0,product([M#matrix_to_atom[2, 3],3;int(1..)]) = 0,product([M#matrix_to_atom[3, 1],1;int(1..)]) = 0,product([M#matrix_to_atom[3, 1],2;int(1..)]) = 0,product([M#matrix_to_atom[3, 1],3;int(1..)]) = 0,product([M#matrix_to_atom[3, 2],1;int(1..)]) = 0,product([M#matrix_to_atom[3, 2],2;int(1..)]) = 0,product([M#matrix_to_atom[3, 2],3;int(1..)]) = 0,product([M#matrix_to_atom[3, 3],1;int(1..)]) = 0,product([M#matrix_to_atom[3, 3],2;int(1..)]) = 0,product([M#matrix_to_atom[3, 3],3;int(1..)]) = 0;int(1..)]
+
+--
+
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+FlatProductEq(M#matrix_to_atom_1_1,2,M#matrix_to_atom_1_2),
+FlatProductEq(M#matrix_to_atom_1_1,3,M#matrix_to_atom_1_3),
+M#matrix_to_atom_1_2 = M#matrix_to_atom_2_1,
+FlatProductEq(M#matrix_to_atom_1_2,2,M#matrix_to_atom_2_2),
+FlatProductEq(M#matrix_to_atom_1_2,3,M#matrix_to_atom_2_3),
+M#matrix_to_atom_1_3 = M#matrix_to_atom_3_1,
+FlatProductEq(M#matrix_to_atom_1_3,2,M#matrix_to_atom_3_2),
+FlatProductEq(M#matrix_to_atom_1_3,3,M#matrix_to_atom_3_3),
+FlatProductEq(M#matrix_to_atom_1_1,2,M#matrix_to_atom_2_1),
+__1 = __2,
+__3 = __4,
+FlatProductEq(M#matrix_to_atom_2_1,2,M#matrix_to_atom_2_2),
+__5 = __6,
+FlatProductEq(M#matrix_to_atom_3_1,2,M#matrix_to_atom_2_3),
+__7 = __8,
+__9 = __10,
+FlatProductEq(M#matrix_to_atom_1_1,3,M#matrix_to_atom_3_1),
+__11 = __12,
+__13 = __14,
+FlatProductEq(M#matrix_to_atom_2_1,3,M#matrix_to_atom_3_2),
+__15 = __16,
+__17 = __18,
+FlatProductEq(M#matrix_to_atom_3_1,3,M#matrix_to_atom_3_3),
+__19 = __20,
+and([product([M#matrix_to_atom[1, 1],1;int(1..)]) = 0,product([M#matrix_to_atom[1, 1],2;int(1..)]) = 0,product([M#matrix_to_atom[1, 1],3;int(1..)]) = 0,product([M#matrix_to_atom[1, 2],1;int(1..)]) = 0,product([M#matrix_to_atom[1, 2],2;int(1..)]) = 0,product([M#matrix_to_atom[1, 2],3;int(1..)]) = 0,product([M#matrix_to_atom[1, 3],1;int(1..)]) = 0,product([M#matrix_to_atom[1, 3],2;int(1..)]) = 0,product([M#matrix_to_atom[1, 3],3;int(1..)]) = 0,product([M#matrix_to_atom[2, 1],1;int(1..)]) = 0,product([M#matrix_to_atom[2, 1],2;int(1..)]) = 0,product([M#matrix_to_atom[2, 1],3;int(1..)]) = 0,product([M#matrix_to_atom[2, 2],1;int(1..)]) = 0,product([M#matrix_to_atom[2, 2],2;int(1..)]) = 0,product([M#matrix_to_atom[2, 2],3;int(1..)]) = 0,product([M#matrix_to_atom[2, 3],1;int(1..)]) = 0,product([M#matrix_to_atom[2, 3],2;int(1..)]) = 0,product([M#matrix_to_atom[2, 3],3;int(1..)]) = 0,product([M#matrix_to_atom[3, 1],1;int(1..)]) = 0,product([M#matrix_to_atom[3, 1],2;int(1..)]) = 0,product([M#matrix_to_atom[3, 1],3;int(1..)]) = 0,product([M#matrix_to_atom[3, 2],1;int(1..)]) = 0,product([M#matrix_to_atom[3, 2],2;int(1..)]) = 0,product([M#matrix_to_atom[3, 2],3;int(1..)]) = 0,product([M#matrix_to_atom[3, 3],1;int(1..)]) = 0,product([M#matrix_to_atom[3, 3],2;int(1..)]) = 0,product([M#matrix_to_atom[3, 3],3;int(1..)]) = 0;int(1..)]),
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2,
+FlatProductEq(M#matrix_to_atom_2_1,2,__1),
+FlatProductEq(M#matrix_to_atom_1_2,2,__2),
+FlatProductEq(M#matrix_to_atom_2_1,3,__3),
+FlatProductEq(M#matrix_to_atom_1_3,2,__4),
+FlatProductEq(M#matrix_to_atom_2_2,3,__5),
+FlatProductEq(M#matrix_to_atom_2_3,2,__6),
+FlatProductEq(M#matrix_to_atom_2_3,2,__7),
+FlatProductEq(M#matrix_to_atom_3_2,2,__8),
+FlatProductEq(M#matrix_to_atom_2_3,3,__9),
+FlatProductEq(M#matrix_to_atom_3_3,2,__10),
+FlatProductEq(M#matrix_to_atom_3_1,2,__11),
+FlatProductEq(M#matrix_to_atom_1_2,3,__12),
+FlatProductEq(M#matrix_to_atom_3_1,3,__13),
+FlatProductEq(M#matrix_to_atom_1_3,3,__14),
+FlatProductEq(M#matrix_to_atom_3_2,2,__15),
+FlatProductEq(M#matrix_to_atom_2_2,3,__16),
+FlatProductEq(M#matrix_to_atom_3_2,3,__17),
+FlatProductEq(M#matrix_to_atom_2_3,3,__18),
+FlatProductEq(M#matrix_to_atom_3_3,2,__19),
+FlatProductEq(M#matrix_to_atom_3_2,3,__20)
+   ~~> constant_evaluator ([("Constant", 9001)])
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+FlatProductEq(M#matrix_to_atom_1_1,2,M#matrix_to_atom_1_2),
+FlatProductEq(M#matrix_to_atom_1_1,3,M#matrix_to_atom_1_3),
+M#matrix_to_atom_1_2 = M#matrix_to_atom_2_1,
+FlatProductEq(M#matrix_to_atom_1_2,2,M#matrix_to_atom_2_2),
+FlatProductEq(M#matrix_to_atom_1_2,3,M#matrix_to_atom_2_3),
+M#matrix_to_atom_1_3 = M#matrix_to_atom_3_1,
+FlatProductEq(M#matrix_to_atom_1_3,2,M#matrix_to_atom_3_2),
+FlatProductEq(M#matrix_to_atom_1_3,3,M#matrix_to_atom_3_3),
+FlatProductEq(M#matrix_to_atom_1_1,2,M#matrix_to_atom_2_1),
+__1 = __2,
+__3 = __4,
+FlatProductEq(M#matrix_to_atom_2_1,2,M#matrix_to_atom_2_2),
+__5 = __6,
+FlatProductEq(M#matrix_to_atom_3_1,2,M#matrix_to_atom_2_3),
+__7 = __8,
+__9 = __10,
+FlatProductEq(M#matrix_to_atom_1_1,3,M#matrix_to_atom_3_1),
+__11 = __12,
+__13 = __14,
+FlatProductEq(M#matrix_to_atom_2_1,3,M#matrix_to_atom_3_2),
+__15 = __16,
+__17 = __18,
+FlatProductEq(M#matrix_to_atom_3_1,3,M#matrix_to_atom_3_3),
+__19 = __20,
+product([M#matrix_to_atom[1, 1],1;int(1..)]) = 0,
+product([M#matrix_to_atom[1, 1],2;int(1..)]) = 0,
+product([M#matrix_to_atom[1, 1],3;int(1..)]) = 0,
+product([M#matrix_to_atom[1, 2],1;int(1..)]) = 0,
+product([M#matrix_to_atom[1, 2],2;int(1..)]) = 0,
+product([M#matrix_to_atom[1, 2],3;int(1..)]) = 0,
+product([M#matrix_to_atom[1, 3],1;int(1..)]) = 0,
+product([M#matrix_to_atom[1, 3],2;int(1..)]) = 0,
+product([M#matrix_to_atom[1, 3],3;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 1],1;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 1],2;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 1],3;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 2],1;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 2],2;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 2],3;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 3],1;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 3],2;int(1..)]) = 0,
+product([M#matrix_to_atom[2, 3],3;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 1],1;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 1],2;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 1],3;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 2],1;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 2],2;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 2],3;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 3],1;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 3],2;int(1..)]) = 0,
+product([M#matrix_to_atom[3, 3],3;int(1..)]) = 0,
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2,
+FlatProductEq(M#matrix_to_atom_2_1,2,__1),
+FlatProductEq(M#matrix_to_atom_1_2,2,__2),
+FlatProductEq(M#matrix_to_atom_2_1,3,__3),
+FlatProductEq(M#matrix_to_atom_1_3,2,__4),
+FlatProductEq(M#matrix_to_atom_2_2,3,__5),
+FlatProductEq(M#matrix_to_atom_2_3,2,__6),
+FlatProductEq(M#matrix_to_atom_2_3,2,__7),
+FlatProductEq(M#matrix_to_atom_3_2,2,__8),
+FlatProductEq(M#matrix_to_atom_2_3,3,__9),
+FlatProductEq(M#matrix_to_atom_3_3,2,__10),
+FlatProductEq(M#matrix_to_atom_3_1,2,__11),
+FlatProductEq(M#matrix_to_atom_1_2,3,__12),
+FlatProductEq(M#matrix_to_atom_3_1,3,__13),
+FlatProductEq(M#matrix_to_atom_1_3,3,__14),
+FlatProductEq(M#matrix_to_atom_3_2,2,__15),
+FlatProductEq(M#matrix_to_atom_2_2,3,__16),
+FlatProductEq(M#matrix_to_atom_3_2,3,__17),
+FlatProductEq(M#matrix_to_atom_2_3,3,__18),
+FlatProductEq(M#matrix_to_atom_3_3,2,__19),
+FlatProductEq(M#matrix_to_atom_3_2,3,__20)
+
+--
+
+product([M#matrix_to_atom[1, 1],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 1];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[1, 1]
+
+--
+
+product([M#matrix_to_atom[1, 1],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[1, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 1],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[1, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 2],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 2];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[1, 2]
+
+--
+
+product([M#matrix_to_atom[1, 2],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[1, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 2],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[1, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 3],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[1, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 3];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[1, 3]
+
+--
+
+product([M#matrix_to_atom[1, 3],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[1, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[1, 3],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[1, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 1],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 1];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[2, 1]
+
+--
+
+product([M#matrix_to_atom[2, 1],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 1],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 2],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 2];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[2, 2]
+
+--
+
+product([M#matrix_to_atom[2, 2],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 2],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 3],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[2, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 3];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[2, 3]
+
+--
+
+product([M#matrix_to_atom[2, 3],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[2, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[2, 3],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[2, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 1],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 1];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[3, 1]
+
+--
+
+product([M#matrix_to_atom[3, 1],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[3, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 1],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[3, 1];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 2],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 2];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[3, 2]
+
+--
+
+product([M#matrix_to_atom[3, 2],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[3, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 2],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[3, 2];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 3],1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#matrix_to_atom[3, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 3];int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+M#matrix_to_atom[3, 3]
+
+--
+
+product([M#matrix_to_atom[3, 3],2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,M#matrix_to_atom[3, 3];int(1..)])
+
+--
+
+product([M#matrix_to_atom[3, 3],3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,M#matrix_to_atom[3, 3];int(1..)])
+
+--
+
+M#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 1])
+
+--
+
+M#matrix_to_atom_1_1 = 1,
+M#matrix_to_atom_2_2 = 1,
+M#matrix_to_atom_3_3 = 1,
+FlatProductEq(M#matrix_to_atom_1_1,2,M#matrix_to_atom_1_2),
+FlatProductEq(M#matrix_to_atom_1_1,3,M#matrix_to_atom_1_3),
+M#matrix_to_atom_1_2 = M#matrix_to_atom_2_1,
+FlatProductEq(M#matrix_to_atom_1_2,2,M#matrix_to_atom_2_2),
+FlatProductEq(M#matrix_to_atom_1_2,3,M#matrix_to_atom_2_3),
+M#matrix_to_atom_1_3 = M#matrix_to_atom_3_1,
+FlatProductEq(M#matrix_to_atom_1_3,2,M#matrix_to_atom_3_2),
+FlatProductEq(M#matrix_to_atom_1_3,3,M#matrix_to_atom_3_3),
+FlatProductEq(M#matrix_to_atom_1_1,2,M#matrix_to_atom_2_1),
+__1 = __2,
+__3 = __4,
+FlatProductEq(M#matrix_to_atom_2_1,2,M#matrix_to_atom_2_2),
+__5 = __6,
+FlatProductEq(M#matrix_to_atom_3_1,2,M#matrix_to_atom_2_3),
+__7 = __8,
+__9 = __10,
+FlatProductEq(M#matrix_to_atom_1_1,3,M#matrix_to_atom_3_1),
+__11 = __12,
+__13 = __14,
+FlatProductEq(M#matrix_to_atom_2_1,3,M#matrix_to_atom_3_2),
+__15 = __16,
+__17 = __18,
+FlatProductEq(M#matrix_to_atom_3_1,3,M#matrix_to_atom_3_3),
+__19 = __20,
+SafeIndex(M#matrix_to_atom,[1, 1]) = 0,
+product([2,M#matrix_to_atom[1, 1];int(1..)]) = 0,
+product([3,M#matrix_to_atom[1, 1];int(1..)]) = 0,
+M#matrix_to_atom[1, 2] = 0,
+product([2,M#matrix_to_atom[1, 2];int(1..)]) = 0,
+product([3,M#matrix_to_atom[1, 2];int(1..)]) = 0,
+M#matrix_to_atom[1, 3] = 0,
+product([2,M#matrix_to_atom[1, 3];int(1..)]) = 0,
+product([3,M#matrix_to_atom[1, 3];int(1..)]) = 0,
+M#matrix_to_atom[2, 1] = 0,
+product([2,M#matrix_to_atom[2, 1];int(1..)]) = 0,
+product([3,M#matrix_to_atom[2, 1];int(1..)]) = 0,
+M#matrix_to_atom[2, 2] = 0,
+product([2,M#matrix_to_atom[2, 2];int(1..)]) = 0,
+product([3,M#matrix_to_atom[2, 2];int(1..)]) = 0,
+M#matrix_to_atom[2, 3] = 0,
+product([2,M#matrix_to_atom[2, 3];int(1..)]) = 0,
+product([3,M#matrix_to_atom[2, 3];int(1..)]) = 0,
+M#matrix_to_atom[3, 1] = 0,
+product([2,M#matrix_to_atom[3, 1];int(1..)]) = 0,
+product([3,M#matrix_to_atom[3, 1];int(1..)]) = 0,
+M#matrix_to_atom[3, 2] = 0,
+product([2,M#matrix_to_atom[3, 2];int(1..)]) = 0,
+product([3,M#matrix_to_atom[3, 2];int(1..)]) = 0,
+M#matrix_to_atom[3, 3] = 0,
+product([2,M#matrix_to_atom[3, 3];int(1..)]) = 0,
+product([3,M#matrix_to_atom[3, 3];int(1..)]) = 0,
+and([ (a != b) -> (M#matrix_to_atom[a, b] = M#matrix_to_atom[b, a]) | a : D, b : D ]),
+__0 =aux occurrences#matrix_to_atom_2,
+FlatProductEq(M#matrix_to_atom_2_1,2,__1),
+FlatProductEq(M#matrix_to_atom_1_2,2,__2),
+FlatProductEq(M#matrix_to_atom_2_1,3,__3),
+FlatProductEq(M#matrix_to_atom_1_3,2,__4),
+FlatProductEq(M#matrix_to_atom_2_2,3,__5),
+FlatProductEq(M#matrix_to_atom_2_3,2,__6),
+FlatProductEq(M#matrix_to_atom_2_3,2,__7),
+FlatProductEq(M#matrix_to_atom_3_2,2,__8),
+FlatProductEq(M#matrix_to_atom_2_3,3,__9),
+FlatProductEq(M#matrix_to_atom_3_3,2,__10),
+FlatProductEq(M#matrix_to_atom_3_1,2,__11),
+FlatProductEq(M#matrix_to_atom_1_2,3,__12),
+FlatProductEq(M#matrix_to_atom_3_1,3,__13),
+FlatProductEq(M#matrix_to_atom_1_3,3,__14),
+FlatProductEq(M#matrix_to_atom_3_2,2,__15),
+FlatProductEq(M#matrix_to_atom_2_2,3,__16),
+FlatProductEq(M#matrix_to_atom_3_2,3,__17),
+FlatProductEq(M#matrix_to_atom_2_3,3,__18),
+FlatProductEq(M#matrix_to_atom_3_3,2,__19),
+FlatProductEq(M#matrix_to_atom_3_2,3,__20)
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
+Final model:
+
+letting n be 3
+letting abelian be true
+letting rank3 be true
+letting D be domain int(1..n)
+letting diagonal be [1,1,1;int(1..3)]
+find M: matrix indexed by [D, D] of D
+find occurrences: matrix indexed by [D] of int(1..(product([n,n;int(1..)])))
+find __0: int(1..(product([n,n;int(1..)])))
+find M#matrix_to_atom_1_1: int(1..3)
+find M#matrix_to_atom_1_2: int(1..3)
+find M#matrix_to_atom_1_3: int(1..3)
+find M#matrix_to_atom_2_1: int(1..3)
+find M#matrix_to_atom_2_2: int(1..3)
+find M#matrix_to_atom_2_3: int(1..3)
+find M#matrix_to_atom_3_1: int(1..3)
+find M#matrix_to_atom_3_2: int(1..3)
+find M#matrix_to_atom_3_3: int(1..3)
+find occurrences#matrix_to_atom_1: int(1..9)
+find occurrences#matrix_to_atom_2: int(1..9)
+find occurrences#matrix_to_atom_3: int(1..9)
+find __1: int(2..6)
+find __2: int(2..6)
+find __3: int(3..9)
+find __4: int(2..6)
+find __5: int(3..9)
+find __6: int(2..6)
+find __7: int(2..6)
+find __8: int(2..6)
+find __9: int(3..9)
+find __10: int(2..6)
+find __11: int(2..6)
+find __12: int(3..9)
+find __13: int(3..9)
+find __14: int(3..9)
+find __15: int(2..6)
+find __16: int(3..9)
+find __17: int(3..9)
+find __18: int(3..9)
+find __19: int(2..6)
+find __20: int(3..9)
+
+such that
+
+false
+

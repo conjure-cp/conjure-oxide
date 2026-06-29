@@ -1,7 +1,7 @@
 // Supset rule for sets
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Expression as Expr, Moo, ReturnType, SymbolTable, Typeable};
-use conjure_cp::rule_engine::Reduction;
+use conjure_cp::rule_engine::RuleEffect;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
@@ -13,7 +13,7 @@ fn neq_not_eq_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if matches!(a.as_ref().return_type(), ReturnType::Set(_))
                 && matches!(b.as_ref().return_type(), ReturnType::Set(_)) =>
         {
-            Ok(Reduction::pure(Expr::Not(
+            Ok(RuleEffect::pure(Expr::Not(
                 Metadata::new(),
                 Moo::new(Expr::Eq(Metadata::new(), b.clone(), a.clone())),
             )))

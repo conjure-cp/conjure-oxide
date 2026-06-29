@@ -5,7 +5,7 @@ use conjure_cp::ast::SymbolTable;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use conjure_cp::ast::Atom;
@@ -68,7 +68,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
     let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
-    Ok(Reduction::pure(subject))
+    Ok(RuleEffect::pure(subject))
 }
 
 #[register_rule("Bubble", 8000, [UnsafeIndex])]
@@ -126,7 +126,7 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         indices.clone(),
     ));
 
-    Ok(Reduction::pure(Expression::Bubble(
+    Ok(RuleEffect::pure(Expression::Bubble(
         Metadata::new(),
         new_expr,
         bubble_constraint,
@@ -217,7 +217,7 @@ fn tuple_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Moo::new(into_matrix_expr!(equality_constraints)),
     );
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 //tuple equality where the left is a variable and the right is a tuple literal
@@ -288,7 +288,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Moo::new(into_matrix_expr!(equality_constraints)),
     );
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 // convert equality to tuple inequality
@@ -379,5 +379,5 @@ fn tuple_inequality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         )),
     );
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }

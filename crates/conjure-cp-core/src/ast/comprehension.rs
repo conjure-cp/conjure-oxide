@@ -2,7 +2,6 @@
 
 use std::{collections::BTreeSet, fmt::Display};
 
-use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools as _;
 use parking_lot::RwLockReadGuard;
@@ -11,8 +10,8 @@ use serde_with::serde_as;
 use uniplate::{Biplate, Uniplate};
 
 use super::{
-    DeclarationPtr, Domain, DomainPtr, Expression, Model, Moo, Name, Range, SymbolTable,
-    SymbolTablePtr, Typeable,
+    DeclarationPtr, Domain, DomainPtr, Expression, Model, Name, Range, SymbolTable, SymbolTablePtr,
+    Typeable,
     ac_operators::ACOperatorKind,
     categories::{Category, CategoryOf},
     serde::{AsId, PtrAsInner},
@@ -45,6 +44,10 @@ pub enum ComprehensionQualifier {
 pub struct Comprehension {
     pub return_expression: Expression,
     pub qualifiers: Vec<ComprehensionQualifier>,
+    /// When this comprehension appears inside an AC operator, records which operator so
+    /// expansion can apply the correct skip semantics for symbolic guards.
+    #[serde(default)]
+    pub skip_operator: Option<ACOperatorKind>,
     #[doc(hidden)]
     #[serde_as(as = "PtrAsInner")]
     pub symbols: SymbolTablePtr,
@@ -246,72 +249,14 @@ impl ComprehensionBuilder {
 
     /// Creates a comprehension with the given return expression.
     ///
-    /// If this comprehension is inside an AC-operator, the kind of this operator should be passed
-    /// in the `comprehension_kind` field.
-    ///
-    /// If a comprehension kind is not given, comprehension guards containing non-quantified
-    /// decision variables are invalid, and will cause a panic.
-    pub fn with_return_value(
-        self,
-        mut expression: Expression,
-        comprehension_kind: Option<ACOperatorKind>,
-    ) -> Comprehension {
-        let quantified_variables = self.quantified_variables;
-        let symbols = self.symbols.read();
-
-        let mut qualifiers = Vec::new();
-        let mut other_guards = Vec::new();
-
-        for qualifier in self.qualifiers {
-            match qualifier {
-                ComprehensionQualifier::Generator { .. } => qualifiers.push(qualifier),
-                ComprehensionQualifier::ExpressionGenerator { .. } => qualifiers.push(qualifier),
-                ComprehensionQualifier::Condition(condition) => {
-                    if is_quantified_guard(&symbols, &quantified_variables, &condition) {
-                        qualifiers.push(ComprehensionQualifier::Condition(condition));
-                    } else {
-                        other_guards.push(condition);
-                    }
-                }
-            }
-        }
-        drop(symbols);
-
-        // handle guards that reference non-quantified decision variables
-        if !other_guards.is_empty() {
-            let comprehension_kind = comprehension_kind.expect(
-                "if any guards reference decision variables, a comprehension kind should be given",
-            );
-
-            let guard_expr = match other_guards.as_slice() {
-                [x] => x.clone(),
-                xs => Expression::And(Metadata::new(), Moo::new(into_matrix_expr!(xs.to_vec()))),
-            };
-
-            expression = match comprehension_kind {
-                ACOperatorKind::And => {
-                    Expression::Imply(Metadata::new(), Moo::new(guard_expr), Moo::new(expression))
-                }
-                ACOperatorKind::Or => Expression::And(
-                    Metadata::new(),
-                    Moo::new(matrix_expr![guard_expr, expression]),
-                ),
-
-                ACOperatorKind::Sum => {
-                    panic!("guards that reference decision variables not yet implemented for sum");
-                }
-
-                ACOperatorKind::Product => {
-                    panic!(
-                        "guards that reference decision variables not yet implemented for product"
-                    );
-                }
-            }
-        }
-
+    /// Guards are always stored as [`ComprehensionQualifier::Condition`] entries. When a guard
+    /// references non-quantified decision variables, the enclosing AC operator applies the
+    /// appropriate skip semantics during comprehension expansion.
+    pub fn with_return_value(self, expression: Expression) -> Comprehension {
         Comprehension {
             return_expression: expression,
-            qualifiers,
+            qualifiers: self.qualifiers,
+            skip_operator: None,
             symbols: self.symbols,
         }
     }

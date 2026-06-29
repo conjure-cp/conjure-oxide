@@ -9,12 +9,11 @@ CARGO_LOCKED ?= --locked
 # Extra feature flags to be passed to Cargo (e.g. --features z3-bundled).
 CARGO_FEATURES ?=
 CARGO_TARGET_DIR ?= target
+CARGO_BIN_DIR ?= $(HOME)/.cargo/bin
 DEV_CONTAINER_IMAGE ?= conjure-oxide-dev
 DEV_CONTAINER_FILE ?= Dockerfile.dev
-CARGO_TEST_WORKSPACE = cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
-# Golden files follow the test-suite convention of `.expected` or `-expected-` in the file name.
-# This intentionally ignores config.toml, including expected-time-only changes.
-RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED = if test -n "$$(git status --porcelain -- ':(glob)**/*.expected*' ':(glob)**/*-expected-*')"; then echo "Golden files changed; running tests without ACCEPT"; PATH="$$HOME/.cargo/bin:$$PATH" $(CARGO_TEST_WORKSPACE); else echo "No golden files changed; skipping non-accepting test run"; fi
+CARGO_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+export PATH := $(CARGO_BIN_DIR):$(PATH)
 
 .PHONY: submodules
 ## Initialises git submodules needed for builds
@@ -50,14 +49,14 @@ build: build-release build-debug
 .PHONY: install
 ## Installs release conjure-oxide and debug conjure-oxide-debug to ~/.cargo/bin
 install: build
-	@mkdir -p $$HOME/.cargo/bin
-	@install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
-	@install -m 755 $(CARGO_TARGET_DIR)/debug/conjure-oxide $$HOME/.cargo/bin/conjure-oxide-debug
+	@mkdir -p $(CARGO_BIN_DIR)
+	@install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $(CARGO_BIN_DIR)/conjure-oxide
+	@install -m 755 $(CARGO_TARGET_DIR)/debug/conjure-oxide $(CARGO_BIN_DIR)/conjure-oxide-debug
 
 .PHONY: test
 ## Runs all tests
 test: submodules install
-	PATH="$$HOME/.cargo/bin:$$PATH" $(CARGO_TEST_WORKSPACE)
+	$(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -65,22 +64,19 @@ test-coverage:
 	./tools/coverage.sh
 
 .PHONY: test-accept
-## Runs all tests in accept mode, then in normal mode if golden files changed
+## Runs all tests in accept mode
 test-accept: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true $(CARGO_TEST_WORKSPACE)
-	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
+	ACCEPT=true $(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-accept-with-slower-times
-## Runs all tests in accept mode, only increases expected run times, then in normal mode if golden files changed
+## Runs all tests in accept mode, only increasing expected run times
 test-accept-with-slower-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
-	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
+	ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-accept-with-exact-times
-## Runs all tests in accept mode, updates expected run times exactly, then in normal mode if golden files changed
+## Runs all tests in accept mode, updating expected run times exactly
 test-accept-with-exact-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
-	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
+	ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 
@@ -97,25 +93,6 @@ fix-dirty:
 	cargo fmt --all
 	cargo fix $(CARGO_LOCKED) $(CARGO_FEATURES) --allow-dirty --allow-staged
 	cargo clippy -q $(CARGO_LOCKED) $(CARGO_FEATURES) --fix --allow-dirty --allow-staged
-
-
-.PHONY: build-container
-## Builds the developer container image (Dockerfile.dev)
-build-container:
-	podman build -f $(DEV_CONTAINER_FILE) -t $(DEV_CONTAINER_IMAGE) .
-
-.PHONY: run-in-container
-## Runs a command in the developer container (usage: make run-in-container CMD="make build")
-run-in-container:
-	@test -n "$(CMD)"
-	@podman run --rm -it \
-	  --userns=keep-id \
-	  -e HOME=/tmp \
-	  -e CARGO_HOME=/tmp/cargo \
-	  -v "$$PWD:/work:Z" \
-	  -w /work \
-	  $(DEV_CONTAINER_IMAGE) \
-	  bash -lc 'mkdir -p "$$CARGO_HOME" && exec bash -lc "$(CMD)"'
 
 # install cargo extensions used in this Makefile (cargo-shear)
 .PHONY: install-cargo-extensions

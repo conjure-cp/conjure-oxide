@@ -53,7 +53,6 @@
   - [Representation Rules and Transformation Rules](developers-guide/architecture/rule-types.md)
   - [Essence Parser](developers-guide/architecture/essence-parser/index.md)
     - [ProTrace Module](developers-guide/architecture/essence-parser/protrace-module.md)
-    - [TreeMorph Benchmarking](developers-guide/architecture/essence-parser/treemorph-benchmarking.md)
   - [LSP]()
     - [General Structure](developers-guide/architecture/lsp/general-structure.md)
     - [Demo](developers-guide/architecture/lsp/demo.md)

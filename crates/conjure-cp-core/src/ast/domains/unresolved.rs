@@ -71,8 +71,16 @@ impl UnresolvedDomain {
             UnresolvedDomain::Int(rngs) => rngs
                 .iter()
                 .map(Range::<IntVal>::resolve)
-                .collect::<Result<_, _>>()
-                .map(GroundDomain::Int),
+                .collect::<Result<Vec<_>, _>>()
+                .map(|ranges| {
+                    let ranges = ranges
+                        .into_iter()
+                        .filter(
+                            |range| !matches!(range, Range::Bounded(lower, upper) if lower > upper),
+                        )
+                        .collect::<Vec<_>>();
+                    GroundDomain::Int(Range::squeeze(&ranges))
+                }),
             UnresolvedDomain::Set(attr, inner) => {
                 Ok(GroundDomain::Set(attr.resolve()?, inner.resolve()?))
             }
@@ -228,9 +236,7 @@ impl UnresolvedDomain {
         match self {
             UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
             UnresolvedDomain::Sequence(_, inner_dom) => Some(inner_dom.clone()),
-            UnresolvedDomain::Matrix(_, _) => {
-                todo!("Unwrap one dimension of the domain")
-            }
+            UnresolvedDomain::Matrix(inner, _) => Some(inner.clone()),
             _ => None,
         }
     }
@@ -305,7 +311,14 @@ impl Display for UnresolvedDomain {
                     write!(f, "int")
                 }
             }
-            UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
+            UnresolvedDomain::Set(attrs, inner_dom) => {
+                let attrs = attrs.to_string();
+                if attrs.is_empty() {
+                    write!(f, "set of {inner_dom}")
+                } else {
+                    write!(f, "set {attrs} of {inner_dom}")
+                }
+            }
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
             UnresolvedDomain::Partition(attrs, inner_dom) => {
                 write!(f, "partition {attrs} from {inner_dom}")

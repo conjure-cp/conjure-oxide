@@ -1,0 +1,62 @@
+Model before rewriting:
+
+letting a be 5
+letting b be 3
+letting c be 7
+find x: int(1..20)
+
+such that
+
+or([ allDifferent(flatten(i)) | i : matrix indexed by [int(a, b..c), int(a..b, c)] of int(0..9) ])
+
+--
+
+or([ allDifferent(flatten(i)) | i : matrix indexed by [int(a, b..c), int(a..b, c)] of int(0..9) ])
+   ~~> exists_quantified_to_finds ([("Base", 2003)])
+allDifferent(flatten(__0))
+new variables:
+  find __0: matrix indexed by [int(a, b..c), int(a..b, c)] of int(0..9)
+
+--
+
+allDifferent(flatten(__0#matrix_to_atom))
+   ~~> select_representation_matrix ([("Representations", 8001)])
+allDifferent(flatten(__0#matrix_to_atom))
+new variables:
+  find __0#matrix_to_atom_3_7: int(0..9)
+  find __0#matrix_to_atom_4_7: int(0..9)
+  find __0#matrix_to_atom_5_7: int(0..9)
+  find __0#matrix_to_atom_6_7: int(0..9)
+  find __0#matrix_to_atom_7_7: int(0..9)
+
+--
+
+flatten(__0#matrix_to_atom)
+   ~~> flatten_matrix ([("Base", 8000)])
+[__0#matrix_to_atom_3_7,__0#matrix_to_atom_4_7,__0#matrix_to_atom_5_7,__0#matrix_to_atom_6_7,__0#matrix_to_atom_7_7;int(1..)]
+
+--
+
+allDifferent([__0#matrix_to_atom_3_7,__0#matrix_to_atom_4_7,__0#matrix_to_atom_5_7,__0#matrix_to_atom_6_7,__0#matrix_to_atom_7_7;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([__0#matrix_to_atom_3_7, __0#matrix_to_atom_4_7, __0#matrix_to_atom_5_7, __0#matrix_to_atom_6_7, __0#matrix_to_atom_7_7])
+
+--
+
+Final model:
+
+letting a be 5
+letting b be 3
+letting c be 7
+find x: int(1..20)
+find __0: matrix indexed by [int(a, b..c), int(a..b, c)] of int(0..9)
+find __0#matrix_to_atom_3_7: int(0..9)
+find __0#matrix_to_atom_4_7: int(0..9)
+find __0#matrix_to_atom_5_7: int(0..9)
+find __0#matrix_to_atom_6_7: int(0..9)
+find __0#matrix_to_atom_7_7: int(0..9)
+
+such that
+
+__flat_alldiff([__0#matrix_to_atom_3_7, __0#matrix_to_atom_4_7, __0#matrix_to_atom_5_7, __0#matrix_to_atom_6_7, __0#matrix_to_atom_7_7])
+

@@ -18,7 +18,8 @@ module.exports = grammar ({
           field("atom", $.atom),
           field("bool_expr", $.bool_expr),
           field("comparison_expr", $.comparison_expr),
-          field("arithmetic_expr", $.arithmetic_expr)
+          field("arithmetic_expr", $.arithmetic_expr),
+          field("annotation_expr", $.annotation_expr)
         ))
       ),
       field("find_statement", $.find_statement),
@@ -28,6 +29,7 @@ module.exports = grammar ({
         commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
       ),
       field("letting_statement", $.letting_statement),
+      field("objective_statement", $.objective_statement),
       field("dominance_relation", $.dominance_relation),
     )),
 
@@ -42,8 +44,7 @@ module.exports = grammar ({
       field("false", $.FALSE)
     ),
 
-    integer: $ => choice(/[0-9]+/, /-[0-9]+/),
-    //integer: $ => token(/[0-9]+/),
+    integer: $ => /[0-9]+/,
 
     TRUE: $ => choice("true", "TRUE"),
 
@@ -92,7 +93,7 @@ module.exports = grammar ({
       "int",
       optional(seq(
         "(",
-        field("ranges", $.range_list),
+        optional(field("ranges", $.range_list)),
         ")"
       ))
     ),
@@ -260,7 +261,7 @@ module.exports = grammar ({
         seq(":", field("domain", $.domain))
       ),
       ".",
-      field("expression", choice($.bool_expr, $.comparison_expr))
+      field("expression", choice($.bool_expr, $.comparison_expr, $.atom))
     )),
 
     aggregate_expr: $ => prec(-5, seq(
@@ -287,14 +288,16 @@ module.exports = grammar ({
       $.lex_comparison,
       $.equality_comparison,
       $.set_comparison,
-      $.all_diff_comparison
+      $.all_diff_comparison,
+      $.all_different_except_comparison,
+      $.global_cardinality_comparison
     )),
 
     // Arithmetic comparisons: require arithmetic operands, return boolean
     arithmetic_comparison: $ => prec.left(seq(
-      field("left", choice($.arithmetic_expr, $.atom)),
+      field("left", choice($.arithmetic_expr, $.annotation_expr, $.atom)),
       field("operator", choice("<=", ">=", "<", ">")),
-      field("right", choice($.arithmetic_expr, $.atom))
+      field("right", choice($.arithmetic_expr, $.annotation_expr, $.atom))
     )),
 
     // Lexicographic comparisons: require collection operands, return boolean.
@@ -306,9 +309,9 @@ module.exports = grammar ({
 
     // Equality comparisons: work on any type, return boolean
     equality_comparison: $ => prec.left(seq(
-      field("left", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.atom)),
+      field("left", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.all_different_except_comparison, $.annotation_expr, $.atom)),
       field("operator", choice("=", "!=")),
-      field("right", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.atom))
+      field("right", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.all_different_except_comparison, $.annotation_expr, $.atom))
     )),
 
     // Set comparisons: require set operands, return boolean
@@ -319,9 +322,41 @@ module.exports = grammar ({
     ),
 
     all_diff_comparison: $ => prec(-10, seq(
-      field("operator", "allDiff"),
+      field("operator", choice("allDifferent", "allDiff")),
       "(",
       field("arg", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+      ")"
+    )),
+
+    all_different_except_comparison: $ => prec(-10, seq(
+      field("operator", choice(
+        "allDifferentExcept",
+        "alldifferent_except",
+        "alldiff_except",
+        "allDiffExcept"
+      )),
+      "(",
+      field("matrix", choice($.matrix, $.identifier, $.index_or_slice, $.flatten, $.bool_expr, $.arithmetic_expr)),
+      ",",
+      field("except", choice($.identifier, $.constant, $.index_or_slice, $.sub_arith_expr, $.negative_expr, $.arithmetic_expr)),
+      ")"
+    )),
+
+    global_cardinality_comparison: $ => prec(-10, seq(
+      field("operator", choice(
+        "globalCardinality",
+        "atLeast",
+        "atMost",
+        "atleast",
+        "atmost",
+        "gcc"
+      )),
+      "(",
+      field("variables", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("arg2", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("arg3", choice($.arithmetic_expr, $.atom)),
       ")"
     )),
 
@@ -354,6 +389,7 @@ module.exports = grammar ({
       field("set_literal", $.set_literal),
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
+      field("element_id", $.element_id),
       field("table", $.table),
       field("negative_table", $.negative_table),
       field("pareto_expression", $.pareto_expression)
@@ -384,7 +420,7 @@ module.exports = grammar ({
       optional(field("elements", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)))),
       optional(seq(
         ";",
-        field("domain", choice($.int_domain, $.bool_domain))
+        field("domain", choice($.int_domain, $.bool_domain, $.identifier))
       )),
       "]"
     ),
@@ -401,7 +437,7 @@ module.exports = grammar ({
       "]"
     )),
 
-    generator: $ => choice(
+    generator: $ => prec(30, choice(
       // i : int(1..5)
       seq(
         field("variable", choice($.identifier, $.tuple)),
@@ -414,7 +450,7 @@ module.exports = grammar ({
         "<-",
         field("collection", choice($.arithmetic_expr, $.identifier, $.matrix))
       )
-    ),
+    )),
 
     condition: $ => field("expression", choice($.bool_expr, $.comparison_expr, $.atom)),
 
@@ -445,6 +481,116 @@ module.exports = grammar ({
       field("right", $.atom)
     )),
 
+    annotation_expr: $ => prec(25, choice(
+      $.type_annotation,
+      $.domain_annotation
+    )),
+
+    type_annotation: $ => prec(25, seq(
+      field("left", $.annotation_subject),
+      field("operator", token("::")),
+      field("type", $.annotation_domain)
+    )),
+
+    domain_annotation: $ => prec(25, seq(
+      field("left", $.annotation_subject),
+      field("operator", token(":")),
+      field("domain", $.annotation_domain)
+    )),
+
+    annotation_subject: $ => choice(
+      $.sub_arith_expr,
+      $.sub_bool_expr,
+      $.sub_atom_expr,
+      $.constant,
+      $.identifier,
+      $.metavar,
+      $.matrix,
+      $.comprehension,
+      $.tuple,
+      $.record,
+      $.set_literal,
+      $.index_or_slice,
+      $.flatten,
+      $.element_id
+    ),
+
+    annotation_domain: $ => choice(
+      field("bool_domain", $.bool_domain),
+      field("int_domain", $.annotation_int_domain),
+      field("variable_domain", $.identifier),
+      field("tuple_domain", $.annotation_tuple_domain),
+      field("matrix_domain", $.annotation_matrix_domain),
+      field("record_domain", $.annotation_record_domain),
+      field("set_domain", $.annotation_set_domain),
+    ),
+
+    annotation_int_domain: $ => seq(
+      "int",
+      optional(seq(
+        "(",
+        optional(field("ranges", $.annotation_range_list)),
+        ")"
+      ))
+    ),
+
+    annotation_range_list: $ => commaSep1(choice($.annotation_int_range, $.integer, $.identifier)),
+
+    annotation_int_range: $ => seq(
+      optional(field("lower", choice($.integer, $.identifier))),
+      "..",
+      optional(field("upper", choice($.integer, $.identifier)))
+    ),
+
+    annotation_tuple_domain: $ => choice(
+      seq(
+        "tuple",
+        "(",
+        optional(commaSep1($.annotation_domain)),
+        ")"
+      ),
+      seq(
+        "(",
+        $.annotation_domain,
+        ",",
+        commaSep1($.annotation_domain),
+        ")"
+      )
+    ),
+
+    annotation_matrix_domain: $ => seq(
+      "matrix",
+      optional("indexed"),
+      optional("by"),
+      optional("indexed"),
+      optional("by"),
+      "[",
+      field("index_domain_list", commaSep1($.annotation_domain)),
+      "]",
+      "of",
+      field("value_domain", $.annotation_domain)
+    ),
+
+    annotation_record_domain: $ => seq(
+      "record",
+      "{",
+      commaSep1(field("name_domain_pair", $.annotation_name_domain_pair)),
+      "}"
+    ),
+
+    annotation_name_domain_pair: $ => seq(
+      field("name", $.identifier),
+      ":",
+      field("domain", $.annotation_domain)
+    ),
+
+    annotation_set_domain: $ => seq(
+      "set",
+      optional(seq("(", $.set_attributes, ")")),
+      "of",
+      field("value_domain", $.annotation_domain)
+    ),
+
     // binary_set_operation: $ => prec.left(seq(
     //   field("left", $.atom),
     //   choice("union", "intersect"),
@@ -464,21 +610,30 @@ module.exports = grammar ({
       ")"
     ),
 
+    element_id: $ => seq(
+      "elementId",
+      "(",
+      field("matrix", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      ",",
+      field("value", choice($.identifier, $.index_or_slice, $.constant, $.sub_arith_expr, $.negative_expr, $.abs_value, $.factorial_expr)),
+      ")"
+    ),
+
     table: $ => seq(
       "table",
       "(",
-      field("variables", $.matrix),
+      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", $.matrix),
+      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 
     negative_table: $ => seq(
-      "negativeTable",
+      choice("negativeTable", "negative_table"),
       "(",
-      field("variables", $.matrix),
+      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", $.matrix),
+      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 
@@ -498,31 +653,31 @@ module.exports = grammar ({
     )),
     
     exponent: $ => prec(18, prec.right(seq(
-      field("left", choice($.arithmetic_expr, $.atom)), 
+      field("left", choice($.arithmetic_expr, $.annotation_expr, $.atom)), 
       field("operator", "**"),
-      field("right", choice($.arithmetic_expr, $.atom))
+      field("right", choice($.arithmetic_expr, $.annotation_expr, $.atom))
     ))),
 
     product_expr: $ => prec(10, prec.left(seq(
-      field("left", choice($.arithmetic_expr, $.atom)), 
+      field("left", choice($.arithmetic_expr, $.annotation_expr, $.atom)), 
       field("operator", $.mulitcative_op), 
-      field("right", choice($.arithmetic_expr, $.atom))
+      field("right", choice($.arithmetic_expr, $.annotation_expr, $.atom))
     ))),
     
     mulitcative_op: $ => choice("*", "/", "%"),
     
     sum_expr: $ => prec(1, prec.left(seq(
-      field("left", choice($.arithmetic_expr, $.atom)), 
+      field("left", choice($.arithmetic_expr, $.annotation_expr, $.atom)), 
       field("operator", $.additive_op), 
-      field("right", choice($.arithmetic_expr, $.atom))
+      field("right", choice($.arithmetic_expr, $.annotation_expr, $.atom))
     ))),
 
     additive_op: $ => choice("+", "-"),
 
     list_combining_expr_arith: $ => prec(-10, seq(
-      field("operator", choice("min", "max", "sum")),
+      field("operator", choice("min", "max", "sum", "product")),
       "(",
-      field("arg", $.atom),
+      field("arg", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.annotation_expr, $.atom)),
       ")"
     )),
 
@@ -536,6 +691,11 @@ module.exports = grammar ({
     pareto_items: $ => commaSep1($.pareto_item),
 
     pareto_item: $ => seq(
+      field("direction", choice("minimising", "maximising")),
+      field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom))
+    ),
+
+    objective_statement: $ => seq(
       field("direction", choice("minimising", "maximising")),
       field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom))
     ),

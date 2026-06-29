@@ -3,7 +3,7 @@ use conjure_cp::{
     bug,
     representation::Representation,
     rule_engine::{
-        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
         register_rule_set,
     },
     settings::SolverFamily,
@@ -48,6 +48,13 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             return None;
         };
 
+        // `matrix_to_atom` can only be initialised for finite matrix domains.
+        // Expression-generator rewrites can introduce temporary matrices like
+        // `matrix indexed by [int(1..)] of ...`, which should be left alone here.
+        if !resolved_domain.is_finite() {
+            return None;
+        }
+
         // TODO: loosen these requirements once we are able to
         if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
             return None;
@@ -73,14 +80,17 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         // If this var has no represnetation yet, the below call to get_or_add will modify the
         // symbol table by adding the representation and represented variable declarations to the
         // symbol table.
-        if symbols.representations_for(&name).unwrap().is_empty() {
+        let Some(existing_reprs) = symbols.representations_for(&name) else {
+            continue;
+        };
+        if existing_reprs.is_empty() {
             has_changed.store(true, Ordering::Relaxed);
         }
 
         // (creates the represented variables as a side effect)
-        let _ = symbols
-            .get_or_add_representation(&name, &["matrix_to_atom"])
-            .unwrap();
+        let Some(_) = symbols.get_or_add_representation(&name, &["matrix_to_atom"]) else {
+            continue;
+        };
 
         let old_name = name.clone();
         let new_name =
@@ -103,7 +113,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     }
 
     if has_changed.load(Ordering::Relaxed) {
-        Ok(Reduction::with_symbols(expr, symbols))
+        Ok(RuleEffect::with_symbols(expr, symbols))
     } else {
         Err(RuleNotApplicable)
     }
@@ -153,7 +163,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     let mut decl_ptr = decl.clone().into_ptr().detach();
     decl_ptr.replace_name(new_name);
 
-    Ok(Reduction::with_symbols(
+    Ok(RuleEffect::with_symbols(
         Expr::Atomic(
             Metadata::new(),
             Atom::Reference(conjure_cp::ast::Reference::new(decl_ptr)),

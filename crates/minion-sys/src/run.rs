@@ -448,6 +448,19 @@ unsafe fn convert_model_to_raw(
         ffi::instance_addConstraint(instance, raw_constraint.ptr);
     }
 
+    if let Some(optimisation) = &model.optimisation {
+        let c_str = CString::new(optimisation.var.clone()).map_err(|_| {
+            anyhow!(
+                "Optimisation variable name {:?} contains a null character.",
+                optimisation.var
+            )
+        })?;
+        let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+        check_minion_result(var_result.result)?;
+        let mut optimise_var = var_result.var;
+        ffi::instance_setOptimise(instance, optimisation.minimising, &mut optimise_var);
+    }
+
     Ok(())
 }
 
@@ -706,8 +719,12 @@ unsafe fn constraint_add_args(
             Ok(())
         }
         //Constraint::LitSumGeq(_, _, _) => todo!(),
-        //Constraint::Gcc(_, _, _) => todo!(),
-        //Constraint::GccWeak(_, _, _) => todo!(),
+        Constraint::Gcc(vars, values, counts) | Constraint::GccWeak(vars, values, counts) => {
+            read_list(i, r_constr, vars)?;
+            read_constant_list(r_constr, values)?;
+            read_list(i, r_constr, counts)?;
+            Ok(())
+        }
         //Constraint::LexLeqRv(_, _) => todo!(),
         //Constraint::LexLeqQuick(_, _) => todo!(),
         //Constraint::LexLessQuick(_, _) => todo!(),
