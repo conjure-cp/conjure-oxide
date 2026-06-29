@@ -7,27 +7,25 @@ We love your input! We want to make contributing to this project as easy and tra
 - Proposing new features
 - Becoming a maintainer
 
-## Where are we
-- We use GitHub to host code, to track issues and feature requests, as well as accept pull requests.
+## Where to find us
+- We use GitHub to host code, track issues and feature requests, and accept pull requests.
 - There is also [Conjure Zulip](https://conjure.zulipchat.com/join/gtrnmpmlnzbfwgjgps26vbzc).
 - At St Andrews, we are running a [Vertically Integrated Project on Conjure](https://ozgurakgun.github.io/vip). If you are a student on this project, you will also be added to an MS Teams team.
 
 ## GitHub Flow
 
-We Use [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow), so all code changes happen through pull requests
-
 Pull requests are the best way to propose changes to the codebase (we use [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)). We actively welcome your pull requests:
 
-1. Fork the repo, create a branch, do not develop on `main`.
+1. Fork the repo, create a branch, and do not develop on `main`.
 2. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
 3. Keep the PR in draft status until you think it's ready to be merged.
-4. Assign PR to reviewer(s) when it's ready to be merged.
+4. Assign the PR to reviewer(s) when it's ready to be merged.
    - If you are working as part of a group, ask for code reviews from the rest of the group. Once everyone in the group is happy, proceed to the next step.
    - Only Oz (@ozgurakgun) can merge PRs, so add him as a reviewer when you want your PR to be merged.
-5. Getting your PR merged.
+5. Get your PR merged.
    - We squash-merge PRs by default. Do not worry about keeping history on your PR branch "clean".
    - During reviewing, avoid force-pushing to the pull request, as this makes reviewing more difficult. You may force-push on draft PRs if you really want to.
-   - If you keen to keep history clean in the PR, consider using fixup commits using Git's [built-in support for fixups](http://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordcommit).
+   - If you are keen to keep history clean in the PR, consider using fixup commits using Git's [built-in support for fixups](http://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordcommit).
      - You can make changes to a commit by running `git commit --fixup <commit>`.
      - You can squash fixup commits on top of their original commits by running `git rebase --autosquash main` and then force pushing to the branch.
      - We have CI checks to block accidental merging of `fixup!` commits.
@@ -36,7 +34,7 @@ Pull requests are the best way to propose changes to the codebase (we use [GitHu
 ## Reporting bugs
 We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/conjure-cp/conjure-oxide/issues/new); it's that easy!
 
-Write bug reports with detail, background, and sample code. Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html) for how to effectively report Bugs. [This is an example](https://stackoverflow.com/q/12488905/180626) of a well written bug report. 
+Write bug reports with detail, background, and sample code. Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html) for how to effectively report bugs. [This is an example](https://stackoverflow.com/q/12488905/180626) of a well-written bug report.
 
 Great bug reports tend to have:
   - A quick summary and/or background
@@ -50,11 +48,15 @@ People *love* thorough bug reports. I'm not even kidding.
 ## Hygiene: code layout, style, linting
 - Run `make check` in the project directory to automatically check for hygiene.
 - Run `make fix` to apply fixes automatically.
-- There is also `make fix-dirty` which works when there are uncommitted changes.
+- Use `make fix-dirty` when there are uncommitted changes.
 
-## House style
+## House rules
 
-These conventions are more specific than the general coding style above.
+These project conventions are more specific than the general guidance above.
+
+### Tooling
+
+- Use the Makefile for the standard install, test, and check workflows. Prefer `make` targets over running `cargo` commands directly.
 
 ### Language
 
@@ -73,20 +75,21 @@ These conventions are more specific than the general coding style above.
 - Use `TEST_CASE_TIMEOUT=N` to set a per-test timeout for integration tests.
 - When recording artefacts from a timeout-bounded run, record the timeout value explicitly in the relevant `config.toml` file.
 
+### Test Artefacts
+
+- Update trace files when the test output has changed for a good reason. Do not try to keep trace files unchanged for their own sake.
+- Update `stats.toml` files when the recorded statistics have changed for a good reason, especially when non-time features change.
+- Avoid committing `stats.toml` updates when only timings have changed by a small amount, to avoid unnecessary churn.
+
 ### Commits
 
 - Never commit code changes and test artefact/config updates in the same commit.
-- Commit code and harness changes first, with a normal semantic commit message.
+- Commit code and harness changes first, with a normal Conventional Commit-style subject.
 - Commit generated or recorded test updates separately, using
   `chore(test-suite): ...` in the subject line.
 - Reserve `test(test-suite):` for changes to test code or harness logic.
 
-
-
-
-
-
-# The Book
+## The Book
 
 Exists.
 
