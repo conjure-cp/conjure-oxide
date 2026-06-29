@@ -44,7 +44,13 @@ and([SafeIndex(a#matrix_to_atom,[1]) != b#matrix_to_atom[1],false;int(1..)])
 
 --
 
-or([and([SafeIndex(a#matrix_to_atom,[1]) != b#matrix_to_atom[1],false;int(1..)]),a#matrix_to_atom[2] != b#matrix_to_atom[2],a#matrix_to_atom[3] != b#matrix_to_atom[3];int(1..)])
+and([SafeIndex(a#matrix_to_atom,[1]) != b#matrix_to_atom[1],false;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
+or([false,a#matrix_to_atom[2] != b#matrix_to_atom[2],a#matrix_to_atom[3] != b#matrix_to_atom[3];int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
 or([a#matrix_to_atom[2] != b#matrix_to_atom[2],a#matrix_to_atom[3] != b#matrix_to_atom[3];int(1..)])
 
@@ -86,7 +92,13 @@ and([SafeIndex(a#matrix_to_atom,[3]) != SafeIndex(b#matrix_to_atom,[3]),false;in
 
 --
 
-or([SafeIndex(a#matrix_to_atom,[2]) != SafeIndex(b#matrix_to_atom,[2]),and([SafeIndex(a#matrix_to_atom,[3]) != SafeIndex(b#matrix_to_atom,[3]),false;int(1..)]);int(1..)])
+and([SafeIndex(a#matrix_to_atom,[3]) != SafeIndex(b#matrix_to_atom,[3]),false;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
+or([SafeIndex(a#matrix_to_atom,[2]) != SafeIndex(b#matrix_to_atom,[2]),false;int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
 or([SafeIndex(a#matrix_to_atom,[2]) != SafeIndex(b#matrix_to_atom,[2]);int(1..)])
 

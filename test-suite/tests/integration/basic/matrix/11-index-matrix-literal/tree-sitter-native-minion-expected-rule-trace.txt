@@ -21,9 +21,15 @@ SafeIndex([j,2,3,4,(j / 2),6;int(1..6)],[i])
 
 --
 
-SafeIndex([j,2,3,4,{SafeDiv(j, 2) @ 2 != 0},6;int(1..6)],[i]) = i
+2 != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-SafeIndex([j,2,3,4,SafeDiv(j, 2),6;int(1..6)],[i]) = i
+true
+
+--
+
+{SafeDiv(j, 2) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeDiv(j, 2)
 
 --
 

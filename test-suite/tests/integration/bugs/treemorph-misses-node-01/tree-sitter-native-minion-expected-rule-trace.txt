@@ -16,9 +16,39 @@ such that
 
 --
 
-{SafePow(c, 2) @ and([or([c != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])} = sum([(a ** 2),(b ** 2);int(1..2)])
+c != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-SafePow(c, 2) = sum([(a ** 2),(b ** 2);int(1..2)])
+true
+
+--
+
+2 != 0
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+2 >= 0
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+or([true,true;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+and([true,true;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+{SafePow(c, 2) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafePow(c, 2)
 
 --
 
@@ -28,9 +58,39 @@ SafePow(c, 2) = sum([(a ** 2),(b ** 2);int(1..2)])
 
 --
 
-SafePow(c, 2) = sum([{SafePow(a, 2) @ and([or([a != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])},(b ** 2);int(1..2)])
+a != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-SafePow(c, 2) = sum([SafePow(a, 2),(b ** 2);int(1..2)])
+true
+
+--
+
+2 != 0
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+2 >= 0
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+or([true,true;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+and([true,true;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+{SafePow(a, 2) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafePow(a, 2)
 
 --
 
@@ -40,9 +100,39 @@ SafePow(c, 2) = sum([SafePow(a, 2),(b ** 2);int(1..2)])
 
 --
 
-SafePow(c, 2) = sum([SafePow(a, 2),{SafePow(b, 2) @ and([or([b != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])};int(1..2)])
+b != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-SafePow(c, 2) = sum([SafePow(a, 2),SafePow(b, 2);int(1..2)])
+true
+
+--
+
+2 != 0
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+2 >= 0
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+or([true,true;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+and([true,true;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+{SafePow(b, 2) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafePow(b, 2)
 
 --
 

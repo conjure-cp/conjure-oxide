@@ -18,17 +18,27 @@ new variables:
 
 --
 
+x
+   ~~> select_representation ([("Representations", 8000)])
+x#tuple_to_atom
+
+--
+
 x#tuple_to_atom[1]
    ~~> tuple_index_to_bubble ([("Bubble", 8000)])
 {SafeIndex(x#tuple_to_atom,[1]) @ and([1 <= 2,1 >= 1;int(1..)])}
 
 --
 
-{SafeIndex(x#tuple_to_atom,[1]) @ and([1 <= 2,1 >= 1;int(1..)])} = false,
-x[2] = 2
+and([1 <= 2,1 >= 1;int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
-SafeIndex(x#tuple_to_atom,[1]) = false,
-x[2] = 2
+true
+
+--
+
+{SafeIndex(x#tuple_to_atom,[1]) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeIndex(x#tuple_to_atom,[1])
 
 --
 
@@ -38,11 +48,15 @@ x#tuple_to_atom[2]
 
 --
 
-SafeIndex(x#tuple_to_atom,[1]) = false,
-{SafeIndex(x#tuple_to_atom,[2]) @ and([2 <= 2,2 >= 1;int(1..)])} = 2
+and([2 <= 2,2 >= 1;int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
-SafeIndex(x#tuple_to_atom,[1]) = false,
-SafeIndex(x#tuple_to_atom,[2]) = 2
+true
+
+--
+
+{SafeIndex(x#tuple_to_atom,[2]) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeIndex(x#tuple_to_atom,[2])
 
 --
 

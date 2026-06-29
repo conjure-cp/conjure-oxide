@@ -33,9 +33,15 @@ product([3,c,d;int(1..)])
 
 --
 
-sum([product([2,a;int(1..)]),product([2,b;int(1..)]),product([3,c,d;int(1..)]),{SafeDiv(e, f) @ f != 0},product([6,(g / h);int(1..)]),-(a),-((g / h));int(1..)]) <= 18
+f != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-sum([product([2,a;int(1..)]),product([2,b;int(1..)]),product([3,c,d;int(1..)]),SafeDiv(e, f),product([6,(g / h);int(1..)]),-(a),-((g / h));int(1..)]) <= 18
+true
+
+--
+
+{SafeDiv(e, f) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeDiv(e, f)
 
 --
 
@@ -45,15 +51,33 @@ sum([product([2,a;int(1..)]),product([2,b;int(1..)]),product([3,c,d;int(1..)]),S
 
 --
 
-sum([product([2,a;int(1..)]),product([2,b;int(1..)]),product([3,c,d;int(1..)]),SafeDiv(e, f),product([6,{SafeDiv(g, h) @ h != 0};int(1..)]),-(a),-((g / h));int(1..)]) <= 18
+h != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-sum([product([2,a;int(1..)]),product([2,b;int(1..)]),product([3,c,d;int(1..)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..)]),-(a),-((g / h));int(1..)]) <= 18
+true
 
 --
 
-sum([product([2,a;int(1..)]),product([2,b;int(1..)]),product([3,c,d;int(1..)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..)]),-(a),-({SafeDiv(g, h) @ h != 0});int(1..)]) <= 18
+{SafeDiv(g, h) @ true}
    ~~> constant_evaluator ([("Constant", 9001)])
-sum([product([2,a;int(1..)]),product([2,b;int(1..)]),product([3,c,d;int(1..)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..)]),-(a),-(SafeDiv(g, h));int(1..)]) <= 18
+SafeDiv(g, h)
+
+--
+
+(g / h)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(g, h) @ h != 0}
+
+--
+
+h != 0
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+{SafeDiv(g, h) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeDiv(g, h)
 
 --
 
@@ -107,15 +131,15 @@ DivEq(e, f, __3)
 
 --
 
-__4 =aux SafeDiv(g, h)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(g, h, __4)
-
---
-
 __5 =aux SafeDiv(g, h)
    ~~> introduce_diveq ([("Minion", 4200)])
 DivEq(g, h, __5)
+
+--
+
+__4 =aux SafeDiv(g, h)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(g, h, __4)
 
 --
 

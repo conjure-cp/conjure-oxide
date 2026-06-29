@@ -21,9 +21,9 @@ sum([product([2,j;int(1..)]),-(1);int(1..)])
 
 --
 
-allDifferent([sum([product([2,j;int(1..)]),-(1);int(1..)]),2,3,(i / 2),6;int(1..5)])
+-(1)
    ~~> constant_evaluator ([("Constant", 9001)])
-allDifferent([sum([product([2,j;int(1..)]),-1;int(1..)]),2,3,(i / 2),6;int(1..5)])
+-1
 
 --
 
@@ -33,9 +33,15 @@ allDifferent([sum([product([2,j;int(1..)]),-1;int(1..)]),2,3,(i / 2),6;int(1..5)
 
 --
 
-allDifferent([sum([product([2,j;int(1..)]),-1;int(1..)]),2,3,{SafeDiv(i, 2) @ 2 != 0},6;int(1..5)])
+2 != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-allDifferent([sum([product([2,j;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i, 2),6;int(1..5)])
+true
+
+--
+
+{SafeDiv(i, 2) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeDiv(i, 2)
 
 --
 

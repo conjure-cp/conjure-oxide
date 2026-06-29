@@ -51,12 +51,6 @@ product([toInt(packed[1]);int(1..)])
 
 --
 
-product([toInt(packed[1]);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-toInt(packed[1])
-
---
-
 product([toInt(packed[2]),7;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([7,toInt(packed[2]);int(1..)])
@@ -108,6 +102,12 @@ product([8,toInt(packed[9]);int(1..)])
 product([toInt(packed[10]),4;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([4,toInt(packed[10]);int(1..)])
+
+--
+
+product([toInt(packed[1]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(packed[1])
 
 --
 
@@ -281,12 +281,6 @@ product([toInt(packed#matrix_to_atom[1]);int(1..)])
 
 --
 
-product([toInt(packed#matrix_to_atom[1]);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-toInt(packed#matrix_to_atom[1])
-
---
-
 product([toInt(packed#matrix_to_atom[2]),7;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([7,toInt(packed#matrix_to_atom[2]);int(1..)])
@@ -341,9 +335,9 @@ product([4,toInt(packed#matrix_to_atom[10]);int(1..)])
 
 --
 
-packed#matrix_to_atom[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(packed#matrix_to_atom,[1])
+product([toInt(packed#matrix_to_atom[1]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(packed#matrix_to_atom[1])
 
 --
 
@@ -398,6 +392,12 @@ SafeIndex(packed#matrix_to_atom,[9])
 packed#matrix_to_atom[10]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(packed#matrix_to_atom,[10])
+
+--
+
+packed#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(packed#matrix_to_atom,[1])
 
 --
 

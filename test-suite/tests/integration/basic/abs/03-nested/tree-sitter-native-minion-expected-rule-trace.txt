@@ -22,27 +22,39 @@ sum([(x / 2),y,-(z);int(1..)])
 
 --
 
-(x / 2)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(x, 2) @ 2 != 0}
-
---
-
-sum([|sum([{SafeDiv(x, 2) @ 2 != 0},y,-(z);int(1..)])|,(|y| / 2);int(1..)]) = 10
-   ~~> constant_evaluator ([("Constant", 9001)])
-sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,(|y| / 2);int(1..)]) = 10
-
---
-
 (|y| / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(|y|, 2) @ 2 != 0}
 
 --
 
-sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,{SafeDiv(|y|, 2) @ 2 != 0};int(1..)]) = 10
+2 != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..)]) = 10
+true
+
+--
+
+{SafeDiv(|y|, 2) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeDiv(|y|, 2)
+
+--
+
+(x / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x, 2) @ 2 != 0}
+
+--
+
+2 != 0
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+{SafeDiv(x, 2) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeDiv(x, 2)
 
 --
 
@@ -128,15 +140,15 @@ AbsEq(__4,y)
 
 --
 
-__1 =aux SafeDiv(__4, 2)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__4, 2, __1)
-
---
-
 __3 =aux SafeDiv(x, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
 DivEq(x, 2, __3)
+
+--
+
+__1 =aux SafeDiv(__4, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(__4, 2, __1)
 
 --
 

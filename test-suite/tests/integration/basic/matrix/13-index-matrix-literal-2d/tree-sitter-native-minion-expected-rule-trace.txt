@@ -27,15 +27,15 @@ SafeIndex([SafeIndex([j,2,3;int(1..3)],[i]),SafeIndex([4,(j / 2),6;int(1..3)],[i
 
 --
 
-SafeIndex([SafeIndex([j,2,3;int(1..3)],[i]),SafeIndex([4,{SafeDiv(j, 2) @ 2 != 0},6;int(1..3)],[i]),SafeIndex([j,8,product([9,j;int(1..)]);int(1..3)],[i]);int(1..3)],[i]) = i
+2 != 0
    ~~> constant_evaluator ([("Constant", 9001)])
-SafeIndex([SafeIndex([j,2,3;int(1..3)],[i]),SafeIndex([4,SafeDiv(j, 2),6;int(1..3)],[i]),SafeIndex([j,8,product([9,j;int(1..)]);int(1..3)],[i]);int(1..3)],[i]) = i
+true
 
 --
 
-SafeIndex([SafeIndex([j,2,3;int(1..3)],[i]),SafeIndex([4,SafeDiv(j, 2),6;int(1..3)],[i]),SafeIndex([j,8,product([9,j;int(1..)]);int(1..3)],[i]);int(1..3)],[i])
-   ~~> matrix_to_list ([("Base", 2000)])
-SafeIndex([SafeIndex([j,2,3;int(1..3)],[i]),SafeIndex([4,SafeDiv(j, 2),6;int(1..3)],[i]),SafeIndex([j,8,product([9,j;int(1..)]);int(1..3)],[i]);int(1..)],[i])
+{SafeDiv(j, 2) @ true}
+   ~~> constant_evaluator ([("Constant", 9001)])
+SafeDiv(j, 2)
 
 --
 
@@ -45,15 +45,21 @@ SafeIndex([j,2,3;int(1..)],[i])
 
 --
 
+SafeIndex([j,8,product([9,j;int(1..)]);int(1..3)],[i])
+   ~~> matrix_to_list ([("Base", 2000)])
+SafeIndex([j,8,product([9,j;int(1..)]);int(1..)],[i])
+
+--
+
 SafeIndex([4,SafeDiv(j, 2),6;int(1..3)],[i])
    ~~> matrix_to_list ([("Base", 2000)])
 SafeIndex([4,SafeDiv(j, 2),6;int(1..)],[i])
 
 --
 
-SafeIndex([j,8,product([9,j;int(1..)]);int(1..3)],[i])
+SafeIndex([SafeIndex([j,2,3;int(1..)],[i]),SafeIndex([4,SafeDiv(j, 2),6;int(1..)],[i]),SafeIndex([j,8,product([9,j;int(1..)]);int(1..)],[i]);int(1..3)],[i])
    ~~> matrix_to_list ([("Base", 2000)])
-SafeIndex([j,8,product([9,j;int(1..)]);int(1..)],[i])
+SafeIndex([SafeIndex([j,2,3;int(1..)],[i]),SafeIndex([4,SafeDiv(j, 2),6;int(1..)],[i]),SafeIndex([j,8,product([9,j;int(1..)]);int(1..)],[i]);int(1..)],[i])
 
 --
 

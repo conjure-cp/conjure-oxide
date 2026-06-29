@@ -27,6 +27,12 @@ new variables:
 
 and([true,!(and([schur[1] = schur[1],schur[1] = schur[2];int(1..)])),true,true,true,true,true,true;int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
+and([!(and([schur[1] = schur[1],schur[1] = schur[2];int(1..)]));int(1..)])
+
+--
+
+and([!(and([schur[1] = schur[1],schur[1] = schur[2];int(1..)]));int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
 !(and([schur[1] = schur[1],schur[1] = schur[2];int(1..)]))
 
 --
@@ -49,7 +55,25 @@ SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
-or([!(SafeIndex(schur#matrix_to_atom,[1]) = SafeIndex(schur#matrix_to_atom,[1])),!(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)])
+schur#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(schur#matrix_to_atom,[1])
+
+--
+
+SafeIndex(schur#matrix_to_atom,[1]) = SafeIndex(schur#matrix_to_atom,[1])
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+!(true)
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
+or([false,!(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
 or([!(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)])
 
@@ -58,6 +82,12 @@ or([!(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)])
 or([!(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 !(schur#matrix_to_atom[1] = schur#matrix_to_atom[2])
+
+--
+
+schur#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
