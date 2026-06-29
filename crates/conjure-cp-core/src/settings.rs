@@ -92,9 +92,9 @@ impl RewriteConfig {
     pub const fn optimised() -> Self {
         Self {
             prefilter: true,
-            dirty: true,
-            cache: true,
-            rule_memo: true,
+            dirty: false,
+            cache: false,
+            rule_memo: false,
             worklist: true,
             candidate_index: false,
             dirty_node_queues: false,
@@ -113,9 +113,9 @@ impl RewriteConfig {
 
     pub const fn is_optimised(self) -> bool {
         self.prefilter
-            && self.dirty
-            && self.cache
-            && self.rule_memo
+            && !self.dirty
+            && !self.cache
+            && !self.rule_memo
             && self.worklist
             && !self.candidate_index
             && !self.dirty_node_queues
@@ -683,7 +683,7 @@ mod tests {
             }
         );
         assert_eq!(
-            RewriteConfig::from_str("baseline+prefilter+dirty+cache+rulememo+worklist").unwrap(),
+            RewriteConfig::from_str("baseline+prefilter+worklist").unwrap(),
             RewriteConfig::optimised()
         );
         assert_eq!(
@@ -706,14 +706,14 @@ mod tests {
     }
 
     #[test]
-    fn optimised_rewrite_config_enables_all_options() {
+    fn optimised_rewrite_config_enables_fast_default_options() {
         assert_eq!(
             RewriteConfig::from_str("optimised").unwrap(),
             RewriteConfig {
                 prefilter: true,
-                dirty: true,
-                cache: true,
-                rule_memo: true,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
                 worklist: true,
                 candidate_index: false,
                 dirty_node_queues: false,
@@ -806,7 +806,7 @@ mod tests {
             })
         );
         assert_eq!(
-            Rewriter::from_str("baseline+prefilter+dirty+cache+rulememo+worklist").unwrap(),
+            Rewriter::from_str("baseline+prefilter+worklist").unwrap(),
             Rewriter::Rewrite(RewriteConfig::optimised())
         );
         assert!(Rewriter::from_str("+dirty").is_err());
