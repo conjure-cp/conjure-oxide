@@ -12,8 +12,12 @@ CARGO_TARGET_DIR ?= target
 CARGO_BIN_DIR ?= $(HOME)/.cargo/bin
 DEV_CONTAINER_IMAGE ?= conjure-oxide-dev
 DEV_CONTAINER_FILE ?= Dockerfile.dev
-CARGO_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+CARGO_TEST_WORKSPACE = cargo nextest run --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --doc
 export PATH := $(CARGO_BIN_DIR):$(PATH)
+# Golden files follow the test-suite convention of `.expected` or `-expected-` in the file name.
+# This intentionally ignores config.toml, including expected-time-only changes.
+RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED = if test -n "$$(git status --porcelain -- ':(glob)**/*.expected*' ':(glob)**/*-expected-*')"; then echo "Golden files changed; running tests without ACCEPT"; $(CARGO_TEST_WORKSPACE); $(CARGO_DOC_TEST_WORKSPACE); else echo "No golden files changed; skipping non-accepting test run"; fi
 
 .PHONY: submodules
 ## Initialises git submodules needed for builds
@@ -55,8 +59,9 @@ install: build
 
 .PHONY: test
 ## Runs all tests
-test: submodules install
+test: submodules install .installed-cargo-nextest.checkpoint
 	$(CARGO_TEST_WORKSPACE)
+	$(CARGO_DOC_TEST_WORKSPACE)
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -64,19 +69,25 @@ test-coverage:
 	./tools/coverage.sh
 
 .PHONY: test-accept
-## Runs all tests in accept mode
-test-accept: install
+## Runs all tests in accept mode, then in normal mode if golden files changed
+test-accept: install .installed-cargo-nextest.checkpoint
 	ACCEPT=true $(CARGO_TEST_WORKSPACE)
+	ACCEPT=true $(CARGO_DOC_TEST_WORKSPACE)
+	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: test-accept-with-slower-times
-## Runs all tests in accept mode, only increasing expected run times
-test-accept-with-slower-times: install
+## Runs all tests in accept mode, only increases expected run times, then in normal mode if golden files changed
+test-accept-with-slower-times: install .installed-cargo-nextest.checkpoint
 	ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
+	ACCEPT=with-slower-times $(CARGO_DOC_TEST_WORKSPACE)
+	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: test-accept-with-exact-times
-## Runs all tests in accept mode, updating expected run times exactly
-test-accept-with-exact-times: install
+## Runs all tests in accept mode, updates expected run times exactly, then in normal mode if golden files changed
+test-accept-with-exact-times: install .installed-cargo-nextest.checkpoint
 	ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
+	ACCEPT=with-exact-times $(CARGO_DOC_TEST_WORKSPACE)
+	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 
@@ -101,6 +112,10 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 .installed-cargo-extensions.checkpoint: Makefile
 	cargo install cargo-shear
 	touch .installed-cargo-extensions.checkpoint
+
+.installed-cargo-nextest.checkpoint: Makefile
+	@if ! command -v cargo-nextest >/dev/null 2>&1; then cargo install cargo-nextest --locked; fi
+	touch .installed-cargo-nextest.checkpoint
 
 test-clean:
 	cd test-suite/tests/integration/; find -type f -path '**generated**' -delete
