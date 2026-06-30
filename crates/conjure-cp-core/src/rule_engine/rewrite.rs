@@ -1054,7 +1054,19 @@ impl WorklistScheduler {
             }
         }
 
-        self.enqueue_node_at_level(arena, surface, node_id, next_self_level, mode, dirty_trace);
+        let next_self_mode = if mode.descends_on_failure() {
+            ScheduledMode::CheckNode
+        } else {
+            mode
+        };
+        self.enqueue_node_at_level(
+            arena,
+            surface,
+            node_id,
+            next_self_level,
+            next_self_mode,
+            dirty_trace,
+        );
     }
 
     fn pop_next(
@@ -3028,15 +3040,28 @@ mod tests {
         &[("test-rule-set", 1)],
     );
 
+    fn test_rule_groups_at_priorities(priorities: &[u16]) -> Vec<RuleGroup<'static>> {
+        priorities
+            .iter()
+            .map(|&priority| {
+                RuleGroup::new(
+                    priority,
+                    vec![crate::rule_engine::RuleData {
+                        rule: &TEST_RULE,
+                        priority,
+                        rule_set: &TEST_RULE_SET,
+                    }],
+                )
+            })
+            .collect()
+    }
+
     fn test_rule_groups() -> Vec<RuleGroup<'static>> {
-        vec![RuleGroup::new(
-            1,
-            vec![crate::rule_engine::RuleData {
-                rule: &TEST_RULE,
-                priority: 1,
-                rule_set: &TEST_RULE_SET,
-            }],
-        )]
+        test_rule_groups_at_priorities(&[1])
+    }
+
+    fn test_rule_groups_with_two_levels() -> Vec<RuleGroup<'static>> {
+        test_rule_groups_at_priorities(&[1, 2])
     }
 
     #[test]
@@ -3129,7 +3154,7 @@ mod tests {
         let right_leaf_id = ids[3];
         let root_sibling_id = ids[4];
 
-        let rule_groups = test_rule_groups();
+        let rule_groups = test_rule_groups_with_two_levels();
         let mut scheduler =
             WorklistScheduler::new(&surfaces, &rule_groups, RewriteConfig::optimised());
         let mut dirty_trace = DirtyTrace::default();
@@ -3205,6 +3230,24 @@ mod tests {
                 &mut dirty_trace
             ),
             Some((0, 0, right_leaf_id, ScheduledMode::TraverseSubtree))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((1, 0, root_id, ScheduledMode::CheckNode))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((1, 0, eq_id, ScheduledMode::CheckNode))
         );
     }
 
