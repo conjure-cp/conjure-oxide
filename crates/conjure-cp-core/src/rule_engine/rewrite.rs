@@ -2240,17 +2240,56 @@ fn enqueue_worklist_nodes_referencing_names(
             continue;
         }
 
-        for node_id in rewriter_preorder_ids(&surface.arena) {
-            if subtree_references_any(surface.arena.expression(node_id), names) {
-                scheduler.enqueue_node_and_ancestors(
-                    &surface.arena,
-                    surface_index,
-                    node_id,
-                    dirty_trace,
-                );
-            }
+        let mut affected_nodes = Vec::new();
+        collect_worklist_nodes_referencing_names(
+            &surface.arena,
+            surface.arena.root(),
+            names,
+            &mut affected_nodes,
+        );
+        for node_id in affected_nodes.into_iter().rev() {
+            scheduler.enqueue_node_at_level(
+                &surface.arena,
+                surface_index,
+                node_id,
+                0,
+                ScheduledMode::CheckNode,
+                Some(dirty_trace),
+            );
         }
     }
+}
+
+fn collect_worklist_nodes_referencing_names(
+    arena: &ExpressionArena,
+    node_id: ExpressionNodeId,
+    names: &[Name],
+    affected_nodes: &mut Vec<ExpressionNodeId>,
+) -> bool {
+    if !arena.is_reachable(node_id) {
+        return false;
+    }
+
+    let mut references_changed_name =
+        expression_directly_references_any(arena.expression(node_id), names);
+    if !matches!(arena.expression(node_id), Expr::Comprehension(_, _)) {
+        for &child_id in arena.children(node_id) {
+            references_changed_name |=
+                collect_worklist_nodes_referencing_names(arena, child_id, names, affected_nodes);
+        }
+    }
+
+    if references_changed_name {
+        affected_nodes.push(node_id);
+    }
+    references_changed_name
+}
+
+fn expression_directly_references_any(expr: &Expr, names: &[Name]) -> bool {
+    let Expr::Atomic(_, Atom::Reference(reference)) = expr else {
+        return false;
+    };
+    names.iter().any(|name| &*reference.name() == name)
 }
 
 /// Returns a cached hash of the symbol values visible to rule applications.
@@ -2870,6 +2909,18 @@ mod tests {
         (arena, node_id)
     }
 
+    fn reference_expr(name: &Name) -> Expr {
+        use crate::ast::{Domain, Range, Reference};
+
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                name.clone(),
+                Domain::int(vec![Range::Bounded(1, 3)]),
+            ))),
+        )
+    }
+
     fn test_rule_set_applies(_: &crate::settings::SolverFamily) -> bool {
         true
     }
@@ -3066,6 +3117,37 @@ mod tests {
                 &mut dirty_trace
             ),
             Some((0, 0, right_leaf_id, ScheduledMode::TraverseSubtree))
+        );
+    }
+
+    #[test]
+    fn worklist_reference_invalidation_schedules_affected_path_once() {
+        let x = Name::user("x");
+        let tree = root(vec![
+            Expr::Eq(
+                Metadata::new(),
+                Moo::new(reference_expr(&x)),
+                Moo::new(int_lit(1)),
+            ),
+            int_lit(2),
+        ]);
+        let arena = ExpressionArena::from_root(tree);
+        let ids = rewriter_preorder_ids(&arena);
+        let root_id = ids[0];
+        let eq_id = ids[1];
+        let reference_id = ids[2];
+
+        let mut affected_nodes = Vec::new();
+        collect_worklist_nodes_referencing_names(
+            &arena,
+            arena.root(),
+            std::slice::from_ref(&x),
+            &mut affected_nodes,
+        );
+
+        assert_eq!(
+            affected_nodes.into_iter().rev().collect_vec(),
+            vec![root_id, eq_id, reference_id]
         );
     }
 
