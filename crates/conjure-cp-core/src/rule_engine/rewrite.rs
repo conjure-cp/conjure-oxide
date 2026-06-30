@@ -1147,7 +1147,6 @@ fn try_rewrite_model<'ctx, 'rules>(
     ctx: &mut RewritePassContext<'ctx, 'rules>,
 ) -> Option<()> {
     ctx.dirty_trace.passes += 1;
-    increment_counter(&mut ctx.stats.rewriter_passes);
     if !ctx.config.worklist {
         if let Some(letting_name) = try_rewrite_value_letting_once(
             submodel,

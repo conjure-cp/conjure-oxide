@@ -39,11 +39,6 @@ use serde_with::skip_serializing_none;
 ///   - A successful application means the rule was successfully applied to transform the expression or constraint.
 ///   - If `None`, this metric is not tracked or not applicable for the current session.
 ///
-/// - `rewriter_passes`:
-///   - Type: `Option<usize>`
-///   - The number of outer rewrite-loop passes attempted.
-///   - If `None`, this metric is not tracked or not applicable for the current session.
-///
 /// - `rewriter_value_letting_rewrites`:
 ///   - Type: `Option<usize>`
 ///   - The number of value-letting bodies rewritten by the rewriter.
@@ -80,7 +75,6 @@ pub struct RewriterStats {
     pub rewriter_run_time: Option<std::time::Duration>,
     pub rewriter_rule_application_attempts: Option<usize>,
     pub rewriter_rule_applications: Option<usize>,
-    pub rewriter_passes: Option<usize>,
     pub rewriter_value_letting_rewrites: Option<usize>,
 }
 
@@ -91,7 +85,6 @@ impl RewriterStats {
             rewriter_run_time: None,
             rewriter_rule_application_attempts: None,
             rewriter_rule_applications: None,
-            rewriter_passes: Some(0),
             rewriter_value_letting_rewrites: Some(0),
         }
     }
