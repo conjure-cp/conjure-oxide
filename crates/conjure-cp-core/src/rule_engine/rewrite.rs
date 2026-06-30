@@ -24,7 +24,8 @@ use crate::{
 
 use itertools::Itertools;
 use std::{
-    collections::{BTreeMap, HashMap, HashSet, VecDeque},
+    cmp::Ordering,
+    collections::{BTreeMap, BinaryHeap, HashMap, HashSet},
     hash::{DefaultHasher, Hash, Hasher},
     time::Instant,
 };
@@ -855,6 +856,31 @@ struct ScheduledNode {
     node_id: ExpressionNodeId,
     generation: u32,
     mode: ScheduledMode,
+    depth: usize,
+    sequence: u64,
+}
+
+impl PartialEq for ScheduledNode {
+    fn eq(&self, other: &Self) -> bool {
+        self.depth == other.depth && self.sequence == other.sequence
+    }
+}
+
+impl Eq for ScheduledNode {}
+
+impl PartialOrd for ScheduledNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for ScheduledNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other
+            .depth
+            .cmp(&self.depth)
+            .then_with(|| other.sequence.cmp(&self.sequence))
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -866,15 +892,21 @@ struct ScheduledKey {
 }
 
 struct WorklistScheduler {
-    queues_by_level: Vec<VecDeque<ScheduledNode>>,
+    // Candidate-level skipping can enqueue a descendant into a future rule level before an
+    // ancestor reaches that same level. Each level is therefore ordered by depth, then insertion
+    // sequence, so the semantic invariant "try an expression before its descendants at the same
+    // priority" does not depend on enqueue timing.
+    queues_by_level: Vec<BinaryHeap<ScheduledNode>>,
     scheduled: HashMap<ScheduledKey, ScheduledMode>,
+    next_sequence: u64,
 }
 
 impl WorklistScheduler {
     fn empty(rule_groups: &[RuleGroup<'_>]) -> Self {
         Self {
-            queues_by_level: vec![VecDeque::new(); rule_groups.len()],
+            queues_by_level: vec![BinaryHeap::new(); rule_groups.len()],
             scheduled: HashMap::new(),
+            next_sequence: 0,
         }
     }
 
@@ -1004,7 +1036,10 @@ impl WorklistScheduler {
             node_id,
             generation: arena.generation(node_id),
             mode,
+            depth: arena.preorder_path(node_id).len(),
+            sequence: self.next_sequence,
         };
+        self.next_sequence += 1;
         let key = ScheduledKey {
             level,
             surface,
@@ -1014,7 +1049,7 @@ impl WorklistScheduler {
         match self.scheduled.entry(key) {
             std::collections::hash_map::Entry::Vacant(entry) => {
                 entry.insert(mode);
-                self.queues_by_level[level].push_back(scheduled);
+                self.queues_by_level[level].push(scheduled);
                 if let Some(trace) = dirty_trace.as_deref_mut() {
                     trace.record_worklist_enqueue(mode);
                 }
@@ -1022,7 +1057,7 @@ impl WorklistScheduler {
             std::collections::hash_map::Entry::Occupied(mut entry) => {
                 if !entry.get().includes(mode) {
                     entry.insert(mode);
-                    self.queues_by_level[level].push_back(scheduled);
+                    self.queues_by_level[level].push(scheduled);
                     if let Some(trace) = dirty_trace.as_deref_mut() {
                         trace.record_worklist_enqueue(mode);
                     }
@@ -1081,7 +1116,7 @@ impl WorklistScheduler {
         dirty_trace: &mut DirtyTrace,
     ) -> Option<(usize, usize, ExpressionNodeId, ScheduledMode)> {
         for (level, queue) in self.queues_by_level.iter_mut().enumerate() {
-            while let Some(scheduled) = queue.pop_front() {
+            while let Some(scheduled) = queue.pop() {
                 let key = ScheduledKey {
                     level,
                     surface: scheduled.surface,
@@ -3203,6 +3238,60 @@ mod tests {
                 &mut dirty_trace
             ),
             None
+        );
+    }
+
+    #[test]
+    fn worklist_level_order_prefers_ancestors_over_earlier_descendants() {
+        let tree = root(vec![Expr::Eq(
+            Metadata::new(),
+            Moo::new(int_lit(1)),
+            Moo::new(int_lit(2)),
+        )]);
+        let surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
+        let arena = &surfaces[0].arena;
+        let ids = rewriter_preorder_ids(arena);
+        let eq_id = ids[1];
+        let left_leaf_id = ids[2];
+
+        let rule_groups = test_rule_groups();
+        let mut scheduler = WorklistScheduler::empty(&rule_groups);
+        let mut dirty_trace = DirtyTrace::default();
+
+        scheduler.enqueue_node_at_level(
+            arena,
+            0,
+            left_leaf_id,
+            0,
+            ScheduledMode::CheckNode,
+            Some(&mut dirty_trace),
+        );
+        scheduler.enqueue_node_at_level(
+            arena,
+            0,
+            eq_id,
+            0,
+            ScheduledMode::CheckNode,
+            Some(&mut dirty_trace),
+        );
+
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, eq_id, ScheduledMode::CheckNode))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, left_leaf_id, ScheduledMode::CheckNode))
         );
     }
 
