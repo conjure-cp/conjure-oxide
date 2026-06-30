@@ -17,7 +17,7 @@ CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES
 export PATH := $(CARGO_BIN_DIR):$(PATH)
 # Golden files follow the test-suite convention of `.expected` or `-expected-` in the file name.
 # This intentionally ignores config.toml, including expected-time-only changes.
-RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED = if test -n "$$(git status --porcelain -- ':(glob)**/*.expected*' ':(glob)**/*-expected-*')"; then echo "Golden files changed; running tests without ACCEPT"; $(CARGO_TEST_WORKSPACE); $(CARGO_DOC_TEST_WORKSPACE); else echo "No golden files changed; skipping non-accepting test run"; fi
+RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED = if test -n "$$(git status --porcelain -- ':(glob)**/*.expected*' ':(glob)**/*-expected-*')"; then echo "Golden files changed; running tests without ACCEPT"; $(CARGO_DOC_TEST_WORKSPACE); $(CARGO_TEST_WORKSPACE); else echo "No golden files changed; skipping non-accepting test run"; fi
 
 .PHONY: submodules
 ## Initialises git submodules needed for builds
@@ -60,8 +60,8 @@ install: build
 .PHONY: test
 ## Runs all tests
 test: submodules install .installed-cargo-nextest.checkpoint
-	$(CARGO_TEST_WORKSPACE)
 	$(CARGO_DOC_TEST_WORKSPACE)
+	$(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -71,22 +71,22 @@ test-coverage:
 .PHONY: test-accept
 ## Runs all tests in accept mode, then in normal mode if golden files changed
 test-accept: install .installed-cargo-nextest.checkpoint
-	ACCEPT=true $(CARGO_TEST_WORKSPACE)
 	ACCEPT=true $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=true $(CARGO_TEST_WORKSPACE)
 	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: test-accept-with-slower-times
 ## Runs all tests in accept mode, only increases expected run times, then in normal mode if golden files changed
 test-accept-with-slower-times: install .installed-cargo-nextest.checkpoint
-	ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
 	ACCEPT=with-slower-times $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
 	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: test-accept-with-exact-times
 ## Runs all tests in accept mode, updates expected run times exactly, then in normal mode if golden files changed
 test-accept-with-exact-times: install .installed-cargo-nextest.checkpoint
-	ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
 	ACCEPT=with-exact-times $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
 	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: fix
