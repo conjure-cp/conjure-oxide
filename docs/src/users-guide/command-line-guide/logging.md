@@ -60,7 +60,7 @@ This will show:
 For more detailed testing output (including JSON traces and rewritten models), run specific tests:
 
 ```bash
-cargo test <test_name>
+cargo nextest run -E 'test(<test_name>)'
 ```
 
 This generates `.json` and `.txt` files containing rule traces, parsed Essence, solutions, and the rewritten model.

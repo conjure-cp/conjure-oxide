@@ -41,8 +41,8 @@ Called at the end of `parse_model_with_context`. Performs this validation by tra
 ## How To Test
 
  ```bash
-cargo test -p conjure-cp-essence-parser --test semantic_test
-cargo test -p conjure-cp-essence-parser --test keyword_as_ident
+cargo nextest run -p conjure-cp-essence-parser --test semantic_test
+cargo nextest run -p conjure-cp-essence-parser --test keyword_as_ident
 
 ```
 
