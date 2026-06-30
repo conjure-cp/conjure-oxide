@@ -225,10 +225,12 @@ print(f"{float(sys.argv[2]) - float(sys.argv[1]):.6f}")
 PY
 )"
 
-  local rewriter_time attempts applications stderr_tail
+  local rewriter_time attempts applications passes value_letting_rewrites stderr_tail
   rewriter_time="$(extract_json_field "$info_json" rewriterRunTime)"
   attempts="$(extract_json_field "$info_json" rewriterRuleApplicationAttempts)"
   applications="$(extract_json_field "$info_json" rewriterRuleApplications)"
+  passes="$(extract_json_field "$info_json" rewriterPasses)"
+  value_letting_rewrites="$(extract_json_field "$info_json" rewriterValueLettingRewrites)"
   stderr_tail="$(tail -20 "$stderr_file" 2>/dev/null || true)"
 
   csv_escape "$test_dir"; printf ','
@@ -237,7 +239,7 @@ PY
   csv_escape "$solver"; printf ','
   csv_escape "$rewriter"; printf ','
   csv_escape "$status"; printf ','
-  printf '%s,%s,%s,%s,%s,' "$exit_code" "$elapsed" "${rewriter_time:-}" "${attempts:-}" "${applications:-}"
+  printf '%s,%s,%s,%s,%s,%s,%s,' "$exit_code" "$elapsed" "${rewriter_time:-}" "${attempts:-}" "${applications:-}" "${passes:-}" "${value_letting_rewrites:-}"
   csv_escape "$stderr_tail"; printf '\n'
 }
 
@@ -245,7 +247,7 @@ export OXIDE_BIN tmpdir
 export -f csv_escape extract_json_field run_one
 
 {
-  echo '"test_dir","parser","comprehension_expander","solver","rewriter","status","exit_code","elapsed_s","rewriter_time_s","rule_attempts","rule_applications","stderr_tail"'
+  echo '"test_dir","parser","comprehension_expander","solver","rewriter","status","exit_code","elapsed_s","rewriter_time_s","rule_attempts","rule_applications","rewrite_passes","value_letting_rewrites","stderr_tail"'
   parallel --no-notice --jobs "$JOBS" --eta --colsep '\t' run_one {1} {2} {3} {4} {5} {6} {7} {8} :::: "$jobs_tsv"
 } > "$OUT"
 

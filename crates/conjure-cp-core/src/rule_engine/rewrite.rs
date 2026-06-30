@@ -1043,12 +1043,14 @@ fn try_rewrite_model<'ctx, 'rules>(
     ctx: &mut RewritePassContext<'ctx, 'rules>,
 ) -> Option<()> {
     ctx.dirty_trace.passes += 1;
+    increment_counter(&mut ctx.stats.rewriter_passes);
     if let Some(letting_name) = try_rewrite_value_letting_once(
         submodel,
         ctx.rules_grouped,
         ctx.prop_multiple_equally_applicable,
     ) {
         ctx.dirty_trace.value_letting_rewrites += 1;
+        increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
         invalidate_symbol_context_caches(submodel, ctx);
         if ctx.config.dirty {
             ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
@@ -1819,6 +1821,10 @@ fn candidate_node_index_enabled(config: RewriteConfig) -> bool {
 
 fn dirty_node_queues_enabled(config: RewriteConfig) -> bool {
     config.dirty && config.dirty_node_queues
+}
+
+fn increment_counter(counter: &mut Option<usize>) {
+    *counter = Some(counter.unwrap_or(0) + 1);
 }
 
 fn traced_arena_content_hash(
