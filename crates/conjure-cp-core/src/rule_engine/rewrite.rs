@@ -703,8 +703,39 @@ impl DirtyNodeQueues {
     }
 }
 
+#[derive(Clone, Debug)]
+enum RewriteSurfaceKind {
+    Root,
+    ValueLetting { name: Name },
+}
+
+struct RewriteSurface {
+    kind: RewriteSurfaceKind,
+    arena: ExpressionArena,
+    active: bool,
+}
+
+impl RewriteSurface {
+    fn root(arena: ExpressionArena) -> Self {
+        Self {
+            kind: RewriteSurfaceKind::Root,
+            arena,
+            active: true,
+        }
+    }
+
+    fn value_letting(name: Name, expr: Expr) -> Self {
+        Self {
+            kind: RewriteSurfaceKind::ValueLetting { name },
+            arena: ExpressionArena::from_root(expr),
+            active: true,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 struct ScheduledNode {
+    surface: usize,
     node_id: ExpressionNodeId,
     generation: u32,
 }
@@ -712,6 +743,7 @@ struct ScheduledNode {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct ScheduledKey {
     level: usize,
+    surface: usize,
     node_id: ExpressionNodeId,
     generation: u32,
 }
@@ -722,33 +754,77 @@ struct WorklistScheduler {
 }
 
 impl WorklistScheduler {
-    fn new(arena: &ExpressionArena, rule_groups: &[RuleGroup<'_>], config: RewriteConfig) -> Self {
-        let mut scheduler = Self {
+    fn empty(rule_groups: &[RuleGroup<'_>]) -> Self {
+        Self {
             queues_by_level: vec![VecDeque::new(); rule_groups.len()],
             scheduled: HashSet::new(),
-        };
-        for node_id in rewriter_preorder_ids(arena) {
-            scheduler.enqueue_node(arena, node_id, rule_groups, config, None);
+        }
+    }
+
+    fn new(
+        surfaces: &[RewriteSurface],
+        rule_groups: &[RuleGroup<'_>],
+        config: RewriteConfig,
+    ) -> Self {
+        let mut scheduler = Self::empty(rule_groups);
+        for surface in 0..surfaces.len() {
+            scheduler.enqueue_surface(surfaces, surface, rule_groups, config, None);
         }
         scheduler
+    }
+
+    fn enqueue_surface(
+        &mut self,
+        surfaces: &[RewriteSurface],
+        surface: usize,
+        rule_groups: &[RuleGroup<'_>],
+        config: RewriteConfig,
+        mut dirty_trace: Option<&mut DirtyTrace>,
+    ) {
+        let Some(rewrite_surface) = surfaces.get(surface) else {
+            return;
+        };
+        if !rewrite_surface.active {
+            return;
+        }
+
+        for node_id in rewriter_preorder_ids(&rewrite_surface.arena) {
+            self.enqueue_node(
+                &rewrite_surface.arena,
+                surface,
+                node_id,
+                rule_groups,
+                config,
+                dirty_trace.as_deref_mut(),
+            );
+        }
     }
 
     fn enqueue_subtree(
         &mut self,
         arena: &ExpressionArena,
+        surface: usize,
         node_id: ExpressionNodeId,
         rule_groups: &[RuleGroup<'_>],
         config: RewriteConfig,
         dirty_trace: &mut DirtyTrace,
     ) {
         for dirty_node in rewriter_reachable_subtree_ids(arena, node_id) {
-            self.enqueue_node(arena, dirty_node, rule_groups, config, Some(dirty_trace));
+            self.enqueue_node(
+                arena,
+                surface,
+                dirty_node,
+                rule_groups,
+                config,
+                Some(dirty_trace),
+            );
         }
     }
 
     fn enqueue_node_and_ancestors(
         &mut self,
         arena: &ExpressionArena,
+        surface: usize,
         node_id: ExpressionNodeId,
         rule_groups: &[RuleGroup<'_>],
         config: RewriteConfig,
@@ -756,7 +832,14 @@ impl WorklistScheduler {
     ) {
         let mut current = Some(node_id);
         while let Some(current_id) = current {
-            self.enqueue_node(arena, current_id, rule_groups, config, Some(dirty_trace));
+            self.enqueue_node(
+                arena,
+                surface,
+                current_id,
+                rule_groups,
+                config,
+                Some(dirty_trace),
+            );
             current = arena.parent(current_id);
         }
     }
@@ -764,6 +847,7 @@ impl WorklistScheduler {
     fn enqueue_node(
         &mut self,
         arena: &ExpressionArena,
+        surface: usize,
         node_id: ExpressionNodeId,
         rule_groups: &[RuleGroup<'_>],
         config: RewriteConfig,
@@ -783,11 +867,13 @@ impl WorklistScheduler {
             }
 
             let scheduled = ScheduledNode {
+                surface,
                 node_id,
                 generation: arena.generation(node_id),
             };
             let inserted = self.scheduled.insert(ScheduledKey {
                 level,
+                surface,
                 node_id,
                 generation: scheduled.generation,
             });
@@ -802,18 +888,29 @@ impl WorklistScheduler {
 
     fn pop_next(
         &mut self,
-        arena: &ExpressionArena,
+        surfaces: &[RewriteSurface],
         rule_groups: &[RuleGroup<'_>],
         config: RewriteConfig,
         dirty_trace: &mut DirtyTrace,
-    ) -> Option<(usize, ExpressionNodeId)> {
+    ) -> Option<(usize, usize, ExpressionNodeId)> {
         for (level, queue) in self.queues_by_level.iter_mut().enumerate() {
             while let Some(scheduled) = queue.pop_front() {
                 self.scheduled.remove(&ScheduledKey {
                     level,
+                    surface: scheduled.surface,
                     node_id: scheduled.node_id,
                     generation: scheduled.generation,
                 });
+
+                let Some(surface) = surfaces.get(scheduled.surface) else {
+                    dirty_trace.record_worklist_stale_pop();
+                    continue;
+                };
+                if !surface.active {
+                    dirty_trace.record_worklist_stale_pop();
+                    continue;
+                }
+                let arena = &surface.arena;
                 if !arena.is_reachable(scheduled.node_id)
                     || arena.generation(scheduled.node_id) != scheduled.generation
                 {
@@ -833,7 +930,7 @@ impl WorklistScheduler {
                 }
 
                 dirty_trace.record_worklist_pop();
-                return Some((level, scheduled.node_id));
+                return Some((level, scheduled.surface, scheduled.node_id));
             }
         }
 
@@ -843,7 +940,7 @@ impl WorklistScheduler {
 
 #[derive(Default)]
 struct RuleApplicabilityMemo {
-    failures: HashSet<(usize, u64, u32, u32)>,
+    failures: HashSet<(usize, usize, u64, u32, u32)>,
 }
 
 impl RuleApplicabilityMemo {
@@ -855,12 +952,14 @@ impl RuleApplicabilityMemo {
 
     fn is_known_failure(
         &self,
+        surface: usize,
         node_id: ExpressionNodeId,
         rule_name: &str,
         node_generation: u32,
         symbol_generation: u32,
     ) -> bool {
         self.failures.contains(&(
+            surface,
             node_id.index(),
             Self::rule_name_hash(rule_name),
             node_generation,
@@ -870,12 +969,14 @@ impl RuleApplicabilityMemo {
 
     fn record_failure(
         &mut self,
+        surface: usize,
         node_id: ExpressionNodeId,
         rule_name: &str,
         node_generation: u32,
         symbol_generation: u32,
     ) {
         self.failures.insert((
+            surface,
             node_id.index(),
             Self::rule_name_hash(rule_name),
             node_generation,
@@ -963,8 +1064,6 @@ pub fn rewrite_model<'a>(
         .collect_vec();
 
     let mut model = introduce_objective_auxiliary(model.clone());
-    let mut done_something = true;
-
     let mut rewriter_stats = RewriterStats::new();
     rewriter_stats.is_optimisation_enabled = Some(!config.is_baseline());
     let mut dirty_trace = DirtyTrace::from_env();
@@ -1000,8 +1099,13 @@ pub fn rewrite_model<'a>(
             #[cfg(debug_assertions)]
             run_start: &run_start,
         };
-        while done_something {
-            done_something = try_rewrite_model(&mut model, &mut pass_ctx).is_some();
+        if config.worklist {
+            let _ = try_rewrite_model(&mut model, &mut pass_ctx);
+        } else {
+            let mut done_something = true;
+            while done_something {
+                done_something = try_rewrite_model(&mut model, &mut pass_ctx).is_some();
+            }
         }
     }
 
@@ -1044,19 +1148,21 @@ fn try_rewrite_model<'ctx, 'rules>(
 ) -> Option<()> {
     ctx.dirty_trace.passes += 1;
     increment_counter(&mut ctx.stats.rewriter_passes);
-    if let Some(letting_name) = try_rewrite_value_letting_once(
-        submodel,
-        ctx.rules_grouped,
-        ctx.prop_multiple_equally_applicable,
-    ) {
-        ctx.dirty_trace.value_letting_rewrites += 1;
-        increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
-        invalidate_symbol_context_caches(submodel, ctx);
-        if ctx.config.dirty {
-            ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
-            clear_clean_rule_metadata_for_name(submodel, &letting_name);
+    if !ctx.config.worklist {
+        if let Some(letting_name) = try_rewrite_value_letting_once(
+            submodel,
+            ctx.rules_grouped,
+            ctx.prop_multiple_equally_applicable,
+        ) {
+            ctx.dirty_trace.value_letting_rewrites += 1;
+            increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
+            invalidate_symbol_context_caches(submodel, ctx);
+            if ctx.config.dirty {
+                ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
+                clear_clean_rule_metadata_for_name(submodel, &letting_name);
+            }
+            return Some(());
         }
-        return Some(());
     }
 
     let mut did_rewrite = false;
@@ -1172,6 +1278,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                         if ctx.config.rule_memo
                             && ctx.rule_applicability_memo.as_ref().is_some_and(|memo| {
                                 memo.is_known_failure(
+                                    0,
                                     node_id,
                                     rd.rule.name,
                                     node_generation,
@@ -1242,6 +1349,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                                     && let Some(memo) = ctx.rule_applicability_memo.as_mut()
                                 {
                                     memo.record_failure(
+                                        0,
                                         node_id,
                                         rd.rule.name,
                                         node_generation,
@@ -1433,13 +1541,15 @@ fn try_rewrite_model<'ctx, 'rules>(
 fn try_rewrite_model_with_worklist<'ctx, 'rules>(
     submodel: &mut Model,
     ctx: &mut RewritePassContext<'ctx, 'rules>,
-    mut arena: ExpressionArena,
+    arena: ExpressionArena,
 ) -> Option<()> {
     let mut did_rewrite = false;
-    let mut scheduler = WorklistScheduler::new(&arena, ctx.bucketed_rules, ctx.config);
+    let root_surface = 0usize;
+    let (mut surfaces, mut value_letting_surfaces) = build_worklist_surfaces(submodel, arena);
+    let mut scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
 
-    while let Some((level, node_id)) =
-        scheduler.pop_next(&arena, ctx.bucketed_rules, ctx.config, ctx.dirty_trace)
+    while let Some((level, surface_index, node_id)) =
+        scheduler.pop_next(&surfaces, ctx.bucketed_rules, ctx.config, ctx.dirty_trace)
     {
         ctx.dirty_trace.priority_scans += 1;
         ctx.dirty_trace.expression_visits += 1;
@@ -1454,7 +1564,11 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
         if let Some(symbol_context_hash) = scan_symbol_context_hash {
             let cache_result = {
                 let expression_content_hash = *node_content_hash.get_or_insert_with(|| {
-                    traced_arena_content_hash(&mut arena, node_id, ctx.dirty_trace)
+                    traced_arena_content_hash(
+                        &mut surfaces[surface_index].arena,
+                        node_id,
+                        ctx.dirty_trace,
+                    )
                 });
                 let cache = ctx.cache.as_mut().expect("checked above");
                 cache.get_from_hash(expression_content_hash, level, symbol_context_hash)
@@ -1465,33 +1579,58 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                     ctx.dirty_trace.cache_terminal_hits += 1;
                     trace!(target: "rule_engine", clean_level, "Rewrite cache terminal hit");
                     if ctx.config.dirty {
-                        arena.mark_clean_for_rule_priority(node_id, rule_group.priority);
+                        surfaces[surface_index]
+                            .arena
+                            .mark_clean_for_rule_priority(node_id, rule_group.priority);
                     }
                     continue;
                 }
                 CacheResult::Rewrite(cached) => {
                     ctx.dirty_trace.cache_hits += 1;
                     ctx.dirty_trace.cache_rewrite_hits += 1;
-                    let mappings = replace_focus_and_dirty_ancestors(
-                        &mut arena,
-                        node_id,
-                        cached.expr,
-                        ctx.dirty_trace,
-                        Some(symbol_context_hash),
-                    );
+                    let rewritten_value_letting_name =
+                        value_letting_surface_name(&surfaces[surface_index].kind).cloned();
+                    let mappings = {
+                        let arena = &mut surfaces[surface_index].arena;
+                        replace_focus_and_dirty_ancestors(
+                            arena,
+                            node_id,
+                            cached.expr,
+                            ctx.dirty_trace,
+                            Some(symbol_context_hash),
+                        )
+                    };
                     let mapping_count = mappings.len();
                     let cache = ctx.cache.as_mut().expect("cache enabled");
                     insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
                     ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
                     enqueue_worklist_rewrite_impact(
                         &mut scheduler,
-                        &arena,
+                        &surfaces[surface_index].arena,
+                        surface_index,
                         node_id,
-                        &[],
                         ctx.bucketed_rules,
                         ctx.config,
                         ctx.dirty_trace,
                     );
+                    if let Some(name) = rewritten_value_letting_name {
+                        write_value_letting_surface_to_model(
+                            submodel,
+                            &name,
+                            &surfaces[surface_index].arena,
+                        );
+                        ctx.dirty_trace.value_letting_rewrites += 1;
+                        increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
+                        invalidate_symbol_context_caches(submodel, ctx);
+                        enqueue_worklist_nodes_referencing_names(
+                            &mut scheduler,
+                            &surfaces,
+                            std::slice::from_ref(&name),
+                            ctx.bucketed_rules,
+                            ctx.config,
+                            ctx.dirty_trace,
+                        );
+                    }
                     did_rewrite = true;
                     continue;
                 }
@@ -1503,15 +1642,16 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
         let mut attempted_rule = false;
-        let node_generation = arena.generation(node_id);
+        let node_generation = surfaces[surface_index].arena.generation(node_id);
         let symbol_generation = ctx.symbol_generation;
         {
-            let expr = arena.expression(node_id);
+            let expr = surfaces[surface_index].arena.expression(node_id);
             for rd in rule_group.candidates(ctx.config, expr) {
                 attempted_rule = true;
                 if ctx.config.rule_memo
                     && ctx.rule_applicability_memo.as_ref().is_some_and(|memo| {
                         memo.is_known_failure(
+                            surface_index,
                             node_id,
                             rd.rule.name,
                             node_generation,
@@ -1578,6 +1718,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                             && let Some(memo) = ctx.rule_applicability_memo.as_mut()
                         {
                             memo.record_failure(
+                                surface_index,
                                 node_id,
                                 rd.rule.name,
                                 node_generation,
@@ -1613,7 +1754,9 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         if ctx.config.dirty && attempted_rule && results.is_empty() {
             ctx.dirty_trace.record_clean_mark(rule_group.priority);
-            arena.mark_clean_for_rule_priority(node_id, rule_group.priority);
+            surfaces[surface_index]
+                .arena
+                .mark_clean_for_rule_priority(node_id, rule_group.priority);
         }
         if attempted_rule {
             ctx.dirty_trace.attempted_expressions += 1;
@@ -1653,7 +1796,11 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         let effect_impact = RuleEffectImpact::new(&result.effect, &submodel.symbols());
         let has_model_side_effects = effect_impact.has_model_side_effects();
-        let changes_symbol_context = effect_impact.changes_symbol_context();
+        let rewritten_value_letting_name =
+            value_letting_surface_name(&surfaces[surface_index].kind).cloned();
+        let value_letting_rewrite = rewritten_value_letting_name.is_some();
+        let changes_symbol_context =
+            effect_impact.changes_symbol_context() || value_letting_rewrite;
         let rule_name = result.rule_data.rule.name;
         let RuleResult { effect, .. } = result;
         let crate::rule_engine::rule::RuleEffect {
@@ -1674,23 +1821,48 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             .cache
             .then_some(pre_effect_symbol_context_hash)
             .flatten();
-        let mappings = replace_focus_and_dirty_ancestors(
-            &mut arena,
-            *node_id,
-            replacement.clone(),
-            ctx.dirty_trace,
-            cache_mapping_context,
-        );
+        let mappings = {
+            let arena = &mut surfaces[surface_index].arena;
+            replace_focus_and_dirty_ancestors(
+                arena,
+                *node_id,
+                replacement.clone(),
+                ctx.dirty_trace,
+                cache_mapping_context,
+            )
+        };
 
         ctx.dirty_trace
             .record_rewrite(rule_name, has_model_side_effects);
         submodel.symbols_mut().extend(symbols);
         let new_top_node_ids = if effect_impact.has_new_top {
-            arena.add_root_children(new_top)
+            surfaces[root_surface].arena.add_root_children(new_top)
         } else {
             Vec::new()
         };
         submodel.add_clauses(new_clauses);
+        if let Some(name) = rewritten_value_letting_name.as_ref() {
+            write_value_letting_surface_to_model(submodel, name, &surfaces[surface_index].arena);
+            ctx.dirty_trace.value_letting_rewrites += 1;
+            increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
+        }
+        let mut affected_names = effect_impact.changed_names.clone();
+        if let Some(name) = rewritten_value_letting_name.as_ref()
+            && !affected_names.contains(name)
+        {
+            affected_names.push(name.clone());
+        }
+        let mut symbol_surface_names = effect_impact.added_names.clone();
+        symbol_surface_names.extend(effect_impact.changed_names.iter().cloned());
+        if let Some(name) = rewritten_value_letting_name.as_ref() {
+            symbol_surface_names.retain(|candidate| candidate != name);
+        }
+        let synced_surfaces = sync_value_letting_surfaces(
+            submodel,
+            &mut surfaces,
+            &mut value_letting_surfaces,
+            &symbol_surface_names,
+        );
         if changes_symbol_context {
             invalidate_symbol_context_caches(submodel, ctx);
         }
@@ -1718,7 +1890,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             && (ctx.config.dirty || ctx.config.cache)
         {
             ctx.dirty_trace.record_side_effect_arena_reimport();
-            submodel.replace_root(arena.into_root_expression());
+            write_worklist_surfaces_to_model(submodel, &surfaces);
             let mut targeted = false;
             if !effect_impact.changed_names.is_empty() {
                 clear_clean_rule_metadata_for_names(submodel, &effect_impact.changed_names);
@@ -1732,10 +1904,18 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 ctx.dirty_trace.record_whole_model_clear(rule_name);
                 clear_model_clean_rule_metadata(submodel);
             }
-            arena = ExpressionArena::from_root(take_model_root(submodel));
+            let rebuilt_root = ExpressionArena::from_root(take_model_root(submodel));
+            let (rebuilt_surfaces, rebuilt_value_letting_surfaces) =
+                build_worklist_surfaces(submodel, rebuilt_root);
+            surfaces = rebuilt_surfaces;
             #[cfg(not(debug_assertions))]
             {
-                scheduler = WorklistScheduler::new(&arena, ctx.bucketed_rules, ctx.config);
+                value_letting_surfaces = rebuilt_value_letting_surfaces;
+                scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
+            }
+            #[cfg(debug_assertions)]
+            {
+                let _ = rebuilt_value_letting_surfaces;
             }
             reset_rule_applicability_memo(ctx);
         } else {
@@ -1744,9 +1924,36 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             }
             enqueue_worklist_rewrite_impact(
                 &mut scheduler,
-                &arena,
+                &surfaces[surface_index].arena,
+                surface_index,
                 *node_id,
-                &new_top_node_ids,
+                ctx.bucketed_rules,
+                ctx.config,
+                ctx.dirty_trace,
+            );
+            for new_top_node_id in new_top_node_ids {
+                scheduler.enqueue_subtree(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    new_top_node_id,
+                    ctx.bucketed_rules,
+                    ctx.config,
+                    ctx.dirty_trace,
+                );
+            }
+            for synced_surface in synced_surfaces {
+                scheduler.enqueue_surface(
+                    &surfaces,
+                    synced_surface,
+                    ctx.bucketed_rules,
+                    ctx.config,
+                    Some(ctx.dirty_trace),
+                );
+            }
+            enqueue_worklist_nodes_referencing_names(
+                &mut scheduler,
+                &surfaces,
+                &affected_names,
                 ctx.bucketed_rules,
                 ctx.config,
                 ctx.dirty_trace,
@@ -1755,34 +1962,174 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         #[cfg(debug_assertions)]
         {
-            submodel.replace_root(arena.clone().into_root_expression());
+            write_worklist_surfaces_to_model(submodel, &surfaces);
             let assertion_context = format!("rewriter after applying rule '{rule_name}'");
             debug_assert_model_well_formed(submodel, &assertion_context);
-            arena = ExpressionArena::from_root(take_model_root(submodel));
-            scheduler = WorklistScheduler::new(&arena, ctx.bucketed_rules, ctx.config);
+            let rebuilt_root = ExpressionArena::from_root(take_model_root(submodel));
+            (surfaces, value_letting_surfaces) = build_worklist_surfaces(submodel, rebuilt_root);
+            scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
             reset_rule_applicability_memo(ctx);
         }
 
         did_rewrite = true;
     }
 
-    submodel.replace_root(arena.into_root_expression());
+    write_worklist_surfaces_to_model(submodel, &surfaces);
     did_rewrite.then_some(())
 }
 
 fn enqueue_worklist_rewrite_impact(
     scheduler: &mut WorklistScheduler,
     arena: &ExpressionArena,
+    surface: usize,
     node_id: ExpressionNodeId,
-    new_top_node_ids: &[ExpressionNodeId],
     rule_groups: &[RuleGroup<'_>],
     config: RewriteConfig,
     dirty_trace: &mut DirtyTrace,
 ) {
-    scheduler.enqueue_subtree(arena, node_id, rule_groups, config, dirty_trace);
-    scheduler.enqueue_node_and_ancestors(arena, node_id, rule_groups, config, dirty_trace);
-    for &new_top_node_id in new_top_node_ids {
-        scheduler.enqueue_subtree(arena, new_top_node_id, rule_groups, config, dirty_trace);
+    scheduler.enqueue_subtree(arena, surface, node_id, rule_groups, config, dirty_trace);
+    scheduler.enqueue_node_and_ancestors(arena, surface, node_id, rule_groups, config, dirty_trace);
+}
+
+fn build_worklist_surfaces(
+    submodel: &Model,
+    root_arena: ExpressionArena,
+) -> (Vec<RewriteSurface>, HashMap<Name, usize>) {
+    let mut surfaces = vec![RewriteSurface::root(root_arena)];
+    let mut value_letting_surfaces = HashMap::new();
+
+    for (name, decl) in submodel.symbols().clone().into_iter_local() {
+        let letting_expr = decl
+            .as_value_letting()
+            .map(|expr| clear_expr_clean_rule_metadata(expr.clone()));
+        if let Some(expr) = letting_expr {
+            let surface = surfaces.len();
+            surfaces.push(RewriteSurface::value_letting(name.clone(), expr));
+            value_letting_surfaces.insert(name, surface);
+        }
+    }
+
+    (surfaces, value_letting_surfaces)
+}
+
+fn value_letting_surface_name(kind: &RewriteSurfaceKind) -> Option<&Name> {
+    match kind {
+        RewriteSurfaceKind::Root => None,
+        RewriteSurfaceKind::ValueLetting { name } => Some(name),
+    }
+}
+
+fn current_value_letting_expression(submodel: &Model, name: &Name) -> Option<Expr> {
+    let declaration = {
+        let symbols = submodel.symbols();
+        symbols.lookup_local(name)
+    }?;
+    declaration
+        .as_value_letting()
+        .map(|expr| clear_expr_clean_rule_metadata(expr.clone()))
+}
+
+fn sync_value_letting_surfaces(
+    submodel: &Model,
+    surfaces: &mut Vec<RewriteSurface>,
+    value_letting_surfaces: &mut HashMap<Name, usize>,
+    names: &[Name],
+) -> Vec<usize> {
+    let mut synced_surfaces = Vec::new();
+    let mut seen = HashSet::new();
+
+    for name in names {
+        if !seen.insert(name.clone()) {
+            continue;
+        }
+
+        if let Some(expr) = current_value_letting_expression(submodel, name) {
+            if let Some(old_surface) = value_letting_surfaces.get(name).copied()
+                && let Some(surface) = surfaces.get_mut(old_surface)
+            {
+                surface.active = false;
+            }
+            let new_surface = surfaces.len();
+            surfaces.push(RewriteSurface::value_letting(name.clone(), expr));
+            value_letting_surfaces.insert(name.clone(), new_surface);
+            synced_surfaces.push(new_surface);
+        } else if let Some(old_surface) = value_letting_surfaces.remove(name)
+            && let Some(surface) = surfaces.get_mut(old_surface)
+        {
+            surface.active = false;
+        }
+    }
+
+    synced_surfaces
+}
+
+fn write_worklist_surfaces_to_model(submodel: &mut Model, surfaces: &[RewriteSurface]) {
+    let root = surfaces[0].arena.expression_from(surfaces[0].arena.root());
+    submodel.replace_root(root);
+
+    for surface in surfaces.iter().skip(1) {
+        if !surface.active {
+            continue;
+        }
+        let Some(name) = value_letting_surface_name(&surface.kind) else {
+            continue;
+        };
+        write_value_letting_surface_to_model(submodel, name, &surface.arena);
+    }
+}
+
+fn write_value_letting_surface_to_model(
+    submodel: &mut Model,
+    name: &Name,
+    arena: &ExpressionArena,
+) -> bool {
+    let declaration = {
+        let symbols = submodel.symbols();
+        symbols.lookup_local(name)
+    };
+    let Some(mut declaration) = declaration else {
+        return false;
+    };
+    {
+        let Some(mut letting) = declaration.as_value_letting_mut() else {
+            return false;
+        };
+
+        *letting = arena.expression_from(arena.root());
+    }
+    submodel.symbols_mut().refresh_local_binding_hashes();
+    true
+}
+
+fn enqueue_worklist_nodes_referencing_names(
+    scheduler: &mut WorklistScheduler,
+    surfaces: &[RewriteSurface],
+    names: &[Name],
+    rule_groups: &[RuleGroup<'_>],
+    config: RewriteConfig,
+    dirty_trace: &mut DirtyTrace,
+) {
+    if names.is_empty() {
+        return;
+    }
+
+    for (surface_index, surface) in surfaces.iter().enumerate() {
+        if !surface.active {
+            continue;
+        }
+
+        for node_id in rewriter_preorder_ids(&surface.arena) {
+            if subtree_references_any(surface.arena.expression(node_id), names) {
+                scheduler.enqueue_node_and_ancestors(
+                    &surface.arena,
+                    surface_index,
+                    node_id,
+                    rule_groups,
+                    config,
+                    dirty_trace,
+                );
+            }
+        }
     }
 }
 
@@ -2627,15 +2974,17 @@ mod tests {
         let (arena, node_id) = arena_with_preorder_focus(int_lit(1), 0);
         let generation = arena.generation(node_id);
 
-        assert!(!memo.is_known_failure(node_id, "constant_evaluator", generation, 0));
-        memo.record_failure(node_id, "constant_evaluator", generation, 0);
-        assert!(memo.is_known_failure(node_id, "constant_evaluator", generation, 0));
+        assert!(!memo.is_known_failure(0, node_id, "constant_evaluator", generation, 0));
+        memo.record_failure(0, node_id, "constant_evaluator", generation, 0);
+        assert!(memo.is_known_failure(0, node_id, "constant_evaluator", generation, 0));
         assert!(!memo.is_known_failure(
+            0,
             node_id,
             "constant_evaluator",
             generation.wrapping_add(1),
             0
         ));
-        assert!(!memo.is_known_failure(node_id, "constant_evaluator", generation, 1));
+        assert!(!memo.is_known_failure(0, node_id, "constant_evaluator", generation, 1));
+        assert!(!memo.is_known_failure(1, node_id, "constant_evaluator", generation, 0));
     }
 }

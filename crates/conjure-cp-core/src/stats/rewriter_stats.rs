@@ -46,8 +46,7 @@ use serde_with::skip_serializing_none;
 ///
 /// - `rewriter_value_letting_rewrites`:
 ///   - Type: `Option<usize>`
-///   - The number of times the special value-letting rewrite phase rewrote one letting and forced
-///     another outer rewrite-loop pass.
+///   - The number of value-letting bodies rewritten by the rewriter.
 ///   - If `None`, this metric is not tracked or not applicable for the current session.
 ///
 /// # Example
