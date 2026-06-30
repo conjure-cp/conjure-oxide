@@ -65,6 +65,49 @@ type ApplicableRule<'a, CtxFnType> = (
     Option<VariableDeclarationSnapshot>,
 );
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ScheduledMode {
+    CheckNode,
+    TraverseSubtree,
+}
+
+impl ScheduledMode {
+    fn includes(self, other: Self) -> bool {
+        matches!(
+            (self, other),
+            (ScheduledMode::TraverseSubtree, ScheduledMode::CheckNode)
+                | (
+                    ScheduledMode::TraverseSubtree,
+                    ScheduledMode::TraverseSubtree
+                )
+                | (ScheduledMode::CheckNode, ScheduledMode::CheckNode)
+        )
+    }
+
+    fn descends_on_failure(self) -> bool {
+        matches!(self, ScheduledMode::TraverseSubtree)
+    }
+}
+
+#[derive(Default, Debug)]
+struct WorklistModeCounts {
+    check_node: usize,
+    traverse_subtree: usize,
+}
+
+impl WorklistModeCounts {
+    fn increment(&mut self, mode: ScheduledMode) {
+        self.add(mode, 1);
+    }
+
+    fn add(&mut self, mode: ScheduledMode, value: usize) {
+        match mode {
+            ScheduledMode::CheckNode => self.check_node += value,
+            ScheduledMode::TraverseSubtree => self.traverse_subtree += value,
+        }
+    }
+}
+
 #[derive(Default)]
 struct DirtyTrace {
     enabled: bool,
@@ -103,6 +146,12 @@ struct DirtyTrace {
     worklist_enqueues: usize,
     worklist_pops: usize,
     worklist_stale_pops: usize,
+    worklist_enqueues_by_mode: WorklistModeCounts,
+    worklist_pops_by_mode: WorklistModeCounts,
+    worklist_stale_pops_by_mode: WorklistModeCounts,
+    worklist_no_candidate_pops_by_mode: WorklistModeCounts,
+    worklist_rule_attempt_pops_by_mode: WorklistModeCounts,
+    worklist_child_descents_by_mode: WorklistModeCounts,
     dirty_hits_by_priority: BTreeMap<u16, usize>,
     clean_marks_by_priority: BTreeMap<u16, usize>,
     rule_attempts_by_priority: BTreeMap<u16, usize>,
@@ -209,25 +258,49 @@ impl DirtyTrace {
         self.rule_memo_hits += 1;
     }
 
-    fn record_worklist_enqueue(&mut self) {
+    fn record_worklist_enqueue(&mut self, mode: ScheduledMode) {
         if !self.enabled {
             return;
         }
         self.worklist_enqueues += 1;
+        self.worklist_enqueues_by_mode.increment(mode);
     }
 
-    fn record_worklist_pop(&mut self) {
+    fn record_worklist_pop(&mut self, mode: ScheduledMode) {
         if !self.enabled {
             return;
         }
         self.worklist_pops += 1;
+        self.worklist_pops_by_mode.increment(mode);
     }
 
-    fn record_worklist_stale_pop(&mut self) {
+    fn record_worklist_stale_pop(&mut self, mode: ScheduledMode) {
         if !self.enabled {
             return;
         }
         self.worklist_stale_pops += 1;
+        self.worklist_stale_pops_by_mode.increment(mode);
+    }
+
+    fn record_worklist_no_candidate_pop(&mut self, mode: ScheduledMode) {
+        if !self.enabled {
+            return;
+        }
+        self.worklist_no_candidate_pops_by_mode.increment(mode);
+    }
+
+    fn record_worklist_rule_attempt_pop(&mut self, mode: ScheduledMode) {
+        if !self.enabled {
+            return;
+        }
+        self.worklist_rule_attempt_pops_by_mode.increment(mode);
+    }
+
+    fn record_worklist_child_descent(&mut self, mode: ScheduledMode, children: usize) {
+        if !self.enabled {
+            return;
+        }
+        self.worklist_child_descents_by_mode.add(mode, children);
     }
 
     fn finish(&self, stats: &RewriterStats) {
@@ -350,10 +423,34 @@ impl DirtyTrace {
             self.candidate_index_skipped_nodes
         );
         eprintln!("[dirty-trace] worklist_enqueues={}", self.worklist_enqueues);
+        eprintln!(
+            "[dirty-trace] worklist_enqueues_by_mode={:?}",
+            self.worklist_enqueues_by_mode
+        );
         eprintln!("[dirty-trace] worklist_pops={}", self.worklist_pops);
+        eprintln!(
+            "[dirty-trace] worklist_pops_by_mode={:?}",
+            self.worklist_pops_by_mode
+        );
         eprintln!(
             "[dirty-trace] worklist_stale_pops={}",
             self.worklist_stale_pops
+        );
+        eprintln!(
+            "[dirty-trace] worklist_stale_pops_by_mode={:?}",
+            self.worklist_stale_pops_by_mode
+        );
+        eprintln!(
+            "[dirty-trace] worklist_no_candidate_pops_by_mode={:?}",
+            self.worklist_no_candidate_pops_by_mode
+        );
+        eprintln!(
+            "[dirty-trace] worklist_rule_attempt_pops_by_mode={:?}",
+            self.worklist_rule_attempt_pops_by_mode
+        );
+        eprintln!(
+            "[dirty-trace] worklist_child_descents_by_mode={:?}",
+            self.worklist_child_descents_by_mode
         );
     }
 }
@@ -768,30 +865,6 @@ struct ScheduledKey {
     generation: u32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ScheduledMode {
-    CheckNode,
-    TraverseSubtree,
-}
-
-impl ScheduledMode {
-    fn includes(self, other: Self) -> bool {
-        matches!(
-            (self, other),
-            (ScheduledMode::TraverseSubtree, ScheduledMode::CheckNode)
-                | (
-                    ScheduledMode::TraverseSubtree,
-                    ScheduledMode::TraverseSubtree
-                )
-                | (ScheduledMode::CheckNode, ScheduledMode::CheckNode)
-        )
-    }
-
-    fn descends_on_failure(self) -> bool {
-        matches!(self, ScheduledMode::TraverseSubtree)
-    }
-}
-
 struct WorklistScheduler {
     queues_by_level: Vec<VecDeque<ScheduledNode>>,
     scheduled: HashMap<ScheduledKey, ScheduledMode>,
@@ -890,12 +963,14 @@ impl WorklistScheduler {
         node_id: ExpressionNodeId,
         level: usize,
         mut dirty_trace: Option<&mut DirtyTrace>,
-    ) {
+    ) -> usize {
         if matches!(arena.expression(node_id), Expr::Comprehension(_, _)) {
-            return;
+            return 0;
         }
 
+        let mut child_count = 0;
         for &child_id in arena.children(node_id) {
+            child_count += 1;
             self.enqueue_node_at_level(
                 arena,
                 surface,
@@ -905,6 +980,7 @@ impl WorklistScheduler {
                 dirty_trace.as_deref_mut(),
             );
         }
+        child_count
     }
 
     fn enqueue_node_at_level(
@@ -940,7 +1016,7 @@ impl WorklistScheduler {
                 entry.insert(mode);
                 self.queues_by_level[level].push_back(scheduled);
                 if let Some(trace) = dirty_trace.as_deref_mut() {
-                    trace.record_worklist_enqueue();
+                    trace.record_worklist_enqueue(mode);
                 }
             }
             std::collections::hash_map::Entry::Occupied(mut entry) => {
@@ -948,7 +1024,7 @@ impl WorklistScheduler {
                     entry.insert(mode);
                     self.queues_by_level[level].push_back(scheduled);
                     if let Some(trace) = dirty_trace.as_deref_mut() {
-                        trace.record_worklist_enqueue();
+                        trace.record_worklist_enqueue(mode);
                     }
                 }
             }
@@ -966,13 +1042,16 @@ impl WorklistScheduler {
         mut dirty_trace: Option<&mut DirtyTrace>,
     ) {
         if mode.descends_on_failure() {
-            self.enqueue_children_at_level(
+            let child_count = self.enqueue_children_at_level(
                 arena,
                 surface,
                 node_id,
                 level,
                 dirty_trace.as_deref_mut(),
             );
+            if let Some(trace) = dirty_trace.as_deref_mut() {
+                trace.record_worklist_child_descent(mode, child_count);
+            }
         }
 
         self.enqueue_node_at_level(arena, surface, node_id, next_self_level, mode, dirty_trace);
@@ -994,27 +1073,28 @@ impl WorklistScheduler {
                     generation: scheduled.generation,
                 };
                 if self.scheduled.get(&key).copied() != Some(scheduled.mode) {
+                    dirty_trace.record_worklist_stale_pop(scheduled.mode);
                     continue;
                 }
                 self.scheduled.remove(&key);
 
                 let Some(surface) = surfaces.get(scheduled.surface) else {
-                    dirty_trace.record_worklist_stale_pop();
+                    dirty_trace.record_worklist_stale_pop(scheduled.mode);
                     continue;
                 };
                 if !surface.active {
-                    dirty_trace.record_worklist_stale_pop();
+                    dirty_trace.record_worklist_stale_pop(scheduled.mode);
                     continue;
                 }
                 let arena = &surface.arena;
                 if !arena.is_reachable(scheduled.node_id)
                     || arena.generation(scheduled.node_id) != scheduled.generation
                 {
-                    dirty_trace.record_worklist_stale_pop();
+                    dirty_trace.record_worklist_stale_pop(scheduled.mode);
                     continue;
                 }
 
-                dirty_trace.record_worklist_pop();
+                dirty_trace.record_worklist_pop(scheduled.mode);
                 return Some((level, scheduled.surface, scheduled.node_id, scheduled.mode));
             }
         }
@@ -1661,6 +1741,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             ctx.config,
             surfaces[surface_index].arena.expression(node_id),
         ) {
+            ctx.dirty_trace
+                .record_worklist_no_candidate_pop(scheduled_mode);
             scheduler.enqueue_after_no_rewrite(
                 &surfaces[surface_index].arena,
                 surface_index,
@@ -1765,6 +1847,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
         let mut attempted_rule = false;
+        let mut actual_rule_attempted = false;
         let node_generation = surfaces[surface_index].arena.generation(node_id);
         let symbol_generation = ctx.symbol_generation;
         {
@@ -1786,6 +1869,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                     continue;
                 }
 
+                actual_rule_attempted = true;
                 ctx.dirty_trace.rule_attempts += 1;
                 if ctx.dirty_trace.enabled {
                     *ctx.dirty_trace
@@ -1883,6 +1967,10 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
         }
         if attempted_rule {
             ctx.dirty_trace.attempted_expressions += 1;
+        }
+        if actual_rule_attempted {
+            ctx.dirty_trace
+                .record_worklist_rule_attempt_pop(scheduled_mode);
         }
 
         if results.is_empty() {
