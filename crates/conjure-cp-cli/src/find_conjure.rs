@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow, bail};
 use versions::Versioning;
 
-const CONJURE_MIN_VERSION: &str = "2.6.0";
+const CONJURE_MIN_VERSION: &str = "2.6.1"; // v2.6.1
 const CORRECT_FIRST_LINE: &str = "Conjure: The Automated Constraint Modelling Tool";
 
 /// Checks if the conjure executable is present in PATH and if it is the correct version.
