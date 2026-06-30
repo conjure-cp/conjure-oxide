@@ -1,11 +1,13 @@
-use super::attrs::SetAttr;
-use super::ground::GroundDomain;
-use super::range::Range;
-use super::unresolved::{IntVal, UnresolvedDomain};
-use crate::ast::domains::attrs::{MSetAttr, PartitionAttr};
+use crate::ast::domains::{
+    attrs::{MSetAttr, PartitionAttr, SetAttr},
+    ground::{FieldGround, GroundDomain},
+    int_val::IntVal,
+    range::Range,
+    unresolved::{FieldUnresolved, UnresolvedDomain},
+};
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Expression, FieldEntry, FieldEntryGround, FuncAttr, Literal,
-    Moo, Reference, RelAttr, ReturnType, SequenceAttr, Typeable,
+    DeclarationPtr, DomainOpError, Expression, Field, FuncAttr, Literal, Moo, Reference, RelAttr,
+    ReturnType, SequenceAttr, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -20,7 +22,7 @@ pub type Int = i32;
 pub type DomainPtr = Moo<Domain>;
 
 impl DomainPtr {
-    pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
+    pub fn resolve(&self) -> Result<Moo<GroundDomain>, DomainOpError> {
         self.as_ref().resolve()
     }
 
@@ -37,37 +39,12 @@ impl DomainPtr {
     }
 }
 
-impl From<Moo<GroundDomain>> for DomainPtr {
-    fn from(value: Moo<GroundDomain>) -> Self {
-        Moo::new(Domain::Ground(value))
-    }
-}
-
-impl From<Moo<UnresolvedDomain>> for DomainPtr {
-    fn from(value: Moo<UnresolvedDomain>) -> Self {
-        Moo::new(Domain::Unresolved(value))
-    }
-}
-
-impl From<GroundDomain> for DomainPtr {
-    fn from(value: GroundDomain) -> Self {
-        Moo::new(Domain::Ground(Moo::new(value)))
-    }
-}
-
-impl From<UnresolvedDomain> for DomainPtr {
-    fn from(value: UnresolvedDomain) -> Self {
-        Moo::new(Domain::Unresolved(Moo::new(value)))
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
 #[biplate(to=DomainPtr)]
 #[biplate(to=GroundDomain)]
 #[biplate(to=UnresolvedDomain)]
 #[biplate(to=Expression)]
 #[biplate(to=Reference)]
-#[biplate(to=FieldEntry)]
 #[biplate(to=IntVal)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Domain {
@@ -208,7 +185,7 @@ impl Domain {
     /// Create a new tuple domain with the given entries.
     /// If the entries are all ground, the variant will be [GroundDomain::Record].
     /// Otherwise, it will be [UnresolvedDomain::Record].
-    pub fn record(entries: Vec<FieldEntry>) -> DomainPtr {
+    pub fn record(entries: Vec<Field<DomainPtr>>) -> DomainPtr {
         if let Ok(entries_gds) = entries.iter().cloned().map(TryInto::try_into).try_collect() {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Record(entries_gds))));
         }
@@ -270,7 +247,7 @@ impl Domain {
     /// Create a new variant domain with the given entries.
     /// If the entries are all ground, the variant will be [GroundDomain::Variant].
     /// Otherwise, it will be [UnresolvedDomain::Variant].
-    pub fn variant(entries: Vec<FieldEntry>) -> DomainPtr {
+    pub fn variant(entries: Vec<Field<DomainPtr>>) -> DomainPtr {
         if let Ok(entries_gds) = entries.iter().cloned().map(TryInto::try_into).try_collect() {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Variant(entries_gds))));
         }
@@ -323,9 +300,9 @@ impl Domain {
     /// Otherwise, try to resolve it; Return None if this is not yet possible.
     /// Domains which contain references to givens cannot be resolved until these
     /// givens are substituted for their concrete values.
-    pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
+    pub fn resolve(&self) -> Result<Moo<GroundDomain>, DomainOpError> {
         match self {
-            Domain::Ground(gd) => Some(gd.clone()),
+            Domain::Ground(gd) => Ok(gd.clone()),
             Domain::Unresolved(ud) => ud.resolve().map(Moo::new),
         }
     }
@@ -615,7 +592,7 @@ impl Domain {
     }
 
     /// If this is a record domain, clone and return its entries.
-    pub fn as_record(&self) -> Option<Vec<FieldEntry>> {
+    pub fn as_record(&self) -> Option<Vec<FieldUnresolved>> {
         if let Some(GroundDomain::Record(record_entries)) = self.as_ground() {
             return Some(record_entries.iter().cloned().map(|r| r.into()).collect());
         }
@@ -626,7 +603,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Record], get a mutable reference to its entries
-    pub fn as_record_ground(&self) -> Option<&Vec<FieldEntryGround>> {
+    pub fn as_record_ground(&self) -> Option<&Vec<FieldGround>> {
         if let Some(GroundDomain::Record(entries)) = self.as_ground() {
             return Some(entries);
         }
@@ -635,9 +612,10 @@ impl Domain {
 
     /// If this is a record domain, get a mutable reference to its list of entries.
     /// The domain always becomes [UnresolvedDomain::Record] after this operation.
-    pub fn as_record_mut(&mut self) -> Option<&mut Vec<FieldEntry>> {
+    pub fn as_record_mut(&mut self) -> Option<&mut Vec<FieldUnresolved>> {
         if let Some(GroundDomain::Record(entries_gds)) = self.as_ground() {
-            let entries: Vec<FieldEntry> = entries_gds.iter().cloned().map(|r| r.into()).collect();
+            let entries: Vec<FieldUnresolved> =
+                entries_gds.iter().cloned().map(|r| r.into()).collect();
             *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Record(entries)));
         }
 
@@ -648,7 +626,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Record], get a mutable reference to its entries
-    pub fn as_record_ground_mut(&mut self) -> Option<&mut Vec<FieldEntryGround>> {
+    pub fn as_record_ground_mut(&mut self) -> Option<&mut Vec<FieldGround>> {
         if let Some(GroundDomain::Record(entries)) = self.as_ground_mut() {
             return Some(entries);
         }
@@ -787,7 +765,7 @@ impl Domain {
     }
 
     /// If this is a variant domain, clone and return its entries.
-    pub fn as_variant(&self) -> Option<Vec<FieldEntry>> {
+    pub fn as_variant(&self) -> Option<Vec<FieldUnresolved>> {
         if let Some(GroundDomain::Variant(entries)) = self.as_ground() {
             return Some(entries.iter().cloned().map(|r| r.into()).collect());
         }
@@ -798,7 +776,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Variant], get a mutable reference to its entries
-    pub fn as_variant_ground(&self) -> Option<&Vec<FieldEntryGround>> {
+    pub fn as_variant_ground(&self) -> Option<&Vec<FieldGround>> {
         if let Some(GroundDomain::Variant(entries)) = self.as_ground() {
             return Some(entries);
         }
@@ -807,9 +785,10 @@ impl Domain {
 
     /// If this is a variant domain, get a mutable reference to its list of entries.
     /// The domain always becomes [UnresolvedDomain::Variant] after this operation.
-    pub fn as_variant_mut(&mut self) -> Option<&mut Vec<FieldEntry>> {
+    pub fn as_variant_mut(&mut self) -> Option<&mut Vec<FieldUnresolved>> {
         if let Some(GroundDomain::Variant(entries_gds)) = self.as_ground() {
-            let entries: Vec<FieldEntry> = entries_gds.iter().cloned().map(|r| r.into()).collect();
+            let entries: Vec<FieldUnresolved> =
+                entries_gds.iter().cloned().map(|r| r.into()).collect();
             *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Variant(entries)));
         }
 
@@ -820,7 +799,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Variant], get a mutable reference to its entries
-    pub fn as_variant_ground_mut(&mut self) -> Option<&mut Vec<FieldEntryGround>> {
+    pub fn as_variant_ground_mut(&mut self) -> Option<&mut Vec<FieldGround>> {
         if let Some(GroundDomain::Variant(entries)) = self.as_ground_mut() {
             return Some(entries);
         }
@@ -1090,13 +1069,13 @@ mod tests {
     fn test_length_record() {
         // 3 ways to pick rec.a, 2 ways to pick rec.b
         let t = Domain::record(vec![
-            FieldEntry {
+            Field {
                 name: Name::user("a"),
-                domain: domain_int!(1..3),
+                value: domain_int!(1..3),
             },
-            FieldEntry {
+            Field {
                 name: Name::user("b"),
-                domain: Domain::bool(),
+                value: Domain::bool(),
             },
         ]);
         assert_eq!(t.length(), Ok(6));

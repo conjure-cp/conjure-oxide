@@ -67,7 +67,7 @@ fn simplify_in_domain(expr: &Expr, domain: &DomainPtr) -> Option<bool> {
     }
 
     let expr_domain = resolved_ground_domain_of_for_partial_eval(expr)?;
-    let domain = domain.resolve()?;
+    let domain = domain.resolve().ok()?;
     let intersection = expr_domain.intersect(&domain).ok()?;
 
     if normalise_int_domain(&intersection) == normalise_int_domain(expr_domain.as_ref()) {
@@ -153,7 +153,7 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
             }
         }
         Expr::UnsafeIndex(_, _, _) | Expr::UnsafeSlice(_, _, _) => None,
-        _ => expr.domain_of()?.resolve(),
+        _ => expr.domain_of()?.resolve().ok(),
     }
 }
 
@@ -224,6 +224,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::Table(_, _, _) => Err(RuleNotApplicable),
         Expr::NegativeTable(_, _, _) => Err(RuleNotApplicable),
+        Expr::RecordField(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {
             // partially evaluate matrix literals indexed by a constant.
 
@@ -273,8 +274,8 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                     .domain()
                     .ok_or(RuleNotApplicable)?
                     .resolve()
-                    .ok_or(RuleNotApplicable)?;
-                let domain = domain.resolve().ok_or(RuleNotApplicable)?;
+                    .map_err(|_| RuleNotApplicable)?;
+                let domain = domain.resolve().map_err(|_| RuleNotApplicable)?;
 
                 let intersection = decl_domain
                     .intersect(&domain)
@@ -301,10 +302,8 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref() {
                 if domain
                     .resolve()
-                    .ok_or(RuleNotApplicable)?
-                    .contains(lit)
-                    .ok()
-                    .ok_or(RuleNotApplicable)?
+                    .and_then(|gd| gd.contains(lit))
+                    .map_err(|_| RuleNotApplicable)?
                 {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
                 } else {
@@ -642,23 +641,23 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         }
         Expr::Imply(_m, x, y) => {
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = x.as_ref() {
-                if *x {
+                return if *x {
                     // (true) -> y ~~> y
-                    return Ok(Reduction::pure(Moo::unwrap_or_clone(y.clone())));
+                    Ok(Reduction::pure(Moo::unwrap_or_clone(y.clone())))
                 } else {
                     // (false) -> y ~~> true
-                    return Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())));
-                }
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
+                };
             };
 
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(y))) = y.as_ref() {
-                if *y {
+                return if *y {
                     // x -> (true) ~~> true
-                    return Ok(Reduction::pure(Expr::from(true)));
+                    Ok(Reduction::pure(Expr::from(true)))
                 } else {
                     // x -> (false) ~~> !x
-                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), x.clone())));
-                }
+                    Ok(Reduction::pure(Expr::Not(Metadata::new(), x.clone())))
+                };
             };
 
             // reflexivity: p -> p ~> true
@@ -676,22 +675,22 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         }
         Expr::Iff(_m, x, y) => {
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = x.as_ref() {
-                if *x {
+                return if *x {
                     // (true) <-> y ~~> y
-                    return Ok(Reduction::pure(Moo::unwrap_or_clone(y.clone())));
+                    Ok(Reduction::pure(Moo::unwrap_or_clone(y.clone())))
                 } else {
                     // (false) <-> y ~~> !y
-                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), y.clone())));
-                }
+                    Ok(Reduction::pure(Expr::Not(Metadata::new(), y.clone())))
+                };
             };
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(y))) = y.as_ref() {
-                if *y {
+                return if *y {
                     // x <-> (true) ~~> x
-                    return Ok(Reduction::pure(Moo::unwrap_or_clone(x.clone())));
+                    Ok(Reduction::pure(Moo::unwrap_or_clone(x.clone())))
                 } else {
                     // x <-> (false) ~~> !x
-                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), x.clone())));
-                }
+                    Ok(Reduction::pure(Expr::Not(Metadata::new(), x.clone())))
+                };
             };
 
             // reflexivity: p <-> p ~> true
