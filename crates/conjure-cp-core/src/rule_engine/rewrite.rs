@@ -1039,6 +1039,8 @@ impl WorklistScheduler {
         level: usize,
         next_self_level: usize,
         mode: ScheduledMode,
+        rule_groups: &[RuleGroup<'_>],
+        config: RewriteConfig,
         mut dirty_trace: Option<&mut DirtyTrace>,
     ) {
         if mode.descends_on_failure() {
@@ -1059,6 +1061,8 @@ impl WorklistScheduler {
         } else {
             mode
         };
+        let next_self_level =
+            next_worklist_candidate_level(arena, node_id, next_self_level, rule_groups, config);
         self.enqueue_node_at_level(
             arena,
             surface,
@@ -1113,6 +1117,26 @@ impl WorklistScheduler {
 
         None
     }
+}
+
+fn next_worklist_candidate_level(
+    arena: &ExpressionArena,
+    node_id: ExpressionNodeId,
+    start_level: usize,
+    rule_groups: &[RuleGroup<'_>],
+    config: RewriteConfig,
+) -> usize {
+    if start_level >= rule_groups.len() || !arena.is_reachable(node_id) {
+        return rule_groups.len();
+    }
+
+    let expr = arena.expression(node_id);
+    rule_groups
+        .iter()
+        .enumerate()
+        .skip(start_level)
+        .find_map(|(level, rule_group)| rule_group.has_candidates(config, expr).then_some(level))
+        .unwrap_or(rule_groups.len())
 }
 
 #[derive(Default)]
@@ -1744,6 +1768,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 level,
                 level + 1,
                 scheduled_mode,
+                ctx.bucketed_rules,
+                ctx.config,
                 Some(ctx.dirty_trace),
             );
             continue;
@@ -1762,6 +1788,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 level,
                 level + 1,
                 scheduled_mode,
+                ctx.bucketed_rules,
+                ctx.config,
                 Some(ctx.dirty_trace),
             );
             continue;
@@ -1802,6 +1830,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                         level,
                         clean_level + 1,
                         scheduled_mode,
+                        ctx.bucketed_rules,
+                        ctx.config,
                         Some(ctx.dirty_trace),
                     );
                     continue;
@@ -1993,6 +2023,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 level,
                 level + 1,
                 scheduled_mode,
+                ctx.bucketed_rules,
+                ctx.config,
                 Some(ctx.dirty_trace),
             );
             continue;
@@ -3039,6 +3071,12 @@ mod tests {
         never_apply_test_rule,
         &[("test-rule-set", 1)],
     );
+    static TEST_NO_TARGET_RULE: crate::rule_engine::Rule<'static> = crate::rule_engine::Rule {
+        name: "no-target-test-rule",
+        application: never_apply_test_rule,
+        rule_sets: &[("test-rule-set", 1)],
+        applicable_to: Some(&[]),
+    };
 
     fn test_rule_groups_at_priorities(priorities: &[u16]) -> Vec<RuleGroup<'static>> {
         priorities
@@ -3062,6 +3100,35 @@ mod tests {
 
     fn test_rule_groups_with_two_levels() -> Vec<RuleGroup<'static>> {
         test_rule_groups_at_priorities(&[1, 2])
+    }
+
+    fn test_rule_groups_with_no_candidate_middle_level() -> Vec<RuleGroup<'static>> {
+        vec![
+            RuleGroup::new(
+                1,
+                vec![crate::rule_engine::RuleData {
+                    rule: &TEST_RULE,
+                    priority: 1,
+                    rule_set: &TEST_RULE_SET,
+                }],
+            ),
+            RuleGroup::new(
+                2,
+                vec![crate::rule_engine::RuleData {
+                    rule: &TEST_NO_TARGET_RULE,
+                    priority: 2,
+                    rule_set: &TEST_RULE_SET,
+                }],
+            ),
+            RuleGroup::new(
+                3,
+                vec![crate::rule_engine::RuleData {
+                    rule: &TEST_RULE,
+                    priority: 3,
+                    rule_set: &TEST_RULE_SET,
+                }],
+            ),
+        ]
     }
 
     #[test]
@@ -3186,6 +3253,8 @@ mod tests {
             0,
             1,
             ScheduledMode::TraverseSubtree,
+            &rule_groups,
+            RewriteConfig::optimised(),
             Some(&mut dirty_trace),
         );
         let eq_work = scheduler.pop_next(
@@ -3202,6 +3271,8 @@ mod tests {
             0,
             1,
             ScheduledMode::TraverseSubtree,
+            &rule_groups,
+            RewriteConfig::optimised(),
             Some(&mut dirty_trace),
         );
         assert_eq!(
@@ -3248,6 +3319,62 @@ mod tests {
                 &mut dirty_trace
             ),
             Some((1, 0, eq_id, ScheduledMode::CheckNode))
+        );
+    }
+
+    #[test]
+    fn worklist_no_rewrite_skips_levels_without_candidates_for_self() {
+        let tree = root(vec![int_lit(1)]);
+        let surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
+        let arena = &surfaces[0].arena;
+        let ids = rewriter_preorder_ids(arena);
+        let root_id = ids[0];
+        let child_id = ids[1];
+
+        let rule_groups = test_rule_groups_with_no_candidate_middle_level();
+        let mut scheduler =
+            WorklistScheduler::new(&surfaces, &rule_groups, RewriteConfig::optimised());
+        let mut dirty_trace = DirtyTrace::default();
+
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, root_id, ScheduledMode::TraverseSubtree))
+        );
+
+        scheduler.enqueue_after_no_rewrite(
+            arena,
+            0,
+            root_id,
+            0,
+            1,
+            ScheduledMode::TraverseSubtree,
+            &rule_groups,
+            RewriteConfig::optimised(),
+            Some(&mut dirty_trace),
+        );
+
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, child_id, ScheduledMode::TraverseSubtree))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((2, 0, root_id, ScheduledMode::CheckNode))
         );
     }
 
