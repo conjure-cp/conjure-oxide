@@ -31,6 +31,25 @@ use std::{
 use tracing::trace;
 use uniplate::{Biplate, Uniplate};
 
+// Rewriter selection invariant:
+//
+// 1. Higher rule priority wins.
+// 2. Within one priority, an expression is tried before its descendants.
+//
+// Consequently, if A contains B and both are rewriteable at the same priority, A must be selected
+// first. If A rewrites, old descendants such as B are not considered; descendants are only
+// scheduled when no enclosing expression rewrites first. The rewriter does not require old full-scan
+// preorder between unrelated sibling subtrees.
+// This is a semantic requirement of the rewriter, not merely a scheduling optimisation.
+//
+// Rule side effects:
+//
+// A selected rule always replaces the focused expression. It may also append top-level constraints,
+// append CNF clauses, add symbol declarations, or change existing symbol declarations (for example
+// by tightening a domain). Rewriting a value-letting surface writes the replacement expression back
+// to that symbol declaration. Symbol changes invalidate rule-application context caches; changed
+// declarations and CNF effects may require rebuilding rewrite surfaces from the model.
+
 // debug imports
 #[cfg(debug_assertions)]
 use {
@@ -738,6 +757,7 @@ struct ScheduledNode {
     surface: usize,
     node_id: ExpressionNodeId,
     generation: u32,
+    mode: ScheduledMode,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -748,16 +768,40 @@ struct ScheduledKey {
     generation: u32,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ScheduledMode {
+    CheckNode,
+    TraverseSubtree,
+}
+
+impl ScheduledMode {
+    fn includes(self, other: Self) -> bool {
+        matches!(
+            (self, other),
+            (ScheduledMode::TraverseSubtree, ScheduledMode::CheckNode)
+                | (
+                    ScheduledMode::TraverseSubtree,
+                    ScheduledMode::TraverseSubtree
+                )
+                | (ScheduledMode::CheckNode, ScheduledMode::CheckNode)
+        )
+    }
+
+    fn descends_on_failure(self) -> bool {
+        matches!(self, ScheduledMode::TraverseSubtree)
+    }
+}
+
 struct WorklistScheduler {
     queues_by_level: Vec<VecDeque<ScheduledNode>>,
-    scheduled: HashSet<ScheduledKey>,
+    scheduled: HashMap<ScheduledKey, ScheduledMode>,
 }
 
 impl WorklistScheduler {
     fn empty(rule_groups: &[RuleGroup<'_>]) -> Self {
         Self {
             queues_by_level: vec![VecDeque::new(); rule_groups.len()],
-            scheduled: HashSet::new(),
+            scheduled: HashMap::new(),
         }
     }
 
@@ -777,8 +821,8 @@ impl WorklistScheduler {
         &mut self,
         surfaces: &[RewriteSurface],
         surface: usize,
-        rule_groups: &[RuleGroup<'_>],
-        config: RewriteConfig,
+        _rule_groups: &[RuleGroup<'_>],
+        _config: RewriteConfig,
         mut dirty_trace: Option<&mut DirtyTrace>,
     ) {
         let Some(rewrite_surface) = surfaces.get(surface) else {
@@ -788,16 +832,12 @@ impl WorklistScheduler {
             return;
         }
 
-        for node_id in rewriter_preorder_ids(&rewrite_surface.arena) {
-            self.enqueue_node(
-                &rewrite_surface.arena,
-                surface,
-                node_id,
-                rule_groups,
-                config,
-                dirty_trace.as_deref_mut(),
-            );
-        }
+        self.enqueue_subtree(
+            &rewrite_surface.arena,
+            surface,
+            rewrite_surface.arena.root(),
+            dirty_trace.as_deref_mut(),
+        );
     }
 
     fn enqueue_subtree(
@@ -805,20 +845,16 @@ impl WorklistScheduler {
         arena: &ExpressionArena,
         surface: usize,
         node_id: ExpressionNodeId,
-        rule_groups: &[RuleGroup<'_>],
-        config: RewriteConfig,
-        dirty_trace: &mut DirtyTrace,
+        dirty_trace: Option<&mut DirtyTrace>,
     ) {
-        for dirty_node in rewriter_reachable_subtree_ids(arena, node_id) {
-            self.enqueue_node(
-                arena,
-                surface,
-                dirty_node,
-                rule_groups,
-                config,
-                Some(dirty_trace),
-            );
-        }
+        self.enqueue_node_at_level(
+            arena,
+            surface,
+            node_id,
+            0,
+            ScheduledMode::TraverseSubtree,
+            dirty_trace,
+        );
     }
 
     fn enqueue_node_and_ancestors(
@@ -826,81 +862,141 @@ impl WorklistScheduler {
         arena: &ExpressionArena,
         surface: usize,
         node_id: ExpressionNodeId,
-        rule_groups: &[RuleGroup<'_>],
-        config: RewriteConfig,
         dirty_trace: &mut DirtyTrace,
     ) {
+        let mut chain = Vec::new();
         let mut current = Some(node_id);
         while let Some(current_id) = current {
-            self.enqueue_node(
+            chain.push(current_id);
+            current = arena.parent(current_id);
+        }
+
+        for current_id in chain.into_iter().rev() {
+            self.enqueue_node_at_level(
                 arena,
                 surface,
                 current_id,
-                rule_groups,
-                config,
+                0,
+                ScheduledMode::CheckNode,
                 Some(dirty_trace),
             );
-            current = arena.parent(current_id);
         }
     }
 
-    fn enqueue_node(
+    fn enqueue_children_at_level(
         &mut self,
         arena: &ExpressionArena,
         surface: usize,
         node_id: ExpressionNodeId,
-        rule_groups: &[RuleGroup<'_>],
-        config: RewriteConfig,
+        level: usize,
         mut dirty_trace: Option<&mut DirtyTrace>,
     ) {
+        if matches!(arena.expression(node_id), Expr::Comprehension(_, _)) {
+            return;
+        }
+
+        for &child_id in arena.children(node_id) {
+            self.enqueue_node_at_level(
+                arena,
+                surface,
+                child_id,
+                level,
+                ScheduledMode::TraverseSubtree,
+                dirty_trace.as_deref_mut(),
+            );
+        }
+    }
+
+    fn enqueue_node_at_level(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        level: usize,
+        mode: ScheduledMode,
+        mut dirty_trace: Option<&mut DirtyTrace>,
+    ) {
+        if level >= self.queues_by_level.len() {
+            return;
+        }
         if !arena.is_reachable(node_id) {
             return;
         }
 
-        let expr = arena.expression(node_id);
-        for (level, rule_group) in rule_groups.iter().enumerate() {
-            if config.dirty && arena.is_clean_for_rule_priority(node_id, rule_group.priority) {
-                continue;
-            }
-            if !rule_group.has_candidates(config, expr) {
-                continue;
-            }
-
-            let scheduled = ScheduledNode {
-                surface,
-                node_id,
-                generation: arena.generation(node_id),
-            };
-            let inserted = self.scheduled.insert(ScheduledKey {
-                level,
-                surface,
-                node_id,
-                generation: scheduled.generation,
-            });
-            if inserted {
+        let scheduled = ScheduledNode {
+            surface,
+            node_id,
+            generation: arena.generation(node_id),
+            mode,
+        };
+        let key = ScheduledKey {
+            level,
+            surface,
+            node_id,
+            generation: scheduled.generation,
+        };
+        match self.scheduled.entry(key) {
+            std::collections::hash_map::Entry::Vacant(entry) => {
+                entry.insert(mode);
                 self.queues_by_level[level].push_back(scheduled);
+                if let Some(trace) = dirty_trace.as_deref_mut() {
+                    trace.record_worklist_enqueue();
+                }
             }
-            if inserted && let Some(trace) = dirty_trace.as_deref_mut() {
-                trace.record_worklist_enqueue();
+            std::collections::hash_map::Entry::Occupied(mut entry) => {
+                if !entry.get().includes(mode) {
+                    entry.insert(mode);
+                    self.queues_by_level[level].push_back(scheduled);
+                    if let Some(trace) = dirty_trace.as_deref_mut() {
+                        trace.record_worklist_enqueue();
+                    }
+                }
             }
         }
+    }
+
+    fn enqueue_after_no_rewrite(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        level: usize,
+        next_self_level: usize,
+        mode: ScheduledMode,
+        mut dirty_trace: Option<&mut DirtyTrace>,
+    ) {
+        if mode.descends_on_failure() {
+            self.enqueue_children_at_level(
+                arena,
+                surface,
+                node_id,
+                level,
+                dirty_trace.as_deref_mut(),
+            );
+        }
+
+        self.enqueue_node_at_level(arena, surface, node_id, next_self_level, mode, dirty_trace);
     }
 
     fn pop_next(
         &mut self,
         surfaces: &[RewriteSurface],
-        rule_groups: &[RuleGroup<'_>],
-        config: RewriteConfig,
+        _rule_groups: &[RuleGroup<'_>],
+        _config: RewriteConfig,
         dirty_trace: &mut DirtyTrace,
-    ) -> Option<(usize, usize, ExpressionNodeId)> {
+    ) -> Option<(usize, usize, ExpressionNodeId, ScheduledMode)> {
         for (level, queue) in self.queues_by_level.iter_mut().enumerate() {
             while let Some(scheduled) = queue.pop_front() {
-                self.scheduled.remove(&ScheduledKey {
+                let key = ScheduledKey {
                     level,
                     surface: scheduled.surface,
                     node_id: scheduled.node_id,
                     generation: scheduled.generation,
-                });
+                };
+                if self.scheduled.get(&key).copied() != Some(scheduled.mode) {
+                    continue;
+                }
+                self.scheduled.remove(&key);
 
                 let Some(surface) = surfaces.get(scheduled.surface) else {
                     dirty_trace.record_worklist_stale_pop();
@@ -918,19 +1014,8 @@ impl WorklistScheduler {
                     continue;
                 }
 
-                let rule_group = &rule_groups[level];
-                if config.dirty
-                    && arena.is_clean_for_rule_priority(scheduled.node_id, rule_group.priority)
-                {
-                    dirty_trace.record_dirty_hit(rule_group.priority);
-                    continue;
-                }
-                if !rule_group.has_candidates(config, arena.expression(scheduled.node_id)) {
-                    continue;
-                }
-
                 dirty_trace.record_worklist_pop();
-                return Some((level, scheduled.surface, scheduled.node_id));
+                return Some((level, scheduled.surface, scheduled.node_id, scheduled.mode));
             }
         }
 
@@ -1044,8 +1129,8 @@ struct RewritePassContext<'ctx, 'rules> {
     run_start: &'ctx Instant,
 }
 
-/// Rewrites a model by applying rules in priority order,
-/// favouring expressions found earlier during preorder traversal of the tree.
+/// Rewrites a model by applying rules in priority order, trying enclosing expressions before their
+/// descendants at each priority.
 pub fn rewrite_model<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
@@ -1547,13 +1632,47 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
     let (mut surfaces, mut value_letting_surfaces) = build_worklist_surfaces(submodel, arena);
     let mut scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
 
-    while let Some((level, surface_index, node_id)) =
+    while let Some((level, surface_index, node_id, scheduled_mode)) =
         scheduler.pop_next(&surfaces, ctx.bucketed_rules, ctx.config, ctx.dirty_trace)
     {
         ctx.dirty_trace.priority_scans += 1;
         ctx.dirty_trace.expression_visits += 1;
 
         let rule_group = &ctx.bucketed_rules[level];
+        if ctx.config.dirty
+            && surfaces[surface_index]
+                .arena
+                .is_clean_for_rule_priority(node_id, rule_group.priority)
+        {
+            ctx.dirty_trace.record_dirty_hit(rule_group.priority);
+            scheduler.enqueue_after_no_rewrite(
+                &surfaces[surface_index].arena,
+                surface_index,
+                node_id,
+                level,
+                level + 1,
+                scheduled_mode,
+                Some(ctx.dirty_trace),
+            );
+            continue;
+        }
+
+        if !rule_group.has_candidates(
+            ctx.config,
+            surfaces[surface_index].arena.expression(node_id),
+        ) {
+            scheduler.enqueue_after_no_rewrite(
+                &surfaces[surface_index].arena,
+                surface_index,
+                node_id,
+                level,
+                level + 1,
+                scheduled_mode,
+                Some(ctx.dirty_trace),
+            );
+            continue;
+        }
+
         let mut node_content_hash = None;
         let scan_symbol_context_hash = ctx
             .cache
@@ -1582,6 +1701,15 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                             .arena
                             .mark_clean_for_rule_priority(node_id, rule_group.priority);
                     }
+                    scheduler.enqueue_after_no_rewrite(
+                        &surfaces[surface_index].arena,
+                        surface_index,
+                        node_id,
+                        level,
+                        clean_level + 1,
+                        scheduled_mode,
+                        Some(ctx.dirty_trace),
+                    );
                     continue;
                 }
                 CacheResult::Rewrite(cached) => {
@@ -1608,8 +1736,6 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                         &surfaces[surface_index].arena,
                         surface_index,
                         node_id,
-                        ctx.bucketed_rules,
-                        ctx.config,
                         ctx.dirty_trace,
                     );
                     if let Some(name) = rewritten_value_letting_name {
@@ -1625,8 +1751,6 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                             &mut scheduler,
                             &surfaces,
                             std::slice::from_ref(&name),
-                            ctx.bucketed_rules,
-                            ctx.config,
                             ctx.dirty_trace,
                         );
                     }
@@ -1762,6 +1886,15 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
         }
 
         if results.is_empty() {
+            scheduler.enqueue_after_no_rewrite(
+                &surfaces[surface_index].arena,
+                surface_index,
+                node_id,
+                level,
+                level + 1,
+                scheduled_mode,
+                Some(ctx.dirty_trace),
+            );
             continue;
         }
 
@@ -1926,8 +2059,6 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 &surfaces[surface_index].arena,
                 surface_index,
                 *node_id,
-                ctx.bucketed_rules,
-                ctx.config,
                 ctx.dirty_trace,
             );
             for new_top_node_id in new_top_node_ids {
@@ -1935,9 +2066,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                     &surfaces[root_surface].arena,
                     root_surface,
                     new_top_node_id,
-                    ctx.bucketed_rules,
-                    ctx.config,
-                    ctx.dirty_trace,
+                    Some(ctx.dirty_trace),
                 );
             }
             for synced_surface in synced_surfaces {
@@ -1953,8 +2082,6 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 &mut scheduler,
                 &surfaces,
                 &affected_names,
-                ctx.bucketed_rules,
-                ctx.config,
                 ctx.dirty_trace,
             );
         }
@@ -1982,12 +2109,10 @@ fn enqueue_worklist_rewrite_impact(
     arena: &ExpressionArena,
     surface: usize,
     node_id: ExpressionNodeId,
-    rule_groups: &[RuleGroup<'_>],
-    config: RewriteConfig,
     dirty_trace: &mut DirtyTrace,
 ) {
-    scheduler.enqueue_subtree(arena, surface, node_id, rule_groups, config, dirty_trace);
-    scheduler.enqueue_node_and_ancestors(arena, surface, node_id, rule_groups, config, dirty_trace);
+    scheduler.enqueue_node_and_ancestors(arena, surface, node_id, dirty_trace);
+    scheduler.enqueue_subtree(arena, surface, node_id, Some(dirty_trace));
 }
 
 fn build_worklist_surfaces(
@@ -2104,8 +2229,6 @@ fn enqueue_worklist_nodes_referencing_names(
     scheduler: &mut WorklistScheduler,
     surfaces: &[RewriteSurface],
     names: &[Name],
-    rule_groups: &[RuleGroup<'_>],
-    config: RewriteConfig,
     dirty_trace: &mut DirtyTrace,
 ) {
     if names.is_empty() {
@@ -2123,8 +2246,6 @@ fn enqueue_worklist_nodes_referencing_names(
                     &surface.arena,
                     surface_index,
                     node_id,
-                    rule_groups,
-                    config,
                     dirty_trace,
                 );
             }
@@ -2749,6 +2870,36 @@ mod tests {
         (arena, node_id)
     }
 
+    fn test_rule_set_applies(_: &crate::settings::SolverFamily) -> bool {
+        true
+    }
+
+    fn never_apply_test_rule(
+        _: &Expr,
+        _: &crate::ast::SymbolTable,
+    ) -> crate::rule_engine::ApplicationResult {
+        Err(crate::rule_engine::ApplicationError::RuleNotApplicable)
+    }
+
+    static TEST_RULE_SET: RuleSet<'static> =
+        RuleSet::new("test-rule-set", &[], test_rule_set_applies);
+    static TEST_RULE: crate::rule_engine::Rule<'static> = crate::rule_engine::Rule::new(
+        "never-apply-test-rule",
+        never_apply_test_rule,
+        &[("test-rule-set", 1)],
+    );
+
+    fn test_rule_groups() -> Vec<RuleGroup<'static>> {
+        vec![RuleGroup::new(
+            1,
+            vec![crate::rule_engine::RuleData {
+                rule: &TEST_RULE,
+                priority: 1,
+                rule_set: &TEST_RULE_SET,
+            }],
+        )]
+    }
+
     #[test]
     fn rewriter_subtree_preorder_does_not_enter_comprehensions() {
         let tree = root(vec![
@@ -2763,6 +2914,158 @@ mod tests {
         assert_eq!(
             rewriter_reachable_subtree_ids(&arena, comp_id),
             vec![comp_id]
+        );
+    }
+
+    #[test]
+    fn worklist_ancestor_enqueue_checks_enclosing_nodes_first() {
+        let tree = root(vec![Expr::Eq(
+            Metadata::new(),
+            Moo::new(int_lit(1)),
+            Moo::new(int_lit(2)),
+        )]);
+        let surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
+        let arena = &surfaces[0].arena;
+        let ids = rewriter_preorder_ids(arena);
+        let root_id = ids[0];
+        let eq_id = ids[1];
+        let left_leaf_id = ids[2];
+
+        let rule_groups = test_rule_groups();
+        let mut scheduler = WorklistScheduler::empty(&rule_groups);
+        let mut dirty_trace = DirtyTrace::default();
+
+        scheduler.enqueue_node_and_ancestors(arena, 0, left_leaf_id, &mut dirty_trace);
+
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, root_id, ScheduledMode::CheckNode))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, eq_id, ScheduledMode::CheckNode))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, left_leaf_id, ScheduledMode::CheckNode))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn worklist_subtree_descends_lazily_in_breadth_first_order() {
+        let tree = root(vec![
+            Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2))),
+            int_lit(3),
+        ]);
+        let surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
+        let arena = &surfaces[0].arena;
+        let ids = rewriter_preorder_ids(arena);
+        let root_id = ids[0];
+        let eq_id = ids[1];
+        let left_leaf_id = ids[2];
+        let right_leaf_id = ids[3];
+        let root_sibling_id = ids[4];
+
+        let rule_groups = test_rule_groups();
+        let mut scheduler =
+            WorklistScheduler::new(&surfaces, &rule_groups, RewriteConfig::optimised());
+        let mut dirty_trace = DirtyTrace::default();
+
+        let root_work = scheduler.pop_next(
+            &surfaces,
+            &rule_groups,
+            RewriteConfig::optimised(),
+            &mut dirty_trace,
+        );
+        assert_eq!(
+            root_work,
+            Some((0, 0, root_id, ScheduledMode::TraverseSubtree))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            None
+        );
+
+        scheduler.enqueue_after_no_rewrite(
+            arena,
+            0,
+            root_id,
+            0,
+            1,
+            ScheduledMode::TraverseSubtree,
+            Some(&mut dirty_trace),
+        );
+        let eq_work = scheduler.pop_next(
+            &surfaces,
+            &rule_groups,
+            RewriteConfig::optimised(),
+            &mut dirty_trace,
+        );
+        assert_eq!(eq_work, Some((0, 0, eq_id, ScheduledMode::TraverseSubtree)));
+        scheduler.enqueue_after_no_rewrite(
+            arena,
+            0,
+            eq_id,
+            0,
+            1,
+            ScheduledMode::TraverseSubtree,
+            Some(&mut dirty_trace),
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, root_sibling_id, ScheduledMode::TraverseSubtree))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, left_leaf_id, ScheduledMode::TraverseSubtree))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, right_leaf_id, ScheduledMode::TraverseSubtree))
         );
     }
 
