@@ -122,8 +122,8 @@ cargo +nightly build --workspace
 ln -sf conjure-oxide "${TARGET_DIR}/debug/conjure-oxide-debug"
 
 echo_err "info: running tests"
-cargo +nightly nextest run --workspace
 cargo +nightly test --workspace --doc
+cargo +nightly nextest run --workspace
 
 echo_err "info: generating coverage reports"
 grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t html\
