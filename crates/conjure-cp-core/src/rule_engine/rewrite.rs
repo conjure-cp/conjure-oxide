@@ -26,7 +26,11 @@ use itertools::Itertools;
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, BinaryHeap, HashMap, HashSet},
+    fmt::Write as FmtWrite,
+    fs::{self, OpenOptions},
     hash::{DefaultHasher, Hash, Hasher},
+    io::Write as IoWrite,
+    path::PathBuf,
     time::Instant,
 };
 use tracing::trace;
@@ -112,6 +116,7 @@ impl WorklistModeCounts {
 #[derive(Default)]
 struct DirtyTrace {
     enabled: bool,
+    destination: DirtyTraceDestination,
     passes: usize,
     priority_scans: usize,
     expression_visits: usize,
@@ -161,10 +166,39 @@ struct DirtyTrace {
     whole_model_clears_by_rule: BTreeMap<String, usize>,
 }
 
+#[derive(Default)]
+enum DirtyTraceDestination {
+    #[default]
+    Stderr,
+    File(PathBuf),
+    Directory(PathBuf),
+}
+
 impl DirtyTrace {
     fn from_env() -> Self {
+        let Some(destination) = std::env::var_os("CONJURE_DIRTY_TRACE") else {
+            return Self::default();
+        };
+
+        let destination = if destination.is_empty()
+            || destination == "1"
+            || destination
+                .to_str()
+                .is_some_and(|value| value.eq_ignore_ascii_case("true"))
+        {
+            DirtyTraceDestination::Stderr
+        } else {
+            let path = PathBuf::from(destination);
+            if path.is_dir() {
+                DirtyTraceDestination::Directory(path)
+            } else {
+                DirtyTraceDestination::File(path)
+            }
+        };
+
         Self {
-            enabled: std::env::var_os("CONJURE_DIRTY_TRACE").is_some(),
+            enabled: true,
+            destination,
             ..Self::default()
         }
     }
@@ -309,150 +343,328 @@ impl DirtyTrace {
             return;
         }
 
-        eprintln!("[dirty-trace] passes={}", self.passes);
-        eprintln!("[dirty-trace] priority_scans={}", self.priority_scans);
-        eprintln!("[dirty-trace] expression_visits={}", self.expression_visits);
-        eprintln!(
+        let mut output = String::new();
+        writeln!(output, "[dirty-trace] passes={}", self.passes).unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] priority_scans={}",
+            self.priority_scans
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] expression_visits={}",
+            self.expression_visits
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] attempted_expressions={}",
             self.attempted_expressions
-        );
-        eprintln!("[dirty-trace] rule_attempts_counted={}", self.rule_attempts);
-        eprintln!("[dirty-trace] rule_memo_hits={}", self.rule_memo_hits);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] rule_attempts_counted={}",
+            self.rule_attempts
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] rule_memo_hits={}",
+            self.rule_memo_hits
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] stats_rule_attempts={}",
             stats.rewriter_rule_application_attempts.unwrap_or(0)
-        );
-        eprintln!("[dirty-trace] clean_marks={}", self.clean_marks);
-        eprintln!("[dirty-trace] dirty_hits={}", self.dirty_hits);
-        eprintln!("[dirty-trace] rewrites={}", self.rewrites);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(output, "[dirty-trace] clean_marks={}", self.clean_marks).unwrap();
+        writeln!(output, "[dirty-trace] dirty_hits={}", self.dirty_hits).unwrap();
+        writeln!(output, "[dirty-trace] rewrites={}", self.rewrites).unwrap();
+        writeln!(
+            output,
             "[dirty-trace] value_letting_rewrites={}",
             self.value_letting_rewrites
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] whole_model_clears_after_value_letting={}",
             self.whole_model_clears_after_value_letting
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] whole_model_clears_after_side_effects={}",
             self.whole_model_clears_after_side_effects
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] side_effect_arena_reimports={}",
             self.side_effect_arena_reimports
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] side_effects_kept_in_arena={}",
             self.side_effects_kept_in_arena
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] replacement_subtree_clears={}",
             self.replacement_subtree_clears
-        );
-        eprintln!("[dirty-trace] ancestor_clears={}", self.ancestor_clears);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] ancestor_clears={}",
+            self.ancestor_clears
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] dirty_hits_by_priority={:?}",
             self.dirty_hits_by_priority
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] clean_marks_by_priority={:?}",
             self.clean_marks_by_priority
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] rule_attempts_by_priority={:?}",
             self.rule_attempts_by_priority
-        );
-        eprintln!("[dirty-trace] rewrites_by_rule={:?}", self.rewrites_by_rule);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] rewrites_by_rule={:?}",
+            self.rewrites_by_rule
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] side_effect_rewrites_by_rule={:?}",
             self.side_effect_rewrites_by_rule
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] whole_model_clears_by_rule={:?}",
             self.whole_model_clears_by_rule
-        );
-        eprintln!("[dirty-trace] cache_hits={}", self.cache_hits);
-        eprintln!("[dirty-trace] cache_misses={}", self.cache_misses);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(output, "[dirty-trace] cache_hits={}", self.cache_hits).unwrap();
+        writeln!(output, "[dirty-trace] cache_misses={}", self.cache_misses).unwrap();
+        writeln!(
+            output,
             "[dirty-trace] cache_terminal_hits={}",
             self.cache_terminal_hits
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] cache_rewrite_hits={}",
             self.cache_rewrite_hits
-        );
-        eprintln!("[dirty-trace] cache_inserts={}", self.cache_inserts);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(output, "[dirty-trace] cache_inserts={}", self.cache_inserts).unwrap();
+        writeln!(
+            output,
             "[dirty-trace] cache_ancestor_mappings={}",
             self.cache_ancestor_mappings
-        );
-        eprintln!("[dirty-trace] cache_resets={}", self.cache_resets);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(output, "[dirty-trace] cache_resets={}", self.cache_resets).unwrap();
+        writeln!(
+            output,
             "[dirty-trace] arena_content_hash_requests={}",
             self.arena_content_hash_requests
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] arena_content_hash_hits={}",
             self.arena_content_hash_hits
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] arena_content_hash_misses={}",
             self.arena_content_hash_misses
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] ancestor_hash_capture_runs={}",
             self.ancestor_hash_capture_runs
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] ancestor_hash_captured_nodes={}",
             self.ancestor_hash_captured_nodes
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] candidate_index_scans={}",
             self.candidate_index_scans
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] candidate_index_full_scans={}",
             self.candidate_index_full_scans
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] candidate_index_filtered_scans={}",
             self.candidate_index_filtered_scans
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] candidate_index_skipped_nodes={}",
             self.candidate_index_skipped_nodes
-        );
-        eprintln!("[dirty-trace] worklist_enqueues={}", self.worklist_enqueues);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] worklist_enqueues={}",
+            self.worklist_enqueues
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] worklist_enqueues_by_mode={:?}",
             self.worklist_enqueues_by_mode
-        );
-        eprintln!("[dirty-trace] worklist_pops={}", self.worklist_pops);
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(output, "[dirty-trace] worklist_pops={}", self.worklist_pops).unwrap();
+        writeln!(
+            output,
             "[dirty-trace] worklist_pops_by_mode={:?}",
             self.worklist_pops_by_mode
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] worklist_stale_pops={}",
             self.worklist_stale_pops
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] worklist_stale_pops_by_mode={:?}",
             self.worklist_stale_pops_by_mode
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] worklist_no_candidate_pops_by_mode={:?}",
             self.worklist_no_candidate_pops_by_mode
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] worklist_rule_attempt_pops_by_mode={:?}",
             self.worklist_rule_attempt_pops_by_mode
-        );
-        eprintln!(
+        )
+        .unwrap();
+        writeln!(
+            output,
             "[dirty-trace] worklist_child_descents_by_mode={:?}",
             self.worklist_child_descents_by_mode
-        );
+        )
+        .unwrap();
+
+        self.write_output(&output);
+    }
+
+    fn write_output(&self, output: &str) {
+        let path = match &self.destination {
+            DirtyTraceDestination::Stderr => {
+                eprint!("{output}");
+                return;
+            }
+            DirtyTraceDestination::File(path) => path.clone(),
+            DirtyTraceDestination::Directory(directory) => directory.join(format!(
+                "dirty-trace-{}.txt",
+                current_test_name_for_dirty_trace()
+            )),
+        };
+
+        if let Some(parent) = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+        {
+            if let Err(error) = fs::create_dir_all(parent) {
+                eprintln!(
+                    "[dirty-trace] failed to create trace directory {}: {error}",
+                    parent.display()
+                );
+                eprint!("{output}");
+                return;
+            }
+        }
+
+        match OpenOptions::new().create(true).append(true).open(&path) {
+            Ok(mut file) => {
+                if let Err(error) = file.write_all(output.as_bytes()) {
+                    eprintln!(
+                        "[dirty-trace] failed to write trace file {}: {error}",
+                        path.display()
+                    );
+                    eprint!("{output}");
+                }
+            }
+            Err(error) => {
+                eprintln!(
+                    "[dirty-trace] failed to open trace file {}: {error}",
+                    path.display()
+                );
+                eprint!("{output}");
+            }
+        }
+    }
+}
+
+fn current_test_name_for_dirty_trace() -> String {
+    let current_thread = std::thread::current();
+    let name = current_thread
+        .name()
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| format!("pid-{}", std::process::id()));
+    sanitize_dirty_trace_filename(&name)
+}
+
+fn sanitize_dirty_trace_filename(name: &str) -> String {
+    let sanitized = name
+        .chars()
+        .map(|character| {
+            if character.is_ascii_alphanumeric() || matches!(character, '-' | '_' | '.') {
+                character
+            } else {
+                '-'
+            }
+        })
+        .collect::<String>();
+
+    let sanitized = sanitized.trim_matches('-');
+    if sanitized.is_empty() {
+        "unknown".to_string()
+    } else {
+        sanitized.to_string()
     }
 }
 
@@ -2809,6 +3021,14 @@ mod tests {
             Metadata::new(),
             Moo::new(builder.with_return_value(return_expression)),
         )
+    }
+
+    #[test]
+    fn dirty_trace_filename_replaces_path_separators_and_module_delimiters() {
+        assert_eq!(
+            sanitize_dirty_trace_filename("generated_tests::savilerow/quasiGroup6"),
+            "generated_tests--savilerow-quasiGroup6"
+        );
     }
 
     #[test]
