@@ -166,7 +166,7 @@ struct DirtyTrace {
     whole_model_clears_by_rule: BTreeMap<String, usize>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Eq)]
 enum DirtyTraceDestination {
     #[default]
     Stderr,
@@ -180,25 +180,9 @@ impl DirtyTrace {
             return Self::default();
         };
 
-        let destination = if destination.is_empty()
-            || destination == "1"
-            || destination
-                .to_str()
-                .is_some_and(|value| value.eq_ignore_ascii_case("true"))
-        {
-            DirtyTraceDestination::Stderr
-        } else {
-            let path = PathBuf::from(destination);
-            if path.is_dir() {
-                DirtyTraceDestination::Directory(path)
-            } else {
-                DirtyTraceDestination::File(path)
-            }
-        };
-
         Self {
             enabled: true,
-            destination,
+            destination: dirty_trace_destination_from_env_value(destination),
             ..Self::default()
         }
     }
@@ -636,6 +620,33 @@ impl DirtyTrace {
                 eprint!("{output}");
             }
         }
+    }
+}
+
+fn dirty_trace_destination_from_env_value(
+    destination: std::ffi::OsString,
+) -> DirtyTraceDestination {
+    if destination.is_empty()
+        || destination == "1"
+        || destination
+            .to_str()
+            .is_some_and(|value| value.eq_ignore_ascii_case("true"))
+    {
+        return DirtyTraceDestination::Stderr;
+    }
+
+    let path = PathBuf::from(destination);
+    if path.is_file() {
+        return DirtyTraceDestination::File(path);
+    }
+
+    // Treat bare paths as directories to support a single `nextest` run with
+    // `CONJURE_DIRTY_TRACE=/abs/trace-dir`; each test then writes its own file.
+    // Explicit file output remains available for paths that look like filenames.
+    if path.is_dir() || path.extension().is_none() {
+        DirtyTraceDestination::Directory(path)
+    } else {
+        DirtyTraceDestination::File(path)
     }
 }
 
@@ -3028,6 +3039,22 @@ mod tests {
         assert_eq!(
             sanitize_dirty_trace_filename("generated_tests::savilerow/quasiGroup6"),
             "generated_tests--savilerow-quasiGroup6"
+        );
+    }
+
+    #[test]
+    fn dirty_trace_bare_path_is_directory_destination() {
+        assert_eq!(
+            dirty_trace_destination_from_env_value("trace-dir".into()),
+            DirtyTraceDestination::Directory(PathBuf::from("trace-dir"))
+        );
+    }
+
+    #[test]
+    fn dirty_trace_txt_path_is_file_destination() {
+        assert_eq!(
+            dirty_trace_destination_from_env_value("trace.txt".into()),
+            DirtyTraceDestination::File(PathBuf::from("trace.txt"))
         );
     }
 
