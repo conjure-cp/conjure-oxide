@@ -70,7 +70,7 @@ jobs:
     - name: Restore cache
       id: restore_cache
       if: ${{ matrix.os == 'ubuntu-latest' }}
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: |
           ~/.cargo/bin/
@@ -116,7 +116,7 @@ jobs:
 
     - name: Save cache
       if: ${{ always() && github.event_name == 'push' && matrix.os == 'ubuntu-latest' && steps.restore_cache.outputs.cache-hit != 'true' }}
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: |
           ~/.cargo/bin/
