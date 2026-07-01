@@ -122,7 +122,7 @@ impl<'de> Visitor<'de> for NumberOfSolutionsVisitor {
     type Value = NumberOfSolutions;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("a positive integer or the string \"all\"")
+        formatter.write_str("a positive integer, the string \"all\", or the string \"skip\"")
     }
 
     fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
@@ -137,7 +137,7 @@ impl<'de> Visitor<'de> for NumberOfSolutionsVisitor {
 
         if value == 0 {
             return Err(E::custom(
-                "number-of-solutions must be positive, or the string \"all\"",
+                "number-of-solutions must be positive, or the string \"all\" or \"skip\"",
             ));
         }
 
@@ -149,7 +149,7 @@ impl<'de> Visitor<'de> for NumberOfSolutionsVisitor {
         E: de::Error,
     {
         let value = u64::try_from(value).map_err(|_| {
-            E::custom("number-of-solutions must be positive, or the string \"all\"")
+            E::custom("number-of-solutions must be positive, or the string \"all\" or \"skip\"")
         })?;
 
         self.visit_u64(value)
@@ -159,12 +159,12 @@ impl<'de> Visitor<'de> for NumberOfSolutionsVisitor {
     where
         E: de::Error,
     {
-        if value == "all" {
-            Ok(NumberOfSolutions::All)
-        } else {
-            Err(E::custom(format!(
-                "invalid number-of-solutions value '{value}', expected a positive integer or \"all\""
-            )))
+        match value {
+            "all" => Ok(NumberOfSolutions::All),
+            "skip" => Ok(NumberOfSolutions::Skip),
+            _ => Err(E::custom(format!(
+                "invalid number-of-solutions value '{value}', expected a positive integer, \"all\", or \"skip\""
+            ))),
         }
     }
 }
@@ -398,14 +398,17 @@ pub enum NumberOfSolutions {
     All,
     /// Stop after the given number of solutions.
     Limit(i32),
+    /// Do not run the solver for this integration test.
+    Skip,
 }
 
 impl NumberOfSolutions {
     /// Converts the config value into the solver API limit, where `0` means all solutions.
-    pub fn as_solver_limit(self) -> i32 {
+    pub fn as_solver_limit(self) -> Option<i32> {
         match self {
-            Self::All => 0,
-            Self::Limit(limit) => limit,
+            Self::All => Some(0),
+            Self::Limit(limit) => Some(limit),
+            Self::Skip => None,
         }
     }
 }

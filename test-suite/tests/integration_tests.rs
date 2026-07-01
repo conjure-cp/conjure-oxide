@@ -54,8 +54,8 @@ use test_suite::diagnostics::{
 };
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
-    RecordedRunStats, RuleTraceAggregateStats, read_stats_or_default, round_expected_time,
-    stats_path, upsert_expected_time_stats, upsert_recorded_run_stats,
+    NumberOfSolutions, RecordedRunStats, RuleTraceAggregateStats, read_stats_or_default,
+    round_expected_time, stats_path, upsert_expected_time_stats, upsert_recorded_run_stats,
     upsert_rule_trace_aggregate_stats, upsert_status_stats, upsert_tool_status_stats,
 };
 
@@ -332,7 +332,8 @@ fn integration_test_inner_with_status(
 
     let skip_conjure_validation = config.should_skip_conjure_validation();
     let minion_discrete_threshold = config.minion_discrete_threshold;
-    let number_of_solutions = config.number_of_solutions.as_solver_limit();
+    let number_of_solutions = config.number_of_solutions;
+    let solver_solution_limit = number_of_solutions.as_solver_limit();
     let keep_intermediate_solutions = config.keep_intermediate_solutions;
 
     let parsers = config
@@ -353,12 +354,15 @@ fn integration_test_inner_with_status(
     let param_file = param_file_in_test_dir(path);
     let stats_path = stats_path(Path::new(path));
     let mut conjure_captured = false;
-    let conjure_solutions = if accept && !skip_conjure_validation {
+    let conjure_solutions = if accept
+        && !skip_conjure_validation
+        && let Some(solver_solution_limit) = solver_solution_limit
+    {
         let conjure_run = match get_solutions_from_conjure_with_stats(
             &model_path,
             param_file.as_deref(),
             Default::default(),
-            number_of_solutions,
+            solver_solution_limit,
             ConjureSolveCaptureOptions {
                 artifact_dir: Some(conjure_artifacts_dir(Path::new(path))),
                 savilerow_options: Some("-O0".to_string()),
@@ -584,7 +588,7 @@ fn integration_test_inner(
     extension: &str,
     run_case: RunCase<'_>,
     minion_discrete_threshold: usize,
-    number_of_solutions: i32,
+    number_of_solutions: NumberOfSolutions,
     keep_intermediate_solutions: bool,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
@@ -633,16 +637,15 @@ fn integration_test_inner(
     let rewritten_model = rewrite_model(&model, &rule_sets, false, config)?;
     let translation_time_s = translation_started_at.elapsed().as_secs_f64();
 
-    let solver_input_file = None;
-    let solver = match solver_fam {
-        SolverFamily::Minion => Solver::new(Minion::default()),
-        SolverFamily::Sat(_) => Solver::new(Sat::default()),
-
-        SolverFamily::Smt(_) => Solver::new(Smt::default()),
-    };
-
     let solver_started_at = Instant::now();
-    let solutions = {
+    let solutions = if let Some(number_of_solutions) = number_of_solutions.as_solver_limit() {
+        let solver_input_file = None;
+        let solver = match solver_fam {
+            SolverFamily::Minion => Solver::new(Minion::default()),
+            SolverFamily::Sat(_) => Solver::new(Sat::default()),
+
+            SolverFamily::Smt(_) => Solver::new(Smt::default()),
+        };
         let solved = get_solutions(
             solver,
             rewritten_model,
@@ -652,17 +655,22 @@ fn integration_test_inner(
             false,
         )?;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
-        solved
+        Some(solved)
+    } else {
+        None
     };
     let solve_time_s = solver_started_at.elapsed().as_secs_f64();
 
     // Stage 3b: Check solutions against Conjure when accept mode is enabled and validation is enabled.
-    if accept && conjure_solutions.is_some() {
+    if accept && conjure_solutions.is_some() && solutions.is_some() {
         let conjure_solutions = conjure_solutions
             .as_deref()
             .expect("conjure solutions should be present when Conjure validation is enabled");
+        let solutions = solutions
+            .as_deref()
+            .expect("oxide solutions should be present when solver ran");
 
-        let username_solutions = normalize_solutions_for_comparison(&solutions);
+        let username_solutions = normalize_solutions_for_comparison(solutions);
         let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
 
         let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
@@ -681,16 +689,20 @@ fn integration_test_inner(
     if accept {
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-        copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
+        if solutions.is_some() {
+            copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
+        }
         if rule_trace_snapshots_enabled {
             copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
         }
     }
 
     // Check Stage 3a (solutions)
-    let expected_solutions_json = read_solutions_json(path, case_name, "expected", solver_fam)?;
-    let username_solutions_json = solutions_to_json(&solutions);
-    assert_eq!(username_solutions_json, expected_solutions_json);
+    if let Some(solutions) = solutions.as_ref() {
+        let expected_solutions_json = read_solutions_json(path, case_name, "expected", solver_fam)?;
+        let username_solutions_json = solutions_to_json(solutions);
+        assert_eq!(username_solutions_json, expected_solutions_json);
+    }
 
     if rule_trace_snapshots_enabled {
         let generated = read_default_rule_trace(path, case_name, "generated", &solver_fam)?;
@@ -864,7 +876,7 @@ fn copy_generated_to_expected(
 fn record_integration_failure(
     test_dir: &str,
     record: FailureRecord,
-    number_of_solutions: i32,
+    number_of_solutions: NumberOfSolutions,
     conjure_captured: bool,
 ) {
     let Some((essence_base, extension)) = essence_file_in_test_dir(test_dir) else {
@@ -874,7 +886,7 @@ fn record_integration_failure(
     let param_file = param_file_in_test_dir(test_dir);
     let test_path = Path::new(test_dir);
     let _ = write_failure_record(test_path, &record);
-    if !conjure_captured {
+    if !conjure_captured && let Some(number_of_solutions) = number_of_solutions.as_solver_limit() {
         let _ = capture_conjure_reference(
             test_path,
             &model_path,
