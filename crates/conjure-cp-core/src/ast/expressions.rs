@@ -2868,7 +2868,7 @@ impl Typeable for Expression {
 
 impl Expression {
     /// Visit each direct `Expression` child by reference, without cloning.
-    pub fn for_each_expr_child(&self, f: &mut impl FnMut(&Expression)) {
+    fn for_each_expr_child(&self, f: &mut impl FnMut(&Expression)) {
         match self {
             // Special Case
             Expression::AbstractLiteral(_, alit) => match alit {
