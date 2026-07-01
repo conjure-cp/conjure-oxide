@@ -53,18 +53,6 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    // do not bubble things containing lettings
-    if expr.universe_bi().iter().any(|x: &Name| {
-        syms.lookup(x).is_some_and(|x| {
-            matches!(
-                &x.kind() as &DeclarationKind,
-                DeclarationKind::ValueLetting(_, _)
-            )
-        })
-    }) {
-        return Err(RuleNotApplicable);
-    };
-
     let mut bubbled_conditions = vec![];
     let (new_inner, num_changed) = rewrite_children(expr, |child| match child {
         Expression::Bubble(_, a, b) if a.return_type() != ReturnType::Bool => {
@@ -76,8 +64,23 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
         child => (child, false),
     });
     if num_changed == 0 {
-        Err(ApplicationError::RuleNotApplicable)
-    } else if bubbled_conditions.len() == 1 {
+        return Err(ApplicationError::RuleNotApplicable);
+    }
+
+    // The value-letting guard walks every referenced name in the subtree, so keep it behind the
+    // cheap direct-child Bubble check. Most `bubble_up` attempts fail before this point.
+    if expr.universe_bi().iter().any(|x: &Name| {
+        syms.lookup(x).is_some_and(|x| {
+            matches!(
+                &x.kind() as &DeclarationKind,
+                DeclarationKind::ValueLetting(_, _)
+            )
+        })
+    }) {
+        return Err(RuleNotApplicable);
+    };
+
+    if bubbled_conditions.len() == 1 {
         let new_expr = Expression::Bubble(
             Metadata::new(),
             Moo::new(new_inner),
