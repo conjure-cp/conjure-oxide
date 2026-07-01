@@ -1185,6 +1185,14 @@ struct ScheduledKey {
     generation: u32,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct SubtreeCandidateKey {
+    level: usize,
+    surface: usize,
+    node_id: ExpressionNodeId,
+    generation: u32,
+}
+
 struct WorklistScheduler {
     // Candidate-level skipping can enqueue a descendant into a future rule level before an
     // ancestor reaches that same level. Each level is therefore ordered by depth, then insertion
@@ -1192,6 +1200,7 @@ struct WorklistScheduler {
     // priority" does not depend on enqueue timing.
     queues_by_level: Vec<BinaryHeap<ScheduledNode>>,
     scheduled: HashMap<ScheduledKey, ScheduledMode>,
+    subtree_candidate_cache: HashMap<SubtreeCandidateKey, bool>,
     next_sequence: u64,
 }
 
@@ -1200,6 +1209,7 @@ impl WorklistScheduler {
         Self {
             queues_by_level: vec![BinaryHeap::new(); rule_groups.len()],
             scheduled: HashMap::new(),
+            subtree_candidate_cache: HashMap::new(),
             next_sequence: 0,
         }
     }
@@ -1288,6 +1298,8 @@ impl WorklistScheduler {
         surface: usize,
         node_id: ExpressionNodeId,
         level: usize,
+        rule_groups: &[RuleGroup<'_>],
+        config: RewriteConfig,
         mut dirty_trace: Option<&mut DirtyTrace>,
     ) -> usize {
         if matches!(arena.expression(node_id), Expr::Comprehension(_, _)) {
@@ -1296,6 +1308,16 @@ impl WorklistScheduler {
 
         let mut child_count = 0;
         for &child_id in arena.children(node_id) {
+            if !self.subtree_has_candidates_at_level(
+                arena,
+                surface,
+                child_id,
+                level,
+                rule_groups,
+                config,
+            ) {
+                continue;
+            }
             child_count += 1;
             self.enqueue_node_at_level(
                 arena,
@@ -1378,6 +1400,8 @@ impl WorklistScheduler {
                 surface,
                 node_id,
                 level,
+                rule_groups,
+                config,
                 dirty_trace.as_deref_mut(),
             );
             if let Some(trace) = dirty_trace.as_deref_mut() {
@@ -1392,8 +1416,9 @@ impl WorklistScheduler {
         // future levels. The traversal root advances and rediscovers descendants only after it
         // survives that future level, avoiding stale descendant work when an ancestor rewrites.
         let next_self_level = if mode.advances_as_subtree() {
-            next_worklist_subtree_candidate_level(
+            self.next_subtree_candidate_level(
                 arena,
+                surface,
                 node_id,
                 next_self_level,
                 rule_groups,
@@ -1467,8 +1492,9 @@ impl WorklistScheduler {
                         // A descendant rewrite updates ancestor generations. Refreshing the
                         // traversal root preserves its job of carrying still-unseen sibling
                         // descendants to later rule levels.
-                        let refresh_level = next_worklist_subtree_candidate_level(
+                        let refresh_level = self.next_subtree_candidate_level(
                             arena,
+                            scheduled.surface,
                             scheduled.node_id,
                             level,
                             rule_groups,
@@ -1493,6 +1519,74 @@ impl WorklistScheduler {
 
         None
     }
+
+    fn next_subtree_candidate_level(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        start_level: usize,
+        rule_groups: &[RuleGroup<'_>],
+        config: RewriteConfig,
+    ) -> usize {
+        if start_level >= rule_groups.len() || !arena.is_reachable(node_id) {
+            return rule_groups.len();
+        }
+
+        (start_level..rule_groups.len())
+            .find(|&level| {
+                self.subtree_has_candidates_at_level(
+                    arena,
+                    surface,
+                    node_id,
+                    level,
+                    rule_groups,
+                    config,
+                )
+            })
+            .unwrap_or(rule_groups.len())
+    }
+
+    fn subtree_has_candidates_at_level(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        level: usize,
+        rule_groups: &[RuleGroup<'_>],
+        config: RewriteConfig,
+    ) -> bool {
+        if level >= rule_groups.len() || !arena.is_reachable(node_id) {
+            return false;
+        }
+
+        let key = SubtreeCandidateKey {
+            level,
+            surface,
+            node_id,
+            generation: arena.generation(node_id),
+        };
+        if let Some(&has_candidates) = self.subtree_candidate_cache.get(&key) {
+            return has_candidates;
+        }
+
+        let rule_group = &rule_groups[level];
+        let has_candidates = rule_group.has_candidates(config, arena.expression(node_id))
+            || (!matches!(arena.expression(node_id), Expr::Comprehension(_, _))
+                && arena.children(node_id).iter().any(|&child_id| {
+                    self.subtree_has_candidates_at_level(
+                        arena,
+                        surface,
+                        child_id,
+                        level,
+                        rule_groups,
+                        config,
+                    )
+                }));
+
+        self.subtree_candidate_cache.insert(key, has_candidates);
+        has_candidates
+    }
 }
 
 fn next_worklist_candidate_level(
@@ -1513,49 +1607,6 @@ fn next_worklist_candidate_level(
         .skip(start_level)
         .find_map(|(level, rule_group)| rule_group.has_candidates(config, expr).then_some(level))
         .unwrap_or(rule_groups.len())
-}
-
-fn next_worklist_subtree_candidate_level(
-    arena: &ExpressionArena,
-    node_id: ExpressionNodeId,
-    start_level: usize,
-    rule_groups: &[RuleGroup<'_>],
-    config: RewriteConfig,
-) -> usize {
-    if start_level >= rule_groups.len() || !arena.is_reachable(node_id) {
-        return rule_groups.len();
-    }
-
-    rule_groups
-        .iter()
-        .enumerate()
-        .skip(start_level)
-        .find_map(|(level, rule_group)| {
-            worklist_subtree_has_candidates(arena, node_id, rule_group, config).then_some(level)
-        })
-        .unwrap_or(rule_groups.len())
-}
-
-fn worklist_subtree_has_candidates(
-    arena: &ExpressionArena,
-    node_id: ExpressionNodeId,
-    rule_group: &RuleGroup<'_>,
-    config: RewriteConfig,
-) -> bool {
-    if !arena.is_reachable(node_id) {
-        return false;
-    }
-    if rule_group.has_candidates(config, arena.expression(node_id)) {
-        return true;
-    }
-    if matches!(arena.expression(node_id), Expr::Comprehension(_, _)) {
-        return false;
-    }
-
-    arena
-        .children(node_id)
-        .iter()
-        .any(|&child_id| worklist_subtree_has_candidates(arena, child_id, rule_group, config))
 }
 
 #[derive(Default)]
@@ -3574,6 +3625,34 @@ mod tests {
         ]
     }
 
+    fn test_rule_groups_targeting_expr(expr: &Expr) -> Vec<RuleGroup<'static>> {
+        let discriminant = discriminant_from_value(expr);
+        let mut rules_by_discriminant = Vec::new();
+        rules_by_discriminant.resize_with(discriminant + 1, || None);
+        rules_by_discriminant[discriminant] = Some(vec![crate::rule_engine::RuleData {
+            rule: &TEST_RULE,
+            priority: 1,
+            rule_set: &TEST_RULE_SET,
+        }]);
+
+        vec![RuleGroup {
+            priority: 1,
+            rules: vec![crate::rule_engine::RuleData {
+                rule: &TEST_RULE,
+                priority: 1,
+                rule_set: &TEST_RULE_SET,
+            }],
+            rules_by_discriminant,
+            universal_rules: Vec::new(),
+            target_discriminants: vec![discriminant],
+            target_discriminant_mask: {
+                let mut mask = vec![false; discriminant + 1];
+                mask[discriminant] = true;
+                mask
+            },
+        }]
+    }
+
     #[test]
     fn rewriter_subtree_preorder_does_not_enter_comprehensions() {
         let tree = root(vec![
@@ -3974,6 +4053,62 @@ mod tests {
             }
         }
         assert!(found_sibling_at_next_level);
+    }
+
+    #[test]
+    fn worklist_prunes_child_subtrees_without_candidates_at_level() {
+        let eq = Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2)));
+        let tree = root(vec![eq.clone(), int_lit(3)]);
+        let surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
+        let arena = &surfaces[0].arena;
+        let ids = rewriter_preorder_ids(arena);
+        let root_id = ids[0];
+        let eq_id = ids[1];
+
+        let rule_groups = test_rule_groups_targeting_expr(&eq);
+        let mut scheduler =
+            WorklistScheduler::new(&surfaces, &rule_groups, RewriteConfig::optimised());
+        let mut dirty_trace = DirtyTrace::default();
+
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, root_id, ScheduledMode::TraverseSubtreeRoot))
+        );
+        scheduler.enqueue_after_no_rewrite(
+            arena,
+            0,
+            root_id,
+            0,
+            1,
+            ScheduledMode::TraverseSubtreeRoot,
+            &rule_groups,
+            RewriteConfig::optimised(),
+            Some(&mut dirty_trace),
+        );
+
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, eq_id, ScheduledMode::TraverseSubtreeDescendant))
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            None
+        );
     }
 
     #[test]
