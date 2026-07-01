@@ -89,7 +89,7 @@ fn check_my_expression() {
 }
 ```
 
-The ``morph`` function is the core function of the crate, and handles the bulk application of transformation rules to the tree. We input the set of rules, a decision function, and some metadata, returning a ``(tree, metadata)`` tuple. Running ``cargo test --test file_name`` in a directory containing the file with this code will verify that tree-morph is indeed doing what it should do! In the following sections we explore some of tree-morph's features in more depth.
+The ``morph`` function is the core function of the crate, and handles the bulk application of transformation rules to the tree. We input the set of rules, a decision function, and some metadata, returning a ``(tree, metadata)`` tuple. Running ``cargo nextest run --test file_name`` in a directory containing the file with this code will verify that tree-morph is indeed doing what it should do! In the following sections we explore some of tree-morph's features in more depth.
 
 ## Metadata
 
@@ -173,7 +173,7 @@ fn number_of_operations() {
 }
 ```
 
-Running ``cargo test --test file_name`` in a directory containing the file with this code will verify that indeed two addition operations are successfully undertaken.
+Running ``cargo nextest run --test file_name`` in a directory containing the file with this code will verify that indeed two addition operations are successfully undertaken.
 
 But wait! The original problem was solving ``(1+2)^2``, why have two addition operations been recorded? The answer is in how we grouped the rules together in the ``morph`` function.
 
