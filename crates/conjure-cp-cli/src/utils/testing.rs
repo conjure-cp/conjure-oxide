@@ -253,7 +253,7 @@ pub fn save_solutions_json(
     solutions: &Vec<BTreeMap<Name, Literal>>,
     path: &str,
     test_name: &str,
-    solver: SolverFamily,
+    _solver: SolverFamily,
 ) -> Result<JsonValue, std::io::Error> {
     let json_solutions = solutions_to_json(solutions);
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
@@ -271,7 +271,7 @@ pub fn read_solutions_json(
     prefix: &str,
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
-    let solver_name = solver.as_str();
+    let _solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}.{prefix}-solutions.json");
     let expected_json_str = read_with_path(filename)?;
 
@@ -288,7 +288,7 @@ pub fn read_default_rule_trace(
     prefix: &str,
     solver: &SolverFamily,
 ) -> Result<Vec<String>, std::io::Error> {
-    let solver_name = solver.as_str();
+    let _solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.txt");
     let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()

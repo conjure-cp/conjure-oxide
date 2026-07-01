@@ -15,9 +15,9 @@ mod test_config;
 use test_config::RunCase;
 use test_config::TestConfig;
 
+#[allow(dead_code)]
 #[path = "src/golden_files.rs"]
 mod golden_files;
-use golden_files::AcceptMode;
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
@@ -331,7 +331,7 @@ fn write_integration_test(
     let ignore = get_ignore_attr(&cfg, true)?;
 
     let base_name = path.replace("./", "").replace(['/', '-'], "_");
-    let case_suffix = format!("{}", runcase.run_case_label());
+    let case_suffix = runcase.run_case_label();
     let test_name = format!("{}_{}", base_name, case_suffix.replace('-', "_"));
 
     write!(

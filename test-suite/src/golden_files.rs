@@ -1,9 +1,6 @@
 use std::collections::BTreeSet;
-use std::path::Path;
-
-// use crate::AcceptMode;
-
 use std::env;
+use std::path::Path;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AcceptMode {

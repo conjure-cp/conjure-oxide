@@ -39,7 +39,6 @@ use std::str::FromStr;
 use test_suite::AcceptMode;
 use test_suite::RunCase;
 use test_suite::TestConfig;
-use test_suite::golden_files::*;
 use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
 
 fn integration_test(
@@ -55,7 +54,8 @@ fn integration_test(
     let started_at = Instant::now();
 
     let rewriter = runcase.rewriter;
-    let solver = runcase.solver;
+    // FIXME: maybe?
+    // let solver = runcase.solver;
     let case_name = runcase.run_case_label();
 
     if accept {
