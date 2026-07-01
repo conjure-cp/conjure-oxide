@@ -59,7 +59,7 @@ fn integration_test(
     let case_name = runcase.run_case_label();
 
     if accept {
-        clean_test_dir_for_accept(path, &case_name, solver)?;
+        clean_test_dir_for_accept(path, &runcase)?;
     }
 
     let file_config: TestConfig =
@@ -271,8 +271,8 @@ fn integration_test_inner(
     if accept {
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-        copy_generated_to_expected(path, &case_name, "solutions", "json", solver_fam)?;
-        copy_human_trace_generated_to_expected(path, &case_name, solver_fam)?;
+        copy_generated_to_expected(path, "solutions", "json", &run_case)?;
+        copy_human_trace_generated_to_expected(path, &run_case)?;
     }
 
     // Check Stage 3a (solutions)
@@ -299,43 +299,43 @@ fn integration_test_inner(
     Ok(())
 }
 
-fn clean_test_dir_for_accept(
-    path: &str,
-    case_name: &str,
-    solver: SolverFamily,
-) -> Result<(), std::io::Error> {
-    let solver_name = solver.as_str();
-    let prefix = format!("{case_name}-{solver_name}");
+fn clean_test_dir_for_accept(path: &str, runcase: &RunCase) -> Result<(), std::io::Error> {
+    let pattern = format!("{path}/{}*generated*", runcase.run_case_label()); // your pattern here
+    let stats = format!("{path}/{}*stats*", runcase.run_case_label()); // your pattern here
+    println!("pat: {}", pattern);
 
-    for entry in std::fs::read_dir(path)? {
-        let entry = entry?;
-        let file_name = entry.file_name();
-        let file_name = file_name.to_string_lossy();
-        let entry_path = entry.path();
-
-        if !file_name.starts_with(&prefix) {
-            continue;
-        }
-
-        if entry_path.is_dir() {
-            std::fs::remove_dir_all(entry_path)?;
-        } else {
-            std::fs::remove_file(entry_path)?;
+    for entry in glob::glob(pattern.as_str()).expect("Failed to read glob pattern") {
+        match entry {
+            Ok(entry_path) => {
+                if let Err(e) = fs::remove_file(&entry_path) {
+                    eprintln!("Failed to remove {:?}: {}", entry_path, e);
+                }
+            }
+            Err(e) => eprintln!("Error reading path: {}", e),
         }
     }
 
+    for entry in glob::glob(stats.as_str()).expect("Failed to read glob pattern") {
+        match entry {
+            Ok(entry_path) => {
+                if let Err(e) = fs::remove_file(&entry_path) {
+                    eprintln!("Failed to remove {:?}: {}", entry_path, e);
+                }
+            }
+            Err(e) => eprintln!("Error reading path: {}", e),
+        }
+    }
     Ok(())
 }
 
 fn copy_human_trace_generated_to_expected(
     path: &str,
-    test_name: &str,
-    solver: SolverFamily,
+    runcase: &RunCase,
 ) -> Result<(), std::io::Error> {
-    let solver_name = solver.as_str();
+    let n = runcase.run_case_label();
 
-    let src = format!("{path}/{test_name}-generated-rule-trace.txt");
-    let dest = format!("{path}/{test_name}-expected-rule-trace.txt");
+    let src = format!("{path}/{n}-generated-rule-trace.txt");
+    let dest = format!("{path}/{n}-expected-rule-trace.txt");
     println!("copying: {src} to {dest}");
 
     std::fs::copy(src, dest)?;
@@ -345,20 +345,13 @@ fn copy_human_trace_generated_to_expected(
 
 fn copy_generated_to_expected(
     path: &str,
-    test_name: &str,
     stage: &str,
     extension: &str,
-    solver: SolverFamily,
+    runcase: &RunCase,
 ) -> Result<(), std::io::Error> {
-    // let marker = solver.as_str();
-
-    // std::fs::copy(
-    //     format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
-    //     format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
-    // )?;
-
-    let src = format!("{path}/{test_name}.generated-{stage}.{extension}");
-    let dest = format!("{path}/{test_name}.expected-{stage}.{extension}");
+    let n = runcase.run_case_label();
+    let src = format!("{path}/{n}.generated-{stage}.{extension}");
+    let dest = format!("{path}/{n}.expected-{stage}.{extension}");
     eprintln!("copying: {src} to {dest}");
 
     std::fs::copy(src, dest)?;

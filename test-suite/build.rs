@@ -15,6 +15,9 @@ mod test_config;
 use test_config::RunCase;
 use test_config::TestConfig;
 
+#[path = "src/golden_files.rs"]
+mod golden_files;
+
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
     println!("cargo:rerun-if-changed=tests/custom");
@@ -293,6 +296,7 @@ fn setup_integration_tests(
                         comprehension_expander,
                         solver,
                     };
+
                     write_integration_test(arg_file, &path, &essence_files, run_case)?;
                 }
             }
@@ -315,6 +319,14 @@ fn write_integration_test(
     let base_name = path.replace("./", "").replace(['/', '-'], "_");
     let case_suffix = format!("{}", runcase.run_case_label());
     let test_name = format!("{}_{}", base_name, case_suffix.replace('-', "_"));
+
+    // FIXME: This might work
+    // let allowed_expected_files = runcase.expected_integration_files_for_case();
+    // crate::golden_files::assert_no_redundant_expected_files(
+    //     Path::new(path),
+    //     &allowed_expected_files,
+    //     None,
+    // )?;
 
     write!(
         file,
