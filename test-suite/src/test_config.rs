@@ -33,7 +33,10 @@ fn read_toml_document_or_empty(path: &Path) -> io::Result<DocumentMut> {
 }
 
 fn write_toml_document(path: &Path, document: &DocumentMut) -> io::Result<()> {
-    fs::write(path, format!("{document}\n"))
+    let mut contents = document.to_string();
+    contents.truncate(contents.trim_end_matches('\n').len());
+    contents.push('\n');
+    fs::write(path, contents)
 }
 
 // toml_edit's Index impl panics on missing keys, so use .get() before creating tables.
