@@ -101,30 +101,17 @@ pub fn upsert_expected_time_config(path: &Path, expected_time: u64) -> io::Resul
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct TestConfig {
-    #[serde(
-        // default,
-        rename = "parser",
-        deserialize_with = "deserialize_string_or_vec"
-    )]
+    #[serde(rename = "parser", deserialize_with = "deserialize_string_or_vec")]
     pub parser: Vec<String>, // Stage 1a: list of parsers (tree-sitter or via-conjure)
 
-    #[serde(
-        // default,
-        rename = "rewriter",
-        deserialize_with = "deserialize_string_or_vec"
-    )]
+    #[serde(rename = "rewriter", deserialize_with = "deserialize_string_or_vec")]
     pub rewriter: Vec<String>,
     #[serde(
-        // default,
         rename = "comprehension-expander",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub comprehension_expander: Vec<String>,
-    #[serde(
-        // default,
-        rename = "solver",
-        deserialize_with = "deserialize_string_or_vec"
-    )]
+    #[serde(rename = "solver", deserialize_with = "deserialize_string_or_vec")]
     pub solver: Vec<String>,
 
     #[serde(
@@ -140,7 +127,6 @@ pub struct TestConfig {
     pub skip: bool,
 
     #[serde(
-    //     default,
         rename = "expected-time",
         deserialize_with = "deserialise_expected_time"
     )]
@@ -301,8 +287,6 @@ impl RunCase {
         let solver_name = self.solver.as_str();
         BTreeSet::from([
             format!("{case_name}.expected-solutions.json"),
-            // expected files are named: format!("{path}/{test_name}.expected-{stage}.{extension}") (from the generator in `integration_tests.rs`)
-            // test_name = runcase.run_case_label()
             format!("{case_name}-expected-rule-trace.txt"),
         ])
     }

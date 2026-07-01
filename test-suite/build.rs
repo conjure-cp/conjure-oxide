@@ -258,6 +258,7 @@ fn setup_integration_tests(
     essence_files: Vec<(String, String)>,
 ) -> io::Result<()> {
     if essence_files.len() != 1 {
+        // TODO: Consider supporting multiple Essence files - easier now, reserved for next PR
         return Ok(());
     }
 
@@ -285,7 +286,6 @@ fn setup_integration_tests(
         .into_iter()
         .collect::<Vec<_>>();
 
-    // FIXME: This might work
     let mut allowed_expected_files = std::collections::BTreeSet::new();
 
     let mut runcases: Vec<RunCase> = Vec::new();

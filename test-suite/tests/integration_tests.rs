@@ -54,8 +54,6 @@ fn integration_test(
     let started_at = Instant::now();
 
     let rewriter = runcase.rewriter;
-    // FIXME: maybe?
-    // let solver = runcase.solver;
     let case_name = runcase.run_case_label();
 
     if accept {
@@ -124,9 +122,6 @@ fn integration_test(
         )
     })
     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
-
-    // let allowed_expected_files = runcase.expected_integration_files_for_case();
-    // assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
 
     if accept_mode.records_expected_time() {
         let observed_expected_time = round_expected_time(started_at.elapsed());

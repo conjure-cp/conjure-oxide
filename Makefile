@@ -135,7 +135,6 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	touch .installed-cargo-nextest.checkpoint
 
 test-clean:
-	# FIXME: This might not work I think? recheck what this is doing
 	cd test-suite/tests/integration/; find -type f -path '**generated**' -delete
 	cd test-suite/tests/integration/; find -type f -path '**expected**' -delete
 	cd test-suite/tests/integration/; find -type f -path '**stats**' -delete
