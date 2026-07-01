@@ -11,12 +11,10 @@ use conjure_cp::rule_engine::{
 use itertools::{Itertools, chain, izip};
 use uniplate::Uniplate;
 
-use crate::bottom_up_adaptor::as_bottom_up;
-
 /// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
-#[register_rule("Base", 5000, [Root])]
+#[register_rule("Base", 5000, [SafeIndex])]
 fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    (as_bottom_up(index_matrix_to_atom_impl))(expr, symbols)
+    index_matrix_to_atom_impl(expr, symbols)
 }
 
 pub(crate) fn try_index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
