@@ -7,7 +7,7 @@ use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_default_rule_trace};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
@@ -23,10 +23,10 @@ use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
-    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
-    set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_default_rule_trace_enabled, set_minion_discrete_threshold,
-    set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
+    Parser, Rewriter, SolverFamily, set_comprehension_expander, set_current_parser,
+    set_current_rewriter, set_current_solver_family, set_default_rule_trace_enabled,
+    set_minion_discrete_threshold, set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
+    set_rule_trace_verbose_enabled,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -35,42 +35,29 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
+use std::str::FromStr;
 use test_suite::AcceptMode;
+use test_suite::RunCase;
 use test_suite::TestConfig;
-use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
 
-#[derive(Clone, Copy, Debug)]
-struct RunCase<'a> {
-    parser: Parser,
-    rewriter: Rewriter,
-    comprehension_expander: QuantifiedExpander,
-    solver: SolverFamily,
-    case_name: &'a str,
-}
-
-fn run_case_label(
+fn integration_test(
     path: &str,
     essence_base: &str,
     extension: &str,
-    run_case: RunCase<'_>,
-) -> String {
-    format!(
-        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
-        run_case.parser,
-        run_case.rewriter,
-        run_case.comprehension_expander,
-        run_case.solver.as_str()
-    )
-}
+    runcase_str: &str,
+) -> Result<(), Box<dyn Error>> {
+    let runcase = RunCase::from_str(runcase_str)?;
 
-fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let accept_mode = AcceptMode::from_env();
     let accept = accept_mode.accepts_outputs();
     let started_at = Instant::now();
 
+    let rewriter = runcase.rewriter;
+    let case_name = runcase.run_case_label();
+
     if accept {
-        clean_test_dir_for_accept(path, essence_base, extension)?;
+        clean_test_dir_for_accept(path, &runcase)?;
     }
 
     let file_config: TestConfig =
@@ -84,19 +71,6 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     let validate_with_conjure = config.validate_with_conjure;
     let minion_discrete_threshold = config.minion_discrete_threshold;
-
-    let parsers = config
-        .configured_parsers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let rewriters = config
-        .configured_rewriters()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let comprehension_expanders = config
-        .configured_comprehension_expanders()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let solvers = config
-        .configured_solvers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
 
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
@@ -115,68 +89,39 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         }
         None
     };
-    let mut allowed_expected_files = BTreeSet::new();
-
-    for parser in parsers.iter().copied() {
-        for rewriter in rewriters.clone() {
-            for comprehension_expander in comprehension_expanders.clone() {
-                for solver in solvers.clone() {
-                    let case_name = run_case_name(parser, rewriter, comprehension_expander);
-                    let run_case = RunCase {
-                        parser,
-                        rewriter,
-                        comprehension_expander,
-                        solver,
-                        case_name: case_name.as_str(),
-                    };
-                    let file = File::create(format!(
-                        "{path}/{}-{}-generated-rule-trace.txt",
-                        run_case.case_name,
-                        run_case.solver.as_str()
-                    ))?;
-                    let subscriber = Arc::new(
-                        tracing_subscriber::registry().with(
-                            fmt::layer()
-                                .with_writer(file)
-                                .with_level(false)
-                                .without_time()
-                                .with_target(false)
-                                .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
-                                .with_filter(FilterFn::new(|meta| {
-                                    meta.target() == "rule_engine_rule_trace"
-                                })),
-                        ),
-                    )
-                        as Arc<dyn tracing::Subscriber + Send + Sync>;
-                    let run_label = run_case_label(path, essence_base, extension, run_case);
-                    eprintln!("[integration] running {run_label}");
-                    let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
-                    set_rule_trace_enabled(true);
-                    set_default_rule_trace_enabled(default_rule_trace_enabled);
-                    set_rule_trace_verbose_enabled(false);
-                    set_rule_trace_aggregates_enabled(false);
-                    tracing::subscriber::with_default(subscriber, || {
-                        integration_test_inner(
-                            path,
-                            essence_base,
-                            extension,
-                            run_case,
-                            minion_discrete_threshold,
-                            conjure_solutions.clone(),
-                            accept,
-                        )
-                    })
-                    .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
-                    allowed_expected_files.extend(expected_integration_files_for_case(
-                        run_case.case_name,
-                        solver,
-                    ));
-                }
-            }
-        }
-    }
-
-    assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
+    let file = File::create(format!("{path}/{}-generated-rule-trace.txt", case_name,))?;
+    let subscriber = Arc::new(
+        tracing_subscriber::registry().with(
+            fmt::layer()
+                .with_writer(file)
+                .with_level(false)
+                .without_time()
+                .with_target(false)
+                .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
+                .with_filter(FilterFn::new(|meta| {
+                    meta.target() == "rule_engine_rule_trace"
+                })),
+        ),
+    ) as Arc<dyn tracing::Subscriber + Send + Sync>;
+    let run_label = case_name;
+    eprintln!("[integration] running {run_label}");
+    let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
+    set_rule_trace_enabled(true);
+    set_default_rule_trace_enabled(default_rule_trace_enabled);
+    set_rule_trace_verbose_enabled(false);
+    set_rule_trace_aggregates_enabled(false);
+    tracing::subscriber::with_default(subscriber, || {
+        integration_test_inner(
+            path,
+            essence_base,
+            extension,
+            runcase.clone(),
+            minion_discrete_threshold,
+            conjure_solutions.clone(),
+            accept,
+        )
+    })
+    .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
 
     if accept_mode.records_expected_time() {
         let observed_expected_time = round_expected_time(started_at.elapsed());
@@ -227,7 +172,7 @@ fn integration_test_inner(
     path: &str,
     essence_base: &str,
     extension: &str,
-    run_case: RunCase<'_>,
+    run_case: RunCase,
     minion_discrete_threshold: usize,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
@@ -236,7 +181,7 @@ fn integration_test_inner(
     let rewriter = run_case.rewriter;
     let comprehension_expander = run_case.comprehension_expander;
     let solver_fam = run_case.solver;
-    let case_name = run_case.case_name;
+    let case_name = run_case.run_case_label();
 
     let context: Arc<RwLock<Context<'static>>> = Default::default();
 
@@ -286,7 +231,7 @@ fn integration_test_inner(
 
     let solutions = {
         let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
-        save_solutions_json(&solved, path, case_name, solver_fam)?;
+        save_solutions_json(&solved, path, &case_name)?;
         solved
     };
 
@@ -315,12 +260,12 @@ fn integration_test_inner(
     if accept {
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-        copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
-        copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
+        copy_generated_to_expected(path, "solutions", "json", &run_case)?;
+        copy_human_trace_generated_to_expected(path, &run_case)?;
     }
 
     // Check Stage 3a (solutions)
-    let expected_solutions_json = read_solutions_json(path, case_name, "expected", solver_fam)?;
+    let expected_solutions_json = read_solutions_json(path, &case_name, "expected")?;
     let username_solutions_json = solutions_to_json(&solutions);
     assert_eq!(username_solutions_json, expected_solutions_json);
 
@@ -328,8 +273,8 @@ fn integration_test_inner(
     match rewriter {
         Rewriter::Morph(_) => {}
         Rewriter::Naive => {
-            let generated = read_default_rule_trace(path, case_name, "generated", &solver_fam)?;
-            let expected = read_default_rule_trace(path, case_name, "expected", &solver_fam)?;
+            let generated = read_default_rule_trace(path, &case_name, "generated")?;
+            let expected = read_default_rule_trace(path, &case_name, "expected")?;
 
             assert_eq!(
                 expected, generated,
@@ -338,82 +283,68 @@ fn integration_test_inner(
         }
     }
 
-    save_stats_json(context, path, case_name, solver_fam)?;
+    save_stats_json(context, path, &case_name, solver_fam)?;
 
     Ok(())
 }
 
-fn run_case_name(
-    parser: Parser,
-    rewriter: Rewriter,
-    comprehension_expander: QuantifiedExpander,
-) -> String {
-    format!("{parser}-{rewriter}-{comprehension_expander}")
-}
+fn clean_test_dir_for_accept(path: &str, runcase: &RunCase) -> Result<(), std::io::Error> {
+    let pattern = format!("{path}/{}*generated*", runcase.run_case_label()); // your pattern here
+    let stats = format!("{path}/{}*stats*", runcase.run_case_label()); // your pattern here
+    println!("pat: {}", pattern);
 
-/// Returns the expected snapshot files for an executed integration run case.
-fn expected_integration_files_for_case(case_name: &str, solver: SolverFamily) -> BTreeSet<String> {
-    let solver_name = solver.as_str();
-    BTreeSet::from([
-        format!("{case_name}-{solver_name}.expected-solutions.json"),
-        format!("{case_name}-{solver_name}-expected-rule-trace.txt"),
-    ])
-}
-
-fn clean_test_dir_for_accept(
-    path: &str,
-    essence_base: &str,
-    extension: &str,
-) -> Result<(), std::io::Error> {
-    let input_filename = format!("{essence_base}.{extension}");
-
-    for entry in std::fs::read_dir(path)? {
-        let entry = entry?;
-        let file_name = entry.file_name();
-        let file_name = file_name.to_string_lossy();
-        let entry_path = entry.path();
-
-        if file_name == input_filename || file_name == "config.toml" {
-            continue;
-        }
-
-        if entry_path.is_dir() {
-            std::fs::remove_dir_all(entry_path)?;
-        } else {
-            std::fs::remove_file(entry_path)?;
+    for entry in glob::glob(pattern.as_str()).expect("Failed to read glob pattern") {
+        match entry {
+            Ok(entry_path) => {
+                if let Err(e) = fs::remove_file(&entry_path) {
+                    eprintln!("Failed to remove {:?}: {}", entry_path, e);
+                }
+            }
+            Err(e) => eprintln!("Error reading path: {}", e),
         }
     }
 
+    for entry in glob::glob(stats.as_str()).expect("Failed to read glob pattern") {
+        match entry {
+            Ok(entry_path) => {
+                if let Err(e) = fs::remove_file(&entry_path) {
+                    eprintln!("Failed to remove {:?}: {}", entry_path, e);
+                }
+            }
+            Err(e) => eprintln!("Error reading path: {}", e),
+        }
+    }
     Ok(())
 }
 
 fn copy_human_trace_generated_to_expected(
     path: &str,
-    test_name: &str,
-    solver: SolverFamily,
+    runcase: &RunCase,
 ) -> Result<(), std::io::Error> {
-    let solver_name = solver.as_str();
+    let n = runcase.run_case_label();
 
-    std::fs::copy(
-        format!("{path}/{test_name}-{solver_name}-generated-rule-trace.txt"),
-        format!("{path}/{test_name}-{solver_name}-expected-rule-trace.txt"),
-    )?;
+    let src = format!("{path}/{n}-generated-rule-trace.txt");
+    let dest = format!("{path}/{n}-expected-rule-trace.txt");
+    println!("copying: {src} to {dest}");
+
+    std::fs::copy(src, dest)?;
+    println!("ret: copy_human");
     Ok(())
 }
 
 fn copy_generated_to_expected(
     path: &str,
-    test_name: &str,
     stage: &str,
     extension: &str,
-    solver: SolverFamily,
+    runcase: &RunCase,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.as_str();
+    let n = runcase.run_case_label();
+    let src = format!("{path}/{n}.generated-{stage}.{extension}");
+    let dest = format!("{path}/{n}.expected-{stage}.{extension}");
+    eprintln!("copying: {src} to {dest}");
 
-    std::fs::copy(
-        format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
-        format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
-    )?;
+    std::fs::copy(src, dest)?;
+    println!("ret: copy_gen_to_ex");
     Ok(())
 }
 
