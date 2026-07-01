@@ -158,7 +158,7 @@ fn check_my_expression() {
 }
 check_my_expression();
 ```
-The ``morph`` function is the core function of the crate, and handles the bulk application of transformation rules to the tree. We input the set of rules, a decision function, and some metadata, returning a ``(tree, metadata)`` tuple. Running ``cargo test --test file_name`` in a directory containing the file with this code will verify that tree-morph is indeed doing what it should do! In the following sections we explore some of tree-morph's features in more depth.
+The ``morph`` function is the core function of the crate, and handles the bulk application of transformation rules to the tree. We input the set of rules, a decision function, and some metadata, returning a ``(tree, metadata)`` tuple. Running ``cargo nextest run --test file_name`` in a directory containing the file with this code will verify that tree-morph is indeed doing what it should do! In the following sections we explore some of tree-morph's features in more depth.
 
 ## Metadata
 Metadata refers to additional contextual information passed along during the tree transformation process. A simple usage of metadata is counting the number of transformation steps a process takes. We keep track of metadata via the ``Commands`` struct, which is used to capture any other side-effects to the transformation process apart from the pure rule changes. If, in our above example, we wanted to count the number of addition rule changes applies, we would first need to create a new struct to capture the metadata.
@@ -319,7 +319,7 @@ fn number_of_operations() {
 }
 number_of_operations();
 ```
-Running ``cargo test --test file_name`` in a directory containing the file with this code will verify that indeed two addition operations are successfully undertaken.
+Running ``cargo nextest run --test file_name`` in a directory containing the file with this code will verify that indeed two addition operations are successfully undertaken.
 
 But wait! The original problem was solving ``(1+2)^2``, why have two addition operations been recorded? The answer is in how we grouped the rules together in the ``morph`` function.
 

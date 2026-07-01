@@ -7,7 +7,7 @@ Integration tests for `conjure-oxide`
 Run the integration tests from the repository root with:
 
 ```sh
-cargo test
+cargo nextest run -p test-suite
 ```
 
 ### How tests work
@@ -21,7 +21,7 @@ Each test runs `conjure-oxide` on an `input.essence` file and checks that the re
 3. Run the following to generate the expected solution and JSON files:
 
 ```sh
-ACCEPT=true cargo test
+ACCEPT=true cargo nextest run -p test-suite
 ```
 
 ### Updating tests with `ACCEPT=true`
@@ -29,7 +29,7 @@ ACCEPT=true cargo test
 If you expect the rewritten AST to change (e.g. after a refactor), you can overwrite the stored output files by running:
 
 ```sh
-ACCEPT=true cargo test
+ACCEPT=true cargo nextest run -p test-suite
 ```
 
 Instead of comparing against the existing JSON files, the test harness will:
