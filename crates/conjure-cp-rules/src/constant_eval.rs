@@ -91,8 +91,9 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule("Constant", 9001)]
 fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::AbstractLiteral(_, _)
-        | Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::AbstractLiteral(_))) => {
+        // Focused `AbstractLiteral` nodes must still fold locally: parent rules often match the
+        // `Atomic(Literal(...))` form after the worklist revisits them.
+        Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::AbstractLiteral(_))) => {
             Err(RuleNotApplicable)
         }
         _ => match fold_constant_expression(expr)
