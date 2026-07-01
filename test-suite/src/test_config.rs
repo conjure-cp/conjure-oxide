@@ -228,6 +228,23 @@ pub fn upsert_tool_status_stats(path: &Path, tool: &str, status: &str) -> io::Re
     write_toml_document(path, &document)
 }
 
+/// Inserts or updates the recorded conjure-oxide timing stats in a test `stats.toml`.
+pub fn upsert_oxide_timing_stats(
+    path: &Path,
+    translation_time: f64,
+    solve_time: Option<f64>,
+) -> io::Result<()> {
+    let mut document = read_toml_document_or_empty(path)?;
+
+    ensure_table(&mut document, "oxide");
+    document["oxide"]["translation-time"] = value(translation_time);
+    if let Some(solve_time) = solve_time {
+        document["oxide"]["solve-time"] = value(solve_time);
+    }
+
+    write_toml_document(path, &document)
+}
+
 /// Timing measurements recorded from one accepted integration test run.
 #[derive(Clone, Copy, Debug)]
 pub struct RecordedRunStats {

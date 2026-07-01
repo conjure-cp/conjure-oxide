@@ -55,8 +55,9 @@ use test_suite::diagnostics::{
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
     NumberOfSolutions, RecordedRunStats, RuleTraceAggregateStats, read_stats_or_default,
-    round_expected_time, stats_path, upsert_expected_time_stats, upsert_recorded_run_stats,
-    upsert_rule_trace_aggregate_stats, upsert_status_stats, upsert_tool_status_stats,
+    round_expected_time, stats_path, upsert_expected_time_stats, upsert_oxide_timing_stats,
+    upsert_recorded_run_stats, upsert_rule_trace_aggregate_stats, upsert_status_stats,
+    upsert_tool_status_stats,
 };
 
 const DISABLE_TRACING_ENV: &str = "CONJURE_OXIDE_TEST_DISABLE_TRACING";
@@ -516,6 +517,15 @@ fn integration_test_inner_with_status(
         {
             upsert_expected_time_stats(&stats_path, expected_time)?;
         }
+    }
+
+    if accept {
+        let oxide_solve_time = solver_solution_limit.map(|_| oxide_timings.solve_time_s);
+        upsert_oxide_timing_stats(
+            &stats_path,
+            oxide_timings.translation_time_s,
+            oxide_solve_time,
+        )?;
     }
 
     if accept && !skip_conjure_validation {
