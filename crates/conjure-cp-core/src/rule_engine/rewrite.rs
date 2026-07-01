@@ -113,6 +113,36 @@ impl WorklistModeCounts {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+enum WorklistStaleReason {
+    ModeMismatch,
+    MissingSurface,
+    InactiveSurface,
+    UnreachableNode,
+    GenerationMismatch,
+}
+
+#[derive(Default, Debug)]
+struct WorklistStaleReasonCounts {
+    mode_mismatch: WorklistModeCounts,
+    missing_surface: WorklistModeCounts,
+    inactive_surface: WorklistModeCounts,
+    unreachable_node: WorklistModeCounts,
+    generation_mismatch: WorklistModeCounts,
+}
+
+impl WorklistStaleReasonCounts {
+    fn increment(&mut self, reason: WorklistStaleReason, mode: ScheduledMode) {
+        match reason {
+            WorklistStaleReason::ModeMismatch => self.mode_mismatch.increment(mode),
+            WorklistStaleReason::MissingSurface => self.missing_surface.increment(mode),
+            WorklistStaleReason::InactiveSurface => self.inactive_surface.increment(mode),
+            WorklistStaleReason::UnreachableNode => self.unreachable_node.increment(mode),
+            WorklistStaleReason::GenerationMismatch => self.generation_mismatch.increment(mode),
+        }
+    }
+}
+
 #[derive(Default)]
 struct DirtyTrace {
     enabled: bool,
@@ -155,6 +185,7 @@ struct DirtyTrace {
     worklist_enqueues_by_mode: WorklistModeCounts,
     worklist_pops_by_mode: WorklistModeCounts,
     worklist_stale_pops_by_mode: WorklistModeCounts,
+    worklist_stale_pops_by_reason: WorklistStaleReasonCounts,
     worklist_no_candidate_pops_by_mode: WorklistModeCounts,
     worklist_rule_attempt_pops_by_mode: WorklistModeCounts,
     worklist_child_descents_by_mode: WorklistModeCounts,
@@ -293,12 +324,13 @@ impl DirtyTrace {
         self.worklist_pops_by_mode.increment(mode);
     }
 
-    fn record_worklist_stale_pop(&mut self, mode: ScheduledMode) {
+    fn record_worklist_stale_pop(&mut self, mode: ScheduledMode, reason: WorklistStaleReason) {
         if !self.enabled {
             return;
         }
         self.worklist_stale_pops += 1;
         self.worklist_stale_pops_by_mode.increment(mode);
+        self.worklist_stale_pops_by_reason.increment(reason, mode);
     }
 
     fn record_worklist_no_candidate_pop(&mut self, mode: ScheduledMode) {
@@ -551,6 +583,12 @@ impl DirtyTrace {
             output,
             "[dirty-trace] worklist_stale_pops_by_mode={:?}",
             self.worklist_stale_pops_by_mode
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] worklist_stale_pops_by_reason={:?}",
+            self.worklist_stale_pops_by_reason
         )
         .unwrap();
         writeln!(
@@ -1347,24 +1385,41 @@ impl WorklistScheduler {
                     generation: scheduled.generation,
                 };
                 if self.scheduled.get(&key).copied() != Some(scheduled.mode) {
-                    dirty_trace.record_worklist_stale_pop(scheduled.mode);
+                    dirty_trace.record_worklist_stale_pop(
+                        scheduled.mode,
+                        WorklistStaleReason::ModeMismatch,
+                    );
                     continue;
                 }
                 self.scheduled.remove(&key);
 
                 let Some(surface) = surfaces.get(scheduled.surface) else {
-                    dirty_trace.record_worklist_stale_pop(scheduled.mode);
+                    dirty_trace.record_worklist_stale_pop(
+                        scheduled.mode,
+                        WorklistStaleReason::MissingSurface,
+                    );
                     continue;
                 };
                 if !surface.active {
-                    dirty_trace.record_worklist_stale_pop(scheduled.mode);
+                    dirty_trace.record_worklist_stale_pop(
+                        scheduled.mode,
+                        WorklistStaleReason::InactiveSurface,
+                    );
                     continue;
                 }
                 let arena = &surface.arena;
-                if !arena.is_reachable(scheduled.node_id)
-                    || arena.generation(scheduled.node_id) != scheduled.generation
-                {
-                    dirty_trace.record_worklist_stale_pop(scheduled.mode);
+                if !arena.is_reachable(scheduled.node_id) {
+                    dirty_trace.record_worklist_stale_pop(
+                        scheduled.mode,
+                        WorklistStaleReason::UnreachableNode,
+                    );
+                    continue;
+                }
+                if arena.generation(scheduled.node_id) != scheduled.generation {
+                    dirty_trace.record_worklist_stale_pop(
+                        scheduled.mode,
+                        WorklistStaleReason::GenerationMismatch,
+                    );
                     continue;
                 }
 
