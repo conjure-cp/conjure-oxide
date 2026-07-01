@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find a: int(1..5)
+find b: int(1..5)
+
+such that
+
+(min([a,b;int(1..2)]) >= 3)
+
+--
+
+Final model:
+
+find a: int(1..5)
+find b: int(1..5)
+find __0: int(1..5)
+find __1: int(1..5)
+
+such that
+
+Ineq(3, __0, 0),
+__0 =aux __1,
+Ineq(__1, a, 0),
+Ineq(__1, b, 0),
+or([(__1 = a),(__1 = b);int(1..)])
+

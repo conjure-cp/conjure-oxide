@@ -1,0 +1,31 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..5)] of bool
+
+such that
+
+(a[1] = true),
+(a[2] = true),
+(a[3] = true),
+(a[4] = true),
+(a[5] = !(a[4]))
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..5)] of bool
+find a#matrix_to_atom_1: bool
+find a#matrix_to_atom_2: bool
+find a#matrix_to_atom_3: bool
+find a#matrix_to_atom_4: bool
+find a#matrix_to_atom_5: bool
+
+such that
+
+Reify(true, a#matrix_to_atom_1),
+Reify(true, a#matrix_to_atom_2),
+Reify(true, a#matrix_to_atom_3),
+Reify(true, a#matrix_to_atom_4),
+Reify(WatchedLiteral(a#matrix_to_atom_4,false), a#matrix_to_atom_5)
+

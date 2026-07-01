@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find x: int(0..6)
+
+such that
+
+and([ (i <= x) | i : int(1..5) ])
+
+--
+
+Model before rewriting:
+
+find i: int(1..5)
+find __0: int(0..6)
+
+such that
+
+(true != Ineq(i, __0, 0))
+
+--
+
+Final model:
+
+find i: int(1..5)
+find __0: int(0..6)
+find __1: bool
+
+such that
+
+(true != __1),
+Reify(Ineq(i, __0, 0), __1)
+
+Final model:
+
+find x: int(0..6)
+
+such that
+
+Ineq(1, x, 0),
+Ineq(2, x, 0),
+Ineq(3, x, 0),
+Ineq(4, x, 0),
+Ineq(5, x, 0)
+

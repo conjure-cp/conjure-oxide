@@ -17,6 +17,7 @@ use test_config::TestConfig;
 
 #[path = "src/golden_files.rs"]
 mod golden_files;
+use golden_files::AcceptMode;
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
@@ -64,7 +65,6 @@ fn main() -> io::Result<()> {
 
             let essence_files: Vec<(String, String)> = std::iter::zip(stems, exts).collect();
             setup_integration_tests(&mut f, subdir.path().display().to_string(), essence_files)?;
-            // write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
         }
     }
 
@@ -285,22 +285,36 @@ fn setup_integration_tests(
         .into_iter()
         .collect::<Vec<_>>();
 
+    // FIXME: This might work
+    let mut allowed_expected_files = std::collections::BTreeSet::new();
+
+    let mut runcases: Vec<RunCase> = Vec::new();
     for parser in parsers.iter().copied() {
         for rewriter in rewriters.clone() {
             for comprehension_expander in comprehension_expanders.clone() {
                 for solver in solvers.clone() {
-                    let _case_name = "meow";
                     let run_case = RunCase {
                         parser,
                         rewriter,
                         comprehension_expander,
                         solver,
                     };
-
-                    write_integration_test(arg_file, &path, &essence_files, run_case)?;
+                    allowed_expected_files
+                        .append(&mut run_case.expected_integration_files_for_case());
+                    runcases.push(run_case);
                 }
             }
         }
+    }
+
+    crate::golden_files::assert_no_redundant_expected_files(
+        Path::new(&path),
+        &allowed_expected_files,
+        None,
+    )?;
+
+    for runcase in runcases {
+        write_integration_test(arg_file, &path, &essence_files, runcase)?;
     }
     Ok(())
 }
@@ -319,14 +333,6 @@ fn write_integration_test(
     let base_name = path.replace("./", "").replace(['/', '-'], "_");
     let case_suffix = format!("{}", runcase.run_case_label());
     let test_name = format!("{}_{}", base_name, case_suffix.replace('-', "_"));
-
-    // FIXME: This might work
-    // let allowed_expected_files = runcase.expected_integration_files_for_case();
-    // crate::golden_files::assert_no_redundant_expected_files(
-    //     Path::new(path),
-    //     &allowed_expected_files,
-    //     None,
-    // )?;
 
     write!(
         file,

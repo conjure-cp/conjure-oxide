@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find a: int(-10..10)
+find b: int(-10..10)
+
+such that
+
+(sum([|a|,|(b - 1)|;int(1..2)]) <= 3)
+
+--
+
+Final model:
+
+find a: int(-10..10)
+find b: int(-10..10)
+find __0: int(0..21)
+find __1: int(-11..9)
+find __2: int(0..10)
+find __3: int(0..11)
+
+such that
+
+Ineq(__0, 3, 0),
+SumLeq([__2, __3], __0),
+SumGeq([__2, __3], __0),
+SumLeq([-1, b], __1),
+SumGeq([-1, b], __1),
+AbsEq(__2,a),
+AbsEq(__3,__1)
+
