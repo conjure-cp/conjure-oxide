@@ -16,6 +16,20 @@ use super::utils::rewrite_children;
 
 register_rule_set!("Bubble", ("Base"));
 
+fn is_non_bool_bubble(expr: &Expression) -> bool {
+    matches!(expr, Expression::Bubble(_, inner, _) if inner.return_type() != ReturnType::Bool)
+}
+
+fn has_direct_non_bool_bubble_child(expr: &Expression) -> bool {
+    let mut found = false;
+    expr.for_each_expr_child(&mut |child| {
+        if !found && is_non_bool_bubble(child) {
+            found = true;
+        }
+    });
+    found
+}
+
 // Bubble reduction rules
 
 /*
@@ -50,6 +64,12 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     // also do not bubble bubbles inside bubbles, as this does nothing productive it just shuffles
     // the conditions around, shuffles them back, then gets stuck in a loop doing this ad infinitum
     if matches!(expr, Expression::Root(_, _) | Expression::Bubble(_, _, _)) {
+        return Err(RuleNotApplicable);
+    }
+
+    // This rule is universal and extremely hot. Most attempts have no direct non-boolean Bubble
+    // child, so avoid cloning/rebuilding all children on the common failing path.
+    if !has_direct_non_bool_bubble_child(expr) {
         return Err(RuleNotApplicable);
     }
 
