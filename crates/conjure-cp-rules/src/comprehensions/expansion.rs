@@ -73,7 +73,7 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
 /// Guarded comprehensions with symbolic guards are expanded here (not by
 /// [`expand_comprehension_native`]) so matrix representation can run first.
 /// Skip semantics come from [`Comprehension::skip_operator`].
-#[register_rule("Base", 1999)]
+#[register_rule("Base", 1999, [And, Or, Sum, Product])]
 fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if comprehension_expander() != QuantifiedExpander::Native {
         return Err(RuleNotApplicable);
@@ -211,7 +211,7 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
 /// 5. Rewrite and solve the temporary model with Minion; keep only quantified assignments.
 /// 6. Instantiate the original return expression under those assignments.
 /// 7. Rebuild the same AC operator around the instantiated matrix literal.
-#[register_rule("Base", 2002)]
+#[register_rule("Base", 2002, [And, Or, Sum, Product])]
 fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if comprehension_expander() != QuantifiedExpander::ViaSolverAc {
         return Err(RuleNotApplicable);
