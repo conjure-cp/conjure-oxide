@@ -15,5 +15,5 @@ Debug symbols for Minion can be enabled by setting the environment variable `DEB
 Eg.
 
 ```shell
-DEBUG_MINION=true cargo test
+DEBUG_MINION=true cargo nextest run -p minion-sys
 ```

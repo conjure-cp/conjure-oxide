@@ -68,11 +68,11 @@ API-specific tests are located in `crates/conjure-cp-essence-parser/tests` and c
 
 ```bash
 # to run all tests
-cargo test -p conjure-cp-essence-parser --test
+cargo nextest run -p conjure-cp-essence-parser
 
 # to run with a specific test target
-cargo test -p conjure-cp-essence-parser --test semantic_test
-cargo test -p conjure-cp-essence-parser --test keywords_as_ident
-cargo test -p conjure-cp-essence-parser --test missing_token
-cargo test -p conjure-cp-essence-parser --test unexpected_token
+cargo nextest run -p conjure-cp-essence-parser --test semantic_test
+cargo nextest run -p conjure-cp-essence-parser --test keywords_as_ident
+cargo nextest run -p conjure-cp-essence-parser --test missing_token
+cargo nextest run -p conjure-cp-essence-parser --test unexpected_token
 ```
