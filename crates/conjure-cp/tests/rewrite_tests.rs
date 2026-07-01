@@ -1,8 +1,8 @@
 use conjure_cp::{
     Model,
     ast::{
-        Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name, Range, Reference,
-        SymbolTable, eval_constant,
+        AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Field, Literal, Metadata, Moo,
+        Name, Range, Reference, SymbolTable, eval_constant,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_model},
@@ -792,6 +792,67 @@ fn eval_const_bool() {
     let expr = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
     let result = eval_constant(&expr);
     assert_eq!(result, Some(Literal::Bool(true)));
+}
+
+#[test]
+fn eval_const_record_field_from_abstract_literal() {
+    let expr = Expression::RecordField(
+        Metadata::new(),
+        Moo::new(Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Record(vec![
+                Field {
+                    name: Name::user("a"),
+                    value: Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                },
+                Field {
+                    name: Name::user("b"),
+                    value: Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(4))),
+                },
+            ]),
+        )),
+        Name::user("a"),
+    );
+
+    assert_eq!(eval_constant(&expr), Some(Literal::Bool(false)));
+}
+
+#[test]
+fn eval_const_set_ops_from_abstract_literals() {
+    fn set(values: &[i32]) -> Moo<Expression> {
+        Moo::new(Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Set(
+                values
+                    .iter()
+                    .map(|value| {
+                        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*value)))
+                    })
+                    .collect(),
+            ),
+        ))
+    }
+
+    let union = Expression::Union(Metadata::new(), set(&[1, 2]), set(&[2, 3]));
+    assert_eq!(
+        eval_constant(&union),
+        Some(Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+            Literal::Int(1),
+            Literal::Int(2),
+            Literal::Int(3),
+        ])))
+    );
+
+    let intersect = Expression::Intersect(Metadata::new(), set(&[1, 2]), set(&[2, 3]));
+    assert_eq!(
+        eval_constant(&intersect),
+        Some(Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+            Literal::Int(2),
+        ])))
+    );
+
+    let subset_eq = Expression::SubsetEq(Metadata::new(), set(&[1, 2]), set(&[1, 2, 3]));
+    assert_eq!(eval_constant(&subset_eq), Some(Literal::Bool(true)));
 }
 
 #[test]

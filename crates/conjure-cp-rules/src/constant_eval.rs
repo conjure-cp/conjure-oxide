@@ -8,9 +8,6 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
     register_rule_set,
 };
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use uniplate::Biplate;
 
 register_rule_set!("Constant", ());
 
@@ -75,60 +72,26 @@ fn fold_constant_expression(expr: &Expr) -> Option<Expr> {
     Some(folded)
 }
 
-#[register_rule("Base", 9000)]
+#[register_rule(
+    "Base",
+    9000,
+    [
+        SafeIndex, InDomain, Bubble, ToInt, Abs, Sum, Product, Min, Max, Not, Or, And, Root, Imply,
+        Iff, Eq, Neq, AllDiff
+    ]
+)]
 fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     run_partial_evaluator(expr)
 }
 
-/// Applies everywhere because this folds constants and partial-evaluates any expression variant,
-/// not just `Root`.
+/// Folds the focused expression when it is constant, or applies local partial evaluation.
+///
+/// Keep this rule local: whole-root simplification is handled by explicit root rules and by the
+/// worklist rechecking ancestors after child rewrites.
 #[register_rule("Constant", 9001)]
 fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // I break the rules a bit here: this is a global rule on roots.
-    //
-    // This rule is really really hot when expanding comprehensions.. Also, at time of writing, we
-    // have the rule engine rewriter, which is slow on large trees....
-    //
-    // Also, constant_evaluating bottom up vs top down does things in less passes: the rewriter,
-    // however, favour doing this top-down!
-    //
-    // e.g. or([(1=1),(2=2),(3+3 = 6)])
-    //
-    // We also reuse it as a plain expression simplifier when rewriting value lettings so shared
-    // declaration pointers observe the rewritten letting body.
     match expr {
-        Expr::Root(_, _) => {
-            let has_changed: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-            let has_changed_2 = Arc::clone(&has_changed);
-
-            let new_expr = expr.transform_bi(&move |x| {
-                if matches!(
-                    x,
-                    Expr::Atomic(_, Atom::Literal(_)) | Expr::Atomic(_, Atom::Reference(_))
-                ) {
-                    return x;
-                }
-
-                match fold_constant_expression(&x)
-                    .or_else(|| run_partial_evaluator(&x).ok().map(|r| r.new_expression))
-                {
-                    Some(new_expr) => {
-                        has_changed.store(true, Ordering::Relaxed);
-                        new_expr
-                    }
-
-                    None => x,
-                }
-            });
-
-            if has_changed_2.load(Ordering::Relaxed) {
-                Ok(RuleEffect::pure(new_expr))
-            } else {
-                Err(RuleNotApplicable)
-            }
-        }
-        Expr::AbstractLiteral(_, _)
-        | Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::AbstractLiteral(_))) => {
+        Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::AbstractLiteral(_))) => {
             Err(RuleNotApplicable)
         }
         _ => match fold_constant_expression(expr)

@@ -26,95 +26,111 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::TypeAnnotation(_, expr, _) | Expr::DomainAnnotation(_, expr, _) => {
             eval_constant(expr)
         }
-        Expr::Supset(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let a_set: HashSet<Lit> = a.iter().cloned().collect();
-                let b_set: HashSet<Lit> = b.iter().cloned().collect();
+        Expr::Supset(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
 
-                if a_set.difference(&b_set).count() > 0 {
-                    Some(Lit::Bool(a_set.is_superset(&b_set)))
-                } else {
-                    Some(Lit::Bool(false))
-                }
+            let a_set: HashSet<Lit> = a.iter().cloned().collect();
+            let b_set: HashSet<Lit> = b.iter().cloned().collect();
+
+            if a_set.difference(&b_set).count() > 0 {
+                Some(Lit::Bool(a_set.is_superset(&b_set)))
+            } else {
+                Some(Lit::Bool(false))
             }
-            _ => None,
-        },
-        Expr::SupsetEq(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => Some(Lit::Bool(
+        }
+        Expr::SupsetEq(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            Some(Lit::Bool(
                 a.iter()
                     .cloned()
                     .collect::<HashSet<Lit>>()
                     .is_superset(&b.iter().cloned().collect::<HashSet<Lit>>()),
-            )),
-            _ => None,
-        },
-        Expr::Subset(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let a_set: HashSet<Lit> = a.iter().cloned().collect();
-                let b_set: HashSet<Lit> = b.iter().cloned().collect();
+            ))
+        }
+        Expr::Subset(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
 
-                if b_set.difference(&a_set).count() > 0 {
-                    Some(Lit::Bool(a_set.is_subset(&b_set)))
-                } else {
-                    Some(Lit::Bool(false))
-                }
+            let a_set: HashSet<Lit> = a.iter().cloned().collect();
+            let b_set: HashSet<Lit> = b.iter().cloned().collect();
+
+            if b_set.difference(&a_set).count() > 0 {
+                Some(Lit::Bool(a_set.is_subset(&b_set)))
+            } else {
+                Some(Lit::Bool(false))
             }
-            _ => None,
-        },
-        Expr::SubsetEq(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => Some(Lit::Bool(
+        }
+        Expr::SubsetEq(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            Some(Lit::Bool(
                 a.iter()
                     .cloned()
                     .collect::<HashSet<Lit>>()
                     .is_subset(&b.iter().cloned().collect::<HashSet<Lit>>()),
-            )),
-            _ => None,
-        },
-        Expr::Intersect(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let mut res: Vec<Lit> = Vec::new();
-                for lit in a.iter() {
-                    if b.contains(lit) && !res.contains(lit) {
-                        res.push(lit.clone());
-                    }
+            ))
+        }
+        Expr::Intersect(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            let mut res: Vec<Lit> = Vec::new();
+            for lit in a {
+                if b.contains(&lit) && !res.contains(&lit) {
+                    res.push(lit);
                 }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
             }
-            _ => None,
-        },
-        Expr::Union(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let mut res: Vec<Lit> = Vec::new();
-                for lit in a.iter() {
-                    res.push(lit.clone());
-                }
-                for lit in b.iter() {
-                    if !res.contains(lit) {
-                        res.push(lit.clone());
-                    }
-                }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+        }
+        Expr::Union(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            let mut res: Vec<Lit> = Vec::new();
+            for lit in a {
+                res.push(lit);
             }
-            _ => None,
-        },
+            for lit in b {
+                if !res.contains(&lit) {
+                    res.push(lit);
+                }
+            }
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+        }
         Expr::In(_, a, b) => {
             if let (
                 Expr::Atomic(_, Atom::Literal(Lit::Int(c))),
@@ -150,15 +166,14 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::AbstractComprehension(_, _) => None,
         Expr::RecordField(_, rec, fld_name) => {
-            if let Expr::Atomic(
-                _,
-                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Record(ents))),
-            ) = rec.as_ref()
-            {
-                for Field { name, value } in ents {
-                    if name.eq(fld_name) {
-                        return Some(value.clone());
-                    }
+            let Lit::AbstractLiteral(AbstractLiteral::Record(ents)) = eval_constant(rec.as_ref())?
+            else {
+                return None;
+            };
+
+            for Field { name, value } in ents {
+                if name.eq(fld_name) {
+                    return Some(value);
                 }
             }
             None
