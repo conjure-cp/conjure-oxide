@@ -225,6 +225,7 @@ struct DirtyTrace {
     dirty_hits_by_priority: BTreeMap<u16, usize>,
     clean_marks_by_priority: BTreeMap<u16, usize>,
     rule_attempts_by_priority: BTreeMap<u16, usize>,
+    rule_attempts_by_rule: BTreeMap<String, usize>,
     rewrites_by_rule: BTreeMap<String, usize>,
     side_effect_rewrites_by_rule: BTreeMap<String, usize>,
     whole_model_clears_by_rule: BTreeMap<String, usize>,
@@ -339,6 +340,18 @@ impl DirtyTrace {
             return;
         }
         self.rule_memo_hits += 1;
+    }
+
+    fn record_rule_attempt(&mut self, priority: u16, rule_name: &str) {
+        self.rule_attempts += 1;
+        if !self.enabled {
+            return;
+        }
+        *self.rule_attempts_by_priority.entry(priority).or_default() += 1;
+        *self
+            .rule_attempts_by_rule
+            .entry(rule_name.to_owned())
+            .or_default() += 1;
     }
 
     fn record_worklist_enqueue(&mut self, mode: ScheduledMode) {
@@ -491,6 +504,12 @@ impl DirtyTrace {
             output,
             "[dirty-trace] rule_attempts_by_priority={:?}",
             self.rule_attempts_by_priority
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "[dirty-trace] rule_attempts_by_rule={:?}",
+            self.rule_attempts_by_rule
         )
         .unwrap();
         writeln!(
@@ -1960,13 +1979,8 @@ fn try_rewrite_model<'ctx, 'rules>(
                             continue;
                         }
 
-                        ctx.dirty_trace.rule_attempts += 1;
-                        if ctx.dirty_trace.enabled {
-                            *ctx.dirty_trace
-                                .rule_attempts_by_priority
-                                .entry(rule_group.priority)
-                                .or_default() += 1;
-                        }
+                        ctx.dirty_trace
+                            .record_rule_attempt(rule_group.priority, rd.rule.name);
                         // Count rule application attempts
                         ctx.stats.rewriter_rule_application_attempts =
                             Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
@@ -2382,13 +2396,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 }
 
                 actual_rule_attempted = true;
-                ctx.dirty_trace.rule_attempts += 1;
-                if ctx.dirty_trace.enabled {
-                    *ctx.dirty_trace
-                        .rule_attempts_by_priority
-                        .entry(rule_group.priority)
-                        .or_default() += 1;
-                }
+                ctx.dirty_trace
+                    .record_rule_attempt(rule_group.priority, rd.rule.name);
                 ctx.stats.rewriter_rule_application_attempts =
                     Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
 
