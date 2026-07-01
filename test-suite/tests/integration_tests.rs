@@ -231,7 +231,7 @@ fn integration_test_inner(
 
     let solutions = {
         let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
-        save_solutions_json(&solved, path, &case_name, solver_fam)?;
+        save_solutions_json(&solved, path, &case_name)?;
         solved
     };
 
@@ -265,7 +265,7 @@ fn integration_test_inner(
     }
 
     // Check Stage 3a (solutions)
-    let expected_solutions_json = read_solutions_json(path, &case_name, "expected", solver_fam)?;
+    let expected_solutions_json = read_solutions_json(path, &case_name, "expected")?;
     let username_solutions_json = solutions_to_json(&solutions);
     assert_eq!(username_solutions_json, expected_solutions_json);
 
@@ -273,8 +273,8 @@ fn integration_test_inner(
     match rewriter {
         Rewriter::Morph(_) => {}
         Rewriter::Naive => {
-            let generated = read_default_rule_trace(path, &case_name, "generated", &solver_fam)?;
-            let expected = read_default_rule_trace(path, &case_name, "expected", &solver_fam)?;
+            let generated = read_default_rule_trace(path, &case_name, "generated")?;
+            let expected = read_default_rule_trace(path, &case_name, "expected")?;
 
             assert_eq!(
                 expected, generated,

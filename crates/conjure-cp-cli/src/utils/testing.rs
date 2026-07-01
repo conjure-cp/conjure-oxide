@@ -267,7 +267,6 @@ pub fn read_solutions_json(
     path: &str,
     test_name: &str,
     prefix: &str,
-    solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
     let filename = format!("{path}/{test_name}.{prefix}-solutions.json");
     let expected_json_str = read_with_path(filename)?;
@@ -283,7 +282,6 @@ pub fn read_default_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
-    solver: &SolverFamily,
 ) -> Result<Vec<String>, std::io::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.txt");
     let rules_trace: Vec<String> = read_with_path(filename)?
