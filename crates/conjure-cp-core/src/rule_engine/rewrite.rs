@@ -73,24 +73,52 @@ type ApplicableRule<'a, CtxFnType> = (
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ScheduledMode {
     CheckNode,
-    TraverseSubtree,
+    TraverseSubtreeRoot,
+    TraverseSubtreeDescendant,
 }
 
 impl ScheduledMode {
     fn includes(self, other: Self) -> bool {
         matches!(
             (self, other),
-            (ScheduledMode::TraverseSubtree, ScheduledMode::CheckNode)
+            (ScheduledMode::TraverseSubtreeRoot, ScheduledMode::CheckNode)
                 | (
-                    ScheduledMode::TraverseSubtree,
-                    ScheduledMode::TraverseSubtree
+                    ScheduledMode::TraverseSubtreeRoot,
+                    ScheduledMode::TraverseSubtreeRoot
+                )
+                | (
+                    ScheduledMode::TraverseSubtreeRoot,
+                    ScheduledMode::TraverseSubtreeDescendant
+                )
+                | (
+                    ScheduledMode::TraverseSubtreeDescendant,
+                    ScheduledMode::CheckNode
+                )
+                | (
+                    ScheduledMode::TraverseSubtreeDescendant,
+                    ScheduledMode::TraverseSubtreeDescendant
                 )
                 | (ScheduledMode::CheckNode, ScheduledMode::CheckNode)
         )
     }
 
     fn descends_on_failure(self) -> bool {
-        matches!(self, ScheduledMode::TraverseSubtree)
+        matches!(
+            self,
+            ScheduledMode::TraverseSubtreeRoot | ScheduledMode::TraverseSubtreeDescendant
+        )
+    }
+
+    fn next_self_mode(self) -> Option<Self> {
+        match self {
+            ScheduledMode::CheckNode => Some(ScheduledMode::CheckNode),
+            ScheduledMode::TraverseSubtreeRoot => Some(ScheduledMode::TraverseSubtreeRoot),
+            ScheduledMode::TraverseSubtreeDescendant => None,
+        }
+    }
+
+    fn advances_as_subtree(self) -> bool {
+        matches!(self, ScheduledMode::TraverseSubtreeRoot)
     }
 }
 
@@ -108,7 +136,9 @@ impl WorklistModeCounts {
     fn add(&mut self, mode: ScheduledMode, value: usize) {
         match mode {
             ScheduledMode::CheckNode => self.check_node += value,
-            ScheduledMode::TraverseSubtree => self.traverse_subtree += value,
+            ScheduledMode::TraverseSubtreeRoot | ScheduledMode::TraverseSubtreeDescendant => {
+                self.traverse_subtree += value
+            }
         }
     }
 }
@@ -1218,7 +1248,7 @@ impl WorklistScheduler {
             surface,
             node_id,
             0,
-            ScheduledMode::TraverseSubtree,
+            ScheduledMode::TraverseSubtreeRoot,
             dirty_trace,
         );
     }
@@ -1269,7 +1299,7 @@ impl WorklistScheduler {
                 surface,
                 child_id,
                 level,
-                ScheduledMode::TraverseSubtree,
+                ScheduledMode::TraverseSubtreeDescendant,
                 dirty_trace.as_deref_mut(),
             );
         }
@@ -1352,13 +1382,23 @@ impl WorklistScheduler {
             }
         }
 
-        let next_self_mode = if mode.descends_on_failure() {
-            ScheduledMode::CheckNode
-        } else {
-            mode
+        let Some(next_self_mode) = mode.next_self_mode() else {
+            return;
         };
-        let next_self_level =
-            next_worklist_candidate_level(arena, node_id, next_self_level, rule_groups, config);
+        // Descendants reached while traversing the current level do not eagerly advance to
+        // future levels. The traversal root advances and rediscovers descendants only after it
+        // survives that future level, avoiding stale descendant work when an ancestor rewrites.
+        let next_self_level = if mode.advances_as_subtree() {
+            next_worklist_subtree_candidate_level(
+                arena,
+                node_id,
+                next_self_level,
+                rule_groups,
+                config,
+            )
+        } else {
+            next_worklist_candidate_level(arena, node_id, next_self_level, rule_groups, config)
+        };
         self.enqueue_node_at_level(
             arena,
             surface,
@@ -1450,6 +1490,49 @@ fn next_worklist_candidate_level(
         .skip(start_level)
         .find_map(|(level, rule_group)| rule_group.has_candidates(config, expr).then_some(level))
         .unwrap_or(rule_groups.len())
+}
+
+fn next_worklist_subtree_candidate_level(
+    arena: &ExpressionArena,
+    node_id: ExpressionNodeId,
+    start_level: usize,
+    rule_groups: &[RuleGroup<'_>],
+    config: RewriteConfig,
+) -> usize {
+    if start_level >= rule_groups.len() || !arena.is_reachable(node_id) {
+        return rule_groups.len();
+    }
+
+    rule_groups
+        .iter()
+        .enumerate()
+        .skip(start_level)
+        .find_map(|(level, rule_group)| {
+            worklist_subtree_has_candidates(arena, node_id, rule_group, config).then_some(level)
+        })
+        .unwrap_or(rule_groups.len())
+}
+
+fn worklist_subtree_has_candidates(
+    arena: &ExpressionArena,
+    node_id: ExpressionNodeId,
+    rule_group: &RuleGroup<'_>,
+    config: RewriteConfig,
+) -> bool {
+    if !arena.is_reachable(node_id) {
+        return false;
+    }
+    if rule_group.has_candidates(config, arena.expression(node_id)) {
+        return true;
+    }
+    if matches!(arena.expression(node_id), Expr::Comprehension(_, _)) {
+        return false;
+    }
+
+    arena
+        .children(node_id)
+        .iter()
+        .any(|&child_id| worklist_subtree_has_candidates(arena, child_id, rule_group, config))
 }
 
 #[derive(Default)]
@@ -3625,7 +3708,7 @@ mod tests {
         );
         assert_eq!(
             root_work,
-            Some((0, 0, root_id, ScheduledMode::TraverseSubtree))
+            Some((0, 0, root_id, ScheduledMode::TraverseSubtreeRoot))
         );
         assert_eq!(
             scheduler.pop_next(
@@ -3643,7 +3726,7 @@ mod tests {
             root_id,
             0,
             1,
-            ScheduledMode::TraverseSubtree,
+            ScheduledMode::TraverseSubtreeRoot,
             &rule_groups,
             RewriteConfig::optimised(),
             Some(&mut dirty_trace),
@@ -3654,14 +3737,17 @@ mod tests {
             RewriteConfig::optimised(),
             &mut dirty_trace,
         );
-        assert_eq!(eq_work, Some((0, 0, eq_id, ScheduledMode::TraverseSubtree)));
+        assert_eq!(
+            eq_work,
+            Some((0, 0, eq_id, ScheduledMode::TraverseSubtreeDescendant))
+        );
         scheduler.enqueue_after_no_rewrite(
             arena,
             0,
             eq_id,
             0,
             1,
-            ScheduledMode::TraverseSubtree,
+            ScheduledMode::TraverseSubtreeDescendant,
             &rule_groups,
             RewriteConfig::optimised(),
             Some(&mut dirty_trace),
@@ -3673,7 +3759,12 @@ mod tests {
                 RewriteConfig::optimised(),
                 &mut dirty_trace
             ),
-            Some((0, 0, root_sibling_id, ScheduledMode::TraverseSubtree))
+            Some((
+                0,
+                0,
+                root_sibling_id,
+                ScheduledMode::TraverseSubtreeDescendant
+            ))
         );
         assert_eq!(
             scheduler.pop_next(
@@ -3682,7 +3773,7 @@ mod tests {
                 RewriteConfig::optimised(),
                 &mut dirty_trace
             ),
-            Some((0, 0, left_leaf_id, ScheduledMode::TraverseSubtree))
+            Some((0, 0, left_leaf_id, ScheduledMode::TraverseSubtreeDescendant))
         );
         assert_eq!(
             scheduler.pop_next(
@@ -3691,7 +3782,12 @@ mod tests {
                 RewriteConfig::optimised(),
                 &mut dirty_trace
             ),
-            Some((0, 0, right_leaf_id, ScheduledMode::TraverseSubtree))
+            Some((
+                0,
+                0,
+                right_leaf_id,
+                ScheduledMode::TraverseSubtreeDescendant
+            ))
         );
         assert_eq!(
             scheduler.pop_next(
@@ -3700,7 +3796,7 @@ mod tests {
                 RewriteConfig::optimised(),
                 &mut dirty_trace
             ),
-            Some((1, 0, root_id, ScheduledMode::CheckNode))
+            Some((1, 0, root_id, ScheduledMode::TraverseSubtreeRoot))
         );
         assert_eq!(
             scheduler.pop_next(
@@ -3709,12 +3805,33 @@ mod tests {
                 RewriteConfig::optimised(),
                 &mut dirty_trace
             ),
-            Some((1, 0, eq_id, ScheduledMode::CheckNode))
+            None
+        );
+
+        scheduler.enqueue_after_no_rewrite(
+            arena,
+            0,
+            root_id,
+            1,
+            2,
+            ScheduledMode::TraverseSubtreeRoot,
+            &rule_groups,
+            RewriteConfig::optimised(),
+            Some(&mut dirty_trace),
+        );
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((1, 0, eq_id, ScheduledMode::TraverseSubtreeDescendant))
         );
     }
 
     #[test]
-    fn worklist_no_rewrite_skips_levels_without_candidates_for_self() {
+    fn worklist_no_rewrite_skips_levels_without_candidates_for_subtree() {
         let tree = root(vec![int_lit(1)]);
         let surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
         let arena = &surfaces[0].arena;
@@ -3734,7 +3851,7 @@ mod tests {
                 RewriteConfig::optimised(),
                 &mut dirty_trace
             ),
-            Some((0, 0, root_id, ScheduledMode::TraverseSubtree))
+            Some((0, 0, root_id, ScheduledMode::TraverseSubtreeRoot))
         );
 
         scheduler.enqueue_after_no_rewrite(
@@ -3743,7 +3860,7 @@ mod tests {
             root_id,
             0,
             1,
-            ScheduledMode::TraverseSubtree,
+            ScheduledMode::TraverseSubtreeRoot,
             &rule_groups,
             RewriteConfig::optimised(),
             Some(&mut dirty_trace),
@@ -3756,7 +3873,7 @@ mod tests {
                 RewriteConfig::optimised(),
                 &mut dirty_trace
             ),
-            Some((0, 0, child_id, ScheduledMode::TraverseSubtree))
+            Some((0, 0, child_id, ScheduledMode::TraverseSubtreeDescendant))
         );
         assert_eq!(
             scheduler.pop_next(
@@ -3765,7 +3882,7 @@ mod tests {
                 RewriteConfig::optimised(),
                 &mut dirty_trace
             ),
-            Some((2, 0, root_id, ScheduledMode::CheckNode))
+            Some((2, 0, root_id, ScheduledMode::TraverseSubtreeRoot))
         );
     }
 
