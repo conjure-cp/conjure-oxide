@@ -72,8 +72,11 @@ type ApplicableRule<'a, CtxFnType> = (
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ScheduledMode {
+    /// Check only this node at the scheduled rule level.
     CheckNode,
+    /// Traverse this subtree at the scheduled level and carry it forward if it survives.
     TraverseSubtreeRoot,
+    /// Traverse this descendant at the current level only; the root carries future levels.
     TraverseSubtreeDescendant,
 }
 
