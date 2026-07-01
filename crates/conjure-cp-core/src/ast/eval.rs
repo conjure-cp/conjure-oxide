@@ -150,17 +150,17 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::AbstractComprehension(_, _) => None,
         Expr::RecordField(_, rec, fld_name) => {
-            if let Expr::Atomic(
-                _,
-                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Record(ents))),
-            ) = rec.as_ref()
-            {
-                for Field { name, value } in ents {
-                    if name.eq(fld_name) {
-                        return Some(value.clone());
-                    }
+            let Lit::AbstractLiteral(AbstractLiteral::Record(ents)) = eval_constant(rec.as_ref())?
+            else {
+                return None;
+            };
+
+            for Field { name, value } in ents {
+                if name.eq(fld_name) {
+                    return Some(value);
                 }
             }
+
             None
         }
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
@@ -954,4 +954,31 @@ fn with_temporary_quantified_binding<T>(
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Moo, Name};
+
+    #[test]
+    fn evaluates_field_access_on_abstract_record_literal() {
+        let record = Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Record(vec![
+                Field {
+                    name: Name::User("a".into()),
+                    value: Expr::from(false),
+                },
+                Field {
+                    name: Name::User("b".into()),
+                    value: Expr::from(4),
+                },
+            ]),
+        );
+        let field_access =
+            Expr::RecordField(Metadata::new(), Moo::new(record), Name::User("a".into()));
+
+        assert_eq!(eval_constant(&field_access), Some(Lit::Bool(false)));
+    }
 }
