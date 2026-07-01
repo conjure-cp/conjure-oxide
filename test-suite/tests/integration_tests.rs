@@ -58,7 +58,6 @@ use test_suite::test_config::{
     stats_path, upsert_expected_time_stats, upsert_recorded_run_stats,
     upsert_rule_trace_aggregate_stats, upsert_status_stats, upsert_tool_status_stats,
 };
-use test_suite::text_files::write_text_with_trailing_newline;
 
 const DISABLE_TRACING_ENV: &str = "CONJURE_OXIDE_TEST_DISABLE_TRACING";
 
@@ -842,7 +841,7 @@ fn copy_human_trace_generated_to_expected(
 
     let expected_trace =
         truncate_to_first_chars(&generated_trace, DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT);
-    write_text_with_trailing_newline(Path::new(&expected_path), &expected_trace)?;
+    fs::write(expected_path, format!("{expected_trace}\n"))?;
     Ok(())
 }
 

@@ -23,7 +23,6 @@ use conjure_cp::error::Error;
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
-use crate::utils::text_files::write_text_with_trailing_newline;
 use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
@@ -154,7 +153,7 @@ pub fn save_model_json(
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{test_name}-{marker}.generated-{test_stage}.serialised.json");
     println!("saving: {filename}");
-    write_text_with_trailing_newline(Path::new(&filename), &generated_json_str)?;
+    std::fs::write(filename, format!("{generated_json_str}\n"))?;
     Ok(())
 }
 
@@ -173,9 +172,9 @@ pub fn save_stats_json(
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
 
-    write_text_with_trailing_newline(
-        Path::new(&format!("{path}/{test_name}-{solver_name}-stats.json")),
-        &generated_json_str,
+    std::fs::write(
+        format!("{path}/{test_name}-{solver_name}-stats.json"),
+        format!("{generated_json_str}\n"),
     )?;
 
     Ok(())
@@ -268,7 +267,7 @@ pub fn save_solutions_json(
 
     let solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
-    write_text_with_trailing_newline(Path::new(&filename), &generated_json_str)?;
+    std::fs::write(filename, format!("{generated_json_str}\n"))?;
 
     Ok(json_solutions)
 }

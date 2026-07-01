@@ -4,8 +4,6 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
-use crate::text_files::write_text_with_trailing_newline;
-
 /// Gitignored directory inside each integration test case for debugging failed runs.
 pub const DIAGNOSTICS_DIR: &str = "diagnostics";
 
@@ -42,9 +40,9 @@ pub fn clear_diagnostics(test_dir: &Path) -> io::Result<()> {
 pub fn write_failure_record(test_dir: &Path, record: &FailureRecord) -> io::Result<()> {
     fs::create_dir_all(diagnostics_dir(test_dir))?;
     let failure_json = serde_json::to_string_pretty(record).map_err(io::Error::other)?;
-    write_text_with_trailing_newline(
-        &diagnostics_dir(test_dir).join("failure.json"),
-        &failure_json,
+    fs::write(
+        diagnostics_dir(test_dir).join("failure.json"),
+        format!("{failure_json}\n"),
     )
 }
 
@@ -63,5 +61,5 @@ pub fn write_oxide_failure_text(test_dir: &Path, run_label: &str, message: &str)
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    write_text_with_trailing_newline(&path, message)
+    fs::write(path, format!("{message}\n"))
 }

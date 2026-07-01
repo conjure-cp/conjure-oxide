@@ -9,8 +9,6 @@ use walkdir::WalkDir;
 // (build.rs cannot depend on the crate it's building)
 #[path = "src/test_config.rs"]
 mod test_config;
-#[path = "src/text_files.rs"]
-mod text_files;
 use test_config::{TestConfig, TestRunStats, stats_path};
 
 fn main() -> io::Result<()> {

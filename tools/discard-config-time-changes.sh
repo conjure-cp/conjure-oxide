@@ -43,17 +43,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-file_ends_with_newline() {
-  local file="$1"
-  [[ ! -s "$file" ]] && return 0
-  [[ "$(tail -c 1 "$file" | xxd -p)" == "0a" ]]
-}
-
-ensure_trailing_newline() {
-  local file="$1"
-  file_ends_with_newline "$file" || printf '\n' >>"$file"
-}
-
 restore_time_fields() {
   local head_file="$1"
   local work_file="$2"
@@ -117,8 +106,6 @@ restore_time_fields() {
       }
     }
   ' "$work_file" > "$out_file"
-
-  ensure_trailing_newline "$out_file"
 }
 
 cd "$REPO_ROOT"

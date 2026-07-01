@@ -11,8 +11,6 @@ use std::str::FromStr;
 use std::time::Duration;
 use toml_edit::{DocumentMut, Item, Table, value};
 
-use crate::text_files::write_text_with_trailing_newline;
-
 pub const STATS_FILE_NAME: &str = "stats.toml";
 
 pub fn stats_path(test_dir: &Path) -> std::path::PathBuf {
@@ -35,7 +33,7 @@ fn read_toml_document_or_empty(path: &Path) -> io::Result<DocumentMut> {
 }
 
 fn write_toml_document(path: &Path, document: &DocumentMut) -> io::Result<()> {
-    write_text_with_trailing_newline(path, &document.to_string())
+    fs::write(path, format!("{document}\n"))
 }
 
 // toml_edit's Index impl panics on missing keys, so use .get() before creating tables.
