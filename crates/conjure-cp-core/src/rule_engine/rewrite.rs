@@ -1415,12 +1415,12 @@ impl WorklistScheduler {
     fn pop_next(
         &mut self,
         surfaces: &[RewriteSurface],
-        _rule_groups: &[RuleGroup<'_>],
-        _config: RewriteConfig,
+        rule_groups: &[RuleGroup<'_>],
+        config: RewriteConfig,
         dirty_trace: &mut DirtyTrace,
     ) -> Option<(usize, usize, ExpressionNodeId, ScheduledMode)> {
-        for (level, queue) in self.queues_by_level.iter_mut().enumerate() {
-            while let Some(scheduled) = queue.pop() {
+        for level in 0..self.queues_by_level.len() {
+            while let Some(scheduled) = self.queues_by_level[level].pop() {
                 let key = ScheduledKey {
                     level,
                     surface: scheduled.surface,
@@ -1463,6 +1463,26 @@ impl WorklistScheduler {
                         scheduled.mode,
                         WorklistStaleReason::GenerationMismatch,
                     );
+                    if scheduled.mode.advances_as_subtree() {
+                        // A descendant rewrite updates ancestor generations. Refreshing the
+                        // traversal root preserves its job of carrying still-unseen sibling
+                        // descendants to later rule levels.
+                        let refresh_level = next_worklist_subtree_candidate_level(
+                            arena,
+                            scheduled.node_id,
+                            level,
+                            rule_groups,
+                            config,
+                        );
+                        self.enqueue_node_at_level(
+                            arena,
+                            scheduled.surface,
+                            scheduled.node_id,
+                            refresh_level,
+                            scheduled.mode,
+                            Some(dirty_trace),
+                        );
+                    }
                     continue;
                 }
 
@@ -3831,6 +3851,129 @@ mod tests {
             ),
             Some((1, 0, eq_id, ScheduledMode::TraverseSubtreeDescendant))
         );
+    }
+
+    #[test]
+    fn worklist_refreshes_stale_subtree_carrier_after_descendant_rewrite() {
+        let tree = root(vec![
+            Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2))),
+            int_lit(3),
+        ]);
+        let mut surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
+        let ids = rewriter_preorder_ids(&surfaces[0].arena);
+        let root_id = ids[0];
+        let eq_id = ids[1];
+        let root_sibling_id = ids[4];
+
+        let rule_groups = test_rule_groups_with_two_levels();
+        let mut scheduler =
+            WorklistScheduler::new(&surfaces, &rule_groups, RewriteConfig::optimised());
+        let mut dirty_trace = DirtyTrace::default();
+
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, root_id, ScheduledMode::TraverseSubtreeRoot))
+        );
+        scheduler.enqueue_after_no_rewrite(
+            &surfaces[0].arena,
+            0,
+            root_id,
+            0,
+            1,
+            ScheduledMode::TraverseSubtreeRoot,
+            &rule_groups,
+            RewriteConfig::optimised(),
+            Some(&mut dirty_trace),
+        );
+
+        assert_eq!(
+            scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace
+            ),
+            Some((0, 0, eq_id, ScheduledMode::TraverseSubtreeDescendant))
+        );
+        replace_focus_and_dirty_ancestors(
+            &mut surfaces[0].arena,
+            eq_id,
+            clear_expr_clean_rule_metadata(int_lit(10)),
+            &mut dirty_trace,
+            None,
+        );
+        enqueue_worklist_rewrite_impact(
+            &mut scheduler,
+            &surfaces[0].arena,
+            0,
+            eq_id,
+            &mut dirty_trace,
+        );
+
+        let mut found_refreshed_root = false;
+        for _ in 0..32 {
+            let Some((level, surface, node_id, mode)) = scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace,
+            ) else {
+                break;
+            };
+            if (level, surface, node_id, mode)
+                == (1, 0, root_id, ScheduledMode::TraverseSubtreeRoot)
+            {
+                found_refreshed_root = true;
+                scheduler.enqueue_after_no_rewrite(
+                    &surfaces[0].arena,
+                    0,
+                    root_id,
+                    1,
+                    2,
+                    ScheduledMode::TraverseSubtreeRoot,
+                    &rule_groups,
+                    RewriteConfig::optimised(),
+                    Some(&mut dirty_trace),
+                );
+                break;
+            }
+            scheduler.enqueue_after_no_rewrite(
+                &surfaces[surface].arena,
+                surface,
+                node_id,
+                level,
+                level + 1,
+                mode,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                Some(&mut dirty_trace),
+            );
+        }
+        assert!(found_refreshed_root);
+
+        let mut found_sibling_at_next_level = false;
+        for _ in 0..32 {
+            let Some((level, _surface, node_id, mode)) = scheduler.pop_next(
+                &surfaces,
+                &rule_groups,
+                RewriteConfig::optimised(),
+                &mut dirty_trace,
+            ) else {
+                break;
+            };
+            if (level, node_id, mode)
+                == (1, root_sibling_id, ScheduledMode::TraverseSubtreeDescendant)
+            {
+                found_sibling_at_next_level = true;
+                break;
+            }
+        }
+        assert!(found_sibling_at_next_level);
     }
 
     #[test]
