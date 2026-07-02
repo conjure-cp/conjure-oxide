@@ -1,3 +1,4 @@
+use crate::ast::Field;
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -12,9 +13,9 @@ pub enum ReturnType {
     MSet(Box<ReturnType>),
     Tuple(Vec<ReturnType>),
     Sequence(Box<ReturnType>),
-    Record(Vec<ReturnType>),
+    Record(Vec<Field<ReturnType>>),
+    Variant(Vec<Field<ReturnType>>),
     Function(Box<ReturnType>, Box<ReturnType>),
-    Variant(Vec<ReturnType>),
     Relation(Vec<ReturnType>),
     Partition(Box<ReturnType>),
 
@@ -28,9 +29,29 @@ pub enum ReturnType {
     Unknown,
 }
 
+impl ReturnType {
+    /// If this is a collection of elements of the same type (e.g. matrix / set),
+    /// get the element type. Otherwise, returns None.
+    pub fn elem_type(&self) -> Option<ReturnType> {
+        match self {
+            ReturnType::Matrix(e)
+            | ReturnType::Set(e)
+            | ReturnType::MSet(e)
+            | ReturnType::Sequence(e) => Some(*e.clone()),
+            _ => None,
+        }
+    }
+}
+
 /// Guaranteed to always typecheck
 pub trait Typeable {
     fn return_type(&self) -> ReturnType;
+}
+
+impl Display for Field<ReturnType> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.name, self.value)
+    }
 }
 
 impl Display for ReturnType {
@@ -48,7 +69,11 @@ impl Display for ReturnType {
             }
             ReturnType::Record(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
-                write!(f, "record of ({inners})")
+                write!(f, "record of {{{inners}}}")
+            }
+            ReturnType::Variant(types) => {
+                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "variant {{{inners}}}")
             }
             ReturnType::Function(ty1, ty2) => {
                 write!(f, "function of ({ty1} --> {ty2})")
@@ -58,10 +83,6 @@ impl Display for ReturnType {
                 write!(f, "relation of ({inners})")
             }
             ReturnType::Partition(inner) => write!(f, "partition of {inner}"),
-            ReturnType::Variant(types) => {
-                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
-                write!(f, "variant {{{inners}}}")
-            }
             ReturnType::Unknown => write!(f, "?"),
         }
     }

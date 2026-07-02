@@ -6,8 +6,7 @@ mod prelude {
     pub use conjure_cp::{
         ast::Metadata,
         ast::{
-            AbstractLiteral, Atom, DeclarationPtr, Expression, FieldEntry, Literal, Name,
-            SymbolTable, matrix,
+            AbstractLiteral, Atom, DeclarationPtr, Expression, Literal, Name, SymbolTable, matrix,
         },
         bug, into_matrix, register_representation,
         representation::{Representation, get_repr_rule},

@@ -1,46 +1,59 @@
-use std::collections::VecDeque;
-
 use super::Name;
-use super::literals::AbstractLiteralValue;
-use serde::{Deserialize, Serialize};
-
+use crate::ast::literals::AbstractLiteralValue;
+use funcmap::{FuncMap, TryFuncMap};
 use polyquine::Quine;
+use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::VecDeque;
+use std::fmt::{Display, Formatter};
 use uniplate::{Biplate, Uniplate};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, Quine)]
+/// A named field of a record or variant.
+/// Used in [AbstractLiteral::Record] / [AbstractLiteral::Variant] and
+/// in corresponding domains
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, Quine, FuncMap, TryFuncMap)]
 #[path_prefix(conjure_cp::ast)]
-pub struct FieldValue<T: AbstractLiteralValue> {
+pub struct Field<T> {
     pub name: Name,
     pub value: T,
+}
+
+impl<T: Eq> PartialOrd<Self> for Field<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T: Eq> Ord for Field<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.name.cmp(&other.name)
+    }
 }
 
 // Uniplate instance copy and pasted from cargo expand
 
 // derive macro doesn't work as this has a generic type (for the same reasons as AbstractLiteral) ~nd60
 
-impl<T> Uniplate for FieldValue<T>
+impl<T> Uniplate for Field<T>
 where
-    T: AbstractLiteralValue,
+    T: Biplate<Field<T>>,
 {
     fn uniplate(
         &self,
     ) -> (
-        ::uniplate::Tree<FieldValue<T>>,
-        Box<dyn Fn(::uniplate::Tree<FieldValue<T>>) -> FieldValue<T>>,
+        ::uniplate::Tree<Field<T>>,
+        Box<dyn Fn(::uniplate::Tree<Field<T>>) -> Field<T>>,
     ) {
         let _name_copy = self.name.clone();
-        let (tree_value, ctx_value) = <T as Biplate<FieldValue<T>>>::biplate(&self.value);
-        let children = ::uniplate::Tree::Many(::std::collections::VecDeque::from([
-            tree_value,
-            ::uniplate::Tree::Zero,
-        ]));
-        let ctx = Box::new(move |x: ::uniplate::Tree<FieldValue<T>>| {
+        let (tree_value, ctx_value) = <T as Biplate<Field<T>>>::biplate(&self.value);
+        let children = ::uniplate::Tree::Many(VecDeque::from([tree_value, ::uniplate::Tree::Zero]));
+        let ctx = Box::new(move |x: ::uniplate::Tree<Field<T>>| {
             let ::uniplate::Tree::Many(xs) = x else {
                 panic!()
             };
             let tree_value = xs[0].clone();
             let value = ctx_value(tree_value);
-            FieldValue {
+            Field {
                 name: _name_copy.clone(),
                 value,
             }
@@ -51,34 +64,34 @@ where
 
 // want to be able to go anywhere U can go
 // (I'll follow U wherever U will go)
-impl<To, U> Biplate<To> for FieldValue<U>
+impl<To, U> Biplate<To> for Field<U>
 where
-    U: AbstractLiteralValue + Biplate<To>,
+    U: Biplate<Field<U>> + Biplate<To>,
     To: Uniplate,
 {
     fn biplate(&self) -> (uniplate::Tree<To>, Box<dyn Fn(uniplate::Tree<To>) -> Self>) {
         use uniplate::Tree;
 
-        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<FieldValue<U>>() {
+        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<Field<U>>() {
             // To ==From => return One(self)
 
             unsafe {
                 // SAFETY: asserted the type equality above
-                let self_to = std::mem::transmute::<&FieldValue<U>, &To>(self).clone();
+                let self_to = std::mem::transmute::<&Field<U>, &To>(self).clone();
                 let tree = Tree::One(self_to);
                 let ctx = Box::new(move |x| {
                     let Tree::One(x) = x else {
                         panic!();
                     };
 
-                    std::mem::transmute::<&To, &FieldValue<U>>(&x).clone()
+                    std::mem::transmute::<&To, &Field<U>>(&x).clone()
                 });
 
                 (tree, ctx)
             }
         } else if std::any::TypeId::of::<To>() == std::any::TypeId::of::<Name>() {
             // return name field, as well as any names inside the value
-            let self2: FieldValue<U> = self.clone();
+            let self2: Field<U> = self.clone();
             let f_name: Name = self2.name;
             let f_val: U = self2.value;
 
@@ -108,7 +121,7 @@ where
                     let value = ctx_val(tree_val);
 
                     // reconstruct things
-                    FieldValue { name, value }
+                    Field { name, value }
                 });
 
                 (tree, ctx)
@@ -116,7 +129,7 @@ where
         } else {
             // walk into To ignoring name field, as Name can only biplate into Name
 
-            let self2: FieldValue<U> = self.clone();
+            let self2: Field<U> = self.clone();
             let f_name: Name = self2.name;
             let f_val: U = self2.value;
 
@@ -133,7 +146,7 @@ where
                 let tree_val = xs[0].clone();
 
                 // reconstruct things
-                FieldValue {
+                Field {
                     name: f_name.clone(),
                     value: ctx_val(tree_val),
                 }
@@ -141,5 +154,14 @@ where
 
             (tree, ctx)
         }
+    }
+}
+
+impl<T> Display for Field<T>
+where
+    T: AbstractLiteralValue,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} = {}", self.name, self.value)
     }
 }

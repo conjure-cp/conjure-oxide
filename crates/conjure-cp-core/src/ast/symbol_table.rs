@@ -350,7 +350,7 @@ impl SymbolTable {
     ///
     /// See [`SymbolTable::domain`].
     pub fn resolve_domain(&self, name: &Name) -> Option<Moo<GroundDomain>> {
-        self.domain(name)?.resolve()
+        self.domain(name)?.resolve().ok()
     }
 
     /// Iterates over entries in the LOCAL symbol table.

@@ -113,7 +113,7 @@ fn parse_record(
         ctx.inner_typechecking_context = ctx.typechecking_context;
         ctx.typechecking_context = saved_ctx;
 
-        values.push(conjure_cp_core::ast::records::FieldValue { name, value });
+        values.push(conjure_cp_core::ast::records::Field { name, value });
     }
 
     if had_error {

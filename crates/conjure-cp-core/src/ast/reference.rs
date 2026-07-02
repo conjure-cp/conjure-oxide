@@ -57,7 +57,7 @@ impl Reference {
     }
 
     pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
-        self.domain()?.resolve()
+        self.domain()?.resolve().ok()
     }
 
     /// Returns the expression behind a value-letting reference, if this is one.

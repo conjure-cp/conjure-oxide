@@ -1686,7 +1686,7 @@ fn translate_reified_constraint(
             let var_linear = expr_to_linear(var_expr.as_ref(), ctx)?;
             let var_idx = get_or_create_var_for_linear(var_linear, cp_model);
             let resolved_domain = domain.resolve();
-            let domain = resolved_domain.as_deref().ok_or_else(|| {
+            let domain = resolved_domain.as_deref().map_err(|_| {
                 SolverError::ModelInvalid("InDomain without resolvable domain".into())
             })?;
             let domain_intervals = extract_domain_intervals(domain)?;
@@ -2434,7 +2434,7 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             let var_linear = expr_to_linear(var_expr.as_ref(), ctx)?;
             let var_idx = get_or_create_var_for_linear(var_linear, cp_model);
             let resolved_domain = domain.resolve();
-            let domain = resolved_domain.as_deref().ok_or_else(|| {
+            let domain = resolved_domain.as_deref().map_err(|_| {
                 SolverError::ModelInvalid("InDomain without resolvable domain".into())
             })?;
             let domain_intervals = extract_domain_intervals(domain)?;
@@ -2502,7 +2502,7 @@ pub(super) fn model_to_cp_sat(model: Model) -> SolverResult<(CpModelProto, Vec<S
             var_proto.name = name.to_string();
 
             let resolved_domain = find_var.domain_of().resolve();
-            let domain = resolved_domain.as_deref().ok_or_else(|| {
+            let domain = resolved_domain.as_deref().map_err(|_| {
                 SolverError::ModelInvalid(format!("Variable {} without resolvable domain", name))
             })?;
             

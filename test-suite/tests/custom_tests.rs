@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::time::Instant;
 use test_suite::AcceptMode;
+use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
 
@@ -31,6 +32,12 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     );
     let expected_output_path = test_path.join("stdout.expected");
     let expected_error_path = test_path.join("stderr.expected");
+    let config_path = test_path.join("config.toml");
+    let file_config: TestConfig = if let Ok(config_contents) = fs::read_to_string(&config_path) {
+        toml::from_str(&config_contents).unwrap()
+    } else {
+        Default::default()
+    };
 
     // Execute the test script in the correct directory
     let output = Command::new("sh")
@@ -67,8 +74,12 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     assert_no_redundant_expected_files(Path::new(&test_path), &allowed_expected_files, None)?;
 
     if accept_mode.records_expected_time() {
-        let expected_time = round_expected_time(started_at.elapsed());
-        upsert_expected_time_config(&test_path.join("config.toml"), expected_time)?;
+        let observed_expected_time = round_expected_time(started_at.elapsed());
+        if let Some(expected_time) =
+            accept_mode.expected_time_to_record(file_config.expected_time, observed_expected_time)
+        {
+            upsert_expected_time_config(&config_path, expected_time)?;
+        }
     }
 
     Ok(())

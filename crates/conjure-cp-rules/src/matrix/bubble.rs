@@ -20,7 +20,7 @@ fn expression_membership_proof(
     domain: &GroundDomain,
     index: &Expression,
 ) -> Result<MembershipProof, ApplicationError> {
-    let Some(index_domain) = index.domain_of().and_then(|domain| domain.resolve()) else {
+    let Some(index_domain) = index.domain_of().and_then(|domain| domain.resolve().ok()) else {
         return Ok(MembershipProof::Unknown);
     };
 
@@ -109,7 +109,7 @@ fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         .domain_of()
         .ok_or(ApplicationError::DomainError)?
         .resolve()
-        .ok_or(RuleNotApplicable)?;
+        .map_err(|_| RuleNotApplicable)?;
 
     // TODO: tuple, this is a hack right now just to avoid the rule being applied to tuples, but could we safely modify the rule to
     // handle tuples as well?
@@ -160,7 +160,7 @@ fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         .domain_of()
         .ok_or(ApplicationError::DomainError)?
         .resolve()
-        .ok_or(RuleNotApplicable)?;
+        .map_err(|_| RuleNotApplicable)?;
 
     let GroundDomain::Matrix(_, index_domains) = domain.as_ref() else {
         bug!(

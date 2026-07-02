@@ -43,12 +43,12 @@ pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Re
             let expr_value = eval_constant(&expr)
                 .ok_or_else(|| anyhow!("Letting expression `{expr}` cannot be evaluated"))?;
 
-            let Some(ground_domain) = domain.resolve() else {
+            let Ok(ground_domain) = domain.resolve() else {
                 next_pending.push(name);
                 continue;
             };
 
-            if !ground_domain.contains(&expr_value).unwrap() {
+            if !ground_domain.contains(&expr_value)? {
                 return Err(anyhow!(
                     "Domain of given statement `{name}` does not contain letting value"
                 ));
