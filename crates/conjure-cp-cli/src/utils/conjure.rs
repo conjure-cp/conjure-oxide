@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
+use std::fs;
 use std::path::PathBuf;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Instant;
 
 use conjure_cp::ast::{Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Name};
 use conjure_cp::bug;
@@ -22,6 +24,20 @@ use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use uniplate::Uniplate;
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ConjureRunTimings {
+    pub translation_time_s: f64,
+    pub conjure_translation_time_s: f64,
+    pub savilerow_translation_time_s: f64,
+    pub solve_time_s: f64,
+}
+
+#[derive(Debug)]
+pub struct ConjureSolutions {
+    pub solutions: Vec<BTreeMap<Name, Literal>>,
+    pub timings: Option<ConjureRunTimings>,
+}
 
 /// Coerces a literal into the type expected by a reference domain when possible.
 ///
@@ -122,14 +138,33 @@ fn retroactively_prune_dominated(
         .collect()
 }
 
+fn validate_solution_collection_options(model: &Model, num_sols: i32) -> Result<(), anyhow::Error> {
+    if model.objective.is_some() && num_sols != 1 {
+        let got = if num_sols == 0 {
+            "all".to_string()
+        } else {
+            num_sols.to_string()
+        };
+        return Err(anyhow::anyhow!(
+            "optimisation problems require number-of-solutions=1 (got {got})"
+        ));
+    }
+    Ok(())
+}
+
 pub fn get_solutions(
     solver: Solver,
     model: Model,
     num_sols: i32,
+    keep_intermediate_solutions: bool,
     solver_input_file: &Option<PathBuf>,
     rule_trace_cdp: bool,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     set_rule_trace_enabled(rule_trace_cdp && configured_rule_trace_enabled());
+
+    validate_solution_collection_options(&model, num_sols)?;
+
+    let is_optimisation = model.objective.is_some();
 
     let dominance_expression = model.dominance.as_ref().map(|expr| match expr {
         Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
@@ -160,14 +195,28 @@ pub fn get_solutions(
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
 
-    let solver = if num_sols > 0 {
+    let solver = if is_optimisation {
+        solver
+            .solve(Box::new(move |sols| {
+                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+                let solution = sols.into_iter().collect();
+                if keep_intermediate_solutions {
+                    all_solutions.push(solution);
+                } else {
+                    all_solutions.clear();
+                    all_solutions.push(solution);
+                }
+                true
+            }))
+            .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
+    } else if num_sols > 0 {
         // Get num_sols solutions
         let sols_left = Mutex::new(num_sols);
 
         solver
             .solve(Box::new(move |sols| {
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols.into_iter().collect());
+                all_solutions.push(sols.into_iter().collect());
                 let mut sols_left = sols_left.lock().unwrap();
                 *sols_left -= 1;
 
@@ -179,7 +228,7 @@ pub fn get_solutions(
         solver
             .solve(Box::new(move |sols| {
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols.into_iter().collect());
+                all_solutions.push(sols.into_iter().collect());
                 true
             }))
             .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
@@ -220,6 +269,10 @@ pub fn get_solutions(
     for sol in sols.iter_mut() {
         // Get the value of complex variables using their auxiliary variables
         for (name, representation) in representations.iter() {
+            if sol.contains_key(name) {
+                continue;
+            }
+
             let value = representation.value_up(sol).map_err(|err| {
                 anyhow::anyhow!(
                     "failed to reconstruct value for variable {name} from solver solution: {err}"
@@ -253,28 +306,86 @@ pub fn get_solutions(
     Ok(sols.clone())
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct ConjureSolveCaptureOptions {
+    /// When set, `conjure solve -o` writes models and Minion files here instead of a temp dir.
+    pub artifact_dir: Option<PathBuf>,
+    /// Passed to `conjure solve --savilerow-options` (e.g. `-O0`).
+    pub savilerow_options: Option<String>,
+}
+
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
     param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let tmp_dir = tempdir()?;
+    Ok(get_solutions_from_conjure_with_stats(
+        essence_file,
+        param_file,
+        context,
+        0,
+        ConjureSolveCaptureOptions::default(),
+    )?
+    .solutions)
+}
+
+#[allow(clippy::unwrap_used)]
+pub fn get_solutions_from_conjure_with_stats(
+    essence_file: &str,
+    param_file: Option<&str>,
+    context: Arc<RwLock<Context<'static>>>,
+    number_of_solutions: i32,
+    capture_options: ConjureSolveCaptureOptions,
+) -> Result<ConjureSolutions, anyhow::Error> {
+    enum ConjureOutputDir {
+        Temp(tempfile::TempDir),
+        Fixed(PathBuf),
+    }
+
+    impl ConjureOutputDir {
+        fn path(&self) -> &std::path::Path {
+            match self {
+                Self::Temp(dir) => dir.path(),
+                Self::Fixed(path) => path,
+            }
+        }
+    }
+
+    let output_dir = match &capture_options.artifact_dir {
+        Some(path) => {
+            fs::create_dir_all(path)?;
+            ConjureOutputDir::Fixed(path.clone())
+        }
+        None => ConjureOutputDir::Temp(tempdir()?),
+    };
 
     let mut cmd = std::process::Command::new("conjure");
+    let number_of_solutions_arg = if number_of_solutions == 0 {
+        "all".to_string()
+    } else {
+        number_of_solutions.to_string()
+    };
 
     cmd.arg("solve")
-        .arg("--number-of-solutions=all")
+        .arg(format!("--number-of-solutions={number_of_solutions_arg}"))
         .arg("--copy-solutions=no")
         .arg("-o")
-        .arg(tmp_dir.path())
-        .arg(essence_file);
+        .arg(output_dir.path());
+
+    if let Some(options) = &capture_options.savilerow_options {
+        cmd.arg(format!("--savilerow-options={options}"));
+    }
+
+    cmd.arg(essence_file);
 
     if let Some(file) = param_file {
         cmd.arg(file);
     }
 
+    let conjure_solve_start = Instant::now();
     let output = cmd.output()?;
+    let conjure_solve_wall_time_s = conjure_solve_start.elapsed().as_secs_f64();
 
     if !output.status.success() {
         let stderr =
@@ -286,7 +397,7 @@ pub fn get_solutions_from_conjure(
     }
 
     let solutions_files: Vec<_> =
-        glob(&format!("{}/*.solution", tmp_dir.path().display()))?.collect();
+        glob(&format!("{}/*.solution", output_dir.path().display()))?.collect();
 
     let solutions_set: Vec<_> = solutions_files
         .par_iter()
@@ -314,10 +425,58 @@ pub fn get_solutions_from_conjure(
         })
         .collect();
 
-    Ok(solutions_set
-        .into_iter()
-        .filter(|x| !x.is_empty())
-        .collect())
+    let timings = read_conjure_timings(output_dir.path(), conjure_solve_wall_time_s)?;
+
+    Ok(ConjureSolutions {
+        solutions: solutions_set
+            .into_iter()
+            .filter(|x| !x.is_empty())
+            .collect(),
+        timings,
+    })
+}
+
+fn read_conjure_timings(
+    path: &std::path::Path,
+    conjure_solve_wall_time_s: f64,
+) -> Result<Option<ConjureRunTimings>, anyhow::Error> {
+    let stats_files: Vec<_> = glob(&format!("{}/*.stats.json", path.display()))?.collect();
+    if stats_files.is_empty() {
+        return Ok(None);
+    }
+
+    let mut timings = ConjureRunTimings::default();
+    for stats_file in stats_files {
+        let stats_file = stats_file?;
+        let stats: JsonValue = serde_json::from_str(&fs::read_to_string(&stats_file)?)?;
+        let savilerow_total_time = stats
+            .pointer("/savilerowInfo/SavileRowTotalTime")
+            .and_then(JsonValue::as_str)
+            .and_then(|value| value.parse::<f64>().ok())
+            .unwrap_or_default();
+        let solve_time = stats
+            .pointer("/savilerowInfo/SolverTotalTime")
+            .and_then(JsonValue::as_str)
+            .and_then(|value| value.parse::<f64>().ok())
+            .or_else(|| {
+                stats
+                    .pointer("/savilerowInfo/SolverSolveTime")
+                    .and_then(JsonValue::as_str)
+                    .and_then(|value| value.parse::<f64>().ok())
+            })
+            .unwrap_or_default();
+
+        timings.savilerow_translation_time_s += savilerow_total_time;
+        timings.solve_time_s += solve_time;
+    }
+
+    timings.conjure_translation_time_s =
+        (conjure_solve_wall_time_s - timings.savilerow_translation_time_s - timings.solve_time_s)
+            .max(0.0);
+    timings.translation_time_s =
+        timings.conjure_translation_time_s + timings.savilerow_translation_time_s;
+
+    Ok(Some(timings))
 }
 
 pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
@@ -351,7 +510,7 @@ mod tests {
         );
         let dominance_expression = Expression::Imply(
             Metadata::new(),
-            Moo::new(x_ref.clone()),
+            Moo::new(x_ref),
             Moo::new(Expression::FromSolution(
                 Metadata::new(),
                 Moo::new(Atom::Reference(Reference::new(DeclarationPtr::new_find(
@@ -364,7 +523,7 @@ mod tests {
         let mut sol_true = BTreeMap::new();
         sol_true.insert(x.clone(), Literal::Int(1));
         let mut sol_false = BTreeMap::new();
-        sol_false.insert(x.clone(), Literal::Int(0));
+        sol_false.insert(x, Literal::Int(0));
 
         let pruned =
             retroactively_prune_dominated(vec![sol_true, sol_false.clone()], &dominance_expression);

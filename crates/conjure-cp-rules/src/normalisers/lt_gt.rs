@@ -6,7 +6,7 @@ use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::register_rule;
 use conjure_cp::{
     ast::{Expression as Expr, SymbolTable},
-    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
 
 /// Converts Lt to Leq
@@ -26,7 +26,7 @@ fn lt_to_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     // add to rhs so that this is in the correct form for ineq ( x <= y + k)
     // todo (gs248) - tests expect a Sum([rhs, -1]) so we generate that; maybe just use a subtraction instead?
-    Ok(Reduction::pure(essence_expr!(&lhs <= (&rhs + (-1)))))
+    Ok(RuleEffect::pure(essence_expr!(&lhs <= (&rhs + (-1)))))
 }
 
 /// Converts Gt to Geq
@@ -44,5 +44,5 @@ fn gt_to_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(essence_expr!((&lhs + (-1)) >= &rhs)))
+    Ok(RuleEffect::pure(essence_expr!((&lhs + (-1)) >= &rhs)))
 }

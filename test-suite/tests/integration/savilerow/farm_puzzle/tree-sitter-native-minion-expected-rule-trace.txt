@@ -1,0 +1,60 @@
+Model before rewriting:
+
+letting numberOfLegs be 22
+letting FEET be domain int(2, 4)
+find animal1: FEET
+find animal2: FEET
+find animal3: FEET
+find animal4: FEET
+find animal5: FEET
+find animal6: FEET
+find animal7: FEET
+
+such that
+
+sum([sum([sum([sum([sum([sum([animal1,animal2;int(1..)]),animal3;int(1..)]),animal4;int(1..)]),animal5;int(1..)]),animal6;int(1..)]),animal7;int(1..)]) = numberOfLegs
+
+--
+
+numberOfLegs
+   ~~> constant_evaluator ([("Constant", 9001)])
+22
+
+--
+
+sum([sum([sum([sum([sum([sum([animal1,animal2;int(1..)]),animal3;int(1..)]),animal4;int(1..)]),animal5;int(1..)]),animal6;int(1..)]),animal7;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([animal1,animal2,animal3,animal4,animal5,animal6,animal7;int(1..)])
+
+--
+
+sum([animal1,animal2,animal3,animal4,animal5,animal6,animal7;int(1..)]) = 22
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([animal1, animal2, animal3, animal4, animal5, animal6, animal7], 22),SumGeq([animal1, animal2, animal3, animal4, animal5, animal6, animal7], 22);int(1..)])
+
+--
+
+and([SumLeq([animal1, animal2, animal3, animal4, animal5, animal6, animal7], 22),SumGeq([animal1, animal2, animal3, animal4, animal5, animal6, animal7], 22);int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([animal1, animal2, animal3, animal4, animal5, animal6, animal7], 22),
+SumGeq([animal1, animal2, animal3, animal4, animal5, animal6, animal7], 22)
+
+--
+
+Final model:
+
+letting numberOfLegs be 22
+letting FEET be domain int(2, 4)
+find animal1: FEET
+find animal2: FEET
+find animal3: FEET
+find animal4: FEET
+find animal5: FEET
+find animal6: FEET
+find animal7: FEET
+
+such that
+
+SumLeq([animal1, animal2, animal3, animal4, animal5, animal6, animal7], 22),
+SumGeq([animal1, animal2, animal3, animal4, animal5, animal6, animal7], 22)
+

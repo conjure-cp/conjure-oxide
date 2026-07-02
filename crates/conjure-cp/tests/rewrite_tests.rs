@@ -5,7 +5,7 @@ use conjure_cp::{
         SymbolTable, eval_constant,
     },
     into_matrix_expr, matrix_expr,
-    rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive},
+    rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_model},
     settings::{QuantifiedExpander, SolverFamily, set_comprehension_expander},
     solver::{Solver, adaptors},
 };
@@ -688,7 +688,13 @@ fn rewrite_solve_xyz() {
 
     *model.constraints_mut() = vec![nested_expr];
 
-    model = rewrite_naive(&model, &rule_sets, true).unwrap();
+    model = rewrite_model(
+        &model,
+        &rule_sets,
+        true,
+        conjure_cp::settings::RewriteConfig::baseline(),
+    )
+    .unwrap();
     let rewritten_expr = model.constraints();
 
     // Check if the expression is in its simplest form

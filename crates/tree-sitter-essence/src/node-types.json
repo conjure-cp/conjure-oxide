@@ -160,6 +160,98 @@
           {
             "type": "allDiff",
             "named": false
+          },
+          {
+            "type": "allDifferent",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "all_different_except_comparison",
+    "named": true,
+    "fields": {
+      "except": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "constant",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
+            "type": "negative_expr",
+            "named": true
+          },
+          {
+            "type": "sub_arith_expr",
+            "named": true
+          }
+        ]
+      },
+      "matrix": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "allDiffExcept",
+            "named": false
+          },
+          {
+            "type": "allDifferentExcept",
+            "named": false
+          },
+          {
+            "type": "alldiff_except",
+            "named": false
+          },
+          {
+            "type": "alldifferent_except",
+            "named": false
           }
         ]
       }
@@ -218,6 +310,354 @@
     }
   },
   {
+    "type": "annotation_domain",
+    "named": true,
+    "fields": {
+      "bool_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "bool_domain",
+            "named": true
+          }
+        ]
+      },
+      "int_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "annotation_int_domain",
+            "named": true
+          }
+        ]
+      },
+      "matrix_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "annotation_matrix_domain",
+            "named": true
+          }
+        ]
+      },
+      "record_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "annotation_record_domain",
+            "named": true
+          }
+        ]
+      },
+      "set_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "annotation_set_domain",
+            "named": true
+          }
+        ]
+      },
+      "tuple_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "annotation_tuple_domain",
+            "named": true
+          }
+        ]
+      },
+      "variable_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "annotation_expr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "domain_annotation",
+          "named": true
+        },
+        {
+          "type": "type_annotation",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "annotation_int_domain",
+    "named": true,
+    "fields": {
+      "ranges": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "annotation_range_list",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "annotation_int_range",
+    "named": true,
+    "fields": {
+      "lower": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "integer",
+            "named": true
+          }
+        ]
+      },
+      "upper": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "integer",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "annotation_matrix_domain",
+    "named": true,
+    "fields": {
+      "index_domain_list": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      },
+      "value_domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "annotation_name_domain_pair",
+    "named": true,
+    "fields": {
+      "domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "annotation_range_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "annotation_int_range",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "integer",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "annotation_record_domain",
+    "named": true,
+    "fields": {
+      "name_domain_pair": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_name_domain_pair",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "annotation_set_domain",
+    "named": true,
+    "fields": {
+      "value_domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "set_attributes",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "annotation_subject",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "comprehension",
+          "named": true
+        },
+        {
+          "type": "constant",
+          "named": true
+        },
+        {
+          "type": "element_id",
+          "named": true
+        },
+        {
+          "type": "flatten",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "index_or_slice",
+          "named": true
+        },
+        {
+          "type": "matrix",
+          "named": true
+        },
+        {
+          "type": "metavar",
+          "named": true
+        },
+        {
+          "type": "record",
+          "named": true
+        },
+        {
+          "type": "set_literal",
+          "named": true
+        },
+        {
+          "type": "sub_arith_expr",
+          "named": true
+        },
+        {
+          "type": "sub_atom_expr",
+          "named": true
+        },
+        {
+          "type": "sub_bool_expr",
+          "named": true
+        },
+        {
+          "type": "tuple",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "annotation_tuple_domain",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "annotation_domain",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "arithmetic_comparison",
     "named": true,
     "fields": {
@@ -225,6 +665,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "annotation_expr",
+            "named": true
+          },
           {
             "type": "arithmetic_expr",
             "named": true
@@ -261,6 +705,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "annotation_expr",
+            "named": true
+          },
           {
             "type": "arithmetic_expr",
             "named": true
@@ -399,6 +847,16 @@
         "types": [
           {
             "type": "constant",
+            "named": true
+          }
+        ]
+      },
+      "element_id": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "element_id",
             "named": true
           }
         ]
@@ -644,11 +1102,19 @@
           "named": true
         },
         {
+          "type": "all_different_except_comparison",
+          "named": true
+        },
+        {
           "type": "arithmetic_comparison",
           "named": true
         },
         {
           "type": "equality_comparison",
+          "named": true
+        },
+        {
+          "type": "global_cardinality_comparison",
           "named": true
         },
         {
@@ -845,6 +1311,42 @@
     }
   },
   {
+    "type": "domain_annotation",
+    "named": true,
+    "fields": {
+      "domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      },
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_subject",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": ":",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "dominance_relation",
     "named": true,
     "fields": {
@@ -873,6 +1375,68 @@
     }
   },
   {
+    "type": "element_id",
+    "named": true,
+    "fields": {
+      "matrix": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "abs_value",
+            "named": true
+          },
+          {
+            "type": "constant",
+            "named": true
+          },
+          {
+            "type": "factorial_expr",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
+            "type": "negative_expr",
+            "named": true
+          },
+          {
+            "type": "sub_arith_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "equality_comparison",
     "named": true,
     "fields": {
@@ -882,6 +1446,14 @@
         "types": [
           {
             "type": "all_diff_comparison",
+            "named": true
+          },
+          {
+            "type": "all_different_except_comparison",
+            "named": true
+          },
+          {
+            "type": "annotation_expr",
             "named": true
           },
           {
@@ -921,6 +1493,14 @@
             "named": true
           },
           {
+            "type": "all_different_except_comparison",
+            "named": true
+          },
+          {
+            "type": "annotation_expr",
+            "named": true
+          },
+          {
             "type": "arithmetic_expr",
             "named": true
           },
@@ -945,6 +1525,10 @@
         "required": true,
         "types": [
           {
+            "type": "annotation_expr",
+            "named": true
+          },
+          {
             "type": "arithmetic_expr",
             "named": true
           },
@@ -968,6 +1552,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "annotation_expr",
+            "named": true
+          },
           {
             "type": "arithmetic_expr",
             "named": true
@@ -1148,6 +1736,84 @@
           },
           {
             "type": "variable_declaration",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "global_cardinality_comparison",
+    "named": true,
+    "fields": {
+      "arg2": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "arg3": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atLeast",
+            "named": false
+          },
+          {
+            "type": "atMost",
+            "named": false
+          },
+          {
+            "type": "atleast",
+            "named": false
+          },
+          {
+            "type": "atmost",
+            "named": false
+          },
+          {
+            "type": "gcc",
+            "named": false
+          },
+          {
+            "type": "globalCardinality",
+            "named": false
+          }
+        ]
+      },
+      "variables": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
             "named": true
           }
         ]
@@ -1396,11 +2062,6 @@
     }
   },
   {
-    "type": "integer",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "letting_statement",
     "named": true,
     "fields": {
@@ -1545,7 +2206,23 @@
         "required": true,
         "types": [
           {
+            "type": "annotation_expr",
+            "named": true
+          },
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
             "type": "atom",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
             "named": true
           }
         ]
@@ -1560,6 +2237,10 @@
           },
           {
             "type": "min",
+            "named": false
+          },
+          {
+            "type": "product",
             "named": false
           },
           {
@@ -1610,6 +2291,10 @@
         "types": [
           {
             "type": "bool_domain",
+            "named": true
+          },
+          {
+            "type": "identifier",
             "named": true
           },
           {
@@ -1786,6 +2471,18 @@
         "required": true,
         "types": [
           {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
             "type": "matrix",
             "named": true
           }
@@ -1795,6 +2492,18 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
           {
             "type": "matrix",
             "named": true
@@ -1831,6 +2540,48 @@
     "type": "null_index",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "objective_statement",
+    "named": true,
+    "fields": {
+      "direction": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "maximising",
+            "named": false
+          },
+          {
+            "type": "minimising",
+            "named": false
+          }
+        ]
+      },
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
+            "named": true
+          }
+        ]
+      }
+    }
   },
   {
     "type": "or_expr",
@@ -1966,6 +2717,10 @@
         "required": true,
         "types": [
           {
+            "type": "annotation_expr",
+            "named": true
+          },
+          {
             "type": "arithmetic_expr",
             "named": true
           },
@@ -1990,6 +2745,10 @@
         "required": true,
         "types": [
           {
+            "type": "annotation_expr",
+            "named": true
+          },
+          {
             "type": "arithmetic_expr",
             "named": true
           },
@@ -2006,6 +2765,16 @@
     "named": true,
     "root": true,
     "fields": {
+      "annotation_expr": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "annotation_expr",
+            "named": true
+          }
+        ]
+      },
       "arithmetic_expr": {
         "multiple": true,
         "required": false,
@@ -2086,6 +2855,16 @@
           }
         ]
       },
+      "objective_statement": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "objective_statement",
+            "named": true
+          }
+        ]
+      },
       "such_that_keyword": {
         "multiple": true,
         "required": false,
@@ -2146,6 +2925,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "atom",
+            "named": true
+          },
           {
             "type": "bool_expr",
             "named": true
@@ -2506,6 +3289,10 @@
         "required": true,
         "types": [
           {
+            "type": "annotation_expr",
+            "named": true
+          },
+          {
             "type": "arithmetic_expr",
             "named": true
           },
@@ -2530,6 +3317,10 @@
         "required": true,
         "types": [
           {
+            "type": "annotation_expr",
+            "named": true
+          },
+          {
             "type": "arithmetic_expr",
             "named": true
           },
@@ -2550,6 +3341,18 @@
         "required": true,
         "types": [
           {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
             "type": "matrix",
             "named": true
           }
@@ -2559,6 +3362,18 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
           {
             "type": "matrix",
             "named": true
@@ -2642,6 +3457,42 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "type_annotation",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_subject",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "::",
+            "named": false
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -2764,6 +3615,10 @@
     "named": false
   },
   {
+    "type": "::",
+    "named": false
+  },
+  {
     "type": ";",
     "named": false
   },
@@ -2840,7 +3695,43 @@
     "named": false
   },
   {
+    "type": "allDiffExcept",
+    "named": false
+  },
+  {
+    "type": "allDifferent",
+    "named": false
+  },
+  {
+    "type": "allDifferentExcept",
+    "named": false
+  },
+  {
+    "type": "alldiff_except",
+    "named": false
+  },
+  {
+    "type": "alldifferent_except",
+    "named": false
+  },
+  {
     "type": "and",
+    "named": false
+  },
+  {
+    "type": "atLeast",
+    "named": false
+  },
+  {
+    "type": "atMost",
+    "named": false
+  },
+  {
+    "type": "atleast",
+    "named": false
+  },
+  {
+    "type": "atmost",
     "named": false
   },
   {
@@ -2861,6 +3752,10 @@
   },
   {
     "type": "dominance relation",
+    "named": false
+  },
+  {
+    "type": "elementId",
     "named": false
   },
   {
@@ -2892,7 +3787,15 @@
     "named": false
   },
   {
+    "type": "gcc",
+    "named": false
+  },
+  {
     "type": "given",
+    "named": false
+  },
+  {
+    "type": "globalCardinality",
     "named": false
   },
   {
@@ -2912,12 +3815,17 @@
     "named": false
   },
   {
+    "type": "integer",
+    "named": true
+  },
+  {
     "type": "intersect",
     "named": false
   },
   {
     "type": "language_declaration",
-    "named": true
+    "named": true,
+    "extra": true
   },
   {
     "type": "letting",
@@ -2956,6 +3864,10 @@
     "named": false
   },
   {
+    "type": "negative_table",
+    "named": false
+  },
+  {
     "type": "of",
     "named": false
   },
@@ -2968,6 +3880,10 @@
     "named": false
   },
   {
+    "type": "product",
+    "named": false
+  },
+  {
     "type": "record",
     "named": false
   },
@@ -2977,7 +3893,8 @@
   },
   {
     "type": "single_line_comment",
-    "named": true
+    "named": true,
+    "extra": true
   },
   {
     "type": "size",

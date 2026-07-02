@@ -4,7 +4,7 @@ inputs:
   version:
     description: "The version of conjure to install."
     required: false
-    default: "2.6.0"
+    default: "v2.6.1"
   os_arch:
     description: 'The OS / Architecture to use. Supported values are ["linux", "macos", "macos-intel"]'
     required: true
@@ -15,26 +15,26 @@ runs:
   - run: |
       echo "Adding conjure to path."
       # this prepends to path (so imagemagick doesn't interfere!), and does not take effect until the next step runs.
-      echo "${HOME}/conjure/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers/" >> "${GITHUB_PATH}"
+      echo "${HOME}/conjure/conjure-${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers/" >> "${GITHUB_PATH}"
     shell: bash
 
   - run: |
-      if [[ $(conjure --version | head -n2 | tail -n1) != "Conjure v${{ inputs.version }}"* ]]; then
+      if [[ $(conjure --version | head -n2 | tail -n1) != "Conjure ${{ inputs.version }}"* ]]; then
         mkdir -p "${HOME}/conjure"
         cd "${HOME}/conjure"
 
         echo "Downloading conjure."
-        rm -rf conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers*
-        wget https://github.com/conjure-cp/conjure/releases/download/v${{ inputs.version }}/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
-        unzip conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
+        rm -rf conjure-${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers*
+        wget https://github.com/conjure-cp/conjure/releases/download/${{ inputs.version }}/conjure-${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
+        unzip conjure-${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
       else
-        echo "Found conjure v${{ inputs.version }}, not fetching again."
+        echo "Found conjure ${{ inputs.version }}, not fetching again."
       fi
     shell: bash
 
   - name: Check that conjure is installed correctly
     run: |
-      if [[ $(conjure --version | head -n2 | tail -n1) != "Conjure v${{ inputs.version }}"* ]]; then
+      if [[ $(conjure --version | head -n2 | tail -n1) != "Conjure ${{ inputs.version }}"* ]]; then
         echo "Correct conjure not found in path."
         conjure --version
         exit 1

@@ -166,6 +166,9 @@ fn parse_matrix(
     let mut domain: Option<DomainPtr> = None;
     let mut had_error = false;
     for child in named_children(node) {
+        if matches!(child.kind(), "single_line_comment" | "language_declaration") {
+            continue;
+        }
         if child.kind() == "arithmetic_expr"
             || child.kind() == "bool_expr"
             || child.kind() == "comparison_expr"

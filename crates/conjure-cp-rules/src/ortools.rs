@@ -4,7 +4,7 @@ use conjure_cp::{
     ast::AbstractLiteral,
     ast::Metadata,
     ast::{Expression as Expr, SymbolTable},
-    rule_engine::{ApplicationResult, Reduction, register_rule, register_rule_set},
+    rule_engine::{ApplicationResult, RuleEffect, register_rule, register_rule_set},
     settings::SolverFamily,
 };
 
@@ -61,7 +61,7 @@ fn flatten_logical(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         _ => unreachable!(),
     };
 
-    Ok(Reduction::new(new_expr, new_tops, symbols))
+    Ok(RuleEffect::new(new_expr, new_tops, symbols))
 }
 
 /// Matrix a = b iff every index in the union of their indices has the same value.
@@ -124,5 +124,5 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => unreachable!(),
     };
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }

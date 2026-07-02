@@ -1,0 +1,24 @@
+Model before rewriting:
+
+find x: int(0..1000)
+
+such that
+
+x = sum([ 1 | i : set (size 2) of int(7..9) ])
+
+--
+
+x = sum([ 1 | i : set (size 2) of int(7..9) ])
+   ~~> constant_evaluator ([("Constant", 9001)])
+x = 3
+
+--
+
+Final model:
+
+find x: int(0..1000)
+
+such that
+
+x = 3
+

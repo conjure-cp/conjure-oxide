@@ -5,7 +5,7 @@ use conjure_cp::ast::{
 use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
-    ApplicationResult, Reduction, register_rule, register_rule_set,
+    ApplicationResult, RuleEffect, register_rule, register_rule_set,
 };
 use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::TheoryConfig;
@@ -57,5 +57,5 @@ fn unwrap_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         AbstractLiteral::matrix_implied_indices(clauses),
     );
 
-    Ok(Reduction::pure(essence_expr!("and(&clauses_list)")))
+    Ok(RuleEffect::pure(essence_expr!("and(&clauses_list)")))
 }

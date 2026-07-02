@@ -1,0 +1,51 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..6)] of int(1..10)
+
+such that
+
+!(max([;int(1..0)] :: matrix of int) = 0),
+!(min([;int(1..0)] :: matrix of int) = 0),
+!(min([;int(1..0)] :: matrix of int) = 10),
+!(min([ x[i] | i : int(1..6), i < 1 ]) = 0),
+true
+
+--
+
+!(max([;int(1..0)] :: matrix of int) = 0),
+!(min([;int(1..0)] :: matrix of int) = 0),
+!(min([;int(1..0)] :: matrix of int) = 10),
+!(min([ x[i] | i : int(1..6), i < 1 ]) = 0),
+true
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+true
+   ~~> select_representation_matrix ([("Representations", 8001)])
+true
+new variables:
+  find x#matrix_to_atom_1: int(1..10)
+  find x#matrix_to_atom_2: int(1..10)
+  find x#matrix_to_atom_3: int(1..10)
+  find x#matrix_to_atom_4: int(1..10)
+  find x#matrix_to_atom_5: int(1..10)
+  find x#matrix_to_atom_6: int(1..10)
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..6)] of int(1..10)
+find x#matrix_to_atom_1: int(1..10)
+find x#matrix_to_atom_2: int(1..10)
+find x#matrix_to_atom_3: int(1..10)
+find x#matrix_to_atom_4: int(1..10)
+find x#matrix_to_atom_5: int(1..10)
+find x#matrix_to_atom_6: int(1..10)
+
+such that
+
+true
+

@@ -1,9 +1,8 @@
 use conjure_cp::ast::comprehension::ComprehensionQualifier;
 use conjure_cp::ast::{Expression as Expr, *};
-use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
-    ApplicationResult, Reduction, register_rule, register_rule_set,
+    ApplicationResult, RuleEffect, register_rule, register_rule_set,
 };
 use conjure_cp::settings::SolverFamily;
 use conjure_cp::{bug, essence_expr};
@@ -72,62 +71,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
         _ => Err(RuleNotApplicable),
     }?;
-    Ok(Reduction::pure(new_expr))
-}
-
-/// Matrix a = b iff every index in the union of their indices has the same value.
-/// E.g. a: matrix indexed by [int(1..2)] of int(1..2), b: matrix indexed by [int(2..3)] of int(1..2)
-/// a = b ~> a[1] = b[1] /\ a[2] = b[2] /\ a[3] = b[3]
-// Must run before `matrix_ref_to_atom` ("Base", 2000), otherwise matrix equality can be
-// rewritten into `int(1..)` indexed literals, losing finite index bounds for this rule.
-#[register_rule("Smt", 3000, [Eq, Neq])]
-fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let (a, b) = match expr {
-        Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
-        _ => return Err(RuleNotApplicable),
-    };
-
-    let a_idx_domains = matrix::bound_index_domains_of_expr(a.as_ref()).ok_or(RuleNotApplicable)?;
-    let b_idx_domains = matrix::bound_index_domains_of_expr(b.as_ref()).ok_or(RuleNotApplicable)?;
-
-    let pairs = matrix::enumerate_index_union_indices(&a_idx_domains, &b_idx_domains)
-        .map_err(|_| ApplicationError::DomainError)?
-        .map(|idx_lits| {
-            let idx_vec: Vec<_> = idx_lits
-                .into_iter()
-                .map(|lit| Atom::Literal(lit).into())
-                .collect();
-            (
-                Expression::UnsafeIndex(Metadata::new(), a.clone(), idx_vec.clone()),
-                Expression::UnsafeIndex(Metadata::new(), b.clone(), idx_vec),
-            )
-        });
-
-    let new_expr = match expr {
-        Expr::Eq(..) => {
-            let eqs: Vec<_> = pairs.map(|(a, b)| essence_expr!(&a = &b)).collect();
-            Expr::And(
-                Metadata::new(),
-                Moo::new(Expr::AbstractLiteral(
-                    Metadata::new(),
-                    AbstractLiteral::matrix_implied_indices(eqs),
-                )),
-            )
-        }
-        Expr::Neq(..) => {
-            let neqs: Vec<_> = pairs.map(|(a, b)| essence_expr!(&a != &b)).collect();
-            Expr::Or(
-                Metadata::new(),
-                Moo::new(Expr::AbstractLiteral(
-                    Metadata::new(),
-                    AbstractLiteral::matrix_implied_indices(neqs),
-                )),
-            )
-        }
-        _ => unreachable!(),
-    };
-
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Turn a matrix slice into a 1-d matrix of the slice elements
@@ -166,7 +110,7 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Expr::SafeIndex(Metadata::new(), m.clone(), new_idx)
         })
         .collect();
-    Ok(Reduction::pure(Expr::AbstractLiteral(
+    Ok(RuleEffect::pure(Expr::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::matrix_implied_indices(elements),
     )))
@@ -202,7 +146,7 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
 
         let new_child = Expr::SafeSlice(Metadata::new(), Moo::new(child.clone()), vec![None]);
-        return Ok(Reduction::pure(ctx(new_child)));
+        return Ok(RuleEffect::pure(ctx(new_child)));
     }
 
     Err(RuleNotApplicable)
@@ -239,7 +183,7 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
         Metadata::new(),
         AbstractLiteral::Matrix(elems, new_dom.into()),
     );
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Expands a sum over an "in set" comprehension to a list.
@@ -284,7 +228,7 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
             AbstractLiteral::matrix_implied_indices(list),
         )),
     );
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Unwraps a subsetEq expression into checking membership equality.
@@ -331,7 +275,7 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         )),
     );
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 /// Unwraps equality between sets into checking membership equality.
@@ -385,5 +329,5 @@ fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         )),
     );
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }

@@ -1,16 +1,13 @@
 #![allow(dead_code)]
 use conjure_cp::ast::eval::vec_op;
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, Expression as Expr, Literal, Metadata, SymbolTable, eval_constant,
+    AbstractLiteral, Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable, eval_constant,
     run_partial_evaluator,
 };
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
     register_rule_set,
 };
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use uniplate::Biplate;
 
 register_rule_set!("Constant", ());
 
@@ -28,67 +25,81 @@ fn fold_constant_expression(expr: &Expr) -> Option<Expr> {
         return None;
     }
 
-    Some(Expr::Atomic(Metadata::new(), Atom::Literal(constant)))
+    let folded = Expr::Atomic(Metadata::new(), Atom::Literal(constant));
+    if let Expr::TypeAnnotation(_, _, ty) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::TypeAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            ty.clone(),
+        ));
+    }
+
+    if let Expr::DomainAnnotation(_, _, domain) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain.clone(),
+        ));
+    }
+
+    if let Expr::Comprehension(_, comprehension) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+        && let Some(domain) = comprehension.domain_of()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain,
+        ));
+    }
+
+    Some(folded)
 }
 
-#[register_rule("Base", 9000)]
+#[register_rule(
+    "Base",
+    9000,
+    [
+        SafeIndex, InDomain, Bubble, ToInt, Abs, Sum, Product, Min, Max, Not, Or, And, Root, Imply,
+        Iff, Eq, Neq, AllDiff
+    ]
+)]
 fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     run_partial_evaluator(expr)
 }
 
-#[register_rule("Constant", 9001, [Root])]
+/// Folds the focused expression when it is constant, or applies local partial evaluation.
+///
+/// Keep this rule local: whole-root simplification is handled by explicit root rules and by the
+/// worklist rechecking ancestors after child rewrites.
+#[register_rule("Constant", 9001)]
 fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // I break the rules a bit here: this is a global rule on roots.
-    //
-    // This rule is really really hot when expanding comprehensions.. Also, at time of writing, we
-    // have the naive rewriter, which is slow on large trees....
-    //
-    // Also, constant_evaluating bottom up vs top down does things in less passes: the rewriter,
-    // however, favour doing this top-down!
-    //
-    // e.g. or([(1=1),(2=2),(3+3 = 6)])
-    //
-    // We also reuse it as a plain expression simplifier when rewriting value lettings so shared
-    // declaration pointers observe the rewritten letting body.
     match expr {
-        Expr::Root(_, _) => {
-            let has_changed: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-            let has_changed_2 = Arc::clone(&has_changed);
-
-            let new_expr = expr.transform_bi(&move |x| {
-                if matches!(
-                    x,
-                    Expr::Atomic(_, Atom::Literal(_)) | Expr::Atomic(_, Atom::Reference(_))
-                ) {
-                    return x;
-                }
-
-                match fold_constant_expression(&x)
-                    .or_else(|| run_partial_evaluator(&x).ok().map(|r| r.new_expression))
-                {
-                    Some(new_expr) => {
-                        has_changed.store(true, Ordering::Relaxed);
-                        new_expr
-                    }
-
-                    None => x,
-                }
-            });
-
-            if has_changed_2.load(Ordering::Relaxed) {
-                Ok(Reduction::pure(new_expr))
-            } else {
-                Err(RuleNotApplicable)
-            }
-        }
-        Expr::AbstractLiteral(_, _)
-        | Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::AbstractLiteral(_))) => {
+        // Focused `AbstractLiteral` nodes must still fold locally: parent rules often match the
+        // `Atomic(Literal(...))` form after the worklist revisits them.
+        Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::AbstractLiteral(_))) => {
             Err(RuleNotApplicable)
         }
         _ => match fold_constant_expression(expr)
             .or_else(|| run_partial_evaluator(expr).ok().map(|r| r.new_expression))
         {
-            Some(new_expr) if &new_expr != expr => Ok(Reduction::pure(new_expr)),
+            Some(new_expr) if &new_expr != expr => Ok(RuleEffect::pure(new_expr)),
             _ => Err(RuleNotApplicable),
         },
     }
@@ -107,7 +118,7 @@ fn eval_root(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     match exprs.len() {
-        0 => Ok(Reduction::pure(Expr::Root(
+        0 => Ok(RuleEffect::pure(Expr::Root(
             Metadata::new(),
             vec![true.into()],
         ))),
@@ -116,7 +127,7 @@ fn eval_root(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let lit =
                 vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).ok_or(RuleNotApplicable)?;
 
-            Ok(Reduction::pure(Expr::Root(
+            Ok(RuleEffect::pure(Expr::Root(
                 Metadata::new(),
                 vec![lit.into()],
             )))

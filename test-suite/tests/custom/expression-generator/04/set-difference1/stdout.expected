@@ -47,6 +47,7 @@
                           }
                         ]
                       },
+                      "skip_operator": "Sum",
                       "symbols": {
                         "id": {
                           "object_id": 3,
@@ -136,6 +137,7 @@
     ]
   },
   "dominance": null,
+  "objective": null,
   "search_order": null,
   "symbols": {
     "id": {
@@ -224,25 +226,25 @@
 }
 
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set of int(1..5)
+find y: set of int(1..6)
 
 such that
 
-(sum([ i | i <- x, !(i in y) ]) = 2)
+sum([ i | i <- x, !(i in y) ]) = 2
 
 Model before rewriting:
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set of int(1..5)
+find y: set of int(1..6)
 
 such that
 
-(sum([ i | i <- (x - y) ]) = 2)
+sum([ i | i <- (x - y) ]) = 2
 
 --
 
-[ i | i <- (x - y) ], 
+[ i | i <- (x - y) ]
    ~~> difference_set ([("Base", 8700)])
 [ i | i <- x, !(i in y) ]
 
@@ -250,10 +252,10 @@ such that
 
 Final model:
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set of int(1..5)
+find y: set of int(1..6)
 
 such that
 
-(sum([ i | i <- x, !(i in y) ]) = 2)
+sum([ i | i <- x, !(i in y) ]) = 2
 

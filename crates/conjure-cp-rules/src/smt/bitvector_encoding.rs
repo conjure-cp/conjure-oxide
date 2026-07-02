@@ -1,6 +1,6 @@
 use conjure_cp::ast::{Expression, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+    ApplicationError, ApplicationResult, RuleEffect, register_rule, register_rule_set,
 };
 use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::{IntTheory, TheoryConfig};
@@ -36,6 +36,6 @@ fn fold_list_pairwise(
         .iter()
         .cloned()
         .reduce(|a, b| (op)(Default::default(), Moo::new(a), Moo::new(b)))
-        .map(Reduction::pure)
+        .map(RuleEffect::pure)
         .ok_or(ApplicationError::RuleNotApplicable)
 }

@@ -3,7 +3,7 @@
 use ApplicationError::RuleNotApplicable;
 use conjure_cp::{
     ast::{Expression as Expr, SymbolTable},
-    rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule},
+    rule_engine::{ApplicationError, ApplicationResult, RuleEffect, register_rule},
 };
 
 /// Removes sums with a single argument.
@@ -20,7 +20,7 @@ fn remove_unit_vector_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let exprs = e.as_ref().clone().unwrap_list().ok_or(RuleNotApplicable)?;
 
     if exprs.len() == 1 {
-        Ok(Reduction::pure(exprs[0].clone()))
+        Ok(RuleEffect::pure(exprs[0].clone()))
     } else {
         Err(RuleNotApplicable)
     }

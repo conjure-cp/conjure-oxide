@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Prints a per-crate summary of RustDoc coverage in markdown, for consumption by Github Actions.
+# Prints a per-crate summary of RustDoc coverage in markdown, for consumption by GitHub Actions.
 #
 # Author: niklasdewally
 # Date: 2024/12/04

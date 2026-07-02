@@ -3,7 +3,7 @@
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Expression as Expr, Moo, ReturnType, SymbolTable, Typeable};
 use conjure_cp::matrix_expr;
-use conjure_cp::rule_engine::Reduction;
+use conjure_cp::rule_engine::RuleEffect;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
@@ -20,7 +20,7 @@ fn subseteq_intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 {
                     let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), b.clone());
                     let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
-                    Ok(Reduction::pure(Expr::And(
+                    Ok(RuleEffect::pure(Expr::And(
                         Metadata::new(),
                         Moo::new(matrix_expr![expr1, expr2]),
                     )))
@@ -44,7 +44,7 @@ fn union_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 {
                     let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), b.clone());
                     let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
-                    Ok(Reduction::pure(Expr::And(
+                    Ok(RuleEffect::pure(Expr::And(
                         Metadata::new(),
                         Moo::new(matrix_expr![expr1, expr2]),
                     )))

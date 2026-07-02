@@ -57,8 +57,6 @@ Most of our implementation is contained in the `crates/` directory. Here is an o
 - `enum_compatability_macro` is a macro that allows us to indicate whether certain features of Essence are compatible with certain solvers, for documentation purposes.
 - `randicheck` is a somewhat separate project developed by Ty (@TAswan) and others.
   It aims to use Conjure to automatically validate Haskell code and generate minimal failing tests. (TODO is this accurate?)
-- `tree_morph` is a generic library for tree transformations.
-  In the future, it will replace our current rule engine implementation.
 
 Also:
 

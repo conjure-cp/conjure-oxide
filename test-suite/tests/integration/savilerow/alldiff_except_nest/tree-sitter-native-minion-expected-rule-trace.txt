@@ -1,0 +1,96 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..10)] of int(0..10)
+
+such that
+
+or([allDifferentExcept(x, 0),x[3] = 5;int(1..)])
+
+--
+
+or([allDifferentExcept(x#matrix_to_atom, 0),x#matrix_to_atom[3] = 5;int(1..)])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+or([allDifferentExcept(x#matrix_to_atom, 0),x#matrix_to_atom[3] = 5;int(1..)])
+new variables:
+  find x#matrix_to_atom_1: int(0..10)
+  find x#matrix_to_atom_10: int(0..10)
+  find x#matrix_to_atom_2: int(0..10)
+  find x#matrix_to_atom_3: int(0..10)
+  find x#matrix_to_atom_4: int(0..10)
+  find x#matrix_to_atom_5: int(0..10)
+  find x#matrix_to_atom_6: int(0..10)
+  find x#matrix_to_atom_7: int(0..10)
+  find x#matrix_to_atom_8: int(0..10)
+  find x#matrix_to_atom_9: int(0..10)
+
+--
+
+x#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#matrix_to_atom,[3])
+
+--
+
+or([allDifferentExcept(x#matrix_to_atom, 0),SafeIndex(x#matrix_to_atom,[3]) = 5;int(1..)])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+or([allDifferentExcept(x#matrix_to_atom, 0),x#matrix_to_atom_3 = 5;int(1..)])
+
+--
+
+allDifferentExcept(x#matrix_to_atom, 0)
+   ~~> matrix_ref_to_atom ([("Base", 2000)])
+allDifferentExcept([x#matrix_to_atom_1,x#matrix_to_atom_2,x#matrix_to_atom_3,x#matrix_to_atom_4,x#matrix_to_atom_5,x#matrix_to_atom_6,x#matrix_to_atom_7,x#matrix_to_atom_8,x#matrix_to_atom_9,x#matrix_to_atom_10;int(1..)], 0)
+
+--
+
+allDifferentExcept([x#matrix_to_atom_1,x#matrix_to_atom_2,x#matrix_to_atom_3,x#matrix_to_atom_4,x#matrix_to_atom_5,x#matrix_to_atom_6,x#matrix_to_atom_7,x#matrix_to_atom_8,x#matrix_to_atom_9,x#matrix_to_atom_10;int(1..)], 0)
+   ~~> alldifferent_except_to_gccweak ([("Minion", 4100)])
+gccweak([x#matrix_to_atom_1,x#matrix_to_atom_2,x#matrix_to_atom_3,x#matrix_to_atom_4,x#matrix_to_atom_5,x#matrix_to_atom_6,x#matrix_to_atom_7,x#matrix_to_atom_8,x#matrix_to_atom_9,x#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [__0,__1,__2,__3,__4,__5,__6,__7,__8,__9;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+  find __8: bool
+  find __9: bool
+
+--
+
+or([gccweak([x#matrix_to_atom_1,x#matrix_to_atom_2,x#matrix_to_atom_3,x#matrix_to_atom_4,x#matrix_to_atom_5,x#matrix_to_atom_6,x#matrix_to_atom_7,x#matrix_to_atom_8,x#matrix_to_atom_9,x#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [__0,__1,__2,__3,__4,__5,__6,__7,__8,__9;int(1..)]),x#matrix_to_atom_3 = 5;int(1..)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([gccweak([x#matrix_to_atom_1,x#matrix_to_atom_2,x#matrix_to_atom_3,x#matrix_to_atom_4,x#matrix_to_atom_5,x#matrix_to_atom_6,x#matrix_to_atom_7,x#matrix_to_atom_8,x#matrix_to_atom_9,x#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [__0,__1,__2,__3,__4,__5,__6,__7,__8,__9;int(1..)]),x#matrix_to_atom_3 = 5;int(1..)])
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..10)] of int(0..10)
+find x#matrix_to_atom_1: int(0..10)
+find x#matrix_to_atom_2: int(0..10)
+find x#matrix_to_atom_3: int(0..10)
+find x#matrix_to_atom_4: int(0..10)
+find x#matrix_to_atom_5: int(0..10)
+find x#matrix_to_atom_6: int(0..10)
+find x#matrix_to_atom_7: int(0..10)
+find x#matrix_to_atom_8: int(0..10)
+find x#matrix_to_atom_9: int(0..10)
+find x#matrix_to_atom_10: int(0..10)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+
+such that
+
+or([gccweak([x#matrix_to_atom_1,x#matrix_to_atom_2,x#matrix_to_atom_3,x#matrix_to_atom_4,x#matrix_to_atom_5,x#matrix_to_atom_6,x#matrix_to_atom_7,x#matrix_to_atom_8,x#matrix_to_atom_9,x#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [__0,__1,__2,__3,__4,__5,__6,__7,__8,__9;int(1..)]),x#matrix_to_atom_3 = 5;int(1..)])
+

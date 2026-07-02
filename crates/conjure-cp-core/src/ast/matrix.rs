@@ -326,11 +326,16 @@ pub fn num_elements(index_domains: &[Moo<GroundDomain>]) -> Result<u64, DomainOp
 ///   + If `matrix` is not a matrix.
 ///
 ///   + If any dimensions in the matrix are not finite or enumerable with [`Domain::values`].
-///     However, index domains in the form `int(i..)` are supported.
 pub fn flatten_enumerate(
     matrix: AbstractLiteral<Literal>,
 ) -> impl Iterator<Item = (Vec<Literal>, Literal)> {
-    let index_domains = index_domains(&matrix);
+    let shape = shape_of(&matrix).unwrap_or_else(|| bug!("Expected matrix, got: {matrix}"));
+    let index_domains: Vec<Moo<GroundDomain>> = shape
+        .idx_doms
+        .into_iter()
+        .zip(shape.dims)
+        .map(|(domain, len)| bound_index_domain_from_length(domain, len))
+        .collect();
     izip!(enumerate_indices(index_domains), flatten_owned(matrix))
 }
 
@@ -461,15 +466,17 @@ fn expr_matrix_dimension_lengths(expr: &Expr) -> Option<Vec<usize>> {
     Some(shape_of_matrix_expr(expr)?.dims)
 }
 
-/// Cap all `N..` ranges in an int domain to the given length
+/// Cap unbounded integer index domains to the given matrix dimension length.
 #[inline]
 fn bound_index_domain_from_length(mut domain: Moo<GroundDomain>, len: usize) -> Moo<GroundDomain> {
     match Moo::make_mut(&mut domain) {
         GroundDomain::Int(ranges) if ranges.len() == 1 && len > 0 => {
-            if let Range::UnboundedR(start) = ranges[0] {
-                let end = start + (len as i32 - 1);
-                ranges[0] = Range::Bounded(start, end);
-            }
+            ranges[0] = match &ranges[0] {
+                Range::UnboundedR(start) => Range::Bounded(*start, start + (len as i32 - 1)),
+                Range::Unbounded | Range::UnboundedL(_) => Range::Bounded(1, len as i32),
+                Range::Bounded(low, high) => Range::Bounded(*low, *high),
+                Range::Single(value) => Range::Single(*value),
+            };
             domain
         }
         _ => domain,

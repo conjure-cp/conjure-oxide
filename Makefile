@@ -1,10 +1,6 @@
 # Make this Makefile auto-documenting
 include tools/show-help-minified.make
 
-# Ensure local OR-Tools libraries are found by the rust compiler for proc-macros
-export LD_LIBRARY_PATH := $(PWD)/.ortools/lib:$(LD_LIBRARY_PATH)
-export DYLD_LIBRARY_PATH := $(PWD)/.ortools/lib:$(DYLD_LIBRARY_PATH)
-
 # Extra flags to be passed to `cargo check` (default: -q).
 EXTRA_CARGO_CHECK_FLAGS ?= -q
 # Use Cargo.lock to ensure local builds match CI dependency versions.
@@ -13,26 +9,21 @@ CARGO_LOCKED ?= --locked
 # Extra feature flags to be passed to Cargo (e.g. --features z3-bundled).
 CARGO_FEATURES ?=
 CARGO_TARGET_DIR ?= target
+CARGO_BIN_DIR ?= $(HOME)/.cargo/bin
 DEV_CONTAINER_IMAGE ?= conjure-oxide-dev
 DEV_CONTAINER_FILE ?= Dockerfile.dev
-CARGO_TEST_WORKSPACE = cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
-# Golden files follow the test-suite convention of `.expected` or `-expected-` in the file name.
-# This intentionally ignores config.toml, including expected-time-only changes.
-RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED = if test -n "$$(git status --porcelain -- ':(glob)**/*.expected*' ':(glob)**/*-expected-*')"; then echo "Golden files changed; running tests without ACCEPT"; PATH="$$HOME/.cargo/bin:$$PATH" $(CARGO_TEST_WORKSPACE); else echo "No golden files changed; skipping non-accepting test run"; fi
+CARGO_TEST_WORKSPACE = cargo nextest run --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --doc
+export PATH := $(CARGO_BIN_DIR):$(PATH)
 
 .PHONY: submodules
 ## Initialises git submodules needed for builds
 submodules:
 	git submodule update --init --recursive -- crates/minion-sys/vendor
 
-.PHONY: setup-deps
-## Initialises submodules and downloads external dependencies (e.g. OR-Tools)
-setup-deps: submodules
-	./tools/setup_ortools.sh
-
 .PHONY: check
 ## Runs all hygiene checks. These are the same checks that occur in CI for PRs.
-check: setup-deps
+check: submodules
 	RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --all-targets
 	cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
 	cargo fmt --check
@@ -44,12 +35,12 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 
 .PHONY: build-release
 ## Builds the release conjure-oxide executable
-build-release: setup-deps
+build-release: submodules
 	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide --release
 
 .PHONY: build-debug
 ## Builds the debug conjure-oxide executable
-build-debug: setup-deps
+build-debug: submodules
 	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide
 
 .PHONY: build
@@ -59,16 +50,15 @@ build: build-release build-debug
 .PHONY: install
 ## Installs release conjure-oxide and debug conjure-oxide-debug to ~/.cargo/bin
 install: build
-	@mkdir -p $$HOME/.cargo/bin
-	@install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
-	@install -m 755 $(CARGO_TARGET_DIR)/debug/conjure-oxide $$HOME/.cargo/bin/conjure-oxide-debug
+	@mkdir -p $(CARGO_BIN_DIR)
+	@install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $(CARGO_BIN_DIR)/conjure-oxide
+	@install -m 755 $(CARGO_TARGET_DIR)/debug/conjure-oxide $(CARGO_BIN_DIR)/conjure-oxide-debug
 
 .PHONY: test
 ## Runs all tests
-test: setup-deps install
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
-test: submodules install
-	PATH="$$HOME/.cargo/bin:$$PATH" $(CARGO_TEST_WORKSPACE)
+test: submodules install .installed-cargo-nextest.checkpoint
+	$(CARGO_DOC_TEST_WORKSPACE)
+	$(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -76,22 +66,22 @@ test-coverage:
 	./tools/coverage.sh
 
 .PHONY: test-accept
-## Runs all tests in accept mode, then in normal mode if golden files changed
-test-accept: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true $(CARGO_TEST_WORKSPACE)
-	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
+## Runs all tests in accept mode
+test-accept: install .installed-cargo-nextest.checkpoint
+	ACCEPT=true $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=true $(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-accept-with-slower-times
-## Runs all tests in accept mode, only increases expected run times, then in normal mode if golden files changed
-test-accept-with-slower-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
-	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
+## Runs all tests in accept mode, only increases expected run times
+test-accept-with-slower-times: install .installed-cargo-nextest.checkpoint
+	ACCEPT=with-slower-times $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-accept-with-exact-times
-## Runs all tests in accept mode, updates expected run times exactly, then in normal mode if golden files changed
-test-accept-with-exact-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
-	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
+## Runs all tests in accept mode, updates expected run times exactly
+test-accept-with-exact-times: install .installed-cargo-nextest.checkpoint
+	ACCEPT=with-exact-times $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 
@@ -109,25 +99,6 @@ fix-dirty:
 	cargo fix $(CARGO_LOCKED) $(CARGO_FEATURES) --allow-dirty --allow-staged
 	cargo clippy -q $(CARGO_LOCKED) $(CARGO_FEATURES) --fix --allow-dirty --allow-staged
 
-
-.PHONY: build-container
-## Builds the developer container image (Dockerfile.dev)
-build-container:
-	podman build -f $(DEV_CONTAINER_FILE) -t $(DEV_CONTAINER_IMAGE) .
-
-.PHONY: run-in-container
-## Runs a command in the developer container (usage: make run-in-container CMD="make build")
-run-in-container:
-	@test -n "$(CMD)"
-	@podman run --rm -it \
-	  --userns=keep-id \
-	  -e HOME=/tmp \
-	  -e CARGO_HOME=/tmp/cargo \
-	  -v "$$PWD:/work:Z" \
-	  -w /work \
-	  $(DEV_CONTAINER_IMAGE) \
-	  bash -lc 'mkdir -p "$$CARGO_HOME" && exec bash -lc "$(CMD)"'
-
 # install cargo extensions used in this Makefile (cargo-shear)
 .PHONY: install-cargo-extensions
 install-cargo-extensions: .installed-cargo-extensions.checkpoint
@@ -135,6 +106,10 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 .installed-cargo-extensions.checkpoint: Makefile
 	cargo install cargo-shear
 	touch .installed-cargo-extensions.checkpoint
+
+.installed-cargo-nextest.checkpoint: Makefile
+	@if ! command -v cargo-nextest >/dev/null 2>&1; then cargo install cargo-nextest --locked; fi
+	touch .installed-cargo-nextest.checkpoint
 
 test-clean:
 	cd test-suite/tests/integration/; find -type f -path '**generated**' -delete

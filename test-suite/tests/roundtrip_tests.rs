@@ -1,12 +1,13 @@
 use conjure_cp::Model;
-use conjure_cp::ast::SerdeModel;
 use conjure_cp::context::Context;
 use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp::settings::Parser;
-use conjure_cp_cli::utils::testing::serialize_model;
+use conjure_cp_cli::utils::testing::{
+    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, serialize_model, truncate_to_first_chars,
+};
 use std::collections::BTreeSet;
 use std::error::Error;
 use std::fs;
@@ -16,8 +17,6 @@ use std::sync::RwLock;
 use test_suite::AcceptMode;
 use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
-
-use std::io::Write;
 
 /// Parser function used by roundtrip tests.
 type ParseFn = fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<ParseErrorCollection>>;
@@ -33,7 +32,7 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             Default::default()
         };
 
-    let param_file = std::fs::read_dir(path).ok().and_then(|entries| {
+    let param_file = fs::read_dir(path).ok().and_then(|entries| {
         entries
             .filter_map(|entry| entry.ok())
             .find(|entry| entry.path().extension().is_some_and(|ext| ext == "param"))
@@ -188,11 +187,11 @@ fn roundtrip_test_inner(
                 )));
             }
 
-            let expected_model = read_roundtrip_model_json(&context, path, case_name, "expected")?;
-
-            let generated_model =
-                read_roundtrip_model_json(&context, path, case_name, "generated")?;
-            assert_eq!(generated_model, expected_model);
+            let expected_model_json =
+                read_roundtrip_model_json_snapshot(path, case_name, "expected")?;
+            let generated_model_json =
+                read_roundtrip_model_json_snapshot(path, case_name, "generated")?;
+            assert_eq!(generated_model_json, expected_model_json);
 
             let expected_essence =
                 fs::read_to_string(roundtrip_essence_path(path, case_name, "expected"))?;
@@ -278,26 +277,25 @@ fn save_roundtrip_model_json(
     file_type: &str,
 ) -> Result<(), std::io::Error> {
     let serialised = serialize_model(model).map_err(std::io::Error::other)?;
+    let serialised = truncate_to_first_chars(&serialised, DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT);
     fs::write(
         roundtrip_model_json_path(path, case_name, file_type),
-        serialised,
+        format!("{serialised}\n"),
     )?;
     Ok(())
 }
 
-/// Reads and initialises a saved roundtrip model snapshot.
-fn read_roundtrip_model_json(
-    context: &Arc<RwLock<Context<'static>>>,
+/// Reads a saved roundtrip model JSON snapshot.
+fn read_roundtrip_model_json_snapshot(
     path: &str,
     case_name: &str,
     file_type: &str,
-) -> Result<Model, std::io::Error> {
+) -> Result<String, std::io::Error> {
     let serialised = fs::read_to_string(roundtrip_model_json_path(path, case_name, file_type))?;
-    let serde_model: SerdeModel =
-        serde_json::from_str(&serialised).map_err(std::io::Error::other)?;
-    serde_model
-        .initialise(context.clone())
-        .ok_or_else(|| std::io::Error::other("failed to initialise parsed SerdeModel"))
+    Ok(truncate_to_first_chars(
+        &serialised,
+        DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
+    ))
 }
 
 /// Saves a model as an Essence file.
@@ -308,8 +306,7 @@ fn save_essence(
     file_type: &str,
 ) -> Result<(), std::io::Error> {
     let filename = roundtrip_essence_path(path, test_name, file_type);
-    let mut file = fs::File::create(&filename)?;
-    write!(file, "{model}")?;
+    fs::write(filename, format!("{model}\n"))?;
     Ok(())
 }
 
@@ -321,8 +318,7 @@ fn save_parse_error(
     file_type: &str,
 ) -> Result<(), std::io::Error> {
     let filename = roundtrip_error_path(path, test_name, file_type);
-    let mut file = fs::File::create(&filename)?;
-    write!(file, "{error}")?;
+    fs::write(filename, format!("{error}\n"))?;
     Ok(())
 }
 

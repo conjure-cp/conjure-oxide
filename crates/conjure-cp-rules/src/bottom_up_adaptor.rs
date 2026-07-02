@@ -1,11 +1,11 @@
-use conjure_cp::rule_engine::SubmodelZipper;
+use conjure_cp::rule_engine::ExpressionZipper;
 use conjure_cp::{
     ast::{Expression, SymbolTable},
-    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
 
 /// Converts the rule function `rule` to a rule that applies `rule` bottom-up to every expression
-/// in the current sub-model.
+/// in the current expression tree.
 pub fn as_bottom_up(
     rule: impl Fn(&Expression, &SymbolTable) -> ApplicationResult,
 ) -> impl Fn(&Expression, &SymbolTable) -> ApplicationResult {
@@ -15,12 +15,12 @@ pub fn as_bottom_up(
             return Err(RuleNotApplicable);
         };
 
-        // traverse bottom up within the current sub-model, applying the rule.
+        // traverse bottom up within the current expression tree, applying the rule.
         let mut symbols = symbols.clone();
         let mut new_tops = vec![];
         let mut done_something = false;
 
-        let mut zipper = SubmodelZipper::new(expr.clone());
+        let mut zipper = ExpressionZipper::new(expr.clone());
 
         while zipper.go_down().is_some() {}
 
@@ -48,7 +48,7 @@ pub fn as_bottom_up(
         let root_expr = zipper.rebuild_root();
 
         if done_something {
-            Ok(Reduction::new(root_expr, new_tops, symbols))
+            Ok(RuleEffect::new(root_expr, new_tops, symbols))
         } else {
             Err(RuleNotApplicable)
         }

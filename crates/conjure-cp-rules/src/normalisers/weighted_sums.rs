@@ -12,7 +12,7 @@ use conjure_cp::{
     ast::Metadata,
     ast::{Atom, Expression as Expr, Literal as Lit, Moo, SymbolTable},
     into_matrix_expr,
-    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
 
 /// Collects like terms in a weighted sum.
@@ -96,7 +96,7 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(Expr::Sum(
+    Ok(RuleEffect::pure(Expr::Sum(
         meta.clone(),
         Moo::new(into_matrix_expr![new_exprs]),
     )))

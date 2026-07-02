@@ -5,11 +5,12 @@ use crate::{
 };
 
 use super::{Expression, Literal, Typeable};
+use serde::{Deserialize, Serialize};
 
 /// The possible kinds of associative-commutative (AC) operator.
 ///
 /// AC operators take a single vector as input and are commonly used alongside comprehensions.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ACOperatorKind {
     And,
     Or,

@@ -5,7 +5,7 @@ use std::mem::Discriminant;
 use crate::utils::{single_vec_child, with_single_vec_child};
 use conjure_cp::ast::{Expression as Expr, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 /// Normalises associative_commutative operations.
@@ -62,5 +62,5 @@ fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> Applicatio
 
     let new_expr = with_single_vec_child(expr, new_children);
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }

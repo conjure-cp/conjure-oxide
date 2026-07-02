@@ -39,6 +39,11 @@ then
   exit 1
 fi
 
+if ! command -v cargo-nextest &> /dev/null; then
+  echo_err "info: installing cargo-nextest"
+  cargo install cargo-nextest --locked
+fi
+
 if ! command -v jq &> /dev/null 
 then
   echo_err "jq is not found!"
@@ -123,7 +128,8 @@ cargo +nightly build --workspace
 ln -sf conjure-oxide "${TARGET_DIR}/debug/conjure-oxide-debug"
 
 echo_err "info: running tests"
-cargo +nightly test --workspace -- --test-threads=2
+cargo +nightly test --workspace --doc
+cargo +nightly nextest run --workspace
 
 echo_err "info: generating coverage reports"
 grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t html\

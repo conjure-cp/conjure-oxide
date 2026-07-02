@@ -338,7 +338,7 @@ impl GroundDomain {
             GroundDomain::Bool => Ok(2),
             GroundDomain::Int(ranges) => {
                 if ranges.is_empty() {
-                    return Err(DomainOpError::Unbounded);
+                    return Ok(0);
                 }
 
                 let mut length = 0u64;
@@ -460,9 +460,8 @@ impl GroundDomain {
             },
             GroundDomain::Int(ranges) => match lit {
                 Literal::Int(x) => {
-                    // unconstrained int domain - contains all integers
                     if ranges.is_empty() {
-                        return Ok(true);
+                        return Ok(false);
                     };
 
                     Ok(ranges.iter().any(|range| range.contains(x)))
@@ -524,6 +523,14 @@ impl GroundDomain {
                     Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)) => {
                         // Matrix literals are represented as nested 1d matrices, so the elements of
                         // the matrix literal will be the inner dimensions of the matrix.
+
+                        if elems.is_empty()
+                            && index_domains
+                                .iter()
+                                .any(|index_domain| index_domain.length() == Ok(0))
+                        {
+                            return Ok(true);
+                        }
 
                         let Some((current_index_domain, remaining_index_domains)) =
                             index_domains.split_first()
@@ -702,7 +709,7 @@ impl GroundDomain {
         };
 
         if ranges.is_empty() {
-            return Err(DomainOpError::Unbounded);
+            return Ok(vec![]);
         }
 
         let mut values = vec![];
@@ -846,19 +853,15 @@ impl GroundDomain {
     /// Returns true if the domain is finite.
     pub fn is_finite(&self) -> bool {
         for domain in self.universe() {
-            if let GroundDomain::Int(ranges) = domain {
-                if ranges.is_empty() {
-                    return false;
-                }
-
-                if ranges.iter().any(|range| {
+            if let GroundDomain::Int(ranges) = domain
+                && ranges.iter().any(|range| {
                     matches!(
                         range,
                         Range::UnboundedL(_) | Range::UnboundedR(_) | Range::Unbounded
                     )
-                }) {
-                    return false;
-                }
+                })
+            {
+                return false;
             }
         }
         true
@@ -1019,7 +1022,10 @@ impl GroundDomain {
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix"
                     );
                     first_index_domain.push(idx);
-                    l = elems[0].clone();
+                    let Some(first_elem) = elems.first() else {
+                        break;
+                    };
+                    l = first_elem.clone();
                 }
 
                 let mut all_elems: Vec<Literal> = vec![];
@@ -1033,14 +1039,23 @@ impl GroundDomain {
                     all_elems.extend(elems.clone());
 
                     let mut index_domain = vec![idx.clone()];
-                    let mut l = elems[0].clone();
+                    let Some(first_elem) = elems.first() else {
+                        if index_domain != first_index_domain {
+                            return Err(DomainOpError::WrongType);
+                        }
+                        continue;
+                    };
+                    let mut l = first_elem.clone();
                     while let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = l {
                         assert!(
                             !matches!(idx.as_ref(), GroundDomain::Matrix(_, _)),
                             "n-dimensional matrix literals should be represented as a matrix inside a matrix"
                         );
                         index_domain.push(idx);
-                        l = elems[0].clone();
+                        let Some(first_elem) = elems.first() else {
+                            break;
+                        };
+                        l = first_elem.clone();
                     }
 
                     if index_domain != first_index_domain {
@@ -1184,7 +1199,7 @@ impl GroundDomain {
         match self {
             GroundDomain::Set(_, inner) => Some(inner.clone()),
             GroundDomain::MSet(_, inner) => Some(inner.clone()),
-            GroundDomain::Matrix(_, _) => todo!("Unwrap one dimension of the domain"),
+            GroundDomain::Matrix(inner, _) => Some(inner.clone()),
             _ => None,
         }
     }
@@ -1257,7 +1272,14 @@ impl Display for GroundDomain {
                     write!(f, "int")
                 }
             }
-            GroundDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
+            GroundDomain::Set(attrs, inner_dom) => {
+                let attrs = attrs.to_string();
+                if attrs.is_empty() {
+                    write!(f, "set of {inner_dom}")
+                } else {
+                    write!(f, "set {attrs} of {inner_dom}")
+                }
+            }
             GroundDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
             GroundDomain::Sequence(attrs, inner_dom) => {
                 write!(f, "sequence {attrs} of {inner_dom}")

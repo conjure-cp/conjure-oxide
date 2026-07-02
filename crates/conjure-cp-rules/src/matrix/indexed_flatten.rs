@@ -1,6 +1,6 @@
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, SymbolTable, matrix};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 /// Turn an index into a flattened matrix expression directly into the fully qualified index.
@@ -40,5 +40,5 @@ fn indexed_flatten_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // This must be unsafe since we are using a possibly unsafe flat index.
     // TODO: this can be made safe if matrix::flat_index_to_full_index fails out of bounds
     let new_expr = Expr::UnsafeIndex(Metadata::new(), matrix.clone(), flat_index);
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }

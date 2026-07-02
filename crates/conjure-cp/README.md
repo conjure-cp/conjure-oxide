@@ -26,4 +26,3 @@ You will also need to install some rulesets, e.g [conjure-cp-rules](https://gith
 
 This project is licenced under the [Mozilla Public Licence
 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
-

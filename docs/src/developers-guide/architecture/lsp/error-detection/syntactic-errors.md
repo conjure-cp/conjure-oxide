@@ -57,9 +57,9 @@ The different cases are distinguished based on the position of the `ERROR` node 
 ## How To Test
 
 ```bash
-cargo test -p conjure-cp-essence-parser --test malformed_top_level
-cargo test -p conjure-cp-essence-parser --test missing_token
-cargo test -p conjure-cp-essence-parser --test unexpected_token
+cargo nextest run -p conjure-cp-essence-parser --test malformed_top_level
+cargo nextest run -p conjure-cp-essence-parser --test missing_token
+cargo nextest run -p conjure-cp-essence-parser --test unexpected_token
 ```
 
 ## Examples

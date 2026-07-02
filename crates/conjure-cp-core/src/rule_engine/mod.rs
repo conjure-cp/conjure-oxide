@@ -1,9 +1,5 @@
 pub use linkme::distributed_slice;
 
-mod rewrite_morph;
-pub use crate::settings::MorphConfig;
-pub use rewrite_morph::rewrite_morph;
-
 /// This procedural macro registers a decorated function with `conjure_cp_rules`' global registry, and
 /// adds the rule to one or more `RuleSet`'s.
 ///
@@ -37,12 +33,12 @@ pub use rewrite_morph::rewrite_morph;
 /// ```rust
 /// use conjure_cp_core::ast::Expression;
 /// use conjure_cp_core::ast::SymbolTable;
-/// use conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
+/// use conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, RuleEffect};
 /// use conjure_cp_core::rule_engine::register_rule;
 ///
 /// #[register_rule("RuleSetName", 10)]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-///   Ok(Reduction::pure(expr.clone()))
+///   Ok(RuleEffect::pure(expr.clone()))
 /// }
 /// ```
 pub use conjure_cp_rule_macros::register_rule;
@@ -85,16 +81,15 @@ pub use conjure_cp_rule_macros::register_rule;
 #[doc(inline)]
 pub use conjure_cp_rule_macros::register_rule_set;
 pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
-pub use rewrite_naive::rewrite_naive;
+pub use rewrite::rewrite_model;
 pub use rewriter_common::RewriteError;
-pub(crate) use rule::MorphState;
-pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule, RuleFn};
+pub use rule::{ApplicationError, ApplicationResult, Rule, RuleEffect, RuleFn};
 pub use rule_set::RuleSet;
 
-mod submodel_zipper;
+mod expression_zipper;
 
 #[doc(hidden)]
-pub use submodel_zipper::SubmodelZipper;
+pub use expression_zipper::ExpressionZipper;
 
 use crate::{
     Model,
@@ -102,7 +97,7 @@ use crate::{
 };
 
 mod resolve_rules;
-mod rewrite_naive;
+mod rewrite;
 mod rewriter_common;
 mod rule;
 mod rule_set;
@@ -126,14 +121,14 @@ pub mod _dependencies {
 ///
 /// # Example
 /// ```rust
-/// # use conjure_cp_core::rule_engine::{ApplicationResult, Reduction, get_all_rules};
+/// # use conjure_cp_core::rule_engine::{ApplicationResult, RuleEffect, get_all_rules};
 /// # use conjure_cp_core::ast::Expression;
 /// # use conjure_cp_core::ast::SymbolTable;
 /// # use conjure_cp_core::rule_engine::register_rule;
 ///
 /// #[register_rule]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-///   Ok(Reduction::pure(expr.clone()))
+///   Ok(RuleEffect::pure(expr.clone()))
 /// }
 ///
 /// fn main() {
@@ -156,13 +151,13 @@ pub fn get_all_rules() -> Vec<&'static Rule<'static>> {
 /// # Example
 /// ```rust
 /// use conjure_cp_core::rule_engine::register_rule;
-/// use conjure_cp_core::rule_engine::{Rule, ApplicationResult, Reduction, get_rule_by_name};
+/// use conjure_cp_core::rule_engine::{Rule, ApplicationResult, RuleEffect, get_rule_by_name};
 /// use conjure_cp_core::ast::Expression;
 /// use conjure_cp_core::ast::SymbolTable;
 ///
 /// #[register_rule]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-///  Ok(Reduction::pure(expr.clone()))
+///  Ok(RuleEffect::pure(expr.clone()))
 /// }
 ///
 /// fn main() {
@@ -215,8 +210,7 @@ pub fn rewrite_model_with_configured_rewriter<'a>(
     configured_rewriter: Rewriter,
 ) -> Result<Model, RewriteError> {
     match configured_rewriter {
-        Rewriter::Morph(config) => Ok(rewrite_morph(model, rule_sets, false, config)),
-        Rewriter::Naive => rewrite_naive(&model, rule_sets, false),
+        Rewriter::Rewrite(config) => rewrite_model(&model, rule_sets, false, config),
     }
 }
 

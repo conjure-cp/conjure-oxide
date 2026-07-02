@@ -149,6 +149,7 @@
     ]
   },
   "dominance": null,
+  "objective": null,
   "search_order": null,
   "symbols": {
     "id": {
@@ -237,8 +238,8 @@
 }
 
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set of int(1..5)
+find y: set of int(1..6)
 
 such that
 
@@ -248,8 +249,8 @@ and([ __0 in x | __0 <- {1} ])
 
 Model before rewriting:
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set of int(1..5)
+find y: set of int(1..6)
 
 such that
 
@@ -261,7 +262,7 @@ such that
 
 (x subsetEq {1,2}),
 (x subsetEq y),
-({1} subsetEq x), 
+({1} subsetEq x)
    ~~> constant_evaluator ([("Constant", 9001)])
 (x subsetEq {1,2}),
 (x subsetEq y),
@@ -269,19 +270,19 @@ such that
 
 --
 
-(x subsetEq {1,2}), 
+(x subsetEq {1,2})
    ~~> subseteq_set ([("Base", 8700)])
 and([ __0 in {1,2} | __0 <- x ])
 
 --
 
-(x subsetEq y), 
+(x subsetEq y)
    ~~> subseteq_set ([("Base", 8700)])
 and([ __0 in y | __0 <- x ])
 
 --
 
-({1} subsetEq x), 
+({1} subsetEq x)
    ~~> subseteq_set ([("Base", 8700)])
 and([ __0 in x | __0 <- {1} ])
 
@@ -289,8 +290,8 @@ and([ __0 in x | __0 <- {1} ])
 
 Final model:
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set of int(1..5)
+find y: set of int(1..6)
 
 such that
 

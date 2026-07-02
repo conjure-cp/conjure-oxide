@@ -1,7 +1,7 @@
 # Pull Requests
 
 > [!TIP]
-> We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), so All Code Changes Happen Through Pull Requests
+> We Use [GitHub Flow](https://guides.github.com/introduction/flow/index.html), so All Code Changes Happen Through Pull Requests
 
 Our development process is as follows:
 
@@ -16,7 +16,7 @@ Our development process is as follows:
    - During reviewing, avoid force-pushing to the pull request, as this makes reviewing more difficult.
      Details on how to update a PR are given below.
 5. Once Oz has approved the PR:
-   - Update your PR to main by rebase or merge. This can be done through the Github UI or locally.
+   - Update your PR to main by rebase or merge. This can be done through the GitHub UI or locally.
    - Cleanup your git history (see below) or request your PR to be squash merged.
 
 # Style

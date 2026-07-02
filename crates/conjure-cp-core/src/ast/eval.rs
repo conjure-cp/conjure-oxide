@@ -9,118 +9,109 @@ use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
 
+pub(crate) fn factorial_i32(n: i32) -> Option<i32> {
+    if n < 0 {
+        return None;
+    }
+
+    (1..=n).try_fold(1_i32, i32::checked_mul)
+}
+
+fn eval_constant_set(expr: &Expr) -> Option<Vec<Lit>> {
+    let Lit::AbstractLiteral(AbstractLiteral::Set(values)) = eval_constant(expr)? else {
+        return None;
+    };
+
+    Some(values)
+}
+
 /// Simplify an expression to a constant if possible
 /// Returns:
 /// `None` if the expression cannot be simplified to a constant (e.g. if it contains a variable)
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
-        Expr::Supset(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let a_set: HashSet<Lit> = a.iter().cloned().collect();
-                let b_set: HashSet<Lit> = b.iter().cloned().collect();
+        Expr::TypeAnnotation(_, expr, _) | Expr::DomainAnnotation(_, expr, _) => {
+            eval_constant(expr)
+        }
+        Expr::Supset(_, a, b) => {
+            let a = eval_constant_set(a.as_ref())?;
+            let b = eval_constant_set(b.as_ref())?;
+            let a_set: HashSet<Lit> = a.into_iter().collect();
+            let b_set: HashSet<Lit> = b.into_iter().collect();
 
-                if a_set.difference(&b_set).count() > 0 {
-                    Some(Lit::Bool(a_set.is_superset(&b_set)))
-                } else {
-                    Some(Lit::Bool(false))
-                }
-            }
-            _ => None,
-        },
-        Expr::SupsetEq(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => Some(Lit::Bool(
-                a.iter()
-                    .cloned()
-                    .collect::<HashSet<Lit>>()
-                    .is_superset(&b.iter().cloned().collect::<HashSet<Lit>>()),
-            )),
-            _ => None,
-        },
-        Expr::Subset(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let a_set: HashSet<Lit> = a.iter().cloned().collect();
-                let b_set: HashSet<Lit> = b.iter().cloned().collect();
-
-                if b_set.difference(&a_set).count() > 0 {
-                    Some(Lit::Bool(a_set.is_subset(&b_set)))
-                } else {
-                    Some(Lit::Bool(false))
-                }
-            }
-            _ => None,
-        },
-        Expr::SubsetEq(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => Some(Lit::Bool(
-                a.iter()
-                    .cloned()
-                    .collect::<HashSet<Lit>>()
-                    .is_subset(&b.iter().cloned().collect::<HashSet<Lit>>()),
-            )),
-            _ => None,
-        },
-        Expr::Intersect(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let mut res: Vec<Lit> = Vec::new();
-                for lit in a.iter() {
-                    if b.contains(lit) && !res.contains(lit) {
-                        res.push(lit.clone());
-                    }
-                }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
-            }
-            _ => None,
-        },
-        Expr::Union(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let mut res: Vec<Lit> = Vec::new();
-                for lit in a.iter() {
-                    res.push(lit.clone());
-                }
-                for lit in b.iter() {
-                    if !res.contains(lit) {
-                        res.push(lit.clone());
-                    }
-                }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
-            }
-            _ => None,
-        },
-        Expr::In(_, a, b) => {
-            if let (
-                Expr::Atomic(_, Atom::Literal(Lit::Int(c))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(d)))),
-            ) = (a.as_ref(), b.as_ref())
-            {
-                for lit in d.iter() {
-                    if let Lit::Int(x) = lit
-                        && c == x
-                    {
-                        return Some(Lit::Bool(true));
-                    }
-                }
-                Some(Lit::Bool(false))
+            if a_set.difference(&b_set).count() > 0 {
+                Some(Lit::Bool(a_set.is_superset(&b_set)))
             } else {
-                None
+                Some(Lit::Bool(false))
             }
+        }
+        Expr::SupsetEq(_, a, b) => {
+            let a = eval_constant_set(a.as_ref())?;
+            let b = eval_constant_set(b.as_ref())?;
+
+            Some(Lit::Bool(
+                a.into_iter()
+                    .collect::<HashSet<Lit>>()
+                    .is_superset(&b.into_iter().collect::<HashSet<Lit>>()),
+            ))
+        }
+        Expr::Subset(_, a, b) => {
+            let a = eval_constant_set(a.as_ref())?;
+            let b = eval_constant_set(b.as_ref())?;
+            let a_set: HashSet<Lit> = a.into_iter().collect();
+            let b_set: HashSet<Lit> = b.into_iter().collect();
+
+            if b_set.difference(&a_set).count() > 0 {
+                Some(Lit::Bool(a_set.is_subset(&b_set)))
+            } else {
+                Some(Lit::Bool(false))
+            }
+        }
+        Expr::SubsetEq(_, a, b) => {
+            let a = eval_constant_set(a.as_ref())?;
+            let b = eval_constant_set(b.as_ref())?;
+
+            Some(Lit::Bool(
+                a.into_iter()
+                    .collect::<HashSet<Lit>>()
+                    .is_subset(&b.into_iter().collect::<HashSet<Lit>>()),
+            ))
+        }
+        Expr::Intersect(_, a, b) => {
+            let a = eval_constant_set(a.as_ref())?;
+            let b = eval_constant_set(b.as_ref())?;
+
+            let mut res: Vec<Lit> = Vec::new();
+            for lit in a {
+                if b.contains(&lit) && !res.contains(&lit) {
+                    res.push(lit);
+                }
+            }
+
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+        }
+        Expr::Union(_, a, b) => {
+            let a = eval_constant_set(a.as_ref())?;
+            let b = eval_constant_set(b.as_ref())?;
+
+            let mut res: Vec<Lit> = Vec::new();
+            for lit in a {
+                res.push(lit);
+            }
+            for lit in b {
+                if !res.contains(&lit) {
+                    res.push(lit);
+                }
+            }
+
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+        }
+        Expr::In(_, a, b) => {
+            let value = eval_constant(a.as_ref())?;
+            let set = eval_constant_set(b.as_ref())?;
+
+            Some(Lit::Bool(set.contains(&value)))
         }
         Expr::FromSolution(_, _) => None,
         Expr::DominanceRelation(_, _) => None,
@@ -139,17 +130,17 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::AbstractComprehension(_, _) => None,
         Expr::RecordField(_, rec, fld_name) => {
-            if let Expr::Atomic(
-                _,
-                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Record(ents))),
-            ) = rec.as_ref()
-            {
-                for Field { name, value } in ents {
-                    if name.eq(fld_name) {
-                        return Some(value.clone());
-                    }
+            let Lit::AbstractLiteral(AbstractLiteral::Record(ents)) = eval_constant(rec.as_ref())?
+            else {
+                return None;
+            };
+
+            for Field { name, value } in ents {
+                if name.eq(fld_name) {
+                    return Some(value);
                 }
             }
+
             None
         }
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
@@ -269,6 +260,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Table(_, _, _) => None,
         Expr::NegativeTable(_, _, _) => None,
+        Expr::AtLeast(_, _, _, _) => None,
+        Expr::AtMost(_, _, _, _) => None,
+        Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => None,
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead
@@ -534,7 +528,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Lit::Int(a) => Some(Lit::Int(-a)),
             _ => None,
         },
-        Expr::Factorial(_, _) => None,
+        Expr::Factorial(_, a) => match eval_constant(a.as_ref())? {
+            Lit::Int(a) => factorial_i32(a).map(Lit::Int),
+            _ => None,
+        },
         Expr::Minus(_, a, b) => bin_op::<i32, i32>(|a, b| a - b, a, b).map(Lit::Int),
         Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
@@ -703,6 +700,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             })?;
             Some(lt.into())
         }
+        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => None,
     }
 }
 
@@ -889,11 +887,20 @@ fn eval_comprehension_qualifiers(
     Some(())
 }
 
-fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
-    match eval_constant(expr)? {
+/// Values for a constant collection expression used during constant folding.
+///
+/// This does not enumerate decision-variable domains; quantification over decisions is not
+/// unrolled here.
+pub fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
+    generator_values_from_constant_collection(&eval_constant(expr)?)
+}
+
+pub(crate) fn generator_values_from_constant_collection(lit: &Lit) -> Option<Vec<Lit>> {
+    match lit {
         Lit::AbstractLiteral(AbstractLiteral::Set(values))
         | Lit::AbstractLiteral(AbstractLiteral::MSet(values))
-        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values),
+        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values.clone()),
+        Lit::AbstractLiteral(AbstractLiteral::Matrix(values, _)) => Some(values.clone()),
         Lit::AbstractLiteral(list) => list.unwrap_list().cloned(),
         _ => None,
     }
@@ -927,4 +934,54 @@ fn with_temporary_quantified_binding<T>(
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Moo, Name};
+
+    fn set(values: impl IntoIterator<Item = i32>) -> Expr {
+        Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Set(values.into_iter().map(Expr::from).collect()),
+        )
+    }
+
+    #[test]
+    fn evaluates_field_access_on_abstract_record_literal() {
+        let record = Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Record(vec![
+                Field {
+                    name: Name::User("a".into()),
+                    value: Expr::from(false),
+                },
+                Field {
+                    name: Name::User("b".into()),
+                    value: Expr::from(4),
+                },
+            ]),
+        );
+        let field_access =
+            Expr::RecordField(Metadata::new(), Moo::new(record), Name::User("a".into()));
+
+        assert_eq!(eval_constant(&field_access), Some(Lit::Bool(false)));
+    }
+
+    #[test]
+    fn evaluates_membership_in_intersection_of_abstract_set_literals() {
+        let intersection = Expr::Intersect(
+            Metadata::new(),
+            Moo::new(set([1, 2, 4])),
+            Moo::new(set([1, 2, 3])),
+        );
+        let membership = Expr::In(
+            Metadata::new(),
+            Moo::new(Expr::from(2)),
+            Moo::new(intersection),
+        );
+
+        assert_eq!(eval_constant(&membership), Some(Lit::Bool(true)));
+    }
 }

@@ -93,8 +93,7 @@ fn update_file(
         fs::remove_file(&expected_file_path)?;
     }
     if !actual_output.trim().is_empty() {
-        fs::File::create(&expected_file_path)?;
-        fs::write(&expected_file_path, actual_output.as_bytes())?;
+        fs::write(&expected_file_path, actual_output.as_ref())?;
     }
     Ok(())
 }

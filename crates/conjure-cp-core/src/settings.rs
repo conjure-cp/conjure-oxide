@@ -59,90 +59,230 @@ pub fn current_parser() -> Parser {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct MorphConfig {
-    pub cache: MorphCachingStrategy,
+pub struct RewriteConfig {
+    /// Skip rules whose declared expression discriminants cannot match.
     pub prefilter: bool,
-    /// Use naive (no-levels) traversal (`morph_naive`). Enabled with `levelsoff`, disabled with `levelson`.
-    pub naive: bool,
-    pub fixedpoint: bool,
+    /// Skip repeated attempts on unchanged expressions that have already failed at the same priority.
+    pub dirty: bool,
+    /// Cache rewrite results for structurally identical expression subtrees.
+    pub cache: bool,
+    /// Skip rule calls already known to fail for the current node and symbol context.
+    pub rule_memo: bool,
+    /// Drive rewriting from persistent dirty node queues instead of repeated full scans.
+    pub worklist: bool,
+    /// Restrict full scans to expression kinds targeted by each rule group.
+    pub candidate_index: bool,
+    /// Rebuild per-pass dirty queues from clean metadata during full scans.
+    pub dirty_node_queues: bool,
 }
 
-impl Default for MorphConfig {
-    fn default() -> Self {
+impl RewriteConfig {
+    pub const fn baseline() -> Self {
         Self {
-            cache: MorphCachingStrategy::NoCache,
             prefilter: false,
-            naive: true,
-            fixedpoint: false,
+            dirty: false,
+            cache: false,
+            rule_memo: false,
+            worklist: false,
+            candidate_index: false,
+            dirty_node_queues: false,
         }
+    }
+
+    pub const fn optimised() -> Self {
+        Self {
+            prefilter: true,
+            dirty: false,
+            cache: false,
+            rule_memo: false,
+            worklist: true,
+            candidate_index: false,
+            dirty_node_queues: false,
+        }
+    }
+
+    pub const fn is_baseline(self) -> bool {
+        !self.prefilter
+            && !self.dirty
+            && !self.cache
+            && !self.rule_memo
+            && !self.worklist
+            && !self.candidate_index
+            && !self.dirty_node_queues
+    }
+
+    pub const fn is_optimised(self) -> bool {
+        self.prefilter
+            && !self.dirty
+            && !self.cache
+            && !self.rule_memo
+            && self.worklist
+            && !self.candidate_index
+            && !self.dirty_node_queues
     }
 }
 
-impl Display for MorphConfig {
+impl Default for RewriteConfig {
+    fn default() -> Self {
+        Self::optimised()
+    }
+}
+
+impl Display for RewriteConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "morph")?;
-
-        let mut features = Vec::new();
-        if !self.naive {
-            features.push("levelson");
+        if self.is_optimised() {
+            write!(f, "optimised")
+        } else if self.is_baseline() {
+            write!(f, "baseline")
+        } else {
+            let mut options = vec!["baseline"];
+            if self.prefilter {
+                options.push("prefilter");
+            }
+            if self.dirty {
+                options.push("dirty");
+            }
+            if self.cache {
+                options.push("cache");
+            }
+            if self.rule_memo {
+                options.push("rulememo");
+            }
+            if self.worklist {
+                options.push("worklist");
+            }
+            if self.candidate_index {
+                options.push("candidateindex");
+            }
+            if self.dirty_node_queues {
+                options.push("dirtyqueues");
+            }
+            write!(f, "{}", options.join("+"))
         }
-        match self.cache {
-            MorphCachingStrategy::NoCache => {}
-            MorphCachingStrategy::Cache => features.push("cache"),
-            MorphCachingStrategy::IncrementalCache => features.push("inccache"),
-        }
-        if self.prefilter {
-            features.push("prefilteron");
-        }
-        if self.fixedpoint {
-            features.push("fixedpoint");
-        }
-
-        if !features.is_empty() {
-            write!(f, "-{}", features.join("-"))?;
-        }
-
-        Ok(())
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub enum MorphCachingStrategy {
-    NoCache,
-    Cache,
-    #[default]
-    IncrementalCache,
-}
-
-impl FromStr for MorphCachingStrategy {
+impl FromStr for RewriteConfig {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim().to_ascii_lowercase().as_str() {
-            "no-cache" => Ok(Self::NoCache),
-            "cache" => Ok(Self::Cache),
-            "inc-cache" => Ok(Self::IncrementalCache),
-            other => Err(format!(
-                "unknown cache strategy: {other}; expected one of: no-cache, cahce, inc-cache"
-            )),
+        let trimmed = s.trim().to_ascii_lowercase();
+        match trimmed.as_str() {
+            "baseline" => return Ok(Self::baseline()),
+            "optimised" => return Ok(Self::optimised()),
+            _ => {}
         }
-    }
-}
 
-impl Display for MorphCachingStrategy {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MorphCachingStrategy::NoCache => write!(f, "nocache"),
-            MorphCachingStrategy::Cache => write!(f, "cache"),
-            MorphCachingStrategy::IncrementalCache => write!(f, "inccache"),
+        if !trimmed.starts_with("baseline+") {
+            return Err(format!(
+                "unknown rewrite config: {trimmed}; expected baseline, optimised, or baseline plus '+' separated prefilter/dirty/cache/rulememo/worklist/candidateindex/dirtyqueues options"
+            ));
         }
+
+        let mut config = Self::baseline();
+        let mut baseline_seen = false;
+        let mut prefilter_seen = false;
+        let mut dirty_seen = false;
+        let mut cache_seen = false;
+        let mut rule_memo_seen = false;
+        let mut worklist_seen = false;
+        let mut candidate_index_seen = false;
+        let mut dirty_node_queues_seen = false;
+        let mut option_seen = false;
+
+        for token in trimmed.split('+') {
+            match token {
+                "" => {}
+                "baseline" => {
+                    if baseline_seen {
+                        return Err("duplicate rewrite option 'baseline'".to_string());
+                    }
+                    baseline_seen = true;
+                }
+                "prefilter" => {
+                    if prefilter_seen {
+                        return Err("duplicate rewrite option 'prefilter'".to_string());
+                    }
+                    config.prefilter = true;
+                    prefilter_seen = true;
+                    option_seen = true;
+                }
+                "dirty" => {
+                    if dirty_seen {
+                        return Err("duplicate rewrite option 'dirty'".to_string());
+                    }
+                    config.dirty = true;
+                    dirty_seen = true;
+                    option_seen = true;
+                }
+                "cache" => {
+                    if cache_seen {
+                        return Err("duplicate rewrite option 'cache'".to_string());
+                    }
+                    config.cache = true;
+                    cache_seen = true;
+                    option_seen = true;
+                }
+                "rulememo" => {
+                    if rule_memo_seen {
+                        return Err("duplicate rewrite option 'rulememo'".to_string());
+                    }
+                    config.rule_memo = true;
+                    rule_memo_seen = true;
+                    option_seen = true;
+                }
+                "worklist" => {
+                    if worklist_seen {
+                        return Err("duplicate rewrite option 'worklist'".to_string());
+                    }
+                    config.worklist = true;
+                    worklist_seen = true;
+                    option_seen = true;
+                }
+                "candidateindex" => {
+                    if candidate_index_seen {
+                        return Err("duplicate rewrite option 'candidateindex'".to_string());
+                    }
+                    config.candidate_index = true;
+                    candidate_index_seen = true;
+                    option_seen = true;
+                }
+                "dirtyqueues" => {
+                    if dirty_node_queues_seen {
+                        return Err("duplicate rewrite option 'dirtyqueues'".to_string());
+                    }
+                    config.dirty_node_queues = true;
+                    dirty_node_queues_seen = true;
+                    option_seen = true;
+                }
+                other => {
+                    return Err(format!(
+                        "unknown rewrite option '{other}'; expected baseline, optimised, or a '+' separated combination of: prefilter, dirty, cache, rulememo, worklist, candidateindex, dirtyqueues"
+                    ));
+                }
+            }
+        }
+
+        if !option_seen {
+            return Err(
+                "rewrite config 'baseline+' must include at least one of: prefilter, dirty, cache, rulememo, worklist, candidateindex, dirtyqueues"
+                    .to_string(),
+            );
+        }
+
+        Ok(config)
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
-    Naive,
-    Morph(MorphConfig),
+    Rewrite(RewriteConfig),
+}
+
+impl Default for Rewriter {
+    fn default() -> Self {
+        Self::Rewrite(RewriteConfig::optimised())
+    }
 }
 
 thread_local! {
@@ -155,8 +295,7 @@ thread_local! {
 impl Display for Rewriter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Rewriter::Naive => write!(f, "naive"),
-            Rewriter::Morph(config) => write!(f, "{config}"),
+            Rewriter::Rewrite(config) => write!(f, "{config}"),
         }
     }
 }
@@ -167,79 +306,18 @@ impl FromStr for Rewriter {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let trimmed = s.trim().to_ascii_lowercase();
         match trimmed.as_str() {
-            "naive" => Ok(Rewriter::Naive),
-            "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
+            "baseline" | "optimised" => Ok(Rewriter::Rewrite(trimmed.parse()?)),
             other => {
-                if !other.starts_with("morph-") {
-                    return Err(format!(
-                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
-                    ));
+                if other.contains('+') {
+                    return Ok(Rewriter::Rewrite(other.parse()?));
                 }
 
-                let parts = other.split('-').skip(1);
-                Ok(Rewriter::Morph(parse_morph_config_tokens(parts)?))
+                Err(format!(
+                    "unknown rewriter: {other}; expected baseline, optimised, or baseline plus '+' separated prefilter/dirty/cache/rulememo/worklist/candidateindex/dirtyqueues options"
+                ))
             }
         }
     }
-}
-
-fn parse_morph_config_tokens<'a>(
-    tokens: impl IntoIterator<Item = &'a str>,
-) -> Result<MorphConfig, String> {
-    let mut config = MorphConfig::default();
-    let mut cache_set = false;
-    let mut levels_set = false;
-    let mut prefilter_set = false;
-
-    for token in tokens {
-        match token {
-            "" => (),
-            "levelson" => {
-                if levels_set {
-                    return Err(
-                        "conflicting levels options: only one levels setting is allowed"
-                            .to_string(),
-                    );
-                }
-                config.naive = false;
-                levels_set = true;
-            }
-            "cache" | "inccache" => {
-                if cache_set {
-                    return Err(
-                        "conflicting cache options: only one of cache|inccache is allowed"
-                            .to_string(),
-                    );
-                }
-                config.cache = match token {
-                    "cache" => MorphCachingStrategy::Cache,
-                    "inccache" => MorphCachingStrategy::IncrementalCache,
-                    _ => unreachable!(),
-                };
-                cache_set = true;
-            }
-            "prefilteron" => {
-                if prefilter_set {
-                    return Err(
-                        "conflicting prefilter options: only one prefilter setting is allowed"
-                            .to_string(),
-                    );
-                }
-                config.prefilter = true;
-                prefilter_set = true;
-            }
-            "fixedpoint" => {
-                config.fixedpoint = true;
-            }
-            other_token => {
-                return Err(format!(
-                    "unknown morph option '{other_token}', must be one of levelson|cache|inccache|prefilteron|fixedpoint"
-                ));
-            }
-        }
-    }
-
-    Ok(config)
 }
 
 pub fn set_current_rewriter(rewriter: Rewriter) {
@@ -538,4 +616,203 @@ impl SolverFamily {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct SolverArgs {
     pub timeout_ms: Option<u64>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{RewriteConfig, Rewriter};
+    use std::str::FromStr;
+
+    #[test]
+    fn parses_rewrite_option_combinations() {
+        assert_eq!(
+            RewriteConfig::from_str("baseline").unwrap(),
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+prefilter").unwrap(),
+            RewriteConfig {
+                prefilter: true,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+dirty").unwrap(),
+            RewriteConfig {
+                prefilter: false,
+                dirty: true,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+cache").unwrap(),
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: true,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+prefilter+dirty").unwrap(),
+            RewriteConfig {
+                prefilter: true,
+                dirty: true,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+prefilter+worklist").unwrap(),
+            RewriteConfig::optimised()
+        );
+        assert_eq!(
+            RewriteConfig::from_str("baseline+candidateindex+dirtyqueues").unwrap(),
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: true,
+                dirty_node_queues: true,
+            }
+        );
+        assert!(RewriteConfig::from_str("+dirty").is_err());
+        assert!(RewriteConfig::from_str("baseline+rule-memo").is_err());
+        assert!(RewriteConfig::from_str("baseline+candidate-index").is_err());
+        assert!(RewriteConfig::from_str("baseline+candidate-node-index").is_err());
+        assert!(RewriteConfig::from_str("baseline+dirty-node-queues").is_err());
+    }
+
+    #[test]
+    fn optimised_rewrite_config_enables_fast_default_options() {
+        assert_eq!(
+            RewriteConfig::from_str("optimised").unwrap(),
+            RewriteConfig {
+                prefilter: true,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
+                worklist: true,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+        );
+    }
+
+    #[test]
+    fn displays_rewrite_option_combinations() {
+        assert_eq!(RewriteConfig::baseline().to_string(), "baseline");
+        assert_eq!(
+            RewriteConfig {
+                prefilter: true,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+            .to_string(),
+            "baseline+prefilter"
+        );
+        assert_eq!(
+            RewriteConfig {
+                prefilter: false,
+                dirty: true,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+            .to_string(),
+            "baseline+dirty"
+        );
+        assert_eq!(
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: true,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            }
+            .to_string(),
+            "baseline+cache"
+        );
+        assert_eq!(
+            RewriteConfig {
+                prefilter: false,
+                dirty: false,
+                cache: false,
+                rule_memo: false,
+                worklist: true,
+                candidate_index: true,
+                dirty_node_queues: true,
+            }
+            .to_string(),
+            "baseline+worklist+candidateindex+dirtyqueues"
+        );
+        assert_eq!(RewriteConfig::optimised().to_string(), "optimised");
+    }
+
+    #[test]
+    fn parses_rewriter_option_combinations() {
+        assert_eq!(
+            Rewriter::from_str("baseline+dirty").unwrap(),
+            Rewriter::Rewrite(RewriteConfig {
+                prefilter: false,
+                dirty: true,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            })
+        );
+        assert_eq!(
+            Rewriter::from_str("baseline+prefilter+dirty").unwrap(),
+            Rewriter::Rewrite(RewriteConfig {
+                prefilter: true,
+                dirty: true,
+                cache: false,
+                rule_memo: false,
+                worklist: false,
+                candidate_index: false,
+                dirty_node_queues: false,
+            })
+        );
+        assert_eq!(
+            Rewriter::from_str("baseline+prefilter+worklist").unwrap(),
+            Rewriter::Rewrite(RewriteConfig::optimised())
+        );
+        assert!(Rewriter::from_str("+dirty").is_err());
+        assert!(Rewriter::from_str("dirty").is_err());
+    }
 }

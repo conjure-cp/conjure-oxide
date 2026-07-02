@@ -2,16 +2,17 @@ use conjure_cp::{
     ast::Metadata,
     ast::{
         Atom, DeclarationKind, Expression, Literal, Moo, Name, ReturnType, SymbolTable, Typeable,
+        eval_constant,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
         ApplicationError::{self, RuleNotApplicable},
-        ApplicationResult, Reduction, register_rule, register_rule_set,
+        ApplicationResult, RuleEffect, register_rule, register_rule_set,
     },
 };
 use uniplate::Biplate;
 
-use super::utils::{is_all_constant, rewrite_children};
+use super::utils::rewrite_children;
 
 register_rule_set!("Bubble", ("Base"));
 
@@ -28,7 +29,7 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         Expression::Bubble(_, a, b) if a.return_type() == ReturnType::Bool => {
             let a = Moo::unwrap_or_clone(Moo::clone(a));
             let b = Moo::unwrap_or_clone(Moo::clone(b));
-            Ok(Reduction::pure(Expression::And(
+            Ok(RuleEffect::pure(Expression::And(
                 Metadata::new(),
                 Moo::new(matrix_expr![a, b]),
             )))
@@ -52,18 +53,6 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    // do not bubble things containing lettings
-    if expr.universe_bi().iter().any(|x: &Name| {
-        syms.lookup(x).is_some_and(|x| {
-            matches!(
-                &x.kind() as &DeclarationKind,
-                DeclarationKind::ValueLetting(_, _)
-            )
-        })
-    }) {
-        return Err(RuleNotApplicable);
-    };
-
     let mut bubbled_conditions = vec![];
     let (new_inner, num_changed) = rewrite_children(expr, |child| match child {
         Expression::Bubble(_, a, b) if a.return_type() != ReturnType::Bool => {
@@ -75,17 +64,32 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
         child => (child, false),
     });
     if num_changed == 0 {
-        Err(ApplicationError::RuleNotApplicable)
-    } else if bubbled_conditions.len() == 1 {
+        return Err(ApplicationError::RuleNotApplicable);
+    }
+
+    // The value-letting guard walks every referenced name in the subtree, so keep it behind the
+    // cheap direct-child Bubble check. Most `bubble_up` attempts fail before this point.
+    if expr.universe_bi().iter().any(|x: &Name| {
+        syms.lookup(x).is_some_and(|x| {
+            matches!(
+                &x.kind() as &DeclarationKind,
+                DeclarationKind::ValueLetting(_, _)
+            )
+        })
+    }) {
+        return Err(RuleNotApplicable);
+    };
+
+    if bubbled_conditions.len() == 1 {
         let new_expr = Expression::Bubble(
             Metadata::new(),
             Moo::new(new_inner),
             Moo::new(bubbled_conditions[0].clone()),
         );
 
-        Ok(Reduction::pure(new_expr))
+        Ok(RuleEffect::pure(new_expr))
     } else {
-        Ok(Reduction::pure(Expression::Bubble(
+        Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             Moo::new(new_inner),
             Moo::new(Expression::And(
@@ -110,7 +114,7 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
 
 #[register_rule("Bubble", 6000, [UnsafeDiv])]
 fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    if is_all_constant(expr) {
+    if eval_constant(expr).is_some() {
         return Err(RuleNotApplicable);
     }
     if let Expression::UnsafeDiv(_, a, b) = expr {
@@ -119,7 +123,7 @@ fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
 
-        return Ok(Reduction::pure(Expression::Bubble(
+        return Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             Moo::new(Expression::SafeDiv(Metadata::new(), a.clone(), b.clone())),
             Moo::new(Expression::Neq(
@@ -144,7 +148,7 @@ fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 ///
 #[register_rule("Bubble", 6000, [UnsafeMod])]
 fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    if is_all_constant(expr) {
+    if eval_constant(expr).is_some() {
         return Err(RuleNotApplicable);
     }
     if let Expression::UnsafeMod(_, a, b) = expr {
@@ -153,7 +157,7 @@ fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
 
-        return Ok(Reduction::pure(Expression::Bubble(
+        return Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             Moo::new(Expression::SafeMod(Metadata::new(), a.clone(), b.clone())),
             Moo::new(Expression::Neq(
@@ -178,7 +182,7 @@ fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 ///
 #[register_rule("Bubble", 6000, [UnsafePow])]
 fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    if is_all_constant(expr) {
+    if eval_constant(expr).is_some() {
         return Err(RuleNotApplicable);
     }
     if let Expression::UnsafePow(_, a, b) = expr.clone() {
@@ -187,7 +191,7 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
 
-        return Ok(Reduction::pure(Expression::Bubble(
+        return Ok(RuleEffect::pure(Expression::Bubble(
             Metadata::new(),
             Moo::new(Expression::SafePow(Metadata::new(), a.clone(), b.clone())),
             Moo::new(Expression::And(

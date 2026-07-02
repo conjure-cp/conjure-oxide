@@ -2,7 +2,7 @@ use conjure_cp::ast::{Atom, Expression as Expr, Literal};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use crate::sat::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or};
@@ -107,7 +107,7 @@ fn literal_sat_order_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    Ok(Reduction::pure(Expr::SATInt(
+    Ok(RuleEffect::pure(Expr::SATInt(
         Metadata::new(),
         SATIntEncoding::Order,
         Moo::new(into_matrix_expr!(vec![Expr::Atomic(
@@ -168,7 +168,7 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let (output, new_clauses, new_symbols) = sat_order_eq_expr(lhs_bits, rhs_bits, symbols);
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 /// Converts a != expression between two order SATInts to a boolean expression in cnf
@@ -189,7 +189,7 @@ fn neq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 /// Converts a </>/<=/>= expression between two order SATInts to a boolean expression in cnf
@@ -233,7 +233,7 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
     }
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
 }
 
 /// Converts a - expression for a SATInt to a new SATInt
@@ -271,7 +271,7 @@ fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         out.push(neg_bit);
     }
 
-    Ok(Reduction::cnf(
+    Ok(RuleEffect::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Order,

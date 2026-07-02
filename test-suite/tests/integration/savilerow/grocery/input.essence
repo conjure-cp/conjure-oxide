@@ -1,0 +1,26 @@
+$ The Grocery Problem
+$
+$  A child goes to a shop and buys 4 items. When the cashier charges
+$  7.11 Euro he notices that he accidently multiplied the prices 
+$  of the items. So he adds up the prices and suprisingly he gets
+$  the same amount, 7.11 Euro. How much did each item cost?
+$
+$  The value 711*100*100*100 is still too high for bounds variables 
+$  in Minion, so it cannot be computed until sparse bound 
+$  variables are translatable.    
+$
+$  The model is taken from: Christian Schulte, Gert Smolka, Finite Domain
+$  Constraint Programming in Oz. A Tutorial. 2001.
+
+language ESSENCE' 1.0
+letting RANGE be domain int(0..711)
+find item1, item2, item3, item4 : RANGE
+such that 
+     (item1 + item2 + item3 + item4 = 711),
+     (item1 * item2 * item3 * item4 = 711*100*100*100),
+
+      $ symmetry breaking
+     (item1 >= item2),
+     (item2 >= item3),
+     (item3 >= item4)
+     
