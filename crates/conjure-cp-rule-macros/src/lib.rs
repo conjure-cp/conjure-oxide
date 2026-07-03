@@ -8,13 +8,40 @@ use syn::{
     parse::Parse, parse::ParseStream, parse_macro_input,
 };
 
+/// Parsed arguments for `#[register_rule(...)]`.
+///
+/// The attribute syntax is:
+///
+/// ```text
+/// #[register_rule("RuleSet", priority)]
+/// #[register_rule(["RuleSetA", "RuleSetB"], priority)]
+/// #[register_rule("RuleSet", priority, [prefilter, ...])]
+/// ```
+///
+/// The optional prefilter list narrows where the scheduler attempts the rule:
+///
+/// ```text
+/// Variant       // focused expression must have this Expression variant
+/// * / Variant   // focused expression must have an immediate child with this Expression variant
+/// ```
+///
+/// Omitting the prefilter list makes the rule universal. A universal rule is considered at every
+/// focused expression for its priority. In Rust source, write child filters with spaces around the
+/// slash, e.g. `[* / Bubble]`, to keep the wildcard-child syntax visually distinct.
 struct RegisterRuleArgs {
+    /// Rule set names this rule belongs to.
     rule_sets: Vec<LitStr>,
+    /// Priority used for every listed rule set.
     priority: LitInt,
-    /// Expression variant names this rule applies to (e.g. `Add`, `Sub`).
-    /// Empty means applicable to all variants (universal rule).
+    /// Focused-expression variant prefilters, e.g. `Add` or `Sub`.
+    ///
+    /// These are emitted as `Rule::applicable_to`. Empty means the rule has no root-kind
+    /// restriction.
     applicable_variants: Vec<Ident>,
-    /// Expression variant names that must appear as immediate children, parsed as `* / Child`.
+    /// Immediate-child variant prefilters, parsed from `* / Child`.
+    ///
+    /// These are emitted as `Rule::child_applicable_to`. Empty means the rule has no child-kind
+    /// restriction.
     child_applicable_variants: Vec<Ident>,
 }
 
