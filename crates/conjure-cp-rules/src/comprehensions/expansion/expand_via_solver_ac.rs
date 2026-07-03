@@ -56,7 +56,7 @@ pub fn expand_via_solver_ac(
 
     let generator_model = with_temporary_model(generator_model, Some(quantified_vars.clone()));
 
-    let extra_rule_sets = &["Base", "Constant", "Bubble"];
+    let extra_rule_sets = &["Base", "Bubble"];
 
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
     let configured_rewriter = current_rewriter();

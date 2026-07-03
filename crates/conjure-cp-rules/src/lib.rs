@@ -8,7 +8,6 @@ mod base;
 mod bottom_up_adaptor;
 mod bubble;
 mod comprehensions;
-mod constant_eval;
 mod lex;
 mod matrix;
 mod minion;
