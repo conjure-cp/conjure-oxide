@@ -4,8 +4,8 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::token::Comma;
 use syn::{
-    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, bracketed, parenthesized, parse::Parse,
-    parse::ParseStream, parse_macro_input,
+    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, Token, bracketed, parenthesized,
+    parse::Parse, parse::ParseStream, parse_macro_input,
 };
 
 struct RegisterRuleArgs {
@@ -14,6 +14,8 @@ struct RegisterRuleArgs {
     /// Expression variant names this rule applies to (e.g. `Add`, `Sub`).
     /// Empty means applicable to all variants (universal rule).
     applicable_variants: Vec<Ident>,
+    /// Expression variant names that must appear as immediate children, parsed as `* / Child`.
+    child_applicable_variants: Vec<Ident>,
 }
 
 impl Parse for RegisterRuleArgs {
@@ -23,6 +25,7 @@ impl Parse for RegisterRuleArgs {
                 rule_sets: Vec::new(),
                 priority: LitInt::new("0", Span::call_site()),
                 applicable_variants: Vec::new(),
+                child_applicable_variants: Vec::new(),
             });
         }
 
@@ -49,13 +52,21 @@ impl Parse for RegisterRuleArgs {
 
         // Parse optional variant names in brackets: "Minion", 4200, [Add, Sub]
         let mut applicable_variants = Vec::new();
+        let mut child_applicable_variants = Vec::new();
         if input.peek(Comma) {
             let _: Comma = input.parse()?;
             let content;
             bracketed!(content in input);
             while !content.is_empty() {
-                let variant: Ident = content.parse()?;
-                applicable_variants.push(variant);
+                if content.peek(Token![*]) {
+                    let _: Token![*] = content.parse()?;
+                    let _: Token![/] = content.parse()?;
+                    let variant: Ident = content.parse()?;
+                    child_applicable_variants.push(variant);
+                } else {
+                    let variant: Ident = content.parse()?;
+                    applicable_variants.push(variant);
+                }
                 if content.is_empty() {
                     break;
                 }
@@ -67,6 +78,7 @@ impl Parse for RegisterRuleArgs {
             rule_sets,
             priority,
             applicable_variants,
+            child_applicable_variants,
         })
     }
 }
@@ -98,6 +110,15 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         }
     };
 
+    let child_applicable_to = if args.child_applicable_variants.is_empty() {
+        quote! { None }
+    } else {
+        let variants = &args.child_applicable_variants;
+        quote! {
+            Some(&[#(::conjure_cp::discriminant_from_name!(#variants)),*])
+        }
+    };
+
     let expanded = quote! {
         #func
 
@@ -109,6 +130,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             application: #rule_ident,
             rule_sets: #rule_sets_token,
             applicable_to: #applicable_to,
+            child_applicable_to: #child_applicable_to,
         };
     };
 

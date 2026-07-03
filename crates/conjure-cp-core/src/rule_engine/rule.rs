@@ -237,6 +237,8 @@ pub struct Rule<'a> {
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
     /// Discriminant ids of Expression variants this rule applies to, or None for universal rules.
     pub applicable_to: Option<&'static [usize]>,
+    /// Discriminant ids of immediate child Expression variants this rule applies to.
+    pub child_applicable_to: Option<&'static [usize]>,
 }
 
 impl<'a> Rule<'a> {
@@ -250,6 +252,7 @@ impl<'a> Rule<'a> {
             application,
             rule_sets,
             applicable_to: None,
+            child_applicable_to: None,
         }
     }
 

@@ -959,8 +959,40 @@ struct RuleGroup<'a> {
     /// Indexed by discriminant id for O(1) lookup (ids are small and dense; see `Rule::applicable_to`).
     rules_by_discriminant: Vec<Option<Vec<RuleData<'a>>>>,
     universal_rules: Vec<RuleData<'a>>,
+    has_child_filters: bool,
     target_discriminants: Vec<usize>,
     target_discriminant_mask: Vec<bool>,
+}
+
+enum CandidateRules<'group, 'rules> {
+    Slice(std::slice::Iter<'group, RuleData<'rules>>),
+    Filtered {
+        iter: std::slice::Iter<'group, RuleData<'rules>>,
+        expr: &'group Expr,
+        include_universal: bool,
+    },
+}
+
+impl<'group, 'rules> Iterator for CandidateRules<'group, 'rules> {
+    type Item = &'group RuleData<'rules>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            CandidateRules::Slice(iter) => iter.next(),
+            CandidateRules::Filtered {
+                iter,
+                expr,
+                include_universal,
+            } => loop {
+                let rule_data = iter.next()?;
+                if rule_matches_specific_prefilter(rule_data, expr)
+                    || (*include_universal && rule_is_universal(rule_data))
+                {
+                    return Some(rule_data);
+                }
+            },
+        }
+    }
 }
 
 impl<'a> RuleGroup<'a> {
@@ -983,7 +1015,7 @@ impl<'a> RuleGroup<'a> {
             rules_by_discriminant[discriminant] = Some(
                 rules
                     .iter()
-                    .filter(|rd| rule_applies_to_discriminant(rd, discriminant))
+                    .filter(|rd| rule_matches_self_discriminant(rd, discriminant))
                     .cloned()
                     .collect(),
             );
@@ -991,10 +1023,14 @@ impl<'a> RuleGroup<'a> {
 
         let universal_rules: Vec<RuleData<'a>> = rules
             .iter()
-            .filter(|rd| rd.rule.applicable_to.is_none())
+            .filter(|rd| rule_is_universal(rd))
             .cloned()
             .collect();
-        let target_discriminants = if universal_rules.is_empty() {
+        let has_child_filters = rules.iter().any(|rd| rd.rule.child_applicable_to.is_some());
+        // Child filters depend on immediate children, not just this node's variant, so the
+        // root-discriminant candidate index cannot safely skip them until it carries child-kind
+        // summaries as well.
+        let target_discriminants = if universal_rules.is_empty() && !has_child_filters {
             target_discriminants
         } else {
             Vec::new()
@@ -1012,25 +1048,63 @@ impl<'a> RuleGroup<'a> {
             rules,
             rules_by_discriminant,
             universal_rules,
+            has_child_filters,
             target_discriminants,
             target_discriminant_mask,
         }
     }
 
-    fn candidates(&self, config: RewriteConfig, expr: &Expr) -> &[RuleData<'a>] {
+    fn candidates<'group>(
+        &'group self,
+        config: RewriteConfig,
+        expr: &'group Expr,
+    ) -> CandidateRules<'group, 'a> {
         if !config.prefilter {
-            return &self.rules;
+            return CandidateRules::Slice(self.rules.iter());
+        }
+
+        if self.has_child_filters {
+            let has_specific_match = self
+                .rules
+                .iter()
+                .any(|rule_data| rule_matches_specific_prefilter(rule_data, expr));
+            return CandidateRules::Filtered {
+                iter: self.rules.iter(),
+                expr,
+                include_universal: !has_specific_match,
+            };
         }
 
         let discriminant = discriminant_from_value(expr);
-        self.rules_by_discriminant
-            .get(discriminant)
-            .and_then(Option::as_deref)
-            .unwrap_or(&self.universal_rules)
+        CandidateRules::Slice(
+            self.rules_by_discriminant
+                .get(discriminant)
+                .and_then(Option::as_deref)
+                .unwrap_or(&self.universal_rules)
+                .iter(),
+        )
     }
 
     fn has_candidates(&self, config: RewriteConfig, expr: &Expr) -> bool {
-        !self.candidates(config, expr).is_empty()
+        if !config.prefilter {
+            return !self.rules.is_empty();
+        }
+
+        if self.has_child_filters {
+            return !self.universal_rules.is_empty()
+                || self
+                    .rules
+                    .iter()
+                    .any(|rule_data| rule_matches_specific_prefilter(rule_data, expr));
+        }
+
+        let discriminant = discriminant_from_value(expr);
+        !self
+            .rules_by_discriminant
+            .get(discriminant)
+            .and_then(Option::as_deref)
+            .unwrap_or(&self.universal_rules)
+            .is_empty()
     }
 }
 
@@ -3157,11 +3231,45 @@ fn subtree_references_name(expr: &Expr, name: &Name) -> bool {
     })
 }
 
-fn rule_applies_to_discriminant(rule_data: &RuleData<'_>, expr_discriminant: usize) -> bool {
+fn rule_is_universal(rule_data: &RuleData<'_>) -> bool {
+    rule_data.rule.applicable_to.is_none() && rule_data.rule.child_applicable_to.is_none()
+}
+
+fn rule_matches_self_discriminant(rule_data: &RuleData<'_>, expr_discriminant: usize) -> bool {
+    rule_data
+        .rule
+        .applicable_to
+        .is_some_and(|ids| ids.contains(&expr_discriminant))
+}
+
+fn rule_matches_specific_prefilter(rule_data: &RuleData<'_>, expr: &Expr) -> bool {
+    if rule_is_universal(rule_data) {
+        return false;
+    }
+
+    let expr_discriminant = discriminant_from_value(expr);
     rule_data
         .rule
         .applicable_to
         .is_none_or(|ids| ids.contains(&expr_discriminant))
+        && rule_data
+            .rule
+            .child_applicable_to
+            .is_none_or(|ids| expr_has_direct_child_discriminant(expr, ids))
+}
+
+fn expr_has_direct_child_discriminant(expr: &Expr, target_discriminants: &[usize]) -> bool {
+    if target_discriminants.is_empty() {
+        return false;
+    }
+
+    let mut found = false;
+    expr.for_each_expr_child(&mut |child| {
+        if !found && target_discriminants.contains(&discriminant_from_value(child)) {
+            found = true;
+        }
+    });
+    found
 }
 
 #[cfg(debug_assertions)]
@@ -3238,6 +3346,10 @@ mod tests {
 
     fn int_lit(value: i32) -> Expr {
         Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(value)))
+    }
+
+    fn bool_lit(value: bool) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(value)))
     }
 
     fn root(exprs: Vec<Expr>) -> Expr {
@@ -3579,8 +3691,8 @@ mod tests {
         application: never_apply_test_rule,
         rule_sets: &[("test-rule-set", 1)],
         applicable_to: Some(&[]),
+        child_applicable_to: None,
     };
-
     fn test_rule_groups_at_priorities(priorities: &[u16]) -> Vec<RuleGroup<'static>> {
         priorities
             .iter()
@@ -3653,6 +3765,7 @@ mod tests {
             }],
             rules_by_discriminant,
             universal_rules: Vec::new(),
+            has_child_filters: false,
             target_discriminants: vec![discriminant],
             target_discriminant_mask: {
                 let mut mask = vec![false; discriminant + 1];
@@ -3660,6 +3773,56 @@ mod tests {
                 mask
             },
         }]
+    }
+
+    #[test]
+    fn rule_group_child_filter_matches_immediate_child_kind() {
+        let bubble_discriminant = discriminant_from_value(&Expr::Bubble(
+            Metadata::new(),
+            Moo::new(int_lit(0)),
+            Moo::new(bool_lit(true)),
+        ));
+        let child_applicable_to: &'static [usize] =
+            Box::leak(vec![bubble_discriminant].into_boxed_slice());
+        let child_bubble_rule: &'static crate::rule_engine::Rule<'static> =
+            Box::leak(Box::new(crate::rule_engine::Rule {
+                name: "child-bubble-test-rule",
+                application: never_apply_test_rule,
+                rule_sets: &[("test-rule-set", 1)],
+                applicable_to: None,
+                child_applicable_to: Some(child_applicable_to),
+            }));
+        let rule_group = RuleGroup::new(
+            1,
+            vec![crate::rule_engine::RuleData {
+                rule: child_bubble_rule,
+                priority: 1,
+                rule_set: &TEST_RULE_SET,
+            }],
+        );
+        let config = RewriteConfig::optimised();
+
+        let expr_with_bubble_child = Expr::Eq(
+            Metadata::new(),
+            Moo::new(Expr::Bubble(
+                Metadata::new(),
+                Moo::new(int_lit(1)),
+                Moo::new(bool_lit(true)),
+            )),
+            Moo::new(int_lit(2)),
+        );
+        let expr_without_bubble_child =
+            Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2)));
+
+        assert!(rule_group.has_candidates(config, &expr_with_bubble_child));
+        assert_eq!(
+            rule_group
+                .candidates(config, &expr_with_bubble_child)
+                .map(|rule_data| rule_data.rule.name)
+                .collect_vec(),
+            vec!["child-bubble-test-rule"]
+        );
+        assert!(!rule_group.has_candidates(config, &expr_without_bubble_child));
     }
 
     #[test]
