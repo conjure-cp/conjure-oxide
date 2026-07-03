@@ -2027,10 +2027,25 @@ fn try_rewrite_model<'ctx, 'rules>(
                                 ctx.dirty_trace,
                                 Some(symbol_context_hash),
                             );
-                            let mapping_count = mappings.len();
+                            let (_, evaluator_changed) = normalise_evaluators_from_node_to_root(
+                                &mut arena,
+                                node_id,
+                                ctx.dirty_trace,
+                            );
                             let cache = ctx.cache.as_mut().expect("cache enabled");
-                            insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
-                            ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                            // TODO: if cache becomes part of the optimised profile again, preserve
+                            // ancestor mappings through evaluator normalisation instead of dropping
+                            // this evidence when the hook changes an ancestor.
+                            if !evaluator_changed {
+                                let mapping_count = mappings.len();
+                                insert_ancestor_mappings(
+                                    cache,
+                                    mappings,
+                                    level,
+                                    symbol_context_hash,
+                                );
+                                ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                            }
                             did_rewrite = true;
                             continue 'rewrite_loop;
                         }
@@ -2259,6 +2274,8 @@ fn try_rewrite_model<'ctx, 'rules>(
                             ctx.dirty_trace.cache_inserts += 1;
                         }
                         if !evaluator_changed {
+                            // TODO: thread old ancestor hashes through evaluator normalisation so
+                            // cache can keep these mappings even when the hook changes an ancestor.
                             let mapping_count = mappings.len();
                             insert_ancestor_mappings(
                                 cache,
@@ -2431,15 +2448,24 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                             Some(symbol_context_hash),
                         )
                     };
-                    let mapping_count = mappings.len();
+                    let (rewrite_impact_node_id, evaluator_changed) = {
+                        let arena = &mut surfaces[surface_index].arena;
+                        normalise_evaluators_from_node_to_root(arena, node_id, ctx.dirty_trace)
+                    };
                     let cache = ctx.cache.as_mut().expect("cache enabled");
-                    insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
-                    ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                    // TODO: if cache becomes part of the optimised profile again, preserve
+                    // ancestor mappings through evaluator normalisation instead of dropping
+                    // this evidence when the hook changes an ancestor.
+                    if !evaluator_changed {
+                        let mapping_count = mappings.len();
+                        insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
+                        ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                    }
                     enqueue_worklist_rewrite_impact(
                         &mut scheduler,
                         &surfaces[surface_index].arena,
                         surface_index,
-                        node_id,
+                        rewrite_impact_node_id,
                         ctx.dirty_trace,
                     );
                     if let Some(name) = rewritten_value_letting_name {
@@ -2736,6 +2762,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                     ctx.dirty_trace.cache_inserts += 1;
                 }
                 if !evaluator_changed {
+                    // TODO: thread old ancestor hashes through evaluator normalisation so cache
+                    // can keep these mappings even when the hook changes an ancestor.
                     let mapping_count = mappings.len();
                     insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
                     ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
@@ -2899,15 +2927,14 @@ fn normalise_evaluator_node_to_fixpoint(
             break;
         };
 
-        replace_focus_and_dirty_ancestors(
-            arena,
-            node_id,
-            clear_expr_clean_rule_metadata(replacement),
-            dirty_trace,
-            None,
-        );
+        dirty_trace.replacement_subtree_clears += 1;
+        arena.replace_subtree(node_id, clear_expr_clean_rule_metadata(replacement));
         dirty_trace.record_rewrite("evaluator_normalisation_hook", false);
         changed = true;
+    }
+
+    if changed {
+        dirty_ancestors_after_focus_change(arena, node_id, dirty_trace, None);
     }
 
     changed
@@ -3192,10 +3219,19 @@ fn replace_focus_and_dirty_ancestors(
 ) -> AncestorCacheMappings {
     let old_ancestor_content_hashes =
         cache_mapping_context.map(|_| ancestor_content_hashes_to_root(arena, node_id, dirty_trace));
-    let mut ancestor_mappings = Vec::new();
     dirty_trace.replacement_subtree_clears += 1;
     arena.replace_subtree(node_id, new_focus);
 
+    dirty_ancestors_after_focus_change(arena, node_id, dirty_trace, old_ancestor_content_hashes)
+}
+
+fn dirty_ancestors_after_focus_change(
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+    old_ancestor_content_hashes: Option<Vec<u64>>,
+) -> AncestorCacheMappings {
+    let mut ancestor_mappings = Vec::new();
     let mut ancestor_index = 0;
     let mut ancestor = arena.parent(node_id);
     while let Some(ancestor_id) = ancestor {
