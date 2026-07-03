@@ -21,13 +21,15 @@ use syn::{
 /// The optional prefilter list narrows where the scheduler attempts the rule:
 ///
 /// ```text
-/// Variant       // focused expression must have this Expression variant
-/// * / Variant   // focused expression must have an immediate child with this Expression variant
+/// Variant             // focused expression must have this Expression variant
+/// * / Variant         // focused expression must have an immediate child with this variant
+/// Atomic / Reference  // focused expression must be an atomic reference
+/// Atomic / Literal    // focused expression must be an atomic literal
 /// ```
 ///
 /// Omitting the prefilter list makes the rule universal. A universal rule is considered at every
-/// focused expression for its priority. In Rust source, write child filters with spaces around the
-/// slash, e.g. `[* / Bubble]`, to keep the wildcard-child syntax visually distinct.
+/// focused expression for its priority. In Rust source, write slash filters with spaces around the
+/// slash, e.g. `[* / Bubble]` or `[Atomic / Reference]`, to keep the syntax visually distinct.
 struct RegisterRuleArgs {
     /// Rule set names this rule belongs to.
     rule_sets: Vec<LitStr>,
@@ -43,6 +45,11 @@ struct RegisterRuleArgs {
     /// These are emitted as `Rule::child_applicable_to`. Empty means the rule has no child-kind
     /// restriction.
     child_applicable_variants: Vec<Ident>,
+    /// Atomic subvariant prefilters, parsed from `Atomic / Reference` or `Atomic / Literal`.
+    ///
+    /// These are emitted as `Rule::atom_applicable_to`. Empty means the rule has no atom-kind
+    /// restriction.
+    atom_applicable_variants: Vec<Ident>,
 }
 
 impl Parse for RegisterRuleArgs {
@@ -53,6 +60,7 @@ impl Parse for RegisterRuleArgs {
                 priority: LitInt::new("0", Span::call_site()),
                 applicable_variants: Vec::new(),
                 child_applicable_variants: Vec::new(),
+                atom_applicable_variants: Vec::new(),
             });
         }
 
@@ -80,6 +88,7 @@ impl Parse for RegisterRuleArgs {
         // Parse optional variant names in brackets: "Minion", 4200, [Add, Sub]
         let mut applicable_variants = Vec::new();
         let mut child_applicable_variants = Vec::new();
+        let mut atom_applicable_variants = Vec::new();
         if input.peek(Comma) {
             let _: Comma = input.parse()?;
             let content;
@@ -92,7 +101,29 @@ impl Parse for RegisterRuleArgs {
                     child_applicable_variants.push(variant);
                 } else {
                     let variant: Ident = content.parse()?;
-                    applicable_variants.push(variant);
+                    if content.peek(Token![/]) {
+                        let _: Token![/] = content.parse()?;
+                        let atom_variant: Ident = content.parse()?;
+                        if variant.to_string() != "Atomic" {
+                            return Err(syn::Error::new(
+                                variant.span(),
+                                "only Atomic / ... atom-kind prefilters are supported",
+                            ));
+                        }
+                        match atom_variant.to_string().as_str() {
+                            "Literal" | "Reference" => {
+                                atom_applicable_variants.push(atom_variant);
+                            }
+                            _ => {
+                                return Err(syn::Error::new(
+                                    atom_variant.span(),
+                                    "expected Literal or Reference after Atomic /",
+                                ));
+                            }
+                        }
+                    } else {
+                        applicable_variants.push(variant);
+                    }
                 }
                 if content.is_empty() {
                     break;
@@ -106,6 +137,7 @@ impl Parse for RegisterRuleArgs {
             priority,
             applicable_variants,
             child_applicable_variants,
+            atom_applicable_variants,
         })
     }
 }
@@ -146,6 +178,15 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         }
     };
 
+    let atom_applicable_to = if args.atom_applicable_variants.is_empty() {
+        quote! { None }
+    } else {
+        let variants = &args.atom_applicable_variants;
+        quote! {
+            Some(&[#(::conjure_cp::rule_engine::AtomKind::#variants),*])
+        }
+    };
+
     let expanded = quote! {
         #func
 
@@ -158,6 +199,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             rule_sets: #rule_sets_token,
             applicable_to: #applicable_to,
             child_applicable_to: #child_applicable_to,
+            atom_applicable_to: #atom_applicable_to,
         };
     };
 

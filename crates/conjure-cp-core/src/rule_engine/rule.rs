@@ -222,6 +222,15 @@ impl RuleEffect {
 /// The function type used in a [`Rule`].
 pub type RuleFn = fn(&Expression, &SymbolTable) -> ApplicationResult;
 
+/// Atomic expression subvariants that can be used as rule prefilters.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum AtomKind {
+    /// An `Atomic` expression containing a literal.
+    Literal,
+    /// An `Atomic` expression containing a reference.
+    Reference,
+}
+
 /**
  * A rule with a name, application function, and rule sets.
  *
@@ -239,6 +248,8 @@ pub struct Rule<'a> {
     pub applicable_to: Option<&'static [usize]>,
     /// Discriminant ids of immediate child Expression variants this rule applies to.
     pub child_applicable_to: Option<&'static [usize]>,
+    /// Atomic subvariants this rule applies to when the focused expression is `Atomic`.
+    pub atom_applicable_to: Option<&'static [AtomKind]>,
 }
 
 impl<'a> Rule<'a> {
@@ -253,6 +264,7 @@ impl<'a> Rule<'a> {
             rule_sets,
             applicable_to: None,
             child_applicable_to: None,
+            atom_applicable_to: None,
         }
     }
 

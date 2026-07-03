@@ -1,4 +1,4 @@
-use super::{RewriteError, RuleSet, resolve_rules::RuleData};
+use super::{AtomKind, RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
     ast::{
@@ -959,7 +959,7 @@ struct RuleGroup<'a> {
     /// Indexed by discriminant id for O(1) lookup (ids are small and dense; see `Rule::applicable_to`).
     rules_by_discriminant: Vec<Option<Vec<RuleData<'a>>>>,
     universal_rules: Vec<RuleData<'a>>,
-    has_child_filters: bool,
+    has_non_discriminant_filters: bool,
     target_discriminants: Vec<usize>,
     target_discriminant_mask: Vec<bool>,
 }
@@ -1026,11 +1026,13 @@ impl<'a> RuleGroup<'a> {
             .filter(|rd| rule_is_universal(rd))
             .cloned()
             .collect();
-        let has_child_filters = rules.iter().any(|rd| rd.rule.child_applicable_to.is_some());
-        // Child filters depend on immediate children, not just this node's variant, so the
-        // root-discriminant candidate index cannot safely skip them until it carries child-kind
+        let has_non_discriminant_filters = rules.iter().any(|rd| {
+            rd.rule.child_applicable_to.is_some() || rd.rule.atom_applicable_to.is_some()
+        });
+        // Child and atom filters depend on more than this node's expression variant, so the
+        // root-discriminant candidate index cannot safely skip them until it carries those
         // summaries as well.
-        let target_discriminants = if universal_rules.is_empty() && !has_child_filters {
+        let target_discriminants = if universal_rules.is_empty() && !has_non_discriminant_filters {
             target_discriminants
         } else {
             Vec::new()
@@ -1048,7 +1050,7 @@ impl<'a> RuleGroup<'a> {
             rules,
             rules_by_discriminant,
             universal_rules,
-            has_child_filters,
+            has_non_discriminant_filters,
             target_discriminants,
             target_discriminant_mask,
         }
@@ -1063,7 +1065,7 @@ impl<'a> RuleGroup<'a> {
             return CandidateRules::Slice(self.rules.iter());
         }
 
-        if self.has_child_filters {
+        if self.has_non_discriminant_filters {
             let has_specific_match = self
                 .rules
                 .iter()
@@ -1090,7 +1092,7 @@ impl<'a> RuleGroup<'a> {
             return !self.rules.is_empty();
         }
 
-        if self.has_child_filters {
+        if self.has_non_discriminant_filters {
             return !self.universal_rules.is_empty()
                 || self
                     .rules
@@ -3232,7 +3234,9 @@ fn subtree_references_name(expr: &Expr, name: &Name) -> bool {
 }
 
 fn rule_is_universal(rule_data: &RuleData<'_>) -> bool {
-    rule_data.rule.applicable_to.is_none() && rule_data.rule.child_applicable_to.is_none()
+    rule_data.rule.applicable_to.is_none()
+        && rule_data.rule.child_applicable_to.is_none()
+        && rule_data.rule.atom_applicable_to.is_none()
 }
 
 fn rule_matches_self_discriminant(rule_data: &RuleData<'_>, expr_discriminant: usize) -> bool {
@@ -3256,6 +3260,18 @@ fn rule_matches_specific_prefilter(rule_data: &RuleData<'_>, expr: &Expr) -> boo
             .rule
             .child_applicable_to
             .is_none_or(|ids| expr_has_direct_child_discriminant(expr, ids))
+        && rule_data
+            .rule
+            .atom_applicable_to
+            .is_none_or(|kinds| expr_atom_kind(expr).is_some_and(|kind| kinds.contains(&kind)))
+}
+
+fn expr_atom_kind(expr: &Expr) -> Option<AtomKind> {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(_)) => Some(AtomKind::Literal),
+        Expr::Atomic(_, Atom::Reference(_)) => Some(AtomKind::Reference),
+        _ => None,
+    }
 }
 
 fn expr_has_direct_child_discriminant(expr: &Expr, target_discriminants: &[usize]) -> bool {
@@ -3692,6 +3708,7 @@ mod tests {
         rule_sets: &[("test-rule-set", 1)],
         applicable_to: Some(&[]),
         child_applicable_to: None,
+        atom_applicable_to: None,
     };
     fn test_rule_groups_at_priorities(priorities: &[u16]) -> Vec<RuleGroup<'static>> {
         priorities
@@ -3765,7 +3782,7 @@ mod tests {
             }],
             rules_by_discriminant,
             universal_rules: Vec::new(),
-            has_child_filters: false,
+            has_non_discriminant_filters: false,
             target_discriminants: vec![discriminant],
             target_discriminant_mask: {
                 let mut mask = vec![false; discriminant + 1];
@@ -3791,6 +3808,7 @@ mod tests {
                 rule_sets: &[("test-rule-set", 1)],
                 applicable_to: None,
                 child_applicable_to: Some(child_applicable_to),
+                atom_applicable_to: None,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -3823,6 +3841,42 @@ mod tests {
             vec!["child-bubble-test-rule"]
         );
         assert!(!rule_group.has_candidates(config, &expr_without_bubble_child));
+    }
+
+    #[test]
+    fn rule_group_atom_filter_matches_atomic_reference() {
+        let atom_reference_rule: &'static crate::rule_engine::Rule<'static> =
+            Box::leak(Box::new(crate::rule_engine::Rule {
+                name: "atom-reference-test-rule",
+                application: never_apply_test_rule,
+                rule_sets: &[("test-rule-set", 1)],
+                applicable_to: None,
+                child_applicable_to: None,
+                atom_applicable_to: Some(&[AtomKind::Reference]),
+            }));
+        let rule_group = RuleGroup::new(
+            1,
+            vec![crate::rule_engine::RuleData {
+                rule: atom_reference_rule,
+                priority: 1,
+                rule_set: &TEST_RULE_SET,
+            }],
+        );
+        let config = RewriteConfig::optimised();
+        let reference = reference_expr(&Name::user("x"));
+        let literal = int_lit(1);
+        let composite = Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2)));
+
+        assert!(rule_group.has_candidates(config, &reference));
+        assert_eq!(
+            rule_group
+                .candidates(config, &reference)
+                .map(|rule_data| rule_data.rule.name)
+                .collect_vec(),
+            vec!["atom-reference-test-rule"]
+        );
+        assert!(!rule_group.has_candidates(config, &literal));
+        assert!(!rule_group.has_candidates(config, &composite));
     }
 
     #[test]
