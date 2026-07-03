@@ -231,6 +231,23 @@ pub enum AtomKind {
     Reference,
 }
 
+/// A complete rule prefilter alternative.
+///
+/// A rule matches when any of its prefilter alternatives matches the focused expression. This keeps
+/// compound filters such as `And / Comprehension` paired instead of forming a cross product with
+/// other alternatives in the same rule declaration.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum RulePrefilter {
+    /// Focused expression must have this `Expression` variant.
+    Variant(usize),
+    /// Focused expression must have an immediate child with this `Expression` variant.
+    Child { child: usize },
+    /// Focused expression must have this variant and an immediate child with `child`'s variant.
+    VariantChild { variant: usize, child: usize },
+    /// Focused expression must be an `Atomic` expression with this atomic subvariant.
+    Atom(AtomKind),
+}
+
 /**
  * A rule with a name, application function, and rule sets.
  *
@@ -244,12 +261,8 @@ pub struct Rule<'a> {
     pub name: &'a str,
     pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
-    /// Discriminant ids of Expression variants this rule applies to, or None for universal rules.
-    pub applicable_to: Option<&'static [usize]>,
-    /// Discriminant ids of immediate child Expression variants this rule applies to.
-    pub child_applicable_to: Option<&'static [usize]>,
-    /// Atomic subvariants this rule applies to when the focused expression is `Atomic`.
-    pub atom_applicable_to: Option<&'static [AtomKind]>,
+    /// Complete prefilter alternatives this rule applies to, or `None` for universal rules.
+    pub prefilters: Option<&'static [RulePrefilter]>,
 }
 
 impl<'a> Rule<'a> {
@@ -262,9 +275,7 @@ impl<'a> Rule<'a> {
             name,
             application,
             rule_sets,
-            applicable_to: None,
-            child_applicable_to: None,
-            atom_applicable_to: None,
+            prefilters: None,
         }
     }
 

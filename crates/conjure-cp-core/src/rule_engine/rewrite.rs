@@ -1,4 +1,4 @@
-use super::{AtomKind, RewriteError, RuleSet, resolve_rules::RuleData};
+use super::{AtomKind, RewriteError, RulePrefilter, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
     ast::{
@@ -956,7 +956,7 @@ impl RewriteCache {
 struct RuleGroup<'a> {
     priority: u16,
     rules: Vec<RuleData<'a>>,
-    /// Indexed by discriminant id for O(1) lookup (ids are small and dense; see `Rule::applicable_to`).
+    /// Indexed by discriminant id for O(1) lookup of simple variant prefilters.
     rules_by_discriminant: Vec<Option<Vec<RuleData<'a>>>>,
     universal_rules: Vec<RuleData<'a>>,
     has_non_discriminant_filters: bool,
@@ -999,9 +999,14 @@ impl<'a> RuleGroup<'a> {
     fn new(priority: u16, rules: Vec<RuleData<'a>>) -> Self {
         let discriminants = rules
             .iter()
-            .filter_map(|rd| rd.rule.applicable_to)
+            .filter_map(|rd| rd.rule.prefilters)
             .flatten()
-            .copied()
+            .filter_map(|prefilter| match prefilter {
+                RulePrefilter::Variant(discriminant) => Some(*discriminant),
+                RulePrefilter::Child { .. }
+                | RulePrefilter::VariantChild { .. }
+                | RulePrefilter::Atom(_) => None,
+            })
             .collect_vec();
 
         let mut rules_by_discriminant = Vec::new();
@@ -1027,7 +1032,11 @@ impl<'a> RuleGroup<'a> {
             .cloned()
             .collect();
         let has_non_discriminant_filters = rules.iter().any(|rd| {
-            rd.rule.child_applicable_to.is_some() || rd.rule.atom_applicable_to.is_some()
+            rd.rule.prefilters.is_some_and(|prefilters| {
+                prefilters
+                    .iter()
+                    .any(|prefilter| !matches!(prefilter, RulePrefilter::Variant(_)))
+            })
         });
         // Child and atom filters depend on more than this node's expression variant, so the
         // root-discriminant candidate index cannot safely skip them until it carries those
@@ -3234,16 +3243,18 @@ fn subtree_references_name(expr: &Expr, name: &Name) -> bool {
 }
 
 fn rule_is_universal(rule_data: &RuleData<'_>) -> bool {
-    rule_data.rule.applicable_to.is_none()
-        && rule_data.rule.child_applicable_to.is_none()
-        && rule_data.rule.atom_applicable_to.is_none()
+    rule_data.rule.prefilters.is_none()
 }
 
 fn rule_matches_self_discriminant(rule_data: &RuleData<'_>, expr_discriminant: usize) -> bool {
     rule_data
         .rule
-        .applicable_to
-        .is_some_and(|ids| ids.contains(&expr_discriminant))
+        .prefilters
+        .is_some_and(|prefilters| {
+            prefilters.iter().any(|prefilter| {
+                matches!(prefilter, RulePrefilter::Variant(discriminant) if *discriminant == expr_discriminant)
+            })
+        })
 }
 
 fn rule_matches_specific_prefilter(rule_data: &RuleData<'_>, expr: &Expr) -> bool {
@@ -3252,18 +3263,16 @@ fn rule_matches_specific_prefilter(rule_data: &RuleData<'_>, expr: &Expr) -> boo
     }
 
     let expr_discriminant = discriminant_from_value(expr);
-    rule_data
-        .rule
-        .applicable_to
-        .is_none_or(|ids| ids.contains(&expr_discriminant))
-        && rule_data
-            .rule
-            .child_applicable_to
-            .is_none_or(|ids| expr_has_direct_child_discriminant(expr, ids))
-        && rule_data
-            .rule
-            .atom_applicable_to
-            .is_none_or(|kinds| expr_atom_kind(expr).is_some_and(|kind| kinds.contains(&kind)))
+    rule_data.rule.prefilters.is_some_and(|prefilters| {
+        prefilters.iter().any(|prefilter| match prefilter {
+            RulePrefilter::Variant(discriminant) => *discriminant == expr_discriminant,
+            RulePrefilter::Child { child } => expr_has_direct_child_discriminant(expr, &[*child]),
+            RulePrefilter::VariantChild { variant, child } => {
+                *variant == expr_discriminant && expr_has_direct_child_discriminant(expr, &[*child])
+            }
+            RulePrefilter::Atom(atom_kind) => expr_atom_kind(expr) == Some(*atom_kind),
+        })
+    })
 }
 
 fn expr_atom_kind(expr: &Expr) -> Option<AtomKind> {
@@ -3706,9 +3715,7 @@ mod tests {
         name: "no-target-test-rule",
         application: never_apply_test_rule,
         rule_sets: &[("test-rule-set", 1)],
-        applicable_to: Some(&[]),
-        child_applicable_to: None,
-        atom_applicable_to: None,
+        prefilters: Some(&[]),
     };
     fn test_rule_groups_at_priorities(priorities: &[u16]) -> Vec<RuleGroup<'static>> {
         priorities
@@ -3799,16 +3806,18 @@ mod tests {
             Moo::new(int_lit(0)),
             Moo::new(bool_lit(true)),
         ));
-        let child_applicable_to: &'static [usize] =
-            Box::leak(vec![bubble_discriminant].into_boxed_slice());
+        let child_prefilters: &'static [RulePrefilter] = Box::leak(
+            vec![RulePrefilter::Child {
+                child: bubble_discriminant,
+            }]
+            .into_boxed_slice(),
+        );
         let child_bubble_rule: &'static crate::rule_engine::Rule<'static> =
             Box::leak(Box::new(crate::rule_engine::Rule {
                 name: "child-bubble-test-rule",
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
-                applicable_to: None,
-                child_applicable_to: Some(child_applicable_to),
-                atom_applicable_to: None,
+                prefilters: Some(child_prefilters),
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -3850,9 +3859,7 @@ mod tests {
                 name: "atom-reference-test-rule",
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
-                applicable_to: None,
-                child_applicable_to: None,
-                atom_applicable_to: Some(&[AtomKind::Reference]),
+                prefilters: Some(&[RulePrefilter::Atom(AtomKind::Reference)]),
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -3877,6 +3884,65 @@ mod tests {
         );
         assert!(!rule_group.has_candidates(config, &literal));
         assert!(!rule_group.has_candidates(config, &composite));
+    }
+
+    #[test]
+    fn rule_group_variant_child_filter_does_not_cross_product_alternatives() {
+        let and_discriminant = discriminant_from_value(&Expr::And(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(true)]),
+        ));
+        let or_discriminant = discriminant_from_value(&Expr::Or(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(true)]),
+        ));
+        let comprehension_discriminant =
+            discriminant_from_value(&comprehension(bool_lit(true), vec![]));
+        let atomic_discriminant = discriminant_from_value(&bool_lit(true));
+        let paired_prefilters: &'static [RulePrefilter] = Box::leak(
+            vec![
+                RulePrefilter::VariantChild {
+                    variant: and_discriminant,
+                    child: comprehension_discriminant,
+                },
+                RulePrefilter::VariantChild {
+                    variant: or_discriminant,
+                    child: atomic_discriminant,
+                },
+            ]
+            .into_boxed_slice(),
+        );
+        let paired_rule: &'static crate::rule_engine::Rule<'static> =
+            Box::leak(Box::new(crate::rule_engine::Rule {
+                name: "paired-prefilter-test-rule",
+                application: never_apply_test_rule,
+                rule_sets: &[("test-rule-set", 1)],
+                prefilters: Some(paired_prefilters),
+            }));
+        let rule_group = RuleGroup::new(
+            1,
+            vec![crate::rule_engine::RuleData {
+                rule: paired_rule,
+                priority: 1,
+                rule_set: &TEST_RULE_SET,
+            }],
+        );
+        let config = RewriteConfig::optimised();
+        let and_with_comprehension = Expr::And(
+            Metadata::new(),
+            Moo::new(comprehension(bool_lit(true), vec![])),
+        );
+        let or_with_atomic = Expr::Or(Metadata::new(), Moo::new(bool_lit(true)));
+        let and_with_atomic = Expr::And(Metadata::new(), Moo::new(bool_lit(true)));
+        let or_with_comprehension = Expr::Or(
+            Metadata::new(),
+            Moo::new(comprehension(bool_lit(true), vec![])),
+        );
+
+        assert!(rule_group.has_candidates(config, &and_with_comprehension));
+        assert!(rule_group.has_candidates(config, &or_with_atomic));
+        assert!(!rule_group.has_candidates(config, &and_with_atomic));
+        assert!(!rule_group.has_candidates(config, &or_with_comprehension));
     }
 
     #[test]

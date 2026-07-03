@@ -83,7 +83,9 @@ pub use conjure_cp_rule_macros::register_rule_set;
 pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
 pub use rewrite::rewrite_model;
 pub use rewriter_common::RewriteError;
-pub use rule::{ApplicationError, ApplicationResult, AtomKind, Rule, RuleEffect, RuleFn};
+pub use rule::{
+    ApplicationError, ApplicationResult, AtomKind, Rule, RuleEffect, RuleFn, RulePrefilter,
+};
 pub use rule_set::RuleSet;
 
 mod expression_zipper;

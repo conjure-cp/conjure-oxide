@@ -21,35 +21,38 @@ use syn::{
 /// The optional prefilter list narrows where the scheduler attempts the rule:
 ///
 /// ```text
-/// Variant             // focused expression must have this Expression variant
-/// * / Variant         // focused expression must have an immediate child with this variant
-/// Atomic / Reference  // focused expression must be an atomic reference
-/// Atomic / Literal    // focused expression must be an atomic literal
+/// Variant              // focused expression must have this Expression variant
+/// * / Variant          // focused expression must have an immediate child with this variant
+/// Variant / Variant    // focused expression must have the left variant and an immediate child
+///                      // with the right variant
+/// Atomic / Reference   // focused expression must be an atomic reference
+/// Atomic / Literal     // focused expression must be an atomic literal
 /// ```
+///
+/// Items in the list are alternatives. For example, `[And / Comprehension, Or / Comprehension]`
+/// means `(And with direct Comprehension child) OR (Or with direct Comprehension child)`.
 ///
 /// Omitting the prefilter list makes the rule universal. A universal rule is considered at every
 /// focused expression for its priority. In Rust source, write slash filters with spaces around the
 /// slash, e.g. `[* / Bubble]` or `[Atomic / Reference]`, to keep the syntax visually distinct.
+enum ParsedPrefilter {
+    /// Focused-expression variant prefilter, e.g. `Add` or `Sub`.
+    Variant(Ident),
+    /// Immediate-child variant prefilter, parsed from `* / Child`.
+    Child { child: Ident },
+    /// Paired focused-expression and immediate-child variant prefilter, parsed from `Root / Child`.
+    VariantChild { variant: Ident, child: Ident },
+    /// Atomic subvariant prefilter, parsed from `Atomic / Reference` or `Atomic / Literal`.
+    Atom(Ident),
+}
+
 struct RegisterRuleArgs {
     /// Rule set names this rule belongs to.
     rule_sets: Vec<LitStr>,
     /// Priority used for every listed rule set.
     priority: LitInt,
-    /// Focused-expression variant prefilters, e.g. `Add` or `Sub`.
-    ///
-    /// These are emitted as `Rule::applicable_to`. Empty means the rule has no root-kind
-    /// restriction.
-    applicable_variants: Vec<Ident>,
-    /// Immediate-child variant prefilters, parsed from `* / Child`.
-    ///
-    /// These are emitted as `Rule::child_applicable_to`. Empty means the rule has no child-kind
-    /// restriction.
-    child_applicable_variants: Vec<Ident>,
-    /// Atomic subvariant prefilters, parsed from `Atomic / Reference` or `Atomic / Literal`.
-    ///
-    /// These are emitted as `Rule::atom_applicable_to`. Empty means the rule has no atom-kind
-    /// restriction.
-    atom_applicable_variants: Vec<Ident>,
+    /// Complete prefilter alternatives. Empty means the rule is universal.
+    prefilters: Vec<ParsedPrefilter>,
 }
 
 impl Parse for RegisterRuleArgs {
@@ -58,9 +61,7 @@ impl Parse for RegisterRuleArgs {
             return Ok(RegisterRuleArgs {
                 rule_sets: Vec::new(),
                 priority: LitInt::new("0", Span::call_site()),
-                applicable_variants: Vec::new(),
-                child_applicable_variants: Vec::new(),
-                atom_applicable_variants: Vec::new(),
+                prefilters: Vec::new(),
             });
         }
 
@@ -86,9 +87,7 @@ impl Parse for RegisterRuleArgs {
         let priority: LitInt = input.parse()?;
 
         // Parse optional variant names in brackets: "Minion", 4200, [Add, Sub]
-        let mut applicable_variants = Vec::new();
-        let mut child_applicable_variants = Vec::new();
-        let mut atom_applicable_variants = Vec::new();
+        let mut prefilters = Vec::new();
         if input.peek(Comma) {
             let _: Comma = input.parse()?;
             let content;
@@ -98,31 +97,32 @@ impl Parse for RegisterRuleArgs {
                     let _: Token![*] = content.parse()?;
                     let _: Token![/] = content.parse()?;
                     let variant: Ident = content.parse()?;
-                    child_applicable_variants.push(variant);
+                    prefilters.push(ParsedPrefilter::Child { child: variant });
                 } else {
                     let variant: Ident = content.parse()?;
                     if content.peek(Token![/]) {
                         let _: Token![/] = content.parse()?;
-                        let atom_variant: Ident = content.parse()?;
+                        let subvariant: Ident = content.parse()?;
                         if variant.to_string() != "Atomic" {
-                            return Err(syn::Error::new(
-                                variant.span(),
-                                "only Atomic / ... atom-kind prefilters are supported",
-                            ));
-                        }
-                        match atom_variant.to_string().as_str() {
-                            "Literal" | "Reference" => {
-                                atom_applicable_variants.push(atom_variant);
-                            }
-                            _ => {
-                                return Err(syn::Error::new(
-                                    atom_variant.span(),
-                                    "expected Literal or Reference after Atomic /",
-                                ));
+                            prefilters.push(ParsedPrefilter::VariantChild {
+                                variant,
+                                child: subvariant,
+                            });
+                        } else {
+                            match subvariant.to_string().as_str() {
+                                "Literal" | "Reference" => {
+                                    prefilters.push(ParsedPrefilter::Atom(subvariant));
+                                }
+                                _ => {
+                                    return Err(syn::Error::new(
+                                        subvariant.span(),
+                                        "expected Literal or Reference after Atomic /",
+                                    ));
+                                }
                             }
                         }
                     } else {
-                        applicable_variants.push(variant);
+                        prefilters.push(ParsedPrefilter::Variant(variant));
                     }
                 }
                 if content.is_empty() {
@@ -135,9 +135,7 @@ impl Parse for RegisterRuleArgs {
         Ok(RegisterRuleArgs {
             rule_sets,
             priority,
-            applicable_variants,
-            child_applicable_variants,
-            atom_applicable_variants,
+            prefilters,
         })
     }
 }
@@ -160,30 +158,42 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         quote! { &[#((#rule_sets, #priority as u16)),*] }
     };
 
-    let applicable_to = if args.applicable_variants.is_empty() {
+    let prefilters = if args.prefilters.is_empty() {
         quote! { None }
     } else {
-        let variants = &args.applicable_variants;
+        let prefilter_tokens = args.prefilters.iter().map(|prefilter| match prefilter {
+            ParsedPrefilter::Variant(variant) => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Variant(
+                        ::conjure_cp::discriminant_from_name!(#variant)
+                    )
+                }
+            }
+            ParsedPrefilter::Child { child } => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Child {
+                        child: ::conjure_cp::discriminant_from_name!(#child),
+                    }
+                }
+            }
+            ParsedPrefilter::VariantChild { variant, child } => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::VariantChild {
+                        variant: ::conjure_cp::discriminant_from_name!(#variant),
+                        child: ::conjure_cp::discriminant_from_name!(#child),
+                    }
+                }
+            }
+            ParsedPrefilter::Atom(atom_variant) => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Atom(
+                        ::conjure_cp::rule_engine::AtomKind::#atom_variant
+                    )
+                }
+            }
+        });
         quote! {
-            Some(&[#(::conjure_cp::discriminant_from_name!(#variants)),*])
-        }
-    };
-
-    let child_applicable_to = if args.child_applicable_variants.is_empty() {
-        quote! { None }
-    } else {
-        let variants = &args.child_applicable_variants;
-        quote! {
-            Some(&[#(::conjure_cp::discriminant_from_name!(#variants)),*])
-        }
-    };
-
-    let atom_applicable_to = if args.atom_applicable_variants.is_empty() {
-        quote! { None }
-    } else {
-        let variants = &args.atom_applicable_variants;
-        quote! {
-            Some(&[#(::conjure_cp::rule_engine::AtomKind::#variants),*])
+            Some(&[#(#prefilter_tokens),*])
         }
     };
 
@@ -197,9 +207,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             name: stringify!(#rule_ident),
             application: #rule_ident,
             rule_sets: #rule_sets_token,
-            applicable_to: #applicable_to,
-            child_applicable_to: #child_applicable_to,
-            atom_applicable_to: #atom_applicable_to,
+            prefilters: #prefilters,
         };
     };
 
