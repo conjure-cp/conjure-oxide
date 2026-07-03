@@ -3,14 +3,14 @@
 //! Weighted sums are sums in the form c1*v1 + c2*v2 + ..., where cx are literals, and vx variable
 //! references.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
-use conjure_cp::ast::Reference;
+use conjure_cp::ast::{AbstractLiteral, Reference};
 use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::register_rule;
 use conjure_cp::{
     ast::Metadata,
-    ast::{Atom, Expression as Expr, Literal as Lit, Moo, SymbolTable},
+    ast::{Atom, Expression as Expr, IntVal, Literal as Lit, Moo, Range, SymbolTable},
     into_matrix_expr,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
@@ -27,7 +27,11 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(meta, exprs) = expr else {
         return Err(RuleNotApplicable);
     };
-    let exprs = exprs.unwrap_list().ok_or(RuleNotApplicable)?;
+    let exprs = expr_list_elements(exprs.as_ref()).ok_or(RuleNotApplicable)?;
+
+    if !has_duplicate_weighted_reference(exprs) {
+        return Err(RuleNotApplicable);
+    }
 
     // Store:
     //  * map variable -> coefficient for weighted sum terms
@@ -41,40 +45,11 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // should've already ran.
 
     for expr in exprs.iter() {
-        match expr {
-            Expr::Product(_, exprs2) => {
-                match exprs2.unwrap_list().ok_or(RuleNotApplicable)?.as_slice() {
-                    // todo (gs248) It would be nice to generate these destructures by macro, like `essence_expr!` but in reverse
-                    // -c*v
-                    [Expr::Atomic(_, Atom::Reference(re)), Expr::Neg(_, e3)] => {
-                        if let Expr::Atomic(_, Atom::Literal(Lit::Int(l))) = **e3 {
-                            let curr_weight = weighted_terms.get(re).unwrap_or(&0);
-                            weighted_terms.insert(re.clone(), curr_weight - l);
-                        } else {
-                            other_terms.push(expr.clone());
-                        };
-                    }
-
-                    // c*v
-                    [
-                        Expr::Atomic(_, Atom::Reference(re)),
-                        Expr::Atomic(_, Atom::Literal(Lit::Int(l))),
-                    ] => {
-                        let curr_weight = weighted_terms.get(re).unwrap_or(&0);
-                        weighted_terms.insert(re.clone(), curr_weight + l);
-                    }
-
-                    // invalid
-                    _ => {
-                        other_terms.push(expr.clone());
-                    }
-                }
-            }
-
-            // not a product
-            _ => {
-                other_terms.push(expr.clone());
-            }
+        if let Some((re, coefficient)) = weighted_term(expr) {
+            let curr_weight = weighted_terms.get(re).unwrap_or(&0);
+            weighted_terms.insert(re.clone(), curr_weight + coefficient);
+        } else {
+            other_terms.push(expr.clone());
         }
     }
 
@@ -100,4 +75,56 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         meta.clone(),
         Moo::new(into_matrix_expr![new_exprs]),
     )))
+}
+
+fn has_duplicate_weighted_reference(exprs: &[Expr]) -> bool {
+    let mut seen = BTreeSet::new();
+    for expr in exprs {
+        let Some((reference, _)) = weighted_term(expr) else {
+            continue;
+        };
+        if !seen.insert(reference) {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn weighted_term(expr: &Expr) -> Option<(&Reference, i32)> {
+    let Expr::Product(_, exprs) = expr else {
+        return None;
+    };
+
+    match expr_list_elements(exprs.as_ref())? {
+        // todo (gs248) It would be nice to generate these destructures by macro, like `essence_expr!` but in reverse
+        // -c*v
+        [Expr::Atomic(_, Atom::Reference(re)), Expr::Neg(_, e3)] => {
+            let Expr::Atomic(_, Atom::Literal(Lit::Int(l))) = e3.as_ref() else {
+                return None;
+            };
+            Some((re, -*l))
+        }
+
+        // c*v
+        [
+            Expr::Atomic(_, Atom::Reference(re)),
+            Expr::Atomic(_, Atom::Literal(Lit::Int(l))),
+        ] => Some((re, *l)),
+
+        _ => None,
+    }
+}
+
+fn expr_list_elements(expr: &Expr) -> Option<&[Expr]> {
+    match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain))
+            if domain.as_int().is_some_and(|ranges| {
+                matches!(ranges.as_slice(), [Range::UnboundedR(IntVal::Const(1))])
+            }) =>
+        {
+            Some(elems)
+        }
+        _ => None,
+    }
 }
