@@ -3,7 +3,7 @@ use crate::{
     Model,
     ast::{
         Atom, Expression as Expr, ExpressionArena, ExpressionNodeId, Metadata, Moo, Name,
-        discriminant_from_value,
+        discriminant_from_value, normalise_evaluator_local,
     },
     bug,
     objective::introduce_objective_auxiliary,
@@ -1940,13 +1940,12 @@ fn try_rewrite_model<'ctx, 'rules>(
     }
 
     let mut did_rewrite = false;
-    let arena = ExpressionArena::from_root(take_model_root(submodel));
+    let mut arena = ExpressionArena::from_root(take_model_root(submodel));
+    normalise_evaluators_bottom_up(&mut arena, ctx.dirty_trace);
 
     if ctx.config.worklist {
         return try_rewrite_model_with_worklist(submodel, ctx, arena);
     }
-
-    let mut arena = arena;
 
     'rewrite_loop: loop {
         let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
@@ -2239,6 +2238,8 @@ fn try_rewrite_model<'ctx, 'rules>(
                 if changes_symbol_context {
                     invalidate_symbol_context_caches(submodel, ctx);
                 }
+                let (_, evaluator_changed) =
+                    normalise_evaluators_from_node_to_root(&mut arena, *node_id, ctx.dirty_trace);
                 if let Some(pre_effect_symbol_context_hash) = pre_effect_symbol_context_hash {
                     let cache_symbol_context_hash = if changes_symbol_context {
                         current_symbol_context_hash(submodel, ctx)
@@ -2248,21 +2249,25 @@ fn try_rewrite_model<'ctx, 'rules>(
                     let expr_hash =
                         RewriteCache::expression_content_hash(expr, cache_symbol_context_hash);
                     if let Some(cache) = ctx.cache.as_mut() {
-                        cache.insert_from_hash(
-                            expr_hash,
-                            Some(replacement),
-                            *level,
-                            cache_symbol_context_hash,
-                        );
-                        ctx.dirty_trace.cache_inserts += 1;
-                        let mapping_count = mappings.len();
-                        insert_ancestor_mappings(
-                            cache,
-                            mappings,
-                            *level,
-                            cache_symbol_context_hash,
-                        );
-                        ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                        if arena.is_reachable(*node_id) {
+                            cache.insert_from_hash(
+                                expr_hash,
+                                Some(arena.expression(*node_id).clone()),
+                                *level,
+                                cache_symbol_context_hash,
+                            );
+                            ctx.dirty_trace.cache_inserts += 1;
+                        }
+                        if !evaluator_changed {
+                            let mapping_count = mappings.len();
+                            insert_ancestor_mappings(
+                                cache,
+                                mappings,
+                                *level,
+                                cache_symbol_context_hash,
+                            );
+                            ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                        }
                     }
                 }
                 if effect_impact.requires_arena_reimport_for_invalidation()
@@ -2315,6 +2320,12 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
     let mut did_rewrite = false;
     let root_surface = 0usize;
     let (mut surfaces, mut value_letting_surfaces) = build_worklist_surfaces(submodel, arena);
+    for surface in &mut surfaces {
+        if surface.active {
+            normalise_evaluators_bottom_up(&mut surface.arena, ctx.dirty_trace);
+        }
+    }
+    write_worklist_surfaces_to_model(submodel, &surfaces);
     let mut scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
 
     while let Some((level, surface_index, node_id, scheduled_mode)) =
@@ -2669,6 +2680,19 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             Vec::new()
         };
         submodel.add_clauses(new_clauses);
+        let (rewrite_impact_node_id, evaluator_changed) = {
+            let arena = &mut surfaces[surface_index].arena;
+            normalise_evaluators_from_node_to_root(arena, *node_id, ctx.dirty_trace)
+        };
+        for &new_top_node_id in &new_top_node_ids {
+            if surfaces[root_surface].arena.is_reachable(new_top_node_id) {
+                normalise_evaluators_from_node_to_root(
+                    &mut surfaces[root_surface].arena,
+                    new_top_node_id,
+                    ctx.dirty_trace,
+                );
+            }
+        }
         if let Some(name) = rewritten_value_letting_name.as_ref() {
             write_value_letting_surface_to_model(submodel, name, &surfaces[surface_index].arena);
             ctx.dirty_trace.value_letting_rewrites += 1;
@@ -2702,16 +2726,20 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             };
             let expr_hash = RewriteCache::expression_content_hash(expr, cache_symbol_context_hash);
             if let Some(cache) = ctx.cache.as_mut() {
-                cache.insert_from_hash(
-                    expr_hash,
-                    Some(replacement),
-                    *level,
-                    cache_symbol_context_hash,
-                );
-                ctx.dirty_trace.cache_inserts += 1;
-                let mapping_count = mappings.len();
-                insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
-                ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                if surfaces[surface_index].arena.is_reachable(*node_id) {
+                    cache.insert_from_hash(
+                        expr_hash,
+                        Some(surfaces[surface_index].arena.expression(*node_id).clone()),
+                        *level,
+                        cache_symbol_context_hash,
+                    );
+                    ctx.dirty_trace.cache_inserts += 1;
+                }
+                if !evaluator_changed {
+                    let mapping_count = mappings.len();
+                    insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
+                    ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
+                }
             }
         }
         if effect_impact.requires_arena_reimport_for_invalidation()
@@ -2754,7 +2782,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 &mut scheduler,
                 &surfaces[surface_index].arena,
                 surface_index,
-                *node_id,
+                rewrite_impact_node_id,
                 ctx.dirty_trace,
             );
             for new_top_node_id in new_top_node_ids {
@@ -2809,6 +2837,80 @@ fn enqueue_worklist_rewrite_impact(
 ) {
     scheduler.enqueue_node_and_ancestors(arena, surface, node_id, dirty_trace);
     scheduler.enqueue_subtree(arena, surface, node_id, Some(dirty_trace));
+}
+
+/// Applies evaluator normalisation throughout an existing arena surface.
+///
+/// This is the initial half of the evaluator normalisation hook. Evaluation is a privileged pure
+/// simplification rather than an ordinary rule: before normal rule scheduling starts, each surface
+/// is normalised bottom-up so parent evaluators can assume already-normal children. Comprehensions
+/// remain atomic here for the same scoped-rewrite reason as normal scheduler traversal.
+fn normalise_evaluators_bottom_up(arena: &mut ExpressionArena, dirty_trace: &mut DirtyTrace) {
+    let nodes = rewriter_reachable_subtree_ids(arena, arena.root());
+    for node_id in nodes.into_iter().rev() {
+        if !arena.is_reachable(node_id) {
+            continue;
+        }
+        normalise_evaluator_node_to_fixpoint(arena, node_id, dirty_trace);
+    }
+}
+
+/// Applies the post-rewrite evaluator hook from `node_id` up to the root.
+///
+/// Ordinary rules still obey the rewriter invariant that higher priority wins and, within a
+/// priority, enclosing expressions are tried before descendants. Evaluators are the explicit
+/// exception: after an ordinary rule changes a subtree, local full/partial evaluation is allowed to
+/// fire immediately at that node and then at each ancestor because such simplification is always
+/// preferable to scheduling another ordinary rule on the unevaluated expression.
+fn normalise_evaluators_from_node_to_root(
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+) -> (ExpressionNodeId, bool) {
+    let mut current = Some(node_id);
+    let mut highest_rewritten = node_id;
+    let mut changed = false;
+
+    while let Some(current_id) = current {
+        if !arena.is_reachable(current_id) {
+            break;
+        }
+
+        if normalise_evaluator_node_to_fixpoint(arena, current_id, dirty_trace) {
+            highest_rewritten = current_id;
+            changed = true;
+        }
+        current = arena.parent(current_id);
+    }
+
+    (highest_rewritten, changed)
+}
+
+fn normalise_evaluator_node_to_fixpoint(
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+) -> bool {
+    let mut changed = false;
+
+    while arena.is_reachable(node_id) {
+        let expr = arena.expression(node_id);
+        let Some(replacement) = normalise_evaluator_local(expr) else {
+            break;
+        };
+
+        replace_focus_and_dirty_ancestors(
+            arena,
+            node_id,
+            clear_expr_clean_rule_metadata(replacement),
+            dirty_trace,
+            None,
+        );
+        dirty_trace.record_rewrite("evaluator_normalisation_hook", false);
+        changed = true;
+    }
+
+    changed
 }
 
 fn build_worklist_surfaces(

@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Field, Literal as Lit, Metadata,
+    Moo,
     comprehension::{Comprehension, ComprehensionQualifier},
     matrix,
 };
@@ -9,6 +10,8 @@ use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
 use uniplate::Uniplate;
+
+use super::partial_eval::run_partial_evaluator_local;
 
 pub(crate) fn factorial_i32(n: i32) -> Option<i32> {
     if n < 0 {
@@ -37,6 +40,97 @@ pub fn eval_constant_local(expr: &Expr) -> Option<Lit> {
     }
 
     eval_constant(expr)
+}
+
+/// Applies the evaluator normalisation hook to a focused expression.
+///
+/// Evaluators are privileged simplifications, not ordinary rewrite rules. The rewriter invokes
+/// this hook before normal rule scheduling and immediately after a successful ordinary rule,
+/// walking upward while evaluation keeps simplifying parents. This exploits the semantic property
+/// that local constant and partial evaluation is always preferable to trying lower-priority rules,
+/// while avoiding millions of failed universal `constant_evaluator` rule attempts.
+///
+/// The hook is deliberately pure and local: it does not create auxiliary variables, mutate the
+/// symbol table, append constraints, or recursively inspect arbitrary descendants. Children are
+/// expected to have been normalised by the scheduler before their parent is evaluated. Use
+/// [`eval_constant`] or [`super::partial_eval::run_partial_evaluator`] for explicit deep utility
+/// evaluation outside the main rewrite loop.
+pub fn normalise_evaluator_local(expr: &Expr) -> Option<Expr> {
+    match expr {
+        Expr::Root(_, exprs) if exprs.is_empty() => {
+            Some(Expr::Root(Metadata::new(), vec![true.into()]))
+        }
+        // Focused `AbstractLiteral` literals must not repeatedly refold to themselves; parents
+        // still see the `Atomic(Literal(...))` form when the hook walks upward.
+        Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(_))) => None,
+        _ => fold_constant_expression_local(expr).or_else(|| {
+            run_partial_evaluator_local(expr)
+                .ok()
+                .map(|reduction| reduction.new_expression)
+        }),
+    }
+    .filter(|new_expr| new_expr != expr)
+}
+
+/// Constant-folds `expr` locally unless doing so would inline a referenced matrix literal.
+fn fold_constant_expression_local(expr: &Expr) -> Option<Expr> {
+    let constant = eval_constant_local(expr)?;
+
+    if matches!(
+        (expr, &constant),
+        (
+            Expr::Atomic(_, Atom::Reference(_)),
+            Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _))
+        )
+    ) {
+        return None;
+    }
+
+    let folded = Expr::Atomic(Metadata::new(), Atom::Literal(constant));
+    if let Expr::TypeAnnotation(_, _, ty) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::TypeAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            ty.clone(),
+        ));
+    }
+
+    if let Expr::DomainAnnotation(_, _, domain) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain.clone(),
+        ));
+    }
+
+    if let Expr::Comprehension(_, comprehension) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+        && let Some(domain) = comprehension.domain_of()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain,
+        ));
+    }
+
+    Some(folded)
 }
 
 fn has_only_local_constant_operands(expr: &Expr) -> bool {
