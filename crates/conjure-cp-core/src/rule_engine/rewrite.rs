@@ -1020,7 +1020,9 @@ impl<'a> RuleGroup<'a> {
             rules_by_discriminant[discriminant] = Some(
                 rules
                     .iter()
-                    .filter(|rd| rule_matches_self_discriminant(rd, discriminant))
+                    .filter(|rd| {
+                        rule_is_universal(rd) || rule_matches_self_discriminant(rd, discriminant)
+                    })
                     .cloned()
                     .collect(),
             );
@@ -4038,6 +4040,61 @@ mod tests {
         );
         assert!(!rule_group.has_candidates(config, &literal));
         assert!(!rule_group.has_candidates(config, &composite));
+    }
+
+    #[test]
+    fn rule_group_includes_universal_rules_in_variant_buckets() {
+        let lex_discriminant = discriminant_from_value(&Expr::LexLt(
+            Metadata::new(),
+            Moo::new(int_lit(1)),
+            Moo::new(int_lit(2)),
+        ));
+        let lex_prefilters: &'static [RulePrefilter] =
+            Box::leak(Box::new([RulePrefilter::Variant(lex_discriminant)]));
+        let variant_rule: &'static crate::rule_engine::Rule<'static> =
+            Box::leak(Box::new(crate::rule_engine::Rule {
+                name: "variant-specific-test-rule",
+                application: never_apply_test_rule,
+                rule_sets: &[("test-rule-set", 1)],
+                prefilters: Some(lex_prefilters),
+            }));
+        let universal_rule: &'static crate::rule_engine::Rule<'static> =
+            Box::leak(Box::new(crate::rule_engine::Rule {
+                name: "universal-test-rule",
+                application: never_apply_test_rule,
+                rule_sets: &[("test-rule-set", 1)],
+                prefilters: None,
+            }));
+        let rule_group = RuleGroup::new(
+            1,
+            vec![
+                crate::rule_engine::RuleData {
+                    rule: variant_rule,
+                    priority: 1,
+                    rule_set: &TEST_RULE_SET,
+                },
+                crate::rule_engine::RuleData {
+                    rule: universal_rule,
+                    priority: 1,
+                    rule_set: &TEST_RULE_SET,
+                },
+            ],
+        );
+        let config = RewriteConfig::optimised();
+        let lex = Expr::LexLt(
+            Metadata::new(),
+            Moo::new(int_lit(1)),
+            Moo::new(int_lit(2)),
+        );
+
+        assert!(rule_group.has_candidates(config, &lex));
+        assert_eq!(
+            rule_group
+                .candidates(config, &lex)
+                .map(|rule_data| rule_data.rule.name)
+                .collect_vec(),
+            vec!["variant-specific-test-rule", "universal-test-rule"]
+        );
     }
 
     #[test]

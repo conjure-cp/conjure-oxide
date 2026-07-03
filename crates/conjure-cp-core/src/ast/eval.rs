@@ -141,7 +141,8 @@ fn has_only_local_constant_operands(expr: &Expr) -> bool {
         Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
             is_local_constant_expr(inner.as_ref())
         }
-        Expr::Comprehension(_, _) | Expr::AbstractComprehension(_, _) | Expr::Root(_, _) => false,
+        Expr::Comprehension(_, _) => is_constant_evaluable_comprehension(expr),
+        Expr::AbstractComprehension(_, _) | Expr::Root(_, _) => false,
         _ => expr.children().iter().all(is_local_constant_expr),
     }
 }
@@ -154,8 +155,18 @@ fn is_local_constant_expr(expr: &Expr) -> bool {
         Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
             is_local_constant_expr(inner.as_ref())
         }
+        Expr::Comprehension(_, _) => is_constant_evaluable_comprehension(expr),
         _ => false,
     }
+}
+
+/// Whether a comprehension can be constant-folded in one step.
+///
+/// Comprehensions are atomic in rewriter traversal, so parent operators such as `or` may contain
+/// a comprehension element that should still be treated as a constant operand when the
+/// comprehension only ranges over ground domains.
+fn is_constant_evaluable_comprehension(expr: &Expr) -> bool {
+    matches!(expr, Expr::Comprehension(_, _)) && eval_constant(expr).is_some()
 }
 
 fn abstract_literal_children_are_local_constants(lit: &AbstractLiteral<Expr>) -> bool {
