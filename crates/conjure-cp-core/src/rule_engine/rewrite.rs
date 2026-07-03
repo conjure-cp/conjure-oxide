@@ -2874,13 +2874,25 @@ fn enqueue_worklist_rewrite_impact(
 /// is normalised bottom-up so parent evaluators can assume already-normal children. Comprehensions
 /// remain atomic here for the same scoped-rewrite reason as normal scheduler traversal.
 fn normalise_evaluators_bottom_up(arena: &mut ExpressionArena, dirty_trace: &mut DirtyTrace) {
-    let nodes = rewriter_reachable_subtree_ids(arena, arena.root());
+    normalise_evaluators_subtree_bottom_up(arena, arena.root(), dirty_trace);
+}
+
+fn normalise_evaluators_subtree_bottom_up(
+    arena: &mut ExpressionArena,
+    subtree_root: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+) -> bool {
+    let nodes = rewriter_reachable_subtree_ids(arena, subtree_root);
+    let mut changed = false;
+
     for node_id in nodes.into_iter().rev() {
         if !arena.is_reachable(node_id) {
             continue;
         }
-        normalise_evaluator_node_to_fixpoint(arena, node_id, dirty_trace);
+        changed |= normalise_evaluator_node_to_fixpoint(arena, node_id, dirty_trace);
     }
+
+    changed
 }
 
 /// Applies the post-rewrite evaluator hook from `node_id` up to the root.
@@ -2895,9 +2907,13 @@ fn normalise_evaluators_from_node_to_root(
     node_id: ExpressionNodeId,
     dirty_trace: &mut DirtyTrace,
 ) -> (ExpressionNodeId, bool) {
-    let mut current = Some(node_id);
+    // Ordinary rewrites can introduce fresh nested arithmetic whose children were not previously
+    // scheduled. Normalise the replacement subtree bottom-up first, then walk upward so evaluator
+    // simplification remains privileged without running ordinary rules to a fixpoint.
+    let subtree_changed = normalise_evaluators_subtree_bottom_up(arena, node_id, dirty_trace);
+    let mut current = arena.parent(node_id);
     let mut highest_rewritten = node_id;
-    let mut changed = false;
+    let mut changed = subtree_changed;
 
     while let Some(current_id) = current {
         if !arena.is_reachable(current_id) {
