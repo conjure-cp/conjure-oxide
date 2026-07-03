@@ -2,7 +2,7 @@
 use conjure_cp::ast::eval::vec_op;
 use conjure_cp::ast::{
     AbstractLiteral, Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable, eval_constant,
-    run_partial_evaluator,
+    eval_constant_local, run_partial_evaluator_local,
 };
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
@@ -81,7 +81,7 @@ fn fold_constant_expression(expr: &Expr) -> Option<Expr> {
     ]
 )]
 fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    run_partial_evaluator(expr)
+    run_partial_evaluator_local(expr)
 }
 
 /// Folds the focused expression when it is constant, or applies local partial evaluation.
@@ -94,13 +94,61 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::AbstractLiteral(_))) => {
             Err(RuleNotApplicable)
         }
-        _ => match fold_constant_expression(expr)
-            .or_else(|| run_partial_evaluator(expr).ok().map(|r| r.new_expression))
-        {
+        _ => match fold_constant_expression_local(expr).or_else(|| {
+            run_partial_evaluator_local(expr)
+                .ok()
+                .map(|r| r.new_expression)
+        }) {
             Some(new_expr) if &new_expr != expr => Ok(RuleEffect::pure(new_expr)),
             _ => Err(RuleNotApplicable),
         },
     }
+}
+
+/// Constant-folds `expr` locally unless doing so would inline a referenced matrix literal.
+fn fold_constant_expression_local(expr: &Expr) -> Option<Expr> {
+    let constant = eval_constant_local(expr)?;
+
+    if matches!(
+        (expr, &constant),
+        (
+            Expr::Atomic(_, Atom::Reference(_)),
+            Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _))
+        )
+    ) {
+        return None;
+    }
+
+    let folded = Expr::Atomic(Metadata::new(), Atom::Literal(constant));
+    if let Expr::TypeAnnotation(_, _, ty) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::TypeAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            ty.clone(),
+        ));
+    }
+
+    if let Expr::DomainAnnotation(_, _, domain) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain.clone(),
+        ));
+    }
+
+    Some(folded)
 }
 
 /// Evaluate the root expression.

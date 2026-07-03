@@ -8,6 +8,7 @@ use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
+use uniplate::Uniplate;
 
 pub(crate) fn factorial_i32(n: i32) -> Option<i32> {
     if n < 0 {
@@ -15,6 +16,75 @@ pub(crate) fn factorial_i32(n: i32) -> Option<i32> {
     }
 
     (1..=n).try_fold(1_i32, i32::checked_mul)
+}
+
+fn eval_constant_set(expr: &Expr) -> Option<Vec<Lit>> {
+    let Lit::AbstractLiteral(AbstractLiteral::Set(values)) = eval_constant(expr)? else {
+        return None;
+    };
+
+    Some(values)
+}
+
+/// Simplify an expression to a constant using only constants already present at this node.
+///
+/// This is intended for the rewriter: child expressions should have been simplified by the
+/// scheduler before their parent is considered. Use [`eval_constant`] when a caller explicitly
+/// wants recursive evaluation of an arbitrary expression.
+pub fn eval_constant_local(expr: &Expr) -> Option<Lit> {
+    if !has_only_local_constant_operands(expr) {
+        return None;
+    }
+
+    eval_constant(expr)
+}
+
+fn has_only_local_constant_operands(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(_)) => true,
+        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant().is_some(),
+        Expr::AbstractLiteral(_, lit) => abstract_literal_children_are_local_constants(lit),
+        Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
+            is_local_constant_expr(inner.as_ref())
+        }
+        Expr::Comprehension(_, _) | Expr::AbstractComprehension(_, _) | Expr::Root(_, _) => false,
+        _ => expr.children().iter().all(is_local_constant_expr),
+    }
+}
+
+fn is_local_constant_expr(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(_)) => true,
+        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant().is_some(),
+        Expr::AbstractLiteral(_, lit) => abstract_literal_children_are_local_constants(lit),
+        Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
+            is_local_constant_expr(inner.as_ref())
+        }
+        _ => false,
+    }
+}
+
+fn abstract_literal_children_are_local_constants(lit: &AbstractLiteral<Expr>) -> bool {
+    match lit {
+        AbstractLiteral::Set(items)
+        | AbstractLiteral::MSet(items)
+        | AbstractLiteral::Tuple(items)
+        | AbstractLiteral::Matrix(items, _) => items.iter().all(is_local_constant_expr),
+        AbstractLiteral::Record(fields) => fields
+            .iter()
+            .all(|field| is_local_constant_expr(&field.value)),
+        AbstractLiteral::Sequence(items) => items.iter().all(is_local_constant_expr),
+        AbstractLiteral::Function(items) => items
+            .iter()
+            .all(|(from, to)| is_local_constant_expr(from) && is_local_constant_expr(to)),
+        AbstractLiteral::Relation(items) => items
+            .iter()
+            .all(|tuple| tuple.iter().all(is_local_constant_expr)),
+        AbstractLiteral::Partition(parts) => parts
+            .iter()
+            .all(|part| part.iter().all(is_local_constant_expr)),
+        AbstractLiteral::Variant(field) => is_local_constant_expr(&field.value),
+    }
 }
 
 /// Simplify an expression to a constant if possible

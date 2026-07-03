@@ -36,8 +36,8 @@ pub use domains::{
     JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr, PartitionAttr, Range,
     RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
 };
-pub use eval::eval_constant;
 pub use eval::generator_values_from_expr;
+pub use eval::{eval_constant, eval_constant_local};
 pub use expression_arena::{ExpressionArena, ExpressionNodeId};
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
 pub use literals::AbstractLiteral;
@@ -47,7 +47,7 @@ pub use model::*;
 pub use moo::Moo;
 pub use name::Name;
 pub use objective::{Objective, OptimiseDirection};
-pub use partial_eval::run_partial_evaluator;
+pub use partial_eval::{run_partial_evaluator, run_partial_evaluator_local};
 pub use records::Field;
 pub use reference::Reference;
 pub use sat_encoding::SATIntEncoding;
