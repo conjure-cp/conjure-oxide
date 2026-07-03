@@ -2,7 +2,8 @@ use conjure_cp::{
     Model,
     ast::{
         AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Field, Literal, Metadata, Moo,
-        Name, Range, Reference, SymbolTable, eval_constant,
+        SymbolTable, eval_constant, normalise_evaluator_local,
+        Name, Range, Reference,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_model},
@@ -154,9 +155,6 @@ fn simplify_expression(expr: Expression) -> Expression {
 
 #[test]
 fn rule_sum_constants() {
-    let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
-    let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
-
     let mut expr = Expression::Sum(
         Metadata::new(),
         Moo::new(matrix_expr![
@@ -166,14 +164,7 @@ fn rule_sum_constants() {
         ]),
     );
 
-    expr = sum_constants
-        .apply(&expr, &SymbolTable::new())
-        .unwrap()
-        .new_expression;
-    expr = unwrap_sum
-        .apply(&expr, &SymbolTable::new())
-        .unwrap()
-        .new_expression;
+    expr = normalise_evaluator_local(&expr).unwrap();
 
     assert_eq!(
         expr,
@@ -228,8 +219,6 @@ fn rule_sum_geq() {
 #[test]
 fn reduce_solve_xyz() {
     println!("Rules: {:?}", get_all_rules());
-    let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
-    let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
     let lt_to_leq = get_rule_by_name("lt_to_leq").unwrap();
     let leq_to_ineq = get_rule_by_name("x_leq_y_plus_k_to_ineq").unwrap();
     let introduce_sumleq = get_rule_by_name("introduce_weighted_sumleq_sumgeq").unwrap();
@@ -244,14 +233,7 @@ fn reduce_solve_xyz() {
         ]),
     );
 
-    expr1 = sum_constants
-        .apply(&expr1, &SymbolTable::new())
-        .unwrap()
-        .new_expression;
-    expr1 = unwrap_sum
-        .apply(&expr1, &SymbolTable::new())
-        .unwrap()
-        .new_expression;
+    expr1 = normalise_evaluator_local(&expr1).unwrap();
     assert_eq!(
         expr1,
         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(4)))
@@ -623,7 +605,7 @@ fn rewrite_solve_xyz() {
     println!("Rules: {:?}", get_all_rules());
     set_comprehension_expander(QuantifiedExpander::Native);
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Base", "Bubble"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {e}");
@@ -670,7 +652,7 @@ fn rewrite_solve_xyz() {
         ]),
     );
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Base", "Bubble"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {e}");
