@@ -11,7 +11,7 @@ use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
 use uniplate::Uniplate;
 
-use super::partial_eval::run_partial_evaluator_local;
+use super::partial_eval::{run_partial_evaluator, run_partial_evaluator_local};
 
 pub(crate) fn factorial_i32(n: i32) -> Option<i32> {
     if n < 0 {
@@ -50,16 +50,16 @@ pub fn eval_constant_local(expr: &Expr) -> Option<Lit> {
 /// that local constant and partial evaluation is always preferable to trying lower-priority rules,
 /// while avoiding millions of failed universal `constant_evaluator` rule attempts.
 ///
-/// The hook is deliberately pure and local: it does not create auxiliary variables, mutate the
-/// symbol table, append constraints, or recursively inspect arbitrary descendants. Children are
-/// expected to have been normalised by the scheduler before their parent is evaluated. Use
+/// The hook is deliberately pure and local away from the root: it does not create auxiliary
+/// variables, mutate the symbol table, append constraints, or recursively inspect arbitrary
+/// descendants. Children are expected to have been normalised by the scheduler before their parent
+/// is evaluated. At the root, direct top-level constraints get one deep semantic pass so whole-model
+/// contradictions are still removed before solver lowering. Use
 /// [`eval_constant`] or [`super::partial_eval::run_partial_evaluator`] for explicit deep utility
 /// evaluation outside the main rewrite loop.
 pub fn normalise_evaluator_local(expr: &Expr) -> Option<Expr> {
     match expr {
-        Expr::Root(_, exprs) if exprs.is_empty() => {
-            Some(Expr::Root(Metadata::new(), vec![true.into()]))
-        }
+        Expr::Root(_, exprs) => normalise_root_constraints_deep(exprs),
         // Focused `AbstractLiteral` literals must not repeatedly refold to themselves; parents
         // still see the `Atomic(Literal(...))` form when the hook walks upward.
         Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(_))) => None,
@@ -72,12 +72,53 @@ pub fn normalise_evaluator_local(expr: &Expr) -> Option<Expr> {
     .filter(|new_expr| new_expr != expr)
 }
 
+fn normalise_root_constraints_deep(exprs: &[Expr]) -> Option<Expr> {
+    if exprs.is_empty() {
+        return Some(Expr::Root(Metadata::new(), vec![true.into()]));
+    }
+
+    let mut changed = false;
+    let constraints = exprs
+        .iter()
+        .map(|expr| {
+            let mut constraint = expr.clone();
+            while let Some(new_constraint) = normalise_evaluator_deep(&constraint) {
+                constraint = new_constraint;
+                changed = true;
+            }
+            constraint
+        })
+        .collect();
+
+    changed.then(|| Expr::Root(Metadata::new(), constraints))
+}
+
+fn normalise_evaluator_deep(expr: &Expr) -> Option<Expr> {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(_))) => None,
+        _ => fold_constant_expression_deep(expr).or_else(|| {
+            run_partial_evaluator(expr)
+                .ok()
+                .map(|reduction| reduction.new_expression)
+        }),
+    }
+    .filter(|new_expr| new_expr != expr)
+}
+
 /// Constant-folds `expr` locally unless doing so would inline a referenced matrix literal.
 fn fold_constant_expression_local(expr: &Expr) -> Option<Expr> {
-    let constant = eval_constant_local(expr)?;
+    let constant = has_only_local_constant_operands(expr).then(|| eval_constant(expr))??;
+    fold_constant_expression(expr, constant)
+}
 
+fn fold_constant_expression_deep(expr: &Expr) -> Option<Expr> {
+    let constant = eval_constant(expr)?;
+    fold_constant_expression(expr, constant)
+}
+
+fn fold_constant_expression(expr: &Expr, constant: Lit) -> Option<Expr> {
     if matches!(
-        (expr, &constant),
+        (expr, constant.clone()),
         (
             Expr::Atomic(_, Atom::Reference(_)),
             Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _))
