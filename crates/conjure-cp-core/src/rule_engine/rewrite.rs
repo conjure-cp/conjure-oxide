@@ -1913,6 +1913,7 @@ pub fn rewrite_model<'a>(
             model
         );
     }
+
     Ok(model)
 }
 
