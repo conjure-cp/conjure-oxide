@@ -15,15 +15,15 @@ such that
 
 --
 
-b != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
+{SafeDiv(a, b) @ b != 0} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeDiv(a, b) = 1 @ b != 0}
 
 --
 
-{SafeDiv(a, b) @ true}
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafeDiv(a, b)
+{SafeDiv(a, b) = 1 @ b != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeDiv(a, b) = 1,b != 0;int(1..)])
 
 --
 
@@ -40,5 +40,5 @@ find b: int(1..2)
 
 such that
 
-DivEq(a, b, 1)
+and([DivEq(a, b, 1),b != 0;int(1..)])
 

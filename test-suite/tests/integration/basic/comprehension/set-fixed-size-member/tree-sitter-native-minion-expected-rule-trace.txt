@@ -9,27 +9,9 @@ x = sum([ 1 | i : set (size 2) of int(7..9), y in i ])
 
 --
 
-sum([ 1 | i : set (size 2) of int(7..9), y in i ])
-   ~~> expand_ac_comprehension_native ([("Base", 1999)])
-sum([product([toInt(y in {7,8}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {7,9}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {8,9}),sum([1;int(1..)]);int(1..)]);int(1..)])
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
+[ 1 | i : set (size 2) of int(7..9), y in i ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(y in {7,8}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {7,9}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {8,9}),sum([1;int(1..)]);int(1..)]);int(1..)]
 
 --
 
@@ -80,19 +62,6 @@ new constraints:
   __0 =aux toInt(y in {7,8})
   __1 =aux toInt(y in {7,9})
   __2 =aux toInt(y in {8,9})
-
---
-
-and([SumLeq([__0, __1, __2], x),SumGeq([__0, __1, __2], x);int(1..)]),
-__0 =aux toInt(y in {7,8}),
-__1 =aux toInt(y in {7,9}),
-__2 =aux toInt(y in {8,9})
-   ~~> constant_evaluator ([("Constant", 9001)])
-SumLeq([__0, __1, __2], x),
-SumGeq([__0, __1, __2], x),
-__0 =aux toInt(y in {7,8}),
-__1 =aux toInt(y in {7,9}),
-__2 =aux toInt(y in {8,9})
 
 --
 
@@ -175,8 +144,7 @@ find __5: bool
 
 such that
 
-SumLeq([__0, __1, __2], x),
-SumGeq([__0, __1, __2], x),
+and([SumLeq([__0, __1, __2], x),SumGeq([__0, __1, __2], x);int(1..)]),
 __0 =aux toInt(__3),
 __1 =aux toInt(__4),
 __2 =aux toInt(__5),

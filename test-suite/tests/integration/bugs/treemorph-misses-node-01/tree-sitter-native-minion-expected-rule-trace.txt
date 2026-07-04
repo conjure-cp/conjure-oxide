@@ -16,123 +16,15 @@ such that
 
 --
 
-c != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-2 != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-2 >= 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-or([true,true;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-and([true,true;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-{SafePow(c, 2) @ true}
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafePow(c, 2)
-
---
-
 (a ** 2)
    ~~> pow_to_bubble ([("Bubble", 6000)])
 {SafePow(a, 2) @ and([or([a != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])}
 
 --
 
-a != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-2 != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-2 >= 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-or([true,true;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-and([true,true;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-{SafePow(a, 2) @ true}
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafePow(a, 2)
-
---
-
 (b ** 2)
    ~~> pow_to_bubble ([("Bubble", 6000)])
 {SafePow(b, 2) @ and([or([b != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])}
-
---
-
-b != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-2 != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-2 >= 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-or([true,true;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-and([true,true;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
-
---
-
-{SafePow(b, 2) @ true}
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafePow(b, 2)
 
 --
 
@@ -172,21 +64,6 @@ new constraints:
 
 --
 
-__0 = __1,
-MinionPow(c,2,__0),
-and([SumLeq([__2, __3], __1),SumGeq([__2, __3], __1);int(1..)]),
-__2 =aux SafePow(a, 2),
-__3 =aux SafePow(b, 2)
-   ~~> constant_evaluator ([("Constant", 9001)])
-__0 = __1,
-MinionPow(c,2,__0),
-SumLeq([__2, __3], __1),
-SumGeq([__2, __3], __1),
-__2 =aux SafePow(a, 2),
-__3 =aux SafePow(b, 2)
-
---
-
 __2 =aux SafePow(a, 2)
    ~~> introduce_poweq ([("Minion", 4200)])
 MinionPow(a,2,__2)
@@ -213,8 +90,7 @@ such that
 
 __0 = __1,
 MinionPow(c,2,__0),
-SumLeq([__2, __3], __1),
-SumGeq([__2, __3], __1),
+and([SumLeq([__2, __3], __1),SumGeq([__2, __3], __1);int(1..)]),
 MinionPow(a,2,__2),
 MinionPow(b,2,__3)
 

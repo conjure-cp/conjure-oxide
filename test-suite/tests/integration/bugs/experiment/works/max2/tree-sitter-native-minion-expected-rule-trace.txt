@@ -21,17 +21,6 @@ new constraints:
 
 --
 
-max([a,b;int(1..2)]) >= 2,
-and([SumLeq([1, __0], x),SumGeq([1, __0], x);int(1..)]),
-__0 =aux max([a,b;int(1..2)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-max([a,b;int(1..2)]) >= 2,
-SumLeq([1, __0], x),
-SumGeq([1, __0], x),
-__0 =aux max([a,b;int(1..2)])
-
---
-
 max([a,b;int(1..2)]) >= 2
    ~~> flatten_generic ([("Minion", 4200)])
 __1 >= 2
@@ -121,8 +110,7 @@ find __3: int(1..4)
 such that
 
 Ineq(2, __1, 0),
-SumLeq([1, __0], x),
-SumGeq([1, __0], x),
+and([SumLeq([1, __0], x),SumGeq([1, __0], x);int(1..)]),
 __0 =aux __2,
 __1 =aux __3,
 Ineq(a, __2, 0),

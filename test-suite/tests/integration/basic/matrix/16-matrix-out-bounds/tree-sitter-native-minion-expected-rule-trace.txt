@@ -39,29 +39,14 @@ and([SafeIndex(m#matrix_to_atom,[sum([a,b;int(1..)])]) = c,__inDomain(sum([a,b;i
 --
 
 and([SafeIndex(m#matrix_to_atom,[sum([a,b;int(1..)])]) = c,__inDomain(sum([a,b;int(1..)]),int(1..2));int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafeIndex(m#matrix_to_atom,[sum([a,b;int(1..)])]) = c,
-__inDomain(sum([a,b;int(1..)]),int(1..2))
-
---
-
-SafeIndex(m#matrix_to_atom,[sum([a,b;int(1..)])]) = c,
-__inDomain(sum([a,b;int(1..)]),int(1..2))
    ~~> index_matrix_to_atom ([("Base", 5000)])
-SafeIndex([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)],[(sum([a,b;int(1..)]) - 0)]) = c,
-__inDomain(sum([a,b;int(1..)]),int(1..2))
+and([SafeIndex([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)],[(sum([a,b;int(1..)]) - 0)]) = c,__inDomain(sum([a,b;int(1..)]),int(1..2));int(1..)])
 
 --
 
 (sum([a,b;int(1..)]) - 0)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([sum([a,b;int(1..)]),-(0);int(1..)])
-
---
-
--(0)
-   ~~> constant_evaluator ([("Constant", 9001)])
-0
 
 --
 
@@ -87,17 +72,6 @@ and([SumLeq([a, b], __0),SumGeq([a, b], __0);int(1..)])
 
 --
 
-SafeIndex([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)],[sum([a,b,0;int(1..)])]) = c,
-__inDomain(__0,int(1..2)),
-and([SumLeq([a, b], __0),SumGeq([a, b], __0);int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafeIndex([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)],[sum([a,b,0;int(1..)])]) = c,
-__inDomain(__0,int(1..2)),
-SumLeq([a, b], __0),
-SumGeq([a, b], __0)
-
---
-
 __inDomain(__0,int(1..2))
    ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
 __minion_w_inintervalset(__0,[1,2])
@@ -120,21 +94,6 @@ and([SumLeq([0, a, b], __1),SumGeq([0, a, b], __1);int(1..)])
 
 --
 
-SafeIndex([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)],[__1]) = c,
-__minion_w_inintervalset(__0,[1,2]),
-SumLeq([a, b], __0),
-SumGeq([a, b], __0),
-and([SumLeq([0, a, b], __1),SumGeq([0, a, b], __1);int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafeIndex([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)],[__1]) = c,
-__minion_w_inintervalset(__0,[1,2]),
-SumLeq([a, b], __0),
-SumGeq([a, b], __0),
-SumLeq([0, a, b], __1),
-SumGeq([0, a, b], __1)
-
---
-
 SafeIndex([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)],[__1]) = c
    ~~> introduce_element_from_index ([("Minion", 4400)])
 __minion_element_one([m#matrix_to_atom_1,m#matrix_to_atom_2],__1,c)
@@ -154,10 +113,7 @@ find __1: int(-2..4)
 
 such that
 
-__minion_element_one([m#matrix_to_atom_1,m#matrix_to_atom_2],__1,c),
-__minion_w_inintervalset(__0,[1,2]),
-SumLeq([a, b], __0),
-SumGeq([a, b], __0),
-SumLeq([0, a, b], __1),
-SumGeq([0, a, b], __1)
+and([__minion_element_one([m#matrix_to_atom_1,m#matrix_to_atom_2],__1,c),__minion_w_inintervalset(__0,[1,2]);int(1..)]),
+and([SumLeq([a, b], __0),SumGeq([a, b], __0);int(1..)]),
+and([SumLeq([0, a, b], __1),SumGeq([0, a, b], __1);int(1..)])
 

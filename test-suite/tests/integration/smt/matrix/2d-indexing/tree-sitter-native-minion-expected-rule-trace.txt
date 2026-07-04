@@ -22,18 +22,6 @@ new variables:
 
 --
 
-m#matrix_to_atom[0, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(m#matrix_to_atom,[0, 0])
-
---
-
-m#matrix_to_atom[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(m#matrix_to_atom,[1, 1])
-
---
-
 m#matrix_to_atom[0, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(m#matrix_to_atom,[0, 1])
@@ -43,6 +31,18 @@ SafeIndex(m#matrix_to_atom,[0, 1])
 m#matrix_to_atom[1, 0]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(m#matrix_to_atom,[1, 0])
+
+--
+
+m#matrix_to_atom[0, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[0, 0])
+
+--
+
+m#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[1, 1])
 
 --
 
@@ -60,15 +60,6 @@ and([SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),SumGeq([m#matrix_to
 
 --
 
-and([SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2);int(1..)]),
-m#matrix_to_atom_0_1 = m#matrix_to_atom_1_0
-   ~~> constant_evaluator ([("Constant", 9001)])
-SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
-SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
-m#matrix_to_atom_0_1 = m#matrix_to_atom_1_0
-
---
-
 Final model:
 
 find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
@@ -79,7 +70,6 @@ find m#matrix_to_atom_1_1: int(0..1)
 
 such that
 
-SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
-SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),
+and([SumLeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2),SumGeq([m#matrix_to_atom_0_0, m#matrix_to_atom_1_1], 2);int(1..)]),
 m#matrix_to_atom_0_1 = m#matrix_to_atom_1_0
 

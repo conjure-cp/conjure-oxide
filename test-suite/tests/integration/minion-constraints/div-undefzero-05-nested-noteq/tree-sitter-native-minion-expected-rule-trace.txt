@@ -92,12 +92,6 @@ new constraints:
 
 --
 
-SafeDiv(y, z) = 0
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(y, z, 0)
-
---
-
 SafeDiv(x, SafeDiv(y, z))
    ~~> flatten_generic ([("Minion", 4200)])
 SafeDiv(x, __1)
@@ -117,6 +111,12 @@ DivEq(x, __1, __0)
 __1 =aux SafeDiv(y, z)
    ~~> introduce_diveq ([("Minion", 4200)])
 DivEq(y, z, __1)
+
+--
+
+SafeDiv(y, z) = 0
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(y, z, 0)
 
 --
 

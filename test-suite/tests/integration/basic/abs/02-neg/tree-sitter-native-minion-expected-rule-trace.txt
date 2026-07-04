@@ -9,12 +9,6 @@ sum([|-(x)|,|-(y)|;int(1..)]) = 10
 
 --
 
-sum([|-(x)|,|-(y)|;int(1..)]) = 10
-   ~~> constant_evaluator ([("Constant", 9001)])
-sum([|x|,|y|;int(1..)]) = 10
-
---
-
 sum([|x|,|y|;int(1..)]) = 10
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)])
@@ -24,17 +18,6 @@ new variables:
 new constraints:
   __0 =aux |x|
   __1 =aux |y|
-
---
-
-and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
-__0 =aux |x|,
-__1 =aux |y|
-   ~~> constant_evaluator ([("Constant", 9001)])
-SumLeq([__0, __1], 10),
-SumGeq([__0, __1], 10),
-__0 =aux |x|,
-__1 =aux |y|
 
 --
 
@@ -59,8 +42,7 @@ find __1: int(0..5)
 
 such that
 
-SumLeq([__0, __1], 10),
-SumGeq([__0, __1], 10),
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
 AbsEq(__0,x),
 AbsEq(__1,y)
 

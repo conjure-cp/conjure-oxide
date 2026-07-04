@@ -15,15 +15,15 @@ x % y
 
 --
 
-y != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
+{SafeMod(x,y) @ y != 0} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeMod(x,y) = 3 @ y != 0}
 
 --
 
-{SafeMod(x,y) @ true}
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafeMod(x,y)
+{SafeMod(x,y) = 3 @ y != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeMod(x,y) = 3,y != 0;int(1..)])
 
 --
 
@@ -40,5 +40,5 @@ find y: int(2..4)
 
 such that
 
-ModEq(x, y, 3)
+and([ModEq(x, y, 3),y != 0;int(1..)])
 

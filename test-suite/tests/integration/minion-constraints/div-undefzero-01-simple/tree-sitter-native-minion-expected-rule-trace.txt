@@ -15,15 +15,15 @@ such that
 
 --
 
-y != 0
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
+{SafeDiv(x, y) @ y != 0} = 5
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeDiv(x, y) = 5 @ y != 0}
 
 --
 
-{SafeDiv(x, y) @ true}
-   ~~> constant_evaluator ([("Constant", 9001)])
-SafeDiv(x, y)
+{SafeDiv(x, y) = 5 @ y != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeDiv(x, y) = 5,y != 0;int(1..)])
 
 --
 
@@ -40,5 +40,5 @@ find y: int(2..4)
 
 such that
 
-DivEq(x, y, 5)
+and([DivEq(x, y, 5),y != 0;int(1..)])
 
