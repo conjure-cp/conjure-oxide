@@ -7,3 +7,4 @@ mod subseteq;
 mod supset;
 mod supseteq;
 mod union;
+mod intersect;
