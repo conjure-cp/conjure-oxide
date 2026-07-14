@@ -11,9 +11,31 @@
     utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        MedievalDependencies = with pkgs; [
-         # System libraries required by dependencies go here (e.g. openssl, pkg-config)
+        # Dependencies for development that are not system packages, but still required for development (eg; z3 and JDK)
+        DevDependencies = with pkgs; [
+          python3
+          jre
+          z3
         ];
+
+        # System libraries go here (e.g. openssl, pkg-config)
+        MedievalDependencies = with pkgs; [
+          clang-tools
+          libclang
+          llvmPackages.libclang
+          pkg-config
+          openssl
+        ];
+
+        # rust-specific dependencies
+        RustDependencies = with pkgs; [
+          cargo
+          rustc
+          rustfmt
+          clippy
+          rust-analyzer
+        ];
+
         clangMkShell = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; };
 
         conjure = pkgs.stdenv.mkDerivation rec {
@@ -55,24 +77,7 @@
       {
         devShells.default = clangMkShell {
           buildInputs = with pkgs; [
-            # bare rust
-            cargo
-            rustc
-            rustfmt
-            clippy
-            rust-analyzer
-
-	    # other deps
-	    clang-tools
-	    libclang
-	    jre
-	    llvmPackages.libclang
-	    pkg-config
-	    python3
-
-	    openssl
-	    z3
-          ] ++ MedievalDependencies;
+          ] ++ MedievalDependencies ++ DevDependencies ++ RustDependencies;
 
           # Fixes rust-analyzer looking for standard library source code
           RUST_SRC_PATH = pkgs.rustPlatform.rustLibSrc;
