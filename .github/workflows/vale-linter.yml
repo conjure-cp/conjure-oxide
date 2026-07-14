@@ -4,6 +4,7 @@
 name: Vale Linter
 on:
     pull_request_target:
+        types: [opened, synchronize, reopened, labeled, unlabeled]
         branches:
           - main
         paths:
@@ -15,6 +16,7 @@ permissions:
     checks: write
 jobs:
     vale:
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-vale') }}
         name: Vale Runner
         env:
             REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
