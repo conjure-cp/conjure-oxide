@@ -63,9 +63,16 @@ fn parse_name(minion_name: &str) -> Name {
         LazyLock::new(|| Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap());
     static REPRESENTED_NAME_RE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"__conjure_represented_name__(.*)__(.*)___(.*)").unwrap());
+    const REPRESENTED_JSON_PREFIX: &str = "__conjure_represented_name_json_";
 
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Machine(caps[1].parse::<i32>().unwrap())
+    } else if let Some(encoded) = minion_name.strip_prefix(REPRESENTED_JSON_PREFIX) {
+        let bytes = (0..encoded.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&encoded[i..i + 2], 16).unwrap())
+            .collect::<Vec<_>>();
+        serde_json::from_slice(&bytes).unwrap()
     } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Represented(Box::new((
             parse_name(&caps[1]),

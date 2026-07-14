@@ -96,6 +96,10 @@ fn for_each_unrepresented_var(
             continue;
         };
 
+        if !decl.reprs().is_empty() {
+            continue;
+        }
+
         if !conjure_model
             .symbols()
             .representations_for(&name)
@@ -125,7 +129,9 @@ fn load_var(
             load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
         }
         Ok(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
-        x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
+        x => Err(ModelFeatureNotSupported(format!(
+            "variable {name} has unsupported domain {x:?}"
+        ))),
     }
 }
 
@@ -208,10 +214,16 @@ fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
         conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{x}"),
-        conjure_ast::Name::Represented(fields) => {
-            let (name, rule, suffix) = *fields;
-            let name = name_to_string(name);
-            format!("__conjure_represented_name__{name}__{rule}___{suffix}")
+        // Representation names can be nested (record -> tuple -> atoms), so
+        // delimiter-based encoding is ambiguous. JSON encoded as hex is fully
+        // reversible and only uses characters accepted by Minion identifiers.
+        name @ conjure_ast::Name::Represented(_) => {
+            let json = serde_json::to_vec(&name).expect("Name serialization cannot fail");
+            let encoded = json
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>();
+            format!("__conjure_represented_name_json_{encoded}")
         }
         x => format!("{x}"),
     }

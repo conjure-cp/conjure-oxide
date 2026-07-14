@@ -5,6 +5,7 @@ use super::{
     DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, Reference, ReturnType,
     Typeable,
 };
+use crate::representation::{ReprRule, ReprStore};
 use parking_lot::{
     MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
 };
@@ -77,6 +78,12 @@ struct DeclarationPtrInner {
 
     // The contents of the declaration itself should be mutable.
     value: RwLock<Declaration>,
+
+    /// Representations initialised for this declaration.
+    representations: RwLock<ReprStore>,
+
+    /// The declaration from which this auxiliary declaration was created.
+    source: RwLock<Option<DeclarationPtr>>,
 }
 
 impl DeclarationPtrInner {
@@ -87,13 +94,20 @@ impl DeclarationPtrInner {
                 object_id: DECLARATION_PTR_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
             },
             value,
+            representations: RwLock::new(ReprStore::new()),
+            source: RwLock::new(None),
         })
     }
 
     // SAFETY: only use if you are really really sure you arn't going to break the id invariants of
     // DeclarationPtr and HasId!
     fn new_with_id_unchecked(value: RwLock<Declaration>, id: ObjId) -> Arc<DeclarationPtrInner> {
-        Arc::new(DeclarationPtrInner { id, value })
+        Arc::new(DeclarationPtrInner {
+            id,
+            value,
+            representations: RwLock::new(ReprStore::new()),
+            source: RwLock::new(None),
+        })
     }
 }
 
@@ -108,6 +122,33 @@ impl DeclarationPtr {
         DeclarationPtr {
             inner: DeclarationPtrInner::new(RwLock::new(declaration)),
         }
+    }
+
+    /// Gets the declaration from which this auxiliary declaration was created.
+    pub fn source(&self) -> RwLockReadGuard<'_, Option<DeclarationPtr>> {
+        self.inner.source.read()
+    }
+
+    /// Mutates the declaration from which this auxiliary declaration was created.
+    pub fn source_mut(&mut self) -> RwLockWriteGuard<'_, Option<DeclarationPtr>> {
+        self.inner.source.write()
+    }
+
+    /// Gets the representations initialised for this declaration.
+    pub fn reprs(&self) -> RwLockReadGuard<'_, ReprStore> {
+        self.inner.representations.read()
+    }
+
+    /// Mutates the representations initialised for this declaration.
+    pub fn reprs_mut(&mut self) -> RwLockWriteGuard<'_, ReprStore> {
+        self.inner.representations.write()
+    }
+
+    /// Gets a particular representation state, if it has been initialised.
+    pub fn get_repr<T: ReprRule + ?Sized>(
+        &self,
+    ) -> Option<MappedRwLockReadGuard<'_, T::DeclLevel>> {
+        RwLockReadGuard::try_map(self.inner.representations.read(), |reprs| reprs.get::<T>()).ok()
     }
 
     /// Creates a new declaration.
@@ -534,9 +575,14 @@ impl DeclarationPtr {
         // despite having the same contents, the new declaration pointer is unshared, so it should
         // get a new id.
         let value = self.inner.value.read().clone();
-        DeclarationPtr {
+        let representations = self.inner.representations.read().clone();
+        let source = self.inner.source.read().clone();
+        let detached = DeclarationPtr {
             inner: DeclarationPtrInner::new(RwLock::new(value)),
-        }
+        };
+        *detached.inner.representations.write() = representations;
+        *detached.inner.source.write() = source;
+        detached
     }
 
     /// Applies `f` to the declaration, returning the result as a reference.

@@ -6,17 +6,24 @@ mod prelude {
     pub use conjure_cp::{
         ast::Metadata,
         ast::{
-            AbstractLiteral, Atom, DeclarationPtr, Expression, Literal, Name, SymbolTable, matrix,
+            AbstractLiteral, Atom, DeclarationPtr, Expression, Field, Literal, Name, SymbolTable,
+            matrix,
         },
-        bug, into_matrix, register_representation,
-        representation::{Representation, get_repr_rule},
+        bug, into_matrix,
+        representation::register_representation,
         rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult},
     };
 }
 
-mod matrix_to_atom;
-mod record_to_atom;
+pub mod matrix_to_atom;
+pub mod record_to_tuple;
 mod sat_direct_int;
 mod sat_log_int;
 mod sat_order_int;
-mod tuple_to_atom;
+pub mod tuple_packed;
+pub mod tuple_to_atom;
+
+pub use matrix_to_atom::MatrixToAtom;
+pub use record_to_tuple::RecordToTuple;
+pub use tuple_packed::TuplePacked;
+pub use tuple_to_atom::TupleToAtom;

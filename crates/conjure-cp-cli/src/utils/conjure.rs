@@ -1,9 +1,12 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
-use conjure_cp::ast::{Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Name};
+use conjure_cp::ast::categories::{Category, CategoryOf};
+use conjure_cp::ast::{
+    Atom, DeclarationKind, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Name,
+};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
 use conjure_cp::settings::{configured_rule_trace_enabled, set_rule_trace_enabled};
@@ -16,6 +19,7 @@ use tempfile::tempdir;
 use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
+use conjure_cp::representation::util::try_up;
 use conjure_cp::solver::Solver;
 
 use glob::glob;
@@ -217,6 +221,16 @@ pub fn get_solutions(
         })
         .collect_vec();
 
+    let structured_declarations: Vec<DeclarationPtr> = symbols
+        .iter_local()
+        .filter(|(name, declaration)| {
+            matches!(name, Name::User(_))
+                && declaration.category_of() >= Category::Decision
+                && !declaration.reprs().is_empty()
+        })
+        .map(|(_, declaration)| declaration.clone())
+        .collect();
+
     for sol in sols.iter_mut() {
         // Get the value of complex variables using their auxiliary variables
         for (name, representation) in representations.iter() {
@@ -226,6 +240,17 @@ pub fn get_solutions(
                 )
             })?;
             sol.insert(name.clone(), value);
+        }
+
+        let raw_assignment: HashMap<Name, Literal> = sol.clone().into_iter().collect();
+        for declaration in &structured_declarations {
+            let value = try_up(declaration.clone(), &raw_assignment).map_err(|err| {
+                anyhow::anyhow!(
+                    "failed to reconstruct value for variable {}: {err}",
+                    declaration.name()
+                )
+            })?;
+            sol.insert(declaration.name().clone(), value);
         }
 
         // Remove auxiliary variables since we've found the value of the
