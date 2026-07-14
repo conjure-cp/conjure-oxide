@@ -38,14 +38,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: free_disk_space.sh
       run: .github/workflows/tools/free_disk_space.sh
 
     - name: Restore cache
       id: restore_cache
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: |
           ~/.cargo/bin/
@@ -64,7 +64,7 @@ jobs:
 
     - name: Save cache
       if: ${{ always() && github.ref == 'refs/heads/main' && steps.restore_cache.outputs.cache-hit != 'true' }}
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: |
           ~/.cargo/bin/
