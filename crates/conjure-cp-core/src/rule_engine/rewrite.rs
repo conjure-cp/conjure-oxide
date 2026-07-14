@@ -681,15 +681,14 @@ impl DirtyTrace {
         if let Some(parent) = path
             .parent()
             .filter(|parent| !parent.as_os_str().is_empty())
+            && let Err(error) = fs::create_dir_all(parent)
         {
-            if let Err(error) = fs::create_dir_all(parent) {
-                eprintln!(
-                    "[dirty-trace] failed to create trace directory {}: {error}",
-                    parent.display()
-                );
-                eprint!("{output}");
-                return;
-            }
+            eprintln!(
+                "[dirty-trace] failed to create trace directory {}: {error}",
+                parent.display()
+            );
+            eprint!("{output}");
+            return;
         }
 
         match OpenOptions::new().create(true).append(true).open(&path) {
@@ -1299,6 +1298,30 @@ struct SubtreeCandidateKey {
     generation: u32,
 }
 
+#[derive(Clone, Copy)]
+struct WorklistSchedulingContext<'arena, 'groups, 'rules> {
+    arena: &'arena ExpressionArena,
+    surface: usize,
+    rule_groups: &'groups [RuleGroup<'rules>],
+    config: RewriteConfig,
+}
+
+impl<'arena, 'groups, 'rules> WorklistSchedulingContext<'arena, 'groups, 'rules> {
+    fn new(
+        arena: &'arena ExpressionArena,
+        surface: usize,
+        rule_groups: &'groups [RuleGroup<'rules>],
+        config: RewriteConfig,
+    ) -> Self {
+        Self {
+            arena,
+            surface,
+            rule_groups,
+            config,
+        }
+    }
+}
+
 struct WorklistScheduler {
     // Candidate-level skipping can enqueue a descendant into a future rule level before an
     // ancestor reaches that same level. Each level is therefore ordered by depth, then insertion
@@ -1338,7 +1361,7 @@ impl WorklistScheduler {
         surface: usize,
         _rule_groups: &[RuleGroup<'_>],
         _config: RewriteConfig,
-        mut dirty_trace: Option<&mut DirtyTrace>,
+        dirty_trace: Option<&mut DirtyTrace>,
     ) {
         let Some(rewrite_surface) = surfaces.get(surface) else {
             return;
@@ -1351,7 +1374,7 @@ impl WorklistScheduler {
             &rewrite_surface.arena,
             surface,
             rewrite_surface.arena.root(),
-            dirty_trace.as_deref_mut(),
+            dirty_trace,
         );
     }
 
@@ -1400,34 +1423,31 @@ impl WorklistScheduler {
 
     fn enqueue_children_at_level(
         &mut self,
-        arena: &ExpressionArena,
-        surface: usize,
+        context: WorklistSchedulingContext<'_, '_, '_>,
         node_id: ExpressionNodeId,
         level: usize,
-        rule_groups: &[RuleGroup<'_>],
-        config: RewriteConfig,
         mut dirty_trace: Option<&mut DirtyTrace>,
     ) -> usize {
-        if matches!(arena.expression(node_id), Expr::Comprehension(_, _)) {
+        if matches!(context.arena.expression(node_id), Expr::Comprehension(_, _)) {
             return 0;
         }
 
         let mut child_count = 0;
-        for &child_id in arena.children(node_id) {
+        for &child_id in context.arena.children(node_id) {
             if !self.subtree_has_candidates_at_level(
-                arena,
-                surface,
+                context.arena,
+                context.surface,
                 child_id,
                 level,
-                rule_groups,
-                config,
+                context.rule_groups,
+                context.config,
             ) {
                 continue;
             }
             child_count += 1;
             self.enqueue_node_at_level(
-                arena,
-                surface,
+                context.arena,
+                context.surface,
                 child_id,
                 level,
                 ScheduledMode::TraverseSubtreeDescendant,
@@ -1480,7 +1500,7 @@ impl WorklistScheduler {
                 if !entry.get().includes(mode) {
                     entry.insert(mode);
                     self.queues_by_level[level].push(scheduled);
-                    if let Some(trace) = dirty_trace.as_deref_mut() {
+                    if let Some(trace) = dirty_trace {
                         trace.record_worklist_enqueue(mode);
                     }
                 }
@@ -1490,26 +1510,16 @@ impl WorklistScheduler {
 
     fn enqueue_after_no_rewrite(
         &mut self,
-        arena: &ExpressionArena,
-        surface: usize,
+        context: WorklistSchedulingContext<'_, '_, '_>,
         node_id: ExpressionNodeId,
         level: usize,
         next_self_level: usize,
         mode: ScheduledMode,
-        rule_groups: &[RuleGroup<'_>],
-        config: RewriteConfig,
         mut dirty_trace: Option<&mut DirtyTrace>,
     ) {
         if mode.descends_on_failure() {
-            let child_count = self.enqueue_children_at_level(
-                arena,
-                surface,
-                node_id,
-                level,
-                rule_groups,
-                config,
-                dirty_trace.as_deref_mut(),
-            );
+            let child_count =
+                self.enqueue_children_at_level(context, node_id, level, dirty_trace.as_deref_mut());
             if let Some(trace) = dirty_trace.as_deref_mut() {
                 trace.record_worklist_child_descent(mode, child_count);
             }
@@ -1523,19 +1533,25 @@ impl WorklistScheduler {
         // survives that future level, avoiding stale descendant work when an ancestor rewrites.
         let next_self_level = if mode.advances_as_subtree() {
             self.next_subtree_candidate_level(
-                arena,
-                surface,
+                context.arena,
+                context.surface,
                 node_id,
                 next_self_level,
-                rule_groups,
-                config,
+                context.rule_groups,
+                context.config,
             )
         } else {
-            next_worklist_candidate_level(arena, node_id, next_self_level, rule_groups, config)
+            next_worklist_candidate_level(
+                context.arena,
+                node_id,
+                next_self_level,
+                context.rule_groups,
+                context.config,
+            )
         };
         self.enqueue_node_at_level(
-            arena,
-            surface,
+            context.arena,
+            context.surface,
             node_id,
             next_self_level,
             next_self_mode,
@@ -1778,13 +1794,19 @@ impl RuleEffectImpact {
         effect: &crate::rule_engine::rule::RuleEffect,
         symbols: &crate::ast::SymbolTable,
     ) -> Self {
+        let mut changed_names: Vec<_> = effect
+            .changed_symbols(symbols)
+            .into_iter()
+            .map(|(name, _, _)| name)
+            .collect();
+        for name in effect.updated_declaration_names() {
+            if !changed_names.contains(&name) {
+                changed_names.push(name);
+            }
+        }
         Self {
             added_names: effect.added_symbols(symbols).into_iter().collect(),
-            changed_names: effect
-                .changed_symbols(symbols)
-                .into_iter()
-                .map(|(name, _, _)| name)
-                .collect(),
+            changed_names,
             has_new_top: !effect.new_top.is_empty(),
             has_new_clauses: !effect.new_clauses.is_empty(),
         }
@@ -1925,21 +1947,21 @@ fn try_rewrite_model<'ctx, 'rules>(
     ctx: &mut RewritePassContext<'ctx, 'rules>,
 ) -> Option<()> {
     ctx.dirty_trace.passes += 1;
-    if !ctx.config.worklist {
-        if let Some(letting_name) = try_rewrite_value_letting_once(
+    if !ctx.config.worklist
+        && let Some(letting_name) = try_rewrite_value_letting_once(
             submodel,
             ctx.rules_grouped,
             ctx.prop_multiple_equally_applicable,
-        ) {
-            ctx.dirty_trace.value_letting_rewrites += 1;
-            increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
-            invalidate_symbol_context_caches(submodel, ctx);
-            if ctx.config.dirty {
-                ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
-                clear_clean_rule_metadata_for_name(submodel, &letting_name);
-            }
-            return Some(());
+        )
+    {
+        ctx.dirty_trace.value_letting_rewrites += 1;
+        increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
+        invalidate_symbol_context_caches(submodel, ctx);
+        if ctx.config.dirty {
+            ctx.dirty_trace.whole_model_clears_after_value_letting += 1;
+            clear_clean_rule_metadata_for_name(submodel, &letting_name);
         }
+        return Some(());
     }
 
     let mut did_rewrite = false;
@@ -2223,6 +2245,7 @@ fn try_rewrite_model<'ctx, 'rules>(
                     new_top,
                     symbols,
                     new_clauses,
+                    declaration_updates,
                     ..
                 } = effect;
                 let replacement = clear_expr_clean_rule_metadata(new_expression);
@@ -2248,6 +2271,9 @@ fn try_rewrite_model<'ctx, 'rules>(
                 // Apply new symbols and top level
                 ctx.dirty_trace
                     .record_rewrite(rule_name, has_model_side_effects);
+                for update in declaration_updates {
+                    update.apply();
+                }
                 submodel.symbols_mut().extend(symbols);
                 if effect_impact.has_new_top {
                     arena.add_root_children(new_top);
@@ -2362,14 +2388,16 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
         {
             ctx.dirty_trace.record_dirty_hit(rule_group.priority);
             scheduler.enqueue_after_no_rewrite(
-                &surfaces[surface_index].arena,
-                surface_index,
+                WorklistSchedulingContext::new(
+                    &surfaces[surface_index].arena,
+                    surface_index,
+                    ctx.bucketed_rules,
+                    ctx.config,
+                ),
                 node_id,
                 level,
                 level + 1,
                 scheduled_mode,
-                ctx.bucketed_rules,
-                ctx.config,
                 Some(ctx.dirty_trace),
             );
             continue;
@@ -2382,14 +2410,16 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             ctx.dirty_trace
                 .record_worklist_no_candidate_pop(scheduled_mode);
             scheduler.enqueue_after_no_rewrite(
-                &surfaces[surface_index].arena,
-                surface_index,
+                WorklistSchedulingContext::new(
+                    &surfaces[surface_index].arena,
+                    surface_index,
+                    ctx.bucketed_rules,
+                    ctx.config,
+                ),
                 node_id,
                 level,
                 level + 1,
                 scheduled_mode,
-                ctx.bucketed_rules,
-                ctx.config,
                 Some(ctx.dirty_trace),
             );
             continue;
@@ -2424,14 +2454,16 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                             .mark_clean_for_rule_priority(node_id, rule_group.priority);
                     }
                     scheduler.enqueue_after_no_rewrite(
-                        &surfaces[surface_index].arena,
-                        surface_index,
+                        WorklistSchedulingContext::new(
+                            &surfaces[surface_index].arena,
+                            surface_index,
+                            ctx.bucketed_rules,
+                            ctx.config,
+                        ),
                         node_id,
                         level,
                         clean_level + 1,
                         scheduled_mode,
-                        ctx.bucketed_rules,
-                        ctx.config,
                         Some(ctx.dirty_trace),
                     );
                     continue;
@@ -2621,14 +2653,16 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         if results.is_empty() {
             scheduler.enqueue_after_no_rewrite(
-                &surfaces[surface_index].arena,
-                surface_index,
+                WorklistSchedulingContext::new(
+                    &surfaces[surface_index].arena,
+                    surface_index,
+                    ctx.bucketed_rules,
+                    ctx.config,
+                ),
                 node_id,
                 level,
                 level + 1,
                 scheduled_mode,
-                ctx.bucketed_rules,
-                ctx.config,
                 Some(ctx.dirty_trace),
             );
             continue;
@@ -2676,6 +2710,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             new_top,
             symbols,
             new_clauses,
+            declaration_updates,
             ..
         } = effect;
         let replacement = clear_expr_clean_rule_metadata(new_expression);
@@ -2702,6 +2737,9 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         ctx.dirty_trace
             .record_rewrite(rule_name, has_model_side_effects);
+        for update in declaration_updates {
+            update.apply();
+        }
         submodel.symbols_mut().extend(symbols);
         let new_top_node_ids = if effect_impact.has_new_top {
             surfaces[root_surface].arena.add_root_children(new_top)
@@ -4323,14 +4361,11 @@ mod tests {
         );
 
         scheduler.enqueue_after_no_rewrite(
-            arena,
-            0,
+            WorklistSchedulingContext::new(arena, 0, &rule_groups, RewriteConfig::optimised()),
             root_id,
             0,
             1,
             ScheduledMode::TraverseSubtreeRoot,
-            &rule_groups,
-            RewriteConfig::optimised(),
             Some(&mut dirty_trace),
         );
         let eq_work = scheduler.pop_next(
@@ -4344,14 +4379,11 @@ mod tests {
             Some((0, 0, eq_id, ScheduledMode::TraverseSubtreeDescendant))
         );
         scheduler.enqueue_after_no_rewrite(
-            arena,
-            0,
+            WorklistSchedulingContext::new(arena, 0, &rule_groups, RewriteConfig::optimised()),
             eq_id,
             0,
             1,
             ScheduledMode::TraverseSubtreeDescendant,
-            &rule_groups,
-            RewriteConfig::optimised(),
             Some(&mut dirty_trace),
         );
         assert_eq!(
@@ -4411,14 +4443,11 @@ mod tests {
         );
 
         scheduler.enqueue_after_no_rewrite(
-            arena,
-            0,
+            WorklistSchedulingContext::new(arena, 0, &rule_groups, RewriteConfig::optimised()),
             root_id,
             1,
             2,
             ScheduledMode::TraverseSubtreeRoot,
-            &rule_groups,
-            RewriteConfig::optimised(),
             Some(&mut dirty_trace),
         );
         assert_eq!(
@@ -4459,14 +4488,16 @@ mod tests {
             Some((0, 0, root_id, ScheduledMode::TraverseSubtreeRoot))
         );
         scheduler.enqueue_after_no_rewrite(
-            &surfaces[0].arena,
-            0,
+            WorklistSchedulingContext::new(
+                &surfaces[0].arena,
+                0,
+                &rule_groups,
+                RewriteConfig::optimised(),
+            ),
             root_id,
             0,
             1,
             ScheduledMode::TraverseSubtreeRoot,
-            &rule_groups,
-            RewriteConfig::optimised(),
             Some(&mut dirty_trace),
         );
 
@@ -4509,27 +4540,31 @@ mod tests {
             {
                 found_refreshed_root = true;
                 scheduler.enqueue_after_no_rewrite(
-                    &surfaces[0].arena,
-                    0,
+                    WorklistSchedulingContext::new(
+                        &surfaces[0].arena,
+                        0,
+                        &rule_groups,
+                        RewriteConfig::optimised(),
+                    ),
                     root_id,
                     1,
                     2,
                     ScheduledMode::TraverseSubtreeRoot,
-                    &rule_groups,
-                    RewriteConfig::optimised(),
                     Some(&mut dirty_trace),
                 );
                 break;
             }
             scheduler.enqueue_after_no_rewrite(
-                &surfaces[surface].arena,
-                surface,
+                WorklistSchedulingContext::new(
+                    &surfaces[surface].arena,
+                    surface,
+                    &rule_groups,
+                    RewriteConfig::optimised(),
+                ),
                 node_id,
                 level,
                 level + 1,
                 mode,
-                &rule_groups,
-                RewriteConfig::optimised(),
                 Some(&mut dirty_trace),
             );
         }
@@ -4580,14 +4615,11 @@ mod tests {
             Some((0, 0, root_id, ScheduledMode::TraverseSubtreeRoot))
         );
         scheduler.enqueue_after_no_rewrite(
-            arena,
-            0,
+            WorklistSchedulingContext::new(arena, 0, &rule_groups, RewriteConfig::optimised()),
             root_id,
             0,
             1,
             ScheduledMode::TraverseSubtreeRoot,
-            &rule_groups,
-            RewriteConfig::optimised(),
             Some(&mut dirty_trace),
         );
 
@@ -4636,14 +4668,11 @@ mod tests {
         );
 
         scheduler.enqueue_after_no_rewrite(
-            arena,
-            0,
+            WorklistSchedulingContext::new(arena, 0, &rule_groups, RewriteConfig::optimised()),
             root_id,
             0,
             1,
             ScheduledMode::TraverseSubtreeRoot,
-            &rule_groups,
-            RewriteConfig::optimised(),
             Some(&mut dirty_trace),
         );
 

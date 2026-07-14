@@ -83,7 +83,7 @@ fn has_duplicate_weighted_reference(exprs: &[Expr]) -> bool {
         let Some((reference, _)) = weighted_term(expr) else {
             continue;
         };
-        if !seen.insert(reference) {
+        if !seen.insert(reference.id()) {
             return true;
         }
     }

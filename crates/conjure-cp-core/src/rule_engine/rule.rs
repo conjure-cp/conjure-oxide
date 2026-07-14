@@ -6,7 +6,9 @@ use std::sync::Arc;
 use thiserror::Error;
 
 use crate::Model;
-use crate::ast::{CnfClause, DeclarationPtr, Expression, Metadata, Name, SymbolTable};
+use crate::ast::{
+    CnfClause, DeclarationKind, DeclarationPtr, Expression, Metadata, Name, SymbolTable,
+};
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -59,7 +61,36 @@ pub struct RuleEffect {
     pub new_top: Vec<Expression>,
     pub symbols: SymbolTable,
     pub new_clauses: Vec<CnfClause>,
+    /// Shared declarations to update if this effect is selected.
+    pub(crate) declaration_updates: Vec<DeclarationUpdate>,
     materialise: Option<DeferredRuleEffect>,
+}
+
+/// An in-place update to a shared declaration, applied only after its rule is selected.
+#[derive(Clone, Debug)]
+pub(crate) struct DeclarationUpdate {
+    target: DeclarationPtr,
+    replacement_kind: DeclarationKind,
+}
+
+impl DeclarationUpdate {
+    /// Creates a deferred replacement for a shared declaration's kind.
+    fn new(target: DeclarationPtr, replacement_kind: DeclarationKind) -> Self {
+        Self {
+            target,
+            replacement_kind,
+        }
+    }
+
+    /// Returns the name of the declaration that will be updated.
+    pub(crate) fn name(&self) -> Name {
+        self.target.name().clone()
+    }
+
+    /// Commits the replacement while retaining the declaration's identity.
+    pub(crate) fn apply(mut self) {
+        let _ = self.target.replace_kind(self.replacement_kind);
+    }
 }
 
 /// Deferred constructor for a concrete rule effect.
@@ -76,6 +107,7 @@ impl Debug for RuleEffect {
             .field("new_top", &self.new_top)
             .field("symbols", &self.symbols)
             .field("new_clauses", &self.new_clauses)
+            .field("declaration_updates", &self.declaration_updates)
             .field("is_deferred", &self.materialise.is_some())
             .finish()
     }
@@ -88,6 +120,7 @@ impl RuleEffect {
             new_top,
             symbols,
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -99,6 +132,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -110,6 +144,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols,
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -121,6 +156,7 @@ impl RuleEffect {
             new_top,
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -136,6 +172,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols,
             new_clauses,
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -153,6 +190,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: Some(Arc::new(materialise)),
         }
     }
@@ -166,12 +204,33 @@ impl RuleEffect {
         materialise(symbols).materialise(symbols)
     }
 
+    /// Adds declaration replacements that are committed only if this effect is selected.
+    pub fn with_declaration_updates(
+        mut self,
+        updates: impl IntoIterator<Item = (DeclarationPtr, DeclarationKind)>,
+    ) -> Self {
+        self.declaration_updates.extend(
+            updates
+                .into_iter()
+                .map(|(target, kind)| DeclarationUpdate::new(target, kind)),
+        );
+        self
+    }
+
+    /// Iterates over the names changed by deferred declaration updates.
+    pub fn updated_declaration_names(&self) -> impl Iterator<Item = Name> + '_ {
+        self.declaration_updates.iter().map(DeclarationUpdate::name)
+    }
+
     /// Applies side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut Model) {
         debug_assert!(
             self.materialise.is_none(),
             "deferred rule effects must be materialised before being applied"
         );
+        for update in self.declaration_updates {
+            update.apply();
+        }
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top.clone());
         model.add_clauses(self.new_clauses);
@@ -211,7 +270,7 @@ impl RuleEffect {
                 continue;
             };
 
-            if new_value != initial_value {
+            if !new_value.content_eq(&initial_value) {
                 changes.push((var_name.clone(), initial_value.clone(), new_value.clone()));
             }
         }
@@ -301,5 +360,30 @@ impl Eq for Rule<'_> {}
 impl Hash for Rule<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{DecisionVariable, Domain, Range, Reference};
+
+    #[test]
+    fn declaration_updates_are_applied_only_when_effect_is_committed() {
+        let old_domain = Domain::int(vec![Range::Bounded(1, 3)]);
+        let new_domain = Domain::int(vec![Range::Bounded(1, 2)]);
+        let mut model = Model::new(Default::default());
+        let declaration = DeclarationPtr::new_find(Name::user("x"), old_domain.clone());
+        let reference = Reference::new(declaration.clone());
+        model.symbols_mut().insert(declaration.clone()).unwrap();
+
+        let effect = RuleEffect::pure(Expression::from(1)).with_declaration_updates([(
+            declaration,
+            DeclarationKind::Find(DecisionVariable::new(new_domain.clone())),
+        )]);
+
+        assert_eq!(reference.domain(), Some(old_domain));
+        effect.apply(&mut model);
+        assert_eq!(reference.domain(), Some(new_domain));
     }
 }
