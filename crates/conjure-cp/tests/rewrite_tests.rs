@@ -2,8 +2,7 @@ use conjure_cp::{
     Model,
     ast::{
         AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Field, Literal, Metadata, Moo,
-        SymbolTable, eval_constant, normalise_evaluator_local,
-        Name, Range, Reference,
+        Name, Range, Reference, SymbolTable, eval_constant, normalise_evaluator_local,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_model},

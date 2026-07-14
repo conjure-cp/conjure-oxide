@@ -4082,11 +4082,7 @@ mod tests {
             ],
         );
         let config = RewriteConfig::optimised();
-        let lex = Expr::LexLt(
-            Metadata::new(),
-            Moo::new(int_lit(1)),
-            Moo::new(int_lit(2)),
-        );
+        let lex = Expr::LexLt(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2)));
 
         assert!(rule_group.has_candidates(config, &lex));
         assert_eq!(

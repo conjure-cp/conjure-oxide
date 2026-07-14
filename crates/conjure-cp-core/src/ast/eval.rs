@@ -197,7 +197,9 @@ fn normalise_constraint_deep_to_fixpoint(constraint: &Expr) -> Option<Expr> {
         changed = true;
     }
 
-    changed.then_some(current).filter(|current| current != constraint)
+    changed
+        .then_some(current)
+        .filter(|current| current != constraint)
 }
 
 fn partial_evaluator_deep_step(expr: &Expr) -> Option<Expr> {
