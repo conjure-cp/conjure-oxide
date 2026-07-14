@@ -103,7 +103,7 @@ impl Parse for RegisterRuleArgs {
                     if content.peek(Token![/]) {
                         let _: Token![/] = content.parse()?;
                         let subvariant: Ident = content.parse()?;
-                        if variant.to_string() != "Atomic" {
+                        if variant != "Atomic" {
                             prefilters.push(ParsedPrefilter::VariantChild {
                                 variant,
                                 child: subvariant,
