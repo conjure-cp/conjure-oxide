@@ -91,6 +91,11 @@ impl DeclarationUpdate {
     pub(crate) fn apply(mut self) {
         let _ = self.target.replace_kind(self.replacement_kind);
     }
+
+    /// Creates an unshared declaration containing the pending replacement.
+    fn preview(&self) -> DeclarationPtr {
+        DeclarationPtr::new(self.name(), self.replacement_kind.clone())
+    }
 }
 
 /// Deferred constructor for a concrete rule effect.
@@ -220,6 +225,13 @@ impl RuleEffect {
     /// Iterates over the names changed by deferred declaration updates.
     pub fn updated_declaration_names(&self) -> impl Iterator<Item = Name> + '_ {
         self.declaration_updates.iter().map(DeclarationUpdate::name)
+    }
+
+    /// Applies pending declaration replacements to a detached symbol-table preview.
+    pub(crate) fn preview_declaration_updates(&self, symbols: &mut SymbolTable) {
+        for update in &self.declaration_updates {
+            symbols.update_insert(update.preview());
+        }
     }
 
     /// Applies side-effects (e.g. symbol table updates)
@@ -367,6 +379,9 @@ impl Hash for Rule<'_> {
 mod tests {
     use super::*;
     use crate::ast::{DecisionVariable, Domain, Range, Reference};
+    use crate::rule_engine::rewriter_common::{
+        snapshot_symbols_after_effect, snapshot_variable_declarations,
+    };
 
     #[test]
     fn declaration_updates_are_applied_only_when_effect_is_committed() {
@@ -382,6 +397,10 @@ mod tests {
             DeclarationKind::Find(DecisionVariable::new(new_domain.clone())),
         )]);
 
+        let before = snapshot_variable_declarations(&model.symbols());
+        let after = snapshot_symbols_after_effect(&model.symbols(), &effect);
+        assert_eq!(before.get(&Name::user("x")).unwrap(), "find x: int(1..3)");
+        assert_eq!(after.get(&Name::user("x")).unwrap(), "find x: int(1..2)");
         assert_eq!(reference.domain(), Some(old_domain));
         effect.apply(&mut model);
         assert_eq!(reference.domain(), Some(new_domain));

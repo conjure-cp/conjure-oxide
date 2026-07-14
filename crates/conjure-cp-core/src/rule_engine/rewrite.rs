@@ -2217,7 +2217,7 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 let effect = result.effect.materialise(&submodel.symbols());
                 let variable_snapshots = variable_snapshot_before.clone().map(|before| {
-                    let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect.symbols);
+                    let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect);
                     (before, after)
                 });
                 let result = RuleResult {
@@ -2679,7 +2679,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         let effect = result.effect.materialise(&submodel.symbols());
         let variable_snapshots = variable_snapshot_before.clone().map(|before| {
-            let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect.symbols);
+            let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect);
             (before, after)
         });
         let result = RuleResult {
