@@ -3,12 +3,12 @@ use conjure_cp::ast::GroundDomain;
 use conjure_cp::bug;
 use conjure_cp::{
     ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, SymbolTable},
-    register_representation,
+    register_legacy_representation,
     representation::Representation,
     rule_engine::ApplicationError,
 };
 
-register_representation!(SatDirectInt, "sat_direct_int");
+register_legacy_representation!(SatDirectInt, "sat_direct_int");
 
 #[derive(Clone, Debug)]
 pub struct SatDirectInt {
@@ -126,7 +126,7 @@ impl Representation for SatDirectInt {
                     Name::Machine(index as i32),
                     Expression::Atomic(
                         Metadata::new(),
-                        Atom::Reference(conjure_cp::ast::Reference { ptr: decl }),
+                        Atom::Reference(conjure_cp::ast::Reference::new(decl)),
                     ),
                 )
             })

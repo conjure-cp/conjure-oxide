@@ -1,12 +1,15 @@
 use std::collections::VecDeque;
 
+use conjure_cp::ast::eval_constant;
 use conjure_cp::ast::{
     AbstractLiteral, Atom, DeclarationPtr, DomainPtr, Expression as Expr, Literal, Metadata, Moo,
-    Name, SymbolTable,
+    SymbolTable,
     categories::Category,
     comprehension::{Comprehension, ComprehensionQualifier},
 };
-use conjure_cp::rule_engine::RuleEffect;
+use conjure_cp::rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, RuleEffect};
+use conjure_cp::{bug, bug_assert_eq, essence_expr, into_matrix_expr};
+use itertools::{Itertools, izip};
 
 use tracing::{instrument, trace};
 use uniplate::{Biplate, Uniplate};
@@ -68,31 +71,146 @@ pub fn with_single_vec_child(expr: &Expr, child: Vec<Expr>) -> Expr {
     expr.with_children_bi(VecDeque::from([child]))
 }
 
-/// Returns the arity of a tuple constant expression, if this expression is one.
-pub fn constant_tuple_len(expr: &Expr) -> Option<usize> {
+pub fn eval_to_usize(expr: &Expr) -> usize {
+    match eval_constant(expr) {
+        Some(Literal::Int(n)) if n >= 0 => n as usize,
+        Some(lit) => bug!("expected a non-negative integer, got `{lit}`"),
+        None => bug!("expected a constant expression, got `{expr}`"),
+    }
+}
+
+/// True iff the expression is a tuple literal.
+pub fn is_tuple_lit(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(..))
+            | Expr::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(..)))
+            )
+    )
+}
+
+/// Gets the entries of a tuple expression, if it is one.
+pub fn tuple_expr_entries(expr: &Expr) -> Option<Vec<Expr>> {
     match expr {
-        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.len()),
+        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.clone()),
         Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)))) => {
-            Some(elems.len())
+            Some(elems.iter().cloned().map(Expr::from).collect())
         }
         _ => None,
     }
 }
 
-/// Returns record field names of a record constant expression, if this expression is one.
-pub fn constant_record_names(expr: &Expr) -> Option<Vec<Name>> {
+pub fn as_eq_or_neq(expr: &Expr) -> Result<(&Expr, &Expr, bool), ApplicationError> {
     match expr {
-        Expr::AbstractLiteral(_, AbstractLiteral::Record(entries)) => {
-            Some(entries.iter().map(|x| x.name.clone()).collect())
+        Expr::Eq(_, left, right) => Ok((left.as_ref(), right.as_ref(), false)),
+        Expr::Neq(_, left, right) => Ok((left.as_ref(), right.as_ref(), true)),
+        _ => Err(RuleNotApplicable),
+    }
+}
+
+pub fn collect_eq_or_neq<A, B>(neq: bool, itr: impl Iterator<Item = (A, B)>) -> Expr
+where
+    A: Into<Expr> + Clone,
+    B: Into<Expr> + Clone,
+{
+    if neq {
+        let constraints = itr.map(|(a, b)| essence_expr!(&a != &b)).collect_vec();
+        Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(constraints)))
+    } else {
+        let constraints = itr.map(|(a, b)| essence_expr!(&a == &b)).collect_vec();
+        Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(constraints)))
+    }
+}
+
+fn expressions_as_atoms(exprs: &[Expr]) -> Option<Vec<Atom>> {
+    exprs
+        .iter()
+        .map(|expr| match expr {
+            Expr::Atomic(_, atom) => Some(atom.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+pub fn collect_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<Expr>) -> Expr {
+    let len = lhs_fields.len();
+    bug_assert_eq!(
+        len,
+        rhs_fields.len(),
+        "comparison of collections with different shapes"
+    );
+
+    if let Some(lhs_atoms) = expressions_as_atoms(&lhs_fields)
+        && let Some(rhs_atoms) = expressions_as_atoms(&rhs_fields)
+    {
+        match cmp_op {
+            Expr::LexLeq(..) => return Expr::FlatLexLeq(Metadata::new(), lhs_atoms, rhs_atoms),
+            Expr::LexLt(..) => return Expr::FlatLexLt(Metadata::new(), lhs_atoms, rhs_atoms),
+            _ => {}
         }
-        Expr::Atomic(
-            _,
-            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(entries))),
-        ) => Some(entries.iter().map(|x| x.name.clone()).collect()),
+    }
+
+    let mut cases = vec![Vec::<Expr>::with_capacity(len); len];
+    for (i, (lhs, rhs)) in izip!(lhs_fields, rhs_fields).enumerate() {
+        let equal = essence_expr!(&lhs = &rhs);
+        let comparison = cmp_op.with_children(VecDeque::from([lhs, rhs]));
+        for case in cases.iter_mut().take(i) {
+            case.push(equal.clone());
+        }
+        cases[i].push(comparison);
+    }
+
+    let conjunctions = cases
+        .into_iter()
+        .map(|case| Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(case))))
+        .collect();
+    Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(conjunctions)))
+}
+
+pub fn as_comparison_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
+    match expr {
+        Expr::Eq(_, lhs, rhs)
+        | Expr::Neq(_, lhs, rhs)
+        | Expr::Lt(_, lhs, rhs)
+        | Expr::Gt(_, lhs, rhs)
+        | Expr::Leq(_, lhs, rhs)
+        | Expr::Geq(_, lhs, rhs) => Some((lhs.clone(), rhs.clone())),
         _ => None,
     }
 }
 
+pub fn as_lex_comparison_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
+    match expr {
+        Expr::LexGt(_, lhs, rhs)
+        | Expr::LexLt(_, lhs, rhs)
+        | Expr::LexGeq(_, lhs, rhs)
+        | Expr::LexLeq(_, lhs, rhs) => Some((lhs.clone(), rhs.clone())),
+        _ => None,
+    }
+}
+
+pub fn as_cmp_or_lex_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
+    as_lex_comparison_op(expr).or_else(|| as_comparison_op(expr))
+}
+
+pub fn eq_or_neq(neq: bool, lhs: Expr, rhs: Expr) -> Expr {
+    if neq {
+        essence_expr!(&lhs != &rhs)
+    } else {
+        essence_expr!(&lhs = &rhs)
+    }
+}
+
+/// True if the entire AST is constants.
+#[allow(dead_code)]
+pub fn is_all_constant(expression: &Expr) -> bool {
+    expression
+        .universe_bi()
+        .into_iter()
+        .all(|atom| matches!(atom, Atom::Literal(_)))
+}
 /// Converts a vector of expressions to a vector of atoms.
 ///
 /// # Returns
