@@ -1,8 +1,10 @@
 use conjure_cp::ast::records::Field;
-use conjure_cp::ast::{AbstractLiteral, Domain, Literal, Name, SymbolTable};
+use conjure_cp::ast::{AbstractLiteral, Domain, Literal, Name, SetAttr, SymbolTable};
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, range};
-use conjure_cp_rules::representation::{MatrixToAtom, RecordToTuple, TuplePacked};
+use conjure_cp_rules::representation::{
+    MatrixToAtom, RecordToTuple, SetExplicitWithSize, SetOccurrence, TuplePacked,
+};
 
 #[test]
 fn matrix_representation_initialises_and_maps_indices() {
@@ -84,4 +86,49 @@ fn packed_tuple_round_trips_integer_values() {
     let assignment = state.down(value.clone()).unwrap();
     assert_eq!(assignment.packed, Literal::Int(4));
     assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn occurrence_set_round_trips_and_enforces_cardinality() {
+    let domain = Domain::set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
+    let state = <SetOccurrence as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let value =
+        Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(3), Literal::Int(1)]));
+
+    let assignment = state.down(value).unwrap();
+    assert_eq!(
+        assignment.up(),
+        Literal::AbstractLiteral(AbstractLiteral::Set(
+            vec![Literal::Int(1), Literal::Int(3),]
+        ))
+    );
+
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (new_symbols, constraints) = SetOccurrence::init_for(&mut declaration).unwrap();
+    assert_eq!(new_symbols.iter_local().count(), 3);
+    assert_eq!(constraints.len(), 1);
+}
+
+#[test]
+fn explicit_set_round_trips_with_padding() {
+    let domain = Domain::set(SetAttr::new_min_max_size(1, 3), domain_int!(1..4));
+    let state = <SetExplicitWithSize as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let value =
+        Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(4), Literal::Int(2)]));
+
+    let assignment = state.down(value).unwrap();
+    assert_eq!(assignment.set_size, Literal::Int(2));
+    assert_eq!(
+        assignment.up(),
+        Literal::AbstractLiteral(AbstractLiteral::Set(
+            vec![Literal::Int(2), Literal::Int(4),]
+        ))
+    );
+
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (new_symbols, constraints) = SetExplicitWithSize::init_for(&mut declaration).unwrap();
+    assert_eq!(new_symbols.iter_local().count(), 2);
+    assert_eq!(constraints.len(), 2);
 }
