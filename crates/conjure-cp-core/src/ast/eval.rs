@@ -1292,6 +1292,7 @@ mod tests {
         assert_eq!(eval_constant(&membership), Some(Lit::Bool(true)));
     }
 
+
     use crate::matrix_expr;
 
     fn int_lit(value: i32) -> Expr {
