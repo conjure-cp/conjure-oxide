@@ -9,30 +9,30 @@ such that
 
 --
 
-!(a#matrix_to_atom = b#matrix_to_atom)
-   ~~> select_representation_matrix ([("Representations", 8001)])
-!(a#matrix_to_atom = b#matrix_to_atom)
+!(a = b)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+!(a = b)
 new variables:
-  find a#matrix_to_atom_2: int(1..2)
-  find a#matrix_to_atom_3: int(1..2)
-  find b#matrix_to_atom_1: int(1..2)
-  find b#matrix_to_atom_2: int(1..2)
+  find a#MatrixToAtom_1: int(1..2)
+  find a#MatrixToAtom_2: int(1..2)
+  find b#MatrixToAtom_1: int(1..2)
+  find b#MatrixToAtom_2: int(1..2)
 
 --
 
-!(a#matrix_to_atom = b#matrix_to_atom)
+!(a = b)
    ~~> flatten_generic ([("Minion", 4200)])
 !(__0)
 new variables:
   find __0: bool
 new constraints:
-  __0 =aux a#matrix_to_atom = b#matrix_to_atom
+  __0 =aux a = b
 
 --
 
-__0 =aux a#matrix_to_atom = b#matrix_to_atom
+__0 =aux a = b
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(a#matrix_to_atom = b#matrix_to_atom, __0)
+Reify(a = b, __0)
 
 --
 
@@ -42,27 +42,27 @@ WatchedLiteral(__0,false)
 
 --
 
-a#matrix_to_atom = b#matrix_to_atom
+a = b
    ~~> flatten_matrix_eq_neq ([("Base", 3000)])
-and([a#matrix_to_atom[1] = b#matrix_to_atom[1],a#matrix_to_atom[2] = b#matrix_to_atom[2],a#matrix_to_atom[3] = b#matrix_to_atom[3];int(1..)])
+and([a[1] = b[1],a[2] = b[2],a[3] = b[3];int(1..)])
 
 --
 
-a#matrix_to_atom[1]
+a[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-{SafeIndex(a#matrix_to_atom,[1]) @ false}
+{SafeIndex(a,[1]) @ false}
 
 --
 
-{SafeIndex(a#matrix_to_atom,[1]) @ false} = b#matrix_to_atom[1]
+{SafeIndex(a,[1]) @ false} = b[1]
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(a#matrix_to_atom,[1]) = b#matrix_to_atom[1] @ false}
+{SafeIndex(a,[1]) = b[1] @ false}
 
 --
 
-{SafeIndex(a#matrix_to_atom,[1]) = b#matrix_to_atom[1] @ false}
+{SafeIndex(a,[1]) = b[1] @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(a#matrix_to_atom,[1]) = b#matrix_to_atom[1],false;int(1..)])
+and([SafeIndex(a,[1]) = b[1],false;int(1..)])
 
 --
 
@@ -70,10 +70,10 @@ Final model:
 
 find a: matrix indexed by [int(2..3)] of int(1..2)
 find b: matrix indexed by [int(1..2)] of int(1..2)
-find a#matrix_to_atom_2: int(1..2)
-find a#matrix_to_atom_3: int(1..2)
-find b#matrix_to_atom_1: int(1..2)
-find b#matrix_to_atom_2: int(1..2)
+find a#MatrixToAtom_1: int(1..2)
+find a#MatrixToAtom_2: int(1..2)
+find b#MatrixToAtom_1: int(1..2)
+find b#MatrixToAtom_2: int(1..2)
 find __0: bool
 
 such that

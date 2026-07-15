@@ -8,54 +8,66 @@ and([a[1],a[2],a[4];int(1..3)])
 
 --
 
-and([a#matrix_to_atom[1],a#matrix_to_atom[2],a#matrix_to_atom[4];int(1..3)])
-   ~~> select_representation_matrix ([("Representations", 8001)])
-and([a#matrix_to_atom[1],a#matrix_to_atom[2],a#matrix_to_atom[4];int(1..3)])
+and([a[1],a[2],a[4];int(1..3)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([a[1],a[2],a[4];int(1..3)])
 new variables:
-  find a#matrix_to_atom_1: bool
-  find a#matrix_to_atom_2: bool
-  find a#matrix_to_atom_4: bool
+  find a#MatrixToAtom_1: bool
+  find a#MatrixToAtom_2: bool
+  find a#MatrixToAtom_3: bool
 
 --
 
-a#matrix_to_atom[1]
+a[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(a#matrix_to_atom,[1])
+SafeIndex(a,[1])
 
 --
 
-a#matrix_to_atom[2]
+a[2]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(a#matrix_to_atom,[2])
+SafeIndex(a,[2])
 
 --
 
-a#matrix_to_atom[4]
+a[4]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(a#matrix_to_atom,[4])
+SafeIndex(a,[4])
 
 --
 
-and([SafeIndex(a#matrix_to_atom,[1]),SafeIndex(a#matrix_to_atom,[2]),SafeIndex(a#matrix_to_atom,[4]);int(1..3)])
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-and([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_4;int(1..3)])
+SafeIndex(a,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#MatrixToAtom_1
 
 --
 
-and([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_4;int(1..3)])
+SafeIndex(a,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#MatrixToAtom_2
+
+--
+
+SafeIndex(a,[4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#MatrixToAtom_3
+
+--
+
+and([a#MatrixToAtom_1,a#MatrixToAtom_2,a#MatrixToAtom_3;int(1..3)])
    ~~> matrix_to_list ([("Base", 2000)])
-and([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_4;int(1..)])
+and([a#MatrixToAtom_1,a#MatrixToAtom_2,a#MatrixToAtom_3;int(1..)])
 
 --
 
 Final model:
 
 find a: matrix indexed by [int(1..2, 4)] of bool
-find a#matrix_to_atom_1: bool
-find a#matrix_to_atom_2: bool
-find a#matrix_to_atom_4: bool
+find a#MatrixToAtom_1: bool
+find a#MatrixToAtom_2: bool
+find a#MatrixToAtom_3: bool
 
 such that
 
-and([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_4;int(1..)])
+and([a#MatrixToAtom_1,a#MatrixToAtom_2,a#MatrixToAtom_3;int(1..)])
 

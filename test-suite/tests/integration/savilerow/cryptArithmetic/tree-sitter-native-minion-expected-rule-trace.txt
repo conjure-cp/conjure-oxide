@@ -25,68 +25,66 @@ allDifferent(letters)
 
 --
 
-letters#matrix_to_atom[1] != 0,
-letters#matrix_to_atom[3] != 0,
-letters#matrix_to_atom[2] != 0,
-word1Sum = sum([ product([letters#matrix_to_atom[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
-word2Sum = sum([ product([letters#matrix_to_atom[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
-word3Sum = sum([ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
 sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
-allDifferent(letters#matrix_to_atom)
-   ~~> select_representation_matrix ([("Representations", 8001)])
-letters#matrix_to_atom[1] != 0,
-letters#matrix_to_atom[3] != 0,
-letters#matrix_to_atom[2] != 0,
-word1Sum = sum([ product([letters#matrix_to_atom[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
-word2Sum = sum([ product([letters#matrix_to_atom[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
-word3Sum = sum([ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+allDifferent(letters)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+letters[1] != 0,
+letters[3] != 0,
+letters[2] != 0,
+word1Sum = sum([ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
 sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
-allDifferent(letters#matrix_to_atom)
+allDifferent(letters)
 new variables:
-  find letters#matrix_to_atom_1: int(0..9)
-  find letters#matrix_to_atom_2: int(0..9)
-  find letters#matrix_to_atom_3: int(0..9)
-  find letters#matrix_to_atom_4: int(0..9)
-  find letters#matrix_to_atom_5: int(0..9)
-  find letters#matrix_to_atom_6: int(0..9)
+  find letters#MatrixToAtom_1: int(0..9)
+  find letters#MatrixToAtom_2: int(0..9)
+  find letters#MatrixToAtom_3: int(0..9)
+  find letters#MatrixToAtom_4: int(0..9)
+  find letters#MatrixToAtom_5: int(0..9)
+  find letters#MatrixToAtom_6: int(0..9)
 
 --
 
-letters#matrix_to_atom[1]
+letters[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[1])
+SafeIndex(letters,[1])
 
 --
 
-letters#matrix_to_atom[3]
+letters[3]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[3])
+SafeIndex(letters,[3])
 
 --
 
-letters#matrix_to_atom[2]
+letters[2]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[2])
+SafeIndex(letters,[2])
 
 --
 
-SafeIndex(letters#matrix_to_atom,[1]) != 0,
-SafeIndex(letters#matrix_to_atom,[3]) != 0,
-SafeIndex(letters#matrix_to_atom,[2]) != 0,
-word1Sum = sum([ product([letters#matrix_to_atom[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
-word2Sum = sum([ product([letters#matrix_to_atom[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
-word3Sum = sum([ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
-sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
-allDifferent(letters#matrix_to_atom)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-letters#matrix_to_atom_1 != 0,
-letters#matrix_to_atom_3 != 0,
-letters#matrix_to_atom_2 != 0,
-word1Sum = sum([ product([letters#matrix_to_atom[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]),
-word2Sum = sum([ product([letters#matrix_to_atom[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
-word3Sum = sum([ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
-sum([word1Sum,word2Sum;int(1..)]) = word3Sum,
-allDifferent(letters#matrix_to_atom)
+SafeIndex(letters,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_1
+
+--
+
+SafeIndex(letters,[3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_3
+
+--
+
+SafeIndex(letters,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_2
 
 --
 
@@ -96,365 +94,437 @@ and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Su
 
 --
 
-allDifferent(letters#matrix_to_atom)
-   ~~> matrix_ref_to_atom ([("Base", 2000)])
-allDifferent([letters#matrix_to_atom_1,letters#matrix_to_atom_2,letters#matrix_to_atom_3,letters#matrix_to_atom_4,letters#matrix_to_atom_5,letters#matrix_to_atom_6;int(1..)])
+allDifferent(letters)
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDifferent([letters#MatrixToAtom_1,letters#MatrixToAtom_2,letters#MatrixToAtom_3,letters#MatrixToAtom_4,letters#MatrixToAtom_5,letters#MatrixToAtom_6;int(1..6)])
 
 --
 
-allDifferent([letters#matrix_to_atom_1,letters#matrix_to_atom_2,letters#matrix_to_atom_3,letters#matrix_to_atom_4,letters#matrix_to_atom_5,letters#matrix_to_atom_6;int(1..)])
+allDifferent([letters#MatrixToAtom_1,letters#MatrixToAtom_2,letters#MatrixToAtom_3,letters#MatrixToAtom_4,letters#MatrixToAtom_5,letters#MatrixToAtom_6;int(1..6)])
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([letters#matrix_to_atom_1, letters#matrix_to_atom_2, letters#matrix_to_atom_3, letters#matrix_to_atom_4, letters#matrix_to_atom_5, letters#matrix_to_atom_6])
+__flat_alldiff([letters#MatrixToAtom_1, letters#MatrixToAtom_2, letters#MatrixToAtom_3, letters#MatrixToAtom_4, letters#MatrixToAtom_5, letters#MatrixToAtom_6])
 
 --
 
-[ product([letters#matrix_to_atom[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]
+[ product([letters[word1[i]],(10 ** (word1Length - i));int(1..)]) | i : int(1..word1Length) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[product([letters#matrix_to_atom[1],100;int(1..)]),product([letters#matrix_to_atom[2],10;int(1..)]),product([letters#matrix_to_atom[3],1;int(1..)]);int(1..)]
+[product([letters[1],100;int(1..)]),product([letters[2],10;int(1..)]),product([letters[3],1;int(1..)]);int(1..)]
 
 --
 
-product([letters#matrix_to_atom[1],100;int(1..)])
+product([letters[1],100;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([100,letters#matrix_to_atom[1];int(1..)])
+product([100,letters[1];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[2],10;int(1..)])
+product([letters[2],10;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([10,letters#matrix_to_atom[2];int(1..)])
+product([10,letters[2];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[3],1;int(1..)])
+product([letters[3],1;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([letters#matrix_to_atom[3];int(1..)])
+product([letters[3];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[3];int(1..)])
+product([letters[3];int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom[3]
+letters[3]
 
 --
 
-letters#matrix_to_atom[3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[3])
-
---
-
-letters#matrix_to_atom[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[1])
-
---
-
-letters#matrix_to_atom[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[2])
-
---
-
-letters#matrix_to_atom_1 != 0,
-letters#matrix_to_atom_3 != 0,
-letters#matrix_to_atom_2 != 0,
-word1Sum = sum([product([100,SafeIndex(letters#matrix_to_atom,[1]);int(1..)]),product([10,SafeIndex(letters#matrix_to_atom,[2]);int(1..)]),SafeIndex(letters#matrix_to_atom,[3]);int(1..)]),
-word2Sum = sum([ product([letters#matrix_to_atom[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
-word3Sum = sum([ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+letters#MatrixToAtom_1 != 0,
+letters#MatrixToAtom_3 != 0,
+letters#MatrixToAtom_2 != 0,
+word1Sum = sum([product([100,letters[1];int(1..)]),product([10,letters[2];int(1..)]),letters[3];int(1..)]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
 and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)]),
-__flat_alldiff([letters#matrix_to_atom_1, letters#matrix_to_atom_2, letters#matrix_to_atom_3, letters#matrix_to_atom_4, letters#matrix_to_atom_5, letters#matrix_to_atom_6])
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-letters#matrix_to_atom_1 != 0,
-letters#matrix_to_atom_3 != 0,
-letters#matrix_to_atom_2 != 0,
-word1Sum = sum([product([100,letters#matrix_to_atom_1;int(1..)]),product([10,letters#matrix_to_atom_2;int(1..)]),letters#matrix_to_atom_3;int(1..)]),
-word2Sum = sum([ product([letters#matrix_to_atom[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
-word3Sum = sum([ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+__flat_alldiff([letters#MatrixToAtom_1, letters#MatrixToAtom_2, letters#MatrixToAtom_3, letters#MatrixToAtom_4, letters#MatrixToAtom_5, letters#MatrixToAtom_6])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+letters#MatrixToAtom_1 != 0,
+letters#MatrixToAtom_3 != 0,
+letters#MatrixToAtom_2 != 0,
+word1Sum = sum([product([100,letters[1];int(1..)]),product([10,letters[2];int(1..)]),letters[3];int(1..)]),
+word2Sum = sum([ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
 and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)]),
-__flat_alldiff([letters#matrix_to_atom_1, letters#matrix_to_atom_2, letters#matrix_to_atom_3, letters#matrix_to_atom_4, letters#matrix_to_atom_5, letters#matrix_to_atom_6])
+__flat_alldiff([letters#MatrixToAtom_1, letters#MatrixToAtom_2, letters#MatrixToAtom_3, letters#MatrixToAtom_4, letters#MatrixToAtom_5, letters#MatrixToAtom_6])
 
 --
 
-word1Sum = sum([product([100,letters#matrix_to_atom_1;int(1..)]),product([10,letters#matrix_to_atom_2;int(1..)]),letters#matrix_to_atom_3;int(1..)])
+letters[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[3])
+
+--
+
+letters[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[1])
+
+--
+
+letters[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[2])
+
+--
+
+SafeIndex(letters,[3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_3
+
+--
+
+SafeIndex(letters,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_1
+
+--
+
+SafeIndex(letters,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_2
+
+--
+
+word1Sum = sum([product([100,letters#MatrixToAtom_1;int(1..)]),product([10,letters#MatrixToAtom_2;int(1..)]),letters#MatrixToAtom_3;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum);int(1..)])
+and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum);int(1..)])
 new variables:
   find __0: int(0..9)
   find __1: int(0..9)
 new constraints:
-  __0 =aux product([letters#matrix_to_atom_1;int(1..)])
-  __1 =aux product([letters#matrix_to_atom_2;int(1..)])
+  __0 =aux product([letters#MatrixToAtom_1;int(1..)])
+  __1 =aux product([letters#MatrixToAtom_2;int(1..)])
 
 --
 
-product([letters#matrix_to_atom_1;int(1..)])
+product([letters#MatrixToAtom_1;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_1
+letters#MatrixToAtom_1
 
 --
 
-product([letters#matrix_to_atom_2;int(1..)])
+product([letters#MatrixToAtom_2;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_2
+letters#MatrixToAtom_2
 
 --
 
-[ product([letters#matrix_to_atom[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]
+[ product([letters[word2[i]],(10 ** (word2Length - i));int(1..)]) | i : int(1..word2Length) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[product([letters#matrix_to_atom[3],1000;int(1..)]),product([letters#matrix_to_atom[4],100;int(1..)]),product([letters#matrix_to_atom[2],10;int(1..)]),product([letters#matrix_to_atom[3],1;int(1..)]);int(1..)]
+[product([letters[3],1000;int(1..)]),product([letters[4],100;int(1..)]),product([letters[2],10;int(1..)]),product([letters[3],1;int(1..)]);int(1..)]
 
 --
 
-product([letters#matrix_to_atom[3],1000;int(1..)])
+product([letters[3],1000;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([1000,letters#matrix_to_atom[3];int(1..)])
+product([1000,letters[3];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[4],100;int(1..)])
+product([letters[4],100;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([100,letters#matrix_to_atom[4];int(1..)])
+product([100,letters[4];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[2],10;int(1..)])
+product([letters[2],10;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([10,letters#matrix_to_atom[2];int(1..)])
+product([10,letters[2];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[3],1;int(1..)])
+product([letters[3],1;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([letters#matrix_to_atom[3];int(1..)])
+product([letters[3];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[3];int(1..)])
+product([letters[3];int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom[3]
+letters[3]
 
 --
 
-letters#matrix_to_atom[3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[3])
-
---
-
-letters#matrix_to_atom[3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[3])
-
---
-
-letters#matrix_to_atom[4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[4])
-
---
-
-letters#matrix_to_atom[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[2])
-
---
-
-letters#matrix_to_atom_1 != 0,
-letters#matrix_to_atom_3 != 0,
-letters#matrix_to_atom_2 != 0,
-and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum);int(1..)]),
-word2Sum = sum([product([1000,SafeIndex(letters#matrix_to_atom,[3]);int(1..)]),product([100,SafeIndex(letters#matrix_to_atom,[4]);int(1..)]),product([10,SafeIndex(letters#matrix_to_atom,[2]);int(1..)]),SafeIndex(letters#matrix_to_atom,[3]);int(1..)]),
-word3Sum = sum([ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+letters#MatrixToAtom_1 != 0,
+letters#MatrixToAtom_3 != 0,
+letters#MatrixToAtom_2 != 0,
+and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum);int(1..)]),
+word2Sum = sum([product([1000,letters[3];int(1..)]),product([100,letters[4];int(1..)]),product([10,letters[2];int(1..)]),letters[3];int(1..)]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
 and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)]),
-__flat_alldiff([letters#matrix_to_atom_1, letters#matrix_to_atom_2, letters#matrix_to_atom_3, letters#matrix_to_atom_4, letters#matrix_to_atom_5, letters#matrix_to_atom_6]),
-__0 =aux letters#matrix_to_atom_1,
-__1 =aux letters#matrix_to_atom_2
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-letters#matrix_to_atom_1 != 0,
-letters#matrix_to_atom_3 != 0,
-letters#matrix_to_atom_2 != 0,
-and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum);int(1..)]),
-word2Sum = sum([product([1000,letters#matrix_to_atom_3;int(1..)]),product([100,letters#matrix_to_atom_4;int(1..)]),product([10,letters#matrix_to_atom_2;int(1..)]),letters#matrix_to_atom_3;int(1..)]),
-word3Sum = sum([ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
+__flat_alldiff([letters#MatrixToAtom_1, letters#MatrixToAtom_2, letters#MatrixToAtom_3, letters#MatrixToAtom_4, letters#MatrixToAtom_5, letters#MatrixToAtom_6]),
+__0 =aux letters#MatrixToAtom_1,
+__1 =aux letters#MatrixToAtom_2
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+letters#MatrixToAtom_1 != 0,
+letters#MatrixToAtom_3 != 0,
+letters#MatrixToAtom_2 != 0,
+and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum);int(1..)]),
+word2Sum = sum([product([1000,letters[3];int(1..)]),product([100,letters[4];int(1..)]),product([10,letters[2];int(1..)]),letters[3];int(1..)]),
+word3Sum = sum([ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]),
 and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)]),
-__flat_alldiff([letters#matrix_to_atom_1, letters#matrix_to_atom_2, letters#matrix_to_atom_3, letters#matrix_to_atom_4, letters#matrix_to_atom_5, letters#matrix_to_atom_6]),
-__0 =aux letters#matrix_to_atom_1,
-__1 =aux letters#matrix_to_atom_2
+__flat_alldiff([letters#MatrixToAtom_1, letters#MatrixToAtom_2, letters#MatrixToAtom_3, letters#MatrixToAtom_4, letters#MatrixToAtom_5, letters#MatrixToAtom_6]),
+__0 =aux letters#MatrixToAtom_1,
+__1 =aux letters#MatrixToAtom_2
 
 --
 
-word2Sum = sum([product([1000,letters#matrix_to_atom_3;int(1..)]),product([100,letters#matrix_to_atom_4;int(1..)]),product([10,letters#matrix_to_atom_2;int(1..)]),letters#matrix_to_atom_3;int(1..)])
+letters[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[3])
+
+--
+
+letters[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[3])
+
+--
+
+letters[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[4])
+
+--
+
+letters[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[2])
+
+--
+
+SafeIndex(letters,[3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_3
+
+--
+
+SafeIndex(letters,[3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_3
+
+--
+
+SafeIndex(letters,[4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_4
+
+--
+
+SafeIndex(letters,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_2
+
+--
+
+word2Sum = sum([product([1000,letters#MatrixToAtom_3;int(1..)]),product([100,letters#MatrixToAtom_4;int(1..)]),product([10,letters#MatrixToAtom_2;int(1..)]),letters#MatrixToAtom_3;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([1000, 100, 10, 1],[__2, __3, __4, letters#matrix_to_atom_3],word2Sum),FlatWeightedSumGeq([1000, 100, 10, 1],[__2, __3, __4, letters#matrix_to_atom_3],word2Sum);int(1..)])
+and([FlatWeightedSumLeq([1000, 100, 10, 1],[__2, __3, __4, letters#MatrixToAtom_3],word2Sum),FlatWeightedSumGeq([1000, 100, 10, 1],[__2, __3, __4, letters#MatrixToAtom_3],word2Sum);int(1..)])
 new variables:
   find __2: int(0..9)
   find __3: int(0..9)
   find __4: int(0..9)
 new constraints:
-  __2 =aux product([letters#matrix_to_atom_3;int(1..)])
-  __3 =aux product([letters#matrix_to_atom_4;int(1..)])
-  __4 =aux product([letters#matrix_to_atom_2;int(1..)])
+  __2 =aux product([letters#MatrixToAtom_3;int(1..)])
+  __3 =aux product([letters#MatrixToAtom_4;int(1..)])
+  __4 =aux product([letters#MatrixToAtom_2;int(1..)])
 
 --
 
-product([letters#matrix_to_atom_3;int(1..)])
+product([letters#MatrixToAtom_3;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_3
+letters#MatrixToAtom_3
 
 --
 
-product([letters#matrix_to_atom_4;int(1..)])
+product([letters#MatrixToAtom_4;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_4
+letters#MatrixToAtom_4
 
 --
 
-product([letters#matrix_to_atom_2;int(1..)])
+product([letters#MatrixToAtom_2;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_2
+letters#MatrixToAtom_2
 
 --
 
-[ product([letters#matrix_to_atom[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]
+[ product([letters[word3[i]],(10 ** (word3Length - i));int(1..)]) | i : int(1..word3Length) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[product([letters#matrix_to_atom[2],10000;int(1..)]),product([letters#matrix_to_atom[5],1000;int(1..)]),product([letters#matrix_to_atom[5],100;int(1..)]),product([letters#matrix_to_atom[6],10;int(1..)]),product([letters#matrix_to_atom[1],1;int(1..)]);int(1..)]
+[product([letters[2],10000;int(1..)]),product([letters[5],1000;int(1..)]),product([letters[5],100;int(1..)]),product([letters[6],10;int(1..)]),product([letters[1],1;int(1..)]);int(1..)]
 
 --
 
-product([letters#matrix_to_atom[2],10000;int(1..)])
+product([letters[2],10000;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([10000,letters#matrix_to_atom[2];int(1..)])
+product([10000,letters[2];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[5],1000;int(1..)])
+product([letters[5],1000;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([1000,letters#matrix_to_atom[5];int(1..)])
+product([1000,letters[5];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[5],100;int(1..)])
+product([letters[5],100;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([100,letters#matrix_to_atom[5];int(1..)])
+product([100,letters[5];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[6],10;int(1..)])
+product([letters[6],10;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([10,letters#matrix_to_atom[6];int(1..)])
+product([10,letters[6];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[1],1;int(1..)])
+product([letters[1],1;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
-product([letters#matrix_to_atom[1];int(1..)])
+product([letters[1];int(1..)])
 
 --
 
-product([letters#matrix_to_atom[1];int(1..)])
+product([letters[1];int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom[1]
+letters[1]
 
 --
 
-letters#matrix_to_atom[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[1])
-
---
-
-letters#matrix_to_atom[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[2])
-
---
-
-letters#matrix_to_atom[5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[5])
-
---
-
-letters#matrix_to_atom[5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[5])
-
---
-
-letters#matrix_to_atom[6]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(letters#matrix_to_atom,[6])
-
---
-
-letters#matrix_to_atom_1 != 0,
-letters#matrix_to_atom_3 != 0,
-letters#matrix_to_atom_2 != 0,
-and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum);int(1..)]),
-and([FlatWeightedSumLeq([1000, 100, 10, 1],[__2, __3, __4, letters#matrix_to_atom_3],word2Sum),FlatWeightedSumGeq([1000, 100, 10, 1],[__2, __3, __4, letters#matrix_to_atom_3],word2Sum);int(1..)]),
-word3Sum = sum([product([10000,SafeIndex(letters#matrix_to_atom,[2]);int(1..)]),product([1000,SafeIndex(letters#matrix_to_atom,[5]);int(1..)]),product([100,SafeIndex(letters#matrix_to_atom,[5]);int(1..)]),product([10,SafeIndex(letters#matrix_to_atom,[6]);int(1..)]),SafeIndex(letters#matrix_to_atom,[1]);int(1..)]),
+letters#MatrixToAtom_1 != 0,
+letters#MatrixToAtom_3 != 0,
+letters#MatrixToAtom_2 != 0,
+and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum);int(1..)]),
+and([FlatWeightedSumLeq([1000, 100, 10, 1],[__2, __3, __4, letters#MatrixToAtom_3],word2Sum),FlatWeightedSumGeq([1000, 100, 10, 1],[__2, __3, __4, letters#MatrixToAtom_3],word2Sum);int(1..)]),
+word3Sum = sum([product([10000,letters[2];int(1..)]),product([1000,letters[5];int(1..)]),product([100,letters[5];int(1..)]),product([10,letters[6];int(1..)]),letters[1];int(1..)]),
 and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)]),
-__flat_alldiff([letters#matrix_to_atom_1, letters#matrix_to_atom_2, letters#matrix_to_atom_3, letters#matrix_to_atom_4, letters#matrix_to_atom_5, letters#matrix_to_atom_6]),
-__0 =aux letters#matrix_to_atom_1,
-__1 =aux letters#matrix_to_atom_2,
-__2 =aux letters#matrix_to_atom_3,
-__3 =aux letters#matrix_to_atom_4,
-__4 =aux letters#matrix_to_atom_2
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-letters#matrix_to_atom_1 != 0,
-letters#matrix_to_atom_3 != 0,
-letters#matrix_to_atom_2 != 0,
-and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum);int(1..)]),
-and([FlatWeightedSumLeq([1000, 100, 10, 1],[__2, __3, __4, letters#matrix_to_atom_3],word2Sum),FlatWeightedSumGeq([1000, 100, 10, 1],[__2, __3, __4, letters#matrix_to_atom_3],word2Sum);int(1..)]),
-word3Sum = sum([product([10000,letters#matrix_to_atom_2;int(1..)]),product([1000,letters#matrix_to_atom_5;int(1..)]),product([100,letters#matrix_to_atom_5;int(1..)]),product([10,letters#matrix_to_atom_6;int(1..)]),letters#matrix_to_atom_1;int(1..)]),
+__flat_alldiff([letters#MatrixToAtom_1, letters#MatrixToAtom_2, letters#MatrixToAtom_3, letters#MatrixToAtom_4, letters#MatrixToAtom_5, letters#MatrixToAtom_6]),
+__0 =aux letters#MatrixToAtom_1,
+__1 =aux letters#MatrixToAtom_2,
+__2 =aux letters#MatrixToAtom_3,
+__3 =aux letters#MatrixToAtom_4,
+__4 =aux letters#MatrixToAtom_2
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+letters#MatrixToAtom_1 != 0,
+letters#MatrixToAtom_3 != 0,
+letters#MatrixToAtom_2 != 0,
+and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum);int(1..)]),
+and([FlatWeightedSumLeq([1000, 100, 10, 1],[__2, __3, __4, letters#MatrixToAtom_3],word2Sum),FlatWeightedSumGeq([1000, 100, 10, 1],[__2, __3, __4, letters#MatrixToAtom_3],word2Sum);int(1..)]),
+word3Sum = sum([product([10000,letters[2];int(1..)]),product([1000,letters[5];int(1..)]),product([100,letters[5];int(1..)]),product([10,letters[6];int(1..)]),letters[1];int(1..)]),
 and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)]),
-__flat_alldiff([letters#matrix_to_atom_1, letters#matrix_to_atom_2, letters#matrix_to_atom_3, letters#matrix_to_atom_4, letters#matrix_to_atom_5, letters#matrix_to_atom_6]),
-__0 =aux letters#matrix_to_atom_1,
-__1 =aux letters#matrix_to_atom_2,
-__2 =aux letters#matrix_to_atom_3,
-__3 =aux letters#matrix_to_atom_4,
-__4 =aux letters#matrix_to_atom_2
+__flat_alldiff([letters#MatrixToAtom_1, letters#MatrixToAtom_2, letters#MatrixToAtom_3, letters#MatrixToAtom_4, letters#MatrixToAtom_5, letters#MatrixToAtom_6]),
+__0 =aux letters#MatrixToAtom_1,
+__1 =aux letters#MatrixToAtom_2,
+__2 =aux letters#MatrixToAtom_3,
+__3 =aux letters#MatrixToAtom_4,
+__4 =aux letters#MatrixToAtom_2
 
 --
 
-word3Sum = sum([product([10000,letters#matrix_to_atom_2;int(1..)]),product([1000,letters#matrix_to_atom_5;int(1..)]),product([100,letters#matrix_to_atom_5;int(1..)]),product([10,letters#matrix_to_atom_6;int(1..)]),letters#matrix_to_atom_1;int(1..)])
+letters[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[1])
+
+--
+
+letters[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[2])
+
+--
+
+letters[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[5])
+
+--
+
+letters[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[5])
+
+--
+
+letters[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(letters,[6])
+
+--
+
+SafeIndex(letters,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_1
+
+--
+
+SafeIndex(letters,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_2
+
+--
+
+SafeIndex(letters,[5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_5
+
+--
+
+SafeIndex(letters,[5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_5
+
+--
+
+SafeIndex(letters,[6])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+letters#MatrixToAtom_6
+
+--
+
+word3Sum = sum([product([10000,letters#MatrixToAtom_2;int(1..)]),product([1000,letters#MatrixToAtom_5;int(1..)]),product([100,letters#MatrixToAtom_5;int(1..)]),product([10,letters#MatrixToAtom_6;int(1..)]),letters#MatrixToAtom_1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([10000, 1000, 100, 10, 1],[__5, __6, __7, __8, letters#matrix_to_atom_1],word3Sum),FlatWeightedSumGeq([10000, 1000, 100, 10, 1],[__5, __6, __7, __8, letters#matrix_to_atom_1],word3Sum);int(1..)])
+and([FlatWeightedSumLeq([10000, 1000, 100, 10, 1],[__5, __6, __7, __8, letters#MatrixToAtom_1],word3Sum),FlatWeightedSumGeq([10000, 1000, 100, 10, 1],[__5, __6, __7, __8, letters#MatrixToAtom_1],word3Sum);int(1..)])
 new variables:
   find __5: int(0..9)
   find __6: int(0..9)
   find __7: int(0..9)
   find __8: int(0..9)
 new constraints:
-  __5 =aux product([letters#matrix_to_atom_2;int(1..)])
-  __6 =aux product([letters#matrix_to_atom_5;int(1..)])
-  __7 =aux product([letters#matrix_to_atom_5;int(1..)])
-  __8 =aux product([letters#matrix_to_atom_6;int(1..)])
+  __5 =aux product([letters#MatrixToAtom_2;int(1..)])
+  __6 =aux product([letters#MatrixToAtom_5;int(1..)])
+  __7 =aux product([letters#MatrixToAtom_5;int(1..)])
+  __8 =aux product([letters#MatrixToAtom_6;int(1..)])
 
 --
 
-product([letters#matrix_to_atom_2;int(1..)])
+product([letters#MatrixToAtom_2;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_2
+letters#MatrixToAtom_2
 
 --
 
-product([letters#matrix_to_atom_5;int(1..)])
+product([letters#MatrixToAtom_5;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_5
+letters#MatrixToAtom_5
 
 --
 
-product([letters#matrix_to_atom_5;int(1..)])
+product([letters#MatrixToAtom_5;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_5
+letters#MatrixToAtom_5
 
 --
 
-product([letters#matrix_to_atom_6;int(1..)])
+product([letters#MatrixToAtom_6;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
-letters#matrix_to_atom_6
+letters#MatrixToAtom_6
 
 --
 
@@ -471,12 +541,24 @@ find letters: matrix indexed by [int(1..noLetters)] of int(0..9)
 find word1Sum: int(1..((10 ** word1Length)))
 find word2Sum: int(1..((10 ** word2Length)))
 find word3Sum: int(1..((10 ** word3Length)))
-find letters#matrix_to_atom_1: int(0..9)
-find letters#matrix_to_atom_2: int(0..9)
-find letters#matrix_to_atom_3: int(0..9)
-find letters#matrix_to_atom_4: int(0..9)
-find letters#matrix_to_atom_5: int(0..9)
-find letters#matrix_to_atom_6: int(0..9)
+letting word1#MatrixToAtom_1 be 1
+letting word1#MatrixToAtom_2 be 2
+letting word1#MatrixToAtom_3 be 3
+letting word2#MatrixToAtom_1 be 3
+letting word2#MatrixToAtom_2 be 4
+letting word2#MatrixToAtom_3 be 2
+letting word2#MatrixToAtom_4 be 3
+letting word3#MatrixToAtom_1 be 2
+letting word3#MatrixToAtom_2 be 5
+letting word3#MatrixToAtom_3 be 5
+letting word3#MatrixToAtom_4 be 6
+letting word3#MatrixToAtom_5 be 1
+find letters#MatrixToAtom_1: int(0..9)
+find letters#MatrixToAtom_2: int(0..9)
+find letters#MatrixToAtom_3: int(0..9)
+find letters#MatrixToAtom_4: int(0..9)
+find letters#MatrixToAtom_5: int(0..9)
+find letters#MatrixToAtom_6: int(0..9)
 find __0: int(0..9)
 find __1: int(0..9)
 find __2: int(0..9)
@@ -489,21 +571,21 @@ find __8: int(0..9)
 
 such that
 
-letters#matrix_to_atom_1 != 0,
-letters#matrix_to_atom_3 != 0,
-letters#matrix_to_atom_2 != 0,
-and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#matrix_to_atom_3],word1Sum);int(1..)]),
-and([FlatWeightedSumLeq([1000, 100, 10, 1],[__2, __3, __4, letters#matrix_to_atom_3],word2Sum),FlatWeightedSumGeq([1000, 100, 10, 1],[__2, __3, __4, letters#matrix_to_atom_3],word2Sum);int(1..)]),
-and([FlatWeightedSumLeq([10000, 1000, 100, 10, 1],[__5, __6, __7, __8, letters#matrix_to_atom_1],word3Sum),FlatWeightedSumGeq([10000, 1000, 100, 10, 1],[__5, __6, __7, __8, letters#matrix_to_atom_1],word3Sum);int(1..)]),
+letters#MatrixToAtom_1 != 0,
+letters#MatrixToAtom_3 != 0,
+letters#MatrixToAtom_2 != 0,
+and([FlatWeightedSumLeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum),FlatWeightedSumGeq([100, 10, 1],[__0, __1, letters#MatrixToAtom_3],word1Sum);int(1..)]),
+and([FlatWeightedSumLeq([1000, 100, 10, 1],[__2, __3, __4, letters#MatrixToAtom_3],word2Sum),FlatWeightedSumGeq([1000, 100, 10, 1],[__2, __3, __4, letters#MatrixToAtom_3],word2Sum);int(1..)]),
+and([FlatWeightedSumLeq([10000, 1000, 100, 10, 1],[__5, __6, __7, __8, letters#MatrixToAtom_1],word3Sum),FlatWeightedSumGeq([10000, 1000, 100, 10, 1],[__5, __6, __7, __8, letters#MatrixToAtom_1],word3Sum);int(1..)]),
 and([SumLeq([word1Sum, word2Sum], word3Sum),SumGeq([word1Sum, word2Sum], word3Sum);int(1..)]),
-__flat_alldiff([letters#matrix_to_atom_1, letters#matrix_to_atom_2, letters#matrix_to_atom_3, letters#matrix_to_atom_4, letters#matrix_to_atom_5, letters#matrix_to_atom_6]),
-__0 =aux letters#matrix_to_atom_1,
-__1 =aux letters#matrix_to_atom_2,
-__2 =aux letters#matrix_to_atom_3,
-__3 =aux letters#matrix_to_atom_4,
-__4 =aux letters#matrix_to_atom_2,
-__5 =aux letters#matrix_to_atom_2,
-__6 =aux letters#matrix_to_atom_5,
-__7 =aux letters#matrix_to_atom_5,
-__8 =aux letters#matrix_to_atom_6
+__flat_alldiff([letters#MatrixToAtom_1, letters#MatrixToAtom_2, letters#MatrixToAtom_3, letters#MatrixToAtom_4, letters#MatrixToAtom_5, letters#MatrixToAtom_6]),
+__0 =aux letters#MatrixToAtom_1,
+__1 =aux letters#MatrixToAtom_2,
+__2 =aux letters#MatrixToAtom_3,
+__3 =aux letters#MatrixToAtom_4,
+__4 =aux letters#MatrixToAtom_2,
+__5 =aux letters#MatrixToAtom_2,
+__6 =aux letters#MatrixToAtom_5,
+__7 =aux letters#MatrixToAtom_5,
+__8 =aux letters#MatrixToAtom_6
 

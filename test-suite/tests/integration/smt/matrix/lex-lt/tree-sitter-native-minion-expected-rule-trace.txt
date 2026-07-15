@@ -9,20 +9,26 @@ such that
 
 --
 
-(a#matrix_to_atom <lex b#matrix_to_atom)
-   ~~> select_representation_matrix ([("Representations", 8001)])
-(a#matrix_to_atom <lex b#matrix_to_atom)
+(a <lex b)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(a <lex b)
 new variables:
-  find a#matrix_to_atom_1: int(1..2)
-  find a#matrix_to_atom_2: int(1..2)
-  find b#matrix_to_atom_1: int(1..2)
-  find b#matrix_to_atom_2: int(1..2)
+  find a#MatrixToAtom_1: int(1..2)
+  find a#MatrixToAtom_2: int(1..2)
+  find b#MatrixToAtom_1: int(1..2)
+  find b#MatrixToAtom_2: int(1..2)
 
 --
 
-(a#matrix_to_atom <lex b#matrix_to_atom)
+(a <lex b)
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+([a#MatrixToAtom_1,a#MatrixToAtom_2;int(1..2)] <lex [b#MatrixToAtom_1,b#MatrixToAtom_2;int(1..2)])
+
+--
+
+([a#MatrixToAtom_1,a#MatrixToAtom_2;int(1..2)] <lex [b#MatrixToAtom_1,b#MatrixToAtom_2;int(1..2)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLt([a#matrix_to_atom_1, a#matrix_to_atom_2], [b#matrix_to_atom_1, b#matrix_to_atom_2])
+FlatLexLt([a#MatrixToAtom_1, a#MatrixToAtom_2], [b#MatrixToAtom_1, b#MatrixToAtom_2])
 
 --
 
@@ -30,12 +36,12 @@ Final model:
 
 find a: matrix indexed by [int(1..2)] of int(1..2)
 find b: matrix indexed by [int(1..2)] of int(1..2)
-find a#matrix_to_atom_1: int(1..2)
-find a#matrix_to_atom_2: int(1..2)
-find b#matrix_to_atom_1: int(1..2)
-find b#matrix_to_atom_2: int(1..2)
+find a#MatrixToAtom_1: int(1..2)
+find a#MatrixToAtom_2: int(1..2)
+find b#MatrixToAtom_1: int(1..2)
+find b#MatrixToAtom_2: int(1..2)
 
 such that
 
-FlatLexLt([a#matrix_to_atom_1, a#matrix_to_atom_2], [b#matrix_to_atom_1, b#matrix_to_atom_2])
+FlatLexLt([a#MatrixToAtom_1, a#MatrixToAtom_2], [b#MatrixToAtom_1, b#MatrixToAtom_2])
 

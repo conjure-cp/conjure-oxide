@@ -14,56 +14,62 @@ __0 =aux ruler[x]
 --
 
 true,
-__0 =aux ruler#matrix_to_atom[x]
-   ~~> select_representation_matrix ([("Representations", 8001)])
+__0 =aux ruler[x]
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 true,
-__0 =aux ruler#matrix_to_atom[x]
+__0 =aux ruler[x]
 new variables:
-  find ruler#matrix_to_atom_1: int(0..9)
-  find ruler#matrix_to_atom_2: int(0..9)
-  find ruler#matrix_to_atom_3: int(0..9)
+  find ruler#MatrixToAtom_1: int(0..9)
+  find ruler#MatrixToAtom_2: int(0..9)
+  find ruler#MatrixToAtom_3: int(0..9)
 
 --
 
-ruler#matrix_to_atom[x]
+ruler[x]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(ruler#matrix_to_atom,[x])
+SafeIndex(ruler,[x])
 
 --
 
-true,
-__0 =aux SafeIndex(ruler#matrix_to_atom,[x])
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-true,
-__0 =aux SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[(x - 0)])
+SafeIndex(ruler,[x])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+SafeIndex([ruler#MatrixToAtom_1,ruler#MatrixToAtom_2,ruler#MatrixToAtom_3;int(1..)],[sum([product([1,(x - 1);int(1..)]),1;int(1..)])])
 
 --
 
-(x - 0)
+product([1,(x - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(x - 1);int(1..)])
+
+--
+
+product([(x - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(x - 1)
+
+--
+
+(x - 1)
    ~~> minus_to_sum ([("Base", 8400)])
-sum([x,-(0);int(1..)])
+sum([x,-(1);int(1..)])
 
 --
 
-SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[sum([x,0;int(1..)])])
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[__1])
-new variables:
-  find __1: int(1..3)
-new constraints:
-  __1 =aux sum([x,0;int(1..)])
+sum([sum([x,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([x,-1,1;int(1..)])
 
 --
 
-__1 =aux sum([x,0;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([0, x], __1),SumGeq([0, x], __1);int(1..)])
+sum([x;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+x
 
 --
 
-__0 =aux SafeIndex([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3;int(1..)],[__1])
+__0 =aux SafeIndex([ruler#MatrixToAtom_1,ruler#MatrixToAtom_2,ruler#MatrixToAtom_3;int(1..)],[x])
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3],__1,__0)
+__minion_element_one([ruler#MatrixToAtom_1,ruler#MatrixToAtom_2,ruler#MatrixToAtom_3],x,__0)
 
 --
 
@@ -74,14 +80,12 @@ letting TICKS be domain int(1..ticks)
 find x: int(1..ticks)
 find ruler: matrix indexed by [TICKS] of int(0..((ticks ** 2)))
 find __0: int(0..((ticks ** 2)))
-find ruler#matrix_to_atom_1: int(0..9)
-find ruler#matrix_to_atom_2: int(0..9)
-find ruler#matrix_to_atom_3: int(0..9)
-find __1: int(1..3)
+find ruler#MatrixToAtom_1: int(0..9)
+find ruler#MatrixToAtom_2: int(0..9)
+find ruler#MatrixToAtom_3: int(0..9)
 
 such that
 
 true,
-__minion_element_one([ruler#matrix_to_atom_1,ruler#matrix_to_atom_2,ruler#matrix_to_atom_3],__1,__0),
-and([SumLeq([0, x], __1),SumGeq([0, x], __1);int(1..)])
+__minion_element_one([ruler#MatrixToAtom_1,ruler#MatrixToAtom_2,ruler#MatrixToAtom_3],x,__0)
 

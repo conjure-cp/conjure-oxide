@@ -24,31 +24,31 @@ sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
 and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
 __0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
-   ~~> select_representation_matrix ([("Representations", 8001)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
 __0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
 new variables:
-  find rings#matrix_to_atom_1_1: bool
-  find rings#matrix_to_atom_1_2: bool
-  find rings#matrix_to_atom_1_3: bool
-  find rings#matrix_to_atom_1_4: bool
-  find rings#matrix_to_atom_1_5: bool
-  find rings#matrix_to_atom_2_1: bool
-  find rings#matrix_to_atom_2_2: bool
-  find rings#matrix_to_atom_2_3: bool
-  find rings#matrix_to_atom_2_4: bool
-  find rings#matrix_to_atom_2_5: bool
-  find rings#matrix_to_atom_3_1: bool
-  find rings#matrix_to_atom_3_2: bool
-  find rings#matrix_to_atom_3_3: bool
-  find rings#matrix_to_atom_3_4: bool
-  find rings#matrix_to_atom_3_5: bool
-  find rings#matrix_to_atom_4_1: bool
-  find rings#matrix_to_atom_4_2: bool
-  find rings#matrix_to_atom_4_3: bool
-  find rings#matrix_to_atom_4_4: bool
-  find rings#matrix_to_atom_4_5: bool
+  find rings#MatrixToAtom_1: bool
+  find rings#MatrixToAtom_10: bool
+  find rings#MatrixToAtom_11: bool
+  find rings#MatrixToAtom_12: bool
+  find rings#MatrixToAtom_13: bool
+  find rings#MatrixToAtom_14: bool
+  find rings#MatrixToAtom_15: bool
+  find rings#MatrixToAtom_16: bool
+  find rings#MatrixToAtom_17: bool
+  find rings#MatrixToAtom_18: bool
+  find rings#MatrixToAtom_19: bool
+  find rings#MatrixToAtom_2: bool
+  find rings#MatrixToAtom_20: bool
+  find rings#MatrixToAtom_3: bool
+  find rings#MatrixToAtom_4: bool
+  find rings#MatrixToAtom_5: bool
+  find rings#MatrixToAtom_6: bool
+  find rings#MatrixToAtom_7: bool
+  find rings#MatrixToAtom_8: bool
+  find rings#MatrixToAtom_9: bool
 
 --
 
@@ -70,147 +70,257 @@ new variables:
 
 --
 
-and([or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 2]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
-__0 =aux sum([toInt(rings#matrix_to_atom[1, 1]),toInt(rings#matrix_to_atom[1, 2]),toInt(rings#matrix_to_atom[1, 3]),toInt(rings#matrix_to_atom[1, 4]),toInt(rings#matrix_to_atom[1, 5]),toInt(rings#matrix_to_atom[2, 1]),toInt(rings#matrix_to_atom[2, 2]),toInt(rings#matrix_to_atom[2, 3]),toInt(rings#matrix_to_atom[2, 4]),toInt(rings#matrix_to_atom[2, 5]),toInt(rings#matrix_to_atom[3, 1]),toInt(rings#matrix_to_atom[3, 2]),toInt(rings#matrix_to_atom[3, 3]),toInt(rings#matrix_to_atom[3, 4]),toInt(rings#matrix_to_atom[3, 5]),toInt(rings#matrix_to_atom[4, 1]),toInt(rings#matrix_to_atom[4, 2]),toInt(rings#matrix_to_atom[4, 3]),toInt(rings#matrix_to_atom[4, 4]),toInt(rings#matrix_to_atom[4, 5]);int(1..)])
-   ~~> select_representation_matrix ([("Representations", 8001)])
-and([or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 2]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
-__0 =aux sum([toInt(rings#matrix_to_atom[1, 1]),toInt(rings#matrix_to_atom[1, 2]),toInt(rings#matrix_to_atom[1, 3]),toInt(rings#matrix_to_atom[1, 4]),toInt(rings#matrix_to_atom[1, 5]),toInt(rings#matrix_to_atom[2, 1]),toInt(rings#matrix_to_atom[2, 2]),toInt(rings#matrix_to_atom[2, 3]),toInt(rings#matrix_to_atom[2, 4]),toInt(rings#matrix_to_atom[2, 5]),toInt(rings#matrix_to_atom[3, 1]),toInt(rings#matrix_to_atom[3, 2]),toInt(rings#matrix_to_atom[3, 3]),toInt(rings#matrix_to_atom[3, 4]),toInt(rings#matrix_to_atom[3, 5]),toInt(rings#matrix_to_atom[4, 1]),toInt(rings#matrix_to_atom[4, 2]),toInt(rings#matrix_to_atom[4, 3]),toInt(rings#matrix_to_atom[4, 4]),toInt(rings#matrix_to_atom[4, 5]);int(1..)])
+and([or([ sum([toInt(rings[ring, 1]),toInt(rings[ring, 2]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 1]),toInt(rings[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 2]),toInt(rings[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+__0 =aux sum([toInt(rings[1, 1]),toInt(rings[1, 2]),toInt(rings[1, 3]),toInt(rings[1, 4]),toInt(rings[1, 5]),toInt(rings[2, 1]),toInt(rings[2, 2]),toInt(rings[2, 3]),toInt(rings[2, 4]),toInt(rings[2, 5]),toInt(rings[3, 1]),toInt(rings[3, 2]),toInt(rings[3, 3]),toInt(rings[3, 4]),toInt(rings[3, 5]),toInt(rings[4, 1]),toInt(rings[4, 2]),toInt(rings[4, 3]),toInt(rings[4, 4]),toInt(rings[4, 5]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([or([ sum([toInt(rings[ring, 1]),toInt(rings[ring, 2]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 1]),toInt(rings[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 2]),toInt(rings[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+__0 =aux sum([toInt(rings[1, 1]),toInt(rings[1, 2]),toInt(rings[1, 3]),toInt(rings[1, 4]),toInt(rings[1, 5]),toInt(rings[2, 1]),toInt(rings[2, 2]),toInt(rings[2, 3]),toInt(rings[2, 4]),toInt(rings[2, 5]),toInt(rings[3, 1]),toInt(rings[3, 2]),toInt(rings[3, 3]),toInt(rings[3, 4]),toInt(rings[3, 5]),toInt(rings[4, 1]),toInt(rings[4, 2]),toInt(rings[4, 3]),toInt(rings[4, 4]),toInt(rings[4, 5]);int(1..)])
 
 --
 
-rings#matrix_to_atom[1, 1]
+rings[1, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 1])
+SafeIndex(rings,[1, 1])
 
 --
 
-rings#matrix_to_atom[1, 2]
+rings[1, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 2])
+SafeIndex(rings,[1, 2])
 
 --
 
-rings#matrix_to_atom[1, 3]
+rings[1, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 3])
+SafeIndex(rings,[1, 3])
 
 --
 
-rings#matrix_to_atom[1, 4]
+rings[1, 4]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 4])
+SafeIndex(rings,[1, 4])
 
 --
 
-rings#matrix_to_atom[1, 5]
+rings[1, 5]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 5])
+SafeIndex(rings,[1, 5])
 
 --
 
-rings#matrix_to_atom[2, 1]
+rings[2, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 1])
+SafeIndex(rings,[2, 1])
 
 --
 
-rings#matrix_to_atom[2, 2]
+rings[2, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 2])
+SafeIndex(rings,[2, 2])
 
 --
 
-rings#matrix_to_atom[2, 3]
+rings[2, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 3])
+SafeIndex(rings,[2, 3])
 
 --
 
-rings#matrix_to_atom[2, 4]
+rings[2, 4]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 4])
+SafeIndex(rings,[2, 4])
 
 --
 
-rings#matrix_to_atom[2, 5]
+rings[2, 5]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 5])
+SafeIndex(rings,[2, 5])
 
 --
 
-rings#matrix_to_atom[3, 1]
+rings[3, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 1])
+SafeIndex(rings,[3, 1])
 
 --
 
-rings#matrix_to_atom[3, 2]
+rings[3, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 2])
+SafeIndex(rings,[3, 2])
 
 --
 
-rings#matrix_to_atom[3, 3]
+rings[3, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 3])
+SafeIndex(rings,[3, 3])
 
 --
 
-rings#matrix_to_atom[3, 4]
+rings[3, 4]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 4])
+SafeIndex(rings,[3, 4])
 
 --
 
-rings#matrix_to_atom[3, 5]
+rings[3, 5]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 5])
+SafeIndex(rings,[3, 5])
 
 --
 
-rings#matrix_to_atom[4, 1]
+rings[4, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 1])
+SafeIndex(rings,[4, 1])
 
 --
 
-rings#matrix_to_atom[4, 2]
+rings[4, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 2])
+SafeIndex(rings,[4, 2])
 
 --
 
-rings#matrix_to_atom[4, 3]
+rings[4, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 3])
+SafeIndex(rings,[4, 3])
 
 --
 
-rings#matrix_to_atom[4, 4]
+rings[4, 4]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 4])
+SafeIndex(rings,[4, 4])
 
 --
 
-rings#matrix_to_atom[4, 5]
+rings[4, 5]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 5])
+SafeIndex(rings,[4, 5])
 
 --
 
-and([or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 2]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
-__0 =aux sum([toInt(SafeIndex(rings#matrix_to_atom,[1, 1])),toInt(SafeIndex(rings#matrix_to_atom,[1, 2])),toInt(SafeIndex(rings#matrix_to_atom,[1, 3])),toInt(SafeIndex(rings#matrix_to_atom,[1, 4])),toInt(SafeIndex(rings#matrix_to_atom,[1, 5])),toInt(SafeIndex(rings#matrix_to_atom,[2, 1])),toInt(SafeIndex(rings#matrix_to_atom,[2, 2])),toInt(SafeIndex(rings#matrix_to_atom,[2, 3])),toInt(SafeIndex(rings#matrix_to_atom,[2, 4])),toInt(SafeIndex(rings#matrix_to_atom,[2, 5])),toInt(SafeIndex(rings#matrix_to_atom,[3, 1])),toInt(SafeIndex(rings#matrix_to_atom,[3, 2])),toInt(SafeIndex(rings#matrix_to_atom,[3, 3])),toInt(SafeIndex(rings#matrix_to_atom,[3, 4])),toInt(SafeIndex(rings#matrix_to_atom,[3, 5])),toInt(SafeIndex(rings#matrix_to_atom,[4, 1])),toInt(SafeIndex(rings#matrix_to_atom,[4, 2])),toInt(SafeIndex(rings#matrix_to_atom,[4, 3])),toInt(SafeIndex(rings#matrix_to_atom,[4, 4])),toInt(SafeIndex(rings#matrix_to_atom,[4, 5]));int(1..)])
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-and([or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 2]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
-__0 =aux sum([toInt(rings#matrix_to_atom_1_1),toInt(rings#matrix_to_atom_1_2),toInt(rings#matrix_to_atom_1_3),toInt(rings#matrix_to_atom_1_4),toInt(rings#matrix_to_atom_1_5),toInt(rings#matrix_to_atom_2_1),toInt(rings#matrix_to_atom_2_2),toInt(rings#matrix_to_atom_2_3),toInt(rings#matrix_to_atom_2_4),toInt(rings#matrix_to_atom_2_5),toInt(rings#matrix_to_atom_3_1),toInt(rings#matrix_to_atom_3_2),toInt(rings#matrix_to_atom_3_3),toInt(rings#matrix_to_atom_3_4),toInt(rings#matrix_to_atom_3_5),toInt(rings#matrix_to_atom_4_1),toInt(rings#matrix_to_atom_4_2),toInt(rings#matrix_to_atom_4_3),toInt(rings#matrix_to_atom_4_4),toInt(rings#matrix_to_atom_4_5);int(1..)])
+SafeIndex(rings,[1, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_1
 
 --
 
-__0 =aux sum([toInt(rings#matrix_to_atom_1_1),toInt(rings#matrix_to_atom_1_2),toInt(rings#matrix_to_atom_1_3),toInt(rings#matrix_to_atom_1_4),toInt(rings#matrix_to_atom_1_5),toInt(rings#matrix_to_atom_2_1),toInt(rings#matrix_to_atom_2_2),toInt(rings#matrix_to_atom_2_3),toInt(rings#matrix_to_atom_2_4),toInt(rings#matrix_to_atom_2_5),toInt(rings#matrix_to_atom_3_1),toInt(rings#matrix_to_atom_3_2),toInt(rings#matrix_to_atom_3_3),toInt(rings#matrix_to_atom_3_4),toInt(rings#matrix_to_atom_3_5),toInt(rings#matrix_to_atom_4_1),toInt(rings#matrix_to_atom_4_2),toInt(rings#matrix_to_atom_4_3),toInt(rings#matrix_to_atom_4_4),toInt(rings#matrix_to_atom_4_5);int(1..)])
+SafeIndex(rings,[1, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_2
+
+--
+
+SafeIndex(rings,[1, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_3
+
+--
+
+SafeIndex(rings,[1, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_4
+
+--
+
+SafeIndex(rings,[1, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_5
+
+--
+
+SafeIndex(rings,[2, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_6
+
+--
+
+SafeIndex(rings,[2, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_7
+
+--
+
+SafeIndex(rings,[2, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_8
+
+--
+
+SafeIndex(rings,[2, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_9
+
+--
+
+SafeIndex(rings,[2, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_10
+
+--
+
+SafeIndex(rings,[3, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_11
+
+--
+
+SafeIndex(rings,[3, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_12
+
+--
+
+SafeIndex(rings,[3, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_13
+
+--
+
+SafeIndex(rings,[3, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_14
+
+--
+
+SafeIndex(rings,[3, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_15
+
+--
+
+SafeIndex(rings,[4, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_16
+
+--
+
+SafeIndex(rings,[4, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_17
+
+--
+
+SafeIndex(rings,[4, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_18
+
+--
+
+SafeIndex(rings,[4, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_19
+
+--
+
+SafeIndex(rings,[4, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_20
+
+--
+
+__0 =aux sum([toInt(rings#MatrixToAtom_1),toInt(rings#MatrixToAtom_2),toInt(rings#MatrixToAtom_3),toInt(rings#MatrixToAtom_4),toInt(rings#MatrixToAtom_5),toInt(rings#MatrixToAtom_6),toInt(rings#MatrixToAtom_7),toInt(rings#MatrixToAtom_8),toInt(rings#MatrixToAtom_9),toInt(rings#MatrixToAtom_10),toInt(rings#MatrixToAtom_11),toInt(rings#MatrixToAtom_12),toInt(rings#MatrixToAtom_13),toInt(rings#MatrixToAtom_14),toInt(rings#MatrixToAtom_15),toInt(rings#MatrixToAtom_16),toInt(rings#MatrixToAtom_17),toInt(rings#MatrixToAtom_18),toInt(rings#MatrixToAtom_19),toInt(rings#MatrixToAtom_20);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)])
 new variables:
@@ -235,884 +345,1106 @@ new variables:
   find __19: int(0..1)
   find __20: int(0..1)
 new constraints:
-  __1 =aux toInt(rings#matrix_to_atom_1_1)
-  __2 =aux toInt(rings#matrix_to_atom_1_2)
-  __3 =aux toInt(rings#matrix_to_atom_1_3)
-  __4 =aux toInt(rings#matrix_to_atom_1_4)
-  __5 =aux toInt(rings#matrix_to_atom_1_5)
-  __6 =aux toInt(rings#matrix_to_atom_2_1)
-  __7 =aux toInt(rings#matrix_to_atom_2_2)
-  __8 =aux toInt(rings#matrix_to_atom_2_3)
-  __9 =aux toInt(rings#matrix_to_atom_2_4)
-  __10 =aux toInt(rings#matrix_to_atom_2_5)
-  __11 =aux toInt(rings#matrix_to_atom_3_1)
-  __12 =aux toInt(rings#matrix_to_atom_3_2)
-  __13 =aux toInt(rings#matrix_to_atom_3_3)
-  __14 =aux toInt(rings#matrix_to_atom_3_4)
-  __15 =aux toInt(rings#matrix_to_atom_3_5)
-  __16 =aux toInt(rings#matrix_to_atom_4_1)
-  __17 =aux toInt(rings#matrix_to_atom_4_2)
-  __18 =aux toInt(rings#matrix_to_atom_4_3)
-  __19 =aux toInt(rings#matrix_to_atom_4_4)
-  __20 =aux toInt(rings#matrix_to_atom_4_5)
+  __1 =aux toInt(rings#MatrixToAtom_1)
+  __2 =aux toInt(rings#MatrixToAtom_2)
+  __3 =aux toInt(rings#MatrixToAtom_3)
+  __4 =aux toInt(rings#MatrixToAtom_4)
+  __5 =aux toInt(rings#MatrixToAtom_5)
+  __6 =aux toInt(rings#MatrixToAtom_6)
+  __7 =aux toInt(rings#MatrixToAtom_7)
+  __8 =aux toInt(rings#MatrixToAtom_8)
+  __9 =aux toInt(rings#MatrixToAtom_9)
+  __10 =aux toInt(rings#MatrixToAtom_10)
+  __11 =aux toInt(rings#MatrixToAtom_11)
+  __12 =aux toInt(rings#MatrixToAtom_12)
+  __13 =aux toInt(rings#MatrixToAtom_13)
+  __14 =aux toInt(rings#MatrixToAtom_14)
+  __15 =aux toInt(rings#MatrixToAtom_15)
+  __16 =aux toInt(rings#MatrixToAtom_16)
+  __17 =aux toInt(rings#MatrixToAtom_17)
+  __18 =aux toInt(rings#MatrixToAtom_18)
+  __19 =aux toInt(rings#MatrixToAtom_19)
+  __20 =aux toInt(rings#MatrixToAtom_20)
 
 --
 
-[ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 2]);int(1..)]) >= 2 | ring : int(1..r) ]
+[ sum([toInt(rings[ring, 1]),toInt(rings[ring, 2]);int(1..)]) >= 2 | ring : int(1..r) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[sum([toInt(rings#matrix_to_atom[1, 1]),toInt(rings#matrix_to_atom[1, 2]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[2, 1]),toInt(rings#matrix_to_atom[2, 2]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[3, 1]),toInt(rings#matrix_to_atom[3, 2]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[4, 1]),toInt(rings#matrix_to_atom[4, 2]);int(1..)]) >= 2;int(1..)]
+[sum([toInt(rings[1, 1]),toInt(rings[1, 2]);int(1..)]) >= 2,sum([toInt(rings[2, 1]),toInt(rings[2, 2]);int(1..)]) >= 2,sum([toInt(rings[3, 1]),toInt(rings[3, 2]);int(1..)]) >= 2,sum([toInt(rings[4, 1]),toInt(rings[4, 2]);int(1..)]) >= 2;int(1..)]
 
 --
 
-rings#matrix_to_atom[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 1])
-
---
-
-rings#matrix_to_atom[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 2])
-
---
-
-rings#matrix_to_atom[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 1])
-
---
-
-rings#matrix_to_atom[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 2])
-
---
-
-rings#matrix_to_atom[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 1])
-
---
-
-rings#matrix_to_atom[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 2])
-
---
-
-rings#matrix_to_atom[4, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 1])
-
---
-
-rings#matrix_to_atom[4, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 2])
-
---
-
-and([or([sum([toInt(SafeIndex(rings#matrix_to_atom,[1, 1])),toInt(SafeIndex(rings#matrix_to_atom,[1, 2]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[2, 1])),toInt(SafeIndex(rings#matrix_to_atom,[2, 2]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[3, 1])),toInt(SafeIndex(rings#matrix_to_atom,[3, 2]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[4, 1])),toInt(SafeIndex(rings#matrix_to_atom,[4, 2]));int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([or([sum([toInt(rings[1, 1]),toInt(rings[1, 2]);int(1..)]) >= 2,sum([toInt(rings[2, 1]),toInt(rings[2, 2]);int(1..)]) >= 2,sum([toInt(rings[3, 1]),toInt(rings[3, 2]);int(1..)]) >= 2,sum([toInt(rings[4, 1]),toInt(rings[4, 2]);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings[ring, 1]),toInt(rings[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 2]),toInt(rings[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-and([or([sum([toInt(rings#matrix_to_atom_1_1),toInt(rings#matrix_to_atom_1_2);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_2_1),toInt(rings#matrix_to_atom_2_2);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_3_1),toInt(rings#matrix_to_atom_3_2);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_4_1),toInt(rings#matrix_to_atom_4_2);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([or([sum([toInt(rings[1, 1]),toInt(rings[1, 2]);int(1..)]) >= 2,sum([toInt(rings[2, 1]),toInt(rings[2, 2]);int(1..)]) >= 2,sum([toInt(rings[3, 1]),toInt(rings[3, 2]);int(1..)]) >= 2,sum([toInt(rings[4, 1]),toInt(rings[4, 2]);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings[ring, 1]),toInt(rings[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 2]),toInt(rings[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20)
 
 --
 
-sum([toInt(rings#matrix_to_atom_1_1),toInt(rings#matrix_to_atom_1_2);int(1..)]) >= 2
+rings[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 1])
+
+--
+
+rings[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 2])
+
+--
+
+rings[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 1])
+
+--
+
+rings[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 2])
+
+--
+
+rings[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 1])
+
+--
+
+rings[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 2])
+
+--
+
+rings[4, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 1])
+
+--
+
+rings[4, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 2])
+
+--
+
+SafeIndex(rings,[1, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_1
+
+--
+
+SafeIndex(rings,[1, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_2
+
+--
+
+SafeIndex(rings,[2, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_6
+
+--
+
+SafeIndex(rings,[2, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_7
+
+--
+
+SafeIndex(rings,[3, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_11
+
+--
+
+SafeIndex(rings,[3, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_12
+
+--
+
+SafeIndex(rings,[4, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_16
+
+--
+
+SafeIndex(rings,[4, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_17
+
+--
+
+sum([toInt(rings#MatrixToAtom_1),toInt(rings#MatrixToAtom_2);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__21, __22], 2)
 new variables:
   find __21: int(0..1)
   find __22: int(0..1)
 new constraints:
-  __21 =aux toInt(rings#matrix_to_atom_1_1)
-  __22 =aux toInt(rings#matrix_to_atom_1_2)
+  __21 =aux toInt(rings#MatrixToAtom_1)
+  __22 =aux toInt(rings#MatrixToAtom_2)
 
 --
 
-sum([toInt(rings#matrix_to_atom_2_1),toInt(rings#matrix_to_atom_2_2);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_6),toInt(rings#MatrixToAtom_7);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__23, __24], 2)
 new variables:
   find __23: int(0..1)
   find __24: int(0..1)
 new constraints:
-  __23 =aux toInt(rings#matrix_to_atom_2_1)
-  __24 =aux toInt(rings#matrix_to_atom_2_2)
+  __23 =aux toInt(rings#MatrixToAtom_6)
+  __24 =aux toInt(rings#MatrixToAtom_7)
 
 --
 
-sum([toInt(rings#matrix_to_atom_3_1),toInt(rings#matrix_to_atom_3_2);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_11),toInt(rings#MatrixToAtom_12);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__25, __26], 2)
 new variables:
   find __25: int(0..1)
   find __26: int(0..1)
 new constraints:
-  __25 =aux toInt(rings#matrix_to_atom_3_1)
-  __26 =aux toInt(rings#matrix_to_atom_3_2)
+  __25 =aux toInt(rings#MatrixToAtom_11)
+  __26 =aux toInt(rings#MatrixToAtom_12)
 
 --
 
-sum([toInt(rings#matrix_to_atom_4_1),toInt(rings#matrix_to_atom_4_2);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_16),toInt(rings#MatrixToAtom_17);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__27, __28], 2)
 new variables:
   find __27: int(0..1)
   find __28: int(0..1)
 new constraints:
-  __27 =aux toInt(rings#matrix_to_atom_4_1)
-  __28 =aux toInt(rings#matrix_to_atom_4_2)
+  __27 =aux toInt(rings#MatrixToAtom_16)
+  __28 =aux toInt(rings#MatrixToAtom_17)
 
 --
 
-[ sum([toInt(rings#matrix_to_atom[ring, 1]),toInt(rings#matrix_to_atom[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]
+[ sum([toInt(rings[ring, 1]),toInt(rings[ring, 4]);int(1..)]) >= 2 | ring : int(1..r) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[sum([toInt(rings#matrix_to_atom[1, 1]),toInt(rings#matrix_to_atom[1, 4]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[2, 1]),toInt(rings#matrix_to_atom[2, 4]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[3, 1]),toInt(rings#matrix_to_atom[3, 4]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[4, 1]),toInt(rings#matrix_to_atom[4, 4]);int(1..)]) >= 2;int(1..)]
+[sum([toInt(rings[1, 1]),toInt(rings[1, 4]);int(1..)]) >= 2,sum([toInt(rings[2, 1]),toInt(rings[2, 4]);int(1..)]) >= 2,sum([toInt(rings[3, 1]),toInt(rings[3, 4]);int(1..)]) >= 2,sum([toInt(rings[4, 1]),toInt(rings[4, 4]);int(1..)]) >= 2;int(1..)]
 
 --
 
-rings#matrix_to_atom[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 1])
-
---
-
-rings#matrix_to_atom[1, 4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 4])
-
---
-
-rings#matrix_to_atom[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 1])
-
---
-
-rings#matrix_to_atom[2, 4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 4])
-
---
-
-rings#matrix_to_atom[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 1])
-
---
-
-rings#matrix_to_atom[3, 4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 4])
-
---
-
-rings#matrix_to_atom[4, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 1])
-
---
-
-rings#matrix_to_atom[4, 4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 4])
-
---
-
-and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([sum([toInt(SafeIndex(rings#matrix_to_atom,[1, 1])),toInt(SafeIndex(rings#matrix_to_atom,[1, 4]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[2, 1])),toInt(SafeIndex(rings#matrix_to_atom,[2, 4]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[3, 1])),toInt(SafeIndex(rings#matrix_to_atom,[3, 4]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[4, 1])),toInt(SafeIndex(rings#matrix_to_atom,[4, 4]));int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([sum([toInt(rings[1, 1]),toInt(rings[1, 4]);int(1..)]) >= 2,sum([toInt(rings[2, 1]),toInt(rings[2, 4]);int(1..)]) >= 2,sum([toInt(rings[3, 1]),toInt(rings[3, 4]);int(1..)]) >= 2,sum([toInt(rings[4, 1]),toInt(rings[4, 4]);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings[ring, 2]),toInt(rings[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([sum([toInt(rings#matrix_to_atom_1_1),toInt(rings#matrix_to_atom_1_4);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_2_1),toInt(rings#matrix_to_atom_2_4);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_3_1),toInt(rings#matrix_to_atom_3_4);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_4_1),toInt(rings#matrix_to_atom_4_4);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([sum([toInt(rings[1, 1]),toInt(rings[1, 4]);int(1..)]) >= 2,sum([toInt(rings[2, 1]),toInt(rings[2, 4]);int(1..)]) >= 2,sum([toInt(rings[3, 1]),toInt(rings[3, 4]);int(1..)]) >= 2,sum([toInt(rings[4, 1]),toInt(rings[4, 4]);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings[ring, 2]),toInt(rings[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]),or([ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17)
 
 --
 
-sum([toInt(rings#matrix_to_atom_1_1),toInt(rings#matrix_to_atom_1_4);int(1..)]) >= 2
+rings[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 1])
+
+--
+
+rings[1, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 4])
+
+--
+
+rings[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 1])
+
+--
+
+rings[2, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 4])
+
+--
+
+rings[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 1])
+
+--
+
+rings[3, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 4])
+
+--
+
+rings[4, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 1])
+
+--
+
+rings[4, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 4])
+
+--
+
+SafeIndex(rings,[1, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_1
+
+--
+
+SafeIndex(rings,[1, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_4
+
+--
+
+SafeIndex(rings,[2, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_6
+
+--
+
+SafeIndex(rings,[2, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_9
+
+--
+
+SafeIndex(rings,[3, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_11
+
+--
+
+SafeIndex(rings,[3, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_14
+
+--
+
+SafeIndex(rings,[4, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_16
+
+--
+
+SafeIndex(rings,[4, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_19
+
+--
+
+sum([toInt(rings#MatrixToAtom_1),toInt(rings#MatrixToAtom_4);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__29, __30], 2)
 new variables:
   find __29: int(0..1)
   find __30: int(0..1)
 new constraints:
-  __29 =aux toInt(rings#matrix_to_atom_1_1)
-  __30 =aux toInt(rings#matrix_to_atom_1_4)
+  __29 =aux toInt(rings#MatrixToAtom_1)
+  __30 =aux toInt(rings#MatrixToAtom_4)
 
 --
 
-sum([toInt(rings#matrix_to_atom_2_1),toInt(rings#matrix_to_atom_2_4);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_6),toInt(rings#MatrixToAtom_9);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__31, __32], 2)
 new variables:
   find __31: int(0..1)
   find __32: int(0..1)
 new constraints:
-  __31 =aux toInt(rings#matrix_to_atom_2_1)
-  __32 =aux toInt(rings#matrix_to_atom_2_4)
+  __31 =aux toInt(rings#MatrixToAtom_6)
+  __32 =aux toInt(rings#MatrixToAtom_9)
 
 --
 
-sum([toInt(rings#matrix_to_atom_3_1),toInt(rings#matrix_to_atom_3_4);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_11),toInt(rings#MatrixToAtom_14);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__33, __34], 2)
 new variables:
   find __33: int(0..1)
   find __34: int(0..1)
 new constraints:
-  __33 =aux toInt(rings#matrix_to_atom_3_1)
-  __34 =aux toInt(rings#matrix_to_atom_3_4)
+  __33 =aux toInt(rings#MatrixToAtom_11)
+  __34 =aux toInt(rings#MatrixToAtom_14)
 
 --
 
-sum([toInt(rings#matrix_to_atom_4_1),toInt(rings#matrix_to_atom_4_4);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_16),toInt(rings#MatrixToAtom_19);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__35, __36], 2)
 new variables:
   find __35: int(0..1)
   find __36: int(0..1)
 new constraints:
-  __35 =aux toInt(rings#matrix_to_atom_4_1)
-  __36 =aux toInt(rings#matrix_to_atom_4_4)
+  __35 =aux toInt(rings#MatrixToAtom_16)
+  __36 =aux toInt(rings#MatrixToAtom_19)
 
 --
 
-[ sum([toInt(rings#matrix_to_atom[ring, 2]),toInt(rings#matrix_to_atom[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]
+[ sum([toInt(rings[ring, 2]),toInt(rings[ring, 3]);int(1..)]) >= 2 | ring : int(1..r) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[sum([toInt(rings#matrix_to_atom[1, 2]),toInt(rings#matrix_to_atom[1, 3]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[2, 2]),toInt(rings#matrix_to_atom[2, 3]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[3, 2]),toInt(rings#matrix_to_atom[3, 3]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[4, 2]),toInt(rings#matrix_to_atom[4, 3]);int(1..)]) >= 2;int(1..)]
+[sum([toInt(rings[1, 2]),toInt(rings[1, 3]);int(1..)]) >= 2,sum([toInt(rings[2, 2]),toInt(rings[2, 3]);int(1..)]) >= 2,sum([toInt(rings[3, 2]),toInt(rings[3, 3]);int(1..)]) >= 2,sum([toInt(rings[4, 2]),toInt(rings[4, 3]);int(1..)]) >= 2;int(1..)]
 
 --
 
-rings#matrix_to_atom[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 2])
-
---
-
-rings#matrix_to_atom[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 3])
-
---
-
-rings#matrix_to_atom[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 2])
-
---
-
-rings#matrix_to_atom[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 3])
-
---
-
-rings#matrix_to_atom[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 2])
-
---
-
-rings#matrix_to_atom[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 3])
-
---
-
-rings#matrix_to_atom[4, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 2])
-
---
-
-rings#matrix_to_atom[4, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 3])
-
---
-
-and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([sum([toInt(SafeIndex(rings#matrix_to_atom,[1, 2])),toInt(SafeIndex(rings#matrix_to_atom,[1, 3]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[2, 2])),toInt(SafeIndex(rings#matrix_to_atom,[2, 3]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[3, 2])),toInt(SafeIndex(rings#matrix_to_atom,[3, 3]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[4, 2])),toInt(SafeIndex(rings#matrix_to_atom,[4, 3]));int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([sum([toInt(rings[1, 2]),toInt(rings[1, 3]);int(1..)]) >= 2,sum([toInt(rings[2, 2]),toInt(rings[2, 3]);int(1..)]) >= 2,sum([toInt(rings[3, 2]),toInt(rings[3, 3]);int(1..)]) >= 2,sum([toInt(rings[4, 2]),toInt(rings[4, 3]);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([sum([toInt(rings#matrix_to_atom_1_2),toInt(rings#matrix_to_atom_1_3);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_2_2),toInt(rings#matrix_to_atom_2_3);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_3_2),toInt(rings#matrix_to_atom_3_3);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_4_2),toInt(rings#matrix_to_atom_4_3);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([sum([toInt(rings[1, 2]),toInt(rings[1, 3]);int(1..)]) >= 2,sum([toInt(rings[2, 2]),toInt(rings[2, 3]);int(1..)]) >= 2,sum([toInt(rings[3, 2]),toInt(rings[3, 3]);int(1..)]) >= 2,sum([toInt(rings[4, 2]),toInt(rings[4, 3]);int(1..)]) >= 2;int(1..)]),or([ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19)
 
 --
 
-sum([toInt(rings#matrix_to_atom_1_2),toInt(rings#matrix_to_atom_1_3);int(1..)]) >= 2
+rings[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 2])
+
+--
+
+rings[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 3])
+
+--
+
+rings[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 2])
+
+--
+
+rings[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 3])
+
+--
+
+rings[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 2])
+
+--
+
+rings[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 3])
+
+--
+
+rings[4, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 2])
+
+--
+
+rings[4, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 3])
+
+--
+
+SafeIndex(rings,[1, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_2
+
+--
+
+SafeIndex(rings,[1, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_3
+
+--
+
+SafeIndex(rings,[2, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_7
+
+--
+
+SafeIndex(rings,[2, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_8
+
+--
+
+SafeIndex(rings,[3, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_12
+
+--
+
+SafeIndex(rings,[3, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_13
+
+--
+
+SafeIndex(rings,[4, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_17
+
+--
+
+SafeIndex(rings,[4, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_18
+
+--
+
+sum([toInt(rings#MatrixToAtom_2),toInt(rings#MatrixToAtom_3);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__37, __38], 2)
 new variables:
   find __37: int(0..1)
   find __38: int(0..1)
 new constraints:
-  __37 =aux toInt(rings#matrix_to_atom_1_2)
-  __38 =aux toInt(rings#matrix_to_atom_1_3)
+  __37 =aux toInt(rings#MatrixToAtom_2)
+  __38 =aux toInt(rings#MatrixToAtom_3)
 
 --
 
-sum([toInt(rings#matrix_to_atom_2_2),toInt(rings#matrix_to_atom_2_3);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_7),toInt(rings#MatrixToAtom_8);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__39, __40], 2)
 new variables:
   find __39: int(0..1)
   find __40: int(0..1)
 new constraints:
-  __39 =aux toInt(rings#matrix_to_atom_2_2)
-  __40 =aux toInt(rings#matrix_to_atom_2_3)
+  __39 =aux toInt(rings#MatrixToAtom_7)
+  __40 =aux toInt(rings#MatrixToAtom_8)
 
 --
 
-sum([toInt(rings#matrix_to_atom_3_2),toInt(rings#matrix_to_atom_3_3);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_12),toInt(rings#MatrixToAtom_13);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__41, __42], 2)
 new variables:
   find __41: int(0..1)
   find __42: int(0..1)
 new constraints:
-  __41 =aux toInt(rings#matrix_to_atom_3_2)
-  __42 =aux toInt(rings#matrix_to_atom_3_3)
+  __41 =aux toInt(rings#MatrixToAtom_12)
+  __42 =aux toInt(rings#MatrixToAtom_13)
 
 --
 
-sum([toInt(rings#matrix_to_atom_4_2),toInt(rings#matrix_to_atom_4_3);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_17),toInt(rings#MatrixToAtom_18);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__43, __44], 2)
 new variables:
   find __43: int(0..1)
   find __44: int(0..1)
 new constraints:
-  __43 =aux toInt(rings#matrix_to_atom_4_2)
-  __44 =aux toInt(rings#matrix_to_atom_4_3)
+  __43 =aux toInt(rings#MatrixToAtom_17)
+  __44 =aux toInt(rings#MatrixToAtom_18)
 
 --
 
-[ sum([toInt(rings#matrix_to_atom[ring, 3]),toInt(rings#matrix_to_atom[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]
+[ sum([toInt(rings[ring, 3]),toInt(rings[ring, 5]);int(1..)]) >= 2 | ring : int(1..r) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[sum([toInt(rings#matrix_to_atom[1, 3]),toInt(rings#matrix_to_atom[1, 5]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[2, 3]),toInt(rings#matrix_to_atom[2, 5]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[3, 3]),toInt(rings#matrix_to_atom[3, 5]);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom[4, 3]),toInt(rings#matrix_to_atom[4, 5]);int(1..)]) >= 2;int(1..)]
+[sum([toInt(rings[1, 3]),toInt(rings[1, 5]);int(1..)]) >= 2,sum([toInt(rings[2, 3]),toInt(rings[2, 5]);int(1..)]) >= 2,sum([toInt(rings[3, 3]),toInt(rings[3, 5]);int(1..)]) >= 2,sum([toInt(rings[4, 3]),toInt(rings[4, 5]);int(1..)]) >= 2;int(1..)]
 
 --
 
-rings#matrix_to_atom[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 3])
-
---
-
-rings#matrix_to_atom[1, 5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 5])
-
---
-
-rings#matrix_to_atom[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 3])
-
---
-
-rings#matrix_to_atom[2, 5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 5])
-
---
-
-rings#matrix_to_atom[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 3])
-
---
-
-rings#matrix_to_atom[3, 5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 5])
-
---
-
-rings#matrix_to_atom[4, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 3])
-
---
-
-rings#matrix_to_atom[4, 5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 5])
-
---
-
-and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([sum([toInt(SafeIndex(rings#matrix_to_atom,[1, 3])),toInt(SafeIndex(rings#matrix_to_atom,[1, 5]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[2, 3])),toInt(SafeIndex(rings#matrix_to_atom,[2, 5]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[3, 3])),toInt(SafeIndex(rings#matrix_to_atom,[3, 5]));int(1..)]) >= 2,sum([toInt(SafeIndex(rings#matrix_to_atom,[4, 3])),toInt(SafeIndex(rings#matrix_to_atom,[4, 5]));int(1..)]) >= 2;int(1..)]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([sum([toInt(rings[1, 3]),toInt(rings[1, 5]);int(1..)]) >= 2,sum([toInt(rings[2, 3]),toInt(rings[2, 5]);int(1..)]) >= 2,sum([toInt(rings[3, 3]),toInt(rings[3, 5]);int(1..)]) >= 2,sum([toInt(rings[4, 3]),toInt(rings[4, 5]);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([sum([toInt(rings#matrix_to_atom_1_3),toInt(rings#matrix_to_atom_1_5);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_2_3),toInt(rings#matrix_to_atom_2_5);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_3_3),toInt(rings#matrix_to_atom_3_5);int(1..)]) >= 2,sum([toInt(rings#matrix_to_atom_4_3),toInt(rings#matrix_to_atom_4_5);int(1..)]) >= 2;int(1..)]);int(1..)]),
-and([sum([ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([sum([toInt(rings[1, 3]),toInt(rings[1, 5]);int(1..)]) >= 2,sum([toInt(rings[2, 3]),toInt(rings[2, 5]);int(1..)]) >= 2,sum([toInt(rings[3, 3]),toInt(rings[3, 5]);int(1..)]) >= 2,sum([toInt(rings[4, 3]),toInt(rings[4, 5]);int(1..)]) >= 2;int(1..)]);int(1..)]),
+and([sum([ toInt(rings[1, client]) | client : int(1..n) ]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18)
 
 --
 
-sum([toInt(rings#matrix_to_atom_1_3),toInt(rings#matrix_to_atom_1_5);int(1..)]) >= 2
+rings[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 3])
+
+--
+
+rings[1, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 5])
+
+--
+
+rings[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 3])
+
+--
+
+rings[2, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 5])
+
+--
+
+rings[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 3])
+
+--
+
+rings[3, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 5])
+
+--
+
+rings[4, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 3])
+
+--
+
+rings[4, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 5])
+
+--
+
+SafeIndex(rings,[1, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_3
+
+--
+
+SafeIndex(rings,[1, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_5
+
+--
+
+SafeIndex(rings,[2, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_8
+
+--
+
+SafeIndex(rings,[2, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_10
+
+--
+
+SafeIndex(rings,[3, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_13
+
+--
+
+SafeIndex(rings,[3, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_15
+
+--
+
+SafeIndex(rings,[4, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_18
+
+--
+
+SafeIndex(rings,[4, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_20
+
+--
+
+sum([toInt(rings#MatrixToAtom_3),toInt(rings#MatrixToAtom_5);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__45, __46], 2)
 new variables:
   find __45: int(0..1)
   find __46: int(0..1)
 new constraints:
-  __45 =aux toInt(rings#matrix_to_atom_1_3)
-  __46 =aux toInt(rings#matrix_to_atom_1_5)
+  __45 =aux toInt(rings#MatrixToAtom_3)
+  __46 =aux toInt(rings#MatrixToAtom_5)
 
 --
 
-sum([toInt(rings#matrix_to_atom_2_3),toInt(rings#matrix_to_atom_2_5);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_8),toInt(rings#MatrixToAtom_10);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__47, __48], 2)
 new variables:
   find __47: int(0..1)
   find __48: int(0..1)
 new constraints:
-  __47 =aux toInt(rings#matrix_to_atom_2_3)
-  __48 =aux toInt(rings#matrix_to_atom_2_5)
+  __47 =aux toInt(rings#MatrixToAtom_8)
+  __48 =aux toInt(rings#MatrixToAtom_10)
 
 --
 
-sum([toInt(rings#matrix_to_atom_3_3),toInt(rings#matrix_to_atom_3_5);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_13),toInt(rings#MatrixToAtom_15);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__49, __50], 2)
 new variables:
   find __49: int(0..1)
   find __50: int(0..1)
 new constraints:
-  __49 =aux toInt(rings#matrix_to_atom_3_3)
-  __50 =aux toInt(rings#matrix_to_atom_3_5)
+  __49 =aux toInt(rings#MatrixToAtom_13)
+  __50 =aux toInt(rings#MatrixToAtom_15)
 
 --
 
-sum([toInt(rings#matrix_to_atom_4_3),toInt(rings#matrix_to_atom_4_5);int(1..)]) >= 2
+sum([toInt(rings#MatrixToAtom_18),toInt(rings#MatrixToAtom_20);int(1..)]) >= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([__51, __52], 2)
 new variables:
   find __51: int(0..1)
   find __52: int(0..1)
 new constraints:
-  __51 =aux toInt(rings#matrix_to_atom_4_3)
-  __52 =aux toInt(rings#matrix_to_atom_4_5)
+  __51 =aux toInt(rings#MatrixToAtom_18)
+  __52 =aux toInt(rings#MatrixToAtom_20)
 
 --
 
-[ toInt(rings#matrix_to_atom[1, client]) | client : int(1..n) ]
+[ toInt(rings[1, client]) | client : int(1..n) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[toInt(rings#matrix_to_atom[1, 1]),toInt(rings#matrix_to_atom[1, 2]),toInt(rings#matrix_to_atom[1, 3]),toInt(rings#matrix_to_atom[1, 4]),toInt(rings#matrix_to_atom[1, 5]);int(1..)]
-
---
-
-rings#matrix_to_atom[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 1])
-
---
-
-rings#matrix_to_atom[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 2])
-
---
-
-rings#matrix_to_atom[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 3])
-
---
-
-rings#matrix_to_atom[1, 4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 4])
-
---
-
-rings#matrix_to_atom[1, 5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[1, 5])
+[toInt(rings[1, 1]),toInt(rings[1, 2]),toInt(rings[1, 3]),toInt(rings[1, 4]),toInt(rings[1, 5]);int(1..)]
 
 --
 
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
-and([sum([toInt(SafeIndex(rings#matrix_to_atom,[1, 1])),toInt(SafeIndex(rings#matrix_to_atom,[1, 2])),toInt(SafeIndex(rings#matrix_to_atom,[1, 3])),toInt(SafeIndex(rings#matrix_to_atom,[1, 4])),toInt(SafeIndex(rings#matrix_to_atom,[1, 5]));int(1..)]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([sum([toInt(rings[1, 1]),toInt(rings[1, 2]),toInt(rings[1, 3]),toInt(rings[1, 4]),toInt(rings[1, 5]);int(1..)]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
-and([sum([toInt(rings#matrix_to_atom_1_1),toInt(rings#matrix_to_atom_1_2),toInt(rings#matrix_to_atom_1_3),toInt(rings#matrix_to_atom_1_4),toInt(rings#matrix_to_atom_1_5);int(1..)]) <= 3,sum([ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([sum([toInt(rings[1, 1]),toInt(rings[1, 2]),toInt(rings[1, 3]),toInt(rings[1, 4]),toInt(rings[1, 5]);int(1..)]) <= 3,sum([ toInt(rings[2, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20)
 
 --
 
-sum([toInt(rings#matrix_to_atom_1_1),toInt(rings#matrix_to_atom_1_2),toInt(rings#matrix_to_atom_1_3),toInt(rings#matrix_to_atom_1_4),toInt(rings#matrix_to_atom_1_5);int(1..)]) <= 3
+rings[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 1])
+
+--
+
+rings[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 2])
+
+--
+
+rings[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 3])
+
+--
+
+rings[1, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 4])
+
+--
+
+rings[1, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[1, 5])
+
+--
+
+SafeIndex(rings,[1, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_1
+
+--
+
+SafeIndex(rings,[1, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_2
+
+--
+
+SafeIndex(rings,[1, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_3
+
+--
+
+SafeIndex(rings,[1, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_4
+
+--
+
+SafeIndex(rings,[1, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_5
+
+--
+
+sum([toInt(rings#MatrixToAtom_1),toInt(rings#MatrixToAtom_2),toInt(rings#MatrixToAtom_3),toInt(rings#MatrixToAtom_4),toInt(rings#MatrixToAtom_5);int(1..)]) <= 3
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumLeq([__53, __54, __55, __56, __57], 3)
 new variables:
@@ -1122,175 +1454,205 @@ new variables:
   find __56: int(0..1)
   find __57: int(0..1)
 new constraints:
-  __53 =aux toInt(rings#matrix_to_atom_1_1)
-  __54 =aux toInt(rings#matrix_to_atom_1_2)
-  __55 =aux toInt(rings#matrix_to_atom_1_3)
-  __56 =aux toInt(rings#matrix_to_atom_1_4)
-  __57 =aux toInt(rings#matrix_to_atom_1_5)
+  __53 =aux toInt(rings#MatrixToAtom_1)
+  __54 =aux toInt(rings#MatrixToAtom_2)
+  __55 =aux toInt(rings#MatrixToAtom_3)
+  __56 =aux toInt(rings#MatrixToAtom_4)
+  __57 =aux toInt(rings#MatrixToAtom_5)
 
 --
 
-[ toInt(rings#matrix_to_atom[2, client]) | client : int(1..n) ]
+[ toInt(rings[2, client]) | client : int(1..n) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[toInt(rings#matrix_to_atom[2, 1]),toInt(rings#matrix_to_atom[2, 2]),toInt(rings#matrix_to_atom[2, 3]),toInt(rings#matrix_to_atom[2, 4]),toInt(rings#matrix_to_atom[2, 5]);int(1..)]
-
---
-
-rings#matrix_to_atom[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 1])
-
---
-
-rings#matrix_to_atom[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 2])
-
---
-
-rings#matrix_to_atom[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 3])
-
---
-
-rings#matrix_to_atom[2, 4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 4])
-
---
-
-rings#matrix_to_atom[2, 5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[2, 5])
+[toInt(rings[2, 1]),toInt(rings[2, 2]),toInt(rings[2, 3]),toInt(rings[2, 4]),toInt(rings[2, 5]);int(1..)]
 
 --
 
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
-and([SumLeq([__53, __54, __55, __56, __57], 3),sum([toInt(SafeIndex(rings#matrix_to_atom,[2, 1])),toInt(SafeIndex(rings#matrix_to_atom,[2, 2])),toInt(SafeIndex(rings#matrix_to_atom,[2, 3])),toInt(SafeIndex(rings#matrix_to_atom,[2, 4])),toInt(SafeIndex(rings#matrix_to_atom,[2, 5]));int(1..)]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([SumLeq([__53, __54, __55, __56, __57], 3),sum([toInt(rings[2, 1]),toInt(rings[2, 2]),toInt(rings[2, 3]),toInt(rings[2, 4]),toInt(rings[2, 5]);int(1..)]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5),
-__53 =aux toInt(rings#matrix_to_atom_1_1),
-__54 =aux toInt(rings#matrix_to_atom_1_2),
-__55 =aux toInt(rings#matrix_to_atom_1_3),
-__56 =aux toInt(rings#matrix_to_atom_1_4),
-__57 =aux toInt(rings#matrix_to_atom_1_5)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20),
+__53 =aux toInt(rings#MatrixToAtom_1),
+__54 =aux toInt(rings#MatrixToAtom_2),
+__55 =aux toInt(rings#MatrixToAtom_3),
+__56 =aux toInt(rings#MatrixToAtom_4),
+__57 =aux toInt(rings#MatrixToAtom_5)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
-and([SumLeq([__53, __54, __55, __56, __57], 3),sum([toInt(rings#matrix_to_atom_2_1),toInt(rings#matrix_to_atom_2_2),toInt(rings#matrix_to_atom_2_3),toInt(rings#matrix_to_atom_2_4),toInt(rings#matrix_to_atom_2_5);int(1..)]) <= 2,sum([ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([SumLeq([__53, __54, __55, __56, __57], 3),sum([toInt(rings[2, 1]),toInt(rings[2, 2]),toInt(rings[2, 3]),toInt(rings[2, 4]),toInt(rings[2, 5]);int(1..)]) <= 2,sum([ toInt(rings[3, client]) | client : int(1..n) ]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5),
-__53 =aux toInt(rings#matrix_to_atom_1_1),
-__54 =aux toInt(rings#matrix_to_atom_1_2),
-__55 =aux toInt(rings#matrix_to_atom_1_3),
-__56 =aux toInt(rings#matrix_to_atom_1_4),
-__57 =aux toInt(rings#matrix_to_atom_1_5)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20),
+__53 =aux toInt(rings#MatrixToAtom_1),
+__54 =aux toInt(rings#MatrixToAtom_2),
+__55 =aux toInt(rings#MatrixToAtom_3),
+__56 =aux toInt(rings#MatrixToAtom_4),
+__57 =aux toInt(rings#MatrixToAtom_5)
 
 --
 
-sum([toInt(rings#matrix_to_atom_2_1),toInt(rings#matrix_to_atom_2_2),toInt(rings#matrix_to_atom_2_3),toInt(rings#matrix_to_atom_2_4),toInt(rings#matrix_to_atom_2_5);int(1..)]) <= 2
+rings[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 1])
+
+--
+
+rings[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 2])
+
+--
+
+rings[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 3])
+
+--
+
+rings[2, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 4])
+
+--
+
+rings[2, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[2, 5])
+
+--
+
+SafeIndex(rings,[2, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_6
+
+--
+
+SafeIndex(rings,[2, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_7
+
+--
+
+SafeIndex(rings,[2, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_8
+
+--
+
+SafeIndex(rings,[2, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_9
+
+--
+
+SafeIndex(rings,[2, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_10
+
+--
+
+sum([toInt(rings#MatrixToAtom_6),toInt(rings#MatrixToAtom_7),toInt(rings#MatrixToAtom_8),toInt(rings#MatrixToAtom_9),toInt(rings#MatrixToAtom_10);int(1..)]) <= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumLeq([__58, __59, __60, __61, __62], 2)
 new variables:
@@ -1300,185 +1662,215 @@ new variables:
   find __61: int(0..1)
   find __62: int(0..1)
 new constraints:
-  __58 =aux toInt(rings#matrix_to_atom_2_1)
-  __59 =aux toInt(rings#matrix_to_atom_2_2)
-  __60 =aux toInt(rings#matrix_to_atom_2_3)
-  __61 =aux toInt(rings#matrix_to_atom_2_4)
-  __62 =aux toInt(rings#matrix_to_atom_2_5)
+  __58 =aux toInt(rings#MatrixToAtom_6)
+  __59 =aux toInt(rings#MatrixToAtom_7)
+  __60 =aux toInt(rings#MatrixToAtom_8)
+  __61 =aux toInt(rings#MatrixToAtom_9)
+  __62 =aux toInt(rings#MatrixToAtom_10)
 
 --
 
-[ toInt(rings#matrix_to_atom[3, client]) | client : int(1..n) ]
+[ toInt(rings[3, client]) | client : int(1..n) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[toInt(rings#matrix_to_atom[3, 1]),toInt(rings#matrix_to_atom[3, 2]),toInt(rings#matrix_to_atom[3, 3]),toInt(rings#matrix_to_atom[3, 4]),toInt(rings#matrix_to_atom[3, 5]);int(1..)]
-
---
-
-rings#matrix_to_atom[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 1])
-
---
-
-rings#matrix_to_atom[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 2])
-
---
-
-rings#matrix_to_atom[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 3])
-
---
-
-rings#matrix_to_atom[3, 4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 4])
-
---
-
-rings#matrix_to_atom[3, 5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[3, 5])
+[toInt(rings[3, 1]),toInt(rings[3, 2]),toInt(rings[3, 3]),toInt(rings[3, 4]),toInt(rings[3, 5]);int(1..)]
 
 --
 
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
-and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),sum([toInt(SafeIndex(rings#matrix_to_atom,[3, 1])),toInt(SafeIndex(rings#matrix_to_atom,[3, 2])),toInt(SafeIndex(rings#matrix_to_atom,[3, 3])),toInt(SafeIndex(rings#matrix_to_atom,[3, 4])),toInt(SafeIndex(rings#matrix_to_atom,[3, 5]));int(1..)]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),sum([toInt(rings[3, 1]),toInt(rings[3, 2]),toInt(rings[3, 3]),toInt(rings[3, 4]),toInt(rings[3, 5]);int(1..)]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5),
-__53 =aux toInt(rings#matrix_to_atom_1_1),
-__54 =aux toInt(rings#matrix_to_atom_1_2),
-__55 =aux toInt(rings#matrix_to_atom_1_3),
-__56 =aux toInt(rings#matrix_to_atom_1_4),
-__57 =aux toInt(rings#matrix_to_atom_1_5),
-__58 =aux toInt(rings#matrix_to_atom_2_1),
-__59 =aux toInt(rings#matrix_to_atom_2_2),
-__60 =aux toInt(rings#matrix_to_atom_2_3),
-__61 =aux toInt(rings#matrix_to_atom_2_4),
-__62 =aux toInt(rings#matrix_to_atom_2_5)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20),
+__53 =aux toInt(rings#MatrixToAtom_1),
+__54 =aux toInt(rings#MatrixToAtom_2),
+__55 =aux toInt(rings#MatrixToAtom_3),
+__56 =aux toInt(rings#MatrixToAtom_4),
+__57 =aux toInt(rings#MatrixToAtom_5),
+__58 =aux toInt(rings#MatrixToAtom_6),
+__59 =aux toInt(rings#MatrixToAtom_7),
+__60 =aux toInt(rings#MatrixToAtom_8),
+__61 =aux toInt(rings#MatrixToAtom_9),
+__62 =aux toInt(rings#MatrixToAtom_10)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
-and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),sum([toInt(rings#matrix_to_atom_3_1),toInt(rings#matrix_to_atom_3_2),toInt(rings#matrix_to_atom_3_3),toInt(rings#matrix_to_atom_3_4),toInt(rings#matrix_to_atom_3_5);int(1..)]) <= 2,sum([ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
+and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),sum([toInt(rings[3, 1]),toInt(rings[3, 2]),toInt(rings[3, 3]),toInt(rings[3, 4]),toInt(rings[3, 5]);int(1..)]) <= 2,sum([ toInt(rings[4, client]) | client : int(1..n) ]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5),
-__53 =aux toInt(rings#matrix_to_atom_1_1),
-__54 =aux toInt(rings#matrix_to_atom_1_2),
-__55 =aux toInt(rings#matrix_to_atom_1_3),
-__56 =aux toInt(rings#matrix_to_atom_1_4),
-__57 =aux toInt(rings#matrix_to_atom_1_5),
-__58 =aux toInt(rings#matrix_to_atom_2_1),
-__59 =aux toInt(rings#matrix_to_atom_2_2),
-__60 =aux toInt(rings#matrix_to_atom_2_3),
-__61 =aux toInt(rings#matrix_to_atom_2_4),
-__62 =aux toInt(rings#matrix_to_atom_2_5)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20),
+__53 =aux toInt(rings#MatrixToAtom_1),
+__54 =aux toInt(rings#MatrixToAtom_2),
+__55 =aux toInt(rings#MatrixToAtom_3),
+__56 =aux toInt(rings#MatrixToAtom_4),
+__57 =aux toInt(rings#MatrixToAtom_5),
+__58 =aux toInt(rings#MatrixToAtom_6),
+__59 =aux toInt(rings#MatrixToAtom_7),
+__60 =aux toInt(rings#MatrixToAtom_8),
+__61 =aux toInt(rings#MatrixToAtom_9),
+__62 =aux toInt(rings#MatrixToAtom_10)
 
 --
 
-sum([toInt(rings#matrix_to_atom_3_1),toInt(rings#matrix_to_atom_3_2),toInt(rings#matrix_to_atom_3_3),toInt(rings#matrix_to_atom_3_4),toInt(rings#matrix_to_atom_3_5);int(1..)]) <= 2
+rings[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 1])
+
+--
+
+rings[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 2])
+
+--
+
+rings[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 3])
+
+--
+
+rings[3, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 4])
+
+--
+
+rings[3, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[3, 5])
+
+--
+
+SafeIndex(rings,[3, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_11
+
+--
+
+SafeIndex(rings,[3, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_12
+
+--
+
+SafeIndex(rings,[3, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_13
+
+--
+
+SafeIndex(rings,[3, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_14
+
+--
+
+SafeIndex(rings,[3, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_15
+
+--
+
+sum([toInt(rings#MatrixToAtom_11),toInt(rings#MatrixToAtom_12),toInt(rings#MatrixToAtom_13),toInt(rings#MatrixToAtom_14),toInt(rings#MatrixToAtom_15);int(1..)]) <= 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumLeq([__63, __64, __65, __66, __67], 2)
 new variables:
@@ -1488,195 +1880,225 @@ new variables:
   find __66: int(0..1)
   find __67: int(0..1)
 new constraints:
-  __63 =aux toInt(rings#matrix_to_atom_3_1)
-  __64 =aux toInt(rings#matrix_to_atom_3_2)
-  __65 =aux toInt(rings#matrix_to_atom_3_3)
-  __66 =aux toInt(rings#matrix_to_atom_3_4)
-  __67 =aux toInt(rings#matrix_to_atom_3_5)
+  __63 =aux toInt(rings#MatrixToAtom_11)
+  __64 =aux toInt(rings#MatrixToAtom_12)
+  __65 =aux toInt(rings#MatrixToAtom_13)
+  __66 =aux toInt(rings#MatrixToAtom_14)
+  __67 =aux toInt(rings#MatrixToAtom_15)
 
 --
 
-[ toInt(rings#matrix_to_atom[4, client]) | client : int(1..n) ]
+[ toInt(rings[4, client]) | client : int(1..n) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[toInt(rings#matrix_to_atom[4, 1]),toInt(rings#matrix_to_atom[4, 2]),toInt(rings#matrix_to_atom[4, 3]),toInt(rings#matrix_to_atom[4, 4]),toInt(rings#matrix_to_atom[4, 5]);int(1..)]
-
---
-
-rings#matrix_to_atom[4, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 1])
-
---
-
-rings#matrix_to_atom[4, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 2])
-
---
-
-rings#matrix_to_atom[4, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 3])
-
---
-
-rings#matrix_to_atom[4, 4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 4])
-
---
-
-rings#matrix_to_atom[4, 5]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(rings#matrix_to_atom,[4, 5])
+[toInt(rings[4, 1]),toInt(rings[4, 2]),toInt(rings[4, 3]),toInt(rings[4, 4]),toInt(rings[4, 5]);int(1..)]
 
 --
 
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
-and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),SumLeq([__63, __64, __65, __66, __67], 2),sum([toInt(SafeIndex(rings#matrix_to_atom,[4, 1])),toInt(SafeIndex(rings#matrix_to_atom,[4, 2])),toInt(SafeIndex(rings#matrix_to_atom,[4, 3])),toInt(SafeIndex(rings#matrix_to_atom,[4, 4])),toInt(SafeIndex(rings#matrix_to_atom,[4, 5]));int(1..)]) <= 1;int(1..)]),
+and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),SumLeq([__63, __64, __65, __66, __67], 2),sum([toInt(rings[4, 1]),toInt(rings[4, 2]),toInt(rings[4, 3]),toInt(rings[4, 4]),toInt(rings[4, 5]);int(1..)]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5),
-__53 =aux toInt(rings#matrix_to_atom_1_1),
-__54 =aux toInt(rings#matrix_to_atom_1_2),
-__55 =aux toInt(rings#matrix_to_atom_1_3),
-__56 =aux toInt(rings#matrix_to_atom_1_4),
-__57 =aux toInt(rings#matrix_to_atom_1_5),
-__58 =aux toInt(rings#matrix_to_atom_2_1),
-__59 =aux toInt(rings#matrix_to_atom_2_2),
-__60 =aux toInt(rings#matrix_to_atom_2_3),
-__61 =aux toInt(rings#matrix_to_atom_2_4),
-__62 =aux toInt(rings#matrix_to_atom_2_5),
-__63 =aux toInt(rings#matrix_to_atom_3_1),
-__64 =aux toInt(rings#matrix_to_atom_3_2),
-__65 =aux toInt(rings#matrix_to_atom_3_3),
-__66 =aux toInt(rings#matrix_to_atom_3_4),
-__67 =aux toInt(rings#matrix_to_atom_3_5)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20),
+__53 =aux toInt(rings#MatrixToAtom_1),
+__54 =aux toInt(rings#MatrixToAtom_2),
+__55 =aux toInt(rings#MatrixToAtom_3),
+__56 =aux toInt(rings#MatrixToAtom_4),
+__57 =aux toInt(rings#MatrixToAtom_5),
+__58 =aux toInt(rings#MatrixToAtom_6),
+__59 =aux toInt(rings#MatrixToAtom_7),
+__60 =aux toInt(rings#MatrixToAtom_8),
+__61 =aux toInt(rings#MatrixToAtom_9),
+__62 =aux toInt(rings#MatrixToAtom_10),
+__63 =aux toInt(rings#MatrixToAtom_11),
+__64 =aux toInt(rings#MatrixToAtom_12),
+__65 =aux toInt(rings#MatrixToAtom_13),
+__66 =aux toInt(rings#MatrixToAtom_14),
+__67 =aux toInt(rings#MatrixToAtom_15)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
-and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),SumLeq([__63, __64, __65, __66, __67], 2),sum([toInt(rings#matrix_to_atom_4_1),toInt(rings#matrix_to_atom_4_2),toInt(rings#matrix_to_atom_4_3),toInt(rings#matrix_to_atom_4_4),toInt(rings#matrix_to_atom_4_5);int(1..)]) <= 1;int(1..)]),
+and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),SumLeq([__63, __64, __65, __66, __67], 2),sum([toInt(rings[4, 1]),toInt(rings[4, 2]),toInt(rings[4, 3]),toInt(rings[4, 4]),toInt(rings[4, 5]);int(1..)]) <= 1;int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5),
-__53 =aux toInt(rings#matrix_to_atom_1_1),
-__54 =aux toInt(rings#matrix_to_atom_1_2),
-__55 =aux toInt(rings#matrix_to_atom_1_3),
-__56 =aux toInt(rings#matrix_to_atom_1_4),
-__57 =aux toInt(rings#matrix_to_atom_1_5),
-__58 =aux toInt(rings#matrix_to_atom_2_1),
-__59 =aux toInt(rings#matrix_to_atom_2_2),
-__60 =aux toInt(rings#matrix_to_atom_2_3),
-__61 =aux toInt(rings#matrix_to_atom_2_4),
-__62 =aux toInt(rings#matrix_to_atom_2_5),
-__63 =aux toInt(rings#matrix_to_atom_3_1),
-__64 =aux toInt(rings#matrix_to_atom_3_2),
-__65 =aux toInt(rings#matrix_to_atom_3_3),
-__66 =aux toInt(rings#matrix_to_atom_3_4),
-__67 =aux toInt(rings#matrix_to_atom_3_5)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20),
+__53 =aux toInt(rings#MatrixToAtom_1),
+__54 =aux toInt(rings#MatrixToAtom_2),
+__55 =aux toInt(rings#MatrixToAtom_3),
+__56 =aux toInt(rings#MatrixToAtom_4),
+__57 =aux toInt(rings#MatrixToAtom_5),
+__58 =aux toInt(rings#MatrixToAtom_6),
+__59 =aux toInt(rings#MatrixToAtom_7),
+__60 =aux toInt(rings#MatrixToAtom_8),
+__61 =aux toInt(rings#MatrixToAtom_9),
+__62 =aux toInt(rings#MatrixToAtom_10),
+__63 =aux toInt(rings#MatrixToAtom_11),
+__64 =aux toInt(rings#MatrixToAtom_12),
+__65 =aux toInt(rings#MatrixToAtom_13),
+__66 =aux toInt(rings#MatrixToAtom_14),
+__67 =aux toInt(rings#MatrixToAtom_15)
 
 --
 
-sum([toInt(rings#matrix_to_atom_4_1),toInt(rings#matrix_to_atom_4_2),toInt(rings#matrix_to_atom_4_3),toInt(rings#matrix_to_atom_4_4),toInt(rings#matrix_to_atom_4_5);int(1..)]) <= 1
+rings[4, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 1])
+
+--
+
+rings[4, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 2])
+
+--
+
+rings[4, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 3])
+
+--
+
+rings[4, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 4])
+
+--
+
+rings[4, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(rings,[4, 5])
+
+--
+
+SafeIndex(rings,[4, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_16
+
+--
+
+SafeIndex(rings,[4, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_17
+
+--
+
+SafeIndex(rings,[4, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_18
+
+--
+
+SafeIndex(rings,[4, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_19
+
+--
+
+SafeIndex(rings,[4, 5])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+rings#MatrixToAtom_20
+
+--
+
+sum([toInt(rings#MatrixToAtom_16),toInt(rings#MatrixToAtom_17),toInt(rings#MatrixToAtom_18),toInt(rings#MatrixToAtom_19),toInt(rings#MatrixToAtom_20);int(1..)]) <= 1
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumLeq([__68, __69, __70, __71, __72], 1)
 new variables:
@@ -1686,11 +2108,11 @@ new variables:
   find __71: int(0..1)
   find __72: int(0..1)
 new constraints:
-  __68 =aux toInt(rings#matrix_to_atom_4_1)
-  __69 =aux toInt(rings#matrix_to_atom_4_2)
-  __70 =aux toInt(rings#matrix_to_atom_4_3)
-  __71 =aux toInt(rings#matrix_to_atom_4_4)
-  __72 =aux toInt(rings#matrix_to_atom_4_5)
+  __68 =aux toInt(rings#MatrixToAtom_16)
+  __69 =aux toInt(rings#MatrixToAtom_17)
+  __70 =aux toInt(rings#MatrixToAtom_18)
+  __71 =aux toInt(rings#MatrixToAtom_19)
+  __72 =aux toInt(rings#MatrixToAtom_20)
 
 --
 
@@ -1702,26 +2124,55 @@ letting demand be [[0,1,0,1,0;int(1..5)],[1,0,1,0,0;int(1..5)],[0,1,0,0,1;int(1.
 letting capacity_nodes be [3,2,2,1;int(1..4)]
 find rings: matrix indexed by [int(1..r), int(1..n)] of bool
 find __0: int(0..20)
-find rings#matrix_to_atom_1_1: bool
-find rings#matrix_to_atom_1_2: bool
-find rings#matrix_to_atom_1_3: bool
-find rings#matrix_to_atom_1_4: bool
-find rings#matrix_to_atom_1_5: bool
-find rings#matrix_to_atom_2_1: bool
-find rings#matrix_to_atom_2_2: bool
-find rings#matrix_to_atom_2_3: bool
-find rings#matrix_to_atom_2_4: bool
-find rings#matrix_to_atom_2_5: bool
-find rings#matrix_to_atom_3_1: bool
-find rings#matrix_to_atom_3_2: bool
-find rings#matrix_to_atom_3_3: bool
-find rings#matrix_to_atom_3_4: bool
-find rings#matrix_to_atom_3_5: bool
-find rings#matrix_to_atom_4_1: bool
-find rings#matrix_to_atom_4_2: bool
-find rings#matrix_to_atom_4_3: bool
-find rings#matrix_to_atom_4_4: bool
-find rings#matrix_to_atom_4_5: bool
+letting demand#MatrixToAtom_1 be 0
+letting demand#MatrixToAtom_2 be 1
+letting demand#MatrixToAtom_3 be 0
+letting demand#MatrixToAtom_4 be 1
+letting demand#MatrixToAtom_5 be 0
+letting demand#MatrixToAtom_6 be 1
+letting demand#MatrixToAtom_7 be 0
+letting demand#MatrixToAtom_8 be 1
+letting demand#MatrixToAtom_9 be 0
+letting demand#MatrixToAtom_10 be 0
+letting demand#MatrixToAtom_11 be 0
+letting demand#MatrixToAtom_12 be 1
+letting demand#MatrixToAtom_13 be 0
+letting demand#MatrixToAtom_14 be 0
+letting demand#MatrixToAtom_15 be 1
+letting demand#MatrixToAtom_16 be 1
+letting demand#MatrixToAtom_17 be 0
+letting demand#MatrixToAtom_18 be 0
+letting demand#MatrixToAtom_19 be 0
+letting demand#MatrixToAtom_20 be 0
+letting demand#MatrixToAtom_21 be 0
+letting demand#MatrixToAtom_22 be 0
+letting demand#MatrixToAtom_23 be 1
+letting demand#MatrixToAtom_24 be 0
+letting demand#MatrixToAtom_25 be 0
+letting capacity_nodes#MatrixToAtom_1 be 3
+letting capacity_nodes#MatrixToAtom_2 be 2
+letting capacity_nodes#MatrixToAtom_3 be 2
+letting capacity_nodes#MatrixToAtom_4 be 1
+find rings#MatrixToAtom_1: bool
+find rings#MatrixToAtom_2: bool
+find rings#MatrixToAtom_3: bool
+find rings#MatrixToAtom_4: bool
+find rings#MatrixToAtom_5: bool
+find rings#MatrixToAtom_6: bool
+find rings#MatrixToAtom_7: bool
+find rings#MatrixToAtom_8: bool
+find rings#MatrixToAtom_9: bool
+find rings#MatrixToAtom_10: bool
+find rings#MatrixToAtom_11: bool
+find rings#MatrixToAtom_12: bool
+find rings#MatrixToAtom_13: bool
+find rings#MatrixToAtom_14: bool
+find rings#MatrixToAtom_15: bool
+find rings#MatrixToAtom_16: bool
+find rings#MatrixToAtom_17: bool
+find rings#MatrixToAtom_18: bool
+find rings#MatrixToAtom_19: bool
+find rings#MatrixToAtom_20: bool
 find __1: int(0..1)
 find __2: int(0..1)
 find __3: int(0..1)
@@ -1800,76 +2251,76 @@ such that
 and([or([SumGeq([__21, __22], 2),SumGeq([__23, __24], 2),SumGeq([__25, __26], 2),SumGeq([__27, __28], 2);int(1..)]),or([SumGeq([__29, __30], 2),SumGeq([__31, __32], 2),SumGeq([__33, __34], 2),SumGeq([__35, __36], 2);int(1..)]),or([SumGeq([__37, __38], 2),SumGeq([__39, __40], 2),SumGeq([__41, __42], 2),SumGeq([__43, __44], 2);int(1..)]),or([SumGeq([__45, __46], 2),SumGeq([__47, __48], 2),SumGeq([__49, __50], 2),SumGeq([__51, __52], 2);int(1..)]);int(1..)]),
 and([SumLeq([__53, __54, __55, __56, __57], 3),SumLeq([__58, __59, __60, __61, __62], 2),SumLeq([__63, __64, __65, __66, __67], 2),SumLeq([__68, __69, __70, __71, __72], 1);int(1..)]),
 and([SumLeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0),SumGeq([__1, __10, __11, __12, __13, __14, __15, __16, __17, __18, __19, __2, __20, __3, __4, __5, __6, __7, __8, __9], __0);int(1..)]),
-__1 =aux toInt(rings#matrix_to_atom_1_1),
-__2 =aux toInt(rings#matrix_to_atom_1_2),
-__3 =aux toInt(rings#matrix_to_atom_1_3),
-__4 =aux toInt(rings#matrix_to_atom_1_4),
-__5 =aux toInt(rings#matrix_to_atom_1_5),
-__6 =aux toInt(rings#matrix_to_atom_2_1),
-__7 =aux toInt(rings#matrix_to_atom_2_2),
-__8 =aux toInt(rings#matrix_to_atom_2_3),
-__9 =aux toInt(rings#matrix_to_atom_2_4),
-__10 =aux toInt(rings#matrix_to_atom_2_5),
-__11 =aux toInt(rings#matrix_to_atom_3_1),
-__12 =aux toInt(rings#matrix_to_atom_3_2),
-__13 =aux toInt(rings#matrix_to_atom_3_3),
-__14 =aux toInt(rings#matrix_to_atom_3_4),
-__15 =aux toInt(rings#matrix_to_atom_3_5),
-__16 =aux toInt(rings#matrix_to_atom_4_1),
-__17 =aux toInt(rings#matrix_to_atom_4_2),
-__18 =aux toInt(rings#matrix_to_atom_4_3),
-__19 =aux toInt(rings#matrix_to_atom_4_4),
-__20 =aux toInt(rings#matrix_to_atom_4_5),
-__21 =aux toInt(rings#matrix_to_atom_1_1),
-__22 =aux toInt(rings#matrix_to_atom_1_2),
-__23 =aux toInt(rings#matrix_to_atom_2_1),
-__24 =aux toInt(rings#matrix_to_atom_2_2),
-__25 =aux toInt(rings#matrix_to_atom_3_1),
-__26 =aux toInt(rings#matrix_to_atom_3_2),
-__27 =aux toInt(rings#matrix_to_atom_4_1),
-__28 =aux toInt(rings#matrix_to_atom_4_2),
-__29 =aux toInt(rings#matrix_to_atom_1_1),
-__30 =aux toInt(rings#matrix_to_atom_1_4),
-__31 =aux toInt(rings#matrix_to_atom_2_1),
-__32 =aux toInt(rings#matrix_to_atom_2_4),
-__33 =aux toInt(rings#matrix_to_atom_3_1),
-__34 =aux toInt(rings#matrix_to_atom_3_4),
-__35 =aux toInt(rings#matrix_to_atom_4_1),
-__36 =aux toInt(rings#matrix_to_atom_4_4),
-__37 =aux toInt(rings#matrix_to_atom_1_2),
-__38 =aux toInt(rings#matrix_to_atom_1_3),
-__39 =aux toInt(rings#matrix_to_atom_2_2),
-__40 =aux toInt(rings#matrix_to_atom_2_3),
-__41 =aux toInt(rings#matrix_to_atom_3_2),
-__42 =aux toInt(rings#matrix_to_atom_3_3),
-__43 =aux toInt(rings#matrix_to_atom_4_2),
-__44 =aux toInt(rings#matrix_to_atom_4_3),
-__45 =aux toInt(rings#matrix_to_atom_1_3),
-__46 =aux toInt(rings#matrix_to_atom_1_5),
-__47 =aux toInt(rings#matrix_to_atom_2_3),
-__48 =aux toInt(rings#matrix_to_atom_2_5),
-__49 =aux toInt(rings#matrix_to_atom_3_3),
-__50 =aux toInt(rings#matrix_to_atom_3_5),
-__51 =aux toInt(rings#matrix_to_atom_4_3),
-__52 =aux toInt(rings#matrix_to_atom_4_5),
-__53 =aux toInt(rings#matrix_to_atom_1_1),
-__54 =aux toInt(rings#matrix_to_atom_1_2),
-__55 =aux toInt(rings#matrix_to_atom_1_3),
-__56 =aux toInt(rings#matrix_to_atom_1_4),
-__57 =aux toInt(rings#matrix_to_atom_1_5),
-__58 =aux toInt(rings#matrix_to_atom_2_1),
-__59 =aux toInt(rings#matrix_to_atom_2_2),
-__60 =aux toInt(rings#matrix_to_atom_2_3),
-__61 =aux toInt(rings#matrix_to_atom_2_4),
-__62 =aux toInt(rings#matrix_to_atom_2_5),
-__63 =aux toInt(rings#matrix_to_atom_3_1),
-__64 =aux toInt(rings#matrix_to_atom_3_2),
-__65 =aux toInt(rings#matrix_to_atom_3_3),
-__66 =aux toInt(rings#matrix_to_atom_3_4),
-__67 =aux toInt(rings#matrix_to_atom_3_5),
-__68 =aux toInt(rings#matrix_to_atom_4_1),
-__69 =aux toInt(rings#matrix_to_atom_4_2),
-__70 =aux toInt(rings#matrix_to_atom_4_3),
-__71 =aux toInt(rings#matrix_to_atom_4_4),
-__72 =aux toInt(rings#matrix_to_atom_4_5)
+__1 =aux toInt(rings#MatrixToAtom_1),
+__2 =aux toInt(rings#MatrixToAtom_2),
+__3 =aux toInt(rings#MatrixToAtom_3),
+__4 =aux toInt(rings#MatrixToAtom_4),
+__5 =aux toInt(rings#MatrixToAtom_5),
+__6 =aux toInt(rings#MatrixToAtom_6),
+__7 =aux toInt(rings#MatrixToAtom_7),
+__8 =aux toInt(rings#MatrixToAtom_8),
+__9 =aux toInt(rings#MatrixToAtom_9),
+__10 =aux toInt(rings#MatrixToAtom_10),
+__11 =aux toInt(rings#MatrixToAtom_11),
+__12 =aux toInt(rings#MatrixToAtom_12),
+__13 =aux toInt(rings#MatrixToAtom_13),
+__14 =aux toInt(rings#MatrixToAtom_14),
+__15 =aux toInt(rings#MatrixToAtom_15),
+__16 =aux toInt(rings#MatrixToAtom_16),
+__17 =aux toInt(rings#MatrixToAtom_17),
+__18 =aux toInt(rings#MatrixToAtom_18),
+__19 =aux toInt(rings#MatrixToAtom_19),
+__20 =aux toInt(rings#MatrixToAtom_20),
+__21 =aux toInt(rings#MatrixToAtom_1),
+__22 =aux toInt(rings#MatrixToAtom_2),
+__23 =aux toInt(rings#MatrixToAtom_6),
+__24 =aux toInt(rings#MatrixToAtom_7),
+__25 =aux toInt(rings#MatrixToAtom_11),
+__26 =aux toInt(rings#MatrixToAtom_12),
+__27 =aux toInt(rings#MatrixToAtom_16),
+__28 =aux toInt(rings#MatrixToAtom_17),
+__29 =aux toInt(rings#MatrixToAtom_1),
+__30 =aux toInt(rings#MatrixToAtom_4),
+__31 =aux toInt(rings#MatrixToAtom_6),
+__32 =aux toInt(rings#MatrixToAtom_9),
+__33 =aux toInt(rings#MatrixToAtom_11),
+__34 =aux toInt(rings#MatrixToAtom_14),
+__35 =aux toInt(rings#MatrixToAtom_16),
+__36 =aux toInt(rings#MatrixToAtom_19),
+__37 =aux toInt(rings#MatrixToAtom_2),
+__38 =aux toInt(rings#MatrixToAtom_3),
+__39 =aux toInt(rings#MatrixToAtom_7),
+__40 =aux toInt(rings#MatrixToAtom_8),
+__41 =aux toInt(rings#MatrixToAtom_12),
+__42 =aux toInt(rings#MatrixToAtom_13),
+__43 =aux toInt(rings#MatrixToAtom_17),
+__44 =aux toInt(rings#MatrixToAtom_18),
+__45 =aux toInt(rings#MatrixToAtom_3),
+__46 =aux toInt(rings#MatrixToAtom_5),
+__47 =aux toInt(rings#MatrixToAtom_8),
+__48 =aux toInt(rings#MatrixToAtom_10),
+__49 =aux toInt(rings#MatrixToAtom_13),
+__50 =aux toInt(rings#MatrixToAtom_15),
+__51 =aux toInt(rings#MatrixToAtom_18),
+__52 =aux toInt(rings#MatrixToAtom_20),
+__53 =aux toInt(rings#MatrixToAtom_1),
+__54 =aux toInt(rings#MatrixToAtom_2),
+__55 =aux toInt(rings#MatrixToAtom_3),
+__56 =aux toInt(rings#MatrixToAtom_4),
+__57 =aux toInt(rings#MatrixToAtom_5),
+__58 =aux toInt(rings#MatrixToAtom_6),
+__59 =aux toInt(rings#MatrixToAtom_7),
+__60 =aux toInt(rings#MatrixToAtom_8),
+__61 =aux toInt(rings#MatrixToAtom_9),
+__62 =aux toInt(rings#MatrixToAtom_10),
+__63 =aux toInt(rings#MatrixToAtom_11),
+__64 =aux toInt(rings#MatrixToAtom_12),
+__65 =aux toInt(rings#MatrixToAtom_13),
+__66 =aux toInt(rings#MatrixToAtom_14),
+__67 =aux toInt(rings#MatrixToAtom_15),
+__68 =aux toInt(rings#MatrixToAtom_16),
+__69 =aux toInt(rings#MatrixToAtom_17),
+__70 =aux toInt(rings#MatrixToAtom_18),
+__71 =aux toInt(rings#MatrixToAtom_19),
+__72 =aux toInt(rings#MatrixToAtom_20)
 

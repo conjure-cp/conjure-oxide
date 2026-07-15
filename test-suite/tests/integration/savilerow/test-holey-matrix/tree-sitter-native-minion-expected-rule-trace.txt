@@ -10,50 +10,240 @@ such that
 
 --
 
-(z#matrix_to_atom[y] = 1) <-> (q)
-   ~~> select_representation_matrix ([("Representations", 8001)])
-(z#matrix_to_atom[y] = 1) <-> (q)
+(z[y] = 1) <-> (q)
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(z[y] = 1) <-> (q)
 new variables:
-  find z#matrix_to_atom_2: int(0..10)
-  find z#matrix_to_atom_4: int(0..10)
-  find z#matrix_to_atom_6: int(0..10)
-  find z#matrix_to_atom_8: int(0..10)
+  find z#MatrixToAtom_1: int(0..10)
+  find z#MatrixToAtom_2: int(0..10)
+  find z#MatrixToAtom_3: int(0..10)
+  find z#MatrixToAtom_4: int(0..10)
 
 --
 
-z#matrix_to_atom[y]
+z[y]
    ~~> index_to_bubble ([("Bubble", 6000)])
-{SafeIndex(z#matrix_to_atom,[y]) @ __inDomain(y,int(2, 4, 6, 8))}
+{SafeIndex(z,[y]) @ __inDomain(y,int(2, 4, 6, 8))}
 
 --
 
-{SafeIndex(z#matrix_to_atom,[y]) @ __inDomain(y,int(2, 4, 6, 8))} = 1
+{SafeIndex(z,[y]) @ __inDomain(y,int(2, 4, 6, 8))} = 1
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(z#matrix_to_atom,[y]) = 1 @ __inDomain(y,int(2, 4, 6, 8))}
+{SafeIndex(z,[y]) = 1 @ __inDomain(y,int(2, 4, 6, 8))}
 
 --
 
-{SafeIndex(z#matrix_to_atom,[y]) = 1 @ __inDomain(y,int(2, 4, 6, 8))}
+{SafeIndex(z,[y]) = 1 @ __inDomain(y,int(2, 4, 6, 8))}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(z#matrix_to_atom,[y]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)])
+and([SafeIndex(z,[y]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)])
 
 --
 
-(and([SafeIndex(z#matrix_to_atom,[y]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)])) <-> (q)
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-(and([SafeIndex([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8;int(1..)],[elementId([2,4,6,8;int(2, 4, 6, 8)], y)]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)])) <-> (q)
+SafeIndex(z,[y])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+SafeIndex([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4;int(1..)],[sum([product([1,__0;int(1..)]),1;int(1..)])])
+new variables:
+  find __0: int(0..3)
+new constraints:
+  or([and([y = 2,__0 = 0;int(1..)]),and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8)));int(1..)])
 
 --
 
-(and([SafeIndex([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8;int(1..)],[elementId([2,4,6,8;int(2, 4, 6, 8)], y)]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)])) <-> (q)
+product([1,__0;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([__0;int(1..)])
+
+--
+
+product([__0;int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+__0
+
+--
+
+or([and([y = 2,__0 = 0;int(1..)]),and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8)));int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]);int(1..)])
+
+--
+
+and([and([or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]);int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2;int(1..)]);int(1..)])
+
+--
+
+and([and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2;int(1..)]);int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+and([and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]);int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]);int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2;int(1..)]);int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]);int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]);int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 4,__0 = 1;int(1..)]),and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),and([or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2;int(1..)]);int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),and([or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]);int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),and([or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]);int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]),or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 6,__0 = 2;int(1..)]),and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]),and([or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]),and([or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,__0 = 3;int(1..)]);int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,__0 = 3;int(1..)]),or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2;int(1..)]);int(1..)])
+
+--
+
+or([and([y = 8,__0 = 3;int(1..)]),!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,__0 = 3;int(1..)]),and([or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2,__0 = 3;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,y = 6,__0 = 3;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2,y = 8;int(1..)]),or([!(__inDomain(y,int(2, 4, 6, 8))),__0 = 0,__0 = 1,__0 = 2,__0 = 3;int(1..)]);int(1..)])
+
+--
+
+(and([SafeIndex([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4;int(1..)],[sum([__0,1;int(1..)])]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)])) <-> (q)
    ~~> iff_to_eq ([("Minion", 4400)])
-and([SafeIndex([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8;int(1..)],[elementId([2,4,6,8;int(2, 4, 6, 8)], y)]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)]) = q
+and([SafeIndex([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4;int(1..)],[sum([__0,1;int(1..)])]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)]) = q
 
 --
 
-and([SafeIndex([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8;int(1..)],[elementId([2,4,6,8;int(2, 4, 6, 8)], y)]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)]) = q
+and([SafeIndex([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4;int(1..)],[sum([__0,1;int(1..)])]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)]) = q
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(and([SafeIndex([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8;int(1..)],[elementId([2,4,6,8;int(2, 4, 6, 8)], y)]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)]), q)
+Reify(and([SafeIndex([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4;int(1..)],[sum([__0,1;int(1..)])]) = 1,__inDomain(y,int(2, 4, 6, 8));int(1..)]), q)
 
 --
 
@@ -63,25 +253,473 @@ __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
 
 --
 
-SafeIndex([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8;int(1..)],[elementId([2,4,6,8;int(2, 4, 6, 8)], y)])
-   ~~> flatten_element_id_index ([("Minion", 4300)])
-SafeIndex([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8;int(1..)],[__0])
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__inDomain(y,int(2, 4, 6, 8))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__1)
 new variables:
-  find __0: int(-5..6, 8)
+  find __1: bool
 new constraints:
-  __0 =aux elementId([2,4,6,8;int(2, 4, 6, 8)], y)
+  __1 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
 
 --
 
-__0 =aux elementId([2,4,6,8;int(2, 4, 6, 8)], y)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-table([y,__0;int(1..)], [[-5,5;int(1..)],[-4,5;int(1..)],[-3,5;int(1..)],[-2,5;int(1..)],[-1,5;int(1..)],[0,5;int(1..)],[1,5;int(1..)],[2,1;int(1..)],[3,5;int(1..)],[4,2;int(1..)],[5,5;int(1..)];int(1..)])
+__1 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __1)
 
 --
 
-SafeIndex([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8;int(1..)],[__0]) = 1
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__2)
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__2 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __2)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__3)
+new variables:
+  find __3: bool
+new constraints:
+  __3 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__3 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __3)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__4)
+new variables:
+  find __4: bool
+new constraints:
+  __4 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__4 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __4)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__5)
+new variables:
+  find __5: bool
+new constraints:
+  __5 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__5 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __5)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__6)
+new variables:
+  find __6: bool
+new constraints:
+  __6 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__6 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __6)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__7)
+new variables:
+  find __7: bool
+new constraints:
+  __7 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__7 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __7)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__8)
+new variables:
+  find __8: bool
+new constraints:
+  __8 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__8 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __8)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__9)
+new variables:
+  find __9: bool
+new constraints:
+  __9 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__9 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __9)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__10)
+new variables:
+  find __10: bool
+new constraints:
+  __10 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__10 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __10)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__11)
+new variables:
+  find __11: bool
+new constraints:
+  __11 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__11 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __11)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__12)
+new variables:
+  find __12: bool
+new constraints:
+  __12 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__12 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __12)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__13)
+new variables:
+  find __13: bool
+new constraints:
+  __13 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__13 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __13)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__14)
+new variables:
+  find __14: bool
+new constraints:
+  __14 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__14 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __14)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__15)
+new variables:
+  find __15: bool
+new constraints:
+  __15 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__15 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __15)
+
+--
+
+!(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__16)
+new variables:
+  find __16: bool
+new constraints:
+  __16 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+
+--
+
+__16 =aux __minion_w_inintervalset(y,[2,2,4,4,6,6,8,8])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __16)
+
+--
+
+SafeIndex([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4;int(1..)],[sum([__0,1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4;int(1..)],[__17])
+new variables:
+  find __17: int(1..4)
+new constraints:
+  __17 =aux sum([__0,1;int(1..)])
+
+--
+
+__17 =aux sum([__0,1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __0], __17),SumGeq([1, __0], __17);int(1..)])
+
+--
+
+SafeIndex([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4;int(1..)],[__17]) = 1
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8],__0,1)
+__minion_element_one([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4],__17,1)
+
+--
+
+!(__1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__1,false)
+
+--
+
+!(__2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__2,false)
+
+--
+
+!(__3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__3,false)
+
+--
+
+!(__4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__4,false)
+
+--
+
+!(__5)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__5,false)
+
+--
+
+!(__6)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__6,false)
+
+--
+
+!(__7)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__7,false)
+
+--
+
+!(__8)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__8,false)
+
+--
+
+!(__9)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__9,false)
+
+--
+
+!(__10)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__10,false)
+
+--
+
+!(__11)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__11,false)
+
+--
+
+!(__12)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__12,false)
+
+--
+
+!(__13)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__13,false)
+
+--
+
+!(__14)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__14,false)
+
+--
+
+!(__15)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__15,false)
+
+--
+
+!(__16)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__16,false)
 
 --
 
@@ -90,14 +728,48 @@ Final model:
 find y: int(-5..5)
 find z: matrix indexed by [int(2, 4, 6, 8)] of int(0..10)
 find q: bool
-find z#matrix_to_atom_2: int(0..10)
-find z#matrix_to_atom_4: int(0..10)
-find z#matrix_to_atom_6: int(0..10)
-find z#matrix_to_atom_8: int(0..10)
-find __0: int(-5..6, 8)
+find z#MatrixToAtom_1: int(0..10)
+find z#MatrixToAtom_2: int(0..10)
+find z#MatrixToAtom_3: int(0..10)
+find z#MatrixToAtom_4: int(0..10)
+find __0: int(0..3)
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: int(1..4)
 
 such that
 
-Reify(and([__minion_element_one([z#matrix_to_atom_2,z#matrix_to_atom_4,z#matrix_to_atom_6,z#matrix_to_atom_8],__0,1),__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]);int(1..)]), q),
-table([y,__0;int(1..)], [[-5,5;int(1..)],[-4,5;int(1..)],[-3,5;int(1..)],[-2,5;int(1..)],[-1,5;int(1..)],[0,5;int(1..)],[1,5;int(1..)],[2,1;int(1..)],[3,5;int(1..)],[4,2;int(1..)],[5,5;int(1..)];int(1..)])
+Reify(and([__minion_element_one([z#MatrixToAtom_1,z#MatrixToAtom_2,z#MatrixToAtom_3,z#MatrixToAtom_4],__17,1),__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]);int(1..)]), q),
+and([or([WatchedLiteral(__1,false),y = 2,y = 4,y = 6,y = 8;int(1..)]),or([WatchedLiteral(__2,false),y = 2,y = 4,y = 6,__0 = 3;int(1..)]),or([WatchedLiteral(__3,false),y = 2,y = 4,__0 = 2,y = 8;int(1..)]),or([WatchedLiteral(__4,false),y = 2,y = 4,__0 = 2,__0 = 3;int(1..)]),or([WatchedLiteral(__5,false),y = 2,__0 = 1,y = 6,y = 8;int(1..)]),or([WatchedLiteral(__6,false),y = 2,__0 = 1,y = 6,__0 = 3;int(1..)]),or([WatchedLiteral(__7,false),y = 2,__0 = 1,__0 = 2,y = 8;int(1..)]),or([WatchedLiteral(__8,false),y = 2,__0 = 1,__0 = 2,__0 = 3;int(1..)]),or([WatchedLiteral(__9,false),__0 = 0,y = 4,y = 6,y = 8;int(1..)]),or([WatchedLiteral(__10,false),__0 = 0,y = 4,y = 6,__0 = 3;int(1..)]),or([WatchedLiteral(__11,false),__0 = 0,y = 4,__0 = 2,y = 8;int(1..)]),or([WatchedLiteral(__12,false),__0 = 0,y = 4,__0 = 2,__0 = 3;int(1..)]),or([WatchedLiteral(__13,false),__0 = 0,__0 = 1,y = 6,y = 8;int(1..)]),or([WatchedLiteral(__14,false),__0 = 0,__0 = 1,y = 6,__0 = 3;int(1..)]),or([WatchedLiteral(__15,false),__0 = 0,__0 = 1,__0 = 2,y = 8;int(1..)]),or([WatchedLiteral(__16,false),__0 = 0,__0 = 1,__0 = 2,__0 = 3;int(1..)]);int(1..)]),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __1),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __2),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __3),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __4),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __5),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __6),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __7),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __8),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __9),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __10),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __11),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __12),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __13),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __14),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __15),
+Reify(__minion_w_inintervalset(y,[2,2,4,4,6,6,8,8]), __16),
+and([SumLeq([1, __0], __17),SumGeq([1, __0], __17);int(1..)])
 

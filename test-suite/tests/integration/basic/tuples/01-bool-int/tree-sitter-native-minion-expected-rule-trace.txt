@@ -10,58 +10,58 @@ x[2] = 2
 --
 
 x
-   ~~> select_representation ([("Representations", 8000)])
-x#tuple_to_atom
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
 new variables:
-  find x#tuple_to_atom_1: bool
-  find x#tuple_to_atom_2: int(1..4)
-
---
-
-x#tuple_to_atom[1]
-   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
-{SafeIndex(x#tuple_to_atom,[1]) @ and([1 <= 2,1 >= 1;int(1..)])}
+  find x#TupleToAtom_1: bool
+  find x#TupleToAtom_2: int(1..4)
 
 --
 
 x
-   ~~> select_representation ([("Representations", 8000)])
-x#tuple_to_atom
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
 
 --
 
-x#tuple_to_atom[2]
+x[1]
    ~~> tuple_index_to_bubble ([("Bubble", 8000)])
-{SafeIndex(x#tuple_to_atom,[2]) @ and([2 <= 2,2 >= 1;int(1..)])}
+{SafeIndex(x,[1]) @ and([1 >= 1,1 <= 2;int(1..)])}
 
 --
 
-SafeIndex(x#tuple_to_atom,[1])
-   ~~> index_tuple_to_atom ([("Base", 2000)])
-x#tuple_to_atom_1
+SafeIndex(x,[1])
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 9500)])
+x#TupleToAtom_1
 
 --
 
-x#tuple_to_atom_1 = false
+x[2]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[2]) @ and([2 >= 1,2 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[2])
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 9500)])
+x#TupleToAtom_2
+
+--
+
+x#TupleToAtom_1 = false
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(false, x#tuple_to_atom_1)
-
---
-
-SafeIndex(x#tuple_to_atom,[2])
-   ~~> index_tuple_to_atom ([("Base", 2000)])
-x#tuple_to_atom_2
+Reify(false, x#TupleToAtom_1)
 
 --
 
 Final model:
 
 find x: tuple (bool, int(1..4))
-find x#tuple_to_atom_1: bool
-find x#tuple_to_atom_2: int(1..4)
+find x#TupleToAtom_1: bool
+find x#TupleToAtom_2: int(1..4)
 
 such that
 
-Reify(false, x#tuple_to_atom_1),
-x#tuple_to_atom_2 = 2
+Reify(false, x#TupleToAtom_1),
+x#TupleToAtom_2 = 2
 

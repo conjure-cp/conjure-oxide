@@ -21,7 +21,8 @@
                     "ptr": {
                       "object_id": 1,
                       "type_name": "DeclarationPtrInner"
-                    }
+                    },
+                    "repr": null
                   }
                 }
               ]
@@ -78,7 +79,8 @@
                     "ptr": {
                       "object_id": 1,
                       "type_name": "DeclarationPtrInner"
-                    }
+                    },
+                    "repr": null
                   }
                 }
               ]
@@ -93,7 +95,8 @@
                     "ptr": {
                       "object_id": 2,
                       "type_name": "DeclarationPtrInner"
-                    }
+                    },
+                    "repr": null
                   }
                 }
               ]
@@ -138,7 +141,8 @@
                     "ptr": {
                       "object_id": 1,
                       "type_name": "DeclarationPtrInner"
-                    }
+                    },
+                    "repr": null
                   }
                 }
               ]
@@ -240,12 +244,36 @@
 
 find x: set of int(1..5)
 find y: set of int(1..6)
+find x#SetExplicitWithSize_1: matrix indexed by [int(1..5)] of int(1..5)
+find x#SetExplicitWithSize_2: int(0..5)
+find y#SetExplicitWithSize_1: matrix indexed by [int(1..6)] of int(1..6)
+find y#SetExplicitWithSize_2: int(0..6)
+find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..5)
+find x#SetExplicitWithSize_1#MatrixToAtom_2: int(1..5)
+find x#SetExplicitWithSize_1#MatrixToAtom_3: int(1..5)
+find x#SetExplicitWithSize_1#MatrixToAtom_4: int(1..5)
+find x#SetExplicitWithSize_1#MatrixToAtom_5: int(1..5)
+find y#SetExplicitWithSize_1#MatrixToAtom_1: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_2: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_3: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_4: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_5: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_6: int(1..6)
 
 such that
 
 and([ __0 in {1,2} | __0 <- x ]),
 and([ __0 in y | __0 <- x ]),
-and([ __0 in x | __0 <- {1} ])
+and([ __0 in x | __0 <- {1} ]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
 
 Model before rewriting:
 
@@ -257,6 +285,47 @@ such that
 (x subsetEq {1,2}),
 (x subsetEq y),
 ({1} subsetEq x)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#SetExplicitWithSize_1: matrix indexed by [int(1..5)] of int(1..5)
+  find x#SetExplicitWithSize_2: int(0..5)
+new constraints:
+  or([x#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
+  or([x#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
+  or([x#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
+  or([x#SetExplicitWithSize_2 < 5,([4;int(1..1)] <lex [5;int(1..1)]);int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#SetExplicitWithSize_1: matrix indexed by [int(1..6)] of int(1..6)
+  find y#SetExplicitWithSize_2: int(0..6)
+new constraints:
+  or([y#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
+  or([y#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
+  or([y#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
+  or([y#SetExplicitWithSize_2 < 5,([4;int(1..1)] <lex [5;int(1..1)]);int(1..)])
+  or([y#SetExplicitWithSize_2 < 6,([5;int(1..1)] <lex [6;int(1..1)]);int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
 
 --
 
@@ -278,14 +347,78 @@ and([ __0 in x | __0 <- {1} ])
 
 --
 
+and([ __0 in {1,2} | __0 <- x ]),
+and([ __0 in y | __0 <- x ]),
+and([ __0 in x | __0 <- {1} ]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([ __0 in {1,2} | __0 <- x ]),
+and([ __0 in y | __0 <- x ]),
+and([ __0 in x | __0 <- {1} ]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new variables:
+  find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..5)
+  find x#SetExplicitWithSize_1#MatrixToAtom_2: int(1..5)
+  find x#SetExplicitWithSize_1#MatrixToAtom_3: int(1..5)
+  find x#SetExplicitWithSize_1#MatrixToAtom_4: int(1..5)
+  find x#SetExplicitWithSize_1#MatrixToAtom_5: int(1..5)
+  find y#SetExplicitWithSize_1#MatrixToAtom_1: int(1..6)
+  find y#SetExplicitWithSize_1#MatrixToAtom_2: int(1..6)
+  find y#SetExplicitWithSize_1#MatrixToAtom_3: int(1..6)
+  find y#SetExplicitWithSize_1#MatrixToAtom_4: int(1..6)
+  find y#SetExplicitWithSize_1#MatrixToAtom_5: int(1..6)
+  find y#SetExplicitWithSize_1#MatrixToAtom_6: int(1..6)
+
+--
+
 Final model:
 
 find x: set of int(1..5)
 find y: set of int(1..6)
+find x#SetExplicitWithSize_1: matrix indexed by [int(1..5)] of int(1..5)
+find x#SetExplicitWithSize_2: int(0..5)
+find y#SetExplicitWithSize_1: matrix indexed by [int(1..6)] of int(1..6)
+find y#SetExplicitWithSize_2: int(0..6)
+find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..5)
+find x#SetExplicitWithSize_1#MatrixToAtom_2: int(1..5)
+find x#SetExplicitWithSize_1#MatrixToAtom_3: int(1..5)
+find x#SetExplicitWithSize_1#MatrixToAtom_4: int(1..5)
+find x#SetExplicitWithSize_1#MatrixToAtom_5: int(1..5)
+find y#SetExplicitWithSize_1#MatrixToAtom_1: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_2: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_3: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_4: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_5: int(1..6)
+find y#SetExplicitWithSize_1#MatrixToAtom_6: int(1..6)
 
 such that
 
 and([ __0 in {1,2} | __0 <- x ]),
 and([ __0 in y | __0 <- x ]),
-and([ __0 in x | __0 <- {1} ])
+and([ __0 in x | __0 <- {1} ]),
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
 

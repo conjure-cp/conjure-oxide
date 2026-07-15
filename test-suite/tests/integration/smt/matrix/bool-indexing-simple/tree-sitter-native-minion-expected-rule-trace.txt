@@ -8,52 +8,58 @@ a[true] = !(a[false])
 
 --
 
-a#matrix_to_atom[true] = !(a#matrix_to_atom[false])
-   ~~> select_representation_matrix ([("Representations", 8001)])
-a#matrix_to_atom[true] = !(a#matrix_to_atom[false])
+a[true] = !(a[false])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+a[true] = !(a[false])
 new variables:
-  find a#matrix_to_atom_false: bool
-  find a#matrix_to_atom_true: bool
+  find a#MatrixToAtom_1: bool
+  find a#MatrixToAtom_2: bool
 
 --
 
-a#matrix_to_atom[true]
+a[true]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(a#matrix_to_atom,[true])
+SafeIndex(a,[true])
 
 --
 
-a#matrix_to_atom[false]
+a[false]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(a#matrix_to_atom,[false])
+SafeIndex(a,[false])
 
 --
 
-SafeIndex(a#matrix_to_atom,[true]) = !(SafeIndex(a#matrix_to_atom,[false]))
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-a#matrix_to_atom_true = !(a#matrix_to_atom_false)
+SafeIndex(a,[true])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#MatrixToAtom_2
 
 --
 
-a#matrix_to_atom_true = !(a#matrix_to_atom_false)
+SafeIndex(a,[false])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#MatrixToAtom_1
+
+--
+
+a#MatrixToAtom_2 = !(a#MatrixToAtom_1)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(!(a#matrix_to_atom_false), a#matrix_to_atom_true)
+Reify(!(a#MatrixToAtom_1), a#MatrixToAtom_2)
 
 --
 
-!(a#matrix_to_atom_false)
+!(a#MatrixToAtom_1)
    ~~> not_literal_to_wliteral ([("Minion", 4100)])
-WatchedLiteral(a#matrix_to_atom_false,false)
+WatchedLiteral(a#MatrixToAtom_1,false)
 
 --
 
 Final model:
 
 find a: matrix indexed by [bool] of bool
-find a#matrix_to_atom_false: bool
-find a#matrix_to_atom_true: bool
+find a#MatrixToAtom_1: bool
+find a#MatrixToAtom_2: bool
 
 such that
 
-Reify(WatchedLiteral(a#matrix_to_atom_false,false), a#matrix_to_atom_true)
+Reify(WatchedLiteral(a#MatrixToAtom_1,false), a#MatrixToAtom_2)
 
