@@ -106,7 +106,7 @@ fn inline_table_row_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 }
 
-#[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
+#[register_rule("Minion", 4200, [Eq / Product, AuxDeclaration / Product])]
 fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // product = val
     let val: Atom;
@@ -268,7 +268,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 ///
 /// Cases 6 and 7 could potentially be a normalising rule `-e ~> -1*e`. However, I think that we
 /// should only turn negations into a product when they are inside a sum, not all the time.
-#[register_rule("Minion", 4600, [Leq, Geq, Eq, AuxDeclaration])]
+#[register_rule("Minion", 4600, [Leq / Sum, Geq / Sum, Eq / Sum, AuxDeclaration / Sum])]
 fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // Keep track of which type of (in)equality was in the input, and use this to decide what
     // constraints to make at the end
@@ -673,7 +673,7 @@ fn flatten_expression_to_atom(
     Ok(aux_var_info.as_atom())
 }
 
-#[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
+#[register_rule("Minion", 4200, [Eq / SafeDiv, AuxDeclaration / SafeDiv])]
 fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
@@ -727,7 +727,7 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-#[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
+#[register_rule("Minion", 4200, [Eq / SafeMod, AuxDeclaration / SafeMod])]
 fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
@@ -780,7 +780,7 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-#[register_rule("Minion", 4400, [Eq, AuxDeclaration])]
+#[register_rule("Minion", 4400, [Eq / Abs, AuxDeclaration / Abs])]
 fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (x, abs_y): (Atom, Expr) = match expr.clone() {
         Expr::Eq(_, a, b) => {
@@ -822,7 +822,7 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// Introduces a `MinionPowEq` constraint from a `SafePow`
-#[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
+#[register_rule("Minion", 4200, [Eq / SafePow, AuxDeclaration / SafePow])]
 fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b, total) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
@@ -1640,7 +1640,11 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
 ///
 /// 1. the subject is a list literal
 /// 2. the subject is one dimensional
-#[register_rule("Minion", 4400, [Eq, AuxDeclaration, SafeIndex])]
+#[register_rule(
+    "Minion",
+    4400,
+    [Eq / SafeIndex, AuxDeclaration / SafeIndex, SafeIndex]
+)]
 fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (equalto, subject, indices) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
