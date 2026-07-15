@@ -58,7 +58,7 @@ register_representation!(
             tuple_elems[idx] = Some(value);
         }
 
-        let elems: Vec<Literal> = tuple_elems.into_iter().filter_map(|x| x).collect();
+        let elems: Vec<Literal> = tuple_elems.into_iter().flatten().collect();
         if elems.len() != len {
             return Err(down_err("wrong number of entries"));
         }

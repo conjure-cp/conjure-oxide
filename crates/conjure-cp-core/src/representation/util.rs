@@ -18,7 +18,7 @@ pub fn try_up_via(decl: DeclarationPtr, lu: &LookupFn<'_>) -> Result<Literal, Re
 
     // Go up via the first representation
     let mut itr = reprs.iter();
-    let (fst_name, fst) = itr.next().expect("checked that reprs is non-empty");
+    let (_fst_name, fst) = itr.next().expect("checked that reprs is non-empty");
     let fst_res = fst.up_via(lu)?;
 
     // In debug mode, check that all other representations agree
@@ -29,7 +29,7 @@ pub fn try_up_via(decl: DeclarationPtr, lu: &LookupFn<'_>) -> Result<Literal, Re
             res,
             fst_res,
             "representations `{}` and `{}` disagree for variable `{}`",
-            fst_name,
+            _fst_name,
             repr_name,
             decl.name()
         );
