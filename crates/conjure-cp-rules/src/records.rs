@@ -36,7 +36,7 @@ fn index_record_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResul
 }
 
 /// Convert all record literals to tuples
-#[register_rule("ReprGeneral", 9600)]
+#[register_rule("ReprGeneral", 9600, [Atomic / Literal])]
 fn record_lit_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expression::Atomic(_, Atom::Literal(lit)) = expr              &&
@@ -55,7 +55,7 @@ fn record_lit_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult 
 }
 
 /// Convert all record expressions to tuples
-#[register_rule("ReprGeneral", 9600)]
+#[register_rule("ReprGeneral", 9600, [AbstractLiteral])]
 fn record_abslit_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let Expression::AbstractLiteral(_, AbstractLiteral::Record(ents)) = expr else {
         return Err(RuleNotApplicable);
@@ -70,7 +70,7 @@ fn record_abslit_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResu
 }
 
 /// Convert all references to a record variable outside of indexing expressions to a tuple
-#[register_rule("ReprGeneral", 9700)]
+#[register_rule("ReprGeneral", 9700, [* / Atomic, * / AbstractLiteral])]
 fn ref_record_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     if let Expression::SafeIndex(..) | Expression::UnsafeIndex(..) | Expression::RecordField(..) =
         expr

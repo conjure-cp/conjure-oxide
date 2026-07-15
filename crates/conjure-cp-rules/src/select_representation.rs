@@ -52,7 +52,7 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// Select a representation for unconstrained finds with abstract domains
-#[register_rule("ReprGeneral", 9900)]
+#[register_rule("ReprGeneral", 9900, [Root])]
 fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     let Expr::Root(..) = expr else {
         return Err(RuleNotApplicable);
@@ -103,7 +103,7 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
 /// ~>
 /// x#MyRepr > y#MyRepr
 /// ```
-#[register_rule("ReprGeneral", 10100)]
+#[register_rule("ReprGeneral", 10100, [Eq, Neq, Lt, Gt, Leq, Geq])]
 fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard! {
         let Some((lhs, rhs)) = as_comparison_op(expr)               &&

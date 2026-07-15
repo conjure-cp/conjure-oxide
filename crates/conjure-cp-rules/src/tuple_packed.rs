@@ -24,7 +24,11 @@ register_rule_set!("ReprTuplePacked", ("Base"), |f: &SolverFamily| {
 
 /// Select the TuplePacked representation for comparison operations on integer tuples.
 /// Higher priority than the general representation-selection rules.
-#[register_rule("ReprTuplePacked", 10200)]
+#[register_rule(
+    "ReprTuplePacked",
+    10200,
+    [Eq, Neq, Lt, Gt, Leq, Geq, LexLt, LexGt, LexLeq, LexGeq]
+)]
 fn select_packed_for_comparison(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Some((lhs, rhs)) = as_cmp_or_lex_op(expr) else {
@@ -82,7 +86,7 @@ fn select_packed_for_comparison(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```plain
 /// x = y  (both TuplePacked)  ~>  x_packed = y_packed
 /// ```
-#[register_rule("ReprTuplePacked", 9700)]
+#[register_rule("ReprTuplePacked", 9700, [Eq, Neq])]
 fn tuple_packed_var_eq_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
 
@@ -102,7 +106,7 @@ fn tuple_packed_var_eq_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```plain
 /// x = (1, 2, 3)  (x is TuplePacked)  ~>  x_packed = encode(1,2,3)
 /// ```
-#[register_rule("ReprTuplePacked", 9700)]
+#[register_rule("ReprTuplePacked", 9700, [Eq, Neq])]
 fn tuple_packed_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
 
@@ -127,7 +131,11 @@ fn tuple_packed_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```plain
 /// x > y  (both TuplePacked)  ~>  x_packed > y_packed
 /// ```
-#[register_rule("ReprTuplePacked", 9700)]
+#[register_rule(
+    "ReprTuplePacked",
+    9700,
+    [Lt, Gt, Leq, Geq, LexLt, LexGt, LexLeq, LexGeq]
+)]
 fn tuple_packed_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         as_eq_or_neq(expr).is_err() &&
@@ -150,7 +158,11 @@ fn tuple_packed_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```plain
 /// x > (1,2,3)  (x is TuplePacked)  ~>  x_packed > encode(1,2,3)
 /// ```
-#[register_rule("ReprTuplePacked", 9700)]
+#[register_rule(
+    "ReprTuplePacked",
+    9700,
+    [Lt, Gt, Leq, Geq, LexLt, LexGt, LexLeq, LexGeq]
+)]
 fn tuple_packed_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         as_eq_or_neq(expr).is_err() &&
@@ -173,7 +185,7 @@ fn tuple_packed_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```plain
 /// x[i]  (x is TuplePacked)  ~>  (x_packed / stride_i) % size_i + min_i
 /// ```
-#[register_rule("ReprTuplePacked", 9700)]
+#[register_rule("ReprTuplePacked", 9700, [SafeIndex])]
 fn tuple_packed_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::SafeIndex(_, subject, indices) = expr       &&
@@ -219,7 +231,7 @@ fn tuple_packed_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ~>
 /// x_packed = sum_i (x_TupleToAtom_i - min_i) * stride_i
 /// ```
-#[register_rule("ReprTuplePacked", 9700)]
+#[register_rule("ReprTuplePacked", 9700, [Eq, Neq])]
 fn tuple_channel_atom_packed(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
 

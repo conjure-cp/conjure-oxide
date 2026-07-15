@@ -34,7 +34,7 @@ register_rule_set!("ReprMatrixToAtom", ("Base"), |f: &SolverFamily| {
 });
 
 /// Special-case repr selection for matrices as their only representation is MatrixToAtom
-#[register_rule("ReprMatrixToAtom", 8500)]
+#[register_rule("ReprMatrixToAtom", 8500, [Root])]
 fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
     let Expression::Root(..) = expr else {
         return Err(RuleNotApplicable);

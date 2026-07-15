@@ -49,7 +49,7 @@ fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ~>
 /// { x[y] @ (y >= 1 /\ y <= |x|) }
 /// ```
-#[register_rule("Bubble", 8000)]
+#[register_rule("Bubble", 8000, [UnsafeIndex])]
 fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::UnsafeIndex(_, subject, indices) = expr &&
@@ -80,7 +80,7 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ~>
 /// x[1] = y[1] /\ x[2] = y[2] /\ ... /\ x[N] = y[N]
 /// ```
-#[register_rule("ReprGeneral", 9400)]
+#[register_rule("ReprGeneral", 9400, [Eq, Neq])]
 fn tuple_var_eq_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
 
@@ -110,7 +110,7 @@ fn tuple_var_eq_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ~>
 /// x[1] = 1 /\ x[2] = true
 /// ```
-#[register_rule("ReprGeneral", 9400)]
+#[register_rule("ReprGeneral", 9400, [Eq, Neq])]
 fn tuple_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
 
@@ -145,7 +145,11 @@ fn tuple_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///   x[1] = y[1] /\ x[2] = y[2] /\ ... /\ x[n-1] = y[n-1] /\ x[n] > y[n]
 /// ])
 /// ```
-#[register_rule("ReprGeneral", 9400)]
+#[register_rule(
+    "ReprGeneral",
+    9400,
+    [Lt, Gt, Leq, Geq, LexLt, LexGt, LexLeq, LexGeq]
+)]
 fn tuple_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         as_eq_or_neq(expr).is_err() && // equality handled separately
@@ -174,7 +178,11 @@ fn tuple_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///   x[1] = 1 /\ x[2] = 2 /\ x[3] > 3
 /// ])
 /// ```
-#[register_rule("ReprGeneral", 9400)]
+#[register_rule(
+    "ReprGeneral",
+    9400,
+    [Lt, Gt, Leq, Geq, LexLt, LexGt, LexLeq, LexGeq]
+)]
 fn tuple_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         as_eq_or_neq(expr).is_err() && // equality handled separately
@@ -193,7 +201,7 @@ fn tuple_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 /// If we have a tuple literal on the left and variable on the right, swap them
 /// so the above rules can apply
-#[register_rule("ReprGeneral", 9401)]
+#[register_rule("ReprGeneral", 9401, [Eq, Neq, Lt, Gt, Leq, Geq])]
 fn tuple_comparison_reorder(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Some((lit, var)) = as_cmp_or_lex_op(expr)          &&
