@@ -16,8 +16,9 @@ use std::collections::VecDeque;
 use std::fmt::{Debug, Display};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::mem;
+use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use uniplate::{Biplate, Tree, Uniplate};
 
 /// Global counter of declarations.
@@ -25,6 +26,58 @@ use uniplate::{Biplate, Tree, Uniplate};
 /// Thus, when running multiple models in parallel, IDs may
 /// be different with every run depending on scheduling order
 static DECLARATION_PTR_ID_COUNTER: AtomicU32 = const { AtomicU32::new(0) };
+
+/// Global generation of declaration contents.
+///
+/// Declaration pointers are shared across symbol tables, so an in-place update cannot cheaply
+/// notify every table that contains the pointer. Symbol-table content caches compare against this
+/// generation instead.
+static DECLARATION_CONTENT_GENERATION: AtomicU64 = const { AtomicU64::new(1) };
+
+/// Returns the generation shared by all mutable declaration contents.
+pub(crate) fn declaration_content_generation() -> u64 {
+    DECLARATION_CONTENT_GENERATION.load(Ordering::Acquire)
+}
+
+/// Records that a declaration's contents may have changed.
+fn mark_declaration_content_changed() {
+    DECLARATION_CONTENT_GENERATION.fetch_add(1, Ordering::AcqRel);
+}
+
+/// Mutable access to part of a declaration that records a semantic change when released.
+pub struct DeclarationMutGuard<'a, T: ?Sized> {
+    inner: Option<MappedRwLockWriteGuard<'a, T>>,
+}
+
+impl<'a, T: ?Sized> DeclarationMutGuard<'a, T> {
+    /// Wraps a mapped write guard so dropping it records a content change.
+    fn new(inner: MappedRwLockWriteGuard<'a, T>) -> Self {
+        Self { inner: Some(inner) }
+    }
+}
+
+impl<T: ?Sized> Deref for DeclarationMutGuard<'_, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        self.inner.as_deref().expect("declaration guard is live")
+    }
+}
+
+impl<T: ?Sized> DerefMut for DeclarationMutGuard<'_, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.inner
+            .as_deref_mut()
+            .expect("declaration guard is live")
+    }
+}
+
+impl<T: ?Sized> Drop for DeclarationMutGuard<'_, T> {
+    fn drop(&mut self) {
+        drop(self.inner.take());
+        mark_declaration_content_changed();
+    }
+}
 
 #[doc(hidden)]
 /// Resets the id counter of `DeclarationPtr` to 0.
@@ -343,7 +396,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable decision variable, if it is one.
-    pub fn as_find_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DecisionVariable>> {
+    pub fn as_find_mut(&mut self) -> Option<DeclarationMutGuard<'_, DecisionVariable>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::Find(var) = &mut x.kind {
                 Some(var)
@@ -352,6 +405,7 @@ impl DeclarationPtr {
             }
         })
         .ok()
+        .map(DeclarationMutGuard::new)
     }
 
     /// This declaration as a domain letting, if it is one.
@@ -367,7 +421,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable domain letting, if it is one.
-    pub fn as_domain_letting_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DomainPtr>> {
+    pub fn as_domain_letting_mut(&mut self) -> Option<DeclarationMutGuard<'_, DomainPtr>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &mut x.kind {
                 Some(domain)
@@ -376,6 +430,7 @@ impl DeclarationPtr {
             }
         })
         .ok()
+        .map(DeclarationMutGuard::new)
     }
 
     /// This declaration as a value letting, if it is one.
@@ -393,7 +448,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable value letting, if it is one.
-    pub fn as_value_letting_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
+    pub fn as_value_letting_mut(&mut self) -> Option<DeclarationMutGuard<'_, Expression>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::ValueLetting(expression, _)
             | DeclarationKind::TemporaryValueLetting(expression) = &mut x.kind
@@ -404,6 +459,7 @@ impl DeclarationPtr {
             }
         })
         .ok()
+        .map(DeclarationMutGuard::new)
     }
 
     /// This declaration as a given statement, if it is one.
@@ -419,7 +475,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable given statement, if it is one.
-    pub fn as_given_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DomainPtr>> {
+    pub fn as_given_mut(&mut self) -> Option<DeclarationMutGuard<'_, DomainPtr>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::Given(domain) = &mut x.kind {
                 Some(domain)
@@ -428,6 +484,7 @@ impl DeclarationPtr {
             }
         })
         .ok()
+        .map(DeclarationMutGuard::new)
     }
 
     /// This declaration as a quantified expression, if it is one.
@@ -443,7 +500,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable quantified expression, if it is one.
-    pub fn as_quantified_expr_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
+    pub fn as_quantified_expr_mut(&mut self) -> Option<DeclarationMutGuard<'_, Expression>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::QuantifiedExpr(expr) = &mut x.kind {
                 Some(expr)
@@ -452,6 +509,7 @@ impl DeclarationPtr {
             }
         })
         .ok()
+        .map(DeclarationMutGuard::new)
     }
 
     /// Changes the name in this declaration, returning the old one.
@@ -469,15 +527,15 @@ impl DeclarationPtr {
     /// assert_eq!(&declaration.name() as &Name,&Name::User("b".into()));
     /// ```
     pub fn replace_name(&mut self, name: Name) -> Name {
-        let mut decl = self.write();
-        std::mem::replace(&mut decl.name, name)
+        let mut current_name = self.map_mut(|decl| &mut decl.name);
+        std::mem::replace(&mut *current_name, name)
     }
 
     /// Replaces the underlying declaration kind and returns the previous kind.
     /// Note: this affects all cloned `DeclarationPtr`s pointing to the same declaration.
     pub fn replace_kind(&mut self, kind: DeclarationKind) -> DeclarationKind {
-        let mut decl = self.write();
-        std::mem::replace(&mut decl.kind, kind)
+        let mut current_kind = self.map_mut(|decl| &mut decl.kind);
+        std::mem::replace(&mut *current_kind, kind)
     }
 
     /*****************************************/
@@ -552,8 +610,8 @@ impl DeclarationPtr {
     fn map_mut<U>(
         &mut self,
         f: impl FnOnce(&mut Declaration) -> &mut U,
-    ) -> MappedRwLockWriteGuard<'_, U> {
-        RwLockWriteGuard::map(self.write(), f)
+    ) -> DeclarationMutGuard<'_, U> {
+        DeclarationMutGuard::new(RwLockWriteGuard::map(self.write(), f))
     }
 
     /// Replaces the declaration with a new one, returning the old value, without deinitialising
@@ -562,6 +620,7 @@ impl DeclarationPtr {
         let mut guard = self.write();
         let ans = mem::replace(&mut *guard, declaration);
         drop(guard);
+        mark_declaration_content_changed();
         ans
     }
 
@@ -575,6 +634,16 @@ impl DeclarationPtr {
         let mut seen = BTreeSet::new();
         self.hash_content(&mut hasher, &mut seen);
         hasher.finish()
+    }
+
+    /// Compares current declaration contents without considering pointer identity.
+    pub(crate) fn content_eq(&self, other: &Self) -> bool {
+        if self.id() == other.id() {
+            return true;
+        }
+        let this = self.read().clone();
+        let other = other.read().clone();
+        this == other
     }
 
     /// Hashes this declaration's value into `state`, guarding against declaration-reference cycles.
@@ -651,7 +720,7 @@ impl Uniplate for DeclarationPtr {
             Box::new(move |x| {
                 let mut self3 = self2.clone();
                 let inner = recons(x);
-                *(&mut self3.write() as &mut Declaration) = inner;
+                let _ = self3.replace(inner);
                 self3
             }),
         )
@@ -688,7 +757,7 @@ where
                 Box::new(move |x| {
                     let mut self3 = self2.clone();
                     let inner = recons(x);
-                    *(&mut self3.write() as &mut Declaration) = inner;
+                    let _ = self3.replace(inner);
                     self3
                 }),
             )

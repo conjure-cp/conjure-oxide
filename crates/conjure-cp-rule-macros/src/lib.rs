@@ -4,16 +4,55 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::token::Comma;
 use syn::{
-    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, bracketed, parenthesized, parse::Parse,
-    parse::ParseStream, parse_macro_input,
+    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, Token, bracketed, parenthesized,
+    parse::Parse, parse::ParseStream, parse_macro_input,
 };
 
+/// Parsed arguments for `#[register_rule(...)]`.
+///
+/// The attribute syntax is:
+///
+/// ```text
+/// #[register_rule("RuleSet", priority)]
+/// #[register_rule(["RuleSetA", "RuleSetB"], priority)]
+/// #[register_rule("RuleSet", priority, [prefilter, ...])]
+/// ```
+///
+/// The optional prefilter list narrows where the scheduler attempts the rule:
+///
+/// ```text
+/// Variant              // focused expression must have this Expression variant
+/// * / Variant          // focused expression must have an immediate child with this variant
+/// Variant / Variant    // focused expression must have the left variant and an immediate child
+///                      // with the right variant
+/// Atomic / Reference   // focused expression must be an atomic reference
+/// Atomic / Literal     // focused expression must be an atomic literal
+/// ```
+///
+/// Items in the list are alternatives. For example, `[And / Comprehension, Or / Comprehension]`
+/// means `(And with direct Comprehension child) OR (Or with direct Comprehension child)`.
+///
+/// Omitting the prefilter list makes the rule universal. A universal rule is considered at every
+/// focused expression for its priority. In Rust source, write slash filters with spaces around the
+/// slash, e.g. `[* / Bubble]` or `[Atomic / Reference]`, to keep the syntax visually distinct.
+enum ParsedPrefilter {
+    /// Focused-expression variant prefilter, e.g. `Add` or `Sub`.
+    Variant(Ident),
+    /// Immediate-child variant prefilter, parsed from `* / Child`.
+    Child { child: Ident },
+    /// Paired focused-expression and immediate-child variant prefilter, parsed from `Root / Child`.
+    VariantChild { variant: Ident, child: Ident },
+    /// Atomic subvariant prefilter, parsed from `Atomic / Reference` or `Atomic / Literal`.
+    Atom(Ident),
+}
+
 struct RegisterRuleArgs {
+    /// Rule set names this rule belongs to.
     rule_sets: Vec<LitStr>,
+    /// Priority used for every listed rule set.
     priority: LitInt,
-    /// Expression variant names this rule applies to (e.g. `Add`, `Sub`).
-    /// Empty means applicable to all variants (universal rule).
-    applicable_variants: Vec<Ident>,
+    /// Complete prefilter alternatives. Empty means the rule is universal.
+    prefilters: Vec<ParsedPrefilter>,
 }
 
 impl Parse for RegisterRuleArgs {
@@ -22,7 +61,7 @@ impl Parse for RegisterRuleArgs {
             return Ok(RegisterRuleArgs {
                 rule_sets: Vec::new(),
                 priority: LitInt::new("0", Span::call_site()),
-                applicable_variants: Vec::new(),
+                prefilters: Vec::new(),
             });
         }
 
@@ -48,14 +87,44 @@ impl Parse for RegisterRuleArgs {
         let priority: LitInt = input.parse()?;
 
         // Parse optional variant names in brackets: "Minion", 4200, [Add, Sub]
-        let mut applicable_variants = Vec::new();
+        let mut prefilters = Vec::new();
         if input.peek(Comma) {
             let _: Comma = input.parse()?;
             let content;
             bracketed!(content in input);
             while !content.is_empty() {
-                let variant: Ident = content.parse()?;
-                applicable_variants.push(variant);
+                if content.peek(Token![*]) {
+                    let _: Token![*] = content.parse()?;
+                    let _: Token![/] = content.parse()?;
+                    let variant: Ident = content.parse()?;
+                    prefilters.push(ParsedPrefilter::Child { child: variant });
+                } else {
+                    let variant: Ident = content.parse()?;
+                    if content.peek(Token![/]) {
+                        let _: Token![/] = content.parse()?;
+                        let subvariant: Ident = content.parse()?;
+                        if variant != "Atomic" {
+                            prefilters.push(ParsedPrefilter::VariantChild {
+                                variant,
+                                child: subvariant,
+                            });
+                        } else {
+                            match subvariant.to_string().as_str() {
+                                "Literal" | "Reference" => {
+                                    prefilters.push(ParsedPrefilter::Atom(subvariant));
+                                }
+                                _ => {
+                                    return Err(syn::Error::new(
+                                        subvariant.span(),
+                                        "expected Literal or Reference after Atomic /",
+                                    ));
+                                }
+                            }
+                        }
+                    } else {
+                        prefilters.push(ParsedPrefilter::Variant(variant));
+                    }
+                }
                 if content.is_empty() {
                     break;
                 }
@@ -66,7 +135,7 @@ impl Parse for RegisterRuleArgs {
         Ok(RegisterRuleArgs {
             rule_sets,
             priority,
-            applicable_variants,
+            prefilters,
         })
     }
 }
@@ -89,12 +158,42 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         quote! { &[#((#rule_sets, #priority as u16)),*] }
     };
 
-    let applicable_to = if args.applicable_variants.is_empty() {
+    let prefilters = if args.prefilters.is_empty() {
         quote! { None }
     } else {
-        let variants = &args.applicable_variants;
+        let prefilter_tokens = args.prefilters.iter().map(|prefilter| match prefilter {
+            ParsedPrefilter::Variant(variant) => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Variant(
+                        ::conjure_cp::discriminant_from_name!(#variant)
+                    )
+                }
+            }
+            ParsedPrefilter::Child { child } => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Child {
+                        child: ::conjure_cp::discriminant_from_name!(#child),
+                    }
+                }
+            }
+            ParsedPrefilter::VariantChild { variant, child } => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::VariantChild {
+                        variant: ::conjure_cp::discriminant_from_name!(#variant),
+                        child: ::conjure_cp::discriminant_from_name!(#child),
+                    }
+                }
+            }
+            ParsedPrefilter::Atom(atom_variant) => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Atom(
+                        ::conjure_cp::rule_engine::AtomKind::#atom_variant
+                    )
+                }
+            }
+        });
         quote! {
-            Some(&[#(::conjure_cp::discriminant_from_name!(#variants)),*])
+            Some(&[#(#prefilter_tokens),*])
         }
     };
 
@@ -108,7 +207,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             name: stringify!(#rule_ident),
             application: #rule_ident,
             rule_sets: #rule_sets_token,
-            applicable_to: #applicable_to,
+            prefilters: #prefilters,
         };
     };
 

@@ -41,10 +41,11 @@ pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarat
 /// Snapshots variable declarations after applying a rule's symbol-table changes.
 pub fn snapshot_symbols_after_effect(
     symbols: &SymbolTable,
-    effect_symbols: &SymbolTable,
+    effect: &RuleEffect,
 ) -> VariableDeclarationSnapshot {
     let mut merged = symbols.clone();
-    merged.extend(effect_symbols.clone());
+    effect.preview_declaration_updates(&mut merged);
+    merged.extend(effect.symbols.clone());
     snapshot_variable_declarations(&merged)
 }
 

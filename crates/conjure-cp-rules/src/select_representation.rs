@@ -38,8 +38,29 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         return Err(RuleNotApplicable);
     };
 
-    // cannot create representations on non-local variables, so use lookup_local.
-    let matrix_vars = symbols.clone().into_iter_local().filter_map(|(n, decl)| {
+    let matrix_names: Vec<_> = matrix_variables(symbols).map(|(name, _)| name).collect();
+    let expression_names = Biplate::<Name>::universe_bi(expr);
+    let would_change = matrix_names.iter().any(|name| {
+        symbols
+            .representations_for(name)
+            .is_some_and(|representations| representations.is_empty())
+            || expression_names.contains(name)
+    });
+    if !would_change {
+        return Err(RuleNotApplicable);
+    }
+
+    let expr = expr.clone();
+    Ok(RuleEffect::deferred(move |symbols| {
+        materialise_select_representation_matrix(&expr, symbols)
+    }))
+}
+
+/// Returns local finite matrix variables supported by `matrix_to_atom`.
+fn matrix_variables(
+    symbols: &SymbolTable,
+) -> impl Iterator<Item = (Name, conjure_cp::ast::serde::ObjId)> {
+    symbols.clone().into_iter_local().filter_map(|(n, decl)| {
         let id = decl.id();
         let var = decl.as_find()?.clone();
         let resolved_domain = var.domain.resolve().ok()?;
@@ -48,14 +69,10 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             return None;
         };
 
-        // `matrix_to_atom` can only be initialised for finite matrix domains.
-        // Expression-generator rewrites can introduce temporary matrices like
-        // `matrix indexed by [int(1..)] of ...`, which should be left alone here.
         if !resolved_domain.is_finite() {
             return None;
         }
 
-        // TODO: loosen these requirements once we are able to
         if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
             return None;
         }
@@ -68,7 +85,13 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         }
 
         Some((n, id))
-    });
+    })
+}
+
+/// Materialises matrix representations after the root rule is selected.
+fn materialise_select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> RuleEffect {
+    // cannot create representations on non-local variables, so use lookup_local.
+    let matrix_vars = matrix_variables(symbols);
 
     let mut symbols = symbols.clone();
     let mut expr = expr.clone();
@@ -112,14 +135,11 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         });
     }
 
-    if has_changed.load(Ordering::Relaxed) {
-        Ok(RuleEffect::with_symbols(expr, symbols))
-    } else {
-        Err(RuleNotApplicable)
-    }
+    debug_assert!(has_changed.load(Ordering::Relaxed));
+    RuleEffect::with_symbols(expr, symbols)
 }
 
-#[register_rule("Representations", 8000, [Atomic])]
+#[register_rule("Representations", 8000, [Atomic / Reference])]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
@@ -137,10 +157,24 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     if !needs_representation(&name, symbols) {
         return Err(RuleNotApplicable);
     }
+    representation_name(&name, symbols).ok_or(RuleNotApplicable)?;
+
+    let expr = expr.clone();
+    Ok(RuleEffect::deferred(move |symbols| {
+        materialise_select_representation(&expr, symbols)
+    }))
+}
+
+/// Materialises the representation selected for one reference.
+fn materialise_select_representation(expr: &Expr, symbols: &SymbolTable) -> RuleEffect {
+    let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
+        unreachable!("representation effect was created for a reference")
+    };
+    let name = decl.name().clone();
 
     let mut symbols = symbols.clone();
-    let representation =
-        get_or_create_representation(&name, &mut symbols).ok_or(RuleNotApplicable)?;
+    let representation = get_or_create_representation(&name, &mut symbols)
+        .expect("applicable representation can be materialised");
 
     let representation_names = representation
         .into_iter()
@@ -163,20 +197,20 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     let mut decl_ptr = decl.clone().into_ptr().detach();
     decl_ptr.replace_name(new_name);
 
-    Ok(RuleEffect::with_symbols(
+    RuleEffect::with_symbols(
         Expr::Atomic(
             Metadata::new(),
             Atom::Reference(conjure_cp::ast::Reference::new(decl_ptr)),
         ),
         symbols,
-    ))
+    )
 }
 
 /// Returns whether `name` needs representing.
 ///
 fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
     // if name already has a representation, false
-    if let Name::Represented(_) = name {
+    if matches!(name, Name::Represented(_) | Name::WithRepresentation(_, _)) {
         return false;
     }
     // might be more logic here in the future?
@@ -215,9 +249,14 @@ fn get_or_create_representation(
 ) -> Option<Vec<Box<dyn Representation>>> {
     // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
 
+    let representation = representation_name(name, symbols)?;
+    symbols.get_or_add_representation(name, &[representation])
+}
+
+/// Returns the supported representation for `name` without creating it.
+fn representation_name(name: &Name, symbols: &SymbolTable) -> Option<&'static str> {
     let dom = symbols.resolve_domain(name)?;
     match dom.as_ref() {
-        GroundDomain::Set(_, _) => None, // has no representations yet!
         GroundDomain::Tuple(elem_domains) => {
             if elem_domains
                 .iter()
@@ -226,7 +265,7 @@ fn get_or_create_representation(
                 bug!("representing nested abstract domains is not implemented");
             }
 
-            symbols.get_or_add_representation(name, &["tuple_to_atom"])
+            Some("tuple_to_atom")
         }
         GroundDomain::Record(entries) => {
             if entries
@@ -236,8 +275,48 @@ fn get_or_create_representation(
                 bug!("representing nested abstract domains is not implemented");
             }
 
-            symbols.get_or_add_representation(name, &["record_to_atom"])
+            Some("record_to_atom")
         }
-        _ => unreachable!("non abstract domains should never need representations"),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{DeclarationPtr, Domain, Range};
+
+    #[test]
+    fn inserting_a_representation_does_not_lock_its_source_declaration() {
+        let mut symbols = SymbolTable::new();
+        let matrix_domain = Domain::matrix(
+            Domain::bool(),
+            vec![Domain::int(vec![Range::Bounded(1, 2)])],
+        );
+        let name = Name::user("matrix");
+        symbols
+            .insert(DeclarationPtr::new_find(name.clone(), matrix_domain))
+            .unwrap();
+
+        let representation = symbols.get_or_add_representation(&name, &["matrix_to_atom"]);
+
+        assert!(representation.is_some());
+    }
+
+    #[test]
+    fn represented_names_do_not_need_another_representation() {
+        let symbols = SymbolTable::new();
+        let original = Name::user("x");
+
+        let represented_variable = Name::Represented(Box::new((
+            original.clone(),
+            "record_to_atom".into(),
+            "1".into(),
+        )));
+        let represented_reference =
+            Name::WithRepresentation(Box::new(original), vec!["record_to_atom".into()]);
+
+        assert!(!needs_representation(&represented_variable, &symbols));
+        assert!(!needs_representation(&represented_reference, &symbols));
     }
 }

@@ -6,7 +6,9 @@ use std::sync::Arc;
 use thiserror::Error;
 
 use crate::Model;
-use crate::ast::{CnfClause, DeclarationPtr, Expression, Metadata, Name, SymbolTable};
+use crate::ast::{
+    CnfClause, DeclarationKind, DeclarationPtr, Expression, Metadata, Name, SymbolTable,
+};
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -59,7 +61,41 @@ pub struct RuleEffect {
     pub new_top: Vec<Expression>,
     pub symbols: SymbolTable,
     pub new_clauses: Vec<CnfClause>,
+    /// Shared declarations to update if this effect is selected.
+    pub(crate) declaration_updates: Vec<DeclarationUpdate>,
     materialise: Option<DeferredRuleEffect>,
+}
+
+/// An in-place update to a shared declaration, applied only after its rule is selected.
+#[derive(Clone, Debug)]
+pub(crate) struct DeclarationUpdate {
+    target: DeclarationPtr,
+    replacement_kind: DeclarationKind,
+}
+
+impl DeclarationUpdate {
+    /// Creates a deferred replacement for a shared declaration's kind.
+    fn new(target: DeclarationPtr, replacement_kind: DeclarationKind) -> Self {
+        Self {
+            target,
+            replacement_kind,
+        }
+    }
+
+    /// Returns the name of the declaration that will be updated.
+    pub(crate) fn name(&self) -> Name {
+        self.target.name().clone()
+    }
+
+    /// Commits the replacement while retaining the declaration's identity.
+    pub(crate) fn apply(mut self) {
+        let _ = self.target.replace_kind(self.replacement_kind);
+    }
+
+    /// Creates an unshared declaration containing the pending replacement.
+    fn preview(&self) -> DeclarationPtr {
+        DeclarationPtr::new(self.name(), self.replacement_kind.clone())
+    }
 }
 
 /// Deferred constructor for a concrete rule effect.
@@ -76,6 +112,7 @@ impl Debug for RuleEffect {
             .field("new_top", &self.new_top)
             .field("symbols", &self.symbols)
             .field("new_clauses", &self.new_clauses)
+            .field("declaration_updates", &self.declaration_updates)
             .field("is_deferred", &self.materialise.is_some())
             .finish()
     }
@@ -88,6 +125,7 @@ impl RuleEffect {
             new_top,
             symbols,
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -99,6 +137,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -110,6 +149,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols,
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -121,6 +161,7 @@ impl RuleEffect {
             new_top,
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -136,6 +177,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols,
             new_clauses,
+            declaration_updates: Vec::new(),
             materialise: None,
         }
     }
@@ -153,6 +195,7 @@ impl RuleEffect {
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
             materialise: Some(Arc::new(materialise)),
         }
     }
@@ -166,12 +209,40 @@ impl RuleEffect {
         materialise(symbols).materialise(symbols)
     }
 
+    /// Adds declaration replacements that are committed only if this effect is selected.
+    pub fn with_declaration_updates(
+        mut self,
+        updates: impl IntoIterator<Item = (DeclarationPtr, DeclarationKind)>,
+    ) -> Self {
+        self.declaration_updates.extend(
+            updates
+                .into_iter()
+                .map(|(target, kind)| DeclarationUpdate::new(target, kind)),
+        );
+        self
+    }
+
+    /// Iterates over the names changed by deferred declaration updates.
+    pub fn updated_declaration_names(&self) -> impl Iterator<Item = Name> + '_ {
+        self.declaration_updates.iter().map(DeclarationUpdate::name)
+    }
+
+    /// Applies pending declaration replacements to a detached symbol-table preview.
+    pub(crate) fn preview_declaration_updates(&self, symbols: &mut SymbolTable) {
+        for update in &self.declaration_updates {
+            symbols.update_insert(update.preview());
+        }
+    }
+
     /// Applies side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut Model) {
         debug_assert!(
             self.materialise.is_none(),
             "deferred rule effects must be materialised before being applied"
         );
+        for update in self.declaration_updates {
+            update.apply();
+        }
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top.clone());
         model.add_clauses(self.new_clauses);
@@ -211,7 +282,7 @@ impl RuleEffect {
                 continue;
             };
 
-            if new_value != initial_value {
+            if !new_value.content_eq(&initial_value) {
                 changes.push((var_name.clone(), initial_value.clone(), new_value.clone()));
             }
         }
@@ -221,6 +292,32 @@ impl RuleEffect {
 
 /// The function type used in a [`Rule`].
 pub type RuleFn = fn(&Expression, &SymbolTable) -> ApplicationResult;
+
+/// Atomic expression subvariants that can be used as rule prefilters.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum AtomKind {
+    /// An `Atomic` expression containing a literal.
+    Literal,
+    /// An `Atomic` expression containing a reference.
+    Reference,
+}
+
+/// A complete rule prefilter alternative.
+///
+/// A rule matches when any of its prefilter alternatives matches the focused expression. This keeps
+/// compound filters such as `And / Comprehension` paired instead of forming a cross product with
+/// other alternatives in the same rule declaration.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum RulePrefilter {
+    /// Focused expression must have this `Expression` variant.
+    Variant(usize),
+    /// Focused expression must have an immediate child with this `Expression` variant.
+    Child { child: usize },
+    /// Focused expression must have this variant and an immediate child with `child`'s variant.
+    VariantChild { variant: usize, child: usize },
+    /// Focused expression must be an `Atomic` expression with this atomic subvariant.
+    Atom(AtomKind),
+}
 
 /**
  * A rule with a name, application function, and rule sets.
@@ -235,8 +332,8 @@ pub struct Rule<'a> {
     pub name: &'a str,
     pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
-    /// Discriminant ids of Expression variants this rule applies to, or None for universal rules.
-    pub applicable_to: Option<&'static [usize]>,
+    /// Complete prefilter alternatives this rule applies to, or `None` for universal rules.
+    pub prefilters: Option<&'static [RulePrefilter]>,
 }
 
 impl<'a> Rule<'a> {
@@ -249,7 +346,7 @@ impl<'a> Rule<'a> {
             name,
             application,
             rule_sets,
-            applicable_to: None,
+            prefilters: None,
         }
     }
 
@@ -275,5 +372,37 @@ impl Eq for Rule<'_> {}
 impl Hash for Rule<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{DecisionVariable, Domain, Range, Reference};
+    use crate::rule_engine::rewriter_common::{
+        snapshot_symbols_after_effect, snapshot_variable_declarations,
+    };
+
+    #[test]
+    fn declaration_updates_are_applied_only_when_effect_is_committed() {
+        let old_domain = Domain::int(vec![Range::Bounded(1, 3)]);
+        let new_domain = Domain::int(vec![Range::Bounded(1, 2)]);
+        let mut model = Model::new(Default::default());
+        let declaration = DeclarationPtr::new_find(Name::user("x"), old_domain.clone());
+        let reference = Reference::new(declaration.clone());
+        model.symbols_mut().insert(declaration.clone()).unwrap();
+
+        let effect = RuleEffect::pure(Expression::from(1)).with_declaration_updates([(
+            declaration,
+            DeclarationKind::Find(DecisionVariable::new(new_domain.clone())),
+        )]);
+
+        let before = snapshot_variable_declarations(&model.symbols());
+        let after = snapshot_symbols_after_effect(&model.symbols(), &effect);
+        assert_eq!(before.get(&Name::user("x")).unwrap(), "find x: int(1..3)");
+        assert_eq!(after.get(&Name::user("x")).unwrap(), "find x: int(1..2)");
+        assert_eq!(reference.domain(), Some(old_domain));
+        effect.apply(&mut model);
+        assert_eq!(reference.domain(), Some(new_domain));
     }
 }

@@ -6,12 +6,6 @@ find z: int(y..3)
 
 --
 
-
-   ~~> eval_root ([("Constant", 9001)])
-true
-
---
-
 true
    ~~> handle_variables_in_domains ([("Base", 8990)])
 true
@@ -22,17 +16,6 @@ updated variables:
 new constraints:
   and([y >= 1,y <= x;int(1..)])
   and([z >= y,z <= 3;int(1..)])
-
---
-
-true,
-and([y >= 1,y <= x;int(1..)]),
-and([z >= y,z <= 3;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-y >= 1,
-y <= x,
-z >= y,
-z <= 3
 
 --
 
@@ -68,8 +51,7 @@ find z: int(1..3)
 
 such that
 
-Ineq(1, y, 0),
-Ineq(y, x, 0),
-Ineq(y, z, 0),
-Ineq(z, 3, 0)
+true,
+and([Ineq(1, y, 0),Ineq(y, x, 0);int(1..)]),
+and([Ineq(y, z, 0),Ineq(z, 3, 0);int(1..)])
 

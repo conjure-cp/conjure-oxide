@@ -202,7 +202,37 @@ fn simplify_reflexive_comparison(x: &Expr, y: &Expr) -> Option<(bool, bool)> {
     None
 }
 
+fn simplify_reflexive_comparison_with_mode(
+    x: &Expr,
+    y: &Expr,
+    mode: PartialEvalMode,
+) -> Option<(bool, bool)> {
+    match mode {
+        PartialEvalMode::Deep => simplify_reflexive_comparison(x, y),
+        PartialEvalMode::Local => x.identical_atom_to(y).then_some((true, false)),
+    }
+}
+
 pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
+    run_partial_evaluator_with_mode(expr, PartialEvalMode::Deep)
+}
+
+/// Partially evaluates `expr` using only information already available at the focused node.
+///
+/// This is intended for the main rewriter, where recursive simplification is supplied by the
+/// scheduler. Use [`run_partial_evaluator`] when a caller explicitly wants semantic checks that
+/// can inspect referenced expressions.
+pub fn run_partial_evaluator_local(expr: &Expr) -> ApplicationResult {
+    run_partial_evaluator_with_mode(expr, PartialEvalMode::Local)
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PartialEvalMode {
+    Deep,
+    Local,
+}
+
+fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> ApplicationResult {
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
@@ -269,7 +299,9 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         }
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::InDomain(_, x, domain) => {
-            if let Some(result) = simplify_in_domain(x, domain) {
+            if mode == PartialEvalMode::Deep
+                && let Some(result) = simplify_in_domain(x, domain)
+            {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     result.into(),
@@ -407,7 +439,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if acc == 0 {
                 // if safe, 0 * exprs ~> 0
                 // otherwise, just return 0* exprs
-                if is_semantically_safe(&new_product) {
+                if mode == PartialEvalMode::Deep && is_semantically_safe(&new_product) {
                     Ok(RuleEffect::pure(Expr::Atomic(
                         Default::default(),
                         Atom::Literal(Lit::Int(0)),
@@ -507,7 +539,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 return Err(RuleNotApplicable);
             };
 
-            if !is_semantically_safe(e1) {
+            if mode == PartialEvalMode::Deep && !is_semantically_safe(e1) {
                 return Err(RuleNotApplicable);
             }
 
@@ -677,7 +709,9 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             // let identical-CSE turn them into identical variables first. Then, check if they are
             // identical variables.
 
-            if x.identical_atom_to(y.as_ref()) && is_semantically_safe(x) && is_semantically_safe(y)
+            if x.identical_atom_to(y.as_ref())
+                && (mode == PartialEvalMode::Local
+                    || (is_semantically_safe(x) && is_semantically_safe(y)))
             {
                 return Ok(RuleEffect::pure(true.into()));
             }
@@ -710,7 +744,9 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             // let identical-CSE turn them into identical variables first. Then, check if they are
             // identical variables.
 
-            if x.identical_atom_to(y.as_ref()) && is_semantically_safe(x) && is_semantically_safe(y)
+            if x.identical_atom_to(y.as_ref())
+                && (mode == PartialEvalMode::Local
+                    || (is_semantically_safe(x) && is_semantically_safe(y)))
             {
                 return Ok(RuleEffect::pure(true.into()));
             }
@@ -718,19 +754,21 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             Err(RuleNotApplicable)
         }
         Expr::Eq(_, x, y) => {
-            if let Some((eq_result, _)) = simplify_reflexive_comparison(x, y) {
+            if let Some((eq_result, _)) = simplify_reflexive_comparison_with_mode(x, y, mode) {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(eq_result)),
                 )))
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+            } else if mode == PartialEvalMode::Deep
+                && let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
                 && let Some((eq_result, _)) = simplify_comparison_with_literal(y, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(eq_result)),
                 )))
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+            } else if mode == PartialEvalMode::Deep
+                && let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
                 && let Some((eq_result, _)) = simplify_comparison_with_literal(x, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
@@ -742,19 +780,21 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             }
         }
         Expr::Neq(_, x, y) => {
-            if let Some((_, neq_result)) = simplify_reflexive_comparison(x, y) {
+            if let Some((_, neq_result)) = simplify_reflexive_comparison_with_mode(x, y, mode) {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(neq_result)),
                 )))
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+            } else if mode == PartialEvalMode::Deep
+                && let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
                 && let Some((_, neq_result)) = simplify_comparison_with_literal(y, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(neq_result)),
                 )))
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+            } else if mode == PartialEvalMode::Deep
+                && let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
                 && let Some((_, neq_result)) = simplify_comparison_with_literal(x, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(

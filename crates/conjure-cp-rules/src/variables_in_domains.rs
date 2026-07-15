@@ -32,7 +32,7 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 
     let mut known_int_bounds: IntBoundsCache = HashMap::new();
     let mut domain_guards = Vec::new();
-    let mut changed = false;
+    let mut declaration_updates = Vec::new();
 
     // Collect declarations first to avoid iterator invalidation while mutating declarations.
     let declarations: Vec<_> = symbols
@@ -41,7 +41,7 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         .map(|(_, decl)| decl)
         .collect();
 
-    for mut decl in declarations {
+    for decl in declarations {
         let Some(domain) = decl.as_find().map(|var| var.domain_of()) else {
             continue;
         };
@@ -67,19 +67,20 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         };
 
         domain_guards.extend(guards);
-        let _ = decl.replace_kind(DeclarationKind::Find(DecisionVariable::new(widened_domain)));
-        changed = true;
+        declaration_updates.push((
+            decl,
+            DeclarationKind::Find(DecisionVariable::new(widened_domain)),
+        ));
     }
 
-    if !changed {
+    if declaration_updates.is_empty() {
         return Err(RuleNotApplicable);
     }
 
-    Ok(RuleEffect::new(
-        expr.clone(),
-        domain_guards,
-        symbols.clone(),
-    ))
+    Ok(
+        RuleEffect::new(expr.clone(), domain_guards, SymbolTable::new())
+            .with_declaration_updates(declaration_updates),
+    )
 }
 
 /// Returns true iff at least one local symbol contains a reference to a decision variable.

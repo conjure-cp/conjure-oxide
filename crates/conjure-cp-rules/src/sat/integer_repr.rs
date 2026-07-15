@@ -11,6 +11,36 @@ use conjure_cp::into_matrix_expr;
 
 use conjure_cp::{bug, essence_expr};
 
+/// Defers creation of an integer representation until its rule is selected.
+fn defer_integer_representation(
+    expr: &Expr,
+    materialise: fn(&Expr, &SymbolTable) -> ApplicationResult,
+) -> ApplicationResult {
+    let Expr::Atomic(_, Atom::Reference(reference)) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    if reference.ptr().as_find().is_none() {
+        return Err(RuleNotApplicable);
+    }
+    let Some(domain) = reference.resolved_domain() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Int(ranges) = domain.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    if ranges
+        .iter()
+        .any(|range| range.low().is_none() || range.high().is_none())
+    {
+        return Err(RuleNotApplicable);
+    }
+
+    let expr = expr.clone();
+    Ok(RuleEffect::deferred(move |symbols| {
+        materialise(&expr, symbols).expect("applicable integer representation can be materialised")
+    }))
+}
+
 /// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
 ///
 /// E.g. x : int(4), int(10..20), int(30..) ~~> Or(x=4, 10<=x<=20, x>=30)
@@ -90,7 +120,15 @@ pub fn validate_log_int_operands(
 ///
 /// ```
 #[register_rule("SAT_Direct", 9500, [Atomic])]
-fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn integer_decision_representation_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    defer_integer_representation(expr, materialise_integer_decision_representation_direct)
+}
+
+/// Materialises a direct integer representation and its constraints.
+fn materialise_integer_decision_representation_direct(
+    expr: &Expr,
+    symbols: &SymbolTable,
+) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);
@@ -167,7 +205,15 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
 }
 
 #[register_rule("SAT_Order", 9500, [Atomic])]
-fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn integer_decision_representation_order(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    defer_integer_representation(expr, materialise_integer_decision_representation_order)
+}
+
+/// Materialises an order integer representation and its constraints.
+fn materialise_integer_decision_representation_order(
+    expr: &Expr,
+    symbols: &SymbolTable,
+) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);
@@ -241,7 +287,15 @@ fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> 
 
 /// Converts an integer decision variable to SATInt form (Log encoding)
 #[register_rule("SAT_Log", 9500, [Atomic])]
-fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn integer_decision_representation_log(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    defer_integer_representation(expr, materialise_integer_decision_representation_log)
+}
+
+/// Materialises a logarithmic integer representation and its constraints.
+fn materialise_integer_decision_representation_log(
+    expr: &Expr,
+    symbols: &SymbolTable,
+) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);

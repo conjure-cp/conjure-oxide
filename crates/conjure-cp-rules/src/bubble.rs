@@ -43,7 +43,7 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
     E.g. ((a / b) @ (b != 0)) = c => (a / b = c) @ (b != 0)
 */
-#[register_rule("Bubble", 8800)]
+#[register_rule("Bubble", 8800, [* / Bubble])]
 fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     // do not put root inside a bubble
     //

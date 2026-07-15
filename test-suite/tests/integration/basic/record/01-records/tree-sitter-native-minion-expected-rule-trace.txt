@@ -14,33 +14,6 @@ y = z
 
 --
 
-x[a] = true,
-x[b] = 3,
-y = record {a = false,b = 4},
-y = z
-   ~~> constant_evaluator ([("Constant", 9001)])
-x[a] = true,
-x[b] = 3,
-y = record {a = false,b = 4},
-y = z
-
---
-
-x
-   ~~> select_representation ([("Representations", 8000)])
-x#record_to_atom
-new variables:
-  find x#record_to_atom_1: bool
-  find x#record_to_atom_2: int(0..9)
-
---
-
-x
-   ~~> select_representation ([("Representations", 8000)])
-x#record_to_atom
-
---
-
 y
    ~~> select_representation ([("Representations", 8000)])
 y#record_to_atom
@@ -65,15 +38,24 @@ new variables:
 
 --
 
-x#record_to_atom[a] = true
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#record_to_atom[a], true)
+x
+   ~~> select_representation ([("Representations", 8000)])
+x#record_to_atom
+new variables:
+  find x#record_to_atom_1: bool
+  find x#record_to_atom_2: int(0..9)
 
 --
 
-x#record_to_atom[b]
-   ~~> index_record_to_atom ([("Base", 2000)])
-x#record_to_atom_2
+x
+   ~~> select_representation ([("Representations", 8000)])
+x#record_to_atom
+
+--
+
+x#record_to_atom[a] = true
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x#record_to_atom[a], true)
 
 --
 
@@ -83,46 +65,9 @@ and([y#record_to_atom[a] = record {a = false,b = 4}[a],y#record_to_atom[b] = rec
 
 --
 
-record {a = false,b = 4}[a]
-   ~~> constant_evaluator ([("Constant", 9001)])
-false
-
---
-
-record {a = false,b = 4}[b]
-   ~~> constant_evaluator ([("Constant", 9001)])
-4
-
---
-
-Reify(x#record_to_atom[a], true),
-x#record_to_atom_2 = 3,
-and([y#record_to_atom[a] = false,y#record_to_atom[b] = 4;int(1..)]),
-y#record_to_atom = z#record_to_atom
-   ~~> constant_evaluator ([("Constant", 9001)])
-Reify(x#record_to_atom[a], true),
-x#record_to_atom_2 = 3,
-y#record_to_atom[a] = false,
-y#record_to_atom[b] = 4,
-y#record_to_atom = z#record_to_atom
-
---
-
 y#record_to_atom[a] = false
    ~~> bool_eq_to_reify ([("Minion", 4400)])
 Reify(y#record_to_atom[a], false)
-
---
-
-x#record_to_atom[a]
-   ~~> index_record_to_atom ([("Base", 2000)])
-x#record_to_atom_1
-
---
-
-y#record_to_atom[b]
-   ~~> index_record_to_atom ([("Base", 2000)])
-y#record_to_atom_2
 
 --
 
@@ -132,24 +77,27 @@ and([y#record_to_atom[a] = z#record_to_atom[a],y#record_to_atom[b] = z#record_to
 
 --
 
-Reify(x#record_to_atom_1, true),
-x#record_to_atom_2 = 3,
-Reify(y#record_to_atom[a], false),
-y#record_to_atom_2 = 4,
-and([y#record_to_atom[a] = z#record_to_atom[a],y#record_to_atom[b] = z#record_to_atom[b];int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-Reify(x#record_to_atom_1, true),
-x#record_to_atom_2 = 3,
-Reify(y#record_to_atom[a], false),
-y#record_to_atom_2 = 4,
-y#record_to_atom[a] = z#record_to_atom[a],
-y#record_to_atom[b] = z#record_to_atom[b]
+x#record_to_atom[a]
+   ~~> index_record_to_atom ([("Base", 2000)])
+x#record_to_atom_1
+
+--
+
+x#record_to_atom[b]
+   ~~> index_record_to_atom ([("Base", 2000)])
+x#record_to_atom_2
 
 --
 
 y#record_to_atom[a]
    ~~> index_record_to_atom ([("Base", 2000)])
 y#record_to_atom_1
+
+--
+
+y#record_to_atom[b]
+   ~~> index_record_to_atom ([("Base", 2000)])
+y#record_to_atom_2
 
 --
 
@@ -189,19 +137,17 @@ letting R be domain record {a: bool, b: int(0..9)}
 find x: R
 find y: R
 find z: R
-find x#record_to_atom_1: bool
-find x#record_to_atom_2: int(0..9)
 find y#record_to_atom_1: bool
 find y#record_to_atom_2: int(0..9)
 find z#record_to_atom_1: bool
 find z#record_to_atom_2: int(0..9)
+find x#record_to_atom_1: bool
+find x#record_to_atom_2: int(0..9)
 
 such that
 
 Reify(x#record_to_atom_1, true),
 x#record_to_atom_2 = 3,
-Reify(y#record_to_atom_1, false),
-y#record_to_atom_2 = 4,
-Reify(z#record_to_atom_1, y#record_to_atom_1),
-y#record_to_atom_2 = z#record_to_atom_2
+and([Reify(y#record_to_atom_1, false),y#record_to_atom_2 = 4;int(1..)]),
+and([Reify(z#record_to_atom_1, y#record_to_atom_1),y#record_to_atom_2 = z#record_to_atom_2;int(1..)])
 

@@ -139,14 +139,9 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         }
     }
 
-    if comprehension_has_symbolic_guards(&comprehension) {
-        return Err(RuleNotApplicable);
-    }
-
     let mut symbols = symbols.clone();
     let comprehension_domain = comprehension.domain_of();
-    let results = expand_native(comprehension, &mut symbols)
-        .unwrap_or_else(|e| bug!("native comprehension expansion failed: {e}"));
+    let results = expand_native(comprehension, &mut symbols).or(Err(RuleNotApplicable))?;
     let expanded = into_matrix_expr!(results);
     let expanded = match comprehension_domain {
         Some(domain) if expanded.unwrap_list().is_some_and(|elems| elems.is_empty()) => {

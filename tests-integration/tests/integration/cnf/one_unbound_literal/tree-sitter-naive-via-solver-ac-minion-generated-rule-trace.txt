@@ -10,20 +10,13 @@ and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
 
 --
 
-and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-or([a,a;int(1..)]),
-or([!(b),!(b);int(1..)])
-
---
-
-!(b), 
+!(b)
    ~~> not_literal_to_wliteral ([("Minion", 4100)])
 WatchedLiteral(b,false)
 
 --
 
-!(b), 
+!(b)
    ~~> not_literal_to_wliteral ([("Minion", 4100)])
 WatchedLiteral(b,false)
 
@@ -37,6 +30,5 @@ find c: bool
 
 such that
 
-or([a,a;int(1..)]),
-or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..)])
+and([or([a,a;int(1..)]),or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..)]);int(1..)])
 

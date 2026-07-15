@@ -19,7 +19,16 @@ use conjure_cp::{
 /// ```
 ///
 /// where `op` is one of `and`, `or`, `sum`, or `product`.
-#[register_rule("Base", 8900, [And, Or, Sum, Product])]
+#[register_rule(
+    "Base",
+    8900,
+    [
+        And / Comprehension,
+        Or / Comprehension,
+        Sum / Comprehension,
+        Product / Comprehension
+    ]
+)]
 fn merge_nested_ac_comprehensions(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let new_expr = merge_nested_ac_comprehensions_impl(expr).ok_or(RuleNotApplicable)?;
     Ok(RuleEffect::pure(new_expr))

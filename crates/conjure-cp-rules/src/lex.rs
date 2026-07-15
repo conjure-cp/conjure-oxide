@@ -1,6 +1,7 @@
-use conjure_cp::ast::matrix::safe_index_optimised;
 use conjure_cp::ast::{
-    Atom, Expression as Expr, IntVal, Literal, Metadata, Moo, Range, SymbolTable,
+    Atom, Expression as Expr, GroundDomain, IntVal, Literal, Metadata, Moo, Name, Range,
+    SymbolTable,
+    matrix::{self, safe_index_optimised},
 };
 use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, RuleEffect, register_rule};
@@ -65,6 +66,10 @@ fn lex_operand_to_atoms(
     symbols: &mut SymbolTable,
     tops: &mut Vec<Expr>,
 ) -> Result<Vec<Atom>, ApplicationError> {
+    if let Some(atoms) = lex_represented_matrix_to_atoms(operand.as_ref(), symbols)? {
+        return Ok(atoms);
+    }
+
     let elems = lex_operand_elements(operand.as_ref())?;
     let mut atoms = Vec::with_capacity(elems.len());
 
@@ -81,6 +86,55 @@ fn lex_operand_to_atoms(
     }
 
     Ok(atoms)
+}
+
+fn lex_represented_matrix_to_atoms(
+    operand: &Expr,
+    symbols: &SymbolTable,
+) -> Result<Option<Vec<Atom>>, ApplicationError> {
+    let Expr::Atomic(_, Atom::Reference(decl)) = operand else {
+        return Ok(None);
+    };
+
+    let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
+        return Ok(None);
+    };
+
+    if reprs.first().is_none_or(|x| x.as_str() != "matrix_to_atom") {
+        return Ok(None);
+    }
+
+    let decl = symbols.lookup(name.as_ref()).ok_or(RuleNotApplicable)?;
+    let repr = symbols
+        .get_representation(name.as_ref(), &["matrix_to_atom"])
+        .ok_or(RuleNotApplicable)?[0]
+        .clone();
+
+    let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
+        return Ok(None);
+    };
+
+    if index_domains.len() != 1 {
+        return Ok(None);
+    }
+
+    let matrix_values = repr.expression_down(symbols)?;
+    matrix::enumerate_indices(index_domains.clone())
+        .map(|index| {
+            matrix_values
+                .get(&Name::Represented(Box::new((
+                    name.as_ref().clone(),
+                    "matrix_to_atom".into(),
+                    index.iter().join("_").into(),
+                ))))
+                .cloned()
+                .ok_or(RuleNotApplicable)?
+                .try_into()
+                .map_err(|_| RuleNotApplicable)
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map(Some)
 }
 
 #[register_rule("Minion", 2000, [LexLt, LexLeq])]

@@ -9,45 +9,9 @@ x = sum([ 1 | i : set (minSize 1, maxSize 2) of int(7..9), y in i ])
 
 --
 
-sum([ 1 | i : set (minSize 1, maxSize 2) of int(7..9), y in i ])
-   ~~> expand_ac_comprehension_native ([("Base", 1999)])
-sum([product([toInt(y in {7}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {8}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {9}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {7,8}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {7,9}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {8,9}),sum([1;int(1..)]);int(1..)]);int(1..)])
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
-
---
-
-sum([1;int(1..)])
-   ~~> constant_evaluator ([("Constant", 9001)])
-1
+[ 1 | i : set (minSize 1, maxSize 2) of int(7..9), y in i ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(y in {7}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {8}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {9}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {7,8}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {7,9}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {8,9}),sum([1;int(1..)]);int(1..)]);int(1..)]
 
 --
 
@@ -124,7 +88,7 @@ toInt(y in {8,9})
 --
 
 x = sum([toInt(y in {7}),toInt(y in {8}),toInt(y in {9}),toInt(y in {7,8}),toInt(y in {7,9}),toInt(y in {8,9});int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
 and([SumLeq([__0, __1, __2, __3, __4, __5], x),SumGeq([__0, __1, __2, __3, __4, __5], x);int(1..)])
 new variables:
   find __0: int(0..1)
@@ -143,27 +107,8 @@ new constraints:
 
 --
 
-and([SumLeq([__0, __1, __2, __3, __4, __5], x),SumGeq([__0, __1, __2, __3, __4, __5], x);int(1..)]),
-__0 =aux toInt(y in {7}),
-__1 =aux toInt(y in {8}),
-__2 =aux toInt(y in {9}),
-__3 =aux toInt(y in {7,8}),
-__4 =aux toInt(y in {7,9}),
-__5 =aux toInt(y in {8,9})
-   ~~> constant_evaluator ([("Constant", 9001)])
-SumLeq([__0, __1, __2, __3, __4, __5], x),
-SumGeq([__0, __1, __2, __3, __4, __5], x),
-__0 =aux toInt(y in {7}),
-__1 =aux toInt(y in {8}),
-__2 =aux toInt(y in {9}),
-__3 =aux toInt(y in {7,8}),
-__4 =aux toInt(y in {7,9}),
-__5 =aux toInt(y in {8,9})
-
---
-
 toInt(y in {7})
-   ~~> flatten_generic ([("Minion", 4200)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
 toInt(__6)
 new variables:
   find __6: bool
@@ -179,7 +124,7 @@ Reify(y in {7}, __6)
 --
 
 toInt(y in {8})
-   ~~> flatten_generic ([("Minion", 4200)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
 toInt(__7)
 new variables:
   find __7: bool
@@ -195,7 +140,7 @@ Reify(y in {8}, __7)
 --
 
 toInt(y in {9})
-   ~~> flatten_generic ([("Minion", 4200)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
 toInt(__8)
 new variables:
   find __8: bool
@@ -211,7 +156,7 @@ Reify(y in {9}, __8)
 --
 
 toInt(y in {7,8})
-   ~~> flatten_generic ([("Minion", 4200)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
 toInt(__9)
 new variables:
   find __9: bool
@@ -227,7 +172,7 @@ Reify(y in {7,8}, __9)
 --
 
 toInt(y in {7,9})
-   ~~> flatten_generic ([("Minion", 4200)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
 toInt(__10)
 new variables:
   find __10: bool
@@ -243,7 +188,7 @@ Reify(y in {7,9}, __10)
 --
 
 toInt(y in {8,9})
-   ~~> flatten_generic ([("Minion", 4200)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
 toInt(__11)
 new variables:
   find __11: bool
@@ -313,8 +258,7 @@ find __11: bool
 
 such that
 
-SumLeq([__0, __1, __2, __3, __4, __5], x),
-SumGeq([__0, __1, __2, __3, __4, __5], x),
+and([SumLeq([__0, __1, __2, __3, __4, __5], x),SumGeq([__0, __1, __2, __3, __4, __5], x);int(1..)]),
 __0 =aux toInt(__6),
 __1 =aux toInt(__7),
 __2 =aux toInt(__8),

@@ -490,8 +490,7 @@ pub struct TestConfig {
     )]
     pub skip_conjure_validation: String,
 
-    #[serde(rename = "validate-with-conjure")]
-    pub validate_with_conjure: Option<bool>,
+
 
     #[serde(
         default = "default_number_of_solutions",
@@ -521,7 +520,6 @@ pub struct TestConfig {
 impl Default for TestConfig {
     fn default() -> Self {
         Self {
-            validate_with_conjure: None,
             skip: String::new(),
             parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
             rewriter: vec!["optimised".to_string()],

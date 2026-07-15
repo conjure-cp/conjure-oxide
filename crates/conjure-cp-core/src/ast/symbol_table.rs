@@ -20,6 +20,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 use super::comprehension::Comprehension;
+use super::declaration::declaration_content_generation;
 use super::serde::{AsId, DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
     DeclarationPtr, DomainPtr, Expression, GroundDomain, Model, Moo, Name, ReturnType, Typeable,
@@ -216,7 +217,7 @@ impl Hash for SymbolTablePtrInner {
 
 impl PartialEq for SymbolTablePtrInner {
     fn eq(&self, other: &Self) -> bool {
-        self.value.read().eq(&other.value.read())
+        self.id == other.id
     }
 }
 
@@ -270,8 +271,16 @@ pub struct SymbolTable {
     #[serde(default, skip_serializing)]
     local_bindings_xor: u64,
 
+    #[serde(default, skip_serializing)]
+    /// Declaration generation represented by `local_bindings_xor`.
+    local_bindings_generation: u64,
+
     #[serde(default = "default_context_hash_cache", skip_serializing)]
     context_hash_cache: AtomicU64,
+
+    #[serde(default = "default_context_hash_cache", skip_serializing)]
+    /// Declaration generation represented by `context_hash_cache`.
+    context_hash_generation: AtomicU64,
 }
 
 impl Clone for SymbolTable {
@@ -281,7 +290,9 @@ impl Clone for SymbolTable {
             parent: self.parent.clone(),
             next_machine_name: self.next_machine_name,
             local_bindings_xor: self.local_bindings_xor,
+            local_bindings_generation: self.local_bindings_generation,
             context_hash_cache: AtomicU64::new(NO_CONTEXT_HASH),
+            context_hash_generation: AtomicU64::new(0),
         }
     }
 }
@@ -321,7 +332,9 @@ impl SymbolTable {
             next_machine_name: 0,
             parent,
             local_bindings_xor: 0,
+            local_bindings_generation: declaration_content_generation(),
             context_hash_cache: AtomicU64::new(NO_CONTEXT_HASH),
+            context_hash_generation: AtomicU64::new(0),
         }
     }
 
@@ -342,6 +355,14 @@ impl SymbolTable {
         self.local_bindings_xor = self.table.iter().fold(0u64, |acc, (name, declaration)| {
             acc ^ Self::binding_contribution(name, declaration)
         });
+        self.local_bindings_generation = declaration_content_generation();
+    }
+
+    /// Recomputes the incremental binding hash after shared declaration mutation.
+    fn ensure_local_binding_hashes_current(&mut self) {
+        if self.local_bindings_generation != declaration_content_generation() {
+            self.recompute_local_bindings_xor();
+        }
     }
 
     pub(crate) fn refresh_local_binding_hashes(&mut self) {
@@ -360,6 +381,7 @@ impl SymbolTable {
     pub(crate) fn invalidate_context_hash_cache(&mut self) {
         self.context_hash_cache
             .store(NO_CONTEXT_HASH, Ordering::Relaxed);
+        self.context_hash_generation.store(0, Ordering::Relaxed);
     }
 
     /// Returns a cached hash of all declarations visible from this scope.
@@ -367,18 +389,35 @@ impl SymbolTable {
     /// This hashes declaration values, not pointer identity, so rewrite caches remain valid across
     /// equivalent symbol states.
     pub fn context_hash(&self) -> u64 {
+        let declaration_generation = declaration_content_generation();
+        let cached_generation = self.context_hash_generation.load(Ordering::Acquire);
         let cached = self.context_hash_cache.load(Ordering::Relaxed);
-        if cached != NO_CONTEXT_HASH {
+        if cached != NO_CONTEXT_HASH && cached_generation == declaration_generation {
             return cached;
         }
 
-        let hash = if self.parent.is_none() {
-            Self::finalize_context_hash(self.local_bindings_xor, self.table.len())
-        } else {
-            self.compute_scoped_context_hash()
-        };
-        self.context_hash_cache.store(hash, Ordering::Relaxed);
-        hash
+        loop {
+            let generation_before = declaration_content_generation();
+            let hash = if self.parent.is_none() {
+                let bindings_xor = if self.local_bindings_generation == generation_before {
+                    self.local_bindings_xor
+                } else {
+                    self.table.iter().fold(0u64, |acc, (name, declaration)| {
+                        acc ^ Self::binding_contribution(name, declaration)
+                    })
+                };
+                Self::finalize_context_hash(bindings_xor, self.table.len())
+            } else {
+                self.compute_scoped_context_hash()
+            };
+            let generation_after = declaration_content_generation();
+            if generation_before == generation_after {
+                self.context_hash_cache.store(hash, Ordering::Relaxed);
+                self.context_hash_generation
+                    .store(generation_after, Ordering::Release);
+                break hash;
+            }
+        }
     }
 
     fn compute_scoped_context_hash(&self) -> u64 {
@@ -429,6 +468,7 @@ impl SymbolTable {
     ///
     /// Returns `None` if there is already a symbol with this name in the local scope.
     pub fn insert(&mut self, declaration: DeclarationPtr) -> Option<()> {
+        self.ensure_local_binding_hashes_current();
         let name = declaration.name().clone();
         let contribution = Self::binding_contribution(&name, &declaration);
         if let Entry::Vacant(e) = self.table.entry(name) {
@@ -443,6 +483,7 @@ impl SymbolTable {
 
     /// Updates or adds a declaration in the immediate local scope.
     pub fn update_insert(&mut self, declaration: DeclarationPtr) {
+        self.ensure_local_binding_hashes_current();
         let name = declaration.name().clone();
         if let Some(existing) = self.table.get(&name).cloned() {
             self.xor_binding_out(&name, &existing);
@@ -499,6 +540,7 @@ impl SymbolTable {
     /// Extends the symbol table with the given symbol table, updating the gensym counter if
     /// necessary.
     pub fn extend(&mut self, other: SymbolTable) {
+        self.ensure_local_binding_hashes_current();
         if other.table.keys().count() > self.table.keys().count() {
             let new_vars = other.table.keys().collect::<BTreeSet<_>>();
             let old_vars = self.table.keys().collect::<BTreeSet<_>>();
@@ -634,9 +676,6 @@ impl SymbolTable {
 
         let reprs = vec![repr_init_fn(name, self)?];
 
-        // Get mutable access to the variable part
-        let mut var = decl.as_find_mut()?;
-
         for repr_instance in &reprs {
             repr_instance
                 .declaration_down()
@@ -645,6 +684,9 @@ impl SymbolTable {
                 .for_each(|x| self.update_insert(x));
         }
 
+        // Do not hold the declaration write lock while inserting represented variables:
+        // `update_insert` may refresh content hashes and read this declaration.
+        let mut var = decl.as_find_mut()?;
         var.representations.push(reprs.clone());
 
         Some(reprs)
@@ -806,5 +848,67 @@ impl Biplate<Model> for SymbolTable {
             expr_ctx(expr_tree)
         });
         (submodel_tree, ctx)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+
+    use super::*;
+    use crate::ast::{Domain, Range, Reference};
+
+    #[test]
+    fn reference_observes_in_place_domain_update() {
+        let old_domain = Domain::int(vec![Range::Bounded(1, 3)]);
+        let new_domain = Domain::int(vec![Range::Bounded(1, 2)]);
+        let mut declaration = DeclarationPtr::new_find(Name::user("x"), old_domain);
+        let reference = Reference::new(declaration.clone());
+        let original_id = reference.id();
+
+        declaration.as_find_mut().unwrap().domain = new_domain.clone();
+
+        assert_eq!(reference.id(), original_id);
+        assert_eq!(reference.domain(), Some(new_domain));
+    }
+
+    #[test]
+    fn context_hash_observes_shared_declaration_update() {
+        let mut symbols = SymbolTable::new();
+        let mut declaration =
+            DeclarationPtr::new_find(Name::user("x"), Domain::int(vec![Range::Bounded(1, 3)]));
+        symbols.insert(declaration.clone()).unwrap();
+        let before = symbols.context_hash();
+
+        declaration.as_find_mut().unwrap().domain = Domain::int(vec![Range::Bounded(1, 2)]);
+
+        assert_ne!(symbols.context_hash(), before);
+    }
+
+    #[test]
+    fn child_context_hash_observes_parent_declaration_update() {
+        let parent = SymbolTablePtr::new();
+        let mut declaration =
+            DeclarationPtr::new_find(Name::user("x"), Domain::int(vec![Range::Bounded(1, 3)]));
+        parent.write().insert(declaration.clone()).unwrap();
+        let child = SymbolTable::with_parent(parent);
+        let before = child.context_hash();
+
+        declaration.as_find_mut().unwrap().domain = Domain::int(vec![Range::Bounded(1, 2)]);
+
+        assert_ne!(child.context_hash(), before);
+    }
+
+    #[test]
+    fn symbol_table_pointer_equality_and_hash_are_identity_based() {
+        let left = SymbolTablePtr::new();
+        let right = SymbolTablePtr::new();
+        assert_ne!(left, right);
+
+        let mut left_hasher = DefaultHasher::new();
+        left.hash(&mut left_hasher);
+        let mut clone_hasher = DefaultHasher::new();
+        left.clone().hash(&mut clone_hasher);
+        assert_eq!(left_hasher.finish(), clone_hasher.finish());
     }
 }
