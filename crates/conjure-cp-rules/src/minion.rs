@@ -868,7 +868,15 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => Moo::unwrap_or_clone(es.clone()),
     };
 
-    let es = matrix_expr.unwrap_list().ok_or(RuleNotApplicable)?;
+    let es = matrix_expr
+        .clone()
+        .unwrap_list()
+        .or_else(|| {
+            matrix_expr
+                .unwrap_matrix_unchecked()
+                .map(|(elements, _)| elements)
+        })
+        .ok_or(RuleNotApplicable)?;
 
     let atoms = es
         .into_iter()
