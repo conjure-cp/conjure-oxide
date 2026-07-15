@@ -4,8 +4,8 @@ use crate::representation::MatrixToAtom;
 use crate::utils::{eval_to_usize, to_aux_var};
 use conjure_cp::ast::matrix::unflatten_matrix;
 use conjure_cp::ast::{
-    Atom, DeclarationKind, Expression, GroundDomain, Metadata, Moo, Range, Reference, SymbolTable,
-    eval_constant,
+    Atom, DeclarationKind, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, Reference,
+    SymbolTable, eval_constant,
 };
 use conjure_cp::bug::UnwrapOrBug;
 use conjure_cp::into_matrix_expr;
@@ -112,14 +112,12 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
         let Expression::SafeIndex(_, subject, indices) = expr &&
         let Expression::Atomic(_, Atom::Reference(re)) = &**subject &&
         // ...into a variable represented by MatrixToAtom
-        let Some(mta) = re.ptr().get_repr::<MatrixToAtom>() &&
-        // ...which has a matrix domain
-        let dom = re.domain().ok_or(RuleNotApplicable)? &&
-        let Some((_, idx_doms)) = dom.as_matrix()
+        let Some(mta) = re.ptr().get_repr::<MatrixToAtom>()
         else {
             return Err(RuleNotApplicable);
         }
     );
+    let idx_doms = &mta.index_domains;
 
     // All indices that evaluate to a literal are resolved immediately;
     // The rest of the matrix is put into a flat slice which we index by the remaining indices
@@ -163,7 +161,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
         // indexing expression and domain for that dimension
         let mut idx_expr = indices[di].clone();
         let idx_dom = &idx_doms[di];
-        let idx_dom_gd = idx_dom.as_ground().expect("idx doms must be ground");
+        let idx_dom_gd = idx_dom.as_ref();
 
         // if indexing expr is compound, extract it into an auxvar
         // for the stuff that comes below...
@@ -199,7 +197,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
                 // to avoid over-constraining the original `idx_expr`, add a case for when it falls
                 // out of matrix bounds; bubbling rules should have dealt with this previously anyway
                 let default_case =
-                    Expression::InDomain(Metadata::new(), Moo::new(idx_expr), idx_dom.clone());
+                    Expression::InDomain(Metadata::new(), Moo::new(idx_expr), idx_dom.into());
                 eq_cases.push(essence_expr!(!&default_case));
                 let eq_cases_disj =
                     Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(eq_cases)));
@@ -235,19 +233,17 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
         let Expression::SafeSlice(_, subject, dim_slices) = expr &&
         let Expression::Atomic(_, Atom::Reference(re)) = &**subject &&
         // ...into a variable represented by MatrixToAtom
-        let Some(mta) = re.ptr().get_repr::<MatrixToAtom>() &&
-        // ...which has a matrix domain
-        let dom = re.domain().ok_or(RuleNotApplicable)? &&
-        let Some((_, idx_doms)) = dom.as_matrix()
+        let Some(mta) = re.ptr().get_repr::<MatrixToAtom>()
         else {
             return Err(RuleNotApplicable);
         }
     );
+    let idx_doms = &mta.index_domains;
 
     // All indices that evaluate to a literal are resolved immediately;
     // The rest of the matrix is put into a flat slice which we index by the remaining indices
     let mut slices = Vec::new();
-    let mut new_index_domains = Vec::new();
+    let mut new_index_domains: Vec<DomainPtr> = Vec::new();
     let mut new_indices = Vec::new();
     for (i, dim_slice) in dim_slices.iter().enumerate() {
         if let Some(idx_expr) = dim_slice
@@ -257,7 +253,7 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
         } else {
             slices.push(Range::Unbounded);
             new_indices.push(dim_slice.clone());
-            new_index_domains.push(idx_doms[i].clone());
+            new_index_domains.push((&idx_doms[i]).into());
         }
         // TODO: The above handles indices or `..` slices but not `a..b`
         //       Add handling of `a..b` when range expressions are supported by AST / parser
@@ -359,7 +355,9 @@ fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationR
                 changed = true;
                 let elem_refs: Vec<Expression> =
                     mta.flat_elem_refs().map(Expression::from).collect();
-                into_matrix_expr!(elem_refs)
+                let index_domains: Vec<DomainPtr> =
+                    mta.index_domains.iter().map(Into::into).collect();
+                unflatten_matrix(&elem_refs, &index_domains, &mta.strides)
             } else {
                 expr
             }
