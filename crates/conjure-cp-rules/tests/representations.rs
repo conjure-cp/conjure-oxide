@@ -1,6 +1,10 @@
 use conjure_cp::ast::records::Field;
-use conjure_cp::ast::{AbstractLiteral, Domain, Literal, Name, SetAttr, SymbolTable};
+use conjure_cp::ast::{
+    AbstractLiteral, Domain, Expression, Literal, Metadata, Moo, Name, Reference, SetAttr,
+    SymbolTable, run_partial_evaluator,
+};
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
+use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
     MatrixToAtom, RecordToTuple, SetExplicitWithSize, SetOccurrence, TuplePacked,
@@ -58,7 +62,7 @@ fn record_to_tuple_round_trips_values_in_field_order() {
         },
     ]));
 
-    let assignment = state.down(value.clone()).unwrap();
+    let assignment = state.down(value).unwrap();
     assert_eq!(
         assignment.up(),
         Literal::AbstractLiteral(AbstractLiteral::Record(vec![
@@ -72,6 +76,38 @@ fn record_to_tuple_round_trips_values_in_field_order() {
             },
         ]))
     );
+}
+
+#[test]
+fn represented_record_equal_to_tuple_is_not_folded_to_false() {
+    let domain = Domain::record(vec![
+        Field {
+            name: Name::user("a"),
+            value: Domain::bool(),
+        },
+        Field {
+            name: Name::user("b"),
+            value: domain_int!(0..9),
+        },
+    ]);
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    RecordToTuple::init_for(&mut declaration).unwrap();
+
+    let tuple = Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+        Literal::Bool(false),
+        Literal::Int(4),
+    ]));
+    let comparison = Expression::Eq(
+        Metadata::new(),
+        Moo::new(Reference::new(declaration).into()),
+        Moo::new(tuple.into()),
+    );
+
+    assert!(matches!(
+        run_partial_evaluator(&comparison),
+        Err(RuleNotApplicable)
+    ));
 }
 
 #[test]

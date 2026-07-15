@@ -166,6 +166,14 @@ fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, boo
     let expr_domain = resolved_ground_domain_of_for_partial_eval(expr)?;
 
     if !expr_domain.contains(lit).ok()? {
+        // A representation rewrite can temporarily leave one side in its source shape and the
+        // other in its represented shape (for example, `record = tuple`). The source domain does
+        // not contain represented literals, but that does not make the original comparison false.
+        if let Expr::Atomic(_, Atom::Reference(reference)) = expr
+            && !reference.ptr().reprs().is_empty()
+        {
+            return None;
+        }
         return Some((false, true));
     }
 

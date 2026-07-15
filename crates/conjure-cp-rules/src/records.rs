@@ -75,9 +75,11 @@ fn record_abslit_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResu
 }
 
 /// Convert all references to a record variable outside of indexing expressions to a tuple
-#[register_rule("ReprGeneral", 9400)]
+#[register_rule("ReprGeneral", 9700)]
 fn ref_record_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    if let Expression::SafeIndex(..) | Expression::UnsafeIndex(..) = expr {
+    if let Expression::SafeIndex(..) | Expression::UnsafeIndex(..) | Expression::RecordField(..) =
+        expr
+    {
         return Err(RuleNotApplicable);
     };
 
@@ -91,6 +93,22 @@ fn ref_record_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult 
             {
                 changed = true;
                 Reference::new(repr.tuple.clone()).into()
+            } else if let Expression::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(ents))),
+            ) = &expr
+            {
+                changed = true;
+                let mut ents = ents.clone();
+                ents.sort();
+                let tuple = AbstractLiteral::Tuple(ents.into_iter().map(|x| x.value).collect());
+                Expression::Atomic(Metadata::new(), Atom::Literal(tuple.into()))
+            } else if let Expression::AbstractLiteral(_, AbstractLiteral::Record(ents)) = &expr {
+                changed = true;
+                let mut ents = ents.clone();
+                ents.sort();
+                let tuple = AbstractLiteral::Tuple(ents.into_iter().map(|x| x.value).collect());
+                Expression::AbstractLiteral(Metadata::new(), tuple)
             } else {
                 expr
             }
