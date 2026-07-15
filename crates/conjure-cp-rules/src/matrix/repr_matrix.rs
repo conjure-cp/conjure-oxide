@@ -1,4 +1,3 @@
-use crate::bottom_up_adaptor::as_bottom_up;
 use crate::guard;
 use crate::representation::MatrixToAtom;
 use crate::utils::{eval_to_usize, to_aux_var};
@@ -90,13 +89,26 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
 /// ~~>
 /// [m_1_1_2, m_1_2_2, m_1_3_2][x] = true
 /// ```
-#[register_rule("ReprMatrixToAtom", 5000)]
+#[register_rule("ReprMatrixToAtom", 5000, [SafeIndex])]
 fn index_matrix_to_atom(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-    // If we apply this rule top-down, nested indices (e.g m[m[i]]) become a pathological case:
-    // The outer one is unwrapped first, creating a massive expression with lots of copies of m[i],
-    // and so on (getting exponentially worse with each dimension).
-    // Instead, we want to convert the inner `m[i]`, *then* the outer `m[m[i]]`.
-    as_bottom_up(index_matrix_to_atom_impl)(expr, symbols)
+    // Rewriting an outer index first can duplicate nested indices exponentially (e.g. m[m[i]]).
+    // Defer it until every represented-matrix index below it has been rewritten.
+    if expr.universe().iter().skip(1).any(is_matrix_to_atom_index) {
+        return Err(RuleNotApplicable);
+    }
+    index_matrix_to_atom_impl(expr, symbols)
+}
+
+fn is_matrix_to_atom_index(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::SafeIndex(_, subject, _)
+            if matches!(
+                subject.as_ref(),
+                Expression::Atomic(_, Atom::Reference(re))
+                    if re.ptr().get_repr::<MatrixToAtom>().is_some()
+            )
+    )
 }
 
 pub(crate) fn try_index_matrix_to_atom(
@@ -226,7 +238,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
     ))
 }
 
-#[register_rule("ReprMatrixToAtom", 5000)]
+#[register_rule("ReprMatrixToAtom", 5000, [SafeSlice])]
 fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     guard!(
         // this is a safe slicing expression
@@ -314,7 +326,7 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
 /// ~>
 /// [x_MatrixToAtom_1, ..., x_MatrixToAtom_N]
 /// ```
-#[register_rule("ReprMatrixToAtom", 5000)]
+#[register_rule("ReprMatrixToAtom", 5000, [Flatten])]
 fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expression::Flatten(_, dims, subj) = expr            &&

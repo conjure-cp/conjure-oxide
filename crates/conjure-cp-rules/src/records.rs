@@ -1,4 +1,3 @@
-use crate::bottom_up_adaptor::as_bottom_up;
 use crate::guard;
 use crate::representation::record_to_tuple::RecordToTuple;
 use conjure_cp::ast::{
@@ -21,12 +20,8 @@ use uniplate::Uniplate;
 /// ```plain
 /// x: record { a : bool, b : int(0..9) }
 /// ```
-#[register_rule("ReprGeneral", 9500)]
-fn index_record_to_tuple(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-    as_bottom_up(index_record_to_tuple_impl)(expr, symbols)
-}
-
-fn index_record_to_tuple_impl(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+#[register_rule("ReprGeneral", 9500, [RecordField])]
+fn index_record_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expression::RecordField(_, rec_expr, field_name) = expr        &&
         let Expression::Atomic(_, Atom::Reference(re)) = rec_expr.as_ref() &&
