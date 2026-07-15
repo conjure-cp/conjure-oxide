@@ -1,0 +1,25 @@
+Model before rewriting:
+
+find x: int(-5..5)
+find y: int(-5..5)
+
+such that
+
+(sum([|-(x)|,|-(y)|;int(1..)]) = 10)
+
+--
+
+Final model:
+
+find x: int(-5..5)
+find y: int(-5..5)
+find __0: int(0..5)
+find __1: int(0..5)
+
+such that
+
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+AbsEq(__0,x),
+AbsEq(__1,y)
+

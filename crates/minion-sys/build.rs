@@ -85,6 +85,7 @@ fn bind() {
         .allowlist_function("instance_new")
         .allowlist_function("instance_free")
         .allowlist_function("instance_addSearchOrder")
+        .allowlist_function("instance_setOptimise")
         .allowlist_function("instance_addConstraint")
         .allowlist_function("instance_addTupleTableSymbol")
         .allowlist_function("instance_getTupleTableSymbol")

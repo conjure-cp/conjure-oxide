@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Calculates RustDoc coverage, pretty printing the resulting tables as Github
-# Flavoured Markdown for consumption by Github Actions.
+# Calculates RustDoc coverage, pretty printing the resulting tables as GitHub
+# Flavoured Markdown for consumption by GitHub Actions.
 #
 # Author: niklasdewally
 # Date: 2024/12/04

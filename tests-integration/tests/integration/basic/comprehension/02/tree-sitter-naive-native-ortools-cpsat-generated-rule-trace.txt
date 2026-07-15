@@ -1,0 +1,136 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find n: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+and([ (n[i] = (6 - i)) | i : int(1..5) ]),
+and([ ((n[i] < 5)) -> ((m[i] = i)) | i : int(1..5), (i < 4) ])
+
+--
+
+[ (n[i] = (6 - i)) | i : int(1..5) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(n[1] = 5),(n[2] = 4),(n[3] = 3),(n[4] = 2),(n[5] = 1);int(1..)]
+
+--
+
+and([(n[1] = 5),(n[2] = 4),(n[3] = 3),(n[4] = 2),(n[5] = 1);int(1..)]),
+and([ ((n[i] < 5)) -> ((m[i] = i)) | i : int(1..5), (i < 4) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(n[1] = 5),
+(n[2] = 4),
+(n[3] = 3),
+(n[4] = 2),
+(n[5] = 1),
+and([ ((n[i] < 5)) -> ((m[i] = i)) | i : int(1..5), (i < 4) ])
+
+--
+
+n[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n,[1])
+
+--
+
+n[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n,[2])
+
+--
+
+n[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n,[3])
+
+--
+
+n[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n,[4])
+
+--
+
+n[5], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n,[5])
+
+--
+
+[ ((n[i] < 5)) -> ((m[i] = i)) | i : int(1..5), (i < 4) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[((n[1] < 5)) -> ((m[1] = 1)),((n[2] < 5)) -> ((m[2] = 2)),((n[3] < 5)) -> ((m[3] = 3));int(1..)]
+
+--
+
+(SafeIndex(n,[1]) = 5),
+(SafeIndex(n,[2]) = 4),
+(SafeIndex(n,[3]) = 3),
+(SafeIndex(n,[4]) = 2),
+(SafeIndex(n,[5]) = 1),
+and([((n[1] < 5)) -> ((m[1] = 1)),((n[2] < 5)) -> ((m[2] = 2)),((n[3] < 5)) -> ((m[3] = 3));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafeIndex(n,[1]) = 5),
+(SafeIndex(n,[2]) = 4),
+(SafeIndex(n,[3]) = 3),
+(SafeIndex(n,[4]) = 2),
+(SafeIndex(n,[5]) = 1),
+((n[1] < 5)) -> ((m[1] = 1)),
+((n[2] < 5)) -> ((m[2] = 2)),
+((n[3] < 5)) -> ((m[3] = 3))
+
+--
+
+n[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n,[1])
+
+--
+
+m[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m,[1])
+
+--
+
+n[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n,[2])
+
+--
+
+m[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m,[2])
+
+--
+
+n[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n,[3])
+
+--
+
+m[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m,[3])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find n: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+(SafeIndex(n,[1]) = 5),
+(SafeIndex(n,[2]) = 4),
+(SafeIndex(n,[3]) = 3),
+(SafeIndex(n,[4]) = 2),
+(SafeIndex(n,[5]) = 1),
+((SafeIndex(n,[1]) < 5)) -> ((SafeIndex(m,[1]) = 1)),
+((SafeIndex(n,[2]) < 5)) -> ((SafeIndex(m,[2]) = 2)),
+((SafeIndex(n,[3]) < 5)) -> ((SafeIndex(m,[3]) = 3))
+

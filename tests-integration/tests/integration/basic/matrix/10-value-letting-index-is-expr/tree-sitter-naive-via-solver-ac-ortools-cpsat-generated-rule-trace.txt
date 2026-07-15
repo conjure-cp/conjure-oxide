@@ -1,0 +1,26 @@
+Model before rewriting:
+
+letting a be [[1,2,3;int(1..3)],[4,5,6;int(1..3)],[7,8,9;int(1..3)];int(1..3)]
+find i: int(1..2)
+
+such that
+
+(a[i, i] = i)
+
+--
+
+a[i, i], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[i, i])
+
+--
+
+Final model:
+
+letting a be [[1,2,3;int(1..3)],[4,5,6;int(1..3)],[7,8,9;int(1..3)];int(1..3)]
+find i: int(1..2)
+
+such that
+
+(SafeIndex(a,[i, i]) = i)
+

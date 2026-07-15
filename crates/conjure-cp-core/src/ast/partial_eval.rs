@@ -7,7 +7,7 @@ use crate::{
         Metadata, Moo, Range, ReturnType,
     },
     into_matrix_expr,
-    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
 use itertools::iproduct;
 use uniplate::Uniplate;
@@ -202,7 +202,37 @@ fn simplify_reflexive_comparison(x: &Expr, y: &Expr) -> Option<(bool, bool)> {
     None
 }
 
+fn simplify_reflexive_comparison_with_mode(
+    x: &Expr,
+    y: &Expr,
+    mode: PartialEvalMode,
+) -> Option<(bool, bool)> {
+    match mode {
+        PartialEvalMode::Deep => simplify_reflexive_comparison(x, y),
+        PartialEvalMode::Local => x.identical_atom_to(y).then_some((true, false)),
+    }
+}
+
 pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
+    run_partial_evaluator_with_mode(expr, PartialEvalMode::Deep)
+}
+
+/// Partially evaluates `expr` using only information already available at the focused node.
+///
+/// This is intended for the main rewriter, where recursive simplification is supplied by the
+/// scheduler. Use [`run_partial_evaluator`] when a caller explicitly wants semantic checks that
+/// can inspect referenced expressions.
+pub fn run_partial_evaluator_local(expr: &Expr) -> ApplicationResult {
+    run_partial_evaluator_with_mode(expr, PartialEvalMode::Local)
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PartialEvalMode {
+    Deep,
+    Local,
+}
+
+fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> ApplicationResult {
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
@@ -218,12 +248,17 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Comprehension(_, _) => Err(RuleNotApplicable),
         Expr::AbstractComprehension(_, _) => Err(RuleNotApplicable),
         Expr::DominanceRelation(_, _) => Err(RuleNotApplicable),
+        Expr::TypeAnnotation(_, _, _) => Err(RuleNotApplicable),
+        Expr::DomainAnnotation(_, _, _) => Err(RuleNotApplicable),
         Expr::FromSolution(_, _) => Err(RuleNotApplicable),
         Expr::Metavar(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::Table(_, _, _) => Err(RuleNotApplicable),
         Expr::NegativeTable(_, _, _) => Err(RuleNotApplicable),
+        Expr::AtLeast(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::AtMost(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => Err(RuleNotApplicable),
         Expr::RecordField(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {
             // partially evaluate matrix literals indexed by a constant.
@@ -250,9 +285,9 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                     .clone();
 
                 if indices.len() == 1 {
-                    Ok(Reduction::pure(selected))
+                    Ok(RuleEffect::pure(selected))
                 } else {
-                    Ok(Reduction::pure(Expr::SafeIndex(
+                    Ok(RuleEffect::pure(Expr::SafeIndex(
                         Metadata::new(),
                         Moo::new(selected),
                         indices[1..].to_vec(),
@@ -264,8 +299,10 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         }
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::InDomain(_, x, domain) => {
-            if let Some(result) = simplify_in_domain(x, domain) {
-                Ok(Reduction::pure(Expr::Atomic(
+            if mode == PartialEvalMode::Deep
+                && let Some(result) = simplify_in_domain(x, domain)
+            {
+                Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     result.into(),
                 )))
@@ -283,7 +320,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
 
                 // if the declaration's domain is a subset of domain, expr is always true.
                 if &intersection == decl_domain.as_ref() {
-                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
+                    Ok(RuleEffect::pure(Expr::Atomic(Metadata::new(), true.into())))
                 }
                 // if no elements of declaration's domain are in the domain (i.e. they have no
                 // intersection), expr is always false.
@@ -295,7 +332,10 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 else if let Ok(values_in_domain) = intersection.values_i32()
                     && values_in_domain.is_empty()
                 {
-                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
+                    Ok(RuleEffect::pure(Expr::Atomic(
+                        Metadata::new(),
+                        false.into(),
+                    )))
                 } else {
                     Err(RuleNotApplicable)
                 }
@@ -305,9 +345,12 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                     .and_then(|gd| gd.contains(lit))
                     .map_err(|_| RuleNotApplicable)?
                 {
-                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
+                    Ok(RuleEffect::pure(Expr::Atomic(Metadata::new(), true.into())))
                 } else {
-                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
+                    Ok(RuleEffect::pure(Expr::Atomic(
+                        Metadata::new(),
+                        false.into(),
+                    )))
                 }
             } else {
                 Err(RuleNotApplicable)
@@ -318,7 +361,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             //
             // check if cond is true and pop the bubble!
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(true))) = cond.as_ref() {
-                Ok(Reduction::pure(Moo::unwrap_or_clone(expr.clone())))
+                Ok(RuleEffect::pure(Moo::unwrap_or_clone(expr.clone())))
             } else {
                 Err(RuleNotApplicable)
             }
@@ -326,13 +369,13 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Atomic(_, _) => Err(RuleNotApplicable),
         Expr::ToInt(_, expression) => {
             if expression.return_type() == ReturnType::Int {
-                Ok(Reduction::pure(Moo::unwrap_or_clone(expression.clone())))
+                Ok(RuleEffect::pure(Moo::unwrap_or_clone(expression.clone())))
             } else {
                 Err(RuleNotApplicable)
             }
         }
         Expr::Abs(m, e) => match e.as_ref() {
-            Expr::Neg(_, inner) => Ok(Reduction::pure(Expr::Abs(m.clone(), inner.clone()))),
+            Expr::Neg(_, inner) => Ok(RuleEffect::pure(Expr::Abs(m.clone(), inner.clone()))),
             _ => Err(RuleNotApplicable),
         },
         Expr::Sum(m, vec) => {
@@ -360,7 +403,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Expr::Sum(
+                Ok(RuleEffect::pure(Expr::Sum(
                     m.clone(),
                     Moo::new(into_matrix_expr![new_vec]),
                 )))
@@ -396,20 +439,20 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if acc == 0 {
                 // if safe, 0 * exprs ~> 0
                 // otherwise, just return 0* exprs
-                if is_semantically_safe(&new_product) {
-                    Ok(Reduction::pure(Expr::Atomic(
+                if mode == PartialEvalMode::Deep && is_semantically_safe(&new_product) {
+                    Ok(RuleEffect::pure(Expr::Atomic(
                         Default::default(),
                         Atom::Literal(Lit::Int(0)),
                     )))
                 } else {
-                    Ok(Reduction::pure(new_product))
+                    Ok(RuleEffect::pure(new_product))
                 }
             } else if n_consts == 1 {
                 // acc !=0, only one constant
                 Err(RuleNotApplicable)
             } else {
                 // acc !=0, multiple constants found
-                Ok(Reduction::pure(new_product))
+                Ok(RuleEffect::pure(new_product))
             }
         }
 
@@ -445,7 +488,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Expr::Min(
+                Ok(RuleEffect::pure(Expr::Min(
                     m.clone(),
                     Moo::new(into_matrix_expr![new_vec]),
                 )))
@@ -485,7 +528,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Expr::Max(
+                Ok(RuleEffect::pure(Expr::Max(
                     m.clone(),
                     Moo::new(into_matrix_expr![new_vec]),
                 )))
@@ -496,22 +539,22 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 return Err(RuleNotApplicable);
             };
 
-            if !is_semantically_safe(e1) {
+            if mode == PartialEvalMode::Deep && !is_semantically_safe(e1) {
                 return Err(RuleNotApplicable);
             }
 
             match (p.as_ref(), q.as_ref()) {
                 (_, Expr::Atomic(_, Atom::Literal(Lit::Bool(true)))) => {
-                    Ok(Reduction::pure(Expr::from(false)))
+                    Ok(RuleEffect::pure(Expr::from(false)))
                 }
                 (_, Expr::Atomic(_, Atom::Literal(Lit::Bool(false)))) => {
-                    Ok(Reduction::pure(Moo::unwrap_or_clone(p.clone())))
+                    Ok(RuleEffect::pure(Moo::unwrap_or_clone(p.clone())))
                 }
                 (Expr::Atomic(_, Atom::Literal(Lit::Bool(true))), _) => {
-                    Ok(Reduction::pure(Expr::Not(Metadata::new(), q.clone())))
+                    Ok(RuleEffect::pure(Expr::Not(Metadata::new(), q.clone())))
                 }
                 (Expr::Atomic(_, Atom::Literal(Lit::Bool(false))), _) => {
-                    Ok(Reduction::pure(Expr::from(false)))
+                    Ok(RuleEffect::pure(Expr::from(false)))
                 }
                 _ => Err(RuleNotApplicable),
             }
@@ -532,7 +575,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                     // true ~~> entire or is true
                     // false ~~> remove false from the or
                     if x {
-                        return Ok(Reduction::pure(true.into()));
+                        return Ok(RuleEffect::pure(true.into()));
                     }
                 } else {
                     new_terms.push(expr);
@@ -541,19 +584,19 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
 
             // 2. check pairwise tautologies.
             if check_pairwise_or_tautologies(&new_terms) {
-                return Ok(Reduction::pure(true.into()));
+                return Ok(RuleEffect::pure(true.into()));
             }
 
             // 3. empty or ~~> false
             if new_terms.is_empty() {
-                return Ok(Reduction::pure(false.into()));
+                return Ok(RuleEffect::pure(false.into()));
             }
 
             if !has_changed {
                 return Err(RuleNotApplicable);
             }
 
-            Ok(Reduction::pure(Expr::Or(
+            Ok(RuleEffect::pure(Expr::Or(
                 m.clone(),
                 Moo::new(into_matrix_expr![new_terms]),
             )))
@@ -568,7 +611,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = expr {
                     has_const = true;
                     if !x {
-                        return Ok(Reduction::pure(Expr::Atomic(
+                        return Ok(RuleEffect::pure(Expr::Atomic(
                             Default::default(),
                             Atom::Literal(Lit::Bool(false)),
                         )));
@@ -581,7 +624,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if !has_const {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Expr::And(
+                Ok(RuleEffect::pure(Expr::And(
                     Metadata::new(),
                     Moo::new(into_matrix_expr![new_vec]),
                 )))
@@ -607,7 +650,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                         has_changed = true;
                         if !x {
                             // false
-                            return Ok(Reduction::pure(Expr::Root(
+                            return Ok(RuleEffect::pure(Expr::Root(
                                 Metadata::new(),
                                 vec![Expr::Atomic(
                                     Default::default(),
@@ -636,27 +679,27 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 if new_vec.is_empty() {
                     new_vec.push(true.into());
                 }
-                Ok(Reduction::pure(Expr::Root(Metadata::new(), new_vec)))
+                Ok(RuleEffect::pure(Expr::Root(Metadata::new(), new_vec)))
             }
         }
         Expr::Imply(_m, x, y) => {
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = x.as_ref() {
                 return if *x {
                     // (true) -> y ~~> y
-                    Ok(Reduction::pure(Moo::unwrap_or_clone(y.clone())))
+                    Ok(RuleEffect::pure(Moo::unwrap_or_clone(y.clone())))
                 } else {
                     // (false) -> y ~~> true
-                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
+                    Ok(RuleEffect::pure(Expr::Atomic(Metadata::new(), true.into())))
                 };
             };
 
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(y))) = y.as_ref() {
                 return if *y {
                     // x -> (true) ~~> true
-                    Ok(Reduction::pure(Expr::from(true)))
+                    Ok(RuleEffect::pure(Expr::from(true)))
                 } else {
                     // x -> (false) ~~> !x
-                    Ok(Reduction::pure(Expr::Not(Metadata::new(), x.clone())))
+                    Ok(RuleEffect::pure(Expr::Not(Metadata::new(), x.clone())))
                 };
             };
 
@@ -666,9 +709,11 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             // let identical-CSE turn them into identical variables first. Then, check if they are
             // identical variables.
 
-            if x.identical_atom_to(y.as_ref()) && is_semantically_safe(x) && is_semantically_safe(y)
+            if x.identical_atom_to(y.as_ref())
+                && (mode == PartialEvalMode::Local
+                    || (is_semantically_safe(x) && is_semantically_safe(y)))
             {
-                return Ok(Reduction::pure(true.into()));
+                return Ok(RuleEffect::pure(true.into()));
             }
 
             Err(RuleNotApplicable)
@@ -677,19 +722,19 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = x.as_ref() {
                 return if *x {
                     // (true) <-> y ~~> y
-                    Ok(Reduction::pure(Moo::unwrap_or_clone(y.clone())))
+                    Ok(RuleEffect::pure(Moo::unwrap_or_clone(y.clone())))
                 } else {
                     // (false) <-> y ~~> !y
-                    Ok(Reduction::pure(Expr::Not(Metadata::new(), y.clone())))
+                    Ok(RuleEffect::pure(Expr::Not(Metadata::new(), y.clone())))
                 };
             };
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(y))) = y.as_ref() {
                 return if *y {
                     // x <-> (true) ~~> x
-                    Ok(Reduction::pure(Moo::unwrap_or_clone(x.clone())))
+                    Ok(RuleEffect::pure(Moo::unwrap_or_clone(x.clone())))
                 } else {
                     // x <-> (false) ~~> !x
-                    Ok(Reduction::pure(Expr::Not(Metadata::new(), x.clone())))
+                    Ok(RuleEffect::pure(Expr::Not(Metadata::new(), x.clone())))
                 };
             };
 
@@ -699,30 +744,34 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             // let identical-CSE turn them into identical variables first. Then, check if they are
             // identical variables.
 
-            if x.identical_atom_to(y.as_ref()) && is_semantically_safe(x) && is_semantically_safe(y)
+            if x.identical_atom_to(y.as_ref())
+                && (mode == PartialEvalMode::Local
+                    || (is_semantically_safe(x) && is_semantically_safe(y)))
             {
-                return Ok(Reduction::pure(true.into()));
+                return Ok(RuleEffect::pure(true.into()));
             }
 
             Err(RuleNotApplicable)
         }
         Expr::Eq(_, x, y) => {
-            if let Some((eq_result, _)) = simplify_reflexive_comparison(x, y) {
-                Ok(Reduction::pure(Expr::Atomic(
+            if let Some((eq_result, _)) = simplify_reflexive_comparison_with_mode(x, y, mode) {
+                Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(eq_result)),
                 )))
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+            } else if mode == PartialEvalMode::Deep
+                && let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
                 && let Some((eq_result, _)) = simplify_comparison_with_literal(y, lit)
             {
-                Ok(Reduction::pure(Expr::Atomic(
+                Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(eq_result)),
                 )))
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+            } else if mode == PartialEvalMode::Deep
+                && let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
                 && let Some((eq_result, _)) = simplify_comparison_with_literal(x, lit)
             {
-                Ok(Reduction::pure(Expr::Atomic(
+                Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(eq_result)),
                 )))
@@ -731,22 +780,24 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             }
         }
         Expr::Neq(_, x, y) => {
-            if let Some((_, neq_result)) = simplify_reflexive_comparison(x, y) {
-                Ok(Reduction::pure(Expr::Atomic(
+            if let Some((_, neq_result)) = simplify_reflexive_comparison_with_mode(x, y, mode) {
+                Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(neq_result)),
                 )))
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+            } else if mode == PartialEvalMode::Deep
+                && let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
                 && let Some((_, neq_result)) = simplify_comparison_with_literal(y, lit)
             {
-                Ok(Reduction::pure(Expr::Atomic(
+                Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(neq_result)),
                 )))
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+            } else if mode == PartialEvalMode::Deep
+                && let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
                 && let Some((_, neq_result)) = simplify_comparison_with_literal(x, lit)
             {
-                Ok(Reduction::pure(Expr::Atomic(
+                Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(neq_result)),
                 )))
@@ -762,26 +813,29 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::Flatten(_, _, _) => Err(RuleNotApplicable), // TODO: check if anything can be done here
         Expr::AllDiff(m, e) => {
-            let Some(vec) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
+            let Some((vec, _)) = Moo::unwrap_or_clone(e.clone()).unwrap_matrix_unchecked() else {
                 return Err(RuleNotApplicable);
             };
 
-            let mut consts: HashSet<i32> = HashSet::new();
+            let mut consts: HashSet<Lit> = HashSet::new();
 
-            // check for duplicate constant values which would fail the constraint
+            // A fully constant allDiff can be decided immediately.
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr
-                    && !consts.insert(x)
-                {
-                    return Ok(Reduction::pure(Expr::Atomic(
+                let Expr::Atomic(_, Atom::Literal(lit)) = expr else {
+                    return Err(RuleNotApplicable);
+                };
+                if !consts.insert(lit) {
+                    return Ok(RuleEffect::pure(Expr::Atomic(
                         m.clone(),
                         Atom::Literal(Lit::Bool(false)),
                     )));
                 }
             }
 
-            // nothing has changed
-            Err(RuleNotApplicable)
+            Ok(RuleEffect::pure(Expr::Atomic(
+                m.clone(),
+                Atom::Literal(Lit::Bool(true)),
+            )))
         }
         Expr::Neg(_, _) => Err(RuleNotApplicable),
         Expr::Factorial(_, _) => Err(RuleNotApplicable),
@@ -841,6 +895,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::LexGeq(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLeq(_, _, _) => Err(RuleNotApplicable),
+        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => Err(RuleNotApplicable),
     }
 }
 

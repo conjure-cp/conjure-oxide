@@ -1,0 +1,28 @@
+Model before rewriting:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+(product([product([x,y;int(1..)]),z;int(1..)]) < 15)
+
+--
+
+product([product([x,y;int(1..)]),z;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([x,y,z;int(1..)])
+
+--
+
+Final model:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+(product([x,y,z;int(1..)]) < 15)
+

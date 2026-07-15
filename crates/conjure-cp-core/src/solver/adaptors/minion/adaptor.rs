@@ -94,6 +94,23 @@ fn translate_solution(
     conjure_solutions
 }
 
+fn translate_and_add_represented_values(
+    solutions: HashMap<minion_ast::VarName, minion_ast::Constant>,
+    model_template: Option<&ConjureModel>,
+) -> HashMap<conjure_ast::Name, conjure_ast::Literal> {
+    let mut conjure_solutions = translate_solution(solutions);
+    if let Some(model_template) = model_template {
+        add_represented_decision_values(&mut conjure_solutions, model_template);
+    }
+    conjure_solutions
+}
+
+fn has_explicit_false_constraint(constraints: &[minion_ast::Constraint]) -> bool {
+    constraints
+        .iter()
+        .any(|constraint| matches!(constraint, minion_ast::Constraint::False))
+}
+
 impl private::Sealed for Minion {}
 
 impl Minion {
@@ -137,6 +154,9 @@ impl SolverAdaptor for Minion {
         let dominance_model_template = self.dominance_model_template.clone();
         let mut midsearch_error: Option<SolverError> = None;
         let base_model = self.model.as_ref().expect("STATE MACHINE ERR");
+        let has_no_minion_vars = base_model.named_variables.get_variable_order().is_empty();
+        let has_false_constraint = has_explicit_false_constraint(&base_model.constraints);
+        let model_template = dominance_model_template.as_ref();
         let mut known_var_names = base_model
             .named_variables
             .get_variable_order()
@@ -150,10 +170,8 @@ impl SolverAdaptor for Minion {
             Box::new(|solutions| {
                 any_solutions = true;
                 solution_ordinal += 1;
-                let mut conjure_solutions = translate_solution(solutions);
-                if let Some(model_template) = dominance_model_template.as_ref() {
-                    add_represented_decision_values(&mut conjure_solutions, model_template);
-                }
+                let conjure_solutions =
+                    translate_and_add_represented_values(solutions, model_template);
 
                 let continue_search = callback(conjure_solutions.clone());
                 if !continue_search {
@@ -183,6 +201,15 @@ impl SolverAdaptor for Minion {
 
         if let Some(err) = midsearch_error {
             return Err(err);
+        }
+
+        if !any_solutions && has_no_minion_vars && !has_false_constraint {
+            any_solutions = true;
+            let conjure_solutions =
+                translate_and_add_represented_values(HashMap::new(), model_template);
+            if !callback(conjure_solutions) {
+                user_terminated = true;
+            }
         }
 
         let status = if user_terminated {

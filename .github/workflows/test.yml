@@ -88,6 +88,17 @@ jobs:
       if: ${{ matrix.rust_release == 'nightly' }}
       run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
+    - name: Install protoc
+      uses: arduino/setup-protoc@v3
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set PROTOC environment variable
+      run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
+
+    - name: Install OR-Tools
+      run: ./tools/setup_ortools.sh
+
     - name: rustup
       run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 

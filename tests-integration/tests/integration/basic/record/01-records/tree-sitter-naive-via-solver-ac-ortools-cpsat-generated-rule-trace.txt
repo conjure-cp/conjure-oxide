@@ -1,0 +1,42 @@
+Model before rewriting:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+
+such that
+
+(x[a] = true),
+(x[b] = 3),
+(y = record {a = false,b = 4}),
+(y = z)
+
+--
+
+(x[a] = true),
+(x[b] = 3),
+(y = record {a = false,b = 4}),
+(y = z), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[a] = true),
+(x[b] = 3),
+(y = record {a = false,b = 4}),
+(y = z)
+
+--
+
+Final model:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+
+such that
+
+(x[a] = true),
+(x[b] = 3),
+(y = record {a = false,b = 4}),
+(y = z)
+

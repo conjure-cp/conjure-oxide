@@ -1,11 +1,11 @@
 use conjure_cp::{
     Model,
     ast::{
-        Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name, Range, Reference,
-        SymbolTable, eval_constant,
+        AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Field, Literal, Metadata, Moo,
+        Name, Range, Reference, SymbolTable, eval_constant, normalise_evaluator_local,
     },
     into_matrix_expr, matrix_expr,
-    rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive},
+    rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_model},
     settings::{QuantifiedExpander, SolverFamily, set_comprehension_expander},
     solver::{Solver, adaptors},
 };
@@ -154,9 +154,6 @@ fn simplify_expression(expr: Expression) -> Expression {
 
 #[test]
 fn rule_sum_constants() {
-    let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
-    let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
-
     let mut expr = Expression::Sum(
         Metadata::new(),
         Moo::new(matrix_expr![
@@ -166,14 +163,7 @@ fn rule_sum_constants() {
         ]),
     );
 
-    expr = sum_constants
-        .apply(&expr, &SymbolTable::new())
-        .unwrap()
-        .new_expression;
-    expr = unwrap_sum
-        .apply(&expr, &SymbolTable::new())
-        .unwrap()
-        .new_expression;
+    expr = normalise_evaluator_local(&expr).unwrap();
 
     assert_eq!(
         expr,
@@ -228,8 +218,6 @@ fn rule_sum_geq() {
 #[test]
 fn reduce_solve_xyz() {
     println!("Rules: {:?}", get_all_rules());
-    let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
-    let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
     let lt_to_leq = get_rule_by_name("lt_to_leq").unwrap();
     let leq_to_ineq = get_rule_by_name("x_leq_y_plus_k_to_ineq").unwrap();
     let introduce_sumleq = get_rule_by_name("introduce_weighted_sumleq_sumgeq").unwrap();
@@ -244,14 +232,7 @@ fn reduce_solve_xyz() {
         ]),
     );
 
-    expr1 = sum_constants
-        .apply(&expr1, &SymbolTable::new())
-        .unwrap()
-        .new_expression;
-    expr1 = unwrap_sum
-        .apply(&expr1, &SymbolTable::new())
-        .unwrap()
-        .new_expression;
+    expr1 = normalise_evaluator_local(&expr1).unwrap();
     assert_eq!(
         expr1,
         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(4)))
@@ -623,7 +604,7 @@ fn rewrite_solve_xyz() {
     println!("Rules: {:?}", get_all_rules());
     set_comprehension_expander(QuantifiedExpander::Native);
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Base", "Bubble"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {e}");
@@ -670,7 +651,7 @@ fn rewrite_solve_xyz() {
         ]),
     );
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Base", "Bubble"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {e}");
@@ -688,7 +669,13 @@ fn rewrite_solve_xyz() {
 
     *model.constraints_mut() = vec![nested_expr];
 
-    model = rewrite_naive(&model, &rule_sets, true).unwrap();
+    model = rewrite_model(
+        &model,
+        &rule_sets,
+        true,
+        conjure_cp::settings::RewriteConfig::baseline(),
+    )
+    .unwrap();
     let rewritten_expr = model.constraints();
 
     // Check if the expression is in its simplest form
@@ -786,6 +773,67 @@ fn eval_const_bool() {
     let expr = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
     let result = eval_constant(&expr);
     assert_eq!(result, Some(Literal::Bool(true)));
+}
+
+#[test]
+fn eval_const_record_field_from_abstract_literal() {
+    let expr = Expression::RecordField(
+        Metadata::new(),
+        Moo::new(Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Record(vec![
+                Field {
+                    name: Name::user("a"),
+                    value: Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                },
+                Field {
+                    name: Name::user("b"),
+                    value: Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(4))),
+                },
+            ]),
+        )),
+        Name::user("a"),
+    );
+
+    assert_eq!(eval_constant(&expr), Some(Literal::Bool(false)));
+}
+
+#[test]
+fn eval_const_set_ops_from_abstract_literals() {
+    fn set(values: &[i32]) -> Moo<Expression> {
+        Moo::new(Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Set(
+                values
+                    .iter()
+                    .map(|value| {
+                        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*value)))
+                    })
+                    .collect(),
+            ),
+        ))
+    }
+
+    let union = Expression::Union(Metadata::new(), set(&[1, 2]), set(&[2, 3]));
+    assert_eq!(
+        eval_constant(&union),
+        Some(Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+            Literal::Int(1),
+            Literal::Int(2),
+            Literal::Int(3),
+        ])))
+    );
+
+    let intersect = Expression::Intersect(Metadata::new(), set(&[1, 2]), set(&[2, 3]));
+    assert_eq!(
+        eval_constant(&intersect),
+        Some(Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+            Literal::Int(2),
+        ])))
+    );
+
+    let subset_eq = Expression::SubsetEq(Metadata::new(), set(&[1, 2]), set(&[1, 2, 3]));
+    assert_eq!(eval_constant(&subset_eq), Some(Literal::Bool(true)));
 }
 
 #[test]

@@ -8,12 +8,14 @@ pub mod comprehension;
 pub mod declaration;
 mod domains;
 pub mod eval;
+mod expression_arena;
 mod expressions;
 mod literals;
 pub mod matrix;
 mod metadata;
 mod model;
 mod name;
+mod objective;
 pub mod pretty;
 pub mod records;
 mod reference;
@@ -31,10 +33,16 @@ pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
     BinaryAttr, Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal,
-    JectivityAttr, MSetAttr, PartialityAttr, PartitionAttr, Range, RelAttr, SequenceAttr, SetAttr,
-    UnresolvedDomain,
+    JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr, PartitionAttr, Range,
+    RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
 };
-pub use eval::eval_constant;
+pub use eval::generator_values_from_expr;
+pub use eval::{
+    eval_constant, eval_constant_local, finish_root_evaluator_normalisation,
+    normalise_evaluator_local, normalise_root_constraints_deep, normalise_root_constraints_local,
+    normalise_root_selective_deep_expr,
+};
+pub use expression_arena::{ExpressionArena, ExpressionNodeId};
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
@@ -42,7 +50,8 @@ pub use metadata::Metadata;
 pub use model::*;
 pub use moo::Moo;
 pub use name::Name;
-pub use partial_eval::run_partial_evaluator;
+pub use objective::{Objective, OptimiseDirection};
+pub use partial_eval::{run_partial_evaluator, run_partial_evaluator_local};
 pub use records::Field;
 pub use reference::Reference;
 pub use sat_encoding::SATIntEncoding;

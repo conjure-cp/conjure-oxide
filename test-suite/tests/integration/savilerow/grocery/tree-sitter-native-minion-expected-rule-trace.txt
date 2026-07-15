@@ -1,0 +1,64 @@
+Model before rewriting:
+
+letting RANGE be domain int(0..711)
+find item1: RANGE
+find item2: RANGE
+find item3: RANGE
+find item4: RANGE
+
+such that
+
+sum([sum([sum([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)]) = 711,
+product([product([product([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)]) = product([product([product([711,100;int(1..)]),100;int(1..)]),100;int(1..)]),
+item1 >= item2,
+item2 >= item3,
+item3 >= item4
+
+--
+
+sum([sum([sum([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([item1,item2,item3,item4;int(1..)])
+
+--
+
+sum([item1,item2,item3,item4;int(1..)]) = 711
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([item1, item2, item3, item4], 711),SumGeq([item1, item2, item3, item4], 711);int(1..)])
+
+--
+
+item1 >= item2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(item2, item1, 0)
+
+--
+
+item2 >= item3
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(item3, item2, 0)
+
+--
+
+item3 >= item4
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(item4, item3, 0)
+
+--
+
+Final model:
+
+letting RANGE be domain int(0..711)
+find item1: RANGE
+find item2: RANGE
+find item3: RANGE
+find item4: RANGE
+
+such that
+
+and([SumLeq([item1, item2, item3, item4], 711),SumGeq([item1, item2, item3, item4], 711);int(1..)]),
+false,
+Ineq(item2, item1, 0),
+Ineq(item3, item2, 0),
+Ineq(item4, item3, 0)
+

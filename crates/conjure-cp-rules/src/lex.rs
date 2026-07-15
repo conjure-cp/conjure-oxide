@@ -1,21 +1,25 @@
-use conjure_cp::ast::matrix::safe_index_optimised;
-use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable};
+use conjure_cp::ast::{
+    Atom, Expression as Expr, GroundDomain, IntVal, Literal, Metadata, Moo, Name, Range,
+    SymbolTable,
+    matrix::{self, safe_index_optimised},
+};
 use conjure_cp::essence_expr;
-use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule};
+use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, RuleEffect, register_rule};
 
 use ApplicationError::{DomainError, RuleNotApplicable};
 
+use crate::utils::to_aux_var;
 use itertools::Itertools as _;
 
 #[register_rule("Base", 9000, [LexGt, LexGeq])]
 fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::LexGt(metadata, a, b) => Ok(Reduction::pure(Expr::LexLt(
+        Expr::LexGt(metadata, a, b) => Ok(RuleEffect::pure(Expr::LexLt(
             metadata.clone(),
             b.clone(),
             a.clone(),
         ))),
-        Expr::LexGeq(metadata, a, b) => Ok(Reduction::pure(Expr::LexLeq(
+        Expr::LexGeq(metadata, a, b) => Ok(RuleEffect::pure(Expr::LexLeq(
             metadata.clone(),
             b.clone(),
             a.clone(),
@@ -32,28 +36,119 @@ fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// - [a,b,c,d] <=lex [e,f,g] <-> [a,b,c] <lex [d,e,f]
 /// - [a,b,c] <lex [d,e,f,g] <-> [a,b,c] <=lex [d,e,f]
 /// - Everything else stays the same, with the longer matrix being chopped off
+fn lex_operand_elements(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
+    let expr = match expr {
+        Expr::Flatten(_, None, inner) => inner.as_ref(),
+        other => other,
+    };
+
+    if let Some(elems) = expr.unwrap_list() {
+        return Ok(elems);
+    }
+
+    let Some((elems, domain)) = expr.clone().unwrap_matrix_unchecked() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(ranges) = domain.as_int() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let [Range::Bounded(IntVal::Const(1), _)] = ranges[..] else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(elems)
+}
+
+fn lex_operand_to_atoms(
+    operand: &Moo<Expr>,
+    symbols: &mut SymbolTable,
+    tops: &mut Vec<Expr>,
+) -> Result<Vec<Atom>, ApplicationError> {
+    if let Some(atoms) = lex_represented_matrix_to_atoms(operand.as_ref(), symbols)? {
+        return Ok(atoms);
+    }
+
+    let elems = lex_operand_elements(operand.as_ref())?;
+    let mut atoms = Vec::with_capacity(elems.len());
+
+    for elem in elems {
+        if let Ok(atom) = elem.clone().try_into() {
+            atoms.push(atom);
+        } else if let Some(aux) = to_aux_var(&elem, symbols) {
+            *symbols = aux.symbols();
+            tops.push(aux.top_level_expr());
+            atoms.push(aux.as_atom());
+        } else {
+            return Err(RuleNotApplicable);
+        }
+    }
+
+    Ok(atoms)
+}
+
+fn lex_represented_matrix_to_atoms(
+    operand: &Expr,
+    symbols: &SymbolTable,
+) -> Result<Option<Vec<Atom>>, ApplicationError> {
+    let Expr::Atomic(_, Atom::Reference(decl)) = operand else {
+        return Ok(None);
+    };
+
+    let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
+        return Ok(None);
+    };
+
+    if reprs.first().is_none_or(|x| x.as_str() != "matrix_to_atom") {
+        return Ok(None);
+    }
+
+    let decl = symbols.lookup(name.as_ref()).ok_or(RuleNotApplicable)?;
+    let repr = symbols
+        .get_representation(name.as_ref(), &["matrix_to_atom"])
+        .ok_or(RuleNotApplicable)?[0]
+        .clone();
+
+    let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
+        return Ok(None);
+    };
+
+    if index_domains.len() != 1 {
+        return Ok(None);
+    }
+
+    let matrix_values = repr.expression_down(symbols)?;
+    matrix::enumerate_indices(index_domains.clone())
+        .map(|index| {
+            matrix_values
+                .get(&Name::Represented(Box::new((
+                    name.as_ref().clone(),
+                    "matrix_to_atom".into(),
+                    index.iter().join("_").into(),
+                ))))
+                .cloned()
+                .ok_or(RuleNotApplicable)?
+                .try_into()
+                .map_err(|_| RuleNotApplicable)
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map(Some)
+}
+
 #[register_rule("Minion", 2000, [LexLt, LexLeq])]
-fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn flatten_lex_lt_leq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
-        Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (
-            Moo::unwrap_or_clone(a.clone())
-                .unwrap_list()
-                .ok_or(RuleNotApplicable)?,
-            Moo::unwrap_or_clone(b.clone())
-                .unwrap_list()
-                .ok_or(RuleNotApplicable)?,
-        ),
+        Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),
         _ => return Err(RuleNotApplicable),
     };
 
-    let mut atoms_a: Vec<Atom> = a
-        .into_iter()
-        .map(|e| e.try_into().map_err(|_| RuleNotApplicable))
-        .collect::<Result<Vec<_>, ApplicationError>>()?;
-    let mut atoms_b: Vec<Atom> = b
-        .into_iter()
-        .map(|e| e.try_into().map_err(|_| RuleNotApplicable))
-        .collect::<Result<Vec<_>, ApplicationError>>()?;
+    let mut symbols = symbols.clone();
+    let mut tops = vec![];
+
+    let mut atoms_a = lex_operand_to_atoms(a, &mut symbols, &mut tops)?;
+    let mut atoms_b = lex_operand_to_atoms(b, &mut symbols, &mut tops)?;
 
     let new_expr = if atoms_a.len() == atoms_b.len() {
         // Same length, keep the same comparator
@@ -78,7 +173,11 @@ fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    Ok(Reduction::pure(new_expr))
+    if tops.is_empty() {
+        Ok(RuleEffect::pure(new_expr))
+    } else {
+        Ok(RuleEffect::new(new_expr, tops, symbols))
+    }
 }
 
 /// Expand lexicographical lt/leq into a "recursive or" form
@@ -90,12 +189,19 @@ fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// If they are the same length, then the strictness of the comparison comes into effect.
 ///
 /// Must be applied before matrix_to_list since this enumerates over operand indices.
-#[register_rule("Smt", 2001, [LexLt, LexLeq])]
+#[register_rule(["Smt", "OrToolsCpSat"], 2001, [LexLt, LexLeq])]
 fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),
         _ => return Err(RuleNotApplicable),
     };
+
+    let or_eq = matches!(expr, Expr::LexLeq(..));
+
+    if let (Some(a_elems), Some(b_elems)) = (a.unwrap_list(), b.unwrap_list()) {
+        let new_expr = lex_lt_to_recursive_or_elems(&a_elems, &b_elems, or_eq);
+        return Ok(RuleEffect::pure(new_expr));
+    }
 
     let dom_a = a.domain_of().ok_or(RuleNotApplicable)?;
     let dom_b = b.domain_of().ok_or(RuleNotApplicable)?;
@@ -121,10 +227,8 @@ fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             .collect_vec(),
     );
 
-    // If strict, then the base case where they are equal
-    let or_eq = matches!(expr, Expr::LexLeq(..));
     let new_expr = lex_lt_to_recursive_or(a, b, &a_idxs, &b_idxs, or_eq);
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
 }
 
 fn lex_lt_to_recursive_or(
@@ -145,6 +249,22 @@ fn lex_lt_to_recursive_or(
             let tail = lex_lt_to_recursive_or(a, b, a_tail, b_tail, allow_eq);
 
             essence_expr!(r"&a_at_idx < &b_at_idx \/ (&a_at_idx = &b_at_idx /\ &tail)")
+        }
+    }
+}
+
+fn lex_lt_to_recursive_or_elems(
+    a_elems: &[Expr],
+    b_elems: &[Expr],
+    allow_eq: bool,
+) -> Expr {
+    match (a_elems, b_elems) {
+        ([], []) => allow_eq.into(),
+        ([..], []) => false.into(),
+        ([], [..]) => true.into(),
+        ([a_val, a_tail @ ..], [b_val, b_tail @ ..]) => {
+            let tail = lex_lt_to_recursive_or_elems(a_tail, b_tail, allow_eq);
+            essence_expr!(r"&a_val < &b_val \/ (&a_val = &b_val /\ &tail)")
         }
     }
 }

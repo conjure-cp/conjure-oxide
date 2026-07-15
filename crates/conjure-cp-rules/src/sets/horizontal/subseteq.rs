@@ -5,7 +5,7 @@ use conjure_cp::{
     },
     bug,
     rule_engine::{
-        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
     },
 };
 
@@ -39,9 +39,10 @@ fn subseteq_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
                 b.clone(),
             );
 
-            let comp = comp_builder.with_return_value(return_expr, Some(ACOperatorKind::And));
+            let mut comp = comp_builder.with_return_value(return_expr);
+            comp.skip_operator = Some(ACOperatorKind::And);
 
-            Ok(Reduction::pure(Expr::And(
+            Ok(RuleEffect::pure(Expr::And(
                 Metadata::new(),
                 Moo::new(Expr::Comprehension(Metadata::new(), Moo::new(comp))),
             )))

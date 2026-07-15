@@ -33,7 +33,7 @@ use conjure_cp::{
     ast::{Expression as Expr, Moo, ReturnType::Set, SymbolTable, Typeable},
     into_matrix_expr,
     rule_engine::{
-        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
     },
 };
 
@@ -46,7 +46,7 @@ use conjure_cp::{
 fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Neg(_, a) => match a.as_ref() {
-            Expr::Neg(_, inner) => Ok(Reduction::pure(Moo::unwrap_or_clone(inner.clone()))),
+            Expr::Neg(_, inner) => Ok(RuleEffect::pure(Moo::unwrap_or_clone(inner.clone()))),
             _ => Err(RuleNotApplicable),
         },
         _ => Err(RuleNotApplicable),
@@ -70,7 +70,7 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         *child = essence_expr!(-&child);
     }
 
-    Ok(Reduction::pure(with_single_vec_child(
+    Ok(RuleEffect::pure(with_single_vec_child(
         inner_expr.as_ref(),
         children,
     )))
@@ -97,7 +97,7 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 
     factors.push(essence_expr!(-1));
 
-    Ok(Reduction::pure(Expr::Product(
+    Ok(RuleEffect::pure(Expr::Product(
         Metadata::new(),
         Moo::new(into_matrix_expr!(factors)),
     )))
@@ -126,5 +126,5 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    Ok(Reduction::pure(essence_expr!(&lhs + (-&rhs))))
+    Ok(RuleEffect::pure(essence_expr!(&lhs + (-&rhs))))
 }

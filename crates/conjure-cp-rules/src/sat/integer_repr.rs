@@ -1,7 +1,7 @@
 use conjure_cp::ast::{Expression as Expr, GroundDomain};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect,
     register_rule,
 };
 
@@ -10,6 +10,36 @@ use conjure_cp::ast::{Atom, Literal, Moo, Range};
 use conjure_cp::into_matrix_expr;
 
 use conjure_cp::{bug, essence_expr};
+
+/// Defers creation of an integer representation until its rule is selected.
+fn defer_integer_representation(
+    expr: &Expr,
+    materialise: fn(&Expr, &SymbolTable) -> ApplicationResult,
+) -> ApplicationResult {
+    let Expr::Atomic(_, Atom::Reference(reference)) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    if reference.ptr().as_find().is_none() {
+        return Err(RuleNotApplicable);
+    }
+    let Some(domain) = reference.resolved_domain() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Int(ranges) = domain.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    if ranges
+        .iter()
+        .any(|range| range.low().is_none() || range.high().is_none())
+    {
+        return Err(RuleNotApplicable);
+    }
+
+    let expr = expr.clone();
+    Ok(RuleEffect::deferred(move |symbols| {
+        materialise(&expr, symbols).expect("applicable integer representation can be materialised")
+    }))
+}
 
 /// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
 ///
@@ -90,7 +120,15 @@ pub fn validate_log_int_operands(
 ///
 /// ```
 #[register_rule("SAT_Direct", 9500, [Atomic])]
-fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn integer_decision_representation_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    defer_integer_representation(expr, materialise_integer_decision_representation_direct)
+}
+
+/// Materialises a direct integer representation and its constraints.
+fn materialise_integer_decision_representation_direct(
+    expr: &Expr,
+    symbols: &SymbolTable,
+) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);
@@ -158,16 +196,24 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
             }
         }
 
-        let mut reduction = Reduction::cnf(cnf_int, clauses, symbols);
+        let mut reduction = RuleEffect::cnf(cnf_int, clauses, symbols);
         reduction.new_top = constraints;
         Ok(reduction)
     } else {
-        Ok(Reduction::pure(cnf_int))
+        Ok(RuleEffect::pure(cnf_int))
     }
 }
 
 #[register_rule("SAT_Order", 9500, [Atomic])]
-fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn integer_decision_representation_order(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    defer_integer_representation(expr, materialise_integer_decision_representation_order)
+}
+
+/// Materialises an order integer representation and its constraints.
+fn materialise_integer_decision_representation_order(
+    expr: &Expr,
+    symbols: &SymbolTable,
+) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);
@@ -231,17 +277,25 @@ fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> 
             clauses.push(conjure_cp::ast::CnfClause::new(vec![bits[0].clone()]));
         }
 
-        let mut reduction = Reduction::cnf(cnf_int, clauses, symbols);
+        let mut reduction = RuleEffect::cnf(cnf_int, clauses, symbols);
         reduction.new_top = constraints;
         Ok(reduction)
     } else {
-        Ok(Reduction::pure(cnf_int))
+        Ok(RuleEffect::pure(cnf_int))
     }
 }
 
 /// Converts an integer decision variable to SATInt form (Log encoding)
 #[register_rule("SAT_Log", 9500, [Atomic])]
-fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn integer_decision_representation_log(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    defer_integer_representation(expr, materialise_integer_decision_representation_log)
+}
+
+/// Materialises a logarithmic integer representation and its constraints.
+fn materialise_integer_decision_representation_log(
+    expr: &Expr,
+    symbols: &SymbolTable,
+) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);
@@ -296,13 +350,13 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
 
     if !repr_exists {
         // add domain ranges as constraints if this is the first time the representation is added
-        Ok(Reduction::new(
+        Ok(RuleEffect::new(
             cnf_int.clone(),
             vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
             symbols,
         ))
     } else {
-        Ok(Reduction::pure(cnf_int))
+        Ok(RuleEffect::pure(cnf_int))
     }
 }
 
@@ -323,7 +377,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
     };
-    //TODO: Adding constant optimization to all int operations should hopefully make this rule redundant
+    //TODO: Adding constant optimisation to all int operations should hopefully make this rule redundant
 
     let mut binary_encoding = vec![];
 
@@ -339,7 +393,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         value_mut >>= 1;
     }
 
-    Ok(Reduction::pure(Expr::SATInt(
+    Ok(RuleEffect::pure(Expr::SATInt(
         Metadata::new(),
         SATIntEncoding::Log,
         Moo::new(into_matrix_expr!(binary_encoding)),

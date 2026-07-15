@@ -1,7 +1,7 @@
 use conjure_cp::ast::{Atom, Expression as Expr, GroundDomain, Name, SymbolTable, matrix};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 use itertools::Itertools;
 
@@ -51,7 +51,7 @@ fn flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                     .clone()
             })
             .collect_vec();
-        return Ok(Reduction::pure(into_matrix_expr![flat_values]));
+        return Ok(RuleEffect::pure(into_matrix_expr![flat_values]));
     }
 
     Err(RuleNotApplicable)

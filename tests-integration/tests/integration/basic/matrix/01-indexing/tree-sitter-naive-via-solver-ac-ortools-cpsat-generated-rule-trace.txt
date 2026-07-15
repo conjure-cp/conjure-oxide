@@ -1,0 +1,62 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..5)] of bool
+
+such that
+
+(a[1] = true),
+(a[2] = true),
+(a[3] = true),
+(a[4] = true),
+(a[5] = !(a[4]))
+
+--
+
+a[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[1])
+
+--
+
+a[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[2])
+
+--
+
+a[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[3])
+
+--
+
+a[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[4])
+
+--
+
+a[5], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[5])
+
+--
+
+a[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[4])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..5)] of bool
+
+such that
+
+(SafeIndex(a,[1]) = true),
+(SafeIndex(a,[2]) = true),
+(SafeIndex(a,[3]) = true),
+(SafeIndex(a,[4]) = true),
+(SafeIndex(a,[5]) = !(SafeIndex(a,[4])))
+

@@ -7,102 +7,97 @@ We love your input! We want to make contributing to this project as easy and tra
 - Proposing new features
 - Becoming a maintainer
 
-## We Develop with Github
-We use github to host code, to track issues and feature requests, as well as accept pull requests.
+## Where to find us
+- We use GitHub to host code, track issues and feature requests, and accept pull requests.
+- There is also [Conjure Zulip](https://conjure.zulipchat.com/join/gtrnmpmlnzbfwgjgps26vbzc).
+- At St Andrews, we are running a [Vertically Integrated Project on Conjure](https://ozgurakgun.github.io/vip). If you are a student on this project, you will also be added to an MS Teams team.
 
-## Setting up your Development Environment
-For information on how to set up your environment, go to the [Contributor's Guide](https://github.com/conjure-cp/conjure-oxide/wiki/Setting-up-your-development-environment)
+## GitHub Flow
 
-## We Use [Github Flow](https://docs.github.com/en/get-started/using-github/github-flow), so All Code Changes Happen Through Pull Requests
-Pull requests are the best way to propose changes to the codebase (we use [Github Flow](https://docs.github.com/en/get-started/using-github/github-flow)). We actively welcome your pull requests:
+Pull requests are the best way to propose changes to the codebase (we use [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)). We actively welcome your pull requests:
 
-1. Do **not** make a fork, create a branch for your feature on the `conjure-cp/conjure-oxide` repository (can be done directly through GH issues)
-2. Create a branch, do not develop on main.
-3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
-4. Keep the PR in draft status until you think it's ready to be merged.
-5. Assign PR to reviewer(s) when it's ready to be merged.
-    - Only Oz (@ozgurakgun) can merge PRs, so add him as a reviewer when you
-      want your PR to be merged.
-    - During reviewing, avoid force-pushing to the pull request, as this makes
-      reviewing more difficult. Details on how to update a PR are given below.
-6. Once Oz has approved the PR:
-    * Cleanup your git history (see below) or request your PR to be squash merged.
-    * Update your PR to main by rebase or merge. This can be done through the
-      Github UI or locally.
+1. Fork the repo, create a branch, and do not develop on `main`.
+2. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
+3. Keep the PR in draft status until you think it's ready to be merged.
+4. Assign the PR to reviewer(s) when it's ready to be merged.
+   - If you are working as part of a group, ask for code reviews from the rest of the group. Once everyone in the group is happy, proceed to the next step.
+   - Only Oz (@ozgurakgun) can merge PRs, so add him as a reviewer when you want your PR to be merged.
+5. Get your PR merged.
+   - We squash-merge PRs by default. Do not worry about keeping history on your PR branch "clean".
+   - During reviewing, avoid force-pushing to the pull request, as this makes reviewing more difficult. You may force-push on draft PRs if you really want to.
+   - If you are keen to keep history clean in the PR, consider using fixup commits using Git's [built-in support for fixups](http://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordcommit).
+     - You can make changes to a commit by running `git commit --fixup <commit>`.
+     - You can squash fixup commits on top of their original commits by running `git rebase --autosquash main` and then force pushing to the branch.
+     - We have CI checks to block accidental merging of `fixup!` commits.
+     - Also see [this](https://rietta.com/blog/git-rebase-autosquash-code-reviews/) and [this](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordltcommitgt).
 
-### Rebasing Pull Requests and Force Pushes
+## Reporting bugs
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/conjure-cp/conjure-oxide/issues/new); it's that easy!
 
-You should avoid rebasing, amending, and force-pushing changes during PR
-review. This makes code review difficult by removing the context around code
-review comments and changes to a commit. 
+Write bug reports with detail, background, and sample code. Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html) for how to effectively report bugs. [This is an example](https://stackoverflow.com/q/12488905/180626) of a well-written bug report.
 
-Doing this is probably OK on a WIP PR which hasn't had any reviews yet.
+Great bug reports tend to have:
+  - A quick summary and/or background
+  - Specific steps to reproduce
+  - What you expected would happen
+  - What actually happens
+  - Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
 
-### Updating a Pull Request 
+People *love* thorough bug reports. I'm not even kidding.
 
-You should avoid rebasing, amending, or force-pushing to a PR. When updating a
-pull request you should push additional "fixup" commits to your branch instead.
+## Hygiene: code layout, style, linting
+- Run `make check` in the project directory to automatically check for hygiene.
+- Run `make fix` to apply fixes automatically.
+- Use `make fix-dirty` when there are uncommitted changes.
 
-Once your PR is ready to merge (i.e. approved by Oz), you should cleanup and
-rebase your PR and force push. 
+## House rules
 
-The recommended way to update PRs is to use gits [built-in support for
-fixups](http://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordcommit).
+These project conventions are more specific than the general guidance above.
 
-To make a change to a commit (e.g. addressing a code review comment):
+### Tooling
 
-```
-git commit --fixup <commit>
-git push
-```
+- Use the Makefile for the standard install, test, and check workflows. Prefer `make` targets over running `cargo` commands directly.
 
-Once your PR is ready to merge, these fixup commits can be merged into their
-original commits like so: 
+### Language
 
-```
-git rebase --autosquash main
-git push --force
-```
+- Use British spelling in prose, comments, rustdocs, commit messages, and user-facing text.
+- Keep comments and rustdocs brief. Explain intent or behaviour, not obvious syntax.
+- Use ASCII characters unless there is a justified need to use non-ASCII characters.
 
-We have CI checks to block accidental merging of `fixup!` commits.
+### Rust Code
 
+- Document all top-level public functions, structs, enums, and type aliases with brief rustdocs.
+- Document public fields and enum variants when their meaning is not completely obvious.
 
-See: 
- * https://rietta.com/blog/git-rebase-autosquash-code-reviews/
- * https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordltcommitgt
+### Test Runs
 
+- Use `MAX_EXPECTED_TIME=N` to only run test cases that are expected to take up to `N` seconds. Omit or use `MAX_EXPECTED_TIME=0` to run all tests.
+- Use `TEST_CASE_TIMEOUT=N` to set a per-test timeout for integration tests.
+- When recording artefacts from a timeout-bounded run, record the timeout value explicitly in the relevant `config.toml` file.
 
+### Test Artefacts
+
+- Update trace files when the test output has changed for a good reason. Do not try to keep trace files unchanged for their own sake.
+- Update `stats.toml` files when the recorded statistics have changed for a good reason, especially when non-time features change.
+- Avoid committing `stats.toml` updates when only timings have changed by a small amount, to avoid unnecessary churn.
+
+### Commits
+
+- Never commit code changes and test artefact/config updates in the same commit.
+- Commit code and harness changes first, with a normal Conventional Commit-style subject.
+- Commit generated or recorded test updates separately, using
+  `chore(test-suite): ...` in the subject line.
+- Reserve `test(test-suite):` for changes to test code or harness logic.
+
+## The Book
+
+Exists.
 
 ## What We Didn't Do
 To prevent unknown unknowns, skim the documentation and [What We Didn't Do](https://github.com/conjure-cp/conjure-oxide/wiki/What-We-Didn%27t-Do).
 
-## Any contributions you make will be under the Mozilla Public License
-In short, when you submit code changes, your submissions will be understood to be under the same [Mozilla Public License](https://www.mozilla.org/en-US/MPL/2.0/) that covers the project. Feel free to contact the maintainers if that's a concern.
-
-## Report bugs using Github's [issues](https://github.com/conjure-cp/conjure-oxide/issues)
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/conjure-cp/conjure-oxide/issues/new); it's that easy!
-
-## Write bug reports with detail, background, and sample code
-Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html) for how to effectively report Bugs. [This is an example](https://stackoverflow.com/q/12488905/180626) of a well written bug report. 
-
-**Great Bug Reports** tend to have:
-
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific!
-  - Give sample code if you can. [My StackOverflow question](https://stackoverflow.com/q/12488905/180626) includes sample code that *anyone* with a base R setup can run to reproduce what I was seeing
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
-
-People *love* thorough bug reports. I'm not even kidding.
-
-## Coding Style
-- Run `cargo fmt` in the project directory to automatically format code
-- Use `cargo clippy` to lint the code and identify any common issues
-
 ## License
-By contributing, you agree that your contributions will be licensed under its Mozilla Public License.
+Any contributions you make will be under the Mozilla Public License. When you submit a PR, your submissions will be understood to be under the same [Mozilla Public License](https://www.mozilla.org/en-US/MPL/2.0/) that covers the project. Feel free to contact the maintainers if that's a concern.
 
 ## References
-This document was adapted from [this template](https://gist.github.com/briandk/3d2e8b3ec8daf5a27a62).
+This document was adapted from [this template](https://gist.github.com/briandk/3d2e8b3ec8daf5a27a62) and then significantly edited with project specific information.

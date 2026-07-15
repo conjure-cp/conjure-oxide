@@ -34,7 +34,7 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
     );
 
     // call rewrite here as well as in expand_via_solver_ac, just to be consistent
-    let extra_rule_sets = &["Base", "Constant", "Bubble"];
+    let extra_rule_sets = &["Base", "Bubble"];
 
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
     let configured_rewriter = current_rewriter();

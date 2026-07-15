@@ -28,7 +28,7 @@
 //! use std::sync::{Arc,Mutex};
 //! use conjure_cp_core::parse::get_example_model;
 //! use conjure_cp_core::rule_engine::resolve_rule_sets;
-//! use conjure_cp_core::rule_engine::rewrite_naive;
+//! use conjure_cp_core::rule_engine::rewrite_model;
 //! use conjure_cp_core::solver::{adaptors, Solver, SolverAdaptor};
 //! use conjure_cp_core::solver::states::ModelLoaded;
 //! use conjure_cp_core::Model;

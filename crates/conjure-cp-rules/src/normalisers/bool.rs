@@ -4,7 +4,7 @@ use conjure_cp::ast::{Atom, Expression as Expr, Moo, SymbolTable};
 use conjure_cp::essence_expr;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect,
     register_rule,
 };
 use uniplate::Uniplate;
@@ -18,7 +18,7 @@ use uniplate::Uniplate;
 fn remove_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
-            Expr::Not(_, expr_box) => Ok(Reduction::pure(Moo::unwrap_or_clone(expr_box.clone()))),
+            Expr::Not(_, expr_box) => Ok(RuleEffect::pure(Moo::unwrap_or_clone(expr_box.clone()))),
             _ => Err(ApplicationError::RuleNotApplicable),
         },
         _ => Err(ApplicationError::RuleNotApplicable),
@@ -71,7 +71,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 ))
                             }
 
-                            Ok(Reduction::pure(Expr::And(
+                            Ok(RuleEffect::pure(Expr::And(
                                 metadata,
                                 Moo::new(into_matrix_expr![new_and_contents]),
                             )))
@@ -110,14 +110,14 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                 if exprs.len() == 1 {
                     let single_expr = exprs[0].clone();
-                    return Ok(Reduction::pure(essence_expr!(!&single_expr)));
+                    return Ok(RuleEffect::pure(essence_expr!(!&single_expr)));
                 }
 
                 let mut new_exprs = Vec::new();
                 for e in exprs {
                     new_exprs.push(essence_expr!(!&e));
                 }
-                Ok(Reduction::pure(Expr::Or(
+                Ok(RuleEffect::pure(Expr::Or(
                     metadata.clone(),
                     Moo::new(into_matrix_expr![new_exprs]),
                 )))
@@ -144,7 +144,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                 if exprs.len() == 1 {
                     let single_expr = exprs[0].clone();
-                    return Ok(Reduction::pure(essence_expr!(!&single_expr)));
+                    return Ok(RuleEffect::pure(essence_expr!(!&single_expr)));
                 }
 
                 let mut new_exprs = Vec::new();
@@ -153,7 +153,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     new_exprs.push(essence_expr!(!&e));
                 }
 
-                Ok(Reduction::pure(Expr::And(
+                Ok(RuleEffect::pure(Expr::And(
                     metadata.clone(),
                     Moo::new(into_matrix_expr![new_exprs]),
                 )))
@@ -179,7 +179,7 @@ fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             };
 
             if exprs.len() == 1 {
-                return Ok(Reduction::pure(exprs[0].clone()));
+                return Ok(RuleEffect::pure(exprs[0].clone()));
             }
 
             Err(ApplicationError::RuleNotApplicable)
@@ -208,7 +208,7 @@ fn remove_unit_vector_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(exprs[0].clone()))
+    Ok(RuleEffect::pure(exprs[0].clone()))
 }
 
 /// Applies the contrapositive of implication.
@@ -236,7 +236,7 @@ fn normalise_implies_contrapositive(expr: &Expr, _: &SymbolTable) -> Application
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(essence_expr!(&q -> &p)))
+    Ok(RuleEffect::pure(essence_expr!(&q -> &p)))
 }
 
 /// Simplifies the negation of implication.
@@ -261,7 +261,7 @@ fn normalise_implies_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(essence_expr!(r"&p /\ !&q")))
+    Ok(RuleEffect::pure(essence_expr!(r"&p /\ !&q")))
 }
 
 /// Applies left distributivity to implication.
@@ -299,7 +299,7 @@ fn normalise_implies_left_distributivity(expr: &Expr, _: &SymbolTable) -> Applic
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(essence_expr!(&r1 -> (&p -> &q))))
+    Ok(RuleEffect::pure(essence_expr!(&r1 -> (&p -> &q))))
 }
 
 /// Applies import-export to implication, i.e. uncurrying.
@@ -338,5 +338,5 @@ fn normalise_implies_uncurry(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(essence_expr!(r"(&p /\ &q) -> &r")))
+    Ok(RuleEffect::pure(essence_expr!(r"(&p /\ &q) -> &r")))
 }

@@ -1,0 +1,25 @@
+Model before rewriting:
+
+find x: int(1..10)
+letting m be 5
+
+such that
+
+and([ and([ (sum([sum([x,j;int(1..)]),i;int(1..)]) = 10) | j : int((sum([i,1;int(1..)]))..(sum([m,1;int(1..)]))) ]) | i : int(((m - 1))..10) ])
+
+--
+
+Final model:
+
+find x: int(1..10)
+letting m be 5
+
+such that
+
+SumLeq([4, 5, x], 10),
+SumGeq([4, 5, x], 10),
+SumLeq([4, 6, x], 10),
+SumGeq([4, 6, x], 10),
+SumLeq([5, 6, x], 10),
+SumGeq([5, 6, x], 10)
+

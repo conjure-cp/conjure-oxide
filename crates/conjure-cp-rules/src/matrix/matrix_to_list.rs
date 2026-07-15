@@ -2,7 +2,7 @@ use crate::utils::rewrite_children;
 use conjure_cp::ast::{Domain, Expression as Expr, IntVal, Range, SymbolTable};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 /// Converts a matrix to a list if possible.
@@ -73,7 +73,7 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     });
 
     if num_changed != 0 {
-        Ok(Reduction::pure(new_expr))
+        Ok(RuleEffect::pure(new_expr))
     } else {
         Err(RuleNotApplicable)
     }

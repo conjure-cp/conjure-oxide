@@ -1,0 +1,28 @@
+Model before rewriting:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+(sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14)
+
+--
+
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([2,x;int(1..)]),product([3,y;int(1..)]),z;int(1..)])
+
+--
+
+Final model:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+(sum([product([2,x;int(1..)]),product([3,y;int(1..)]),z;int(1..)]) < 14)
+

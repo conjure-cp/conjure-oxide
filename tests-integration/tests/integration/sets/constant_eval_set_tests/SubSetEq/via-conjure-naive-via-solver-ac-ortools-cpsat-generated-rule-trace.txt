@@ -1,0 +1,36 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+(a = ({1,2} subsetEq {1,2,3})),
+(b = ({1,2,3} subsetEq {1,2,3})),
+(c = ({4} subsetEq {1,2,3}))
+
+--
+
+(a = ({1,2} subsetEq {1,2,3})),
+(b = ({1,2,3} subsetEq {1,2,3})),
+(c = ({4} subsetEq {1,2,3})), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(a = true),
+(b = true),
+(c = false)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+(a = true),
+(b = true),
+(c = false)
+

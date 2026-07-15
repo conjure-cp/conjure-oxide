@@ -3,9 +3,9 @@
 use std::mem::Discriminant;
 
 use crate::utils::{single_vec_child, with_single_vec_child};
-use conjure_cp::ast::{Expression as Expr, SymbolTable};
+use conjure_cp::ast::{AbstractLiteral, Expression as Expr, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 /// Normalises associative_commutative operations.
@@ -19,6 +19,10 @@ use conjure_cp::rule_engine::{
 #[register_rule("Base", 8900, [And, Or, Product, Sum])]
 fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if !expr.is_associative_commutative_operator() {
+        return Err(RuleNotApplicable);
+    }
+
+    if !has_direct_nested_ac_child(expr) {
         return Err(RuleNotApplicable);
     }
 
@@ -62,5 +66,29 @@ fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> Applicatio
 
     let new_expr = with_single_vec_child(expr, new_children);
 
-    Ok(Reduction::pure(new_expr))
+    Ok(RuleEffect::pure(new_expr))
+}
+
+fn has_direct_nested_ac_child(expr: &Expr) -> bool {
+    let root_discriminant = std::mem::discriminant(expr);
+    ac_children(expr).is_some_and(|children| {
+        children
+            .iter()
+            .any(|child| std::mem::discriminant(child) == root_discriminant)
+    })
+}
+
+fn ac_children(expr: &Expr) -> Option<&[Expr]> {
+    let matrix = match expr {
+        Expr::And(_, matrix)
+        | Expr::Or(_, matrix)
+        | Expr::Product(_, matrix)
+        | Expr::Sum(_, matrix) => matrix.as_ref(),
+        _ => return None,
+    };
+
+    match matrix {
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(children, _)) => Some(children),
+        _ => None,
+    }
 }

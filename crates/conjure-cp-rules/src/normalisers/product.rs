@@ -6,7 +6,7 @@ use conjure_cp::{
     ast::Metadata,
     ast::{Atom, Expression as Expr, Literal as Lit, Moo, SymbolTable, categories::CategoryOf},
     bug, into_matrix_expr,
-    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
 
 /// Reorders a product expression.
@@ -90,7 +90,7 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     // check if we have actually done anything
     if factors_copy != factors {
-        Ok(Reduction::pure(Expr::Product(
+        Ok(RuleEffect::pure(Expr::Product(
             meta,
             Moo::new(into_matrix_expr!(factors;index_domain)),
         )))
@@ -171,7 +171,7 @@ fn remove_unit_vector_products(expr: &Expr, _: &SymbolTable) -> ApplicationResul
         Expr::Product(_, mat) => {
             let list = (**mat).clone().unwrap_list().ok_or(RuleNotApplicable)?;
             if list.len() == 1 {
-                return Ok(Reduction::pure(list[0].clone()));
+                return Ok(RuleEffect::pure(list[0].clone()));
             }
             Err(RuleNotApplicable)
         }

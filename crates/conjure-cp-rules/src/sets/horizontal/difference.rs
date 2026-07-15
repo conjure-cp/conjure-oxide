@@ -2,13 +2,13 @@ use crate::utils::replace_expression_generator_source;
 use conjure_cp::ast::comprehension::ComprehensionQualifier;
 use conjure_cp::ast::{Atom, Metadata};
 use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
-use conjure_cp::rule_engine::Reduction;
+use conjure_cp::rule_engine::RuleEffect;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 
 // [ return_expr | i <- A - B ] ~~> [ return_expr | i <- A, !(i in B) ]
-#[register_rule("Base", 8700)]
+#[register_rule("Base", 8700, [Comprehension])]
 fn difference_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Comprehension(_, comp) => {
@@ -44,7 +44,7 @@ fn difference_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                             )),
                         )));
 
-                    return Ok(Reduction::pure(Expr::Comprehension(
+                    return Ok(RuleEffect::pure(Expr::Comprehension(
                         Metadata::new(),
                         comprehension.into(),
                     )));
