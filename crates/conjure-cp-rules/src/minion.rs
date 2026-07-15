@@ -1065,8 +1065,9 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
             )));
         }
 
-        let atom_list =
-            pad_represented_element_id_list(atom_list.clone(), reference).unwrap_or(atom_list);
+        let atom_list = pad_indexed_element_id_list(&matrix_expr, atom_list.clone(), reference)
+            .or_else(|| pad_represented_element_id_list(atom_list.clone(), reference))
+            .unwrap_or(atom_list);
 
         return Ok(RuleEffect::pure(Expr::MinionElementOne(
             Metadata::new(),
@@ -1133,6 +1134,48 @@ fn indexed_element_id_inverse_lookup(
         .into_iter()
         .map(|value| Atom::Literal(Lit::Int(value)))
         .collect())
+}
+
+fn pad_indexed_element_id_list(
+    matrix_expr: &Expr,
+    atom_list: Vec<Atom>,
+    result: &Reference,
+) -> Option<Vec<Atom>> {
+    let index_domain = match matrix_expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(_, index_domain)) => {
+            index_domain.resolve().ok()?
+        }
+        Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(_, index_domain))),
+        ) => index_domain.clone(),
+        _ => return None,
+    };
+    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+        return None;
+    };
+    let index_values = Range::values(index_ranges)?.collect_vec();
+    if index_values.len() != atom_list.len() {
+        return None;
+    }
+
+    let result_domain = result.domain()?.resolve().ok()?;
+    let GroundDomain::Int(result_ranges) = result_domain.as_ref() else {
+        return None;
+    };
+    let max_result = Range::values(result_ranges)?.max()?;
+    let mut padded: Vec<Atom> = (1..=max_result)
+        .map(|value| Lit::Int(value).into())
+        .collect();
+
+    for (index, atom) in index_values.into_iter().zip(atom_list) {
+        if !(1..=max_result).contains(&index) {
+            return None;
+        }
+        padded[(index - 1) as usize] = atom;
+    }
+
+    Some(padded)
 }
 
 fn pad_represented_element_id_list(atom_list: Vec<Atom>, result: &Reference) -> Option<Vec<Atom>> {
