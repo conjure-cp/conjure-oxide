@@ -23,7 +23,7 @@ const SKIP_AUTO_SELECT: &[&str] = &[TuplePacked::NAME];
 register_rule_set!("ReprGeneral", ("Base"), |_| true);
 
 /// Select a representation for abstract domains
-#[register_rule("ReprGeneral", 10000)]
+#[register_rule("ReprGeneral", 10000, [Atomic / Reference])]
 fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::Atomic(_, Atom::Reference(re)) = expr &&
