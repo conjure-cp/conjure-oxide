@@ -58,7 +58,9 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
             }
         );
 
-        let (symbols, new_top) = MatrixToAtom::init_for(&mut new_decl).unwrap();
+        let Ok((symbols, new_top)) = MatrixToAtom::init_for(&mut new_decl) else {
+            continue;
+        };
         new_symtab.update_insert(new_decl);
         new_symtab.extend(symbols);
         new_constraints.extend(new_top);
