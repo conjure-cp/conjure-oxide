@@ -1,7 +1,7 @@
 use super::prelude::*;
 use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference};
 use conjure_cp::{essence_expr, into_matrix_expr};
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 
 const MAX_INNER_DOMAIN_SIZE: u64 = 100;
 
@@ -9,7 +9,7 @@ register_representation!(
     SetOccurrence
     struct State<T> {
         pub cardinality: (i32, i32),
-        pub occurs: Moo<HashMap<Literal, T>>
+        pub occurs: Moo<Vec<(Literal, T)>>
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
@@ -39,8 +39,8 @@ register_representation!(
         let (min, max) = state.cardinality;
         let elems: Vec<Expression> = state
             .occurs
-            .values()
-            .map(|x| {
+            .iter()
+            .map(|(_, x)| {
                 let re = Reference::new(x.clone());
                 essence_expr!(toInt(&re))
             })
@@ -66,11 +66,14 @@ register_representation!(
             ));
         }
 
-        let mut occurs: HashMap<Literal, Literal> =
+        let mut occurs: Vec<(Literal, Literal)> =
             elems.into_iter().map(|x| (x, true.into())).collect();
-        for lit in state.occurs.keys() {
-            occurs.entry(lit.clone()).or_insert_with(|| false.into());
+        for (lit, _) in state.occurs.iter() {
+            if !occurs.iter().any(|(value, _)| value == lit) {
+                occurs.push((lit.clone(), false.into()));
+            }
         }
+        occurs.sort_by_key(|(value, _)| value.to_string());
 
         Ok(State {
             occurs: Moo::new(occurs),
@@ -91,7 +94,11 @@ register_representation!(
         Literal::AbstractLiteral(AbstractLiteral::Set(elems))
     }
     fn repr_vars(state: &State<DeclarationPtr>) -> VecDeque<DeclarationPtr> {
-        state.occurs.values().cloned().collect()
+        state
+            .occurs
+            .iter()
+            .map(|(_, declaration)| declaration.clone())
+            .collect()
     }
 );
 
