@@ -132,13 +132,13 @@ from pathlib import Path
 
 path = Path(sys.argv[1])
 if not path.exists():
-    print("\t\t\t")
+    print("\t" * 13)
     raise SystemExit
 
 try:
     data = json.loads(path.read_text())
 except Exception:
-    print("\t\t\t")
+    print("\t" * 13)
     raise SystemExit
 
 runs = data.get("stats", {}).get("rewriterRuns", [])
@@ -152,9 +152,9 @@ def duration_seconds(value):
     return f"{float(secs) + float(nanos) / 1_000_000_000:.9f}"
 
 def value(name):
-    item = run.get(name, "")
+    item = run.get(name, 0)
     if item is None:
-        return ""
+        return "0"
     return str(item)
 
 print("\t".join([
@@ -162,6 +162,16 @@ print("\t".join([
     value("rewriterRuleApplicationAttempts"),
     value("rewriterRuleApplications"),
     value("rewriterValueLettingRewrites"),
+    value("rewriterCacheHits"),
+    value("rewriterCacheMisses"),
+    value("rewriterCacheTerminalHits"),
+    value("rewriterCacheRewriteHits"),
+    value("rewriterCacheInserts"),
+    value("rewriterCacheAncestorMappings"),
+    value("rewriterCacheResets"),
+    value("rewriterContentHashRequests"),
+    value("rewriterContentHashHits"),
+    value("rewriterContentHashMisses"),
 ]))
 PY
 }
@@ -216,7 +226,9 @@ run_one() {
     cmd+=("$param")
   fi
 
-  local status exit_code old_timeformat elapsed rewriter_time attempts applications value_letting_rewrites stderr_tail
+  local status exit_code old_timeformat elapsed rewriter_time attempts applications value_letting_rewrites
+  local cache_hits cache_misses cache_terminal_hits cache_rewrite_hits cache_inserts
+  local cache_ancestor_mappings cache_resets content_hash_requests content_hash_hits content_hash_misses stderr_tail
   old_timeformat="${TIMEFORMAT-}"
   TIMEFORMAT='%3R'
   if {
@@ -240,7 +252,10 @@ run_one() {
   fi
 
   elapsed="$(tail -n 1 "$time_file" 2>/dev/null | tr -d '[:space:]')"
-  IFS=$'\t' read -r rewriter_time attempts applications value_letting_rewrites < <(extract_rewriter_stats "$info_json")
+  IFS=$'\t' read -r rewriter_time attempts applications value_letting_rewrites \
+    cache_hits cache_misses cache_terminal_hits cache_rewrite_hits cache_inserts \
+    cache_ancestor_mappings cache_resets content_hash_requests content_hash_hits \
+    content_hash_misses < <(extract_rewriter_stats "$info_json")
   stderr_tail="$(tail -20 "$stderr_file" 2>/dev/null || true)"
 
   csv_escape "$test_dir"; printf ','
@@ -250,6 +265,11 @@ run_one() {
   csv_escape "$REWRITER"; printf ','
   csv_escape "$status"; printf ','
   printf '%s,%s,%s,%s,%s,%s,' "$exit_code" "${elapsed:-}" "${rewriter_time:-}" "${attempts:-}" "${applications:-}" "${value_letting_rewrites:-}"
+  printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,' \
+    "${cache_hits:-}" "${cache_misses:-}" "${cache_terminal_hits:-}" \
+    "${cache_rewrite_hits:-}" "${cache_inserts:-}" "${cache_ancestor_mappings:-}" \
+    "${cache_resets:-}" "${content_hash_requests:-}" "${content_hash_hits:-}" \
+    "${content_hash_misses:-}"
   csv_escape "$stderr_tail"; printf '\n'
 }
 
@@ -273,11 +293,19 @@ def numeric(row, field):
 
 total_translation = sum(numeric(row, "translation_time_s") for row in ok)
 total_rewriter = sum(numeric(row, "rewriter_time_s") for row in ok)
+total_cache_hits = sum(numeric(row, "cache_hits") for row in ok)
+total_cache_misses = sum(numeric(row, "cache_misses") for row in ok)
+total_content_hash_hits = sum(numeric(row, "content_hash_hits") for row in ok)
+total_content_hash_misses = sum(numeric(row, "content_hash_misses") for row in ok)
 
 print(f"wrote {path}")
 print(f"ok={len(ok)} failed={len(failed)}")
 print(f"total_translation_time_s={total_translation:.6f}")
 print(f"total_rewriter_time_s={total_rewriter:.6f}")
+print(f"total_cache_hits={total_cache_hits:.0f}")
+print(f"total_cache_misses={total_cache_misses:.0f}")
+print(f"total_content_hash_hits={total_content_hash_hits:.0f}")
+print(f"total_content_hash_misses={total_content_hash_misses:.0f}")
 print()
 print("10 slowest translation runs:")
 for index, row in enumerate(sorted(ok, key=lambda row: numeric(row, "translation_time_s"), reverse=True)[:10], start=1):
@@ -302,7 +330,7 @@ export OXIDE_BIN REWRITER tmpdir
 export -f csv_escape extract_rewriter_stats run_one
 
 {
-  echo '"test_dir","parser","comprehension_expander","solver","rewriter","status","exit_code","translation_time_s","rewriter_time_s","rule_attempts","rule_applications","value_letting_rewrites","stderr_tail"'
+  echo '"test_dir","parser","comprehension_expander","solver","rewriter","status","exit_code","translation_time_s","rewriter_time_s","rule_attempts","rule_applications","value_letting_rewrites","cache_hits","cache_misses","cache_terminal_hits","cache_rewrite_hits","cache_inserts","cache_ancestor_mappings","cache_resets","content_hash_requests","content_hash_hits","content_hash_misses","stderr_tail"'
   if [[ -t 2 ]]; then
     parallel --no-notice --jobs "$JOBS" --eta --colsep '\t' run_one {1} {2} {3} {4} {5} {6} {7} :::: "$jobs_tsv"
   else
