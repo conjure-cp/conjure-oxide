@@ -202,6 +202,9 @@ struct DirtyTrace {
     cache_inserts: usize,
     cache_ancestor_mappings: usize,
     cache_resets: usize,
+    /// Temporary diagnostic: rewrite-cache hits/misses by expression discriminant.
+    cache_kind_hits: BTreeMap<usize, usize>,
+    cache_kind_misses: BTreeMap<usize, usize>,
     arena_content_hash_requests: usize,
     arena_content_hash_hits: usize,
     arena_content_hash_misses: usize,
@@ -311,15 +314,84 @@ impl DirtyTrace {
     }
 
     fn record_arena_content_hash(&mut self, hit: bool) {
-        if !self.enabled {
-            return;
-        }
         self.arena_content_hash_requests += 1;
         if hit {
             self.arena_content_hash_hits += 1;
         } else {
             self.arena_content_hash_misses += 1;
         }
+    }
+
+    fn record_cache_kind_lookup_disc(&mut self, discriminant: usize, hit: bool) {
+        if discriminant == 0 {
+            return;
+        }
+        if hit {
+            *self.cache_kind_hits.entry(discriminant).or_default() += 1;
+        } else {
+            *self.cache_kind_misses.entry(discriminant).or_default() += 1;
+        }
+    }
+
+    fn dump_cache_kind_stats_if_requested(&self) {
+        let Some(dest) = std::env::var_os("CONJURE_CACHE_KIND_STATS") else {
+            return;
+        };
+        let mut rows: Vec<(usize, usize, usize)> = self
+            .cache_kind_misses
+            .keys()
+            .chain(self.cache_kind_hits.keys())
+            .copied()
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .map(|discriminant| {
+                (
+                    discriminant,
+                    self.cache_kind_hits
+                        .get(&discriminant)
+                        .copied()
+                        .unwrap_or(0),
+                    self.cache_kind_misses
+                        .get(&discriminant)
+                        .copied()
+                        .unwrap_or(0),
+                )
+            })
+            .collect();
+        rows.sort_by(|a, b| b.2.cmp(&a.2).then(b.1.cmp(&a.1)));
+        if dest == "1" || dest == "stderr" {
+            eprintln!(
+                "[cache-kind-stats] hits={} misses={}",
+                self.cache_hits, self.cache_misses
+            );
+            for (discriminant, hits, misses) in rows {
+                eprintln!(
+                    "[cache-kind-stats] discriminant={discriminant} hits={hits} misses={misses}"
+                );
+            }
+            return;
+        }
+
+        let path = PathBuf::from(dest);
+        if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
+            for (discriminant, hits, misses) in rows {
+                let _ = writeln!(file, "{discriminant},{hits},{misses}");
+            }
+        }
+    }
+
+    fn record_cache_stats(&self, stats: &mut RewriterStats) {
+        self.dump_cache_kind_stats_if_requested();
+        stats.rewriter_cache_hits = Some(self.cache_hits);
+        stats.rewriter_cache_misses = Some(self.cache_misses);
+        stats.rewriter_cache_terminal_hits = Some(self.cache_terminal_hits);
+        stats.rewriter_cache_rewrite_hits = Some(self.cache_rewrite_hits);
+        stats.rewriter_cache_inserts = Some(self.cache_inserts);
+        stats.rewriter_cache_ancestor_mappings = Some(self.cache_ancestor_mappings);
+        stats.rewriter_cache_resets = Some(self.cache_resets);
+        stats.rewriter_content_hash_requests = Some(self.arena_content_hash_requests);
+        stats.rewriter_content_hash_hits = Some(self.arena_content_hash_hits);
+        stats.rewriter_content_hash_misses = Some(self.arena_content_hash_misses);
     }
 
     fn record_candidate_index_scan(&mut self, total_nodes: usize, scanned_nodes: usize) {
@@ -772,8 +844,6 @@ fn sanitize_dirty_trace_filename(name: &str) -> String {
 enum CacheResult {
     /// The expression has not been cached at this level.
     Unknown,
-    /// The expression is known not to rewrite through this maximum cached level.
-    Terminal(usize),
     /// The expression rewrites to a cached replacement.
     Rewrite(CachedRewrite),
 }
@@ -787,6 +857,31 @@ struct CachedRewrite {
     valid_from_rule_group_index: usize,
 }
 
+/// Whether a node is worth consulting the positive rewrite cache.
+///
+/// Some expression kinds dominate visits yet produce no positive rewrite-cache hits under the
+/// current positive-only cache (suite-wide `CONJURE_CACHE_KIND_STATS`). Skipping their lookups
+/// preserves rule semantics (rules still run) while cutting HashMap miss traffic. Atomic leaves
+/// are included for the same reason.
+fn should_lookup_rewrite_cache(expr: &Expr) -> bool {
+    !matches!(
+        expr,
+        Expr::Atomic(..)
+            | Expr::Neq(..)
+            | Expr::Eq(..)
+            | Expr::AuxDeclaration(..)
+            | Expr::ToInt(..)
+            | Expr::AbstractLiteral(..)
+            | Expr::Root(..)
+            | Expr::MinionReify(..)
+            | Expr::MinionReifyImply(..)
+            | Expr::FlatSumGeq(..)
+            | Expr::Imply(..)
+            | Expr::FlatSumLeq(..)
+            | Expr::FlatIneq(..)
+    )
+}
+
 /// Rewrite cache keyed by expression content hash and symbol context hash.
 ///
 /// Rewrite entries are transitively resolved: inserting `A -> B`, `B -> C`, then `C -> D`
@@ -797,8 +892,6 @@ struct RewriteCache {
     rewrites: HashMap<u64, CachedRewrite>,
     /// Reverse edges used to update earlier mappings when a target later rewrites again.
     predecessors: HashMap<u64, Vec<u64>>,
-    /// Context-qualified terminal shortcut: a subtree clean through rule group N is clean for <= N.
-    clean_levels: HashMap<u64, usize>,
 }
 
 impl RewriteCache {
@@ -826,15 +919,6 @@ impl RewriteCache {
         )
     }
 
-    /// Removes terminal evidence for a source when stronger rewrite evidence is installed.
-    ///
-    /// This is needed for ancestor mappings: changing a child proves that the old ancestor maps to
-    /// a rebuilt ancestor even if that old shape was previously cached as terminal.
-    fn clear_terminal_fact(&mut self, expression_content_hash: u64, symbol_context_hash: u64) {
-        let clean_key = Self::combine(expression_content_hash, symbol_context_hash);
-        self.clean_levels.remove(&clean_key);
-    }
-
     /// Looks up a subtree at a rule-group level.
     #[cfg(test)]
     fn get(&self, subtree: &Expr, level: usize, symbol_context_hash: u64) -> CacheResult {
@@ -849,13 +933,6 @@ impl RewriteCache {
         level: usize,
         symbol_context_hash: u64,
     ) -> CacheResult {
-        let clean_key = Self::combine(expression_content_hash, symbol_context_hash);
-        if let Some(&max_clean) = self.clean_levels.get(&clean_key)
-            && max_clean >= level
-        {
-            return CacheResult::Terminal(max_clean);
-        }
-
         match self
             .rewrites
             .get(&Self::combine(expression_content_hash, symbol_context_hash))
@@ -867,7 +944,7 @@ impl RewriteCache {
         }
     }
 
-    /// Inserts either a terminal result or a rewrite result for `from`.
+    /// Inserts positive rewrite evidence for `from`; negative evidence is ignored.
     #[cfg(test)]
     fn insert(&mut self, from: &Expr, to: Option<Expr>, level: usize, symbol_context_hash: u64) {
         self.insert_from_hash(
@@ -892,11 +969,9 @@ impl RewriteCache {
         let from_key = Self::combine(from_content_hash, symbol_context_hash);
 
         let Some(to_expr) = to else {
-            let clean_key = Self::combine(from_content_hash, symbol_context_hash);
-            self.clean_levels
-                .entry(clean_key)
-                .and_modify(|l| *l = (*l).max(level))
-                .or_insert(level);
+            // Reusing negative/terminal results is deliberately disabled. Rule applicability can
+            // depend on evaluator / nested-symbol state that is not represented by the expression
+            // and root symbol hashes, so only positive rewrite evidence is safe to cache.
             return;
         };
 
@@ -908,8 +983,6 @@ impl RewriteCache {
         let valid_from_rule_group_index = self.rewrites.get(&from_key).map_or(level, |rewrite| {
             rewrite.valid_from_rule_group_index.min(level)
         });
-        self.clear_terminal_fact(from_content_hash, symbol_context_hash);
-
         let resolved = match self.rewrites.get(&to_key) {
             Some(rewrite) => CachedRewrite {
                 expr: rewrite.expr.clone(),
@@ -1910,6 +1983,9 @@ pub fn rewrite_model<'a>(
 
     let run_end = Instant::now();
     rewriter_stats.rewriter_run_time = Some(run_end - run_start);
+    if config.cache {
+        dirty_trace.record_cache_stats(&mut rewriter_stats);
+    }
 
     model
         .context
@@ -2024,7 +2100,10 @@ fn try_rewrite_model<'ctx, 'rules>(
                 }
 
                 let mut node_content_hash = None;
-                if let Some(symbol_context_hash) = scan_symbol_context_hash {
+                if let Some(symbol_context_hash) = scan_symbol_context_hash
+                    && should_lookup_rewrite_cache(arena.expression(node_id))
+                {
+                    let lookup_kind = discriminant_from_value(arena.expression(node_id));
                     let cache_result = {
                         let expression_content_hash = *node_content_hash.get_or_insert_with(|| {
                             traced_arena_content_hash(&mut arena, node_id, ctx.dirty_trace)
@@ -2033,18 +2112,11 @@ fn try_rewrite_model<'ctx, 'rules>(
                         cache.get_from_hash(expression_content_hash, level, symbol_context_hash)
                     };
                     match cache_result {
-                        CacheResult::Terminal(clean_level) => {
-                            ctx.dirty_trace.cache_hits += 1;
-                            ctx.dirty_trace.cache_terminal_hits += 1;
-                            trace!(target: "rule_engine", clean_level, "Rewrite cache terminal hit");
-                            if ctx.config.dirty {
-                                arena.mark_clean_for_rule_priority(node_id, rule_group.priority);
-                            }
-                            continue;
-                        }
                         CacheResult::Rewrite(cached) => {
                             ctx.dirty_trace.cache_hits += 1;
                             ctx.dirty_trace.cache_rewrite_hits += 1;
+                            ctx.dirty_trace
+                                .record_cache_kind_lookup_disc(lookup_kind, true);
                             let mappings = replace_focus_and_dirty_ancestors(
                                 &mut arena,
                                 node_id,
@@ -2057,25 +2129,27 @@ fn try_rewrite_model<'ctx, 'rules>(
                                 node_id,
                                 ctx.dirty_trace,
                             );
-                            let cache = ctx.cache.as_mut().expect("cache enabled");
-                            // TODO: if cache becomes part of the optimised profile again, preserve
-                            // ancestor mappings through evaluator normalisation instead of dropping
-                            // this evidence when the hook changes an ancestor.
-                            if !evaluator_changed {
-                                let mapping_count = mappings.len();
-                                insert_ancestor_mappings(
-                                    cache,
+                            let mappings = if evaluator_changed {
+                                resolve_ancestor_mappings_after_normalisation(
+                                    &mut arena,
+                                    node_id,
                                     mappings,
-                                    level,
-                                    symbol_context_hash,
-                                );
-                                ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
-                            }
+                                    ctx.dirty_trace,
+                                )
+                            } else {
+                                mappings
+                            };
+                            let mapping_count = mappings.len();
+                            let cache = ctx.cache.as_mut().expect("cache enabled");
+                            insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
+                            ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
                             did_rewrite = true;
                             continue 'rewrite_loop;
                         }
                         CacheResult::Unknown => {
                             ctx.dirty_trace.cache_misses += 1;
+                            ctx.dirty_trace
+                                .record_cache_kind_lookup_disc(lookup_kind, false);
                         }
                     }
                 }
@@ -2178,16 +2252,6 @@ fn try_rewrite_model<'ctx, 'rules>(
                                 }
                             }
                         }
-                    }
-                    if ctx.config.cache
-                        && results.len() == results_before_expr
-                        && let Some(symbol_context_hash) = scan_symbol_context_hash
-                        && let Some(cache) = ctx.cache.as_mut()
-                    {
-                        let hash = node_content_hash
-                            .expect("cache lookup computed the arena node content hash");
-                        cache.insert_from_hash(hash, None, level, symbol_context_hash);
-                        ctx.dirty_trace.cache_inserts += 1;
                     }
                 }
                 if ctx.config.dirty && attempted_rule && results.len() == results_before_expr {
@@ -2292,28 +2356,49 @@ fn try_rewrite_model<'ctx, 'rules>(
                     };
                     let expr_hash =
                         RewriteCache::expression_content_hash(expr, cache_symbol_context_hash);
-                    if let Some(cache) = ctx.cache.as_mut() {
-                        if arena.is_reachable(*node_id) {
+                    // Warm and clone while `arena` / `dirty_trace` are free; insert under the cache
+                    // borrow afterwards.
+                    let pending_cache_update = ctx.cache.as_ref().map(|_| {
+                        let to_expr = if arena.is_reachable(*node_id) {
+                            Some(clone_arena_expr_with_content_hash(
+                                &mut arena,
+                                *node_id,
+                                ctx.dirty_trace,
+                            ))
+                        } else {
+                            None
+                        };
+                        let mappings = if evaluator_changed {
+                            resolve_ancestor_mappings_after_normalisation(
+                                &mut arena,
+                                *node_id,
+                                mappings,
+                                ctx.dirty_trace,
+                            )
+                        } else {
+                            mappings
+                        };
+                        (to_expr, mappings)
+                    });
+                    if let Some((to_expr, mappings)) = pending_cache_update {
+                        let mapping_count = mappings.len();
+                        let cache = ctx.cache.as_mut().expect("pending update implies cache");
+                        if let Some(to_expr) = to_expr {
                             cache.insert_from_hash(
                                 expr_hash,
-                                Some(arena.expression(*node_id).clone()),
+                                Some(to_expr),
                                 *level,
                                 cache_symbol_context_hash,
                             );
                             ctx.dirty_trace.cache_inserts += 1;
                         }
-                        if !evaluator_changed {
-                            // TODO: thread old ancestor hashes through evaluator normalisation so
-                            // cache can keep these mappings even when the hook changes an ancestor.
-                            let mapping_count = mappings.len();
-                            insert_ancestor_mappings(
-                                cache,
-                                mappings,
-                                *level,
-                                cache_symbol_context_hash,
-                            );
-                            ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
-                        }
+                        insert_ancestor_mappings(
+                            cache,
+                            mappings,
+                            *level,
+                            cache_symbol_context_hash,
+                        );
+                        ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
                     }
                 }
                 if effect_impact.requires_arena_reimport_for_invalidation()
@@ -2431,7 +2516,11 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             .is_some()
             .then(|| current_symbol_context_hash(submodel, ctx));
 
-        if let Some(symbol_context_hash) = scan_symbol_context_hash {
+        if let Some(symbol_context_hash) = scan_symbol_context_hash
+            && should_lookup_rewrite_cache(surfaces[surface_index].arena.expression(node_id))
+        {
+            let lookup_kind =
+                discriminant_from_value(surfaces[surface_index].arena.expression(node_id));
             let cache_result = {
                 let expression_content_hash = *node_content_hash.get_or_insert_with(|| {
                     traced_arena_content_hash(
@@ -2444,33 +2533,11 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 cache.get_from_hash(expression_content_hash, level, symbol_context_hash)
             };
             match cache_result {
-                CacheResult::Terminal(clean_level) => {
-                    ctx.dirty_trace.cache_hits += 1;
-                    ctx.dirty_trace.cache_terminal_hits += 1;
-                    trace!(target: "rule_engine", clean_level, "Rewrite cache terminal hit");
-                    if ctx.config.dirty {
-                        surfaces[surface_index]
-                            .arena
-                            .mark_clean_for_rule_priority(node_id, rule_group.priority);
-                    }
-                    scheduler.enqueue_after_no_rewrite(
-                        WorklistSchedulingContext::new(
-                            &surfaces[surface_index].arena,
-                            surface_index,
-                            ctx.bucketed_rules,
-                            ctx.config,
-                        ),
-                        node_id,
-                        level,
-                        clean_level + 1,
-                        scheduled_mode,
-                        Some(ctx.dirty_trace),
-                    );
-                    continue;
-                }
                 CacheResult::Rewrite(cached) => {
                     ctx.dirty_trace.cache_hits += 1;
                     ctx.dirty_trace.cache_rewrite_hits += 1;
+                    ctx.dirty_trace
+                        .record_cache_kind_lookup_disc(lookup_kind, true);
                     let rewritten_value_letting_name =
                         value_letting_surface_name(&surfaces[surface_index].kind).cloned();
                     let mappings = {
@@ -2487,15 +2554,20 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                         let arena = &mut surfaces[surface_index].arena;
                         normalise_evaluators_from_node_to_root(arena, node_id, ctx.dirty_trace)
                     };
+                    let mappings = if evaluator_changed {
+                        resolve_ancestor_mappings_after_normalisation(
+                            &mut surfaces[surface_index].arena,
+                            node_id,
+                            mappings,
+                            ctx.dirty_trace,
+                        )
+                    } else {
+                        mappings
+                    };
+                    let mapping_count = mappings.len();
                     let cache = ctx.cache.as_mut().expect("cache enabled");
-                    // TODO: if cache becomes part of the optimised profile again, preserve
-                    // ancestor mappings through evaluator normalisation instead of dropping
-                    // this evidence when the hook changes an ancestor.
-                    if !evaluator_changed {
-                        let mapping_count = mappings.len();
-                        insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
-                        ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
-                    }
+                    insert_ancestor_mappings(cache, mappings, level, symbol_context_hash);
+                    ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
                     enqueue_worklist_rewrite_impact(
                         &mut scheduler,
                         &surfaces[surface_index].arena,
@@ -2524,6 +2596,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 }
                 CacheResult::Unknown => {
                     ctx.dirty_trace.cache_misses += 1;
+                    ctx.dirty_trace
+                        .record_cache_kind_lookup_disc(lookup_kind, false);
                 }
             }
         }
@@ -2623,17 +2697,6 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                         }
                     }
                 }
-            }
-
-            if ctx.config.cache
-                && results.is_empty()
-                && let Some(symbol_context_hash) = scan_symbol_context_hash
-                && let Some(cache) = ctx.cache.as_mut()
-            {
-                let hash =
-                    node_content_hash.expect("cache lookup computed the arena node content hash");
-                cache.insert_from_hash(hash, None, level, symbol_context_hash);
-                ctx.dirty_trace.cache_inserts += 1;
             }
         }
 
@@ -2792,23 +2855,42 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 pre_effect_symbol_context_hash
             };
             let expr_hash = RewriteCache::expression_content_hash(expr, cache_symbol_context_hash);
-            if let Some(cache) = ctx.cache.as_mut() {
-                if surfaces[surface_index].arena.is_reachable(*node_id) {
+            let pending_cache_update = ctx.cache.as_ref().map(|_| {
+                let to_expr = if surfaces[surface_index].arena.is_reachable(*node_id) {
+                    Some(clone_arena_expr_with_content_hash(
+                        &mut surfaces[surface_index].arena,
+                        *node_id,
+                        ctx.dirty_trace,
+                    ))
+                } else {
+                    None
+                };
+                let mappings = if evaluator_changed {
+                    resolve_ancestor_mappings_after_normalisation(
+                        &mut surfaces[surface_index].arena,
+                        *node_id,
+                        mappings,
+                        ctx.dirty_trace,
+                    )
+                } else {
+                    mappings
+                };
+                (to_expr, mappings)
+            });
+            if let Some((to_expr, mappings)) = pending_cache_update {
+                let mapping_count = mappings.len();
+                let cache = ctx.cache.as_mut().expect("pending update implies cache");
+                if let Some(to_expr) = to_expr {
                     cache.insert_from_hash(
                         expr_hash,
-                        Some(surfaces[surface_index].arena.expression(*node_id).clone()),
+                        Some(to_expr),
                         *level,
                         cache_symbol_context_hash,
                     );
                     ctx.dirty_trace.cache_inserts += 1;
                 }
-                if !evaluator_changed {
-                    // TODO: thread old ancestor hashes through evaluator normalisation so cache
-                    // can keep these mappings even when the hook changes an ancestor.
-                    let mapping_count = mappings.len();
-                    insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
-                    ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
-                }
+                insert_ancestor_mappings(cache, mappings, *level, cache_symbol_context_hash);
+                ctx.dirty_trace.cache_ancestor_mappings += mapping_count;
             }
         }
         if effect_impact.requires_arena_reimport_for_invalidation()
@@ -3298,13 +3380,29 @@ fn dirty_ancestors_after_focus_change(
         if let Some(hashes) = old_ancestor_content_hashes.as_ref()
             && let Some(&old_hash) = hashes.get(ancestor_index)
         {
-            ancestor_mappings.push((old_hash, arena.expression(ancestor_id).clone()));
+            ancestor_mappings.push((
+                old_hash,
+                clone_arena_expr_with_content_hash(arena, ancestor_id, dirty_trace),
+            ));
         }
         ancestor = arena.parent(ancestor_id);
         ancestor_index += 1;
     }
 
     ancestor_mappings
+}
+
+/// Clones an arena expression after warming its content hash via the arena cache.
+///
+/// Rebuilds leave expression metadata cold; hashing through the arena is incremental, and syncing
+/// that hash onto the payload makes rewrite-cache inserts O(1) to key.
+fn clone_arena_expr_with_content_hash(
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+) -> Expr {
+    let _ = traced_arena_content_hash(arena, node_id, dirty_trace);
+    arena.expression(node_id).clone()
 }
 
 /// Captures ancestor content hashes before replacing the focused subtree.
@@ -3322,6 +3420,39 @@ fn ancestor_content_hashes_to_root(
         ancestor = arena.parent(ancestor_id);
     }
     hashes
+}
+
+/// Re-resolves ancestor mapping targets after evaluator normalisation.
+///
+/// `replace_focus_and_dirty_ancestors` captures post-rebuild ancestors. The evaluator hook may
+/// then change those ancestors further; keep the pre-rewrite source hashes but retarget them to
+/// the post-normalisation expressions so the evidence remains usable.
+fn resolve_ancestor_mappings_after_normalisation(
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
+    mappings: AncestorCacheMappings,
+    dirty_trace: &mut DirtyTrace,
+) -> AncestorCacheMappings {
+    if mappings.is_empty() || !arena.is_reachable(node_id) {
+        return Vec::new();
+    }
+
+    let mut refreshed = Vec::with_capacity(mappings.len());
+    let mut ancestor = arena.parent(node_id);
+    let mut index = 0;
+    while let Some(ancestor_id) = ancestor {
+        if index >= mappings.len() || !arena.is_reachable(ancestor_id) {
+            break;
+        }
+        let (old_hash, _) = mappings[index];
+        refreshed.push((
+            old_hash,
+            clone_arena_expr_with_content_hash(arena, ancestor_id, dirty_trace),
+        ));
+        ancestor = arena.parent(ancestor_id);
+        index += 1;
+    }
+    refreshed
 }
 
 /// Inserts old-ancestor-hash to rebuilt-ancestor mappings under one symbol context.
@@ -3612,6 +3743,65 @@ mod tests {
     }
 
     #[test]
+    fn rewrite_cache_skips_atomic_lookups_but_still_stores_atomic_rewrites() {
+        let from = int_lit(1);
+        let to = int_lit(2);
+        assert!(!should_lookup_rewrite_cache(&from));
+        assert!(!should_lookup_rewrite_cache(&to));
+
+        let mut cache = RewriteCache::default();
+        let context = 10;
+        cache.insert(&from, Some(to.clone()), 0, context);
+        // The map still records Atomic rewrites; the engine simply does not consult it for leaves.
+        match cache.get(&from, 0, context) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, to),
+            CacheResult::Unknown => panic!("expected stored Atomic rewrite"),
+        }
+
+        let sum = Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_lit(1), int_lit(2)]),
+        );
+        assert!(should_lookup_rewrite_cache(&sum));
+    }
+
+    #[test]
+    fn rewrite_cache_skips_suite_zero_hit_lookup_kinds() {
+        // Kinds with suite-wide near-zero positive rewrite hits under positive-only caching.
+        let neq = Expr::Neq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2)));
+        let eq = Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2)));
+        let to_int = Expr::ToInt(Metadata::new(), Moo::new(bool_lit(true)));
+        let imply = Expr::Imply(
+            Metadata::new(),
+            Moo::new(bool_lit(true)),
+            Moo::new(bool_lit(false)),
+        );
+        let root = Expr::Root(Metadata::new(), vec![bool_lit(true)]);
+        assert!(!should_lookup_rewrite_cache(&neq));
+        assert!(!should_lookup_rewrite_cache(&eq));
+        assert!(!should_lookup_rewrite_cache(&to_int));
+        assert!(!should_lookup_rewrite_cache(&imply));
+        assert!(!should_lookup_rewrite_cache(&root));
+
+        // Kinds that do produce positive hits must still be looked up.
+        // Leq/And keep lookups: rare hits still suppress duplicate traced applications.
+        let or = Expr::Or(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(true), bool_lit(false)]),
+        );
+        let leq = Expr::Leq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2)));
+        let and = Expr::And(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(true), bool_lit(false)]),
+        );
+        let safe_index = Expr::SafeIndex(Metadata::new(), Moo::new(int_lit(1)), vec![int_lit(0)]);
+        assert!(should_lookup_rewrite_cache(&or));
+        assert!(should_lookup_rewrite_cache(&leq));
+        assert!(should_lookup_rewrite_cache(&and));
+        assert!(should_lookup_rewrite_cache(&safe_index));
+    }
+
+    #[test]
     fn rewrite_cache_resolves_transitive_rewrites() {
         let a = int_lit(1);
         let b = int_lit(2);
@@ -3627,7 +3817,7 @@ mod tests {
         for expr in [&a, &b, &c] {
             match cache.get(expr, 0, context) {
                 CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, d),
-                CacheResult::Unknown | CacheResult::Terminal(_) => {
+                CacheResult::Unknown => {
                     panic!("expected transitive rewrite cache hit")
                 }
             }
@@ -3646,7 +3836,7 @@ mod tests {
         assert!(matches!(cache.get(&a, 1, context), CacheResult::Unknown));
         match cache.get(&a, 2, context) {
             CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, b),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
+            CacheResult::Unknown => {
                 panic!("expected rewrite at proven rule group")
             }
         }
@@ -3667,121 +3857,17 @@ mod tests {
 
         match cache.get(&a, 0, context) {
             CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, d),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
+            CacheResult::Unknown => {
                 panic!("expected compressed rewrite chain")
             }
         }
         assert!(matches!(cache.get(&b, 0, context), CacheResult::Unknown));
         match cache.get(&b, 1, context) {
             CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, d),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
+            CacheResult::Unknown => {
                 panic!("expected compressed suffix chain")
             }
         }
-    }
-
-    #[test]
-    fn rewrite_cache_preserves_rewrite_to_terminal_target() {
-        let a = int_lit(1);
-        let b = int_lit(2);
-        let mut cache = RewriteCache::default();
-        let context = 10;
-
-        cache.insert(&b, None, 0, context);
-        cache.insert(&a, Some(b.clone()), 0, context);
-
-        match cache.get(&a, 0, context) {
-            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, b),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
-                panic!("terminal target must not make its source terminal")
-            }
-        }
-        assert!(matches!(
-            cache.get(&b, 0, context),
-            CacheResult::Terminal(0)
-        ));
-    }
-
-    #[test]
-    fn rewrite_cache_terminal_target_does_not_terminalise_existing_predecessor() {
-        let a = int_lit(1);
-        let b = int_lit(2);
-        let mut cache = RewriteCache::default();
-        let context = 10;
-
-        cache.insert(&a, Some(b.clone()), 0, context);
-        cache.insert(&b, None, 0, context);
-
-        match cache.get(&a, 0, context) {
-            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, b),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
-                panic!("terminal target must not make its predecessor terminal")
-            }
-        }
-    }
-
-    #[test]
-    fn rewrite_cache_compresses_chain_ending_at_terminal_target() {
-        let a = int_lit(1);
-        let b = int_lit(2);
-        let c = int_lit(3);
-        let mut cache = RewriteCache::default();
-        let context = 10;
-
-        cache.insert(&c, None, 0, context);
-        cache.insert(&b, Some(c.clone()), 0, context);
-        cache.insert(&a, Some(b.clone()), 0, context);
-
-        for expr in [&a, &b] {
-            match cache.get(expr, 0, context) {
-                CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, c),
-                CacheResult::Unknown | CacheResult::Terminal(_) => {
-                    panic!("expected rewrite to terminal target")
-                }
-            }
-        }
-        assert!(matches!(
-            cache.get(&c, 0, context),
-            CacheResult::Terminal(0)
-        ));
-    }
-
-    #[test]
-    fn rewrite_cache_rewrite_overrides_stale_terminal_fact() {
-        let a = int_lit(1);
-        let b = int_lit(2);
-        let mut cache = RewriteCache::default();
-        let context = 10;
-
-        cache.insert(&a, None, 0, context);
-        cache.insert(&a, Some(b.clone()), 0, context);
-
-        match cache.get(&a, 0, context) {
-            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, b),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
-                panic!("new rewrite evidence must override a stale terminal fact")
-            }
-        }
-    }
-
-    #[test]
-    fn rewrite_cache_tracks_terminal_levels() {
-        let a = int_lit(1);
-        let mut cache = RewriteCache::default();
-        let context = 10;
-
-        cache.insert(&a, None, 0, context);
-        cache.insert(&a, None, 1, context);
-
-        match cache.get(&a, 0, context) {
-            CacheResult::Terminal(level) => assert_eq!(level, 1),
-            CacheResult::Unknown | CacheResult::Rewrite(_) => panic!("expected terminal hit"),
-        }
-        match cache.get(&a, 1, context) {
-            CacheResult::Terminal(level) => assert_eq!(level, 1),
-            CacheResult::Unknown | CacheResult::Rewrite(_) => panic!("expected terminal hit"),
-        }
-        assert!(matches!(cache.get(&a, 2, context), CacheResult::Unknown));
     }
 
     #[test]
@@ -3798,10 +3884,90 @@ mod tests {
 
         match cache.get(&old_parent, 0, context) {
             CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, final_parent),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
+            CacheResult::Unknown => {
                 panic!("expected ancestor rewrite cache hit")
             }
         }
+    }
+
+    #[test]
+    fn ancestor_mappings_retarget_after_evaluator_like_ancestor_change() {
+        let tree = root(vec![Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_lit(1), int_lit(1)]),
+        )]);
+        let mut arena = ExpressionArena::from_root(tree);
+        let root_id = arena.root();
+        let sum_id = arena.children(root_id)[0];
+        let mut dirty_trace = DirtyTrace::default();
+
+        let old_root = arena.expression(root_id).clone();
+        let old_root_hash = RewriteCache::expression_content_hash(&old_root, 0);
+        let mappings = replace_focus_and_dirty_ancestors(
+            &mut arena,
+            sum_id,
+            Expr::Sum(
+                Metadata::new(),
+                Moo::new(matrix_expr![int_lit(2), int_lit(0)]),
+            ),
+            &mut dirty_trace,
+            Some(0),
+        );
+        assert_eq!(mappings.len(), 1);
+        assert_eq!(mappings[0].0, old_root_hash);
+
+        // Simulate evaluator normalisation collapsing the rewritten Sum at the same node id.
+        arena.replace_subtree(sum_id, int_lit(2));
+        dirty_ancestors_after_focus_change(&mut arena, sum_id, &mut dirty_trace, None);
+
+        let resolved = resolve_ancestor_mappings_after_normalisation(
+            &mut arena,
+            sum_id,
+            mappings,
+            &mut dirty_trace,
+        );
+        assert_eq!(resolved.len(), 1);
+        assert_eq!(resolved[0].0, old_root_hash);
+        assert_eq!(resolved[0].1, root(vec![int_lit(2)]));
+
+        let mut cache = RewriteCache::default();
+        insert_ancestor_mappings(&mut cache, resolved, 0, 0);
+        match cache.get(&old_root, 0, 0) {
+            CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, root(vec![int_lit(2)])),
+            CacheResult::Unknown => panic!("expected retargeted ancestor rewrite hit"),
+        }
+    }
+
+    #[test]
+    fn ancestor_mapping_clones_carry_warm_content_hashes() {
+        let tree = root(vec![Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_lit(1), int_lit(1)]),
+        )]);
+        let mut arena = ExpressionArena::from_root(tree);
+        let root_id = arena.root();
+        let sum_id = arena.children(root_id)[0];
+        let mut dirty_trace = DirtyTrace::default();
+
+        let mappings = replace_focus_and_dirty_ancestors(
+            &mut arena,
+            sum_id,
+            Expr::Sum(
+                Metadata::new(),
+                Moo::new(matrix_expr![int_lit(2), int_lit(0)]),
+            ),
+            &mut dirty_trace,
+            Some(0),
+        );
+        assert_eq!(mappings.len(), 1);
+        let warm_hash = mappings[0]
+            .1
+            .meta_ref()
+            .cached_content_hash
+            .load(std::sync::atomic::Ordering::Relaxed);
+        // NO_HASH sentinel is 0; a warm mapping must already store the content hash.
+        assert_ne!(warm_hash, 0);
+        assert_eq!(warm_hash, mappings[0].1.cached_content_hash());
     }
 
     #[test]
@@ -3818,12 +3984,16 @@ mod tests {
 
         match cache.get(&from, 0, old_context) {
             CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, to),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
+            CacheResult::Unknown => {
                 panic!("expected rewrite hit in original context")
             }
         }
         assert!(matches!(
             cache.get(&from, 0, new_context),
+            CacheResult::Unknown
+        ));
+        assert!(matches!(
+            cache.get(&terminal, 0, old_context),
             CacheResult::Unknown
         ));
         assert!(matches!(
@@ -3846,7 +4016,7 @@ mod tests {
 
         match cache.get(&a, 0, old_context) {
             CacheResult::Rewrite(rewritten) => assert_eq!(rewritten.expr, c),
-            CacheResult::Unknown | CacheResult::Terminal(_) => {
+            CacheResult::Unknown => {
                 panic!("expected rewrite hit in original context")
             }
         }

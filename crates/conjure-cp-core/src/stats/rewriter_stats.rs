@@ -76,6 +76,26 @@ pub struct RewriterStats {
     pub rewriter_rule_application_attempts: Option<usize>,
     pub rewriter_rule_applications: Option<usize>,
     pub rewriter_value_letting_rewrites: Option<usize>,
+    /// Successful rewrite-cache lookups, including terminal and replacement results.
+    pub rewriter_cache_hits: Option<usize>,
+    /// Rewrite-cache lookups with no usable entry.
+    pub rewriter_cache_misses: Option<usize>,
+    /// Cache hits proving that no rule applies through the requested level.
+    pub rewriter_cache_terminal_hits: Option<usize>,
+    /// Cache hits that supply a replacement expression.
+    pub rewriter_cache_rewrite_hits: Option<usize>,
+    /// Results inserted into the rewrite cache.
+    pub rewriter_cache_inserts: Option<usize>,
+    /// Rebuilt ancestor expressions mapped to cached rewrite results.
+    pub rewriter_cache_ancestor_mappings: Option<usize>,
+    /// Whole rewrite-cache resets.
+    pub rewriter_cache_resets: Option<usize>,
+    /// Arena content-hash requests made for rewrite-cache keys.
+    pub rewriter_content_hash_requests: Option<usize>,
+    /// Arena content-hash requests served from cached hashes.
+    pub rewriter_content_hash_hits: Option<usize>,
+    /// Arena content hashes computed on demand.
+    pub rewriter_content_hash_misses: Option<usize>,
 }
 
 impl RewriterStats {
@@ -86,6 +106,16 @@ impl RewriterStats {
             rewriter_rule_application_attempts: None,
             rewriter_rule_applications: None,
             rewriter_value_letting_rewrites: Some(0),
+            rewriter_cache_hits: None,
+            rewriter_cache_misses: None,
+            rewriter_cache_terminal_hits: None,
+            rewriter_cache_rewrite_hits: None,
+            rewriter_cache_inserts: None,
+            rewriter_cache_ancestor_mappings: None,
+            rewriter_cache_resets: None,
+            rewriter_content_hash_requests: None,
+            rewriter_content_hash_hits: None,
+            rewriter_content_hash_misses: None,
         }
     }
 }

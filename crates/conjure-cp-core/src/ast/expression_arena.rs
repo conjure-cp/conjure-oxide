@@ -81,8 +81,13 @@ impl ExpressionArena {
     }
 
     /// Returns the cached content hash for `id` and whether it was already cached.
+    ///
+    /// The hash is also stored on the expression [`Metadata`](crate::ast::Metadata) so clones of
+    /// the payload (for example rewrite-cache ancestor mappings) can key in O(1) without walking
+    /// the embedded tree again.
     pub fn content_hash_with_cache_status(&mut self, id: ExpressionNodeId) -> (u64, bool) {
         if let Some(hash) = self.node(id).cached_content_hash {
+            self.sync_expression_content_hash(id, hash);
             return (hash, true);
         }
 
@@ -95,7 +100,17 @@ impl ExpressionArena {
             .expression(id)
             .content_hash_from_child_hashes(&mut child_hashes.into_iter());
         self.node_mut(id).cached_content_hash = Some(hash);
+        self.sync_expression_content_hash(id, hash);
         (hash, false)
+    }
+
+    /// Stores `hash` on the expression payload so [`Expression::cached_content_hash`] stays in sync
+    /// with the arena node cache.
+    fn sync_expression_content_hash(&self, id: ExpressionNodeId, hash: u64) {
+        self.expression(id)
+            .meta_ref()
+            .cached_content_hash
+            .store(hash, Ordering::Relaxed);
     }
 
     /// Returns the parent of `id`, or `None` for the root.
@@ -148,9 +163,12 @@ impl ExpressionArena {
 
     /// Records that rewrite-relevant content at `id` has changed.
     pub fn bump_generation(&mut self, id: ExpressionNodeId) {
-        let node = self.node_mut(id);
-        node.generation = node.generation.wrapping_add(1);
-        node.cached_content_hash = None;
+        {
+            let node = self.node_mut(id);
+            node.generation = node.generation.wrapping_add(1);
+            node.cached_content_hash = None;
+        }
+        self.expression(id).invalidate_cached_content_hash();
     }
 
     /// Replaces the subtree at `id` while preserving `id` itself.
@@ -244,8 +262,10 @@ impl ExpressionArena {
     pub fn invalidate_content_hash_to_root(&mut self, id: ExpressionNodeId) {
         let mut node = Some(id);
         while let Some(node_id) = node {
+            let parent = self.node(node_id).parent;
             self.node_mut(node_id).cached_content_hash = None;
-            node = self.parent(node_id);
+            self.expression(node_id).invalidate_cached_content_hash();
+            node = parent;
         }
     }
 
@@ -549,6 +569,44 @@ mod tests {
         assert_eq!(
             arena.content_hash(eq_id),
             arena.expression(eq_id).cached_content_hash()
+        );
+    }
+
+    #[test]
+    fn arena_content_hash_warms_expression_metadata() {
+        use crate::ast::metadata::NO_HASH;
+
+        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2))]));
+        let root_id = arena.root();
+        arena.rebuild_payload_from_children(root_id);
+        assert_eq!(
+            arena
+                .expression(root_id)
+                .meta_ref()
+                .cached_content_hash
+                .load(Ordering::Relaxed),
+            NO_HASH
+        );
+
+        let hash = arena.content_hash(root_id);
+        assert_ne!(hash, NO_HASH);
+        assert_eq!(
+            arena
+                .expression(root_id)
+                .meta_ref()
+                .cached_content_hash
+                .load(Ordering::Relaxed),
+            hash
+        );
+        // Clones used by the rewrite cache must keep the warm hash.
+        assert_eq!(
+            arena
+                .expression(root_id)
+                .clone()
+                .meta_ref()
+                .cached_content_hash
+                .load(Ordering::Relaxed),
+            hash
         );
     }
 
