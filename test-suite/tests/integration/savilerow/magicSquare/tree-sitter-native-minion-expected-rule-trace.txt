@@ -1,0 +1,1115 @@
+Model before rewriting:
+
+letting n be 4
+letting N be domain int(1..n)
+letting theSum be (product([n,sum([product([n,n;int(1..)]),1;int(1..)]);int(1..)]) / 2)
+find magicSquare: matrix indexed by [N, N] of int(1..(product([n,n;int(1..)])))
+
+such that
+
+allDifferent(flatten(magicSquare)),
+theSum < (product([product([n,n;int(1..)]),n;int(1..)]) - sum([ i | i : int(1..((n - 1))) ])),
+theSum > sum([ i | i : int(1..n) ]),
+and([ sum([ magicSquare[row, col] | col : N ]) = theSum | row : N ]),
+and([ sum([ magicSquare[row, col] | row : N ]) = theSum | col : N ]),
+sum([ magicSquare[i, i] | i : N ]) = theSum,
+and([ (magicSquare[row,..] <lex magicSquare[sum([row,1;int(1..)]),..]) | row : int(1..((n - 1))) ]),
+and([ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ])
+
+--
+
+allDifferent(flatten(magicSquare)),
+true,
+true,
+and([ sum([ magicSquare[row, col] | col : N ]) = theSum | row : N ]),
+and([ sum([ magicSquare[row, col] | row : N ]) = theSum | col : N ]),
+sum([ magicSquare[i, i] | i : N ]) = 34,
+and([ (magicSquare[row,..] <lex magicSquare[sum([row,1;int(1..)]),..]) | row : int(1..((n - 1))) ]),
+and([ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+allDifferent(flatten(magicSquare)),
+true,
+true,
+and([ sum([ magicSquare[row, col] | col : N ]) = theSum | row : N ]),
+and([ sum([ magicSquare[row, col] | row : N ]) = theSum | col : N ]),
+sum([ magicSquare[i, i] | i : N ]) = 34,
+and([ (magicSquare[row,..] <lex magicSquare[sum([row,1;int(1..)]),..]) | row : int(1..((n - 1))) ]),
+and([ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ])
+new variables:
+  find magicSquare#MatrixToAtom_1: int(1..16)
+  find magicSquare#MatrixToAtom_10: int(1..16)
+  find magicSquare#MatrixToAtom_11: int(1..16)
+  find magicSquare#MatrixToAtom_12: int(1..16)
+  find magicSquare#MatrixToAtom_13: int(1..16)
+  find magicSquare#MatrixToAtom_14: int(1..16)
+  find magicSquare#MatrixToAtom_15: int(1..16)
+  find magicSquare#MatrixToAtom_16: int(1..16)
+  find magicSquare#MatrixToAtom_2: int(1..16)
+  find magicSquare#MatrixToAtom_3: int(1..16)
+  find magicSquare#MatrixToAtom_4: int(1..16)
+  find magicSquare#MatrixToAtom_5: int(1..16)
+  find magicSquare#MatrixToAtom_6: int(1..16)
+  find magicSquare#MatrixToAtom_7: int(1..16)
+  find magicSquare#MatrixToAtom_8: int(1..16)
+  find magicSquare#MatrixToAtom_9: int(1..16)
+
+--
+
+flatten(magicSquare)
+   ~~> matrix_flatten_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4,magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8,magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12,magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)]
+
+--
+
+allDifferent([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4,magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8,magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12,magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16])
+
+--
+
+[ sum([ magicSquare[row, col] | col : N ]) = theSum | row : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[sum([ magicSquare[1, col] | col : N ]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]
+
+--
+
+[ sum([ magicSquare[row, col] | row : N ]) = theSum | col : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]
+
+--
+
+[ (magicSquare[row,..] <lex magicSquare[sum([row,1;int(1..)]),..]) | row : int(1..((n - 1))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(magicSquare[1,..] <lex magicSquare[2,..]),(magicSquare[2,..] <lex magicSquare[3,..]),(magicSquare[3,..] <lex magicSquare[4,..]);int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([sum([ magicSquare[1, col] | col : N ]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+sum([ magicSquare[i, i] | i : N ]) = 34,
+and([(magicSquare[1,..] <lex magicSquare[2,..]),(magicSquare[2,..] <lex magicSquare[3,..]),(magicSquare[3,..] <lex magicSquare[4,..]);int(1..)]),
+and([ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([sum([ magicSquare[1, col] | col : N ]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+sum([ magicSquare[i, i] | i : N ]) = 34,
+and([(magicSquare[1,..] <lex magicSquare[2,..]),(magicSquare[2,..] <lex magicSquare[3,..]),(magicSquare[3,..] <lex magicSquare[4,..]);int(1..)]),
+and([ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ])
+
+--
+
+magicSquare[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[1,..])
+
+--
+
+magicSquare[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[2,..])
+
+--
+
+magicSquare[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[2,..])
+
+--
+
+magicSquare[3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[3,..])
+
+--
+
+magicSquare[3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[3,..])
+
+--
+
+magicSquare[4,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[4,..])
+
+--
+
+SafeSlice(magicSquare,[1,..])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[2,..])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[2,..])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[3,..])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[3,..])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[4,..])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)]
+
+--
+
+[ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(magicSquare[..,1] <lex magicSquare[..,2]),(magicSquare[..,2] <lex magicSquare[..,3]),(magicSquare[..,3] <lex magicSquare[..,4]);int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([sum([ magicSquare[1, col] | col : N ]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+sum([ magicSquare[i, i] | i : N ]) = 34,
+and([([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4;int(1..)] <lex [magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)]),([magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)] <lex [magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)]),([magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)] <lex [magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)]);int(1..)]),
+and([(magicSquare[..,1] <lex magicSquare[..,2]),(magicSquare[..,2] <lex magicSquare[..,3]),(magicSquare[..,3] <lex magicSquare[..,4]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([sum([ magicSquare[1, col] | col : N ]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+sum([ magicSquare[i, i] | i : N ]) = 34,
+and([([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4;int(1..)] <lex [magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)]),([magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)] <lex [magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)]),([magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)] <lex [magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)]);int(1..)]),
+and([(magicSquare[..,1] <lex magicSquare[..,2]),(magicSquare[..,2] <lex magicSquare[..,3]),(magicSquare[..,3] <lex magicSquare[..,4]);int(1..)])
+
+--
+
+magicSquare[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,1])
+
+--
+
+magicSquare[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,2])
+
+--
+
+magicSquare[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,2])
+
+--
+
+magicSquare[..,3]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,3])
+
+--
+
+magicSquare[..,3]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,3])
+
+--
+
+magicSquare[..,4]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,4])
+
+--
+
+SafeSlice(magicSquare,[..,1])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_13;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,2])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,2])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,3])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,3])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,4])
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[magicSquare#MatrixToAtom_4,magicSquare#MatrixToAtom_8,magicSquare#MatrixToAtom_12,magicSquare#MatrixToAtom_16;int(1..)]
+
+--
+
+[ magicSquare[i, i] | i : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[1, 1],magicSquare[2, 2],magicSquare[3, 3],magicSquare[4, 4];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([sum([ magicSquare[1, col] | col : N ]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+sum([magicSquare[1, 1],magicSquare[2, 2],magicSquare[3, 3],magicSquare[4, 4];int(1..)]) = 34,
+and([([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4;int(1..)] <lex [magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)]),([magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)] <lex [magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)]),([magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)] <lex [magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)]);int(1..)]),
+and([([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_13;int(1..)] <lex [magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)]),([magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)] <lex [magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)]),([magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)] <lex [magicSquare#MatrixToAtom_4,magicSquare#MatrixToAtom_8,magicSquare#MatrixToAtom_12,magicSquare#MatrixToAtom_16;int(1..)]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([sum([ magicSquare[1, col] | col : N ]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+sum([magicSquare[1, 1],magicSquare[2, 2],magicSquare[3, 3],magicSquare[4, 4];int(1..)]) = 34,
+and([([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4;int(1..)] <lex [magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)]),([magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)] <lex [magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)]),([magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)] <lex [magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)]);int(1..)]),
+and([([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_13;int(1..)] <lex [magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)]),([magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)] <lex [magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)]),([magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)] <lex [magicSquare#MatrixToAtom_4,magicSquare#MatrixToAtom_8,magicSquare#MatrixToAtom_12,magicSquare#MatrixToAtom_16;int(1..)]);int(1..)])
+
+--
+
+magicSquare[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 1])
+
+--
+
+magicSquare[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 2])
+
+--
+
+magicSquare[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 3])
+
+--
+
+magicSquare[4, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 4])
+
+--
+
+SafeIndex(magicSquare,[1, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_1
+
+--
+
+SafeIndex(magicSquare,[2, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_6
+
+--
+
+SafeIndex(magicSquare,[3, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_11
+
+--
+
+SafeIndex(magicSquare,[4, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_16
+
+--
+
+sum([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_16;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)])
+
+--
+
+([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4;int(1..)] <lex [magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8])
+
+--
+
+([magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)] <lex [magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12])
+
+--
+
+([magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)] <lex [magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16])
+
+--
+
+([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_13;int(1..)] <lex [magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14])
+
+--
+
+([magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)] <lex [magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15])
+
+--
+
+([magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)] <lex [magicSquare#MatrixToAtom_4,magicSquare#MatrixToAtom_8,magicSquare#MatrixToAtom_12,magicSquare#MatrixToAtom_16;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16])
+
+--
+
+[ magicSquare[1, col] | col : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[1, 1],magicSquare[1, 2],magicSquare[1, 3],magicSquare[1, 4];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([sum([magicSquare[1, 1],magicSquare[1, 2],magicSquare[1, 3],magicSquare[1, 4];int(1..)]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([sum([magicSquare[1, 1],magicSquare[1, 2],magicSquare[1, 3],magicSquare[1, 4];int(1..)]) = 34,sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
+--
+
+magicSquare[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 1])
+
+--
+
+magicSquare[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 2])
+
+--
+
+magicSquare[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 3])
+
+--
+
+magicSquare[1, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 4])
+
+--
+
+SafeIndex(magicSquare,[1, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_1
+
+--
+
+SafeIndex(magicSquare,[1, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_2
+
+--
+
+SafeIndex(magicSquare,[1, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_3
+
+--
+
+SafeIndex(magicSquare,[1, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_4
+
+--
+
+sum([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_4;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34);int(1..)])
+
+--
+
+and([and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34);int(1..)]),sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),sum([ magicSquare[2, col] | col : N ]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)])
+
+--
+
+[ magicSquare[2, col] | col : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[2, 1],magicSquare[2, 2],magicSquare[2, 3],magicSquare[2, 4];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),sum([magicSquare[2, 1],magicSquare[2, 2],magicSquare[2, 3],magicSquare[2, 4];int(1..)]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),sum([magicSquare[2, 1],magicSquare[2, 2],magicSquare[2, 3],magicSquare[2, 4];int(1..)]) = 34,sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
+--
+
+magicSquare[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 1])
+
+--
+
+magicSquare[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 2])
+
+--
+
+magicSquare[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 3])
+
+--
+
+magicSquare[2, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 4])
+
+--
+
+SafeIndex(magicSquare,[2, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_5
+
+--
+
+SafeIndex(magicSquare,[2, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_6
+
+--
+
+SafeIndex(magicSquare,[2, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_7
+
+--
+
+SafeIndex(magicSquare,[2, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_8
+
+--
+
+sum([magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_8;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),and([SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34);int(1..)]),sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),sum([ magicSquare[3, col] | col : N ]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)])
+
+--
+
+[ magicSquare[3, col] | col : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[3, 1],magicSquare[3, 2],magicSquare[3, 3],magicSquare[3, 4];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),sum([magicSquare[3, 1],magicSquare[3, 2],magicSquare[3, 3],magicSquare[3, 4];int(1..)]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),sum([magicSquare[3, 1],magicSquare[3, 2],magicSquare[3, 3],magicSquare[3, 4];int(1..)]) = 34,sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
+--
+
+magicSquare[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 1])
+
+--
+
+magicSquare[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 2])
+
+--
+
+magicSquare[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 3])
+
+--
+
+magicSquare[3, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 4])
+
+--
+
+SafeIndex(magicSquare,[3, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_9
+
+--
+
+SafeIndex(magicSquare,[3, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_10
+
+--
+
+SafeIndex(magicSquare,[3, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_11
+
+--
+
+SafeIndex(magicSquare,[3, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_12
+
+--
+
+sum([magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_12;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),and([SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34);int(1..)]),sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),sum([ magicSquare[4, col] | col : N ]) = 34;int(1..)])
+
+--
+
+[ magicSquare[4, col] | col : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[4, 1],magicSquare[4, 2],magicSquare[4, 3],magicSquare[4, 4];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),sum([magicSquare[4, 1],magicSquare[4, 2],magicSquare[4, 3],magicSquare[4, 4];int(1..)]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),sum([magicSquare[4, 1],magicSquare[4, 2],magicSquare[4, 3],magicSquare[4, 4];int(1..)]) = 34;int(1..)]),
+and([sum([ magicSquare[row, 1] | row : N ]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
+--
+
+magicSquare[4, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 1])
+
+--
+
+magicSquare[4, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 2])
+
+--
+
+magicSquare[4, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 3])
+
+--
+
+magicSquare[4, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 4])
+
+--
+
+SafeIndex(magicSquare,[4, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_13
+
+--
+
+SafeIndex(magicSquare,[4, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_14
+
+--
+
+SafeIndex(magicSquare,[4, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_15
+
+--
+
+SafeIndex(magicSquare,[4, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_16
+
+--
+
+sum([magicSquare#MatrixToAtom_13,magicSquare#MatrixToAtom_14,magicSquare#MatrixToAtom_15,magicSquare#MatrixToAtom_16;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),and([SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)])
+
+--
+
+[ magicSquare[row, 1] | row : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[1, 1],magicSquare[2, 1],magicSquare[3, 1],magicSquare[4, 1];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([sum([magicSquare[1, 1],magicSquare[2, 1],magicSquare[3, 1],magicSquare[4, 1];int(1..)]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([sum([magicSquare[1, 1],magicSquare[2, 1],magicSquare[3, 1],magicSquare[4, 1];int(1..)]) = 34,sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
+--
+
+magicSquare[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 1])
+
+--
+
+magicSquare[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 1])
+
+--
+
+magicSquare[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 1])
+
+--
+
+magicSquare[4, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 1])
+
+--
+
+SafeIndex(magicSquare,[1, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_1
+
+--
+
+SafeIndex(magicSquare,[2, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_5
+
+--
+
+SafeIndex(magicSquare,[3, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_9
+
+--
+
+SafeIndex(magicSquare,[4, 1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_13
+
+--
+
+sum([magicSquare#MatrixToAtom_1,magicSquare#MatrixToAtom_5,magicSquare#MatrixToAtom_9,magicSquare#MatrixToAtom_13;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34);int(1..)])
+
+--
+
+and([and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34);int(1..)]),sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),sum([ magicSquare[row, 2] | row : N ]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)])
+
+--
+
+[ magicSquare[row, 2] | row : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[1, 2],magicSquare[2, 2],magicSquare[3, 2],magicSquare[4, 2];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),sum([magicSquare[1, 2],magicSquare[2, 2],magicSquare[3, 2],magicSquare[4, 2];int(1..)]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),sum([magicSquare[1, 2],magicSquare[2, 2],magicSquare[3, 2],magicSquare[4, 2];int(1..)]) = 34,sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
+--
+
+magicSquare[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 2])
+
+--
+
+magicSquare[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 2])
+
+--
+
+magicSquare[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 2])
+
+--
+
+magicSquare[4, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 2])
+
+--
+
+SafeIndex(magicSquare,[1, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_2
+
+--
+
+SafeIndex(magicSquare,[2, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_6
+
+--
+
+SafeIndex(magicSquare,[3, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_10
+
+--
+
+SafeIndex(magicSquare,[4, 2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_14
+
+--
+
+sum([magicSquare#MatrixToAtom_2,magicSquare#MatrixToAtom_6,magicSquare#MatrixToAtom_10,magicSquare#MatrixToAtom_14;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),and([SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34);int(1..)]),sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),sum([ magicSquare[row, 3] | row : N ]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)])
+
+--
+
+[ magicSquare[row, 3] | row : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[1, 3],magicSquare[2, 3],magicSquare[3, 3],magicSquare[4, 3];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),sum([magicSquare[1, 3],magicSquare[2, 3],magicSquare[3, 3],magicSquare[4, 3];int(1..)]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),sum([magicSquare[1, 3],magicSquare[2, 3],magicSquare[3, 3],magicSquare[4, 3];int(1..)]) = 34,sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
+--
+
+magicSquare[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 3])
+
+--
+
+magicSquare[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 3])
+
+--
+
+magicSquare[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 3])
+
+--
+
+magicSquare[4, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 3])
+
+--
+
+SafeIndex(magicSquare,[1, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_3
+
+--
+
+SafeIndex(magicSquare,[2, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_7
+
+--
+
+SafeIndex(magicSquare,[3, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_11
+
+--
+
+SafeIndex(magicSquare,[4, 3])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_15
+
+--
+
+sum([magicSquare#MatrixToAtom_3,magicSquare#MatrixToAtom_7,magicSquare#MatrixToAtom_11,magicSquare#MatrixToAtom_15;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumGeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),and([SumLeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumGeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34);int(1..)]),sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumLeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumGeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),sum([ magicSquare[row, 4] | row : N ]) = 34;int(1..)])
+
+--
+
+[ magicSquare[row, 4] | row : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare[1, 4],magicSquare[2, 4],magicSquare[3, 4],magicSquare[4, 4];int(1..)]
+
+--
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumLeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumGeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),sum([magicSquare[1, 4],magicSquare[2, 4],magicSquare[3, 4],magicSquare[4, 4];int(1..)]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumLeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumGeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),sum([magicSquare[1, 4],magicSquare[2, 4],magicSquare[3, 4],magicSquare[4, 4];int(1..)]) = 34;int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
+--
+
+magicSquare[1, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[1, 4])
+
+--
+
+magicSquare[2, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[2, 4])
+
+--
+
+magicSquare[3, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[3, 4])
+
+--
+
+magicSquare[4, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(magicSquare,[4, 4])
+
+--
+
+SafeIndex(magicSquare,[1, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_4
+
+--
+
+SafeIndex(magicSquare,[2, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_8
+
+--
+
+SafeIndex(magicSquare,[3, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_12
+
+--
+
+SafeIndex(magicSquare,[4, 4])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+magicSquare#MatrixToAtom_16
+
+--
+
+sum([magicSquare#MatrixToAtom_4,magicSquare#MatrixToAtom_8,magicSquare#MatrixToAtom_12,magicSquare#MatrixToAtom_16;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumLeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumGeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),and([SumLeq([magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8], 34);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumLeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumGeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumLeq([magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8], 34);int(1..)])
+
+--
+
+Final model:
+
+letting n be 4
+letting N be domain int(1..n)
+letting theSum be 34
+find magicSquare: matrix indexed by [N, N] of int(1..(product([n,n;int(1..)])))
+find magicSquare#MatrixToAtom_1: int(1..16)
+find magicSquare#MatrixToAtom_2: int(1..16)
+find magicSquare#MatrixToAtom_3: int(1..16)
+find magicSquare#MatrixToAtom_4: int(1..16)
+find magicSquare#MatrixToAtom_5: int(1..16)
+find magicSquare#MatrixToAtom_6: int(1..16)
+find magicSquare#MatrixToAtom_7: int(1..16)
+find magicSquare#MatrixToAtom_8: int(1..16)
+find magicSquare#MatrixToAtom_9: int(1..16)
+find magicSquare#MatrixToAtom_10: int(1..16)
+find magicSquare#MatrixToAtom_11: int(1..16)
+find magicSquare#MatrixToAtom_12: int(1..16)
+find magicSquare#MatrixToAtom_13: int(1..16)
+find magicSquare#MatrixToAtom_14: int(1..16)
+find magicSquare#MatrixToAtom_15: int(1..16)
+find magicSquare#MatrixToAtom_16: int(1..16)
+
+such that
+
+__flat_alldiff([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]),
+true,
+true,
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], 34),SumLeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34),SumGeq([magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16], 34);int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9], 34),SumLeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6], 34),SumLeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumGeq([magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7], 34),SumLeq([magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8], 34),SumGeq([magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8], 34);int(1..)]),
+and([SumLeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34),SumGeq([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_16, magicSquare#MatrixToAtom_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_4], [magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8]),FlatLexLt([magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_8], [magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12]),FlatLexLt([magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_12], [magicSquare#MatrixToAtom_13, magicSquare#MatrixToAtom_14, magicSquare#MatrixToAtom_15, magicSquare#MatrixToAtom_16]);int(1..)]),
+and([FlatLexLt([magicSquare#MatrixToAtom_1, magicSquare#MatrixToAtom_5, magicSquare#MatrixToAtom_9, magicSquare#MatrixToAtom_13], [magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14]),FlatLexLt([magicSquare#MatrixToAtom_2, magicSquare#MatrixToAtom_6, magicSquare#MatrixToAtom_10, magicSquare#MatrixToAtom_14], [magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15]),FlatLexLt([magicSquare#MatrixToAtom_3, magicSquare#MatrixToAtom_7, magicSquare#MatrixToAtom_11, magicSquare#MatrixToAtom_15], [magicSquare#MatrixToAtom_4, magicSquare#MatrixToAtom_8, magicSquare#MatrixToAtom_12, magicSquare#MatrixToAtom_16]);int(1..)])
+
