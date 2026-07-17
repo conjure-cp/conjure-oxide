@@ -17,6 +17,7 @@ use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
 use conjure_cp::utils::View;
 use conjure_cp::{domain_int, essence_expr, range};
+use std::cell::Cell;
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate};
 
@@ -33,6 +34,44 @@ register_rule_set!("ReprMatrixToAtom", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
 });
 
+/// True when a local find/letting still needs `MatrixToAtom` initialised.
+fn decl_needs_matrix_to_atom_init(decl: &conjure_cp::ast::DeclarationPtr) -> bool {
+    matches!(
+        &decl.kind() as &DeclarationKind,
+        DeclarationKind::Find(..) | DeclarationKind::ValueLetting(..)
+    ) && decl.reprs().is_empty()
+        && decl
+            .resolved_domain()
+            .is_some_and(|gd| matches!(gd.as_ref(), GroundDomain::Matrix(..)))
+}
+
+/// True when a reference can select `MatrixToAtom` but has not yet done so.
+fn reference_needs_matrix_to_atom_selection(re: &Reference) -> bool {
+    re.repr.is_none() && re.ptr.reprs().has_repr(MatrixToAtom::STORED)
+}
+
+/// True when a top-most `Reference` under the expression (via `Biplate`) still needs selection.
+///
+/// Prefer this over `universe_bi`: that expands each `Reference` into declaration domains and
+/// dominated EFPA samples on the hot fail path. Top-most biplate children cover expression and
+/// in-expression domain refs; nested declaration-domain refs are not required for MatrixToAtom.
+fn expression_needs_matrix_to_atom_selection(expr: &Expression) -> bool {
+    Biplate::<Reference>::children_bi(expr)
+        .into_iter()
+        .any(|re| reference_needs_matrix_to_atom_selection(&re))
+}
+
+/// Select `MatrixToAtom` on top-most biplate `Reference` children (shallow `descend_bi`).
+fn select_matrix_to_atom_on_biplate_refs(expr: &Expression, changed: &Cell<bool>) -> Expression {
+    expr.descend_bi(&|mut re: Reference| {
+        if reference_needs_matrix_to_atom_selection(&re) {
+            let _ = re.select_repr_via(&MatrixToAtom);
+            changed.set(true);
+        }
+        re
+    })
+}
+
 /// Special-case repr selection for matrices as their only representation is MatrixToAtom
 #[register_rule("ReprMatrixToAtom", 8500, [Root])]
 fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
@@ -40,9 +79,20 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
+    // Hot fail path: Root is re-dirtied constantly, but after the first few successes there is
+    // usually nothing left to initialise or select. Avoid cloning the symbol table and rewriting
+    // the whole Root (and the subsequent deep `eq`) on those attempts.
+    let needs_decl_init = symtab
+        .iter_local()
+        .any(|(_, decl)| decl_needs_matrix_to_atom_init(decl));
+    if !needs_decl_init && !expression_needs_matrix_to_atom_selection(expr) {
+        return Err(RuleNotApplicable);
+    }
+
     // Initialise MatrixToAtom for every matrix var in the symbol table
     let mut new_symtab = symtab.clone();
     let mut new_constraints = Vec::new();
+    let changed = Cell::new(false);
     for (_, decl) in symtab.iter_local() {
         guard!(
             // this is a variable or constant
@@ -64,17 +114,14 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         new_symtab.update_insert(new_decl);
         new_symtab.extend(symbols);
         new_constraints.extend(new_top);
+        changed.set(true);
     }
 
-    // Select MatrixToAtom for every matrix variable in the model
-    let new_expr = expr.transform_bi(&|mut re: Reference| {
-        let _ = re.select_repr_via(&MatrixToAtom);
-        re
-    });
+    // Select MatrixToAtom on top-most biplate references in the model expression
+    let new_expr = select_matrix_to_atom_on_biplate_refs(expr, &changed);
 
     // Avoid infinite loop
-    let unchanged = new_expr.eq(expr) && new_symtab.eq(symtab);
-    if unchanged {
+    if !changed.get() {
         Err(RuleNotApplicable)
     } else {
         Ok(Reduction::new(new_expr, new_constraints, new_symtab))
