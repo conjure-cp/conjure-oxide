@@ -132,8 +132,8 @@ pub struct GlobalArgs {
     ///   strong win vs baseline and part of `optimised`.
     /// - `dirty`: remember unchanged expressions that have failed at a rule priority; helps full
     ///   scans, roughly neutral with `optimised`.
-    /// - `cache`: reuse rewrite results for structurally identical expression subtrees; fewer
-    ///   attempts but slower than `optimised` in the matrix run.
+    /// - `cache`: reuse rewrite results for structurally identical expression subtrees; currently
+    ///   slower on the translation benchmark, so available explicitly but not part of `optimised`.
     /// - `rulememo`: skip rule calls already known to fail for the same node and symbol context;
     ///   usually slower than baseline/`optimised`.
     /// - `candidateindex`: restrict full scans to expression kinds targeted by each rule group;

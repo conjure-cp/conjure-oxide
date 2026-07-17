@@ -777,6 +777,12 @@ mod tests {
             "baseline+worklist+candidateindex+dirtyqueues"
         );
         assert_eq!(RewriteConfig::optimised().to_string(), "optimised");
+        assert_eq!(
+            RewriteConfig::from_str("baseline+prefilter+cache+worklist")
+                .unwrap()
+                .to_string(),
+            "baseline+prefilter+cache+worklist"
+        );
     }
 
     #[test]
