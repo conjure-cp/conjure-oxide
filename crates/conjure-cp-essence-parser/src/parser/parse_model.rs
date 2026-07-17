@@ -228,7 +228,7 @@ mod test {
     use crate::parse_essence;
     #[allow(unused_imports)]
     use conjure_cp_core::ast::{
-        Atom, Expression, Metadata, Moo, Name, OXIDE_INT_MAX, OXIDE_INT_MIN,
+        Atom, DeclarationKind, Expression, Metadata, Moo, Name, OXIDE_INT_MAX, OXIDE_INT_MIN,
     };
     #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
@@ -340,6 +340,49 @@ mod test {
                 domain_int!(-2..0)
             )
         )
+    }
+
+    #[test]
+    pub fn value_letting_retains_symbolic_integer_domain() {
+        let src = "
+        given v: int(1..)
+        given b: int(1..)
+        given r: int(1..)
+        letting rv be r * v
+        letting ceilrv be rv / b + toInt(rv % b != 0)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let symbols = model.symbols();
+
+        for name in ["rv", "ceilrv"] {
+            let declaration = symbols.lookup(&Name::user(name)).unwrap();
+            assert!(
+                declaration.domain().is_some(),
+                "{name} should have a domain"
+            );
+            assert!(matches!(
+                declaration.kind().deref(),
+                DeclarationKind::ValueLetting(_, Some(_))
+            ));
+        }
+        drop(symbols);
+
+        let (params, _source_map) = parse_essence(
+            "
+            letting v be 8
+            letting b be 28
+            letting r be 14
+            ",
+        )
+        .unwrap();
+        let model = conjure_cp_core::instantiate::instantiate_model(model, params).unwrap();
+        let symbols = model.symbols();
+        let rv = symbols.lookup(&Name::user("rv")).unwrap();
+        assert_eq!(
+            rv.domain().unwrap().resolve().unwrap().as_ref(),
+            domain_int!(112).resolve().unwrap().as_ref()
+        );
     }
 
     #[test]

@@ -378,9 +378,8 @@ impl DeclarationPtr {
     pub fn domain(&self) -> Option<DomainPtr> {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::Find(var) => Some(var.domain_of()),
-            DeclarationKind::ValueLetting(e, _) | DeclarationKind::TemporaryValueLetting(e) => {
-                e.domain_of()
-            }
+            DeclarationKind::ValueLetting(e, domain) => domain.clone().or_else(|| e.domain_of()),
+            DeclarationKind::TemporaryValueLetting(e) => e.domain_of(),
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),

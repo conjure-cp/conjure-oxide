@@ -12,7 +12,29 @@ use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use conjure_cp_core::ast::DeclarationPtr;
-use conjure_cp_core::ast::{Name, SymbolTable};
+use conjure_cp_core::ast::{
+    Domain, DomainPtr, Expression, IntVal, Moo, Name, Range, ReturnType, SymbolTable, Typeable,
+};
+
+/// Infer and retain the domain of a value letting when it enters the symbol table.
+///
+/// Integer lettings denote a single (possibly parameter-dependent) value, so represent their
+/// domain as a symbolic singleton. This remains resolvable after the referenced `given`
+/// declarations are instantiated and, unlike eager interval evaluation, also works when those
+/// declarations currently have unbounded domains.
+fn value_letting_domain(expr: &Expression) -> Option<DomainPtr> {
+    if let Some(domain) = expr.domain_of() {
+        return Some(domain);
+    }
+
+    match expr.return_type() {
+        ReturnType::Int => IntVal::new_expr(Moo::new(expr.clone()))
+            .ok()
+            .map(|value| Domain::int(vec![Range::Single(value)])),
+        ReturnType::Bool => Some(Domain::bool()),
+        _ => expr.domain_of(),
+    }
+}
 
 /// Parse a letting statement into a SymbolTable containing the declared symbols
 pub fn parse_letting_statement(
@@ -119,7 +141,15 @@ pub fn parse_letting_statement(
                 let Some(expr) = parse_expression(ctx, expr_or_domain)? else {
                     continue;
                 };
-                symbol_table.insert(DeclarationPtr::new_value_letting(Name::user(name), expr));
+                let declaration = match value_letting_domain(&expr) {
+                    Some(domain) => DeclarationPtr::new_value_letting_with_domain(
+                        Name::user(name),
+                        expr,
+                        domain,
+                    ),
+                    None => DeclarationPtr::new_value_letting(Name::user(name), expr),
+                };
+                symbol_table.insert(declaration);
             }
         }
     }
