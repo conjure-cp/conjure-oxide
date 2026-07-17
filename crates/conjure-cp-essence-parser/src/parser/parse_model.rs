@@ -152,6 +152,16 @@ pub fn parse_essence_with_context_and_map(
                 };
                 model.add_constraint(expr);
             }
+            "where_statement" => {
+                ctx.typechecking_context = TypecheckingContext::Boolean;
+                let mut cursor = statement.walk();
+                for condition in statement.named_children(&mut cursor) {
+                    let Some(expr) = parse_expression(&mut ctx, condition)? else {
+                        continue;
+                    };
+                    model.add_instantiation_condition(expr);
+                }
+            }
             "language_label" => {}
             "letting_statement" => {
                 let Some(letting_vars) = parse_letting_statement(&mut ctx, statement)? else {

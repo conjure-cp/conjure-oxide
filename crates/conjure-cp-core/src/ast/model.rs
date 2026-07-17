@@ -32,6 +32,8 @@ use super::{
 #[derivative(PartialEq, Eq)]
 pub struct Model {
     constraints: Moo<Expression>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    instantiation_conditions: Vec<Expression>,
     #[serde_as(as = "PtrAsInner")]
     symbols: SymbolTablePtr,
     cnf_clauses: Vec<CnfClause>,
@@ -53,6 +55,7 @@ impl Model {
     fn new_empty(symbols: SymbolTablePtr, context: Arc<RwLock<Context<'static>>>) -> Model {
         Model {
             constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
+            instantiation_conditions: Vec::new(),
             symbols,
             cnf_clauses: Vec::new(),
             search_order: None,
@@ -166,6 +169,21 @@ impl Model {
         self.constraints_mut().extend(constraints);
     }
 
+    /// Conditions introduced by top-level `where` statements.
+    pub fn instantiation_conditions(&self) -> &[Expression] {
+        &self.instantiation_conditions
+    }
+
+    /// Adds a condition that must hold after parameter instantiation.
+    pub fn add_instantiation_condition(&mut self, condition: Expression) {
+        self.instantiation_conditions.push(condition);
+    }
+
+    /// Removes and returns all pending instantiation conditions.
+    pub fn take_instantiation_conditions(&mut self) -> Vec<Expression> {
+        std::mem::take(&mut self.instantiation_conditions)
+    }
+
     /// Adds cnf clauses.
     pub fn add_clauses(&mut self, clauses: Vec<CnfClause>) {
         self.clauses_mut().extend(clauses);
@@ -250,6 +268,7 @@ impl Typeable for Model {
 impl Hash for Model {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.constraints.hash(state);
+        self.instantiation_conditions.hash(state);
         self.symbols.hash(state);
         self.cnf_clauses.hash(state);
         self.search_order.hash(state);
@@ -282,8 +301,17 @@ impl Biplate<Expression> for Model {
             None => Tree::Zero,
         };
 
+        let instantiation_tree = Tree::Many(
+            self.instantiation_conditions
+                .iter()
+                .cloned()
+                .map(Tree::One)
+                .collect(),
+        );
+
         let tree = Tree::Many(VecDeque::from([
             Tree::One(self.root().clone()),
+            instantiation_tree,
             symtab_tree,
             dom_tree,
             obj_tree,
@@ -294,23 +322,26 @@ impl Biplate<Expression> for Model {
         let self2 = self.clone();
         let ctx = Box::new(move |x| {
             let Tree::Many(xs) = x else {
-                panic!("Expected a tree with four children");
+                panic!("Expected a tree with five children");
             };
-            if xs.len() != 4 {
-                panic!("Expected a tree with four children");
+            if xs.len() != 5 {
+                panic!("Expected a tree with five children");
             }
 
             let Tree::One(root) = xs[0].clone() else {
                 panic!("Expected root expression tree");
             };
 
-            let symtab = symtab_ctx(xs[1].clone());
-            let dominance = match xs[2].clone() {
+            let Tree::Many(instantiation_conditions) = xs[1].clone() else {
+                panic!("Expected instantiation-condition expression tree");
+            };
+            let symtab = symtab_ctx(xs[2].clone());
+            let dominance = match xs[3].clone() {
                 Tree::One(expr) => Some(expr),
                 Tree::Zero => None,
                 _ => panic!("Expected dominance tree"),
             };
-            let objective_expr = match xs[3].clone() {
+            let objective_expr = match xs[4].clone() {
                 Tree::One(expr) => Some(expr),
                 Tree::Zero => None,
                 _ => panic!("Expected objective tree"),
@@ -323,6 +354,13 @@ impl Biplate<Expression> for Model {
             };
 
             *self3.root_mut_unchecked() = root;
+            self3.instantiation_conditions = instantiation_conditions
+                .into_iter()
+                .map(|tree| match tree {
+                    Tree::One(expr) => expr,
+                    _ => panic!("Expected instantiation condition expression"),
+                })
+                .collect();
             *self3.symbols_mut() = symtab;
             self3.dominance = dominance;
             self3.objective = match (obj_direction, objective_expr) {
@@ -453,6 +491,15 @@ impl Display for Model {
             writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
         }
 
+        if !self.instantiation_conditions.is_empty() {
+            writeln!(f, "\nwhere\n")?;
+            writeln!(
+                f,
+                "{}",
+                pretty_expressions_as_top_level(&self.instantiation_conditions)
+            )?;
+        }
+
         if !self.clauses().is_empty() {
             writeln!(f, "\nclauses:\n")?;
             writeln!(f, "{}", pretty_clauses(self.clauses()))?;
@@ -469,6 +516,8 @@ impl Display for Model {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SerdeModel {
     constraints: Moo<Expression>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    instantiation_conditions: Vec<Expression>,
     #[serde_as(as = "PtrAsInner")]
     symbols: SymbolTablePtr,
     cnf_clauses: Vec<CnfClause>,
@@ -486,6 +535,7 @@ impl SerdeModel {
         tables.insert(self.symbols.id(), self.symbols.clone());
 
         let mut exprs: VecDeque<Expression> = self.constraints.universe_bi();
+        exprs.extend(self.instantiation_conditions.clone());
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
         }
@@ -531,6 +581,7 @@ impl SerdeModel {
 
         Some(Model {
             constraints: self.constraints,
+            instantiation_conditions: self.instantiation_conditions,
             symbols: self.symbols,
             cnf_clauses: self.cnf_clauses,
             search_order: self.search_order,
@@ -545,6 +596,7 @@ impl From<Model> for SerdeModel {
     fn from(val: Model) -> Self {
         SerdeModel {
             constraints: val.constraints,
+            instantiation_conditions: val.instantiation_conditions,
             symbols: val.symbols,
             cnf_clauses: val.cnf_clauses,
             search_order: val.search_order,
@@ -558,6 +610,7 @@ impl Display for SerdeModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let model = Model {
             constraints: self.constraints.clone(),
+            instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
             cnf_clauses: self.cnf_clauses.clone(),
             search_order: self.search_order.clone(),
@@ -574,6 +627,7 @@ impl SerdeModel {
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
         let model = Model {
             constraints: self.constraints.clone(),
+            instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
             cnf_clauses: self.cnf_clauses.clone(),
             search_order: self.search_order.clone(),

@@ -26,8 +26,9 @@ module.exports = grammar ({
       field("given_statement", $.given_statement),
       seq(
         field("such_that_keyword", "such that"),
-        commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
+        commaSep1($._constraint_expression),
       ),
+      field("where_statement", $.where_statement),
       field("letting_statement", $.letting_statement),
       field("objective_statement", $.objective_statement),
       field("dominance_relation", $.dominance_relation),
@@ -36,6 +37,17 @@ module.exports = grammar ({
     single_line_comment: $ => token(seq('$', /.*/)),
 
     language_declaration: $ => token(seq("language", /.*/)),
+
+    _constraint_expression: $ => choice(
+      field("bool_expr", $.bool_expr),
+      field("atom", $.atom),
+      field("comparison_expr", $.comparison_expr)
+    ),
+
+    where_statement: $ => seq(
+      field("where_keyword", "where"),
+      commaSep1($._constraint_expression)
+    ),
 
     //general
     constant: $ => choice(

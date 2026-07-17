@@ -1,6 +1,6 @@
 use conjure_cp::Model;
 use conjure_cp::context::Context;
-use conjure_cp::instantiate::instantiate_model;
+use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
@@ -152,7 +152,17 @@ fn roundtrip_test_inner(
                     Err(e) => Err(e),
                 }
             }
-            None => Ok(problem_model),
+            None => {
+                let mut problem_model = problem_model;
+                validate_instantiation_conditions(&mut problem_model).map_err(|e| {
+                    Box::new(ParseErrorCollection::InstantiateModel(
+                        InstantiateModelError {
+                            msg: format!("{e}"),
+                        },
+                    )) as Box<dyn Error>
+                })?;
+                Ok(problem_model)
+            }
         },
         Err(e) => Err(e),
     };

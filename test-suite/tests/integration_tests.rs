@@ -28,7 +28,7 @@ use std::sync::RwLock;
 
 use conjure_cp::ast::{Literal, Model, Name};
 use conjure_cp::context::Context;
-use conjure_cp::instantiate::instantiate_model;
+use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
@@ -950,6 +950,8 @@ fn parse_unified_problem_model(
     };
 
     let Some(param_path) = param_file else {
+        let mut problem_model = problem_model;
+        validate_instantiation_conditions(&mut problem_model)?;
         return Ok(problem_model);
     };
 

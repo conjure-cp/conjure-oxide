@@ -11,7 +11,7 @@ use std::{
 
 use anyhow::anyhow;
 use clap::ValueHint;
-use conjure_cp::instantiate::instantiate_model;
+use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp::{
     Model,
     context::Context,
@@ -131,7 +131,11 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
             instantiate_model(problem_model, param_model)?
         }
-        None => problem_model,
+        None => {
+            let mut problem_model = problem_model;
+            validate_instantiation_conditions(&mut problem_model)?;
+            problem_model
+        }
     };
     drop(ctx_lock);
 

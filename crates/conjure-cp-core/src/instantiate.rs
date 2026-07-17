@@ -1,6 +1,6 @@
 use crate::{
     Model,
-    ast::{DeclarationKind, DeclarationPtr, declaration::Declaration, eval_constant},
+    ast::{DeclarationKind, DeclarationPtr, Literal, declaration::Declaration, eval_constant},
 };
 use anyhow::anyhow;
 
@@ -9,7 +9,10 @@ use anyhow::anyhow;
 /// For each `given` declaration in `problem_model`, this looks for a corresponding value `letting`
 /// in `param_model`, checks it is a constant and within the given domain, and replaces the `given`
 /// with a value-letting in the returned model.
-pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+pub fn instantiate_model(
+    mut problem_model: Model,
+    param_model: Model,
+) -> anyhow::Result<Model> {
     let symbol_table = problem_model.symbols_ptr_unchecked().write();
     let param_table = param_model.symbols_ptr_unchecked().write();
     let mut pending_givens = symbol_table
@@ -80,5 +83,31 @@ pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Re
     }
 
     drop(symbol_table);
+    validate_instantiation_conditions(&mut problem_model)?;
     Ok(problem_model)
+}
+
+/// Evaluate and remove all top-level `where` conditions after parameter instantiation.
+pub fn validate_instantiation_conditions(model: &mut Model) -> anyhow::Result<()> {
+    for condition in model.take_instantiation_conditions() {
+        match eval_constant(&condition) {
+            Some(Literal::Bool(true)) => {}
+            Some(Literal::Bool(false)) => {
+                return Err(anyhow!(
+                    "invalid instance: where condition `{condition}` evaluated to false"
+                ));
+            }
+            Some(value) => {
+                return Err(anyhow!(
+                    "where condition `{condition}` evaluated to non-boolean value `{value}`"
+                ));
+            }
+            None => {
+                return Err(anyhow!(
+                    "could not evaluate where condition `{condition}` after parameter instantiation"
+                ));
+            }
+        }
+    }
+    Ok(())
 }
