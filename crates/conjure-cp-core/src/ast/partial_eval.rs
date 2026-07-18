@@ -263,6 +263,40 @@ enum PartialEvalMode {
     Local,
 }
 
+/// Rewrites `x = true` / `true = x` to `x` when `x` is a non-literal boolean atom.
+///
+/// Nested uses such as `(x = true) <-> and([y = true, ...])` otherwise force Minion flattening to
+/// introduce aux variables for the left-hand `Eq`, because both sides of the outer equality are
+/// non-atomic. Lowering the tautological `= true` first keeps a boolean decision variable atomic
+/// so later equality/reify rules can target it directly.
+///
+/// Literal–literal equalities are left alone for constant folding. Non-boolean atoms are refused.
+pub fn try_lower_bool_atom_eq_true(expr: &Expr) -> Option<Expr> {
+    let Expr::Eq(_, left, right) = expr else {
+        return None;
+    };
+
+    let atom = match (left.as_ref(), right.as_ref()) {
+        (Expr::Atomic(_, Atom::Literal(Lit::Bool(true))), Expr::Atomic(_, atom))
+            if !matches!(atom, Atom::Literal(_)) =>
+        {
+            right.as_ref()
+        }
+        (Expr::Atomic(_, atom), Expr::Atomic(_, Atom::Literal(Lit::Bool(true))))
+            if !matches!(atom, Atom::Literal(_)) =>
+        {
+            left.as_ref()
+        }
+        _ => return None,
+    };
+
+    if atom.return_type() != ReturnType::Bool {
+        return None;
+    }
+
+    Some(atom.clone())
+}
+
 fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> ApplicationResult {
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
@@ -830,6 +864,8 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(eq_result)),
                 )))
+            } else if let Some(atom) = try_lower_bool_atom_eq_true(expr) {
+                Ok(RuleEffect::pure(atom))
             } else {
                 Err(RuleNotApplicable)
             }

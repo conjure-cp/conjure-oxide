@@ -1,48 +1,12 @@
 //! Normalising rules for `Neq` and `Eq`.
 
-use conjure_cp::ast::{
-    Atom, Expression as Expr, Literal as Lit, ReturnType, SymbolTable, Typeable,
-};
+use conjure_cp::ast::{Expression as Expr, SymbolTable, Typeable, try_lower_bool_atom_eq_true};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use conjure_cp::ast::ReturnType::{Matrix, Set};
 use conjure_cp::essence_expr;
-
-/// Rewrites `x = true` / `true = x` to `x` when `x` is a non-literal boolean atom.
-///
-/// Nested uses such as `(x = true) <-> and([y = true, ...])` otherwise force Minion flattening to
-/// introduce aux variables for the left-hand `Eq`, because both sides of the outer equality are
-/// non-atomic. Lowering the tautological `= true` first keeps a boolean decision variable atomic
-/// so `iff_to_eq` / `bool_eq_to_reify` can target it directly.
-///
-/// Literal–literal equalities are left alone for constant folding. Non-boolean atoms are refused.
-pub(crate) fn try_lower_bool_atom_eq_true(expr: &Expr) -> Option<Expr> {
-    let Expr::Eq(_, left, right) = expr else {
-        return None;
-    };
-
-    let atom = match (left.as_ref(), right.as_ref()) {
-        (Expr::Atomic(_, Atom::Literal(Lit::Bool(true))), Expr::Atomic(_, atom))
-            if !matches!(atom, Atom::Literal(_)) =>
-        {
-            right.as_ref()
-        }
-        (Expr::Atomic(_, atom), Expr::Atomic(_, Atom::Literal(Lit::Bool(true))))
-            if !matches!(atom, Atom::Literal(_)) =>
-        {
-            left.as_ref()
-        }
-        _ => return None,
-    };
-
-    if atom.return_type() != ReturnType::Bool {
-        return None;
-    }
-
-    Some(atom.clone())
-}
 
 /// Normalises boolean `x = true` to `x` before Minion flattening of nested equalities.
 ///
@@ -51,6 +15,9 @@ pub(crate) fn try_lower_bool_atom_eq_true(expr: &Expr) -> Option<Expr> {
 /// true = x  ~>  x
 /// ```
 /// where `x` is a non-literal boolean atom.
+///
+/// The same lowering is applied by the partial evaluator's `Eq` arm; this rule remains as an
+/// explicit Base-priority oracle for any sites that still reach ordinary rewriting.
 #[register_rule("Base", 9000, [Eq])]
 fn bool_atom_eq_true(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     try_lower_bool_atom_eq_true(expr)
@@ -107,7 +74,10 @@ fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use conjure_cp::ast::{DeclarationPtr, Domain, Metadata, Moo, Name, Range, Reference};
+    use conjure_cp::ast::{
+        Atom, DeclarationPtr, Domain, Literal as Lit, Metadata, Moo, Name, Range, Reference,
+        run_partial_evaluator,
+    };
     use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
 
     /// Boolean decision-variable atomic expression.
@@ -142,6 +112,9 @@ mod tests {
             .apply(&expr, &SymbolTable::new())
             .expect("rule applies");
         assert_eq!(result.new_expression, x);
+
+        let pe = run_partial_evaluator(&expr).expect("partial evaluator Eq arm lowers");
+        assert_eq!(pe.new_expression, x);
     }
 
     #[test]

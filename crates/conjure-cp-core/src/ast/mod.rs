@@ -51,7 +51,9 @@ pub use model::*;
 pub use moo::Moo;
 pub use name::Name;
 pub use objective::{Objective, OptimiseDirection};
-pub use partial_eval::{run_partial_evaluator, run_partial_evaluator_local};
+pub use partial_eval::{
+    run_partial_evaluator, run_partial_evaluator_local, try_lower_bool_atom_eq_true,
+};
 pub use records::Field;
 pub use reference::Reference;
 pub use sat_encoding::SATIntEncoding;
