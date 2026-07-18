@@ -943,4 +943,3 @@ mod tests {
         assert!(model.constraints.is_empty());
     }
 }
-
