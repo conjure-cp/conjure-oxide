@@ -79,13 +79,16 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
-    // Hot fail path: Root is re-dirtied constantly, but after the first few successes there is
-    // usually nothing left to initialise or select. Avoid cloning the symbol table and rewriting
-    // the whole Root (and the subsequent deep `eq`) on those attempts.
+    // Hot fail path: Root is re-dirtied on almost every rewrite. Once every matrix declaration
+    // already exposes MatrixToAtom, do not walk Biplate::<Reference> over the whole model: that
+    // scan is O(model size) and dominates large post-expansion trees (e.g. lee-distance).
+    //
+    // References that emerge later from opaque comprehension bodies are selected by
+    // [`select_mta_after_comprehension_expansion`] on the materialised AC node instead.
     let needs_decl_init = symtab
         .iter_local()
         .any(|(_, decl)| decl_needs_matrix_to_atom_init(decl));
-    if !needs_decl_init && !expression_needs_matrix_to_atom_selection(expr) {
+    if !needs_decl_init {
         return Err(RuleNotApplicable);
     }
 
@@ -117,7 +120,7 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         changed.set(true);
     }
 
-    // Select MatrixToAtom on top-most biplate references in the model expression
+    // Select MatrixToAtom on top-most biplate references already visible outside comprehensions.
     let new_expr = select_matrix_to_atom_on_biplate_refs(expr, &changed);
 
     // Avoid infinite loop
@@ -125,6 +128,29 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         Err(RuleNotApplicable)
     } else {
         Ok(Reduction::new(new_expr, new_constraints, new_symtab))
+    }
+}
+
+/// Select `MatrixToAtom` on references that appear when comprehensions expand.
+///
+/// Comprehensions are Uniplate leaves, so [`select_repr_mta`] cannot see their bodies before
+/// expansion. After a comprehension becomes an AC argument list, select once on that node so later
+/// Root-level `select_repr_mta` attempts can stay O(declarations) rather than O(model).
+#[register_rule("ReprMatrixToAtom", 1990, [And, Or, Sum, Product])]
+fn select_mta_after_comprehension_expansion(
+    expr: &Expression,
+    _: &SymbolTable,
+) -> ApplicationResult {
+    if !expression_needs_matrix_to_atom_selection(expr) {
+        return Err(RuleNotApplicable);
+    }
+
+    let changed = Cell::new(false);
+    let new_expr = select_matrix_to_atom_on_biplate_refs(expr, &changed);
+    if !changed.get() {
+        Err(RuleNotApplicable)
+    } else {
+        Ok(Reduction::pure(new_expr))
     }
 }
 
@@ -431,4 +457,70 @@ fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationR
 
     let new_expr = expr.with_children(flattened_children);
     Ok(Reduction::pure(new_expr))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{DeclarationPtr, Domain, Metadata, Name, Range, SymbolTable};
+    use conjure_cp::into_matrix_expr;
+    use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
+
+    /// Builds a represented matrix find and a large `and([...])` of unselected references to it.
+    fn matrix_and_unselected_refs(n: usize) -> (SymbolTable, Expression, DeclarationPtr) {
+        let mut symbols = SymbolTable::new();
+        let domain = Domain::matrix(
+            Domain::int(vec![Range::Bounded(1, 4)]),
+            vec![Domain::int(vec![Range::Bounded(1, 3)])],
+        );
+        let decl = DeclarationPtr::new_find(Name::user("S"), domain);
+        symbols
+            .insert(decl.clone())
+            .expect("matrix find should insert");
+
+        let mut decl_for_init = decl.clone();
+        let (extra, _tops) = MatrixToAtom::init_for(&mut decl_for_init).unwrap();
+        symbols.update_insert(decl_for_init.clone());
+        symbols.extend(extra);
+
+        let refs: Vec<Expression> = (0..n)
+            .map(|_| {
+                Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(Reference::new(decl.clone())),
+                )
+            })
+            .collect();
+        let and_expr = Expression::And(Metadata::new(), Moo::new(into_matrix_expr!(refs)));
+        let root = Expression::Root(Metadata::new(), vec![and_expr]);
+        (symbols, root, decl_for_init)
+    }
+
+    #[test]
+    fn select_repr_mta_skips_expression_walk_when_decls_already_initialised() {
+        let (symbols, root, decl) = matrix_and_unselected_refs(64);
+        assert!(decl.reprs().has_repr(MatrixToAtom::STORED));
+        assert!(expression_needs_matrix_to_atom_selection(&root));
+
+        let rule = get_rule_by_name("select_repr_mta").expect("select_repr_mta registered");
+        let err = rule.apply(&root, &symbols).unwrap_err();
+        assert!(matches!(err, ApplicationError::RuleNotApplicable));
+    }
+
+    #[test]
+    fn select_mta_after_comprehension_expansion_selects_emergent_refs() {
+        let (symbols, root, _) = matrix_and_unselected_refs(8);
+        let Expression::Root(_, children) = &root else {
+            panic!("expected root");
+        };
+        let and_expr = &children[0];
+        assert!(expression_needs_matrix_to_atom_selection(and_expr));
+
+        let rule = get_rule_by_name("select_mta_after_comprehension_expansion")
+            .expect("select_mta_after_comprehension_expansion registered");
+        let result = rule.apply(and_expr, &symbols).expect("selection applies");
+        assert!(!expression_needs_matrix_to_atom_selection(
+            &result.new_expression
+        ));
+    }
 }
