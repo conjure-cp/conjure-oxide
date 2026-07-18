@@ -50,11 +50,16 @@ pub fn eval_constant_local(expr: &Expr) -> Option<Lit> {
 /// that local constant and partial evaluation is always preferable to trying lower-priority rules,
 /// while avoiding millions of failed universal `constant_evaluator` rule attempts.
 ///
-/// The hook is deliberately pure and local: it does not create auxiliary variables, mutate the
-/// symbol table, append constraints, or recursively inspect arbitrary descendants. Children are
-/// expected to have been normalised by the scheduler before their parent is evaluated. For a deep
-/// semantic pass over top-level constraints after rewriting completes, use
-/// [`finish_root_evaluator_normalisation`].
+/// Away from [`Expr::Root`], the hook is pure and local: it does not create auxiliaries, mutate
+/// the symbol table, or recursively inspect arbitrary descendants. Children are expected to have
+/// been normalised by the scheduler before their parent is evaluated.
+///
+/// At [`Expr::Root`], a selective deep pass runs over top-level constraints (skipping solver-flat
+/// forms). Callers that know which root child changed should prefer
+/// [`normalise_root_selective_deep_expr`] with `only_constraint` so sibling constraints are not
+/// re-traversed. Local root-list reshaping (flatten top-level `and`) is intentionally deferred to
+/// [`finish_root_evaluator_normalisation`]: doing it mid-loop materialises huge root lists and
+/// explodes worklist rule attempts.
 pub fn normalise_evaluator_local(expr: &Expr) -> Option<Expr> {
     match expr {
         Expr::Root(_, exprs) => normalise_root_constraints_selective_deep(exprs, None),
@@ -101,14 +106,26 @@ pub fn normalise_root_constraints_deep(root: &Expr) -> Option<Expr> {
 
 /// Finishes evaluator normalisation on the model root after rewriting completes.
 ///
-/// Applies local root-list partial evaluation only. Deep semantic evaluation of top-level
-/// constraints happens during the rewrite loop via [`normalise_evaluator_local`].
+/// Applies local root-list partial evaluation to a fixpoint (strip `true`, propagate `false`,
+/// flatten top-level `and`). Deep evaluation of individual constraints already runs during
+/// rewriting via [`normalise_evaluator_local`] / [`normalise_root_selective_deep_expr`]; this
+/// finish pass must not be inlined into the mid-loop Root hook because flattening `and` early
+/// explodes worklist size on large expansions.
 pub fn finish_root_evaluator_normalisation(root: &Expr) -> Option<Expr> {
     let Expr::Root(_, exprs) = root else {
         return None;
     };
 
-    normalise_root_constraints_local(exprs)
+    let mut current = Expr::Root(Metadata::new(), exprs.clone());
+    let mut changed = false;
+    while let Expr::Root(_, current_exprs) = &current {
+        let Some(next) = normalise_root_constraints_local(current_exprs) else {
+            break;
+        };
+        current = next;
+        changed = true;
+    }
+    changed.then_some(current)
 }
 
 fn normalise_root_constraints_selective_deep(
@@ -1378,5 +1395,30 @@ mod tests {
         let expr = root(vec![bool_lit(true), int_lit(1)]);
         let normalised = finish_root_evaluator_normalisation(&expr).unwrap();
         assert_eq!(normalised, root(vec![int_lit(1)]));
+    }
+
+    #[test]
+    fn selective_deep_only_constraint_folds_target_index() {
+        let ground = Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_lit(1), int_lit(2), int_lit(3)]),
+        );
+        let untouched = Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_lit(4), int_lit(5)]),
+        );
+        let expr = root(vec![ground, untouched.clone()]);
+        let normalised = normalise_root_selective_deep_expr(&expr, Some(0)).unwrap();
+        assert_eq!(normalised, root(vec![int_lit(6), untouched]));
+    }
+
+    #[test]
+    fn finish_root_normalisation_flattens_top_level_and() {
+        let expr = root(vec![Expr::And(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(true), int_lit(1), int_lit(2)]),
+        )]);
+        let normalised = finish_root_evaluator_normalisation(&expr).unwrap();
+        assert_eq!(normalised, root(vec![int_lit(1), int_lit(2)]));
     }
 }

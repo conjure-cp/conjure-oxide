@@ -3,7 +3,8 @@ use crate::{
     Model,
     ast::{
         Atom, Expression as Expr, ExpressionArena, ExpressionNodeId, Metadata, Moo, Name,
-        discriminant_from_value, normalise_evaluator_local,
+        discriminant_from_value, finish_root_evaluator_normalisation, normalise_evaluator_local,
+        normalise_root_selective_deep_expr,
     },
     bug,
     objective::introduce_objective_auxiliary,
@@ -2012,6 +2013,14 @@ pub fn rewrite_model<'a>(
         );
     }
 
+    // Flatten top-level `and` into the root constraint list (and strip `true` / propagate
+    // `false`) after rewriting. Must not run mid-loop: early flattening of large expanded
+    // conjunctions explodes worklist rule attempts. Solver adaptors expect one flat constraint
+    // per root entry.
+    if let Some(normalised_root) = finish_root_evaluator_normalisation(model.root()) {
+        model.replace_root(normalised_root);
+    }
+
     Ok(model)
 }
 
@@ -3031,6 +3040,7 @@ fn normalise_evaluators_from_node_to_root(
     // scheduled. Normalise the replacement subtree bottom-up first, then walk upward so evaluator
     // simplification remains privileged without running ordinary rules to a fixpoint.
     let subtree_changed = normalise_evaluators_subtree_bottom_up(arena, node_id, dirty_trace);
+    let mut came_from = node_id;
     let mut current = arena.parent(node_id);
     let mut highest_rewritten = node_id;
     let mut changed = subtree_changed;
@@ -3040,14 +3050,53 @@ fn normalise_evaluators_from_node_to_root(
             break;
         }
 
-        if normalise_evaluator_node_to_fixpoint(arena, current_id, dirty_trace) {
+        let rewritten = if current_id == arena.root() {
+            // Only deep-normalise the root child that contains the rewrite. Full-root selective
+            // deep on every upward walk re-traverses every non-flat sibling and dominates CPU on
+            // large models (lee-distance profile).
+            normalise_root_evaluator_for_child(arena, came_from, dirty_trace)
+        } else {
+            normalise_evaluator_node_to_fixpoint(arena, current_id, dirty_trace)
+        };
+        if rewritten {
             highest_rewritten = current_id;
             changed = true;
         }
+        came_from = current_id;
         current = arena.parent(current_id);
     }
 
     (highest_rewritten, changed)
+}
+
+/// Deep-normalises only the root constraint that `child_id` belongs to.
+///
+/// `child_id` must be a direct child of the arena root. Sibling constraints are left untouched.
+fn normalise_root_evaluator_for_child(
+    arena: &mut ExpressionArena,
+    child_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+) -> bool {
+    let root_id = arena.root();
+    let Some(constraint_index) = arena
+        .children(root_id)
+        .iter()
+        .position(|id| *id == child_id)
+    else {
+        return normalise_evaluator_node_to_fixpoint(arena, root_id, dirty_trace);
+    };
+
+    let root_expr = arena.expression(root_id);
+    let Some(replacement) = normalise_root_selective_deep_expr(root_expr, Some(constraint_index))
+    else {
+        return false;
+    };
+
+    dirty_trace.replacement_subtree_clears += 1;
+    arena.replace_subtree(root_id, clear_expr_clean_rule_metadata(replacement));
+    dirty_trace.record_rewrite("evaluator_normalisation_hook", false);
+    dirty_ancestors_after_focus_change(arena, root_id, dirty_trace, None);
+    true
 }
 
 fn normalise_evaluator_node_to_fixpoint(
