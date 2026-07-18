@@ -357,7 +357,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         }
 
         conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
-            Ok(minion_ast::Constraint::AllDiff(parse_atoms(atoms)?))
+            Ok(minion_ast::Constraint::GacAllDiff(parse_atoms(atoms)?))
         }
         conjure_ast::Expression::FlatSumLeq(_metadata, lhs, rhs) => Ok(
             minion_ast::Constraint::SumLeq(parse_atoms(lhs)?, parse_atom(rhs)?),
@@ -914,6 +914,20 @@ fn parse_name(name: conjure_ast::Name) -> Result<minion_ast::Var, SolverError> {
 mod tests {
     use super::*;
     use crate::ast::{Literal, Metadata};
+
+    #[test]
+    fn flat_alldiff_uses_gac_propagation() {
+        let constraint = parse_expr(Expression::FlatAllDiff(
+            Metadata::new(),
+            vec![
+                Atom::Literal(Literal::Int(1)),
+                Atom::Literal(Literal::Int(2)),
+            ],
+        ))
+        .unwrap();
+
+        assert!(matches!(constraint, minion_ast::Constraint::GacAllDiff(_)));
+    }
 
     #[test]
     fn top_level_and_is_rejected() {
