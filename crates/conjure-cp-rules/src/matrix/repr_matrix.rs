@@ -161,41 +161,52 @@ fn select_mta_after_comprehension_expansion(
 /// atom), which costs two worklist updates per indexing site. This rule is the fused fast path for
 /// that case: same result as those two rules when every index is an in-bounds constant, so Bubble
 /// would not wrap a condition. Out-of-bounds or non-constant indices stay with `index_to_bubble`.
+///
+/// The same lowering is also applied during comprehension expansion simplification so ground
+/// indices never enter the rewriter worklist; this rule remains the oracle for any sites that
+/// become constant only after expansion.
 #[register_rule("ReprMatrixToAtom", 6500, [UnsafeIndex])]
 fn unsafe_const_index_matrix_to_atom(
     expr: &Expression,
     _symbols: &SymbolTable,
 ) -> ApplicationResult {
+    try_lower_const_unsafe_index_matrix_to_atom(expr)
+        .map(Reduction::pure)
+        .ok_or(RuleNotApplicable)
+}
+
+/// Attempts the fused constant `UnsafeIndex` → `MatrixToAtom` element lowering.
+///
+/// Returns [`Some`] only when every index is a constant inside its dimension domain and no nested
+/// represented-matrix index remains below this node. Callers outside the rule engine (notably
+/// comprehension expansion simplification) use this to avoid paying a worklist update per site.
+pub(crate) fn try_lower_const_unsafe_index_matrix_to_atom(expr: &Expression) -> Option<Expression> {
     let Expression::UnsafeIndex(_, subject, indices) = expr else {
-        return Err(RuleNotApplicable);
+        return None;
     };
 
     let Expression::Atomic(_, Atom::Reference(re)) = subject.as_ref() else {
-        return Err(RuleNotApplicable);
+        return None;
     };
 
     // Nested represented-matrix indices must be lowered first (same invariant as SafeIndex path).
     if expr.universe().iter().skip(1).any(is_matrix_to_atom_index) {
-        return Err(RuleNotApplicable);
+        return None;
     }
 
-    let Some(mta) = re.ptr().get_repr::<MatrixToAtom>() else {
-        return Err(RuleNotApplicable);
-    };
+    let mta = re.ptr().get_repr::<MatrixToAtom>()?;
 
     if indices.len() != mta.index_domains.len() {
-        return Err(RuleNotApplicable);
+        return None;
     }
 
     // Require every index to be a constant inside its dimension domain; otherwise Bubble owns it.
     let mut slices = Vec::with_capacity(indices.len());
     for (domain, index) in mta.index_domains.iter().zip(indices.iter()) {
-        let Some(lit) = eval_constant(index) else {
-            return Err(RuleNotApplicable);
-        };
+        let lit = eval_constant(index)?;
         match domain.contains(&lit) {
             Ok(true) => slices.push(Range::Single(lit)),
-            _ => return Err(RuleNotApplicable),
+            _ => return None,
         }
     }
 
@@ -207,7 +218,7 @@ fn unsafe_const_index_matrix_to_atom(
         1,
         "constant in-bounds MatrixToAtom index should yield one element"
     );
-    Ok(Reduction::pure(elems.swap_remove(0)))
+    Some(elems.swap_remove(0))
 }
 
 /// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
@@ -613,6 +624,18 @@ mod tests {
             result.new_expression,
             Expression::Atomic(_, Atom::Reference(_))
         ));
+    }
+
+    #[test]
+    fn try_lower_const_unsafe_index_matrix_to_atom_matches_rule() {
+        let (_symbols, decl) = matrix_find_1d();
+        let subject = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
+        let expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(subject), vec![2.into()]);
+
+        let lowered = try_lower_const_unsafe_index_matrix_to_atom(&expr)
+            .expect("helper should lower in-bounds constants");
+        assert!(matches!(lowered, Expression::Atomic(_, Atom::Reference(_))));
+        assert!(try_lower_const_unsafe_index_matrix_to_atom(&Expression::from(true)).is_none());
     }
 
     #[test]

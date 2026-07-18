@@ -6,4 +6,6 @@ mod matrix_to_list;
 mod remove_dimension;
 mod repr_matrix;
 
-pub(crate) use repr_matrix::try_index_matrix_to_atom;
+pub(crate) use repr_matrix::{
+    try_index_matrix_to_atom, try_lower_const_unsafe_index_matrix_to_atom,
+};
