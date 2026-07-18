@@ -26,39 +26,45 @@ or([a[1] != b[1],a[2] != b[2],a[3] != b[3];int(1..)])
 
 --
 
+b[1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+b#MatrixToAtom_1
+
+--
+
+a[2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+a#MatrixToAtom_1
+
+--
+
+b[2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+b#MatrixToAtom_2
+
+--
+
+a[3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+a#MatrixToAtom_2
+
+--
+
 a[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 {SafeIndex(a,[1]) @ false}
 
 --
 
-{SafeIndex(a,[1]) @ false} != b[1]
+{SafeIndex(a,[1]) @ false} != b#MatrixToAtom_1
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(a,[1]) != b[1] @ false}
+{SafeIndex(a,[1]) != b#MatrixToAtom_1 @ false}
 
 --
 
-{SafeIndex(a,[1]) != b[1] @ false}
+{SafeIndex(a,[1]) != b#MatrixToAtom_1 @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(a,[1]) != b[1],false;int(1..)])
-
---
-
-a[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(a,[2])
-
---
-
-b[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(b,[2])
-
---
-
-a[3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(a,[3])
+and([SafeIndex(a,[1]) != b#MatrixToAtom_1,false;int(1..)])
 
 --
 
@@ -68,33 +74,21 @@ b[3]
 
 --
 
-SafeIndex(a,[3]) != {SafeIndex(b,[3]) @ false}
+a#MatrixToAtom_2 != {SafeIndex(b,[3]) @ false}
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(a,[3]) != SafeIndex(b,[3]) @ false}
+{a#MatrixToAtom_2 != SafeIndex(b,[3]) @ false}
 
 --
 
-{SafeIndex(a,[3]) != SafeIndex(b,[3]) @ false}
+{a#MatrixToAtom_2 != SafeIndex(b,[3]) @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(a,[3]) != SafeIndex(b,[3]),false;int(1..)])
+and([a#MatrixToAtom_2 != SafeIndex(b,[3]),false;int(1..)])
 
 --
 
-or([SafeIndex(a,[2]) != SafeIndex(b,[2]);int(1..)])
+or([a#MatrixToAtom_1 != b#MatrixToAtom_2;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-SafeIndex(a,[2]) != SafeIndex(b,[2])
-
---
-
-SafeIndex(a,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-a#MatrixToAtom_1
-
---
-
-SafeIndex(b,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-b#MatrixToAtom_2
+a#MatrixToAtom_1 != b#MatrixToAtom_2
 
 --
 

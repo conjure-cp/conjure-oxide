@@ -111,12 +111,6 @@ x#RecordToTuple_1
 
 --
 
-SafeIndex(x#RecordToTuple_1,[1])
-   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 9500)])
-x#RecordToTuple_1#TupleToAtom_1
-
---
-
 x[b]
    ~~> index_record_to_tuple ([("ReprGeneral", 9500)])
 SafeIndex(x#RecordToTuple_1,[2])
@@ -129,15 +123,15 @@ x#RecordToTuple_1
 
 --
 
-SafeIndex(x#RecordToTuple_1,[2])
+SafeIndex(x#RecordToTuple_1,[1])
    ~~> tuple_to_atom_index_lit ([("ReprGeneral", 9500)])
-x#RecordToTuple_1#TupleToAtom_2
+x#RecordToTuple_1#TupleToAtom_1
 
 --
 
-y#RecordToTuple_1 = (false,4)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-and([y#RecordToTuple_1#TupleToAtom_1 = false,y#RecordToTuple_1#TupleToAtom_2 = 4;int(1..)])
+SafeIndex(x#RecordToTuple_1,[2])
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 9500)])
+x#RecordToTuple_1#TupleToAtom_2
 
 --
 
@@ -147,21 +141,9 @@ and([y#RecordToTuple_1#TupleToAtom_1 = z#RecordToTuple_1#TupleToAtom_1,y#RecordT
 
 --
 
-x#RecordToTuple_1#TupleToAtom_1 = true
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(true, x#RecordToTuple_1#TupleToAtom_1)
-
---
-
-y#RecordToTuple_1#TupleToAtom_1 = false
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(false, y#RecordToTuple_1#TupleToAtom_1)
-
---
-
-y#RecordToTuple_1#TupleToAtom_1 = z#RecordToTuple_1#TupleToAtom_1
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(z#RecordToTuple_1#TupleToAtom_1, y#RecordToTuple_1#TupleToAtom_1)
+y#RecordToTuple_1 = (false,4)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([y#RecordToTuple_1#TupleToAtom_1 = false,y#RecordToTuple_1#TupleToAtom_2 = 4;int(1..)])
 
 --
 
@@ -183,8 +165,8 @@ find x#RecordToTuple_1#TupleToAtom_2: int(0..9)
 
 such that
 
-Reify(true, x#RecordToTuple_1#TupleToAtom_1),
+x#RecordToTuple_1#TupleToAtom_1,
 x#RecordToTuple_1#TupleToAtom_2 = 3,
-and([Reify(false, y#RecordToTuple_1#TupleToAtom_1),y#RecordToTuple_1#TupleToAtom_2 = 4;int(1..)]),
-and([Reify(z#RecordToTuple_1#TupleToAtom_1, y#RecordToTuple_1#TupleToAtom_1),y#RecordToTuple_1#TupleToAtom_2 = z#RecordToTuple_1#TupleToAtom_2;int(1..)])
+and([y#RecordToTuple_1#TupleToAtom_1 = false,y#RecordToTuple_1#TupleToAtom_2 = 4;int(1..)]),
+and([y#RecordToTuple_1#TupleToAtom_1 = z#RecordToTuple_1#TupleToAtom_1,y#RecordToTuple_1#TupleToAtom_2 = z#RecordToTuple_1#TupleToAtom_2;int(1..)])
 

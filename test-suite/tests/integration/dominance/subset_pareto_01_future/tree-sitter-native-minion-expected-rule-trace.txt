@@ -36,60 +36,26 @@ new variables:
 
 --
 
-sum([toInt(selected[1]),toInt(selected[2]),toInt(selected[3]),toInt(selected[4]);int(1..)]) = 1,
-total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
-total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([toInt(selected[1]),toInt(selected[2]),toInt(selected[3]),toInt(selected[4]);int(1..)]) = 1,
-total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
-total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
-
---
-
 selected[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[1])
-
---
-
-selected[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[2])
-
---
-
-selected[3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[3])
-
---
-
-selected[4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[4])
-
---
-
-SafeIndex(selected,[1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_1
 
 --
 
-SafeIndex(selected,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_2
 
 --
 
-SafeIndex(selected,[3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_3
 
 --
 
-SafeIndex(selected,[4])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[4]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_4
 
 --
@@ -140,68 +106,26 @@ product([6,toInt(selected[4]);int(1..)])
 
 --
 
-and([SumLeq([__0, __1, __2, __3], 1),SumGeq([__0, __1, __2, __3], 1);int(1..)]),
-total_cost = sum([product([3,toInt(selected[1]);int(1..)]),product([2,toInt(selected[2]);int(1..)]),product([4,toInt(selected[3]);int(1..)]),product([6,toInt(selected[4]);int(1..)]);int(1..)]),
-total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-__0 =aux toInt(selected#MatrixToAtom_1),
-__1 =aux toInt(selected#MatrixToAtom_2),
-__2 =aux toInt(selected#MatrixToAtom_3),
-__3 =aux toInt(selected#MatrixToAtom_4)
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([SumLeq([__0, __1, __2, __3], 1),SumGeq([__0, __1, __2, __3], 1);int(1..)]),
-total_cost = sum([product([3,toInt(selected[1]);int(1..)]),product([2,toInt(selected[2]);int(1..)]),product([4,toInt(selected[3]);int(1..)]),product([6,toInt(selected[4]);int(1..)]);int(1..)]),
-total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ]),
-__0 =aux toInt(selected#MatrixToAtom_1),
-__1 =aux toInt(selected#MatrixToAtom_2),
-__2 =aux toInt(selected#MatrixToAtom_3),
-__3 =aux toInt(selected#MatrixToAtom_4)
-
---
-
 selected[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[1])
-
---
-
-selected[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[2])
-
---
-
-selected[3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[3])
-
---
-
-selected[4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[4])
-
---
-
-SafeIndex(selected,[1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_1
 
 --
 
-SafeIndex(selected,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_2
 
 --
 
-SafeIndex(selected,[3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_3
 
 --
 
-SafeIndex(selected,[4])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[4]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_4
 
 --
@@ -282,76 +206,26 @@ toInt(selected[1])
 
 --
 
-and([SumLeq([__0, __1, __2, __3], 1),SumGeq([__0, __1, __2, __3], 1);int(1..)]),
-and([FlatWeightedSumLeq([3, 2, 4, 6],[__4, __5, __6, __7],total_cost),FlatWeightedSumGeq([3, 2, 4, 6],[__4, __5, __6, __7],total_cost);int(1..)]),
-total_carbon = sum([toInt(selected[1]),product([4,toInt(selected[2]);int(1..)]),product([2,toInt(selected[3]);int(1..)]),product([5,toInt(selected[4]);int(1..)]);int(1..)]),
-__0 =aux toInt(selected#MatrixToAtom_1),
-__1 =aux toInt(selected#MatrixToAtom_2),
-__2 =aux toInt(selected#MatrixToAtom_3),
-__3 =aux toInt(selected#MatrixToAtom_4),
-__4 =aux toInt(selected#MatrixToAtom_1),
-__5 =aux toInt(selected#MatrixToAtom_2),
-__6 =aux toInt(selected#MatrixToAtom_3),
-__7 =aux toInt(selected#MatrixToAtom_4)
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([SumLeq([__0, __1, __2, __3], 1),SumGeq([__0, __1, __2, __3], 1);int(1..)]),
-and([FlatWeightedSumLeq([3, 2, 4, 6],[__4, __5, __6, __7],total_cost),FlatWeightedSumGeq([3, 2, 4, 6],[__4, __5, __6, __7],total_cost);int(1..)]),
-total_carbon = sum([toInt(selected[1]),product([4,toInt(selected[2]);int(1..)]),product([2,toInt(selected[3]);int(1..)]),product([5,toInt(selected[4]);int(1..)]);int(1..)]),
-__0 =aux toInt(selected#MatrixToAtom_1),
-__1 =aux toInt(selected#MatrixToAtom_2),
-__2 =aux toInt(selected#MatrixToAtom_3),
-__3 =aux toInt(selected#MatrixToAtom_4),
-__4 =aux toInt(selected#MatrixToAtom_1),
-__5 =aux toInt(selected#MatrixToAtom_2),
-__6 =aux toInt(selected#MatrixToAtom_3),
-__7 =aux toInt(selected#MatrixToAtom_4)
-
---
-
 selected[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[1])
-
---
-
-selected[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[2])
-
---
-
-selected[3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[3])
-
---
-
-selected[4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(selected,[4])
-
---
-
-SafeIndex(selected,[1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_1
 
 --
 
-SafeIndex(selected,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_2
 
 --
 
-SafeIndex(selected,[3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_3
 
 --
 
-SafeIndex(selected,[4])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+selected[4]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 selected#MatrixToAtom_4
 
 --

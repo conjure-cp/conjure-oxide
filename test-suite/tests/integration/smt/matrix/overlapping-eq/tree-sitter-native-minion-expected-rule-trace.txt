@@ -28,21 +28,57 @@ and([a[1] = b[1],a[2] = b[2],a[3] = b[3],a[4] = b[4];int(1..)])
 
 --
 
+b[1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+b#MatrixToAtom_1
+
+--
+
+a[2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+a#MatrixToAtom_1
+
+--
+
+b[2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+b#MatrixToAtom_2
+
+--
+
+a[3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+a#MatrixToAtom_2
+
+--
+
+b[3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+b#MatrixToAtom_3
+
+--
+
+a[4]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+a#MatrixToAtom_3
+
+--
+
 a[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 {SafeIndex(a,[1]) @ false}
 
 --
 
-{SafeIndex(a,[1]) @ false} = b[1]
+{SafeIndex(a,[1]) @ false} = b#MatrixToAtom_1
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(a,[1]) = b[1] @ false}
+{SafeIndex(a,[1]) = b#MatrixToAtom_1 @ false}
 
 --
 
-{SafeIndex(a,[1]) = b[1] @ false}
+{SafeIndex(a,[1]) = b#MatrixToAtom_1 @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(a,[1]) = b[1],false;int(1..)])
+and([SafeIndex(a,[1]) = b#MatrixToAtom_1,false;int(1..)])
 
 --
 

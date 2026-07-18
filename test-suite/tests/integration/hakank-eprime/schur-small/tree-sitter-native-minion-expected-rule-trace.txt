@@ -32,80 +32,44 @@ and([!(and([schur[1] = schur[1],schur[1] = schur[2];int(1..)]));int(1..)])
 --
 
 !(and([schur[1] = schur[1],schur[1] = schur[2];int(1..)]))
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-!(and([schur[1] = schur[1],schur[1] = schur[2];int(1..)]))
-
---
-
-!(and([schur[1] = schur[1],schur[1] = schur[2];int(1..)]))
    ~~> distribute_not_over_and ([("Base", 8400)])
 or([!(schur[1] = schur[1]),!(schur[1] = schur[2]);int(1..)])
 
 --
 
 schur[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(schur,[1])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+schur#MatrixToAtom_1
 
 --
 
 schur[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(schur,[1])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+schur#MatrixToAtom_1
 
 --
 
-!(SafeIndex(schur,[1]) = SafeIndex(schur,[1]))
-   ~~> negated_eq_to_neq ([("Base", 8800)])
-SafeIndex(schur,[1]) != SafeIndex(schur,[1])
+or([!(schur[1] = schur[2]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+!(schur[1] = schur[2])
 
 --
 
 schur[1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(schur,[1])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+schur#MatrixToAtom_1
 
 --
 
 schur[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(schur,[2])
-
---
-
-!(SafeIndex(schur,[1]) = SafeIndex(schur,[2]))
-   ~~> negated_eq_to_neq ([("Base", 8800)])
-SafeIndex(schur,[1]) != SafeIndex(schur,[2])
-
---
-
-SafeIndex(schur,[1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-schur#MatrixToAtom_1
-
---
-
-SafeIndex(schur,[1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-schur#MatrixToAtom_1
-
---
-
-or([SafeIndex(schur,[1]) != SafeIndex(schur,[2]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-SafeIndex(schur,[1]) != SafeIndex(schur,[2])
-
---
-
-SafeIndex(schur,[1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-schur#MatrixToAtom_1
-
---
-
-SafeIndex(schur,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 schur#MatrixToAtom_2
+
+--
+
+!(schur#MatrixToAtom_1 = schur#MatrixToAtom_2)
+   ~~> negated_eq_to_neq ([("Base", 8800)])
+schur#MatrixToAtom_1 != schur#MatrixToAtom_2
 
 --
 

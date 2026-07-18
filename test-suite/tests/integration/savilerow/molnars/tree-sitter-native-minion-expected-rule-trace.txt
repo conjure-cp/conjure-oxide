@@ -47,20 +47,6 @@ new variables:
 
 --
 
-sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
-sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
-and([(M[0,..] <=lex M[1,..]),(M[1,..] <=lex M[2,..]);int(1..)]),
-and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
-sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
-and([(M[0,..] <=lex M[1,..]),(M[1,..] <=lex M[2,..]);int(1..)]),
-and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
-true
-
---
-
 M[0,..]
    ~~> slice_to_bubble ([("Bubble", 6000)])
 SafeSlice(M,[0,..])
@@ -115,20 +101,6 @@ SafeSlice(M,[2,..])
 
 --
 
-sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
-sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
-and([([M#MatrixToAtom_1,M#MatrixToAtom_2,M#MatrixToAtom_3;int(1..)] <=lex [M#MatrixToAtom_4,M#MatrixToAtom_5,M#MatrixToAtom_6;int(1..)]),([M#MatrixToAtom_4,M#MatrixToAtom_5,M#MatrixToAtom_6;int(1..)] <=lex [M#MatrixToAtom_7,M#MatrixToAtom_8,M#MatrixToAtom_9;int(1..)]);int(1..)]),
-and([(M[..,0] <=lex M[..,1]),(M[..,1] <=lex M[..,2]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
-sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
-and([([M#MatrixToAtom_1,M#MatrixToAtom_2,M#MatrixToAtom_3;int(1..)] <=lex [M#MatrixToAtom_4,M#MatrixToAtom_5,M#MatrixToAtom_6;int(1..)]),([M#MatrixToAtom_4,M#MatrixToAtom_5,M#MatrixToAtom_6;int(1..)] <=lex [M#MatrixToAtom_7,M#MatrixToAtom_8,M#MatrixToAtom_9;int(1..)]);int(1..)]),
-and([(M[..,0] <=lex M[..,1]),(M[..,1] <=lex M[..,2]);int(1..)]),
-true
-
---
-
 M[..,0]
    ~~> slice_to_bubble ([("Bubble", 6000)])
 SafeSlice(M,[..,0])
@@ -179,577 +151,13 @@ SafeSlice(M,[..,2])
 
 [ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[product([1,product([ M[j, [0,1,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([1,product([ M[j, [1,2,0;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([1,product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]
+[product([1,product([M[0, 0],M[1, 1],M[2, 2];int(1..)]);int(1..)]),product([-1,product([M[0, 0],M[1, 2],M[2, 1];int(1..)]);int(1..)]),product([-1,product([M[0, 1],M[1, 0],M[2, 2];int(1..)]);int(1..)]),product([1,product([M[0, 1],M[1, 2],M[2, 0];int(1..)]);int(1..)]),product([1,product([M[0, 2],M[1, 0],M[2, 1];int(1..)]);int(1..)]),product([-1,product([M[0, 2],M[1, 1],M[2, 0];int(1..)]);int(1..)]);int(1..)]
 
 --
 
-product([1,product([ M[j, [0,1,2;int(0..2)][j]] | j : RANGE ]);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([product([ M[j, [0,1,2;int(0..2)][j]] | j : RANGE ]);int(1..)])
-
---
-
-product([1,product([ M[j, [1,2,0;int(0..2)][j]] | j : RANGE ]);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([product([ M[j, [1,2,0;int(0..2)][j]] | j : RANGE ]);int(1..)])
-
---
-
-product([1,product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]);int(1..)])
-
---
-
-product([product([ M[j, [0,1,2;int(0..2)][j]] | j : RANGE ]);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-product([ M[j, [0,1,2;int(0..2)][j]] | j : RANGE ])
-
---
-
-product([product([ M[j, [1,2,0;int(0..2)][j]] | j : RANGE ]);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-product([ M[j, [1,2,0;int(0..2)][j]] | j : RANGE ])
-
---
-
-product([product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ])
-
---
-
-[ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[product([1,product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([1,product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([1,product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]
-
---
-
-product([1,product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-
---
-
-product([1,product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-
---
-
-product([1,product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-
---
-
-product([product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ])
-
---
-
-product([product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ])
-
---
-
-product([product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ])
-
---
-
-([M#MatrixToAtom_1,M#MatrixToAtom_2,M#MatrixToAtom_3;int(1..)] <=lex [M#MatrixToAtom_4,M#MatrixToAtom_5,M#MatrixToAtom_6;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6])
-
---
-
-([M#MatrixToAtom_4,M#MatrixToAtom_5,M#MatrixToAtom_6;int(1..)] <=lex [M#MatrixToAtom_7,M#MatrixToAtom_8,M#MatrixToAtom_9;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9])
-
---
-
-([M#MatrixToAtom_1,M#MatrixToAtom_4,M#MatrixToAtom_7;int(1..)] <=lex [M#MatrixToAtom_2,M#MatrixToAtom_5,M#MatrixToAtom_8;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8])
-
---
-
-([M#MatrixToAtom_2,M#MatrixToAtom_5,M#MatrixToAtom_8;int(1..)] <=lex [M#MatrixToAtom_3,M#MatrixToAtom_6,M#MatrixToAtom_9;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9])
-
---
-
-[ M[j, [0,1,2;int(0..2)][j]] | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[M[0, 0],M[1, 1],M[2, 2];int(1..)]
-
---
-
-sum([product([M[0, 0],M[1, 1],M[2, 2];int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([ M[j, [1,2,0;int(0..2)][j]] | j : RANGE ]),product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M[0, 0],M[1, 1],M[2, 2];int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([ M[j, [1,2,0;int(0..2)][j]] | j : RANGE ]),product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-
---
-
-M[0, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 0])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-SafeIndex(M,[0, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_1
-
---
-
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_5
-
---
-
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_9
-
---
-
-[ M[j, [1,2,0;int(0..2)][j]] | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[M[0, 1],M[1, 2],M[2, 0];int(1..)]
-
---
-
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M[0, 1],M[1, 2],M[2, 0];int(1..)]),product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M[0, 1],M[1, 2],M[2, 0];int(1..)]),product([ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-
---
-
-M[0, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[2, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 0])
-
---
-
-SafeIndex(M,[0, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_2
-
---
-
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_6
-
---
-
-SafeIndex(M,[2, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_7
-
---
-
-[ M[j, [2,0,1;int(0..2)][j]] | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[M[0, 2],M[1, 0],M[2, 1];int(1..)]
-
---
-
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M[0, 2],M[1, 0],M[2, 1];int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M[0, 2],M[1, 0],M[2, 1];int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-
---
-
-M[0, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 2])
-
---
-
-M[1, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 0])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-SafeIndex(M,[0, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_3
-
---
-
-SafeIndex(M,[1, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_4
-
---
-
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_8
-
---
-
-[ product([M[j, [0,1,2;int(0..2)][j]],M[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[product([M[0, 0],M[0, 0];int(1..)]),product([M[1, 1],M[1, 1];int(1..)]),product([M[2, 2],M[2, 2];int(1..)]);int(1..)]
-
---
-
-product([product([M[0, 0],M[0, 0];int(1..)]),product([M[1, 1],M[1, 1];int(1..)]),product([M[2, 2],M[2, 2];int(1..)]);int(1..)])
+product([1,product([M[0, 0],M[1, 1],M[2, 2];int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-product([M[0, 0],M[0, 0],M[1, 1],M[1, 1],M[2, 2],M[2, 2];int(1..)])
-
---
-
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M[0, 0],M[0, 0],M[1, 1],M[1, 1],M[2, 2],M[2, 2];int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M[0, 0],M[0, 0],M[1, 1],M[1, 1],M[2, 2],M[2, 2];int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-
---
-
-M[0, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 0])
-
---
-
-M[0, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 0])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-SafeIndex(M,[0, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_1
-
---
-
-SafeIndex(M,[0, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_1
-
---
-
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_5
-
---
-
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_5
-
---
-
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_9
-
---
-
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_9
-
---
-
-[ product([M[j, [1,2,0;int(0..2)][j]],M[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[product([M[0, 1],M[0, 1];int(1..)]),product([M[1, 2],M[1, 2];int(1..)]),product([M[2, 0],M[2, 0];int(1..)]);int(1..)]
-
---
-
-product([product([M[0, 1],M[0, 1];int(1..)]),product([M[1, 2],M[1, 2];int(1..)]),product([M[2, 0],M[2, 0];int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-product([M[0, 1],M[0, 1],M[1, 2],M[1, 2],M[2, 0],M[2, 0];int(1..)])
-
---
-
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M[0, 1],M[0, 1],M[1, 2],M[1, 2],M[2, 0],M[2, 0];int(1..)]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M[0, 1],M[0, 1],M[1, 2],M[1, 2],M[2, 0],M[2, 0];int(1..)]),product([ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-
---
-
-M[0, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 1])
-
---
-
-M[0, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[2, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 0])
-
---
-
-M[2, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 0])
-
---
-
-SafeIndex(M,[0, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_2
-
---
-
-SafeIndex(M,[0, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_2
-
---
-
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_6
-
---
-
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_6
-
---
-
-SafeIndex(M,[2, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_7
-
---
-
-SafeIndex(M,[2, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_7
-
---
-
-[ product([M[j, [2,0,1;int(0..2)][j]],M[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[product([M[0, 2],M[0, 2];int(1..)]),product([M[1, 0],M[1, 0];int(1..)]),product([M[2, 1],M[2, 1];int(1..)]);int(1..)]
-
---
-
-product([product([M[0, 2],M[0, 2];int(1..)]),product([M[1, 0],M[1, 0];int(1..)]),product([M[2, 1],M[2, 1];int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-product([M[0, 2],M[0, 2],M[1, 0],M[1, 0],M[2, 1],M[2, 1];int(1..)])
-
---
-
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M[0, 2],M[0, 2],M[1, 0],M[1, 0],M[2, 1],M[2, 1];int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,product([ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M[0, 2],M[0, 2],M[1, 0],M[1, 0],M[2, 1],M[2, 1];int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-
---
-
-M[0, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 2])
-
---
-
-M[0, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 2])
-
---
-
-M[1, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 0])
-
---
-
-M[1, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 0])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-SafeIndex(M,[0, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_3
-
---
-
-SafeIndex(M,[0, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_3
-
---
-
-SafeIndex(M,[1, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_4
-
---
-
-SafeIndex(M,[1, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_4
-
---
-
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_8
-
---
-
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_8
-
---
-
-[ M[j, [0,2,1;int(0..2)][j]] | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[M[0, 0],M[1, 2],M[2, 1];int(1..)]
+product([1,M[0, 0],M[1, 1],M[2, 2];int(1..)])
 
 --
 
@@ -759,121 +167,21 @@ product([-1,M[0, 0],M[1, 2],M[2, 1];int(1..)])
 
 --
 
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,M[0, 0],M[1, 2],M[2, 1];int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,M[0, 0],M[1, 2],M[2, 1];int(1..)]),product([-1,product([ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-
---
-
-M[0, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 0])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-SafeIndex(M,[0, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_1
-
---
-
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_6
-
---
-
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_8
-
---
-
-[ M[j, [1,0,2;int(0..2)][j]] | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[M[0, 1],M[1, 0],M[2, 2];int(1..)]
-
---
-
 product([-1,product([M[0, 1],M[1, 0],M[2, 2];int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 product([-1,M[0, 1],M[1, 0],M[2, 2];int(1..)])
 
 --
 
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,M#MatrixToAtom_1,M#MatrixToAtom_6,M#MatrixToAtom_8;int(1..)]),product([-1,M[0, 1],M[1, 0],M[2, 2];int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,M#MatrixToAtom_1,M#MatrixToAtom_6,M#MatrixToAtom_8;int(1..)]),product([-1,M[0, 1],M[1, 0],M[2, 2];int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,product([ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
+product([1,product([M[0, 1],M[1, 2],M[2, 0];int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M[0, 1],M[1, 2],M[2, 0];int(1..)])
 
 --
 
-M[0, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 1])
-
---
-
-M[1, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 0])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-SafeIndex(M,[0, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_2
-
---
-
-SafeIndex(M,[1, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_4
-
---
-
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_9
-
---
-
-[ M[j, [2,1,0;int(0..2)][j]] | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[M[0, 2],M[1, 1],M[2, 0];int(1..)]
+product([1,product([M[0, 2],M[1, 0],M[2, 1];int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M[0, 2],M[1, 0],M[2, 1];int(1..)])
 
 --
 
@@ -883,53 +191,129 @@ product([-1,M[0, 2],M[1, 1],M[2, 0];int(1..)])
 
 --
 
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,M#MatrixToAtom_1,M#MatrixToAtom_6,M#MatrixToAtom_8;int(1..)]),product([-1,M#MatrixToAtom_2,M#MatrixToAtom_4,M#MatrixToAtom_9;int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,M[0, 2],M[1, 1],M[2, 0];int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_9;int(1..)]),product([-1,M#MatrixToAtom_1,M#MatrixToAtom_6,M#MatrixToAtom_8;int(1..)]),product([-1,M#MatrixToAtom_2,M#MatrixToAtom_4,M#MatrixToAtom_9;int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_8;int(1..)]),product([-1,M[0, 2],M[1, 1],M[2, 0];int(1..)]);int(1..)]) = det,
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,product([ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true
+product([1,M[0, 0],M[1, 1],M[2, 2];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M[0, 0],M[1, 1],M[2, 2];int(1..)])
+
+--
+
+product([1,M[0, 1],M[1, 2],M[2, 0];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M[0, 1],M[1, 2],M[2, 0];int(1..)])
+
+--
+
+product([1,M[0, 2],M[1, 0],M[2, 1];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M[0, 2],M[1, 0],M[2, 1];int(1..)])
+
+--
+
+M[0, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_1
+
+--
+
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_6
+
+--
+
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_8
+
+--
+
+M[0, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_2
+
+--
+
+M[1, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_4
+
+--
+
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_9
 
 --
 
 M[0, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 2])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[2, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 0])
-
---
-
-SafeIndex(M,[0, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
+
+--
+
+M[0, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_1
+
+--
+
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_5
+
+--
+
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_9
+
+--
+
+M[0, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_2
+
+--
+
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_6
+
+--
+
+M[2, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_7
+
+--
+
+M[0, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_3
+
+--
+
+M[1, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_4
+
+--
+
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_8
 
 --
 
@@ -1013,9 +397,15 @@ new constraints:
 
 --
 
-[ product([M[j, [0,2,1;int(0..2)][j]],M[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]
+[ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[product([M[0, 0],M[0, 0];int(1..)]),product([M[1, 2],M[1, 2];int(1..)]),product([M[2, 1],M[2, 1];int(1..)]);int(1..)]
+[product([1,product([product([M[0, 0],M[0, 0];int(1..)]),product([M[1, 1],M[1, 1];int(1..)]),product([M[2, 2],M[2, 2];int(1..)]);int(1..)]);int(1..)]),product([-1,product([product([M[0, 0],M[0, 0];int(1..)]),product([M[1, 2],M[1, 2];int(1..)]),product([M[2, 1],M[2, 1];int(1..)]);int(1..)]);int(1..)]),product([-1,product([product([M[0, 1],M[0, 1];int(1..)]),product([M[1, 0],M[1, 0];int(1..)]),product([M[2, 2],M[2, 2];int(1..)]);int(1..)]);int(1..)]),product([1,product([product([M[0, 1],M[0, 1];int(1..)]),product([M[1, 2],M[1, 2];int(1..)]),product([M[2, 0],M[2, 0];int(1..)]);int(1..)]);int(1..)]),product([1,product([product([M[0, 2],M[0, 2];int(1..)]),product([M[1, 0],M[1, 0];int(1..)]),product([M[2, 1],M[2, 1];int(1..)]);int(1..)]);int(1..)]),product([-1,product([product([M[0, 2],M[0, 2];int(1..)]),product([M[1, 1],M[1, 1];int(1..)]),product([M[2, 0],M[2, 0];int(1..)]);int(1..)]);int(1..)]);int(1..)]
+
+--
+
+product([1,product([product([M[0, 0],M[0, 0];int(1..)]),product([M[1, 1],M[1, 1];int(1..)]),product([M[2, 2],M[2, 2];int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M[0, 0],M[0, 0],M[1, 1],M[1, 1],M[2, 2],M[2, 2];int(1..)])
 
 --
 
@@ -1025,241 +415,21 @@ product([-1,M[0, 0],M[0, 0],M[1, 2],M[1, 2],M[2, 1],M[2, 1];int(1..)])
 
 --
 
-and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det);int(1..)]),
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,M[0, 0],M[0, 0],M[1, 2],M[1, 2],M[2, 1],M[2, 1];int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true,
-FlatProductEq(M#MatrixToAtom_9,__6,__0),
-FlatProductEq(M#MatrixToAtom_1,__7,__1),
-FlatProductEq(M#MatrixToAtom_2,__8,__2),
-FlatProductEq(M#MatrixToAtom_7,__9,__3),
-FlatProductEq(M#MatrixToAtom_8,__10,__4),
-FlatProductEq(M#MatrixToAtom_3,__11,__5),
-FlatProductEq(M#MatrixToAtom_5,M#MatrixToAtom_1,__6),
-FlatProductEq(M#MatrixToAtom_8,M#MatrixToAtom_6,__7),
-FlatProductEq(M#MatrixToAtom_9,M#MatrixToAtom_4,__8),
-FlatProductEq(M#MatrixToAtom_6,M#MatrixToAtom_2,__9),
-FlatProductEq(M#MatrixToAtom_4,M#MatrixToAtom_3,__10),
-FlatProductEq(M#MatrixToAtom_7,M#MatrixToAtom_5,__11)
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det);int(1..)]),
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,M[0, 0],M[0, 0],M[1, 2],M[1, 2],M[2, 1],M[2, 1];int(1..)]),product([-1,product([ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true,
-FlatProductEq(M#MatrixToAtom_9,__6,__0),
-FlatProductEq(M#MatrixToAtom_1,__7,__1),
-FlatProductEq(M#MatrixToAtom_2,__8,__2),
-FlatProductEq(M#MatrixToAtom_7,__9,__3),
-FlatProductEq(M#MatrixToAtom_8,__10,__4),
-FlatProductEq(M#MatrixToAtom_3,__11,__5),
-FlatProductEq(M#MatrixToAtom_5,M#MatrixToAtom_1,__6),
-FlatProductEq(M#MatrixToAtom_8,M#MatrixToAtom_6,__7),
-FlatProductEq(M#MatrixToAtom_9,M#MatrixToAtom_4,__8),
-FlatProductEq(M#MatrixToAtom_6,M#MatrixToAtom_2,__9),
-FlatProductEq(M#MatrixToAtom_4,M#MatrixToAtom_3,__10),
-FlatProductEq(M#MatrixToAtom_7,M#MatrixToAtom_5,__11)
-
---
-
-M[0, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 0])
-
---
-
-M[0, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 0])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-SafeIndex(M,[0, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_1
-
---
-
-SafeIndex(M,[0, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_1
-
---
-
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_6
-
---
-
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_6
-
---
-
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_8
-
---
-
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_8
-
---
-
-[ product([M[j, [1,0,2;int(0..2)][j]],M[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[product([M[0, 1],M[0, 1];int(1..)]),product([M[1, 0],M[1, 0];int(1..)]),product([M[2, 2],M[2, 2];int(1..)]);int(1..)]
-
---
-
 product([-1,product([product([M[0, 1],M[0, 1];int(1..)]),product([M[1, 0],M[1, 0];int(1..)]),product([M[2, 2],M[2, 2];int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 product([-1,M[0, 1],M[0, 1],M[1, 0],M[1, 0],M[2, 2],M[2, 2];int(1..)])
 
 --
 
-and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det);int(1..)]),
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,M[0, 1],M[0, 1],M[1, 0],M[1, 0],M[2, 2],M[2, 2];int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true,
-FlatProductEq(M#MatrixToAtom_9,__6,__0),
-FlatProductEq(M#MatrixToAtom_1,__7,__1),
-FlatProductEq(M#MatrixToAtom_2,__8,__2),
-FlatProductEq(M#MatrixToAtom_7,__9,__3),
-FlatProductEq(M#MatrixToAtom_8,__10,__4),
-FlatProductEq(M#MatrixToAtom_3,__11,__5),
-FlatProductEq(M#MatrixToAtom_5,M#MatrixToAtom_1,__6),
-FlatProductEq(M#MatrixToAtom_8,M#MatrixToAtom_6,__7),
-FlatProductEq(M#MatrixToAtom_9,M#MatrixToAtom_4,__8),
-FlatProductEq(M#MatrixToAtom_6,M#MatrixToAtom_2,__9),
-FlatProductEq(M#MatrixToAtom_4,M#MatrixToAtom_3,__10),
-FlatProductEq(M#MatrixToAtom_7,M#MatrixToAtom_5,__11)
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det);int(1..)]),
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,M[0, 1],M[0, 1],M[1, 0],M[1, 0],M[2, 2],M[2, 2];int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,product([ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true,
-FlatProductEq(M#MatrixToAtom_9,__6,__0),
-FlatProductEq(M#MatrixToAtom_1,__7,__1),
-FlatProductEq(M#MatrixToAtom_2,__8,__2),
-FlatProductEq(M#MatrixToAtom_7,__9,__3),
-FlatProductEq(M#MatrixToAtom_8,__10,__4),
-FlatProductEq(M#MatrixToAtom_3,__11,__5),
-FlatProductEq(M#MatrixToAtom_5,M#MatrixToAtom_1,__6),
-FlatProductEq(M#MatrixToAtom_8,M#MatrixToAtom_6,__7),
-FlatProductEq(M#MatrixToAtom_9,M#MatrixToAtom_4,__8),
-FlatProductEq(M#MatrixToAtom_6,M#MatrixToAtom_2,__9),
-FlatProductEq(M#MatrixToAtom_4,M#MatrixToAtom_3,__10),
-FlatProductEq(M#MatrixToAtom_7,M#MatrixToAtom_5,__11)
+product([1,product([product([M[0, 1],M[0, 1];int(1..)]),product([M[1, 2],M[1, 2];int(1..)]),product([M[2, 0],M[2, 0];int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M[0, 1],M[0, 1],M[1, 2],M[1, 2],M[2, 0],M[2, 0];int(1..)])
 
 --
 
-M[0, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 1])
-
---
-
-M[0, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 1])
-
---
-
-M[1, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 0])
-
---
-
-M[1, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 0])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-SafeIndex(M,[0, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_2
-
---
-
-SafeIndex(M,[0, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_2
-
---
-
-SafeIndex(M,[1, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_4
-
---
-
-SafeIndex(M,[1, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_4
-
---
-
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_9
-
---
-
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_9
-
---
-
-[ product([M[j, [2,1,0;int(0..2)][j]],M[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[product([M[0, 2],M[0, 2];int(1..)]),product([M[1, 1],M[1, 1];int(1..)]),product([M[2, 0],M[2, 0];int(1..)]);int(1..)]
+product([1,product([product([M[0, 2],M[0, 2];int(1..)]),product([M[1, 0],M[1, 0];int(1..)]),product([M[2, 1],M[2, 1];int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M[0, 2],M[0, 2],M[1, 0],M[1, 0],M[2, 1],M[2, 1];int(1..)])
 
 --
 
@@ -1269,113 +439,237 @@ product([-1,M[0, 2],M[0, 2],M[1, 1],M[1, 1],M[2, 0],M[2, 0];int(1..)])
 
 --
 
-and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det);int(1..)]),
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,M[0, 2],M[0, 2],M[1, 1],M[1, 1],M[2, 0],M[2, 0];int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true,
-FlatProductEq(M#MatrixToAtom_9,__6,__0),
-FlatProductEq(M#MatrixToAtom_1,__7,__1),
-FlatProductEq(M#MatrixToAtom_2,__8,__2),
-FlatProductEq(M#MatrixToAtom_7,__9,__3),
-FlatProductEq(M#MatrixToAtom_8,__10,__4),
-FlatProductEq(M#MatrixToAtom_3,__11,__5),
-FlatProductEq(M#MatrixToAtom_5,M#MatrixToAtom_1,__6),
-FlatProductEq(M#MatrixToAtom_8,M#MatrixToAtom_6,__7),
-FlatProductEq(M#MatrixToAtom_9,M#MatrixToAtom_4,__8),
-FlatProductEq(M#MatrixToAtom_6,M#MatrixToAtom_2,__9),
-FlatProductEq(M#MatrixToAtom_4,M#MatrixToAtom_3,__10),
-FlatProductEq(M#MatrixToAtom_7,M#MatrixToAtom_5,__11)
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det);int(1..)]),
-sum([product([M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_5,M#MatrixToAtom_5,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([-1,M#MatrixToAtom_1,M#MatrixToAtom_1,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_9,M#MatrixToAtom_9;int(1..)]),product([M#MatrixToAtom_2,M#MatrixToAtom_2,M#MatrixToAtom_6,M#MatrixToAtom_6,M#MatrixToAtom_7,M#MatrixToAtom_7;int(1..)]),product([M#MatrixToAtom_3,M#MatrixToAtom_3,M#MatrixToAtom_4,M#MatrixToAtom_4,M#MatrixToAtom_8,M#MatrixToAtom_8;int(1..)]),product([-1,M[0, 2],M[0, 2],M[1, 1],M[1, 1],M[2, 0],M[2, 0];int(1..)]);int(1..)]) = squaredet,
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6]),FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9]);int(1..)]),
-and([FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8]),FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9]);int(1..)]),
-true,
-FlatProductEq(M#MatrixToAtom_9,__6,__0),
-FlatProductEq(M#MatrixToAtom_1,__7,__1),
-FlatProductEq(M#MatrixToAtom_2,__8,__2),
-FlatProductEq(M#MatrixToAtom_7,__9,__3),
-FlatProductEq(M#MatrixToAtom_8,__10,__4),
-FlatProductEq(M#MatrixToAtom_3,__11,__5),
-FlatProductEq(M#MatrixToAtom_5,M#MatrixToAtom_1,__6),
-FlatProductEq(M#MatrixToAtom_8,M#MatrixToAtom_6,__7),
-FlatProductEq(M#MatrixToAtom_9,M#MatrixToAtom_4,__8),
-FlatProductEq(M#MatrixToAtom_6,M#MatrixToAtom_2,__9),
-FlatProductEq(M#MatrixToAtom_4,M#MatrixToAtom_3,__10),
-FlatProductEq(M#MatrixToAtom_7,M#MatrixToAtom_5,__11)
+product([1,M[0, 0],M[0, 0],M[1, 1],M[1, 1],M[2, 2],M[2, 2];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M[0, 0],M[0, 0],M[1, 1],M[1, 1],M[2, 2],M[2, 2];int(1..)])
+
+--
+
+product([1,M[0, 1],M[0, 1],M[1, 2],M[1, 2],M[2, 0],M[2, 0];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M[0, 1],M[0, 1],M[1, 2],M[1, 2],M[2, 0],M[2, 0];int(1..)])
+
+--
+
+product([1,M[0, 2],M[0, 2],M[1, 0],M[1, 0],M[2, 1],M[2, 1];int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M[0, 2],M[0, 2],M[1, 0],M[1, 0],M[2, 1],M[2, 1];int(1..)])
+
+--
+
+M[0, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_1
+
+--
+
+M[0, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_1
+
+--
+
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_6
+
+--
+
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_6
+
+--
+
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_8
+
+--
+
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_8
+
+--
+
+M[0, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_2
+
+--
+
+M[0, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_2
+
+--
+
+M[1, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_4
+
+--
+
+M[1, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_4
+
+--
+
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_9
+
+--
+
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_9
 
 --
 
 M[0, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 2])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_3
 
 --
 
 M[0, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[0, 2])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[2, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 0])
-
---
-
-M[2, 0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 0])
-
---
-
-SafeIndex(M,[0, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[0, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_5
+
+--
+
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_5
+
+--
+
+M[2, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_7
+
+--
+
+M[2, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_7
+
+--
+
+M[0, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_1
+
+--
+
+M[0, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_1
+
+--
+
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_5
+
+--
+
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_5
+
+--
+
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_9
+
+--
+
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_9
+
+--
+
+M[0, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_2
+
+--
+
+M[0, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_2
+
+--
+
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_6
+
+--
+
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_6
+
+--
+
+M[2, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_7
+
+--
+
+M[2, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_7
+
+--
+
+M[0, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_5
+M[0, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_5
+M[1, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[2, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_7
+M[1, 0]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[2, 0])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-M#MatrixToAtom_7
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_8
+
+--
+
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+M#MatrixToAtom_8
 
 --
 
@@ -1492,6 +786,30 @@ new constraints:
   FlatProductEq(__38,M#MatrixToAtom_5,__39)
   FlatProductEq(__39,M#MatrixToAtom_5,__40)
   FlatProductEq(__40,M#MatrixToAtom_3,__41)
+
+--
+
+([M#MatrixToAtom_1,M#MatrixToAtom_2,M#MatrixToAtom_3;int(1..)] <=lex [M#MatrixToAtom_4,M#MatrixToAtom_5,M#MatrixToAtom_6;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_2, M#MatrixToAtom_3], [M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6])
+
+--
+
+([M#MatrixToAtom_4,M#MatrixToAtom_5,M#MatrixToAtom_6;int(1..)] <=lex [M#MatrixToAtom_7,M#MatrixToAtom_8,M#MatrixToAtom_9;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([M#MatrixToAtom_4, M#MatrixToAtom_5, M#MatrixToAtom_6], [M#MatrixToAtom_7, M#MatrixToAtom_8, M#MatrixToAtom_9])
+
+--
+
+([M#MatrixToAtom_1,M#MatrixToAtom_4,M#MatrixToAtom_7;int(1..)] <=lex [M#MatrixToAtom_2,M#MatrixToAtom_5,M#MatrixToAtom_8;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([M#MatrixToAtom_1, M#MatrixToAtom_4, M#MatrixToAtom_7], [M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8])
+
+--
+
+([M#MatrixToAtom_2,M#MatrixToAtom_5,M#MatrixToAtom_8;int(1..)] <=lex [M#MatrixToAtom_3,M#MatrixToAtom_6,M#MatrixToAtom_9;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([M#MatrixToAtom_2, M#MatrixToAtom_5, M#MatrixToAtom_8], [M#MatrixToAtom_3, M#MatrixToAtom_6, M#MatrixToAtom_9])
 
 --
 

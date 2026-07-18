@@ -47,13 +47,7 @@ new variables:
 --
 
 occurrences[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(occurrences,[2])
-
---
-
-SafeIndex(occurrences,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 occurrences#MatrixToAtom_2
 
 --
@@ -64,52 +58,20 @@ occurrences#MatrixToAtom_2
 
 --
 
-and([M[1, 1] = 1,M[2, 2] = 1,M[3, 3] = 1;int(1..)]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences#MatrixToAtom_2
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([M[1, 1] = 1,M[2, 2] = 1,M[3, 3] = 1;int(1..)]),
-and([ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences#MatrixToAtom_2
-
---
-
 M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
@@ -444,664 +406,326 @@ M[3, 3]
 
 --
 
-and([M#MatrixToAtom_1 = 1,M#MatrixToAtom_5 = 1,M#MatrixToAtom_9 = 1;int(1..)]),
-and([M[1, 1] = M[1, 1],product([2,M[1, 1];int(1..)]) = M[1, 2],product([3,M[1, 1];int(1..)]) = M[1, 3],M[1, 2] = M[2, 1],product([2,M[1, 2];int(1..)]) = M[2, 2],product([3,M[1, 2];int(1..)]) = M[2, 3],M[1, 3] = M[3, 1],product([2,M[1, 3];int(1..)]) = M[3, 2],product([3,M[1, 3];int(1..)]) = M[3, 3],M[2, 1] = product([2,M[1, 1];int(1..)]),product([2,M[2, 1];int(1..)]) = product([2,M[1, 2];int(1..)]),product([3,M[2, 1];int(1..)]) = product([2,M[1, 3];int(1..)]),M[2, 2] = product([2,M[2, 1];int(1..)]),product([2,M[2, 2];int(1..)]) = product([2,M[2, 2];int(1..)]),product([3,M[2, 2];int(1..)]) = product([2,M[2, 3];int(1..)]),M[2, 3] = product([2,M[3, 1];int(1..)]),product([2,M[2, 3];int(1..)]) = product([2,M[3, 2];int(1..)]),product([3,M[2, 3];int(1..)]) = product([2,M[3, 3];int(1..)]),M[3, 1] = product([3,M[1, 1];int(1..)]),product([2,M[3, 1];int(1..)]) = product([3,M[1, 2];int(1..)]),product([3,M[3, 1];int(1..)]) = product([3,M[1, 3];int(1..)]),M[3, 2] = product([3,M[2, 1];int(1..)]),product([2,M[3, 2];int(1..)]) = product([3,M[2, 2];int(1..)]),product([3,M[3, 2];int(1..)]) = product([3,M[2, 3];int(1..)]),M[3, 3] = product([3,M[3, 1];int(1..)]),product([2,M[3, 3];int(1..)]) = product([3,M[3, 2];int(1..)]),product([3,M[3, 3];int(1..)]) = product([3,M[3, 3];int(1..)]);int(1..)]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences#MatrixToAtom_2
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([M#MatrixToAtom_1 = 1,M#MatrixToAtom_5 = 1,M#MatrixToAtom_9 = 1;int(1..)]),
-and([M[1, 1] = M[1, 1],product([2,M[1, 1];int(1..)]) = M[1, 2],product([3,M[1, 1];int(1..)]) = M[1, 3],M[1, 2] = M[2, 1],product([2,M[1, 2];int(1..)]) = M[2, 2],product([3,M[1, 2];int(1..)]) = M[2, 3],M[1, 3] = M[3, 1],product([2,M[1, 3];int(1..)]) = M[3, 2],product([3,M[1, 3];int(1..)]) = M[3, 3],M[2, 1] = product([2,M[1, 1];int(1..)]),product([2,M[2, 1];int(1..)]) = product([2,M[1, 2];int(1..)]),product([3,M[2, 1];int(1..)]) = product([2,M[1, 3];int(1..)]),M[2, 2] = product([2,M[2, 1];int(1..)]),product([2,M[2, 2];int(1..)]) = product([2,M[2, 2];int(1..)]),product([3,M[2, 2];int(1..)]) = product([2,M[2, 3];int(1..)]),M[2, 3] = product([2,M[3, 1];int(1..)]),product([2,M[2, 3];int(1..)]) = product([2,M[3, 2];int(1..)]),product([3,M[2, 3];int(1..)]) = product([2,M[3, 3];int(1..)]),M[3, 1] = product([3,M[1, 1];int(1..)]),product([2,M[3, 1];int(1..)]) = product([3,M[1, 2];int(1..)]),product([3,M[3, 1];int(1..)]) = product([3,M[1, 3];int(1..)]),M[3, 2] = product([3,M[2, 1];int(1..)]),product([2,M[3, 2];int(1..)]) = product([3,M[2, 2];int(1..)]),product([3,M[3, 2];int(1..)]) = product([3,M[2, 3];int(1..)]),M[3, 3] = product([3,M[3, 1];int(1..)]),product([2,M[3, 3];int(1..)]) = product([3,M[3, 2];int(1..)]),product([3,M[3, 3];int(1..)]) = product([3,M[3, 3];int(1..)]);int(1..)]),
-and([ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences#MatrixToAtom_2
-
---
-
 M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
@@ -1688,388 +1312,164 @@ M[3, 3]
 
 --
 
-and([M#MatrixToAtom_1 = 1,M#MatrixToAtom_5 = 1,M#MatrixToAtom_9 = 1;int(1..)]),
-and([FlatProductEq(M#MatrixToAtom_1,2,M#MatrixToAtom_2),FlatProductEq(M#MatrixToAtom_1,3,M#MatrixToAtom_3),M#MatrixToAtom_2 = M#MatrixToAtom_4,FlatProductEq(M#MatrixToAtom_2,2,M#MatrixToAtom_5),FlatProductEq(M#MatrixToAtom_2,3,M#MatrixToAtom_6),M#MatrixToAtom_3 = M#MatrixToAtom_7,FlatProductEq(M#MatrixToAtom_3,2,M#MatrixToAtom_8),FlatProductEq(M#MatrixToAtom_3,3,M#MatrixToAtom_9),FlatProductEq(M#MatrixToAtom_1,2,M#MatrixToAtom_4),__1 = __2,__3 = __4,FlatProductEq(M#MatrixToAtom_4,2,M#MatrixToAtom_5),__5 = __6,__7 = __8,FlatProductEq(M#MatrixToAtom_7,2,M#MatrixToAtom_6),__9 = __10,__11 = __12,FlatProductEq(M#MatrixToAtom_1,3,M#MatrixToAtom_7),__13 = __14,__15 = __16,FlatProductEq(M#MatrixToAtom_4,3,M#MatrixToAtom_8),__17 = __18,__19 = __20,FlatProductEq(M#MatrixToAtom_7,3,M#MatrixToAtom_9),__21 = __22,__23 = __24;int(1..)]),
-and([M[1, 1] = 0,product([2,M[1, 1];int(1..)]) = 0,product([3,M[1, 1];int(1..)]) = 0,M[1, 2] = 0,product([2,M[1, 2];int(1..)]) = 0,product([3,M[1, 2];int(1..)]) = 0,M[1, 3] = 0,product([2,M[1, 3];int(1..)]) = 0,product([3,M[1, 3];int(1..)]) = 0,M[2, 1] = 0,product([2,M[2, 1];int(1..)]) = 0,product([3,M[2, 1];int(1..)]) = 0,M[2, 2] = 0,product([2,M[2, 2];int(1..)]) = 0,product([3,M[2, 2];int(1..)]) = 0,M[2, 3] = 0,product([2,M[2, 3];int(1..)]) = 0,product([3,M[2, 3];int(1..)]) = 0,M[3, 1] = 0,product([2,M[3, 1];int(1..)]) = 0,product([3,M[3, 1];int(1..)]) = 0,M[3, 2] = 0,product([2,M[3, 2];int(1..)]) = 0,product([3,M[3, 2];int(1..)]) = 0,M[3, 3] = 0,product([2,M[3, 3];int(1..)]) = 0,product([3,M[3, 3];int(1..)]) = 0;int(1..)]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences#MatrixToAtom_2,
-FlatProductEq(M#MatrixToAtom_4,2,__1),
-FlatProductEq(M#MatrixToAtom_2,2,__2),
-FlatProductEq(M#MatrixToAtom_4,3,__3),
-FlatProductEq(M#MatrixToAtom_3,2,__4),
-FlatProductEq(M#MatrixToAtom_5,2,__5),
-FlatProductEq(M#MatrixToAtom_5,2,__6),
-FlatProductEq(M#MatrixToAtom_5,3,__7),
-FlatProductEq(M#MatrixToAtom_6,2,__8),
-FlatProductEq(M#MatrixToAtom_6,2,__9),
-FlatProductEq(M#MatrixToAtom_8,2,__10),
-FlatProductEq(M#MatrixToAtom_6,3,__11),
-FlatProductEq(M#MatrixToAtom_9,2,__12),
-FlatProductEq(M#MatrixToAtom_7,2,__13),
-FlatProductEq(M#MatrixToAtom_2,3,__14),
-FlatProductEq(M#MatrixToAtom_7,3,__15),
-FlatProductEq(M#MatrixToAtom_3,3,__16),
-FlatProductEq(M#MatrixToAtom_8,2,__17),
-FlatProductEq(M#MatrixToAtom_5,3,__18),
-FlatProductEq(M#MatrixToAtom_8,3,__19),
-FlatProductEq(M#MatrixToAtom_6,3,__20),
-FlatProductEq(M#MatrixToAtom_9,2,__21),
-FlatProductEq(M#MatrixToAtom_8,3,__22),
-FlatProductEq(M#MatrixToAtom_9,3,__23),
-FlatProductEq(M#MatrixToAtom_9,3,__24)
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([M#MatrixToAtom_1 = 1,M#MatrixToAtom_5 = 1,M#MatrixToAtom_9 = 1;int(1..)]),
-and([FlatProductEq(M#MatrixToAtom_1,2,M#MatrixToAtom_2),FlatProductEq(M#MatrixToAtom_1,3,M#MatrixToAtom_3),M#MatrixToAtom_2 = M#MatrixToAtom_4,FlatProductEq(M#MatrixToAtom_2,2,M#MatrixToAtom_5),FlatProductEq(M#MatrixToAtom_2,3,M#MatrixToAtom_6),M#MatrixToAtom_3 = M#MatrixToAtom_7,FlatProductEq(M#MatrixToAtom_3,2,M#MatrixToAtom_8),FlatProductEq(M#MatrixToAtom_3,3,M#MatrixToAtom_9),FlatProductEq(M#MatrixToAtom_1,2,M#MatrixToAtom_4),__1 = __2,__3 = __4,FlatProductEq(M#MatrixToAtom_4,2,M#MatrixToAtom_5),__5 = __6,__7 = __8,FlatProductEq(M#MatrixToAtom_7,2,M#MatrixToAtom_6),__9 = __10,__11 = __12,FlatProductEq(M#MatrixToAtom_1,3,M#MatrixToAtom_7),__13 = __14,__15 = __16,FlatProductEq(M#MatrixToAtom_4,3,M#MatrixToAtom_8),__17 = __18,__19 = __20,FlatProductEq(M#MatrixToAtom_7,3,M#MatrixToAtom_9),__21 = __22,__23 = __24;int(1..)]),
-and([M[1, 1] = 0,product([2,M[1, 1];int(1..)]) = 0,product([3,M[1, 1];int(1..)]) = 0,M[1, 2] = 0,product([2,M[1, 2];int(1..)]) = 0,product([3,M[1, 2];int(1..)]) = 0,M[1, 3] = 0,product([2,M[1, 3];int(1..)]) = 0,product([3,M[1, 3];int(1..)]) = 0,M[2, 1] = 0,product([2,M[2, 1];int(1..)]) = 0,product([3,M[2, 1];int(1..)]) = 0,M[2, 2] = 0,product([2,M[2, 2];int(1..)]) = 0,product([3,M[2, 2];int(1..)]) = 0,M[2, 3] = 0,product([2,M[2, 3];int(1..)]) = 0,product([3,M[2, 3];int(1..)]) = 0,M[3, 1] = 0,product([2,M[3, 1];int(1..)]) = 0,product([3,M[3, 1];int(1..)]) = 0,M[3, 2] = 0,product([2,M[3, 2];int(1..)]) = 0,product([3,M[3, 2];int(1..)]) = 0,M[3, 3] = 0,product([2,M[3, 3];int(1..)]) = 0,product([3,M[3, 3];int(1..)]) = 0;int(1..)]),
-and([ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]),
-__0 =aux occurrences#MatrixToAtom_2,
-FlatProductEq(M#MatrixToAtom_4,2,__1),
-FlatProductEq(M#MatrixToAtom_2,2,__2),
-FlatProductEq(M#MatrixToAtom_4,3,__3),
-FlatProductEq(M#MatrixToAtom_3,2,__4),
-FlatProductEq(M#MatrixToAtom_5,2,__5),
-FlatProductEq(M#MatrixToAtom_5,2,__6),
-FlatProductEq(M#MatrixToAtom_5,3,__7),
-FlatProductEq(M#MatrixToAtom_6,2,__8),
-FlatProductEq(M#MatrixToAtom_6,2,__9),
-FlatProductEq(M#MatrixToAtom_8,2,__10),
-FlatProductEq(M#MatrixToAtom_6,3,__11),
-FlatProductEq(M#MatrixToAtom_9,2,__12),
-FlatProductEq(M#MatrixToAtom_7,2,__13),
-FlatProductEq(M#MatrixToAtom_2,3,__14),
-FlatProductEq(M#MatrixToAtom_7,3,__15),
-FlatProductEq(M#MatrixToAtom_3,3,__16),
-FlatProductEq(M#MatrixToAtom_8,2,__17),
-FlatProductEq(M#MatrixToAtom_5,3,__18),
-FlatProductEq(M#MatrixToAtom_8,3,__19),
-FlatProductEq(M#MatrixToAtom_6,3,__20),
-FlatProductEq(M#MatrixToAtom_9,2,__21),
-FlatProductEq(M#MatrixToAtom_8,3,__22),
-FlatProductEq(M#MatrixToAtom_9,3,__23),
-FlatProductEq(M#MatrixToAtom_9,3,__24)
-
---
-
 M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-M[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 3])
-
---
-
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_1
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_5
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
 
-SafeIndex(M,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_9
 
 --
@@ -2188,208 +1588,74 @@ FlatProductEq(M#MatrixToAtom_9,3,0)
 
 --
 
-and([M#MatrixToAtom_1 = 1,M#MatrixToAtom_5 = 1,M#MatrixToAtom_9 = 1;int(1..)]),
-and([FlatProductEq(M#MatrixToAtom_1,2,M#MatrixToAtom_2),FlatProductEq(M#MatrixToAtom_1,3,M#MatrixToAtom_3),M#MatrixToAtom_2 = M#MatrixToAtom_4,FlatProductEq(M#MatrixToAtom_2,2,M#MatrixToAtom_5),FlatProductEq(M#MatrixToAtom_2,3,M#MatrixToAtom_6),M#MatrixToAtom_3 = M#MatrixToAtom_7,FlatProductEq(M#MatrixToAtom_3,2,M#MatrixToAtom_8),FlatProductEq(M#MatrixToAtom_3,3,M#MatrixToAtom_9),FlatProductEq(M#MatrixToAtom_1,2,M#MatrixToAtom_4),__1 = __2,__3 = __4,FlatProductEq(M#MatrixToAtom_4,2,M#MatrixToAtom_5),__5 = __6,__7 = __8,FlatProductEq(M#MatrixToAtom_7,2,M#MatrixToAtom_6),__9 = __10,__11 = __12,FlatProductEq(M#MatrixToAtom_1,3,M#MatrixToAtom_7),__13 = __14,__15 = __16,FlatProductEq(M#MatrixToAtom_4,3,M#MatrixToAtom_8),__17 = __18,__19 = __20,FlatProductEq(M#MatrixToAtom_7,3,M#MatrixToAtom_9),__21 = __22,__23 = __24;int(1..)]),
-and([M#MatrixToAtom_1 = 0,FlatProductEq(M#MatrixToAtom_1,2,0),FlatProductEq(M#MatrixToAtom_1,3,0),M#MatrixToAtom_2 = 0,FlatProductEq(M#MatrixToAtom_2,2,0),FlatProductEq(M#MatrixToAtom_2,3,0),M#MatrixToAtom_3 = 0,FlatProductEq(M#MatrixToAtom_3,2,0),FlatProductEq(M#MatrixToAtom_3,3,0),M#MatrixToAtom_4 = 0,FlatProductEq(M#MatrixToAtom_4,2,0),FlatProductEq(M#MatrixToAtom_4,3,0),M#MatrixToAtom_5 = 0,FlatProductEq(M#MatrixToAtom_5,2,0),FlatProductEq(M#MatrixToAtom_5,3,0),M#MatrixToAtom_6 = 0,FlatProductEq(M#MatrixToAtom_6,2,0),FlatProductEq(M#MatrixToAtom_6,3,0),M#MatrixToAtom_7 = 0,FlatProductEq(M#MatrixToAtom_7,2,0),FlatProductEq(M#MatrixToAtom_7,3,0),M#MatrixToAtom_8 = 0,FlatProductEq(M#MatrixToAtom_8,2,0),FlatProductEq(M#MatrixToAtom_8,3,0),M#MatrixToAtom_9 = 0,FlatProductEq(M#MatrixToAtom_9,2,0),FlatProductEq(M#MatrixToAtom_9,3,0);int(1..)]),
-and([M[1, 2] = M[2, 1],M[1, 3] = M[3, 1],M[2, 1] = M[1, 2],M[2, 3] = M[3, 2],M[3, 1] = M[1, 3],M[3, 2] = M[2, 3];int(1..)]),
-__0 =aux occurrences#MatrixToAtom_2,
-FlatProductEq(M#MatrixToAtom_4,2,__1),
-FlatProductEq(M#MatrixToAtom_2,2,__2),
-FlatProductEq(M#MatrixToAtom_4,3,__3),
-FlatProductEq(M#MatrixToAtom_3,2,__4),
-FlatProductEq(M#MatrixToAtom_5,2,__5),
-FlatProductEq(M#MatrixToAtom_5,2,__6),
-FlatProductEq(M#MatrixToAtom_5,3,__7),
-FlatProductEq(M#MatrixToAtom_6,2,__8),
-FlatProductEq(M#MatrixToAtom_6,2,__9),
-FlatProductEq(M#MatrixToAtom_8,2,__10),
-FlatProductEq(M#MatrixToAtom_6,3,__11),
-FlatProductEq(M#MatrixToAtom_9,2,__12),
-FlatProductEq(M#MatrixToAtom_7,2,__13),
-FlatProductEq(M#MatrixToAtom_2,3,__14),
-FlatProductEq(M#MatrixToAtom_7,3,__15),
-FlatProductEq(M#MatrixToAtom_3,3,__16),
-FlatProductEq(M#MatrixToAtom_8,2,__17),
-FlatProductEq(M#MatrixToAtom_5,3,__18),
-FlatProductEq(M#MatrixToAtom_8,3,__19),
-FlatProductEq(M#MatrixToAtom_6,3,__20),
-FlatProductEq(M#MatrixToAtom_9,2,__21),
-FlatProductEq(M#MatrixToAtom_8,3,__22),
-FlatProductEq(M#MatrixToAtom_9,3,__23),
-FlatProductEq(M#MatrixToAtom_9,3,__24)
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-and([M#MatrixToAtom_1 = 1,M#MatrixToAtom_5 = 1,M#MatrixToAtom_9 = 1;int(1..)]),
-and([FlatProductEq(M#MatrixToAtom_1,2,M#MatrixToAtom_2),FlatProductEq(M#MatrixToAtom_1,3,M#MatrixToAtom_3),M#MatrixToAtom_2 = M#MatrixToAtom_4,FlatProductEq(M#MatrixToAtom_2,2,M#MatrixToAtom_5),FlatProductEq(M#MatrixToAtom_2,3,M#MatrixToAtom_6),M#MatrixToAtom_3 = M#MatrixToAtom_7,FlatProductEq(M#MatrixToAtom_3,2,M#MatrixToAtom_8),FlatProductEq(M#MatrixToAtom_3,3,M#MatrixToAtom_9),FlatProductEq(M#MatrixToAtom_1,2,M#MatrixToAtom_4),__1 = __2,__3 = __4,FlatProductEq(M#MatrixToAtom_4,2,M#MatrixToAtom_5),__5 = __6,__7 = __8,FlatProductEq(M#MatrixToAtom_7,2,M#MatrixToAtom_6),__9 = __10,__11 = __12,FlatProductEq(M#MatrixToAtom_1,3,M#MatrixToAtom_7),__13 = __14,__15 = __16,FlatProductEq(M#MatrixToAtom_4,3,M#MatrixToAtom_8),__17 = __18,__19 = __20,FlatProductEq(M#MatrixToAtom_7,3,M#MatrixToAtom_9),__21 = __22,__23 = __24;int(1..)]),
-and([M#MatrixToAtom_1 = 0,FlatProductEq(M#MatrixToAtom_1,2,0),FlatProductEq(M#MatrixToAtom_1,3,0),M#MatrixToAtom_2 = 0,FlatProductEq(M#MatrixToAtom_2,2,0),FlatProductEq(M#MatrixToAtom_2,3,0),M#MatrixToAtom_3 = 0,FlatProductEq(M#MatrixToAtom_3,2,0),FlatProductEq(M#MatrixToAtom_3,3,0),M#MatrixToAtom_4 = 0,FlatProductEq(M#MatrixToAtom_4,2,0),FlatProductEq(M#MatrixToAtom_4,3,0),M#MatrixToAtom_5 = 0,FlatProductEq(M#MatrixToAtom_5,2,0),FlatProductEq(M#MatrixToAtom_5,3,0),M#MatrixToAtom_6 = 0,FlatProductEq(M#MatrixToAtom_6,2,0),FlatProductEq(M#MatrixToAtom_6,3,0),M#MatrixToAtom_7 = 0,FlatProductEq(M#MatrixToAtom_7,2,0),FlatProductEq(M#MatrixToAtom_7,3,0),M#MatrixToAtom_8 = 0,FlatProductEq(M#MatrixToAtom_8,2,0),FlatProductEq(M#MatrixToAtom_8,3,0),M#MatrixToAtom_9 = 0,FlatProductEq(M#MatrixToAtom_9,2,0),FlatProductEq(M#MatrixToAtom_9,3,0);int(1..)]),
-and([M[1, 2] = M[2, 1],M[1, 3] = M[3, 1],M[2, 1] = M[1, 2],M[2, 3] = M[3, 2],M[3, 1] = M[1, 3],M[3, 2] = M[2, 3];int(1..)]),
-__0 =aux occurrences#MatrixToAtom_2,
-FlatProductEq(M#MatrixToAtom_4,2,__1),
-FlatProductEq(M#MatrixToAtom_2,2,__2),
-FlatProductEq(M#MatrixToAtom_4,3,__3),
-FlatProductEq(M#MatrixToAtom_3,2,__4),
-FlatProductEq(M#MatrixToAtom_5,2,__5),
-FlatProductEq(M#MatrixToAtom_5,2,__6),
-FlatProductEq(M#MatrixToAtom_5,3,__7),
-FlatProductEq(M#MatrixToAtom_6,2,__8),
-FlatProductEq(M#MatrixToAtom_6,2,__9),
-FlatProductEq(M#MatrixToAtom_8,2,__10),
-FlatProductEq(M#MatrixToAtom_6,3,__11),
-FlatProductEq(M#MatrixToAtom_9,2,__12),
-FlatProductEq(M#MatrixToAtom_7,2,__13),
-FlatProductEq(M#MatrixToAtom_2,3,__14),
-FlatProductEq(M#MatrixToAtom_7,3,__15),
-FlatProductEq(M#MatrixToAtom_3,3,__16),
-FlatProductEq(M#MatrixToAtom_8,2,__17),
-FlatProductEq(M#MatrixToAtom_5,3,__18),
-FlatProductEq(M#MatrixToAtom_8,3,__19),
-FlatProductEq(M#MatrixToAtom_6,3,__20),
-FlatProductEq(M#MatrixToAtom_9,2,__21),
-FlatProductEq(M#MatrixToAtom_8,3,__22),
-FlatProductEq(M#MatrixToAtom_9,3,__23),
-FlatProductEq(M#MatrixToAtom_9,3,__24)
-
---
-
 M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 1])
-
---
-
-M[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 1])
-
---
-
-M[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[1, 3])
-
---
-
-M[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[3, 2])
-
---
-
-M[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(M,[2, 3])
-
---
-
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_4
 
 --
 
-SafeIndex(M,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_2
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_7
 
 --
 
-SafeIndex(M,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_3
 
 --
 
-SafeIndex(M,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_8
 
 --
 
-SafeIndex(M,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+M[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 M#MatrixToAtom_6
 
 --

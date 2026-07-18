@@ -24,45 +24,39 @@ new variables:
 
 --
 
-m[m[2]]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(m,[m[2]])
-
---
-
-m[m[3]]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(m,[m[3]])
-
---
-
-m[m[4]]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(m,[m[4]])
-
---
-
 m[2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(m,[2])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+m#MatrixToAtom_1
 
 --
 
 m[3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(m,[3])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+m#MatrixToAtom_2
 
 --
 
 m[4]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(m,[4])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+m#MatrixToAtom_3
 
 --
 
-SafeIndex(m,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-m#MatrixToAtom_1
+m[m#MatrixToAtom_1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m,[m#MatrixToAtom_1])
+
+--
+
+m[m#MatrixToAtom_2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m,[m#MatrixToAtom_2])
+
+--
+
+m[m#MatrixToAtom_3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m,[m#MatrixToAtom_3])
 
 --
 
@@ -96,12 +90,6 @@ sum([m#MatrixToAtom_1,-2,1;int(1..)])
 
 --
 
-SafeIndex(m,[3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-m#MatrixToAtom_2
-
---
-
 SafeIndex(m,[m#MatrixToAtom_2])
    ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
 SafeIndex([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3;int(1..)],[sum([product([1,(m#MatrixToAtom_2 - 2);int(1..)]),1;int(1..)])])
@@ -129,12 +117,6 @@ sum([m#MatrixToAtom_2,-(2);int(1..)])
 sum([sum([m#MatrixToAtom_2,-2;int(1..)]),1;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 sum([m#MatrixToAtom_2,-2,1;int(1..)])
-
---
-
-SafeIndex(m,[4])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-m#MatrixToAtom_3
 
 --
 

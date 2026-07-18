@@ -54,13 +54,193 @@ __flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAto
 
 [ sum([ square[r, c] | c : Index ]) = s | r : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[sum([ square[1, c] | c : Index ]) = s,sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]
+[sum([square[1, 1],square[1, 2],square[1, 3];int(1..)]) = s,sum([square[2, 1],square[2, 2],square[2, 3];int(1..)]) = s,sum([square[3, 1],square[3, 2],square[3, 3];int(1..)]) = s;int(1..)]
+
+--
+
+square[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_1
+
+--
+
+square[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_2
+
+--
+
+square[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_3
+
+--
+
+square[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_4
+
+--
+
+square[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_5
+
+--
+
+square[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_6
+
+--
+
+square[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_7
+
+--
+
+square[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_8
+
+--
+
+square[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_9
+
+--
+
+sum([square#MatrixToAtom_1,square#MatrixToAtom_2,square#MatrixToAtom_3;int(1..)]) = s
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s);int(1..)])
+
+--
+
+and([and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s);int(1..)]),sum([square#MatrixToAtom_4,square#MatrixToAtom_5,square#MatrixToAtom_6;int(1..)]) = s,sum([square#MatrixToAtom_7,square#MatrixToAtom_8,square#MatrixToAtom_9;int(1..)]) = s;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),sum([square#MatrixToAtom_4,square#MatrixToAtom_5,square#MatrixToAtom_6;int(1..)]) = s,sum([square#MatrixToAtom_7,square#MatrixToAtom_8,square#MatrixToAtom_9;int(1..)]) = s;int(1..)])
+
+--
+
+sum([square#MatrixToAtom_4,square#MatrixToAtom_5,square#MatrixToAtom_6;int(1..)]) = s
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s);int(1..)])
+
+--
+
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),and([SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s);int(1..)]),sum([square#MatrixToAtom_7,square#MatrixToAtom_8,square#MatrixToAtom_9;int(1..)]) = s;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),sum([square#MatrixToAtom_7,square#MatrixToAtom_8,square#MatrixToAtom_9;int(1..)]) = s;int(1..)])
+
+--
+
+sum([square#MatrixToAtom_7,square#MatrixToAtom_8,square#MatrixToAtom_9;int(1..)]) = s
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)])
+
+--
+
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),and([SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)])
 
 --
 
 [ sum([ square[r, c] | r : Index ]) = s | c : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]
+[sum([square[1, 1],square[2, 1],square[3, 1];int(1..)]) = s,sum([square[1, 2],square[2, 2],square[3, 2];int(1..)]) = s,sum([square[1, 3],square[2, 3],square[3, 3];int(1..)]) = s;int(1..)]
+
+--
+
+square[1, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_1
+
+--
+
+square[2, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_4
+
+--
+
+square[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_7
+
+--
+
+square[1, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_2
+
+--
+
+square[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_5
+
+--
+
+square[3, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_8
+
+--
+
+square[1, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_3
+
+--
+
+square[2, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_6
+
+--
+
+square[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
+square#MatrixToAtom_9
+
+--
+
+sum([square#MatrixToAtom_1,square#MatrixToAtom_4,square#MatrixToAtom_7;int(1..)]) = s
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s);int(1..)])
+
+--
+
+and([and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s);int(1..)]),sum([square#MatrixToAtom_2,square#MatrixToAtom_5,square#MatrixToAtom_8;int(1..)]) = s,sum([square#MatrixToAtom_3,square#MatrixToAtom_6,square#MatrixToAtom_9;int(1..)]) = s;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),sum([square#MatrixToAtom_2,square#MatrixToAtom_5,square#MatrixToAtom_8;int(1..)]) = s,sum([square#MatrixToAtom_3,square#MatrixToAtom_6,square#MatrixToAtom_9;int(1..)]) = s;int(1..)])
+
+--
+
+sum([square#MatrixToAtom_2,square#MatrixToAtom_5,square#MatrixToAtom_8;int(1..)]) = s
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s);int(1..)])
+
+--
+
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),and([SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s);int(1..)]),sum([square#MatrixToAtom_3,square#MatrixToAtom_6,square#MatrixToAtom_9;int(1..)]) = s;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),sum([square#MatrixToAtom_3,square#MatrixToAtom_6,square#MatrixToAtom_9;int(1..)]) = s;int(1..)])
+
+--
+
+sum([square#MatrixToAtom_3,square#MatrixToAtom_6,square#MatrixToAtom_9;int(1..)]) = s
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s);int(1..)])
+
+--
+
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s);int(1..)])
 
 --
 
@@ -70,52 +250,20 @@ __flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAto
 
 --
 
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([sum([ square[1, c] | c : Index ]) = s,sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-sum([square[1, 1],square[2, 2],square[3, 3];int(1..)]) = s,
-sum([ square[d, (4 - d)] | d : Index ]) = s
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([sum([ square[1, c] | c : Index ]) = s,sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-sum([square[1, 1],square[2, 2],square[3, 3];int(1..)]) = s,
-sum([ square[d, (4 - d)] | d : Index ]) = s
-
---
-
 square[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[1, 1])
-
---
-
-square[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[2, 2])
-
---
-
-square[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[3, 3])
-
---
-
-SafeIndex(square,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 square#MatrixToAtom_1
 
 --
 
-SafeIndex(square,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+square[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 square#MatrixToAtom_5
 
 --
 
-SafeIndex(square,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+square[3, 3]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 square#MatrixToAtom_9
 
 --
@@ -132,52 +280,20 @@ and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9
 
 --
 
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([sum([ square[1, c] | c : Index ]) = s,sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-sum([square[1, 3],square[2, 2],square[3, 1];int(1..)]) = s
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([sum([ square[1, c] | c : Index ]) = s,sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-sum([square[1, 3],square[2, 2],square[3, 1];int(1..)]) = s
-
---
-
 square[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[1, 3])
-
---
-
-square[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[2, 2])
-
---
-
-square[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[3, 1])
-
---
-
-SafeIndex(square,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 square#MatrixToAtom_3
 
 --
 
-SafeIndex(square,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+square[2, 2]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 square#MatrixToAtom_5
 
 --
 
-SafeIndex(square,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+square[3, 1]
+   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
 square#MatrixToAtom_7
 
 --
@@ -185,414 +301,6 @@ square#MatrixToAtom_7
 sum([square#MatrixToAtom_3,square#MatrixToAtom_5,square#MatrixToAtom_7;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-
---
-
-[ square[1, c] | c : Index ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[square[1, 1],square[1, 2],square[1, 3];int(1..)]
-
---
-
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([sum([square[1, 1],square[1, 2],square[1, 3];int(1..)]) = s,sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([sum([square[1, 1],square[1, 2],square[1, 3];int(1..)]) = s,sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-
---
-
-square[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[1, 1])
-
---
-
-square[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[1, 2])
-
---
-
-square[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[1, 3])
-
---
-
-SafeIndex(square,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_1
-
---
-
-SafeIndex(square,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_2
-
---
-
-SafeIndex(square,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_3
-
---
-
-sum([square#MatrixToAtom_1,square#MatrixToAtom_2,square#MatrixToAtom_3;int(1..)]) = s
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s);int(1..)])
-
---
-
-and([and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s);int(1..)]),sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),sum([ square[2, c] | c : Index ]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)])
-
---
-
-[ square[2, c] | c : Index ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[square[2, 1],square[2, 2],square[2, 3];int(1..)]
-
---
-
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),sum([square[2, 1],square[2, 2],square[2, 3];int(1..)]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),sum([square[2, 1],square[2, 2],square[2, 3];int(1..)]) = s,sum([ square[3, c] | c : Index ]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-
---
-
-square[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[2, 1])
-
---
-
-square[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[2, 2])
-
---
-
-square[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[2, 3])
-
---
-
-SafeIndex(square,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_4
-
---
-
-SafeIndex(square,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_5
-
---
-
-SafeIndex(square,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_6
-
---
-
-sum([square#MatrixToAtom_4,square#MatrixToAtom_5,square#MatrixToAtom_6;int(1..)]) = s
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s);int(1..)])
-
---
-
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),and([SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s);int(1..)]),sum([ square[3, c] | c : Index ]) = s;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),sum([ square[3, c] | c : Index ]) = s;int(1..)])
-
---
-
-[ square[3, c] | c : Index ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[square[3, 1],square[3, 2],square[3, 3];int(1..)]
-
---
-
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),sum([square[3, 1],square[3, 2],square[3, 3];int(1..)]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),sum([square[3, 1],square[3, 2],square[3, 3];int(1..)]) = s;int(1..)]),
-and([sum([ square[r, 1] | r : Index ]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-
---
-
-square[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[3, 1])
-
---
-
-square[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[3, 2])
-
---
-
-square[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[3, 3])
-
---
-
-SafeIndex(square,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_7
-
---
-
-SafeIndex(square,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_8
-
---
-
-SafeIndex(square,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_9
-
---
-
-sum([square#MatrixToAtom_7,square#MatrixToAtom_8,square#MatrixToAtom_9;int(1..)]) = s
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)])
-
---
-
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),and([SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)])
-
---
-
-[ square[r, 1] | r : Index ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[square[1, 1],square[2, 1],square[3, 1];int(1..)]
-
---
-
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)]),
-and([sum([square[1, 1],square[2, 1],square[3, 1];int(1..)]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)]),
-and([sum([square[1, 1],square[2, 1],square[3, 1];int(1..)]) = s,sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-
---
-
-square[1, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[1, 1])
-
---
-
-square[2, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[2, 1])
-
---
-
-square[3, 1]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[3, 1])
-
---
-
-SafeIndex(square,[1, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_1
-
---
-
-SafeIndex(square,[2, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_4
-
---
-
-SafeIndex(square,[3, 1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_7
-
---
-
-sum([square#MatrixToAtom_1,square#MatrixToAtom_4,square#MatrixToAtom_7;int(1..)]) = s
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s);int(1..)])
-
---
-
-and([and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s);int(1..)]),sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),sum([ square[r, 2] | r : Index ]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)])
-
---
-
-[ square[r, 2] | r : Index ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[square[1, 2],square[2, 2],square[3, 2];int(1..)]
-
---
-
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),sum([square[1, 2],square[2, 2],square[3, 2];int(1..)]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),sum([square[1, 2],square[2, 2],square[3, 2];int(1..)]) = s,sum([ square[r, 3] | r : Index ]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-
---
-
-square[1, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[1, 2])
-
---
-
-square[2, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[2, 2])
-
---
-
-square[3, 2]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[3, 2])
-
---
-
-SafeIndex(square,[1, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_2
-
---
-
-SafeIndex(square,[2, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_5
-
---
-
-SafeIndex(square,[3, 2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_8
-
---
-
-sum([square#MatrixToAtom_2,square#MatrixToAtom_5,square#MatrixToAtom_8;int(1..)]) = s
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s);int(1..)])
-
---
-
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),and([SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s);int(1..)]),sum([ square[r, 3] | r : Index ]) = s;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),sum([ square[r, 3] | r : Index ]) = s;int(1..)])
-
---
-
-[ square[r, 3] | r : Index ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[square[1, 3],square[2, 3],square[3, 3];int(1..)]
-
---
-
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),sum([square[1, 3],square[2, 3],square[3, 3];int(1..)]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
-__flat_alldiff([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3, square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6, square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_2, square#MatrixToAtom_3], s),SumLeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumGeq([square#MatrixToAtom_4, square#MatrixToAtom_5, square#MatrixToAtom_6], s),SumLeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_7, square#MatrixToAtom_8, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),sum([square[1, 3],square[2, 3],square[3, 3];int(1..)]) = s;int(1..)]),
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_5, square#MatrixToAtom_9], s);int(1..)]),
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_5, square#MatrixToAtom_7], s);int(1..)])
-
---
-
-square[1, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[1, 3])
-
---
-
-square[2, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[2, 3])
-
---
-
-square[3, 3]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(square,[3, 3])
-
---
-
-SafeIndex(square,[1, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_3
-
---
-
-SafeIndex(square,[2, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_6
-
---
-
-SafeIndex(square,[3, 3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-square#MatrixToAtom_9
-
---
-
-sum([square#MatrixToAtom_3,square#MatrixToAtom_6,square#MatrixToAtom_9;int(1..)]) = s
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s);int(1..)])
-
---
-
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),and([SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s);int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SumLeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumGeq([square#MatrixToAtom_1, square#MatrixToAtom_4, square#MatrixToAtom_7], s),SumLeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumGeq([square#MatrixToAtom_2, square#MatrixToAtom_5, square#MatrixToAtom_8], s),SumLeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s),SumGeq([square#MatrixToAtom_3, square#MatrixToAtom_6, square#MatrixToAtom_9], s);int(1..)])
 
 --
 
