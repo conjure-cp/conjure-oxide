@@ -10,7 +10,6 @@ use conjure_cp::{
     bug,
     rule_engine::{ApplicationError, ApplicationResult, RuleEffect, register_rule},
 };
-use uniplate::Biplate;
 
 use ApplicationError::RuleNotApplicable;
 
@@ -26,7 +25,10 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         return Err(RuleNotApplicable);
     };
 
-    if !symbols_have_decision_variable_references(symbols) {
+    // Fast path: models whose finds are already ground never need widening. The previous gate
+    // treated every ground integer find as a hit, so this rule scanned the whole symbol table on
+    // every Root attempt and always returned RuleNotApplicable afterwards.
+    if !symbols_need_domain_widening(symbols) {
         return Err(RuleNotApplicable);
     }
 
@@ -83,35 +85,15 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
     )
 }
 
-/// Returns true iff at least one local symbol contains a reference to a decision variable.
-fn symbols_have_decision_variable_references(symbols: &SymbolTable) -> bool {
-    let is_decision_reference = |reference: &Reference| {
-        reference.ptr().as_find().is_some()
-            || symbols
-                .lookup(&reference.name().clone())
-                .is_some_and(|decl| decl.as_find().is_some())
-    };
-
+/// Returns true iff some local declaration still has a non-ground domain.
+///
+/// Only unresolved domains can need widening / consistency guards. Ground integer finds must not
+/// trigger the expensive symbol-table scan in [`handle_variables_in_domains`].
+fn symbols_need_domain_widening(symbols: &SymbolTable) -> bool {
     symbols.iter_local().any(|(_, declaration)| {
-        declaration.domain().is_some_and(|domain| {
-            Biplate::<Reference>::universe_bi(domain.as_ref())
-                .iter()
-                .any(&is_decision_reference)
-                || Biplate::<IntVal>::universe_bi(domain.as_ref())
-                    .iter()
-                    .any(|int_val| match int_val {
-                        IntVal::Const(_) => false,
-                        IntVal::Reference(reference) => is_decision_reference(reference),
-                        IntVal::Expr(expr) => Biplate::<Atom>::universe_bi(expr.as_ref())
-                            .iter()
-                            .any(|atom| {
-                                matches!(atom, Atom::Reference(reference) if is_decision_reference(reference))
-                            }),
-                    })
-        }) || declaration.as_find().is_some_and(|find| {
-            let domain = find.domain_of();
-            domain.resolve().is_ok() && domain.as_ref().as_int().is_some()
-        })
+        declaration
+            .domain()
+            .is_some_and(|domain| matches!(domain.as_ref(), Domain::Unresolved(_)))
     })
 }
 
@@ -303,4 +285,73 @@ fn domain_consistency_constraints(
     };
 
     Some(vec![guard])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{DeclarationPtr, Expression};
+    use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
+
+    /// Builds a Root expression with no constraints (domain widening only looks at symbols).
+    fn empty_root() -> Expression {
+        Expression::Root(Metadata::new(), vec![])
+    }
+
+    #[test]
+    fn symbols_need_domain_widening_false_for_ground_int_finds() {
+        let mut symbols = SymbolTable::new();
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::int(vec![Range::Bounded(1, 3)]));
+        symbols.insert(x).expect("insert x");
+        assert!(!symbols_need_domain_widening(&symbols));
+    }
+
+    #[test]
+    fn symbols_need_domain_widening_true_for_unresolved_int_find() {
+        let mut symbols = SymbolTable::new();
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::int(vec![Range::Bounded(1, 3)]));
+        symbols.insert(x.clone()).expect("insert x");
+        let y_domain = Domain::int(vec![Range::Bounded(
+            IntVal::Const(1),
+            IntVal::Reference(Reference::new(x)),
+        )]);
+        let y = DeclarationPtr::new_find(Name::user("y"), y_domain);
+        symbols.insert(y).expect("insert y");
+        assert!(symbols_need_domain_widening(&symbols));
+    }
+
+    #[test]
+    fn handle_variables_in_domains_skips_ground_only_models() {
+        let mut symbols = SymbolTable::new();
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::int(vec![Range::Bounded(1, 3)]));
+        symbols.insert(x).expect("insert x");
+        let rule = get_rule_by_name("handle_variables_in_domains").expect("rule registered");
+        let err = rule.apply(&empty_root(), &symbols).unwrap_err();
+        assert!(matches!(err, ApplicationError::RuleNotApplicable));
+    }
+
+    #[test]
+    fn handle_variables_in_domains_widens_unresolved_int_find() {
+        let mut symbols = SymbolTable::new();
+        let x = DeclarationPtr::new_find(Name::user("x"), Domain::int(vec![Range::Bounded(1, 3)]));
+        symbols.insert(x.clone()).expect("insert x");
+        let y_domain = Domain::int(vec![Range::Bounded(
+            IntVal::Const(1),
+            IntVal::Reference(Reference::new(x)),
+        )]);
+        let y = DeclarationPtr::new_find(Name::user("y"), y_domain);
+        symbols.insert(y.clone()).expect("insert y");
+
+        let rule = get_rule_by_name("handle_variables_in_domains").expect("rule registered");
+        let result = rule.apply(&empty_root(), &symbols).expect("should widen y");
+        let updated: Vec<_> = result.updated_declaration_names().collect();
+        assert!(
+            updated.contains(&Name::user("y")),
+            "expected declaration update for unresolved find y, got {updated:?}"
+        );
+        assert!(
+            !result.new_top.is_empty(),
+            "expected consistency guards for widened domain"
+        );
+    }
 }
