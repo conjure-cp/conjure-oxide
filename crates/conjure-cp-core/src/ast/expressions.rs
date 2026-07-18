@@ -436,6 +436,17 @@ pub enum Expression {
     #[compatible(Minion)]
     FlatAllDiff(Metadata, Vec<Atom>),
 
+    /// Ensures that `result = min(vars)`.
+    ///
+    /// Low-level Minion constraint. Prefer this over expanding [`Expression::Min`] into
+    /// leq/or/eq constraints when targeting Minion.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#min)
+    #[compatible(Minion)]
+    FlatMinEq(Metadata, Vec<Atom>, Atom),
+
     /// Ensures that sum(vec) >= x.
     ///
     /// Low-level Minion constraint.
@@ -1129,6 +1140,7 @@ impl Expression {
                 Some(DomainPtr::from(GroundDomain::from_set_i32(&values)))
             }
             Expression::FlatAbsEq(_, _, _) => Some(Domain::bool()),
+            Expression::FlatMinEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumGeq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumLeq(_, _, _) => Some(Domain::bool()),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::bool()),
@@ -1844,6 +1856,7 @@ impl Expression {
             Factorial,
             FlatAbsEq,
             FlatAllDiff,
+            FlatMinEq,
             FlatSumGeq,
             FlatSumLeq,
             FlatIneq,
@@ -2334,6 +2347,9 @@ impl Display for Expression {
             Expression::Parts(_, partition) => {
                 write!(f, "parts({partition})")
             }
+            Expression::FlatMinEq(_, vars, result) => {
+                write!(f, "FlatMinEq({}, {})", pretty_vec(vars), result.clone())
+            }
             Expression::FlatSumGeq(_, box1, box2) => {
                 write!(f, "SumGeq({}, {})", pretty_vec(box1), box2.clone())
             }
@@ -2658,6 +2674,7 @@ impl Typeable for Expression {
             Expression::SafeDiv(_, _, _) => ReturnType::Int,
             Expression::UnsafeDiv(_, _, _) => ReturnType::Int,
             Expression::FlatAllDiff(_, _) => ReturnType::Bool,
+            Expression::FlatMinEq(_, _, _) => ReturnType::Bool,
             Expression::FlatSumGeq(_, _, _) => ReturnType::Bool,
             Expression::FlatSumLeq(_, _, _) => ReturnType::Bool,
             Expression::MinionDivEqUndefZero(_, _, _, _) => ReturnType::Bool,
@@ -3071,6 +3088,7 @@ impl Expression {
             | Expression::MinionModuloEqUndefZero(_, _, _, _)
             | Expression::MinionPow(_, _, _, _)
             | Expression::FlatAllDiff(_, _)
+            | Expression::FlatMinEq(_, _, _)
             | Expression::FlatSumGeq(_, _, _)
             | Expression::FlatSumLeq(_, _, _)
             | Expression::FlatIneq(_, _, _, _)
@@ -3372,7 +3390,9 @@ impl Expression {
             }
 
             // Vec<Atom> + Atom
-            Expression::FlatSumGeq(_, vs, a) | Expression::FlatSumLeq(_, vs, a) => {
+            Expression::FlatMinEq(_, vs, a)
+            | Expression::FlatSumGeq(_, vs, a)
+            | Expression::FlatSumLeq(_, vs, a) => {
                 for v in vs {
                     v.hash(&mut hasher);
                 }

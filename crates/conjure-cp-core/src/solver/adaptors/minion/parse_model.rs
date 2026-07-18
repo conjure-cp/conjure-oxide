@@ -583,6 +583,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atom(Moo::unwrap_or_clone(x))?,
             parse_atom(Moo::unwrap_or_clone(y))?,
         )),
+        conjure_ast::Expression::FlatMinEq(_metadata, vars, result) => Ok(
+            minion_ast::Constraint::Min(parse_atoms(vars)?, parse_atom(result)?),
+        ),
         conjure_ast::Expression::MinionPow(_, x, y, z) => Ok(minion_ast::Constraint::Pow(
             (
                 parse_atom(Moo::unwrap_or_clone(x))?,

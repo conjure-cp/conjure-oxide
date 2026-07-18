@@ -49,6 +49,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | Expr::MinionReify(_, _, _)
             | Expr::MinionReifyImply(_, _, _)
             | Expr::FlatAbsEq(_, _, _)
+            | Expr::FlatMinEq(_, _, _)
             | Expr::Min(_, _)
             | Expr::Max(_, _)
             | Expr::AllDiff(_, _)

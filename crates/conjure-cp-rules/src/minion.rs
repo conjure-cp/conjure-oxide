@@ -780,6 +780,99 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
+/// Lowers a bare `min([a, b, ...])` to an auxiliary bound by Minion's native `min` constraint.
+///
+/// Priority is above Base `min_to_var` so Minion keeps Savile Row's `min(vars, aux)` encoding
+/// instead of expanding into leq/or/eq constraints that become watched-or.
+#[register_rule("Minion", 6100, [Min])]
+fn introduce_mineq_from_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Min(_, inside_min_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(exprs) = inside_min_expr.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+    if exprs.is_empty() {
+        return Err(RuleNotApplicable);
+    }
+
+    let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
+    let mut symbols = symbols.clone();
+    let mut new_tops: Vec<Expr> = Vec::new();
+
+    let mut atoms = Vec::with_capacity(exprs.len());
+    for child in exprs {
+        atoms.push(flatten_expression_to_atom(
+            child,
+            &mut symbols,
+            &mut new_tops,
+        )?);
+    }
+
+    let aux = Atom::new_ref(symbols.gen_find(&domain));
+    new_tops.push(Expr::FlatMinEq(Metadata::new(), atoms, aux.clone()));
+
+    Ok(RuleEffect::new(
+        Expr::Atomic(Metadata::new(), aux),
+        new_tops,
+        symbols,
+    ))
+}
+
+/// Lowers `x = min([a, b, ...])` / auxiliary declarations of `min` to [`Expr::FlatMinEq`].
+#[register_rule("Minion", 6100, [Eq / Min, AuxDeclaration / Min])]
+fn introduce_mineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let (result, min_expr): (Atom, Expr) = match expr.clone() {
+        Expr::Eq(_, a, b) => {
+            let a = Moo::unwrap_or_clone(a);
+            let b = Moo::unwrap_or_clone(b);
+            let a_atom: Option<&Atom> = (&a).try_into().ok();
+            let b_atom: Option<&Atom> = (&b).try_into().ok();
+
+            if let Some(a_atom) = a_atom {
+                Ok((a_atom.clone(), b))
+            } else if let Some(b_atom) = b_atom {
+                Ok((b_atom.clone(), a))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
+        Expr::AuxDeclaration(_, reference, inner) => {
+            Ok((Atom::Reference(reference), Moo::unwrap_or_clone(inner)))
+        }
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    let Expr::Min(_, inside_min_expr) = min_expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Some(exprs) = inside_min_expr.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+    if exprs.is_empty() {
+        return Err(RuleNotApplicable);
+    }
+
+    let mut symbols = symbols.clone();
+    let mut new_tops: Vec<Expr> = Vec::new();
+    let mut atoms = Vec::with_capacity(exprs.len());
+    for child in exprs {
+        atoms.push(flatten_expression_to_atom(
+            child,
+            &mut symbols,
+            &mut new_tops,
+        )?);
+    }
+
+    let flat = Expr::FlatMinEq(Metadata::new(), atoms, result);
+    if new_tops.is_empty() {
+        Ok(RuleEffect::pure(flat))
+    } else {
+        Ok(RuleEffect::new(flat, new_tops, symbols))
+    }
+}
+
 #[register_rule("Minion", 4400, [Eq / Abs, AuxDeclaration / Abs])]
 fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (x, abs_y): (Atom, Expr) = match expr.clone() {
@@ -2237,6 +2330,7 @@ fn iff_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 mod tests {
     use super::*;
     use conjure_cp::ast::{DeclarationPtr, Domain};
+    use conjure_cp::matrix_expr;
     use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
 
     /// Builds a boolean decision-variable atomic expression.
@@ -2250,9 +2344,65 @@ mod tests {
         )
     }
 
+    /// Builds an integer decision-variable atomic expression.
+    fn int_atom(name: &str) -> Expr {
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                Name::user(name),
+                Domain::int(vec![Range::Bounded(1, 5)]),
+            ))),
+        )
+    }
+
     /// Atomic Boolean literal.
     fn bool_lit(value: bool) -> Expr {
         Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
+    }
+
+    #[test]
+    fn introduce_mineq_from_min_emits_flat_min_eq() {
+        let expr = Expr::Min(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_atom("a"), int_atom("b")]),
+        );
+        let rule = get_rule_by_name("introduce_mineq_from_min").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("min of atoms should lower to FlatMinEq");
+        assert!(
+            matches!(result.new_expression, Expr::Atomic(_, _)),
+            "bare min must become an auxiliary atom"
+        );
+        assert!(
+            result
+                .new_top
+                .iter()
+                .any(|c| matches!(c, Expr::FlatMinEq(_, vars, _) if vars.len() == 2)),
+            "must post FlatMinEq over the two atoms"
+        );
+    }
+
+    #[test]
+    fn introduce_mineq_from_aux_declaration() {
+        let result_decl =
+            DeclarationPtr::new_find(Name::user("r"), Domain::int(vec![Range::Bounded(1, 5)]));
+        let expr = Expr::AuxDeclaration(
+            Metadata::new(),
+            Reference::new(result_decl.clone()),
+            Moo::new(Expr::Min(
+                Metadata::new(),
+                Moo::new(matrix_expr![int_atom("a"), int_atom("b")]),
+            )),
+        );
+        let rule = get_rule_by_name("introduce_mineq").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("aux = min([...]) should become FlatMinEq");
+        assert!(
+            matches!(result.new_expression, Expr::FlatMinEq(_, vars, _) if vars.len() == 2),
+            "auxiliary min must lower to FlatMinEq"
+        );
     }
 
     #[test]

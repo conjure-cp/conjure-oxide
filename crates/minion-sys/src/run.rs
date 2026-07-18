@@ -743,7 +743,11 @@ unsafe fn constraint_add_args(
         //Constraint::NegativeMddc(_, _) => todo!(),
         //Constraint::Str2Plus(_, _) => todo!(),
         //Constraint::Max(_, _) => todo!(),
-        //Constraint::Min(_, _) => todo!(),
+        Constraint::Min(vars, result) => {
+            read_list(i, r_constr, vars)?;
+            read_var(i, r_constr, result)?;
+            Ok(())
+        }
         //Constraint::NvalueGeq(_, _) => todo!(),
         //Constraint::NvalueLeq(_, _) => todo!(),
         //Constraint::Element(_, _, _) => todo!(),

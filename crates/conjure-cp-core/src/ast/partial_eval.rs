@@ -956,6 +956,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         // simplified and partially evaluated.
         Expr::FlatAllDiff(_, _) => Err(RuleNotApplicable),
         Expr::FlatAbsEq(_, _, _) => Err(RuleNotApplicable),
+        Expr::FlatMinEq(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
         Expr::FlatMinusEq(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatProductEq(_, _, _, _) => Err(RuleNotApplicable),

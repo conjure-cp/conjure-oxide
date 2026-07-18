@@ -170,6 +170,7 @@ fn constraint_skips_deep_root_normalisation(expr: &Expr) -> bool {
         Expr::FlatProductEq(_, _, _, _)
         | Expr::FlatSumLeq(_, _, _)
         | Expr::FlatSumGeq(_, _, _)
+        | Expr::FlatMinEq(_, _, _)
         | Expr::FlatIneq(_, _, _, _)
         | Expr::FlatMinusEq(_, _, _)
         | Expr::FlatAbsEq(_, _, _)
@@ -693,6 +694,16 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             })?;
 
             Some(Lit::Bool(sum >= a.try_into().ok()?))
+        }
+        Expr::FlatMinEq(_, vars, result) => {
+            let min = vars
+                .iter()
+                .try_fold(None, |acc: Option<i32>, atom: &Atom| {
+                    let n: i32 = atom.try_into().ok()?;
+                    Some(Some(acc.map_or(n, |m| m.min(n))))
+                })??;
+            let result: i32 = result.try_into().ok()?;
+            Some(Lit::Bool(min == result))
         }
         Expr::Min(_, e) => {
             opt_vec_lit_op::<i32, i32>(|e| e.iter().min().copied(), e.as_ref()).map(Lit::Int)
