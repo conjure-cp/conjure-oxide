@@ -154,6 +154,62 @@ fn select_mta_after_comprehension_expansion(
     }
 }
 
+/// Lowers a constant in-bounds [`Expression::UnsafeIndex`] of a `MatrixToAtom` subject to the atom.
+///
+/// After comprehension expansion, indices are typically ground. The default pipeline is
+/// `index_to_bubble` (`UnsafeIndex` → `SafeIndex`) then [`index_matrix_to_atom`] (`SafeIndex` →
+/// atom), which costs two worklist updates per indexing site. This rule is the fused fast path for
+/// that case: same result as those two rules when every index is an in-bounds constant, so Bubble
+/// would not wrap a condition. Out-of-bounds or non-constant indices stay with `index_to_bubble`.
+#[register_rule("ReprMatrixToAtom", 6500, [UnsafeIndex])]
+fn unsafe_const_index_matrix_to_atom(
+    expr: &Expression,
+    _symbols: &SymbolTable,
+) -> ApplicationResult {
+    let Expression::UnsafeIndex(_, subject, indices) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expression::Atomic(_, Atom::Reference(re)) = subject.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // Nested represented-matrix indices must be lowered first (same invariant as SafeIndex path).
+    if expr.universe().iter().skip(1).any(is_matrix_to_atom_index) {
+        return Err(RuleNotApplicable);
+    }
+
+    let Some(mta) = re.ptr().get_repr::<MatrixToAtom>() else {
+        return Err(RuleNotApplicable);
+    };
+
+    if indices.len() != mta.index_domains.len() {
+        return Err(RuleNotApplicable);
+    }
+
+    // Require every index to be a constant inside its dimension domain; otherwise Bubble owns it.
+    let mut slices = Vec::with_capacity(indices.len());
+    for (domain, index) in mta.index_domains.iter().zip(indices.iter()) {
+        let Some(lit) = eval_constant(index) else {
+            return Err(RuleNotApplicable);
+        };
+        match domain.contains(&lit) {
+            Ok(true) => slices.push(Range::Single(lit)),
+            _ => return Err(RuleNotApplicable),
+        }
+    }
+
+    let view = mta.slice_lit(&slices).unwrap_or_bug();
+    let mut elems = mta.view_as_exprs(&view);
+    // All indices were concrete and in-bounds, so the view is a single scalar atom.
+    assert_eq!(
+        elems.len(),
+        1,
+        "constant in-bounds MatrixToAtom index should yield one element"
+    );
+    Ok(Reduction::pure(elems.swap_remove(0)))
+}
+
 /// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
 /// ```plain
 /// find m: matrix indexed by [int(1..2), int(1..3), int(1..4)] of bool
@@ -174,15 +230,15 @@ fn index_matrix_to_atom(expr: &Expression, symbols: &SymbolTable) -> Application
     index_matrix_to_atom_impl(expr, symbols)
 }
 
+/// True when `expr` is a (safe or unsafe) index into a declaration with `MatrixToAtom` initialised.
 fn is_matrix_to_atom_index(expr: &Expression) -> bool {
+    let subject = match expr {
+        Expression::SafeIndex(_, subject, _) | Expression::UnsafeIndex(_, subject, _) => subject,
+        _ => return false,
+    };
     matches!(
-        expr,
-        Expression::SafeIndex(_, subject, _)
-            if matches!(
-                subject.as_ref(),
-                Expression::Atomic(_, Atom::Reference(re))
-                    if re.ptr().get_repr::<MatrixToAtom>().is_some()
-            )
+        subject.as_ref(),
+        Expression::Atomic(_, Atom::Reference(re)) if re.ptr().get_repr::<MatrixToAtom>().is_some()
     )
 }
 
@@ -522,5 +578,72 @@ mod tests {
         assert!(!expression_needs_matrix_to_atom_selection(
             &result.new_expression
         ));
+    }
+
+    /// Builds an initialised 1d matrix find `m` indexed by `int(1..3)` of `int(1..4)`.
+    fn matrix_find_1d() -> (SymbolTable, DeclarationPtr) {
+        let mut symbols = SymbolTable::new();
+        let domain = Domain::matrix(
+            Domain::int(vec![Range::Bounded(1, 4)]),
+            vec![Domain::int(vec![Range::Bounded(1, 3)])],
+        );
+        let decl = DeclarationPtr::new_find(Name::user("m"), domain);
+        symbols
+            .insert(decl.clone())
+            .expect("matrix find should insert");
+        let mut decl_for_init = decl.clone();
+        let (extra, _tops) = MatrixToAtom::init_for(&mut decl_for_init).unwrap();
+        symbols.update_insert(decl_for_init.clone());
+        symbols.extend(extra);
+        (symbols, decl_for_init)
+    }
+
+    #[test]
+    fn unsafe_const_index_matrix_to_atom_lowers_in_bounds_constants() {
+        let (symbols, decl) = matrix_find_1d();
+        let subject = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
+        let expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(subject), vec![2.into()]);
+
+        let rule = get_rule_by_name("unsafe_const_index_matrix_to_atom")
+            .expect("unsafe_const_index_matrix_to_atom registered");
+        let result = rule
+            .apply(&expr, &symbols)
+            .expect("fused const index applies");
+        assert!(matches!(
+            result.new_expression,
+            Expression::Atomic(_, Atom::Reference(_))
+        ));
+    }
+
+    #[test]
+    fn unsafe_const_index_matrix_to_atom_refuses_out_of_bounds() {
+        let (symbols, decl) = matrix_find_1d();
+        let subject = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
+        let expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(subject), vec![9.into()]);
+
+        let rule = get_rule_by_name("unsafe_const_index_matrix_to_atom")
+            .expect("unsafe_const_index_matrix_to_atom registered");
+        let err = rule.apply(&expr, &symbols).unwrap_err();
+        assert!(matches!(err, ApplicationError::RuleNotApplicable));
+    }
+
+    #[test]
+    fn unsafe_const_index_matrix_to_atom_refuses_non_constant_index() {
+        let (symbols, decl) = matrix_find_1d();
+        let idx_dom = Domain::int(vec![Range::Bounded(1, 3)]);
+        let idx_decl = DeclarationPtr::new_find(Name::user("i"), idx_dom);
+        let mut symbols = symbols;
+        symbols
+            .insert(idx_decl.clone())
+            .expect("index find inserts");
+
+        let subject = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
+        let index = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(idx_decl)));
+        let expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(subject), vec![index]);
+
+        let rule = get_rule_by_name("unsafe_const_index_matrix_to_atom")
+            .expect("unsafe_const_index_matrix_to_atom registered");
+        let err = rule.apply(&expr, &symbols).unwrap_err();
+        assert!(matches!(err, ApplicationError::RuleNotApplicable));
     }
 }
