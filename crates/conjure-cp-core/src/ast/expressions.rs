@@ -995,10 +995,14 @@ impl Expression {
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
             Expression::TypeAnnotation(_, expr, _) => expr.domain_of(),
             Expression::DomainAnnotation(_, _, domain) => Some(domain.clone()),
-            Expression::Sum(_, e) => sum_domain_of_child(e)
-                .or_else(|| bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))),
+            Expression::Sum(_, e) => sum_domain_of_child(e).or_else(|| {
+                // Fall back when corner products of bounds overflow i32.
+                bounded_i32_domain_for_matrix_literal_monotonic(e, i32::checked_add)
+            }),
             Expression::Product(_, e) => {
-                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y))
+                // Grocery-style products (e.g. four int(0..711) factors) overflow i32;
+                // return None so callers can omit a precise product domain rather than panic.
+                bounded_i32_domain_for_matrix_literal_monotonic(e, i32::checked_mul)
             }
             Expression::Min(_, e) => {
                 if empty_matrix_integer_element_domain(e).is_some() {
@@ -3495,5 +3499,29 @@ mod tests {
     fn test_domain_of_empty_sum() {
         let sum = Expression::Sum(Metadata::new(), Moo::new(matrix_expr![]));
         assert_eq!(sum.domain_of(), None);
+    }
+
+    /// Product domain inference must not panic when bound corner-products overflow i32.
+    #[test]
+    fn test_domain_of_product_overflow_returns_none() {
+        let mk_var = |name: &str| {
+            Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                    Name::User(name.into()),
+                    Domain::int(vec![Range::Bounded(0, 711)]),
+                ))),
+            )
+        };
+        let product = Expression::Product(
+            Metadata::new(),
+            Moo::new(matrix_expr![
+                mk_var("item1"),
+                mk_var("item2"),
+                mk_var("item3"),
+                mk_var("item4")
+            ]),
+        );
+        assert_eq!(product.domain_of(), None);
     }
 }
