@@ -561,13 +561,20 @@ fn rewrite_int_value(
     replacements_by_id: &HashMap<ObjId, DeclarationPtr>,
     replacements_by_name: &HashMap<Name, DeclarationPtr>,
 ) {
-    if let IntVal::Expr(expr) = int_val {
-        let rewritten = replace_declaration_ptrs_in_expr(
-            (**expr).clone(),
-            replacements_by_id,
-            replacements_by_name,
-        );
-        *expr = Moo::new(rewritten);
+    match int_val {
+        IntVal::Reference(reference) => {
+            *reference =
+                replace_reference(reference.clone(), replacements_by_id, replacements_by_name);
+        }
+        IntVal::Expr(expr) => {
+            let rewritten = replace_declaration_ptrs_in_expr(
+                (**expr).clone(),
+                replacements_by_id,
+                replacements_by_name,
+            );
+            *expr = Moo::new(rewritten);
+        }
+        IntVal::Const(_) => {}
     }
 }
 

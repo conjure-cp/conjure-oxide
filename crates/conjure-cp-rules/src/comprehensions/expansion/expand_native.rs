@@ -9,7 +9,7 @@ use conjure_cp::{
     bug, into_matrix_expr,
     solver::SolverError,
 };
-use uniplate::Biplate as _;
+use uniplate::Uniplate as _;
 
 use super::via_solver_common::{
     lift_machine_references_into_parent_scope, simplify_expression,
@@ -44,6 +44,10 @@ fn expand_qualifiers(
         let child_symbols = comprehension.symbols().clone();
         let return_expression =
             concretise_resolved_reference_atoms(comprehension.return_expression.clone());
+        // Comprehensions are leaves in Expression's Uniplate traversal. Expand any nested
+        // comprehensions while the current generators still have their temporary bindings, so
+        // dependent domains in the nested comprehension can resolve those bindings.
+        let return_expression = expand_nested_comprehensions(return_expression, parent_symbols)?;
         let Some(return_expression) = strip_guarded_safe_index_conditions(return_expression) else {
             return Ok(vec![]);
         };
@@ -112,6 +116,30 @@ fn expand_qualifiers(
     };
 
     Ok(expanded)
+}
+
+fn expand_nested_comprehensions(
+    expr: Expression,
+    parent_symbols: &mut SymbolTable,
+) -> Result<Expression, SolverError> {
+    let children = expr
+        .children()
+        .into_iter()
+        .map(|child| expand_nested_comprehensions(child, parent_symbols))
+        .collect::<Result<_, _>>()?;
+    let expr = expr.with_children(children);
+
+    let Expression::Comprehension(_, comprehension) = expr else {
+        return Ok(expr);
+    };
+
+    let results = expand_qualifiers(
+        comprehension.as_ref(),
+        0,
+        parent_symbols,
+        comprehension.skip_operator,
+    )?;
+    Ok(into_matrix_expr!(results))
 }
 
 fn apply_guard_to_suffix(
@@ -192,6 +220,7 @@ fn evaluate_bool_guard(guard: &Expression) -> Result<Option<bool>, SolverError> 
 }
 
 fn concretise_resolved_reference_atoms(expr: Expression) -> Expression {
+    use uniplate::Biplate as _;
     expr.transform_bi(&|atom: Atom| match atom {
         Atom::Reference(reference) => reference
             .resolve_constant()
@@ -203,7 +232,8 @@ fn concretise_resolved_reference_atoms(expr: Expression) -> Expression {
 #[cfg(test)]
 mod tests {
     use conjure_cp::ast::{
-        DeclarationPtr, Domain, Moo, Range, SymbolTablePtr, comprehension::ComprehensionBuilder,
+        DeclarationPtr, Domain, IntVal, Moo, Range, Reference, SymbolTablePtr,
+        comprehension::ComprehensionBuilder,
     };
 
     use super::*;
@@ -260,5 +290,45 @@ mod tests {
 
         let expanded = expand_native(comprehension, &mut parent_symbols.read().clone()).unwrap();
         assert!(expanded.is_empty());
+    }
+
+    #[test]
+    fn nested_comprehension_domains_see_outer_generator_bindings() {
+        let parent_symbols = SymbolTablePtr::new();
+        let mut outer = ComprehensionBuilder::new(parent_symbols.clone()).generator(
+            DeclarationPtr::new_find(Name::user("i"), Domain::int(vec![Range::Bounded(1, 2)])),
+        );
+        let i = outer
+            .generator_symboltable()
+            .read()
+            .lookup_local(&Name::user("i"))
+            .expect("i should be in outer comprehension scope");
+
+        let mut inner = ComprehensionBuilder::new(outer.generator_symboltable()).generator(
+            DeclarationPtr::new_find(
+                Name::user("j"),
+                Domain::int(vec![Range::Single(IntVal::Reference(Reference::new(i)))]),
+            ),
+        );
+        let j = inner
+            .generator_symboltable()
+            .read()
+            .lookup_local(&Name::user("j"))
+            .expect("j should be in inner comprehension scope");
+        let inner = Expression::Comprehension(
+            Metadata::new(),
+            Moo::new(inner.with_return_value(atom_ref(j))),
+        );
+        let outer = outer.with_return_value(inner);
+
+        let expanded = expand_native(outer, &mut parent_symbols.read().clone()).unwrap();
+
+        assert_eq!(
+            expanded,
+            vec![
+                simplify_expression(into_matrix_expr!(vec![int(1)])),
+                simplify_expression(into_matrix_expr!(vec![int(2)])),
+            ]
+        );
     }
 }
