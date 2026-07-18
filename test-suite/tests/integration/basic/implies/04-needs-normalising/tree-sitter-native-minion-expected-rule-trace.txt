@@ -38,15 +38,15 @@ and([!(x),!(!(y));int(1..)])
 
 --
 
-(h) -> ((f) -> (g))
-   ~~> normalise_implies_uncurry ([("Base", 8400)])
-(and([h,f;int(1..)])) -> (g)
-
---
-
 (c) -> ((d) -> (e))
    ~~> normalise_implies_uncurry ([("Base", 8400)])
 (and([c,d;int(1..)])) -> (e)
+
+--
+
+(h) -> ((f) -> (g))
+   ~~> normalise_implies_uncurry ([("Base", 8400)])
+(and([h,f;int(1..)])) -> (g)
 
 --
 
@@ -62,47 +62,47 @@ Ineq(b, a, 0)
 
 --
 
-(and([h,f;int(1..)])) -> (g)
+(and([c,d;int(1..)])) -> (e)
    ~~> flatten_imply ([("Minion", 4200)])
-(__0) -> (g)
+(__0) -> (e)
 new variables:
   find __0: bool
 new constraints:
-  __0 =aux and([h,f;int(1..)])
+  __0 =aux and([c,d;int(1..)])
 
 --
 
-(__0) -> (g)
+(__0) -> (e)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-Ineq(__0, g, 0)
+Ineq(__0, e, 0)
 
 --
 
-__0 =aux and([h,f;int(1..)])
+__0 =aux and([c,d;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(and([h,f;int(1..)]), __0)
+Reify(and([c,d;int(1..)]), __0)
 
 --
 
-(and([c,d;int(1..)])) -> (e)
+(and([h,f;int(1..)])) -> (g)
    ~~> flatten_imply ([("Minion", 4200)])
-(__1) -> (e)
+(__1) -> (g)
 new variables:
   find __1: bool
 new constraints:
-  __1 =aux and([c,d;int(1..)])
+  __1 =aux and([h,f;int(1..)])
 
 --
 
-(__1) -> (e)
+(__1) -> (g)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-Ineq(__1, e, 0)
+Ineq(__1, g, 0)
 
 --
 
-__1 =aux and([c,d;int(1..)])
+__1 =aux and([h,f;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(and([c,d;int(1..)]), __1)
+Reify(and([h,f;int(1..)]), __1)
 
 --
 
@@ -131,8 +131,8 @@ such that
 
 and([WatchedLiteral(x,false),y;int(1..)]),
 Ineq(b, a, 0),
-Ineq(__1, e, 0),
-Ineq(__0, g, 0),
-Reify(and([h,f;int(1..)]), __0),
-Reify(and([c,d;int(1..)]), __1)
+Ineq(__0, e, 0),
+Ineq(__1, g, 0),
+Reify(and([c,d;int(1..)]), __0),
+Reify(and([h,f;int(1..)]), __1)
 

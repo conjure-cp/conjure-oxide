@@ -66,59 +66,35 @@ min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([z,x,5;int(1..)]),50;int(1..)])
 
 --
 
-min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([z,x,5;int(1..)]),50;int(1..)])
-   ~~> min_to_var ([("Base", 6000)])
-__1
+__0 =aux min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([z,x,5;int(1..)]),50;int(1..)])
+   ~~> introduce_mineq ([("Minion", 6100)])
+FlatMinEq([__1, __2, __3, 50], __0)
 new variables:
   find __1: int(2..10)
+  find __2: int(2..10)
+  find __3: int(7..15)
 new constraints:
-  __1 <= sum([z,y;int(1..)])
-  __1 <= sum([y,x;int(1..)])
-  __1 <= sum([z,x,5;int(1..)])
-  __1 <= 50
-  or([__1 = sum([z,y;int(1..)]),__1 = sum([y,x;int(1..)]),__1 = sum([z,x,5;int(1..)]),__1 = 50;int(1..)])
+  __1 =aux sum([z,y;int(1..)])
+  __2 =aux sum([y,x;int(1..)])
+  __3 =aux sum([z,x,5;int(1..)])
 
 --
 
-__1 <= sum([z,y;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([y, z], __1)
-
---
-
-__1 <= sum([y,x;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([x, y], __1)
-
---
-
-__1 <= sum([z,x,5;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([5, x, z], __1)
-
---
-
-__1 = sum([z,y;int(1..)])
+__1 =aux sum([z,y;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([y, z], __1),SumGeq([y, z], __1);int(1..)])
 
 --
 
-__1 = sum([y,x;int(1..)])
+__2 =aux sum([y,x;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([x, y], __1),SumGeq([x, y], __1);int(1..)])
+and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)])
 
 --
 
-__1 = sum([z,x,5;int(1..)])
+__3 =aux sum([z,x,5;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([5, x, z], __1),SumGeq([5, x, z], __1);int(1..)])
-
---
-
-__1 <= 50
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(__1, 50, 0)
+and([SumLeq([5, x, z], __3),SumGeq([5, x, z], __3);int(1..)])
 
 --
 
@@ -130,6 +106,8 @@ find z: int(1..5)
 find a: bool
 find __0: int(2..10)
 find __1: int(2..10)
+find __2: int(2..10)
+find __3: int(7..15)
 
 such that
 
@@ -137,10 +115,8 @@ SumLeq([25, __0, x, y], 40),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
 Ineq(x, y, 0),
-__0 =aux __1,
-SumGeq([y, z], __1),
-SumGeq([x, y], __1),
-SumGeq([5, x, z], __1),
-Ineq(__1, 50, 0),
-or([and([SumLeq([y, z], __1),SumGeq([y, z], __1);int(1..)]),and([SumLeq([x, y], __1),SumGeq([x, y], __1);int(1..)]),and([SumLeq([5, x, z], __1),SumGeq([5, x, z], __1);int(1..)]),__1 = 50;int(1..)])
+FlatMinEq([__1, __2, __3, 50], __0),
+and([SumLeq([y, z], __1),SumGeq([y, z], __1);int(1..)]),
+and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]),
+and([SumLeq([5, x, z], __3),SumGeq([5, x, z], __3);int(1..)])
 

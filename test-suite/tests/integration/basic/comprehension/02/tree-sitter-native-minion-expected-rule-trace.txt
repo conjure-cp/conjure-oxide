@@ -31,115 +31,49 @@ new variables:
 
 [ n[i] = (6 - i) | i : int(1..5) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[n[1] = 5,n[2] = 4,n[3] = 3,n[4] = 2,n[5] = 1;int(1..)]
-
---
-
-n[1]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-n#MatrixToAtom_1
-
---
-
-n[2]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-n#MatrixToAtom_2
-
---
-
-n[3]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-n#MatrixToAtom_3
-
---
-
-n[4]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-n#MatrixToAtom_4
-
---
-
-n[5]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-n#MatrixToAtom_5
+[n#MatrixToAtom_1 = 5,n#MatrixToAtom_2 = 4,n#MatrixToAtom_3 = 3,n#MatrixToAtom_4 = 2,n#MatrixToAtom_5 = 1;int(1..)]
 
 --
 
 [ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[(n[1] < 5) -> (and([m[1] = 1;int(1..)])),(n[2] < 5) -> (and([m[2] = 2;int(1..)])),(n[3] < 5) -> (and([m[3] = 3;int(1..)]));int(1..)]
+[(n#MatrixToAtom_1 < 5) -> (and([m#MatrixToAtom_1 = 1;int(1..)])),(n#MatrixToAtom_2 < 5) -> (and([m#MatrixToAtom_2 = 2;int(1..)])),(n#MatrixToAtom_3 < 5) -> (and([m#MatrixToAtom_3 = 3;int(1..)]));int(1..)]
 
 --
 
-and([m[1] = 1;int(1..)])
+and([m#MatrixToAtom_1 = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-m[1] = 1
+m#MatrixToAtom_1 = 1
 
 --
 
-and([m[2] = 2;int(1..)])
+and([m#MatrixToAtom_2 = 2;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-m[2] = 2
+m#MatrixToAtom_2 = 2
 
 --
 
-and([m[3] = 3;int(1..)])
+and([m#MatrixToAtom_3 = 3;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-m[3] = 3
+m#MatrixToAtom_3 = 3
 
 --
 
-n[1] < 5
+n#MatrixToAtom_1 < 5
    ~~> lt_to_leq ([("Minion", 8400)])
-n[1] <= sum([5,-1;int(1..)])
+n#MatrixToAtom_1 <= sum([5,-1;int(1..)])
 
 --
 
-n[2] < 5
+n#MatrixToAtom_2 < 5
    ~~> lt_to_leq ([("Minion", 8400)])
-n[2] <= sum([5,-1;int(1..)])
+n#MatrixToAtom_2 <= sum([5,-1;int(1..)])
 
 --
 
-n[3] < 5
+n#MatrixToAtom_3 < 5
    ~~> lt_to_leq ([("Minion", 8400)])
-n[3] <= sum([5,-1;int(1..)])
-
---
-
-m[1]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-m#MatrixToAtom_1
-
---
-
-m[2]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-m#MatrixToAtom_2
-
---
-
-m[3]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-m#MatrixToAtom_3
-
---
-
-n[1]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-n#MatrixToAtom_1
-
---
-
-n[2]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-n#MatrixToAtom_2
-
---
-
-n[3]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-n#MatrixToAtom_3
+n#MatrixToAtom_3 <= sum([5,-1;int(1..)])
 
 --
 

@@ -30,27 +30,9 @@ min([2,a;int(1..)])
 
 --
 
-min([2,a;int(1..)])
-   ~~> min_to_var ([("Base", 6000)])
-__1
-new variables:
-  find __1: int(0..2)
-new constraints:
-  __1 <= 2
-  __1 <= a
-  or([__1 = 2,__1 = a;int(1..)])
-
---
-
-__1 <= a
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(__1, a, 0)
-
---
-
-__1 <= 2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(__1, 2, 0)
+__0 =aux min([2,a;int(1..)])
+   ~~> introduce_mineq ([("Minion", 6100)])
+FlatMinEq([2, a], __0)
 
 --
 
@@ -58,13 +40,9 @@ Final model:
 
 find a: int(0..3)
 find __0: int(0..2)
-find __1: int(0..2)
 
 such that
 
 Ineq(__0, 2, 0),
-__0 =aux __1,
-Ineq(__1, 2, 0),
-Ineq(__1, a, 0),
-or([__1 = 2,__1 = a;int(1..)])
+FlatMinEq([2, a], __0)
 

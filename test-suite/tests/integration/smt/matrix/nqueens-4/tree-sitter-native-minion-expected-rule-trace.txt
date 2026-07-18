@@ -47,85 +47,37 @@ __flat_alldiff([x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3, x#MatrixTo
 
 [ sum([x[i],i;int(1..)]) | i : dom ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]
-
---
-
-x[1]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-x#MatrixToAtom_1
-
---
-
-x[2]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-x#MatrixToAtom_2
-
---
-
-x[3]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-x#MatrixToAtom_3
-
---
-
-x[4]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-x#MatrixToAtom_4
+[sum([x#MatrixToAtom_1,1;int(1..)]),sum([x#MatrixToAtom_2,2;int(1..)]),sum([x#MatrixToAtom_3,3;int(1..)]),sum([x#MatrixToAtom_4,4;int(1..)]);int(1..)]
 
 --
 
 [ (x[i] - i) | i : dom ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[(x[1] - 1),(x[2] - 2),(x[3] - 3),(x[4] - 4);int(1..)]
+[(x#MatrixToAtom_1 - 1),(x#MatrixToAtom_2 - 2),(x#MatrixToAtom_3 - 3),(x#MatrixToAtom_4 - 4);int(1..)]
 
 --
 
-(x[1] - 1)
+(x#MatrixToAtom_1 - 1)
    ~~> minus_to_sum ([("Base", 8400)])
-sum([x[1],-(1);int(1..)])
+sum([x#MatrixToAtom_1,-(1);int(1..)])
 
 --
 
-(x[2] - 2)
+(x#MatrixToAtom_2 - 2)
    ~~> minus_to_sum ([("Base", 8400)])
-sum([x[2],-(2);int(1..)])
+sum([x#MatrixToAtom_2,-(2);int(1..)])
 
 --
 
-(x[3] - 3)
+(x#MatrixToAtom_3 - 3)
    ~~> minus_to_sum ([("Base", 8400)])
-sum([x[3],-(3);int(1..)])
+sum([x#MatrixToAtom_3,-(3);int(1..)])
 
 --
 
-(x[4] - 4)
+(x#MatrixToAtom_4 - 4)
    ~~> minus_to_sum ([("Base", 8400)])
-sum([x[4],-(4);int(1..)])
-
---
-
-x[1]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-x#MatrixToAtom_1
-
---
-
-x[2]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-x#MatrixToAtom_2
-
---
-
-x[3]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-x#MatrixToAtom_3
-
---
-
-x[4]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-x#MatrixToAtom_4
+sum([x#MatrixToAtom_4,-(4);int(1..)])
 
 --
 

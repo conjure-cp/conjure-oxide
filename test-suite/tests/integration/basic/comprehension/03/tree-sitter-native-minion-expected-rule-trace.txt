@@ -27,25 +27,25 @@ new variables:
 
 [ m[x] = x | x : int(1..5), y < 5, x < 4 ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[(y < 5) -> (and([m[1] = 1;int(1..)])),(y < 5) -> (and([m[2] = 2;int(1..)])),(y < 5) -> (and([m[3] = 3;int(1..)]));int(1..)]
+[(y < 5) -> (and([m#MatrixToAtom_1 = 1;int(1..)])),(y < 5) -> (and([m#MatrixToAtom_2 = 2;int(1..)])),(y < 5) -> (and([m#MatrixToAtom_3 = 3;int(1..)]));int(1..)]
 
 --
 
-and([m[1] = 1;int(1..)])
+and([m#MatrixToAtom_1 = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-m[1] = 1
+m#MatrixToAtom_1 = 1
 
 --
 
-and([m[2] = 2;int(1..)])
+and([m#MatrixToAtom_2 = 2;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-m[2] = 2
+m#MatrixToAtom_2 = 2
 
 --
 
-and([m[3] = 3;int(1..)])
+and([m#MatrixToAtom_3 = 3;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-m[3] = 3
+m#MatrixToAtom_3 = 3
 
 --
 
@@ -64,24 +64,6 @@ y <= sum([5,-1;int(1..)])
 y < 5
    ~~> lt_to_leq ([("Minion", 8400)])
 y <= sum([5,-1;int(1..)])
-
---
-
-m[1]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-m#MatrixToAtom_1
-
---
-
-m[2]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-m#MatrixToAtom_2
-
---
-
-m[3]
-   ~~> unsafe_const_index_matrix_to_atom ([("ReprMatrixToAtom", 6500)])
-m#MatrixToAtom_3
 
 --
 
