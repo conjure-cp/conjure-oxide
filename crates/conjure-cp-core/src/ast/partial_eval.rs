@@ -468,15 +468,16 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
             let new_product = Expr::Product(m.clone(), Moo::new(into_matrix_expr![new_vec]));
 
             if acc == 0 {
-                // if safe, 0 * exprs ~> 0
-                // otherwise, just return 0* exprs
+                // If safe, 0 * exprs ~> 0. Otherwise do not reshuffle: appending the folded
+                // zero fights `reorder_product` (constant-first) and loops forever under the
+                // local evaluator. Constant folding/placement is left to `reorder_product`.
                 if mode == PartialEvalMode::Deep && is_semantically_safe(&new_product) {
                     Ok(RuleEffect::pure(Expr::Atomic(
                         Default::default(),
                         Atom::Literal(Lit::Int(0)),
                     )))
                 } else {
-                    Ok(RuleEffect::pure(new_product))
+                    Err(RuleNotApplicable)
                 }
             } else if n_consts == 1 {
                 // acc !=0, only one constant
@@ -1137,5 +1138,30 @@ mod tests {
             Moo::new(int_lit(3)),
         )]);
         assert!(run_partial_evaluator_local(&expr).is_err());
+    }
+
+    fn product(factors: Vec<Expr>) -> Expr {
+        Expr::Product(Metadata::new(), Moo::new(into_matrix_expr![factors]))
+    }
+
+    /// Local evaluation must not move a lone zero factor to the end of a product.
+    ///
+    /// That reshuffle undoes `reorder_product`'s constant-first form and causes an infinite
+    /// rewrite loop on models such as `savilerow/diet` (`x[i] * 0`).
+    #[test]
+    fn local_product_does_not_reshuffle_zero_factor() {
+        let x = atom_ref("x");
+        let constant_first = product(vec![int_lit(0), x.clone()]);
+        let variable_first = product(vec![x, int_lit(0)]);
+        assert!(run_partial_evaluator_local(&constant_first).is_err());
+        assert!(run_partial_evaluator_local(&variable_first).is_err());
+    }
+
+    /// Deep evaluation still collapses a safe `0 * x` product to the literal zero.
+    #[test]
+    fn deep_product_collapses_safe_zero_factor() {
+        let expr = product(vec![int_lit(0), atom_ref("x")]);
+        let reduced = run_partial_evaluator(&expr).unwrap().new_expression;
+        assert_eq!(reduced, int_lit(0));
     }
 }
