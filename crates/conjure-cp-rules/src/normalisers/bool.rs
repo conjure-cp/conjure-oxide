@@ -30,6 +30,10 @@ fn remove_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// or(and(a, b), c) ~> and(or(a, c), or(b, c))
 /// ```
+///
+/// Size-increasing cases with a non-trivial rest are refused: see
+/// [`distribution_would_duplicate_nontrivial_rest`]. Nested `and`/`or` remain
+/// valid for Minion (`WatchedAnd`/`WatchedOr`) and for SAT Tseytin encoding.
 #[register_rule("Base", 8400, [Or])]
 fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     fn find_and(exprs: &[Expr]) -> Option<usize> {
@@ -59,6 +63,13 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 return Err(RuleNotApplicable);
                             };
 
+                            // Refuse CNF blow-ups such as or([and(a,b), and(c,d), ...]) that
+                            // copy every sibling disjunct across each conjunct.
+                            if distribution_would_duplicate_nontrivial_rest(and_exprs.len(), &rest)
+                            {
+                                return Err(RuleNotApplicable);
+                            }
+
                             let mut new_and_contents = Vec::new();
 
                             for e in and_exprs {
@@ -84,6 +95,18 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
+}
+
+/// Returns true when distributing `or(and(a1..ak), r1..rm)` would copy a
+/// non-trivial rest across multiple conjuncts.
+///
+/// Refused when either:
+/// - there are two or more rest siblings (`k * m` growth), or
+/// - any rest sibling is itself an `And` (DNF seed: `or(and, and)`).
+///
+/// A single non-`And` rest sibling (`or(and(a,b), c)`) remains allowed.
+fn distribution_would_duplicate_nontrivial_rest(and_len: usize, rest: &[Expr]) -> bool {
+    and_len >= 2 && (rest.len() >= 2 || rest.iter().any(|e| matches!(e, Expr::And(_, _))))
 }
 
 /// Distributes `not` over `and` by De Morgan's Law
@@ -339,4 +362,84 @@ fn normalise_implies_uncurry(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
     };
 
     Ok(RuleEffect::pure(essence_expr!(r"(&p /\ &q) -> &r")))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{Atom, DeclarationPtr, Domain, Metadata, Name, Reference};
+    use conjure_cp::matrix_expr;
+    use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
+
+    /// Builds a boolean decision-variable reference for distribution tests.
+    fn bool_ref(machine_id: i32) -> Atom {
+        Atom::Reference(Reference::new(DeclarationPtr::new_find(
+            Name::Machine(machine_id),
+            Domain::bool(),
+        )))
+    }
+
+    /// Atomic expression wrapping a boolean reference.
+    fn atom_expr(atom: Atom) -> Expr {
+        Expr::Atomic(Metadata::new(), atom)
+    }
+
+    #[test]
+    fn distribution_guard_allows_single_atomic_rest_sibling() {
+        let rest = [atom_expr(bool_ref(9))];
+        assert!(!distribution_would_duplicate_nontrivial_rest(2, &rest));
+    }
+
+    #[test]
+    fn distribution_guard_refuses_multi_rest_or_and_rest() {
+        let a = atom_expr(bool_ref(1));
+        let b = atom_expr(bool_ref(2));
+        let multi = [atom_expr(bool_ref(3)), atom_expr(bool_ref(4))];
+        assert!(distribution_would_duplicate_nontrivial_rest(2, &multi));
+        let and_rest = [Expr::And(Metadata::new(), Moo::new(matrix_expr![a, b]))];
+        assert!(distribution_would_duplicate_nontrivial_rest(2, &and_rest));
+    }
+
+    #[test]
+    fn distribute_or_over_and_still_applies_with_one_rest_sibling() {
+        let d1 = bool_ref(1);
+        let d2 = bool_ref(2);
+        let expr = Expr::Or(
+            Metadata::new(),
+            Moo::new(matrix_expr![
+                Expr::And(
+                    Metadata::new(),
+                    Moo::new(matrix_expr![atom_expr(d1.clone()), atom_expr(d2.clone())]),
+                ),
+                atom_expr(d2.clone()),
+            ]),
+        );
+        let rule = get_rule_by_name("distribute_or_over_and").expect("rule registered");
+        assert!(
+            rule.apply(&expr, &SymbolTable::new()).is_ok(),
+            "or(and(a,b), c) must remain distributable"
+        );
+    }
+
+    #[test]
+    fn distribute_or_over_and_refuses_or_of_many_ands() {
+        let a = atom_expr(bool_ref(1));
+        let b = atom_expr(bool_ref(2));
+        let c = atom_expr(bool_ref(3));
+        let d = atom_expr(bool_ref(4));
+        // Two and-disjuncts: rest is a single And, which must still be refused.
+        let expr = Expr::Or(
+            Metadata::new(),
+            Moo::new(matrix_expr![
+                Expr::And(Metadata::new(), Moo::new(matrix_expr![a, b])),
+                Expr::And(Metadata::new(), Moo::new(matrix_expr![c, d])),
+            ]),
+        );
+        let rule = get_rule_by_name("distribute_or_over_and").expect("rule registered");
+        let err = rule.apply(&expr, &SymbolTable::new()).unwrap_err();
+        assert!(
+            matches!(err, ApplicationError::RuleNotApplicable),
+            "or(and(a,b), and(c,d)) must not CNF-expand"
+        );
+    }
 }
