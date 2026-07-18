@@ -330,6 +330,15 @@ fn load_expr(
     expr: conjure_ast::Expression,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
+    // Top-level `and` must already have been flattened into the root constraint list by
+    // `finish_root_evaluator_normalisation` after rewriting. Nested `and` is still lowered
+    // via `WatchedAnd` in `parse_expr`.
+    if matches!(expr, conjure_ast::Expression::And(_, _)) {
+        return Err(SolverError::ModelInvalid(
+            "top-level and must be flattened into the root constraint list before Minion loading"
+                .to_string(),
+        ));
+    }
     minion_model.constraints.push(parse_expr(expr)?);
     Ok(())
 }
@@ -900,3 +909,24 @@ fn parse_literal(k: conjure_ast::Literal) -> Result<minion_ast::Constant, Solver
 fn parse_name(name: conjure_ast::Name) -> Result<minion_ast::Var, SolverError> {
     Ok(minion_ast::Var::NameRef(name_to_string(name)))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Literal, Metadata};
+
+    #[test]
+    fn top_level_and_is_rejected() {
+        let true_expr = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
+        let expr = Expression::And(
+            Metadata::new(),
+            Moo::new(crate::into_matrix_expr!(vec![true_expr.clone(), true_expr])),
+        );
+        let mut model = MinionModel::new();
+
+        let err = load_expr(expr, &mut model).unwrap_err();
+        assert!(matches!(err, SolverError::ModelInvalid(_)));
+        assert!(model.constraints.is_empty());
+    }
+}
+

@@ -750,11 +750,25 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                         // remove trues
                     }
 
-                    // flatten ands in root
+                    // flatten ands in root, applying the same true/false rules to conjuncts
                     Expr::And(_, vecs) => match Moo::unwrap_or_clone(vecs.clone()).unwrap_list() {
-                        Some(mut list) => {
+                        Some(list) => {
                             has_changed = true;
-                            new_vec.append(&mut list);
+                            for conjunct in list {
+                                match conjunct {
+                                    Expr::Atomic(_, Atom::Literal(Lit::Bool(false))) => {
+                                        return Ok(RuleEffect::pure(Expr::Root(
+                                            Metadata::new(),
+                                            vec![Expr::Atomic(
+                                                Default::default(),
+                                                Atom::Literal(Lit::Bool(false)),
+                                            )],
+                                        )));
+                                    }
+                                    Expr::Atomic(_, Atom::Literal(Lit::Bool(true))) => {}
+                                    other => new_vec.push(other),
+                                }
+                            }
                         }
                         None => new_vec.push(expr.clone()),
                     },
