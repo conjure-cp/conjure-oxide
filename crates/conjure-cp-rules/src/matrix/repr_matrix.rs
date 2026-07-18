@@ -162,6 +162,9 @@ fn select_mta_after_comprehension_expansion(
 /// that case: same result as those two rules when every index is an in-bounds constant, so Bubble
 /// would not wrap a condition. Out-of-bounds or non-constant indices stay with `index_to_bubble`.
 ///
+/// The same lowering is also applied during comprehension expansion simplification so ground
+/// indices never enter the rewriter worklist; this rule remains the oracle for any sites that
+/// become constant only after expansion.
 #[register_rule("ReprMatrixToAtom", 6500, [UnsafeIndex])]
 fn unsafe_const_index_matrix_to_atom(
     expr: &Expression,
@@ -175,8 +178,9 @@ fn unsafe_const_index_matrix_to_atom(
 /// Attempts the fused constant `UnsafeIndex` → `MatrixToAtom` element lowering.
 ///
 /// Returns [`Some`] only when every index is a constant inside its dimension domain and no nested
-/// represented-matrix index remains below this node.
-fn try_lower_const_unsafe_index_matrix_to_atom(expr: &Expression) -> Option<Expression> {
+/// represented-matrix index remains below this node. Callers outside the rule engine (notably
+/// comprehension expansion simplification) use this to avoid paying a worklist update per site.
+pub(crate) fn try_lower_const_unsafe_index_matrix_to_atom(expr: &Expression) -> Option<Expression> {
     let Expression::UnsafeIndex(_, subject, indices) = expr else {
         return None;
     };
