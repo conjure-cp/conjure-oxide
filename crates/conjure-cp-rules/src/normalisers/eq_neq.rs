@@ -1,12 +1,62 @@
 //! Normalising rules for `Neq` and `Eq`.
 
-use conjure_cp::ast::{Expression as Expr, SymbolTable, Typeable};
+use conjure_cp::ast::{
+    Atom, Expression as Expr, Literal as Lit, ReturnType, SymbolTable, Typeable,
+};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 use conjure_cp::ast::ReturnType::{Matrix, Set};
 use conjure_cp::essence_expr;
+
+/// Rewrites `x = true` / `true = x` to `x` when `x` is a non-literal boolean atom.
+///
+/// Nested uses such as `(x = true) <-> and([y = true, ...])` otherwise force Minion flattening to
+/// introduce aux variables for the left-hand `Eq`, because both sides of the outer equality are
+/// non-atomic. Lowering the tautological `= true` first keeps a boolean decision variable atomic
+/// so `iff_to_eq` / `bool_eq_to_reify` can target it directly.
+///
+/// Literal–literal equalities are left alone for constant folding. Non-boolean atoms are refused.
+pub(crate) fn try_lower_bool_atom_eq_true(expr: &Expr) -> Option<Expr> {
+    let Expr::Eq(_, left, right) = expr else {
+        return None;
+    };
+
+    let atom = match (left.as_ref(), right.as_ref()) {
+        (Expr::Atomic(_, Atom::Literal(Lit::Bool(true))), Expr::Atomic(_, atom))
+            if !matches!(atom, Atom::Literal(_)) =>
+        {
+            right.as_ref()
+        }
+        (Expr::Atomic(_, atom), Expr::Atomic(_, Atom::Literal(Lit::Bool(true))))
+            if !matches!(atom, Atom::Literal(_)) =>
+        {
+            left.as_ref()
+        }
+        _ => return None,
+    };
+
+    if atom.return_type() != ReturnType::Bool {
+        return None;
+    }
+
+    Some(atom.clone())
+}
+
+/// Normalises boolean `x = true` to `x` before Minion flattening of nested equalities.
+///
+/// ```text
+/// x = true  ~>  x
+/// true = x  ~>  x
+/// ```
+/// where `x` is a non-literal boolean atom.
+#[register_rule("Base", 9000, [Eq])]
+fn bool_atom_eq_true(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    try_lower_bool_atom_eq_true(expr)
+        .map(RuleEffect::pure)
+        .ok_or(RuleNotApplicable)
+}
 
 /// Converts a negated `Neq` to an `Eq`
 ///
@@ -51,5 +101,88 @@ fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             _ => Err(RuleNotApplicable),
         },
         _ => Err(RuleNotApplicable),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{DeclarationPtr, Domain, Metadata, Moo, Name, Range, Reference};
+    use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
+
+    /// Boolean decision-variable atomic expression.
+    fn bool_atom(name: &str) -> Expr {
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                Name::user(name),
+                Domain::bool(),
+            ))),
+        )
+    }
+
+    /// Boolean literal atomic expression.
+    fn bool_lit(value: bool) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
+    }
+
+    #[test]
+    fn bool_atom_eq_true_lowers_variable_equals_true() {
+        let x = bool_atom("x");
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(x.clone()),
+            Moo::new(bool_lit(true)),
+        );
+        let lowered = try_lower_bool_atom_eq_true(&expr).expect("should lower");
+        assert_eq!(lowered, x);
+
+        let rule = get_rule_by_name("bool_atom_eq_true").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("rule applies");
+        assert_eq!(result.new_expression, x);
+    }
+
+    #[test]
+    fn bool_atom_eq_true_lowers_true_equals_variable() {
+        let x = bool_atom("x");
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(bool_lit(true)),
+            Moo::new(x.clone()),
+        );
+        let lowered = try_lower_bool_atom_eq_true(&expr).expect("should lower");
+        assert_eq!(lowered, x);
+    }
+
+    #[test]
+    fn bool_atom_eq_true_refuses_false_equality() {
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(bool_atom("x")),
+            Moo::new(bool_lit(false)),
+        );
+        assert!(try_lower_bool_atom_eq_true(&expr).is_none());
+        let rule = get_rule_by_name("bool_atom_eq_true").expect("rule registered");
+        let err = rule.apply(&expr, &SymbolTable::new()).unwrap_err();
+        assert!(matches!(err, ApplicationError::RuleNotApplicable));
+    }
+
+    #[test]
+    fn bool_atom_eq_true_refuses_integer_atom() {
+        let int_atom = Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                Name::user("n"),
+                Domain::int(vec![Range::Bounded(1, 3)]),
+            ))),
+        );
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(int_atom),
+            Moo::new(bool_lit(true)),
+        );
+        assert!(try_lower_bool_atom_eq_true(&expr).is_none());
     }
 }

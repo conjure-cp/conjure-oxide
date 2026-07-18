@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::matrix::try_lower_const_unsafe_index_matrix_to_atom;
+use crate::normalisers::try_lower_bool_atom_eq_true;
 use conjure_cp::{
     ast::{
         Atom, DecisionVariable, DeclarationKind, DeclarationPtr, Expression, Literal, Metadata,
@@ -85,8 +86,9 @@ pub(super) fn retain_quantified_solution_values(
 ///
 /// In addition to constant folding and partial evaluation, this lowers constant in-bounds
 /// `MatrixToAtom` [`Expression::UnsafeIndex`] nodes using the same oracle as
-/// `unsafe_const_index_matrix_to_atom`, so ground matrix indexing from expansion does not pay a
-/// per-site worklist update.
+/// `unsafe_const_index_matrix_to_atom`, and boolean `x = true` equalities using the same oracle as
+/// `bool_atom_eq_true`, so ground indexing and tautological bool equalities from expansion do not
+/// each pay a per-site worklist update.
 pub(super) fn simplify_expression(mut expr: Expression) -> Expression {
     // Keep applying evaluators to a fixed point, or until no changes are made.
     for _ in 0..128 {
@@ -95,6 +97,9 @@ pub(super) fn simplify_expression(mut expr: Expression) -> Expression {
                 return Expression::Atomic(Metadata::new(), Atom::Literal(lit));
             }
             if let Some(lowered) = try_lower_const_unsafe_index_matrix_to_atom(&subexpr) {
+                return lowered;
+            }
+            if let Some(lowered) = try_lower_bool_atom_eq_true(&subexpr) {
                 return lowered;
             }
             if let Ok(reduction) = run_partial_evaluator(&subexpr) {

@@ -8,3 +8,5 @@ mod neg_minus;
 mod product;
 mod sum;
 mod weighted_sums;
+
+pub(crate) use eq_neq::try_lower_bool_atom_eq_true;
