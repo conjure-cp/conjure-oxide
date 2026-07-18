@@ -28,6 +28,10 @@ pub struct RuleResult<'a> {
 
 pub type VariableDeclarationSnapshot = BTreeMap<Name, String>;
 
+/// Pretty-prints every local variable declaration for rule-trace before/after diffs.
+///
+/// This is intentionally expensive (string formatting of domains). Callers must only invoke it
+/// when the default human-readable rule trace needs declaration diffs.
 pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarationSnapshot {
     symbols
         .clone()
@@ -36,6 +40,23 @@ pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarat
             pretty_variable_declaration(symbols, &name).map(|declaration| (name, declaration))
         })
         .collect()
+}
+
+/// Captures a Root declaration snapshot only when the default rule-trace sink is enabled.
+///
+/// Failed rule attempts and aggregate/verbose-only tracing must not pay for pretty-printing.
+/// The effect has not been applied yet, so a post-success call is still a valid "before" snapshot.
+pub fn root_variable_snapshot_for_default_trace(
+    expr: &Expression,
+    symbols: &SymbolTable,
+) -> Option<VariableDeclarationSnapshot> {
+    if !matches!(expr, Expression::Root(_, _)) {
+        return None;
+    }
+    if !(rule_trace_enabled() && default_rule_trace_enabled()) {
+        return None;
+    }
+    Some(snapshot_variable_declarations(symbols))
 }
 
 /// Snapshots variable declarations after applying a rule's symbol-table changes.
@@ -278,5 +299,56 @@ pub enum RewriteError {
 impl From<ResolveRulesError> for RewriteError {
     fn from(error: ResolveRulesError) -> Self {
         RewriteError::ResolveRulesError(error)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Literal, Metadata};
+    use crate::settings::{set_default_rule_trace_enabled, set_rule_trace_enabled};
+
+    /// Restores process-local rule-trace flags after a test mutates them.
+    struct RuleTraceFlagGuard {
+        rule_trace: bool,
+        default_rule_trace: bool,
+    }
+
+    impl RuleTraceFlagGuard {
+        /// Saves the current flags and applies `rule_trace` / `default_rule_trace`.
+        fn set(rule_trace: bool, default_rule_trace: bool) -> Self {
+            let guard = Self {
+                rule_trace: rule_trace_enabled(),
+                default_rule_trace: default_rule_trace_enabled(),
+            };
+            set_rule_trace_enabled(rule_trace);
+            set_default_rule_trace_enabled(default_rule_trace);
+            guard
+        }
+    }
+
+    impl Drop for RuleTraceFlagGuard {
+        fn drop(&mut self) {
+            set_rule_trace_enabled(self.rule_trace);
+            set_default_rule_trace_enabled(self.default_rule_trace);
+        }
+    }
+
+    #[test]
+    fn root_snapshot_skipped_when_default_rule_trace_disabled() {
+        let _guard = RuleTraceFlagGuard::set(true, false);
+        let root = Expression::Root(Metadata::new(), vec![Literal::Bool(true).into()]);
+        let symbols = SymbolTable::new();
+        assert!(root_variable_snapshot_for_default_trace(&root, &symbols).is_none());
+    }
+
+    #[test]
+    fn root_snapshot_taken_only_for_root_when_default_rule_trace_enabled() {
+        let _guard = RuleTraceFlagGuard::set(true, true);
+        let root = Expression::Root(Metadata::new(), vec![Literal::Bool(true).into()]);
+        let leaf: Expression = Literal::Bool(true).into();
+        let symbols = SymbolTable::new();
+        assert!(root_variable_snapshot_for_default_trace(&root, &symbols).is_some());
+        assert!(root_variable_snapshot_for_default_trace(&leaf, &symbols).is_none());
     }
 }

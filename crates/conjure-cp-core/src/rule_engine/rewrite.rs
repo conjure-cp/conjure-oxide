@@ -11,7 +11,7 @@ use crate::{
         get_rules_grouped,
         rewriter_common::{
             RuleResult, VariableDeclarationSnapshot, log_rule_application,
-            snapshot_symbols_after_effect, snapshot_variable_declarations,
+            root_variable_snapshot_for_default_trace, snapshot_symbols_after_effect,
             try_rewrite_value_letting_once,
         },
     },
@@ -2192,9 +2192,6 @@ fn try_rewrite_model<'ctx, 'rules>(
                         #[cfg(debug_assertions)]
                         tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
-                        let variable_snapshot_before = matches!(expr, Expr::Root(_, _))
-                            .then(|| snapshot_variable_declarations(&submodel.symbols()));
-
                         match (rd.rule.application)(expr, &submodel.symbols()) {
                             Ok(red) => {
                                 // when called a lot, this becomes very expensive!
@@ -2223,7 +2220,10 @@ fn try_rewrite_model<'ctx, 'rules>(
                                     level,
                                     expr.clone(),
                                     node_id,
-                                    variable_snapshot_before,
+                                    root_variable_snapshot_for_default_trace(
+                                        expr,
+                                        &submodel.symbols(),
+                                    ),
                                 ));
                             }
                             Err(_) => {
@@ -2641,9 +2641,6 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 #[cfg(debug_assertions)]
                 tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
-                let variable_snapshot_before = matches!(expr, Expr::Root(_, _))
-                    .then(|| snapshot_variable_declarations(&submodel.symbols()));
-
                 match (rd.rule.application)(expr, &submodel.symbols()) {
                     Ok(red) => {
                         #[cfg(debug_assertions)]
@@ -2669,7 +2666,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                             level,
                             expr.clone(),
                             node_id,
-                            variable_snapshot_before,
+                            root_variable_snapshot_for_default_trace(expr, &submodel.symbols()),
                         ));
                     }
                     Err(_) => {
