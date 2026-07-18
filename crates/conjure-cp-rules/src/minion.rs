@@ -2170,14 +2170,19 @@ fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-/// Converts an equality to a boolean into a `reify` constraint.
+/// Converts an equality to a boolean constraint into a `reify` constraint.
 ///
 /// ```text
 /// x =aux c ~> reify(c,x)
 /// x = c ~> reify(c,x)
 ///
-/// where c is a boolean constraint
+/// where c is a non-atomic boolean constraint
 /// ```
+///
+/// Atomic equalities such as `x = false` or `x = y` are left alone: Minion can emit `eq`
+/// directly, and turning `x = false` into `reify(false, x)` embeds a posted constraint form
+/// as a Boolean subexpression (for example as the LHS of `Imply`), which neither
+/// [`flatten_imply`] nor [`introduce_reifyimply_ineq_from_imply`] can lower.
 #[register_rule("Minion", 4400, [AuxDeclaration, Eq])]
 fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (atom, e): (Atom, Moo<Expr>) = match expr {
@@ -2190,6 +2195,11 @@ fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
         _ => Err(RuleNotApplicable),
     }?;
+
+    // Reify targets a constraint, not another atom. Atomic Bool equalities stay as `eq`.
+    if matches!(e.as_ref(), Expr::Atomic(_, _)) {
+        return Err(RuleNotApplicable);
+    }
 
     // e does not have to be valid minion constraint yet, as long as we know it can turn into one
     // (i.e. it is boolean).
@@ -2221,4 +2231,78 @@ fn iff_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         x.clone(),
         y.clone(),
     )))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{DeclarationPtr, Domain};
+    use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
+
+    /// Builds a boolean decision-variable atomic expression.
+    fn bool_atom(name: &str) -> Expr {
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                Name::user(name),
+                Domain::bool(),
+            ))),
+        )
+    }
+
+    /// Atomic Boolean literal.
+    fn bool_lit(value: bool) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
+    }
+
+    #[test]
+    fn bool_eq_to_reify_refuses_atomic_false_equality() {
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(bool_atom("x")),
+            Moo::new(bool_lit(false)),
+        );
+        let rule = get_rule_by_name("bool_eq_to_reify").expect("rule registered");
+        let err = rule.apply(&expr, &SymbolTable::new()).unwrap_err();
+        assert!(
+            matches!(err, ApplicationError::RuleNotApplicable),
+            "x = false must not become reify(false, x)"
+        );
+    }
+
+    #[test]
+    fn bool_eq_to_reify_refuses_atomic_variable_equality() {
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(bool_atom("x")),
+            Moo::new(bool_atom("y")),
+        );
+        let rule = get_rule_by_name("bool_eq_to_reify").expect("rule registered");
+        let err = rule.apply(&expr, &SymbolTable::new()).unwrap_err();
+        assert!(
+            matches!(err, ApplicationError::RuleNotApplicable),
+            "x = y must stay as eq, not reify"
+        );
+    }
+
+    #[test]
+    fn bool_eq_to_reify_still_applies_to_constraint_equality() {
+        let constraint = Expr::And(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_atom("a"), bool_atom("b")]),
+        );
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(bool_atom("r")),
+            Moo::new(constraint),
+        );
+        let rule = get_rule_by_name("bool_eq_to_reify").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("r = and(a,b) should reify");
+        assert!(
+            matches!(result.new_expression, Expr::MinionReify(_, _, _)),
+            "non-atomic Boolean equality must still become MinionReify"
+        );
+    }
 }
