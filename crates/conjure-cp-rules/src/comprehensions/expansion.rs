@@ -13,6 +13,7 @@ use conjure_cp::{
     ast::{
         DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Metadata, Moo, Name, Range,
         Reference, SymbolTable, UnresolvedDomain,
+        ac_operators::ACOperatorKind,
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
         serde::{HasId, ObjId},
@@ -27,6 +28,26 @@ use std::collections::HashMap;
 use uniplate::{Biplate, Uniplate};
 
 use via_solver_common::simplify_expression;
+
+/// Simplifies an expanded comprehension under its AC operator before the rewrite is committed.
+///
+/// This folds identities and dominates constant bounds (via [`simplify_expression`] / partial
+/// evaluation) so huge `and([x > k_i, ...])` expansions collapse before rule-trace snapshots and
+/// later rewriting see them.
+fn simplify_expanded_ac_results(results: Vec<Expr>, ac_operator: ACOperatorKind) -> Vec<Expr> {
+    let simplified = simplify_expression(ac_operator.as_expression(into_matrix_expr!(results)));
+    match (&ac_operator, &simplified) {
+        (ACOperatorKind::And, Expr::And(_, matrix))
+        | (ACOperatorKind::Or, Expr::Or(_, matrix))
+        | (ACOperatorKind::Sum, Expr::Sum(_, matrix))
+        | (ACOperatorKind::Product, Expr::Product(_, matrix)) => {
+            Moo::unwrap_or_clone(matrix.clone())
+                .unwrap_list()
+                .unwrap_or_else(|| vec![simplified])
+        }
+        _ => vec![simplified],
+    }
+}
 
 /// Rewrite top-level `exists` comprehensions into constraints over fresh machine `find`s.
 ///
@@ -109,6 +130,7 @@ fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applica
     let mut symbols = symbols.clone();
     let results = expand_native(comprehension, &mut symbols)
         .unwrap_or_else(|e| bug!("native AC comprehension expansion failed: {e}"));
+    let results = simplify_expanded_ac_results(results, ac_operator_kind);
 
     Ok(RuleEffect::with_symbols(
         ac_operator_kind.as_expression(into_matrix_expr!(results)),
@@ -141,7 +163,12 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 
     let mut symbols = symbols.clone();
     let comprehension_domain = comprehension.domain_of();
+    let skip_operator = comprehension.skip_operator;
     let results = expand_native(comprehension, &mut symbols).or(Err(RuleNotApplicable))?;
+    let results = match skip_operator {
+        Some(op) => simplify_expanded_ac_results(results, op),
+        None => results,
+    };
     let expanded = into_matrix_expr!(results);
     let expanded = match comprehension_domain {
         Some(domain) if expanded.unwrap_list().is_some_and(|elems| elems.is_empty()) => {

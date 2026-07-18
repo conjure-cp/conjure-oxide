@@ -12,6 +12,29 @@ use crate::{
 use itertools::iproduct;
 use uniplate::Uniplate;
 
+/// Constant comparison shape used when dominating bounds under `And`.
+///
+/// Only same-operator bounds on the same atomic LHS are merged. Integer strictness is left alone
+/// (`x > k` is not rewritten to `x >= k+1`) so later solver-family normalisers stay in control.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+enum ConstantBoundOp {
+    /// Keep the largest RHS: `x > a /\ x > b` ~> `x > max(a, b)`.
+    Gt,
+    /// Keep the largest RHS: `x >= a /\ x >= b` ~> `x >= max(a, b)`.
+    Geq,
+    /// Keep the smallest RHS: `x < a /\ x < b` ~> `x < min(a, b)`.
+    Lt,
+    /// Keep the smallest RHS: `x <= a /\ x <= b` ~> `x <= min(a, b)`.
+    Leq,
+}
+
+impl ConstantBoundOp {
+    /// Whether a larger RHS is the stronger bound for this operator.
+    fn prefers_larger_rhs(self) -> bool {
+        matches!(self, ConstantBoundOp::Gt | ConstantBoundOp::Geq)
+    }
+}
+
 /// Normalises integer ranges so equivalent domains compare structurally equal.
 fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
     match domain {
@@ -613,24 +636,47 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
             let Some(vec) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
+            // Empty conjunction is the And-identity.
+            if vec.is_empty() {
+                return Ok(RuleEffect::pure(Expr::from(true)));
+            }
             let mut new_vec: Vec<Expr> = Vec::new();
-            let mut has_const: bool = false;
+            let mut has_changed: bool = false;
+            // Strongest constant bound per (atomic LHS, comparison operator), first-seen order.
+            let mut constant_bounds: Vec<(Atom, ConstantBoundOp, i32)> = Vec::new();
+            let mut constant_bound_terms: usize = 0;
             for expr in vec {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = expr {
-                    has_const = true;
+                    has_changed = true;
                     if !x {
                         return Ok(RuleEffect::pure(Expr::Atomic(
                             Default::default(),
                             Atom::Literal(Lit::Bool(false)),
                         )));
                     }
+                } else if let Some((lhs, op, rhs)) = as_constant_bound_comparison(&expr) {
+                    constant_bound_terms += 1;
+                    merge_constant_bound(&mut constant_bounds, lhs, op, rhs);
                 } else {
                     new_vec.push(expr);
                 }
             }
 
-            if !has_const {
-                Err(RuleNotApplicable)
+            // Only treat bound aggregation as a change when at least one conjunct was dominated.
+            if constant_bound_terms > constant_bounds.len() {
+                has_changed = true;
+            }
+
+            if !has_changed {
+                return Err(RuleNotApplicable);
+            }
+
+            for (lhs, op, rhs) in constant_bounds {
+                new_vec.push(make_constant_bound_comparison(lhs, op, rhs));
+            }
+
+            if new_vec.is_empty() {
+                Ok(RuleEffect::pure(Expr::from(true)))
             } else {
                 Ok(RuleEffect::pure(Expr::And(
                     Metadata::new(),
@@ -907,6 +953,60 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
     }
 }
 
+/// Extracts `lhs ▷ k` where `lhs` is atomic and `k` is an integer literal.
+fn as_constant_bound_comparison(expr: &Expr) -> Option<(Atom, ConstantBoundOp, i32)> {
+    let (lhs, rhs, op) = match expr {
+        Expr::Gt(_, lhs, rhs) => (lhs, rhs, ConstantBoundOp::Gt),
+        Expr::Geq(_, lhs, rhs) => (lhs, rhs, ConstantBoundOp::Geq),
+        Expr::Lt(_, lhs, rhs) => (lhs, rhs, ConstantBoundOp::Lt),
+        Expr::Leq(_, lhs, rhs) => (lhs, rhs, ConstantBoundOp::Leq),
+        _ => return None,
+    };
+
+    let Expr::Atomic(_, Atom::Literal(Lit::Int(rhs_value))) = rhs.as_ref() else {
+        return None;
+    };
+    let Expr::Atomic(_, lhs_atom) = lhs.as_ref() else {
+        return None;
+    };
+    Some((lhs_atom.clone(), op, *rhs_value))
+}
+
+/// Rebuilds a constant bound comparison from its dominated components.
+fn make_constant_bound_comparison(lhs: Atom, op: ConstantBoundOp, rhs: i32) -> Expr {
+    let lhs = Expr::Atomic(Metadata::new(), lhs);
+    let rhs = Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(rhs)));
+    match op {
+        ConstantBoundOp::Gt => Expr::Gt(Metadata::new(), Moo::new(lhs), Moo::new(rhs)),
+        ConstantBoundOp::Geq => Expr::Geq(Metadata::new(), Moo::new(lhs), Moo::new(rhs)),
+        ConstantBoundOp::Lt => Expr::Lt(Metadata::new(), Moo::new(lhs), Moo::new(rhs)),
+        ConstantBoundOp::Leq => Expr::Leq(Metadata::new(), Moo::new(lhs), Moo::new(rhs)),
+    }
+}
+
+/// Keeps the strongest RHS for `(lhs, op)` under conjunction, preserving first-seen order.
+fn merge_constant_bound(
+    bounds: &mut Vec<(Atom, ConstantBoundOp, i32)>,
+    lhs: Atom,
+    op: ConstantBoundOp,
+    rhs: i32,
+) {
+    if let Some((_, _, existing)) = bounds
+        .iter_mut()
+        .find(|(existing_lhs, existing_op, _)| existing_lhs == &lhs && *existing_op == op)
+    {
+        if op.prefers_larger_rhs() {
+            if rhs > *existing {
+                *existing = rhs;
+            }
+        } else if rhs < *existing {
+            *existing = rhs;
+        }
+    } else {
+        bounds.push((lhs, op, rhs));
+    }
+}
+
 /// Checks for tautologies involving pairs of terms inside an or, returning true if one is found.
 ///
 /// This applies the following rules:
@@ -954,4 +1054,88 @@ fn check_pairwise_or_tautologies(or_terms: &[Expr]) -> bool {
     }
 
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{DeclarationPtr, Domain, Name};
+
+    fn int_lit(value: i32) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(value)))
+    }
+
+    fn bool_lit(value: bool) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
+    }
+
+    fn atom_ref(name: &str) -> Expr {
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(crate::ast::Reference::new(DeclarationPtr::new_find(
+                Name::user(name),
+                Domain::int(vec![Range::Bounded(1, 20)]),
+            ))),
+        )
+    }
+
+    fn and(exprs: Vec<Expr>) -> Expr {
+        Expr::And(Metadata::new(), Moo::new(into_matrix_expr![exprs]))
+    }
+
+    #[test]
+    fn and_dominates_constant_lower_bounds_on_same_atom() {
+        let x = atom_ref("x");
+        let expr = and(vec![
+            Expr::Gt(Metadata::new(), Moo::new(x.clone()), Moo::new(int_lit(3))),
+            bool_lit(true),
+            Expr::Gt(Metadata::new(), Moo::new(x.clone()), Moo::new(int_lit(9))),
+            Expr::Gt(Metadata::new(), Moo::new(x), Moo::new(int_lit(1))),
+        ]);
+
+        let reduced = run_partial_evaluator_local(&expr).unwrap().new_expression;
+        let Expr::And(_, operands) = reduced else {
+            panic!("expected And, got {reduced}");
+        };
+        let list = Moo::unwrap_or_clone(operands).unwrap_list().unwrap();
+        assert_eq!(list.len(), 1);
+        assert!(matches!(
+            &list[0],
+            Expr::Gt(_, lhs, rhs)
+                if matches!(rhs.as_ref(), Expr::Atomic(_, Atom::Literal(Lit::Int(9))))
+                    && matches!(lhs.as_ref(), Expr::Atomic(_, Atom::Reference(_)))
+        ));
+    }
+
+    #[test]
+    fn and_dominates_constant_upper_bounds_on_same_atom() {
+        let x = atom_ref("x");
+        let expr = and(vec![
+            Expr::Leq(Metadata::new(), Moo::new(x.clone()), Moo::new(int_lit(8))),
+            Expr::Leq(Metadata::new(), Moo::new(x), Moo::new(int_lit(4))),
+        ]);
+
+        let reduced = run_partial_evaluator_local(&expr).unwrap().new_expression;
+        let Expr::And(_, operands) = reduced else {
+            panic!("expected And, got {reduced}");
+        };
+        let list = Moo::unwrap_or_clone(operands).unwrap_list().unwrap();
+        assert_eq!(list.len(), 1);
+        assert!(matches!(
+            &list[0],
+            Expr::Leq(_, _, rhs)
+                if matches!(rhs.as_ref(), Expr::Atomic(_, Atom::Literal(Lit::Int(4))))
+        ));
+    }
+
+    #[test]
+    fn and_does_not_merge_a_single_constant_bound() {
+        let x = atom_ref("x");
+        let expr = and(vec![Expr::Gt(
+            Metadata::new(),
+            Moo::new(x),
+            Moo::new(int_lit(3)),
+        )]);
+        assert!(run_partial_evaluator_local(&expr).is_err());
+    }
 }

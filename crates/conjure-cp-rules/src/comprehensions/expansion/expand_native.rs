@@ -48,6 +48,14 @@ fn expand_qualifiers(
             return Ok(vec![]);
         };
         let return_expression = simplify_expression(return_expression);
+        // Drop AC identities here so And/Or/Sum/Product expansions do not materialise a huge
+        // vector of tautologies that the rewriter must later strip.
+        if let Some(op) = ac_operator
+            && let Expression::Atomic(_, Atom::Literal(lit)) = &return_expression
+            && lit == &op.identity()
+        {
+            return Ok(vec![]);
+        }
         let return_expression = lift_machine_references_into_parent_scope(
             return_expression,
             &child_symbols,
@@ -237,5 +245,20 @@ mod tests {
         let expanded = expand_native(comprehension, &mut parent_symbols.read().clone()).unwrap();
 
         assert_eq!(expanded, vec![int(2), int(4), int(6), int(8)]);
+    }
+
+    #[test]
+    fn native_expansion_drops_and_identity_results() {
+        let parent_symbols = SymbolTablePtr::new();
+        let mut comprehension = ComprehensionBuilder::new(parent_symbols.clone())
+            .generator(DeclarationPtr::new_find(
+                Name::user("i"),
+                Domain::int(vec![Range::Bounded(1, 3)]),
+            ))
+            .with_return_value(Expression::from(true));
+        comprehension.skip_operator = Some(ACOperatorKind::And);
+
+        let expanded = expand_native(comprehension, &mut parent_symbols.read().clone()).unwrap();
+        assert!(expanded.is_empty());
     }
 }
