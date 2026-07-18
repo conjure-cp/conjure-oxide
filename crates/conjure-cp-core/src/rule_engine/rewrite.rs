@@ -3201,6 +3201,7 @@ fn write_worklist_surfaces_to_model(submodel: &mut Model, surfaces: &[RewriteSur
     let root = surfaces[0].arena.expression_from(surfaces[0].arena.root());
     submodel.replace_root(root);
 
+    let mut wrote_value_letting = false;
     for surface in surfaces.iter().skip(1) {
         if !surface.active {
             continue;
@@ -3208,11 +3209,27 @@ fn write_worklist_surfaces_to_model(submodel: &mut Model, surfaces: &[RewriteSur
         let Some(name) = value_letting_surface_name(&surface.kind) else {
             continue;
         };
-        write_value_letting_surface_to_model(submodel, name, &surface.arena);
+        wrote_value_letting |=
+            write_value_letting_surface_to_model_without_refresh(submodel, name, &surface.arena);
+    }
+    if wrote_value_letting {
+        submodel.symbols_mut().refresh_local_binding_hashes();
     }
 }
 
 fn write_value_letting_surface_to_model(
+    submodel: &mut Model,
+    name: &Name,
+    arena: &ExpressionArena,
+) -> bool {
+    let written = write_value_letting_surface_to_model_without_refresh(submodel, name, arena);
+    if written {
+        submodel.symbols_mut().refresh_local_binding_hashes();
+    }
+    written
+}
+
+fn write_value_letting_surface_to_model_without_refresh(
     submodel: &mut Model,
     name: &Name,
     arena: &ExpressionArena,
@@ -3231,7 +3248,6 @@ fn write_value_letting_surface_to_model(
 
         *letting = arena.expression_from(arena.root());
     }
-    submodel.symbols_mut().refresh_local_binding_hashes();
     true
 }
 
