@@ -135,7 +135,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
-        println!("{}", &rewritten_model);
+        println!("{}", rewritten_model);
 
         if let Some(path) = global_args.save_solver_input_file {
             let solver = solver.load_model(rewritten_model)?;
@@ -365,7 +365,7 @@ fn run_solver(
             outf.write_all(solutions_str.as_bytes())?;
             println!(
                 "Solutions saved to {:?}",
-                &cmd_args.output.clone().unwrap().canonicalize()?
+                cmd_args.output.clone().unwrap().canonicalize()?
             )
         }
     }
