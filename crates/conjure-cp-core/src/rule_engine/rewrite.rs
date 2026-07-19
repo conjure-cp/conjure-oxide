@@ -3434,11 +3434,13 @@ fn dirty_ancestors_after_focus_change(
 ) -> AncestorCacheMappings {
     let mut ancestor_mappings = Vec::new();
     let mut ancestor_index = 0;
+    let mut child_id = node_id;
     let mut ancestor = arena.parent(node_id);
     while let Some(ancestor_id) = ancestor {
         dirty_trace.ancestor_clears += 1;
         arena.clear_clean_rule_priority(ancestor_id);
-        arena.rebuild_payload_from_children(ancestor_id);
+        // Same-arity parent update: clone only the changed child into the parent payload.
+        arena.sync_payload_for_changed_child(ancestor_id, child_id);
         if let Some(hashes) = old_ancestor_content_hashes.as_ref()
             && let Some(&old_hash) = hashes.get(ancestor_index)
         {
@@ -3447,6 +3449,7 @@ fn dirty_ancestors_after_focus_change(
                 clone_arena_expr_with_content_hash(arena, ancestor_id, dirty_trace),
             ));
         }
+        child_id = ancestor_id;
         ancestor = arena.parent(ancestor_id);
         ancestor_index += 1;
     }

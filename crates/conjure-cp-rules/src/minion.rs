@@ -878,17 +878,13 @@ fn match_lee_complement(complement: &Expr, expected_inner: &Expr) -> Option<i32>
             (inner.as_ref() == expected_inner).then_some(alphabet_size)
         }
         Expr::Sum(_, matrix) => {
-            let terms = matrix
-                .as_ref()
-                .clone()
-                .unwrap_list()
-                .or_else(|| {
-                    matrix
-                        .as_ref()
-                        .clone()
-                        .unwrap_matrix_unchecked()
-                        .map(|(elems, _)| elems)
-                })?;
+            let terms = matrix.as_ref().clone().unwrap_list().or_else(|| {
+                matrix
+                    .as_ref()
+                    .clone()
+                    .unwrap_matrix_unchecked()
+                    .map(|(elems, _)| elems)
+            })?;
             if terms.len() != 2 {
                 return None;
             }
@@ -2538,16 +2534,10 @@ mod tests {
         let abs_arm = Expr::Abs(Metadata::new(), Moo::new(diff.clone()));
         let complement = Expr::Minus(
             Metadata::new(),
-            Moo::new(Expr::Atomic(
-                Metadata::new(),
-                Atom::Literal(Lit::Int(4)),
-            )),
+            Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(4)))),
             Moo::new(Expr::Abs(Metadata::new(), Moo::new(diff))),
         );
-        let expr = Expr::Min(
-            Metadata::new(),
-            Moo::new(matrix_expr![abs_arm, complement]),
-        );
+        let expr = Expr::Min(Metadata::new(), Moo::new(matrix_expr![abs_arm, complement]));
 
         let rule = get_rule_by_name("introduce_lee_distance_atom").expect("rule registered");
         let result = rule
@@ -2616,10 +2606,7 @@ mod tests {
                 ),
             ]),
         );
-        let expr = Expr::Min(
-            Metadata::new(),
-            Moo::new(matrix_expr![abs_arm, complement]),
-        );
+        let expr = Expr::Min(Metadata::new(), Moo::new(matrix_expr![abs_arm, complement]));
 
         let rule = get_rule_by_name("introduce_lee_distance_atom").expect("rule registered");
         rule.apply(&expr, &SymbolTable::new())

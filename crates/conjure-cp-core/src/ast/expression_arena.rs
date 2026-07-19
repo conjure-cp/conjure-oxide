@@ -258,6 +258,48 @@ impl ExpressionArena {
         node.generation = node.generation.wrapping_add(1);
     }
 
+    /// Syncs the parent payload after a direct child changed.
+    ///
+    /// Uses [`Uniplate::try_replace_child_at`](uniplate::Uniplate::try_replace_child_at) so
+    /// same-arity updates avoid cloning siblings. Falls back to a full rebuild if the child is
+    /// missing or in-place replace fails (e.g. arity mismatch).
+    pub fn sync_payload_for_changed_child(
+        &mut self,
+        parent_id: ExpressionNodeId,
+        child_id: ExpressionNodeId,
+    ) {
+        let Some(index) = self
+            .children(parent_id)
+            .iter()
+            .position(|&id| id == child_id)
+        else {
+            self.rebuild_payload_from_children(parent_id);
+            return;
+        };
+
+        let child_expr = self.direct_child_expression(child_id);
+        let clean_rule_priority = self.node(parent_id).clean_rule_priority;
+        let replaced = self
+            .node_mut(parent_id)
+            .expr
+            .try_replace_child_at(index, child_expr);
+        if !replaced {
+            self.rebuild_payload_from_children(parent_id);
+            return;
+        }
+
+        let node = self.node_mut(parent_id);
+        node.expr.meta_ref().clear_clean_rule_priority();
+        if clean_rule_priority != NO_CLEAN_RULE_PRIORITY {
+            node.expr
+                .meta_ref()
+                .mark_clean_for_rule_priority(clean_rule_priority);
+        }
+        node.expr.invalidate_cached_content_hash();
+        node.cached_content_hash = None;
+        node.generation = node.generation.wrapping_add(1);
+    }
+
     /// Clears cached arena content hashes from `id` through the root.
     pub fn invalidate_content_hash_to_root(&mut self, id: ExpressionNodeId) {
         let mut node = Some(id);
@@ -509,6 +551,91 @@ mod tests {
 
         assert_eq!(arena.expression(eq_id), &eq(int(3), int(2)));
         assert_eq!(arena.expression(root_id), &root(vec![eq(int(3), int(2))]));
+    }
+
+    #[test]
+    fn sync_and_rebuild_agree_after_child_replacement() {
+        let mut sync_arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2)), int(9)]));
+        let mut rebuild_arena = sync_arena.clone();
+
+        for arena in [&mut sync_arena, &mut rebuild_arena] {
+            let root_id = arena.root();
+            let eq_id = arena.children(root_id)[0];
+            let left = arena.children(eq_id)[0];
+            arena.replace_subtree(left, int(3));
+        }
+
+        let sync_root = sync_arena.root();
+        let sync_eq = sync_arena.children(sync_root)[0];
+        let sync_left = sync_arena.children(sync_eq)[0];
+        sync_arena.sync_payload_for_changed_child(sync_eq, sync_left);
+        sync_arena.sync_payload_for_changed_child(sync_root, sync_eq);
+
+        let rebuild_root = rebuild_arena.root();
+        let rebuild_eq = rebuild_arena.children(rebuild_root)[0];
+        rebuild_arena.rebuild_payload_from_children(rebuild_eq);
+        rebuild_arena.rebuild_payload_from_children(rebuild_root);
+
+        assert_eq!(
+            sync_arena.into_root_expression(),
+            rebuild_arena.into_root_expression()
+        );
+    }
+
+    #[test]
+    fn syncs_same_arity_ancestor_payload_without_full_rebuild() {
+        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2)), int(9)]));
+        let root_id = arena.root();
+        let eq_id = arena.children(root_id)[0];
+        let left = arena.children(eq_id)[0];
+        let untouched = arena.children(root_id)[1];
+        let untouched_before = arena.expression(untouched).clone();
+
+        arena.replace_subtree(left, int(3));
+        arena.sync_payload_for_changed_child(eq_id, left);
+        arena.sync_payload_for_changed_child(root_id, eq_id);
+
+        assert_eq!(arena.expression(eq_id), &eq(int(3), int(2)));
+        assert_eq!(
+            arena.expression(root_id),
+            &root(vec![eq(int(3), int(2)), int(9)])
+        );
+        // Sibling payload slot is left in place (same expression value / identity of content).
+        assert_eq!(arena.expression(untouched), &untouched_before);
+        assert_eq!(
+            arena.into_root_expression(),
+            root(vec![eq(int(3), int(2)), int(9)])
+        );
+    }
+
+    #[test]
+    fn syncs_wide_matrix_child_slot_in_place() {
+        use crate::ast::{AbstractLiteral, Domain, Range};
+        use crate::into_matrix_expr;
+
+        let elems: Vec<Expression> = (0..32).map(int).collect();
+        let matrix = into_matrix_expr![elems; Domain::int(vec![Range::Bounded(1, 32)])];
+        let mut arena =
+            ExpressionArena::from_root(Expression::And(Metadata::new(), Moo::new(matrix)));
+        let and_id = arena.root();
+        let matrix_id = arena.children(and_id)[0];
+        let target = arena.children(matrix_id)[17];
+
+        arena.replace_subtree(target, int(99));
+        arena.sync_payload_for_changed_child(matrix_id, target);
+        arena.sync_payload_for_changed_child(and_id, matrix_id);
+
+        let Expression::And(_, inner) = arena.expression(and_id) else {
+            panic!("expected And");
+        };
+        let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref()
+        else {
+            panic!("expected matrix");
+        };
+        assert_eq!(elems.len(), 32);
+        assert_eq!(elems[17], int(99));
+        assert_eq!(elems[0], int(0));
+        assert_eq!(elems[31], int(31));
     }
 
     #[test]

@@ -696,6 +696,74 @@ where
             }
         }
     }
+
+    fn children_bi_count(&self) -> usize {
+        // Manual `biplate` (not derive): delegate counts to the plated containers so wide
+        // matrices/lists stay O(1) instead of materialising `children_bi`.
+        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
+            return 1;
+        }
+        match self {
+            AbstractLiteral::Set(v)
+            | AbstractLiteral::MSet(v)
+            | AbstractLiteral::Sequence(v)
+            | AbstractLiteral::Tuple(v)
+            | AbstractLiteral::Matrix(v, _) => <Vec<U> as Biplate<To>>::children_bi_count(v),
+            AbstractLiteral::Record(entries) => {
+                <Vec<Field<U>> as Biplate<To>>::children_bi_count(entries)
+            }
+            AbstractLiteral::Variant(entry) => {
+                <Moo<Field<U>> as Biplate<To>>::children_bi_count(entry)
+            }
+            AbstractLiteral::Relation(elems) | AbstractLiteral::Partition(elems) => {
+                <Vec<Vec<U>> as Biplate<To>>::children_bi_count(elems)
+            }
+            AbstractLiteral::Function(_) => <Self as Biplate<To>>::children_bi(self).len(),
+        }
+    }
+
+    fn try_replace_child_at_bi(&mut self, index: usize, child: To) -> bool {
+        // Same as `children_bi_count`: keep in-place updates for owned vectors (lee-distance).
+        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
+            if index != 0 {
+                return false;
+            }
+            // SAFETY: TypeId equality means To and AbstractLiteral<U> are the same type.
+            unsafe {
+                let child_as_self = std::mem::transmute_copy::<To, AbstractLiteral<U>>(&child);
+                std::mem::forget(child);
+                *self = child_as_self;
+            }
+            return true;
+        }
+        match self {
+            AbstractLiteral::Set(v)
+            | AbstractLiteral::MSet(v)
+            | AbstractLiteral::Sequence(v)
+            | AbstractLiteral::Tuple(v)
+            | AbstractLiteral::Matrix(v, _) => {
+                <Vec<U> as Biplate<To>>::try_replace_child_at_bi(v, index, child)
+            }
+            AbstractLiteral::Record(entries) => {
+                <Vec<Field<U>> as Biplate<To>>::try_replace_child_at_bi(entries, index, child)
+            }
+            AbstractLiteral::Variant(entry) => {
+                <Moo<Field<U>> as Biplate<To>>::try_replace_child_at_bi(entry, index, child)
+            }
+            AbstractLiteral::Relation(elems) | AbstractLiteral::Partition(elems) => {
+                <Vec<Vec<U>> as Biplate<To>>::try_replace_child_at_bi(elems, index, child)
+            }
+            AbstractLiteral::Function(_) => {
+                let mut children = <Self as Biplate<To>>::children_bi(self);
+                if index >= children.len() {
+                    return false;
+                }
+                children[index] = child;
+                *self = self.with_children_bi(children);
+                true
+            }
+        }
+    }
 }
 
 impl TryFrom<Literal> for i32 {
