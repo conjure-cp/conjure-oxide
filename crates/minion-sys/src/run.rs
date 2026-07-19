@@ -112,14 +112,45 @@ pub enum ValueOrder {
     Random,
 }
 
+/// Minion preprocess strength applied before search.
+///
+/// Matches the `-preprocess` levels accepted by the Minion CLI. SavileRow's
+/// default is [`PreprocessLevel::SacBoundsLimit`], which is substantially
+/// stronger than Minion's own default of GAC.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum PreprocessLevel {
+    None,
+    Gac,
+    SacBounds,
+    /// Restricted SACBounds (`SACBounds_limit`). SavileRow's default.
+    #[default]
+    SacBoundsLimit,
+    Sac,
+    SsacBounds,
+    Ssac,
+}
+
 /// Optional runtime controls for [`run_minion_with_options`].
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 pub struct RunOptions {
     /// Override Minion value ordering.
     ///
     /// When unset, Minion keeps its default behaviour (or whatever was encoded
     /// in the input model).
     pub value_order: Option<ValueOrder>,
+    /// Preprocess level applied before search.
+    ///
+    /// Defaults to [`PreprocessLevel::SacBoundsLimit`] to match SavileRow.
+    pub preprocess: PreprocessLevel,
+}
+
+impl Default for RunOptions {
+    fn default() -> Self {
+        Self {
+            value_order: None,
+            preprocess: PreprocessLevel::SacBoundsLimit,
+        }
+    }
 }
 
 /// State passed through the C callback's `void* userdata` pointer.
@@ -255,6 +286,36 @@ pub fn run_minion_with_options(
                 bias: 0,
             };
         }
+        (*search_method).preprocess = match options.preprocess {
+            PreprocessLevel::None => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_None,
+                limit: false,
+            },
+            PreprocessLevel::Gac => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_GAC,
+                limit: false,
+            },
+            PreprocessLevel::SacBounds => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SACBounds,
+                limit: false,
+            },
+            PreprocessLevel::SacBoundsLimit => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SACBounds,
+                limit: true,
+            },
+            PreprocessLevel::Sac => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SAC,
+                limit: false,
+            },
+            PreprocessLevel::SsacBounds => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SSACBounds,
+                limit: false,
+            },
+            PreprocessLevel::Ssac => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SSAC,
+                limit: false,
+            },
+        };
 
         convert_model_to_raw(search_instance, &model, &mut state.print_vars)?;
 

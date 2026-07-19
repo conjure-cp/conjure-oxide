@@ -202,6 +202,7 @@ impl SolverAdaptor for Minion {
             }),
             RunOptions {
                 value_order: self.value_order.map(Into::into),
+                ..Default::default()
             },
         )
         .map_err(minion_error_to_solver_error)?;

@@ -666,6 +666,16 @@ fn flatten_expression_to_atom(
         return Ok(atom);
     }
 
+    // Minion treats BOOL as 0/1, so `toInt(atom)` needs no aux variable.
+    // SavileRow posts bools directly into sumleq/sumgeq; without this, every
+    // `toInt(b)` becomes `__ =aux toInt(b)` and roughly doubles the variable count
+    // on models like solitaire_battleship.
+    if let Expr::ToInt(_, inner) = &expr
+        && let Expr::Atomic(_, atom) = inner.as_ref()
+    {
+        return Ok(atom.clone());
+    }
+
     let aux_var_info = to_aux_var(&expr, symtab).ok_or(RuleNotApplicable)?;
     *symtab = aux_var_info.symbols();
     top_level_exprs.push(aux_var_info.top_level_expr());
@@ -2429,6 +2439,39 @@ fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
+/// Converts an equality between a decision variable and a constant into `w-literal`.
+///
+/// ```text
+/// x = k  ~>  w-literal(x, k)
+/// k = x  ~>  w-literal(x, k)
+/// ```
+///
+/// SavileRow posts forced assignments this way. Minion's `eq(x,k)` is valid, but
+/// `w-literal` is the watched form used for domain assignments and propagates
+/// more cleanly alongside other watched constraints.
+#[register_rule("Minion", 4400, [Eq])]
+fn eq_atom_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Eq(m, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (reference, lit) = match (a.as_ref(), b.as_ref()) {
+        (Expr::Atomic(_, Atom::Reference(reference)), Expr::Atomic(_, Atom::Literal(lit))) => {
+            (reference, lit)
+        }
+        (Expr::Atomic(_, Atom::Literal(lit)), Expr::Atomic(_, Atom::Reference(reference))) => {
+            (reference, lit)
+        }
+        _ => return Err(RuleNotApplicable),
+    };
+
+    Ok(RuleEffect::pure(Expr::FlatWatchedLiteral(
+        m.clone(),
+        reference.clone(),
+        lit.clone(),
+    )))
+}
+
 /// Converts an equality to a boolean constraint into a `reify` constraint.
 ///
 /// ```text
@@ -2666,6 +2709,68 @@ mod tests {
         assert!(
             matches!(result.new_expression, Expr::FlatMinEq(_, vars, _) if vars.len() == 2),
             "auxiliary min must lower to FlatMinEq"
+        );
+    }
+
+    #[test]
+    fn introduce_weighted_sum_uses_bool_atom_without_to_int_aux() {
+        let bool_var = bool_atom("b");
+        let to_int = Expr::ToInt(Metadata::new(), Moo::new(bool_var.clone()));
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(Expr::Sum(
+                Metadata::new(),
+                Moo::new(matrix_expr![to_int]),
+            )),
+            Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(1)))),
+        );
+
+        let rule =
+            get_rule_by_name("introduce_weighted_sumleq_sumgeq").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("sum of toInt(bool) should lower");
+
+        assert!(
+            result.new_top.is_empty(),
+            "toInt(bool atom) must not create aux vars; got {:?}",
+            result.new_top
+        );
+        match &result.new_expression {
+            Expr::And(_, matrix) => {
+                let list = matrix.as_ref().clone().unwrap_list().expect("and list");
+                assert!(
+                    list.iter().any(|c| matches!(
+                        c,
+                        Expr::FlatSumLeq(_, vars, _) | Expr::FlatSumGeq(_, vars, _)
+                        if vars.len() == 1
+                    )),
+                    "expected FlatSum over the bool atom, got {:?}",
+                    result.new_expression
+                );
+            }
+            other => panic!("expected and of sumleq/sumgeq, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn eq_atom_literal_to_wliteral_lowers_forced_assignment() {
+        let expr = Expr::Eq(
+            Metadata::new(),
+            Moo::new(bool_atom("x")),
+            Moo::new(bool_lit(false)),
+        );
+        let rule = get_rule_by_name("eq_atom_literal_to_wliteral").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("x = false should become w-literal");
+        assert!(
+            matches!(
+                result.new_expression,
+                Expr::FlatWatchedLiteral(_, _, Lit::Bool(false))
+            ),
+            "expected FlatWatchedLiteral(x, false), got {:?}",
+            result.new_expression
         );
     }
 
