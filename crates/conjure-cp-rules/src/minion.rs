@@ -780,6 +780,176 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
+/// Lowers a Lee-metric atom `min([|e|, K - |e|])` to flat Minion constraints in one step.
+///
+/// The alphabet-size form `min([|x - y|, K - |x - y|])` otherwise pays a long micro-pipeline
+/// (`minus_to_sum`, flatten, `introduce_abseq`, `introduce_mineq`, `matrix_to_list`) and, worse,
+/// duplicates work on the two copies of `|e|`. This rule runs above `minus_to_sum` (8400) so the
+/// shared absolute value is preserved, and emits:
+///
+/// - `diff` channelled from `e` (weighted sum when `e` is an atomic minus),
+/// - `AbsEq(abs, diff)`,
+/// - `abs + complement = K`,
+/// - `FlatMinEq([abs, complement], result)`.
+///
+/// Also accepts the post-`minus_to_sum` complement shape `sum([K, -(|e|)])`.
+#[register_rule("Minion", 8600, [Min])]
+fn introduce_lee_distance_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Some((inner, alphabet_size)) = match_lee_distance_min(expr) else {
+        return Err(RuleNotApplicable);
+    };
+
+    let result_domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
+    let abs_domain = Expr::Abs(Metadata::new(), Moo::new(inner.clone()))
+        .domain_of()
+        .ok_or(ApplicationError::DomainError)?;
+
+    let mut symbols = symbols.clone();
+    let mut new_tops: Vec<Expr> = Vec::new();
+
+    let diff_atom = flatten_lee_diff_to_atom(inner, &mut symbols, &mut new_tops)?;
+
+    let abs_atom = Atom::new_ref(symbols.gen_find(&abs_domain));
+    new_tops.push(Expr::FlatAbsEq(
+        Metadata::new(),
+        Moo::new(abs_atom.clone()),
+        Moo::new(diff_atom),
+    ));
+
+    let complement_domain = Domain::int(vec![Range::Bounded(0, alphabet_size)]);
+    let complement_atom = Atom::new_ref(symbols.gen_find(&complement_domain));
+    let alphabet_atom = Atom::Literal(Lit::Int(alphabet_size));
+    new_tops.push(Expr::FlatSumLeq(
+        Metadata::new(),
+        vec![abs_atom.clone(), complement_atom.clone()],
+        alphabet_atom.clone(),
+    ));
+    new_tops.push(Expr::FlatSumGeq(
+        Metadata::new(),
+        vec![abs_atom.clone(), complement_atom.clone()],
+        alphabet_atom,
+    ));
+
+    let result_atom = Atom::new_ref(symbols.gen_find(&result_domain));
+    new_tops.push(Expr::FlatMinEq(
+        Metadata::new(),
+        vec![abs_atom, complement_atom],
+        result_atom.clone(),
+    ));
+
+    Ok(RuleEffect::new(
+        Expr::Atomic(Metadata::new(), result_atom),
+        new_tops,
+        symbols,
+    ))
+}
+
+/// Match `min([|e|, K - |e|])` / `min([|e|, sum([K, -(|e|)])])`, returning `(e, K)`.
+fn match_lee_distance_min(expr: &Expr) -> Option<(Expr, i32)> {
+    let Expr::Min(_, inside) = expr else {
+        return None;
+    };
+    let (elems, _) = inside.as_ref().clone().unwrap_matrix_unchecked()?;
+    if elems.len() != 2 {
+        return None;
+    }
+    match_lee_distance_arms(&elems[0], &elems[1])
+        .or_else(|| match_lee_distance_arms(&elems[1], &elems[0]))
+}
+
+fn match_lee_distance_arms(abs_arm: &Expr, complement_arm: &Expr) -> Option<(Expr, i32)> {
+    let Expr::Abs(_, inner) = abs_arm else {
+        return None;
+    };
+    let alphabet_size = match_lee_complement(complement_arm, inner.as_ref())?;
+    if alphabet_size <= 0 {
+        return None;
+    }
+    Some((Moo::unwrap_or_clone(inner.clone()), alphabet_size))
+}
+
+fn match_lee_complement(complement: &Expr, expected_inner: &Expr) -> Option<i32> {
+    match complement {
+        Expr::Minus(_, lhs, rhs) => {
+            let alphabet_size = as_int_literal(lhs.as_ref())?;
+            let Expr::Abs(_, inner) = rhs.as_ref() else {
+                return None;
+            };
+            (inner.as_ref() == expected_inner).then_some(alphabet_size)
+        }
+        Expr::Sum(_, matrix) => {
+            let terms = matrix
+                .as_ref()
+                .clone()
+                .unwrap_list()
+                .or_else(|| {
+                    matrix
+                        .as_ref()
+                        .clone()
+                        .unwrap_matrix_unchecked()
+                        .map(|(elems, _)| elems)
+                })?;
+            if terms.len() != 2 {
+                return None;
+            }
+            match_lee_sum_complement(&terms[0], &terms[1], expected_inner)
+                .or_else(|| match_lee_sum_complement(&terms[1], &terms[0], expected_inner))
+        }
+        _ => None,
+    }
+}
+
+fn match_lee_sum_complement(a: &Expr, b: &Expr, expected_inner: &Expr) -> Option<i32> {
+    let alphabet_size = as_int_literal(a)?;
+    let Expr::Neg(_, negand) = b else {
+        return None;
+    };
+    let Expr::Abs(_, inner) = negand.as_ref() else {
+        return None;
+    };
+    (inner.as_ref() == expected_inner).then_some(alphabet_size)
+}
+
+fn as_int_literal(expr: &Expr) -> Option<i32> {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(Lit::Int(n))) => Some(*n),
+        _ => None,
+    }
+}
+
+/// Channel `e` into an atom for the Lee abs argument, preferring a flat weighted sum for `a - b`.
+fn flatten_lee_diff_to_atom(
+    inner: Expr,
+    symbols: &mut SymbolTable,
+    top_level_exprs: &mut Vec<Expr>,
+) -> Result<Atom, ApplicationError> {
+    if let Expr::Minus(_, lhs, rhs) = &inner {
+        let lhs_atom: Result<&Atom, _> = lhs.as_ref().try_into();
+        let rhs_atom: Result<&Atom, _> = rhs.as_ref().try_into();
+        if let (Ok(a), Ok(b)) = (lhs_atom, rhs_atom) {
+            let domain = inner.domain_of().ok_or(ApplicationError::DomainError)?;
+            let diff = Atom::new_ref(symbols.gen_find(&domain));
+            let coefficients = vec![Lit::Int(1), Lit::Int(-1)];
+            let vars = vec![a.clone(), b.clone()];
+            top_level_exprs.push(Expr::FlatWeightedSumLeq(
+                Metadata::new(),
+                coefficients.clone(),
+                vars.clone(),
+                Moo::new(diff.clone()),
+            ));
+            top_level_exprs.push(Expr::FlatWeightedSumGeq(
+                Metadata::new(),
+                coefficients,
+                vars,
+                Moo::new(diff.clone()),
+            ));
+            return Ok(diff);
+        }
+    }
+
+    flatten_expression_to_atom(inner, symbols, top_level_exprs)
+}
+
 /// Lowers a bare `min([a, b, ...])` to an auxiliary bound by Minion's native `min` constraint.
 ///
 /// Priority is above Base `min_to_var` so Minion keeps Savile Row's `min(vars, aux)` encoding
@@ -2358,6 +2528,113 @@ mod tests {
     /// Atomic Boolean literal.
     fn bool_lit(value: bool) -> Expr {
         Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
+    }
+
+    #[test]
+    fn introduce_lee_distance_atom_lowers_min_abs_complement() {
+        let a = int_atom("a");
+        let b = int_atom("b");
+        let diff = Expr::Minus(Metadata::new(), Moo::new(a), Moo::new(b));
+        let abs_arm = Expr::Abs(Metadata::new(), Moo::new(diff.clone()));
+        let complement = Expr::Minus(
+            Metadata::new(),
+            Moo::new(Expr::Atomic(
+                Metadata::new(),
+                Atom::Literal(Lit::Int(4)),
+            )),
+            Moo::new(Expr::Abs(Metadata::new(), Moo::new(diff))),
+        );
+        let expr = Expr::Min(
+            Metadata::new(),
+            Moo::new(matrix_expr![abs_arm, complement]),
+        );
+
+        let rule = get_rule_by_name("introduce_lee_distance_atom").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("Lee atom should lower in one step");
+
+        assert!(
+            matches!(result.new_expression, Expr::Atomic(_, _)),
+            "Lee min must become an auxiliary atom"
+        );
+        assert!(
+            result
+                .new_top
+                .iter()
+                .any(|c| matches!(c, Expr::FlatAbsEq(_, _, _))),
+            "must post FlatAbsEq for the shared absolute value"
+        );
+        assert!(
+            result
+                .new_top
+                .iter()
+                .any(|c| matches!(c, Expr::FlatMinEq(_, vars, _) if vars.len() == 2)),
+            "must post FlatMinEq over abs and complement"
+        );
+        assert!(
+            result
+                .new_top
+                .iter()
+                .filter(|c| matches!(c, Expr::FlatSumLeq(_, vars, _) if vars.len() == 2))
+                .count()
+                == 1
+                && result
+                    .new_top
+                    .iter()
+                    .filter(|c| matches!(c, Expr::FlatSumGeq(_, vars, _) if vars.len() == 2))
+                    .count()
+                    == 1,
+            "must channel abs + complement = alphabet size"
+        );
+        assert!(
+            result.new_top.iter().any(|c| {
+                matches!(
+                    c,
+                    Expr::FlatWeightedSumLeq(_, coeffs, vars, _)
+                        | Expr::FlatWeightedSumGeq(_, coeffs, vars, _)
+                        if coeffs.len() == 2 && vars.len() == 2
+                )
+            }),
+            "atomic minus should channel through a weighted sum"
+        );
+    }
+
+    #[test]
+    fn introduce_lee_distance_atom_accepts_sum_complement_form() {
+        let a = int_atom("a");
+        let b = int_atom("b");
+        let diff = Expr::Minus(Metadata::new(), Moo::new(a), Moo::new(b));
+        let abs_arm = Expr::Abs(Metadata::new(), Moo::new(diff.clone()));
+        let complement = Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![
+                Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(4))),
+                Expr::Neg(
+                    Metadata::new(),
+                    Moo::new(Expr::Abs(Metadata::new(), Moo::new(diff))),
+                ),
+            ]),
+        );
+        let expr = Expr::Min(
+            Metadata::new(),
+            Moo::new(matrix_expr![abs_arm, complement]),
+        );
+
+        let rule = get_rule_by_name("introduce_lee_distance_atom").expect("rule registered");
+        rule.apply(&expr, &SymbolTable::new())
+            .expect("sum-form Lee complement should also match");
+    }
+
+    #[test]
+    fn introduce_lee_distance_atom_rejects_unrelated_min() {
+        let expr = Expr::Min(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_atom("a"), int_atom("b")]),
+        );
+        let rule = get_rule_by_name("introduce_lee_distance_atom").expect("rule registered");
+        let err = rule.apply(&expr, &SymbolTable::new()).unwrap_err();
+        assert!(matches!(err, ApplicationError::RuleNotApplicable));
     }
 
     #[test]
