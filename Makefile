@@ -66,22 +66,16 @@ test-coverage:
 	./tools/coverage.sh
 
 .PHONY: test-accept
-## Runs all tests in accept mode
+## Runs all tests in accept mode (also updates expected run times)
 test-accept: install .installed-cargo-nextest.checkpoint
 	ACCEPT=true $(CARGO_DOC_TEST_WORKSPACE)
 	ACCEPT=true $(CARGO_TEST_WORKSPACE)
 
-.PHONY: test-accept-with-slower-times
-## Runs all tests in accept mode, only increases expected run times
-test-accept-with-slower-times: install .installed-cargo-nextest.checkpoint
-	ACCEPT=with-slower-times $(CARGO_DOC_TEST_WORKSPACE)
-	ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
-
-.PHONY: test-accept-with-exact-times
-## Runs all tests in accept mode, updates expected run times exactly
-test-accept-with-exact-times: install .installed-cargo-nextest.checkpoint
-	ACCEPT=with-exact-times $(CARGO_DOC_TEST_WORKSPACE)
-	ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
+.PHONY: test-accept-with-max-times
+## Runs all tests in accept mode, only raising expected run times (max of current and observed)
+test-accept-with-max-times: install .installed-cargo-nextest.checkpoint
+	ACCEPT=with-max-times $(CARGO_DOC_TEST_WORKSPACE)
+	ACCEPT=with-max-times $(CARGO_TEST_WORKSPACE)
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 

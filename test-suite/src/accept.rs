@@ -4,16 +4,13 @@ use std::env;
 pub enum AcceptMode {
     /// Normal test mode: compare generated files with expected files and do not rewrite fixtures.
     Disabled,
-    /// Rewrite expected output fixtures, but leave expected runtime budgets untouched.
+    /// Rewrite expected output fixtures and runtime budgets exactly as observed.
     Accept,
-    /// Rewrite output fixtures and runtime budgets exactly as observed.
-    AcceptWithTimes,
-    /// Rewrite output fixtures, but only raise runtime budgets.
+    /// Rewrite output fixtures, but only raise runtime budgets (max of current and observed).
     ///
-    /// Catching slowdowns is more important than automatically accepting speedups. Runtimes
-    /// are non-deterministic and machine/load dependent, so a significant slowdown may be
-    /// worth noticing while a one-off faster run should not lower the recorded budget.
-    AcceptWithSlowerTimes,
+    /// Useful when recording budgets over several runs: each run keeps the slowest time seen so
+    /// far, so a one-off fast fluke does not lower the recorded value.
+    AcceptWithMaxTimes,
 }
 
 impl AcceptMode {
@@ -21,9 +18,7 @@ impl AcceptMode {
         match env::var("ACCEPT").as_deref() {
             Ok("false") => Self::Disabled,
             Ok("true") => Self::Accept,
-            Ok("with-times") => Self::AcceptWithTimes,
-            Ok("with-exact-times") => Self::AcceptWithTimes,
-            Ok("with-slower-times") => Self::AcceptWithSlowerTimes,
+            Ok("with-max-times") => Self::AcceptWithMaxTimes,
             _ => Self::Disabled,
         }
     }
@@ -33,13 +28,13 @@ impl AcceptMode {
     }
 
     pub fn records_expected_time(self) -> bool {
-        matches!(self, Self::AcceptWithTimes | Self::AcceptWithSlowerTimes)
+        matches!(self, Self::Accept | Self::AcceptWithMaxTimes)
     }
 
     pub fn expected_time_to_record(self, current: Option<u64>, observed: u64) -> Option<u64> {
         match self {
-            Self::AcceptWithTimes => Some(observed),
-            Self::AcceptWithSlowerTimes if current.is_none_or(|current| observed > current) => {
+            Self::Accept => Some(observed),
+            Self::AcceptWithMaxTimes if current.is_none_or(|current| observed > current) => {
                 Some(observed)
             }
             _ => None,
@@ -47,6 +42,6 @@ impl AcceptMode {
     }
 
     pub fn refresh_hint() -> &'static str {
-        "Run with ACCEPT=true, ACCEPT=with-slower-times, or ACCEPT=with-exact-times"
+        "Run with ACCEPT=true or ACCEPT=with-max-times"
     }
 }

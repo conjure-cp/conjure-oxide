@@ -39,7 +39,9 @@ Instead of comparing against the existing JSON files, the test harness will:
 2. Run the new `conjure-oxide` implementation.
 3. Compare the solutions. If they match, it'll overwrite the stored AST and solution files with the new output.
 
-`ACCEPT=true` lets you update expected outputs, while still guarding correctness by checking against old Conjure.
+`ACCEPT=true` (or `make test-accept`) updates expected outputs and overwrites
+`expected-time` with the current observed runtime, while still guarding correctness by
+checking against old Conjure.
 
 When a test fails, the harness writes debugging artifacts under `diagnostics/` in that
 test's directory (gitignored): `failure.json`, Conjure/Savile Row `conjure/*.eprime-minion`,
@@ -47,11 +49,15 @@ and oxide generated traces / Minion snapshots when available. Diagnostics are ca
 each stage runs; on timeout the partial snapshot is kept and `stats.toml` is set to
 `timeout(N)`.
 
-To update `stats.toml` `expected-time` entries, use `make test-accept-with-slower-times`. This only
-writes a new time when the rounded runtime is slower than the current value, so speedups
-remain visible as diffs. Use `make test-accept-with-exact-times` to overwrite times with
-the current observed runtime. The exact-times target also writes a Git-diff-based timing
-comparison CSV to `target/accept-times-diff.csv`.
+To only raise `expected-time` (max of the current budget and the observed time), use
+`make test-accept-with-max-times` (`ACCEPT=with-max-times`). Running this a few times keeps
+the slowest observed budget and avoids recording a fast fluke. To discard noisy `*-time`
+field updates in `config.toml` / `stats.toml` while keeping other local edits, run
+`./tools/discard-config-time-changes.sh`.
+
+After an accept run, you can write a Git-diff-based timing comparison CSV with
+`python3 ./tools/accept-times-diff-report.py` (default output:
+`target/accept-times-diff.csv`).
 
 `stats.toml` also records the last accepted status, Conjure and oxide timing stats, and
 aggregate rule trace application counts derived from the expected rule trace snapshots.
