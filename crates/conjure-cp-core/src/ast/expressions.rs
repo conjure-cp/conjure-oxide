@@ -731,22 +731,10 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     // +,-,/,* are all monotone, so this assumption should be fine for now...
 
     let expr = exprs.pop()?;
-    let dom = expr.domain_of()?;
-    let resolved = dom.resolve().ok()?;
-    let GroundDomain::Int(ranges) = resolved.as_ref() else {
-        return None;
-    };
-
-    let (mut current_min, mut current_max) = range_vec_bounds_i32(ranges)?;
+    let (mut current_min, mut current_max) = i32_bounds_from_domain(&expr.domain_of()?)?;
 
     for expr in exprs {
-        let dom = expr.domain_of()?;
-        let resolved = dom.resolve().ok()?;
-        let GroundDomain::Int(ranges) = resolved.as_ref() else {
-            return None;
-        };
-
-        let (min, max) = range_vec_bounds_i32(ranges)?;
+        let (min, max) = i32_bounds_from_domain(&expr.domain_of()?)?;
 
         // all the possible new values for current_min / current_max
         let minmax = op(min, current_max)?;
@@ -769,6 +757,19 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
         Some(Domain::int(vec![Range::Single(current_min)]))
     } else {
         Some(Domain::int(vec![Range::Bounded(current_min, current_max)]))
+    }
+}
+
+/// Integer bounds for arithmetic domain inference.
+///
+/// Treats `bool` as `int(0..1)` so products/sums of bool atoms (e.g. after
+/// stripping `toInt(bool)` for Minion) still get a useful Int domain.
+fn i32_bounds_from_domain(dom: &DomainPtr) -> Option<(i32, i32)> {
+    let resolved = dom.resolve().ok()?;
+    match resolved.as_ref() {
+        GroundDomain::Int(ranges) => range_vec_bounds_i32(ranges),
+        GroundDomain::Bool => Some((0, 1)),
+        _ => None,
     }
 }
 
