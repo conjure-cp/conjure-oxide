@@ -187,6 +187,8 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
             Moo::new(matrix_expr![y.clone().into(), next_factor]),
         )
         .domain_of()
+        // Essence domain_of rejects bool arithmetic; Minion treats BOOL as 0/1.
+        .or_else(|| minion_product_aux_domain_from_atoms(&y, &next_factor_atom))
         .ok_or(ApplicationError::DomainError)?;
 
         let aux_decl = symbols.gen_find(&aux_domain);
@@ -2169,17 +2171,23 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     let mut new_factors = vec![];
     let mut top_level_exprs = vec![];
     let mut symtab = symtab.clone();
+    let mut changed = false;
 
     for factor in factors {
-        new_factors.push(Expr::Atomic(
-            Metadata::new(),
-            flatten_expression_to_atom(factor, &mut symtab, &mut top_level_exprs)?,
-        ));
+        // Already-flat atoms are left alone. Non-atoms (including toInt(bool),
+        // which Minion treats as the bool atom itself) must be rewritten.
+        let was_atomic = matches!(&factor, Expr::Atomic(_, _));
+        let atom = flatten_expression_to_atom(factor, &mut symtab, &mut top_level_exprs)?;
+        if !was_atomic {
+            changed = true;
+        }
+        new_factors.push(Expr::Atomic(Metadata::new(), atom));
     }
 
     // have we done anything?
-    // if we have created any aux-vars, they will have added a top_level_declaration.
-    if top_level_exprs.is_empty() {
+    // Aux-vars add top-level declarations; stripping toInt(bool) → bool atom
+    // rewrites factors without creating auxes, so also count that as progress.
+    if !changed && top_level_exprs.is_empty() {
         return Err(RuleNotApplicable);
     }
 
