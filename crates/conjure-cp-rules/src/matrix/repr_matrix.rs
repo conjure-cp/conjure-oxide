@@ -487,7 +487,12 @@ fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> Applicat
 }
 
 /// Converts a reference to a 1d-matrix not contained within an indexing or slicing expression to its atoms.
-#[register_rule("ReprMatrixToAtom", 2000)]
+///
+/// Prefiltered to parents of atomic children: the rule only rewrites
+/// `Atomic`/`Reference` children that already have a [`MatrixToAtom`]
+/// representation. Keeping it universal previously dominated failed attempts
+/// on large post-expansion trees (solitaire_battleship).
+#[register_rule("ReprMatrixToAtom", 2000, [* / Atomic])]
 fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationResult {
     if let Expression::SafeSlice(..)
     | Expression::UnsafeSlice(..)

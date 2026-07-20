@@ -2147,7 +2147,9 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
 /// __0 =aux e/2,
 /// __1 =aux f*5
 /// ```
-#[register_rule("Minion", 1000)] // this should be a lower priority than matrix to list
+// Match parents of matrix values whether they appear as `AbstractLiteral`
+// nodes or as `Atomic` literals wrapping a matrix.
+#[register_rule("Minion", 1000, [* / AbstractLiteral, * / Atomic])] // lower than matrix_to_list
 fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // do not flatten matrix literals inside sum, or, and, product as these expressions either do
     // their own flattening, or do not need flat expressions.
@@ -2516,23 +2518,49 @@ fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-/// Converts an iff to an `Eq` constraint.
+/// Converts an iff into Minion form in one step.
 ///
 /// ```text
-/// Iff(a,b) ~> Eq(a,b)
-///
+/// Iff(x, c) ~> reify(c, x)     when x is atomic and c is a non-atomic Bool
+/// Iff(a, b) ~> Eq(a, b)        otherwise (including atomic Bool equalities)
 /// ```
+///
+/// Going via `Iff ~> Eq ~> reify` used two successful rewrites (and two dirty
+/// cascades) for every ship-linkage constraint on models like
+/// solitaire_battleship. Fusing the common case removes that intermediate pass.
 #[register_rule("Minion", 4400, [Iff])]
 fn iff_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Iff(_, x, y) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    Ok(RuleEffect::pure(Expr::Eq(
-        Metadata::new(),
-        x.clone(),
-        y.clone(),
-    )))
+    match (x.as_ref(), y.as_ref()) {
+        (Expr::Atomic(_, atom), other) if !matches!(other, Expr::Atomic(_, _)) => {
+            if other.return_type() != ReturnType::Bool {
+                return Err(RuleNotApplicable);
+            }
+            Ok(RuleEffect::pure(Expr::MinionReify(
+                Metadata::new(),
+                y.clone(),
+                atom.clone(),
+            )))
+        }
+        (other, Expr::Atomic(_, atom)) if !matches!(other, Expr::Atomic(_, _)) => {
+            if other.return_type() != ReturnType::Bool {
+                return Err(RuleNotApplicable);
+            }
+            Ok(RuleEffect::pure(Expr::MinionReify(
+                Metadata::new(),
+                x.clone(),
+                atom.clone(),
+            )))
+        }
+        _ => Ok(RuleEffect::pure(Expr::Eq(
+            Metadata::new(),
+            x.clone(),
+            y.clone(),
+        ))),
+    }
 }
 
 #[cfg(test)]

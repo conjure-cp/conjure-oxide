@@ -1150,14 +1150,15 @@ impl<'a> RuleGroup<'a> {
         }
 
         if self.has_non_discriminant_filters {
-            let has_specific_match = self
-                .rules
-                .iter()
-                .any(|rule_data| rule_matches_specific_prefilter(rule_data, expr));
+            // Always keep universal rules eligible. A matching child/atom
+            // prefilter on a sibling rule does not mean universals are
+            // inapplicable — suppressing them here previously skipped
+            // `matrix_to_list` on `SafeIndex` when `matrix_ref_to_atom` matched
+            // `* / Atomic` (permMultElementId).
             return CandidateRules::Filtered {
                 iter: self.rules.iter(),
                 expr,
-                include_universal: !has_specific_match,
+                include_universal: true,
             };
         }
 
@@ -1917,6 +1918,68 @@ struct RewritePassContext<'ctx, 'rules> {
     run_start: &'ctx Instant,
 }
 
+/// True when a domain still needs Essence→Essence' abstract representation
+/// (set/tuple/record/…); concrete bool/int and matrices of those do not.
+fn domain_needs_abstract_repr(domain: &crate::ast::DomainPtr) -> bool {
+    use crate::ast::{Domain, GroundDomain, UnresolvedDomain};
+    match domain.as_ref() {
+        Domain::Ground(gd) => match gd.as_ref() {
+            GroundDomain::Bool | GroundDomain::Empty(..) | GroundDomain::Int(_) => false,
+            GroundDomain::Matrix(inner, idxs) => {
+                domain_needs_abstract_repr(&(*inner).clone().into())
+                    || idxs
+                        .iter()
+                        .any(|d| domain_needs_abstract_repr(&(*d).clone().into()))
+            }
+            _ => true,
+        },
+        Domain::Unresolved(ud) => match ud.as_ref() {
+            UnresolvedDomain::Int(..) => false,
+            UnresolvedDomain::Matrix(inner, idxs) => {
+                domain_needs_abstract_repr(inner) || idxs.iter().any(domain_needs_abstract_repr)
+            }
+            UnresolvedDomain::Reference(re) => re
+                .domain()
+                .is_some_and(|d| domain_needs_abstract_repr(&d)),
+            _ => true,
+        },
+    }
+}
+
+/// Whether `ReprGeneral` / `ReprTuplePacked` can do useful work on this model.
+///
+/// Models that only use bools, ints, and matrices of those (e.g. solitaire_battleship)
+/// still paid hundreds of thousands of failed attempts on record/tuple/set rules.
+fn model_needs_abstract_repr_rules(model: &Model) -> bool {
+    use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal};
+
+    for (_, decl) in model.symbols().iter_local() {
+        if let Some(domain) = decl.domain()
+            && domain_needs_abstract_repr(&domain)
+        {
+            return true;
+        }
+    }
+
+    // Record/tuple/set *literals* also need ReprGeneral even without abstract finds.
+    // Matrix literals are handled by `ReprMatrixToAtom`, not these rule sets.
+    for expr in model.root().universe() {
+        match expr {
+            Expr::AbstractLiteral(_, abs) if !matches!(abs, AbstractLiteral::Matrix(..)) => {
+                return true;
+            }
+            Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(abs)))
+                if !matches!(abs, AbstractLiteral::Matrix(..)) =>
+            {
+                return true;
+            }
+            _ => {}
+        }
+    }
+
+    false
+}
+
 /// Rewrites a model by applying rules in priority order, trying enclosing expressions before their
 /// descendants at each priority.
 pub fn rewrite_model<'a>(
@@ -1927,7 +1990,18 @@ pub fn rewrite_model<'a>(
 ) -> Result<Model, RewriteError> {
     set_current_rewriter(Rewriter::Rewrite(config));
 
-    let rules_grouped = get_rules_grouped(rule_sets)
+    let needs_abstract_repr = model_needs_abstract_repr_rules(model);
+    let filtered_rule_sets: Vec<&'a RuleSet<'a>> = if needs_abstract_repr {
+        rule_sets.clone()
+    } else {
+        rule_sets
+            .iter()
+            .copied()
+            .filter(|rs| rs.name != "ReprGeneral" && rs.name != "ReprTuplePacked")
+            .collect()
+    };
+
+    let rules_grouped = get_rules_grouped(&filtered_rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
         .collect_vec();

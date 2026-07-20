@@ -27,7 +27,9 @@ use conjure_cp::rule_engine::{
 /// Because of condition 4, and this rules low priority, this rule will not run post-flattening, so
 /// matrices that do not need to be converted to lists in order to get them ready for Minion will
 /// be left alone.
-#[register_rule("Base", 2000)]
+// Match parents of matrix values whether they appear as `AbstractLiteral`
+// nodes or as `Atomic` literals wrapping a matrix.
+#[register_rule("Base", 2000, [* / AbstractLiteral, * / Atomic])]
 fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // match on the parent: do not apply this rule to things descended from abstract literal, or
     // special language constructs like bubble.
