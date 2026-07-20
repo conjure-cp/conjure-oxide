@@ -82,6 +82,12 @@ z = 0
 
 --
 
+z = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,0)
+
+--
+
 SafeMod(x,SafeMod(y,z)) != 3
    ~~> flatten_generic ([("Minion", 4200)])
 __0 != 3
@@ -130,7 +136,7 @@ find __1: int(0..3)
 
 such that
 
-or([__0 != 3,ModEq(y, z, 0),z = 0;int(1..)]),
+or([__0 != 3,ModEq(y, z, 0),WatchedLiteral(z,0);int(1..)]),
 ModEq(x, __1, __0),
 ModEq(y, z, __1)
 

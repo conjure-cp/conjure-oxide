@@ -24,6 +24,18 @@ and([x#TupleToAtom_1 = 1,x#TupleToAtom_2 = 3;int(1..)])
 
 --
 
+x#TupleToAtom_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#TupleToAtom_1,1)
+
+--
+
+x#TupleToAtom_2 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#TupleToAtom_2,3)
+
+--
+
 Final model:
 
 letting v be domain tuple (int(1..2), int(3..4))
@@ -33,5 +45,5 @@ find x#TupleToAtom_2: int(3..4)
 
 such that
 
-and([x#TupleToAtom_1 = 1,x#TupleToAtom_2 = 3;int(1..)])
+and([WatchedLiteral(x#TupleToAtom_1,1),WatchedLiteral(x#TupleToAtom_2,3);int(1..)])
 

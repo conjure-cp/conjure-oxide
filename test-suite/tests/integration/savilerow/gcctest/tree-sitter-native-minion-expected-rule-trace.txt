@@ -38,13 +38,19 @@ m#MatrixToAtom_1
 
 --
 
-(m#MatrixToAtom_1 = 5) -> (or([globalCardinality(m, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
+m#MatrixToAtom_1 = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#MatrixToAtom_1,5)
+
+--
+
+(WatchedLiteral(m#MatrixToAtom_1,5)) -> (or([globalCardinality(m, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
 (__0) -> (or([globalCardinality(m, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
 new variables:
   find __0: bool
 new constraints:
-  __0 =aux m#MatrixToAtom_1 = 5
+  __0 =aux WatchedLiteral(m#MatrixToAtom_1,5)
 
 --
 
@@ -54,9 +60,9 @@ ReifyImply(or([globalCardinality(m, v, [2,2,2,2,2;int(1..5)]),globalCardinality(
 
 --
 
-__0 =aux m#MatrixToAtom_1 = 5
+__0 =aux WatchedLiteral(m#MatrixToAtom_1,5)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(m#MatrixToAtom_1 = 5, __0)
+Reify(WatchedLiteral(m#MatrixToAtom_1,5), __0)
 
 --
 
@@ -134,5 +140,5 @@ such that
 globalCardinality([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3,m#MatrixToAtom_4,m#MatrixToAtom_5,m#MatrixToAtom_6,m#MatrixToAtom_7,m#MatrixToAtom_8,m#MatrixToAtom_9,m#MatrixToAtom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3,m#MatrixToAtom_4,m#MatrixToAtom_5,m#MatrixToAtom_6,m#MatrixToAtom_7,m#MatrixToAtom_8,m#MatrixToAtom_9,m#MatrixToAtom_10;int(1..)]),
 globalCardinality([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3,m#MatrixToAtom_4,m#MatrixToAtom_5,m#MatrixToAtom_6,m#MatrixToAtom_7,m#MatrixToAtom_8,m#MatrixToAtom_9,m#MatrixToAtom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
 ReifyImply(or([globalCardinality([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3,m#MatrixToAtom_4,m#MatrixToAtom_5,m#MatrixToAtom_6,m#MatrixToAtom_7,m#MatrixToAtom_8,m#MatrixToAtom_9,m#MatrixToAtom_10;int(1..)], [2,4,5,6,7;int(1..)], [2,2,2,2,2;int(1..)]),globalCardinality([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3,m#MatrixToAtom_4,m#MatrixToAtom_5,m#MatrixToAtom_6,m#MatrixToAtom_7,m#MatrixToAtom_8,m#MatrixToAtom_9,m#MatrixToAtom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]);int(1..)]), __0),
-Reify(m#MatrixToAtom_1 = 5, __0)
+Reify(WatchedLiteral(m#MatrixToAtom_1,5), __0)
 

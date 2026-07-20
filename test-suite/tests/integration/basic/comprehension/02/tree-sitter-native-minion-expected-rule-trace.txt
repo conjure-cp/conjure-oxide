@@ -35,6 +35,36 @@ new variables:
 
 --
 
+n#MatrixToAtom_1 = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#MatrixToAtom_1,5)
+
+--
+
+n#MatrixToAtom_2 = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#MatrixToAtom_2,4)
+
+--
+
+n#MatrixToAtom_3 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#MatrixToAtom_3,3)
+
+--
+
+n#MatrixToAtom_4 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#MatrixToAtom_4,2)
+
+--
+
+n#MatrixToAtom_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#MatrixToAtom_5,1)
+
+--
+
 [ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [(n#MatrixToAtom_1 < 5) -> (and([m#MatrixToAtom_1 = 1;int(1..)])),(n#MatrixToAtom_2 < 5) -> (and([m#MatrixToAtom_2 = 2;int(1..)])),(n#MatrixToAtom_3 < 5) -> (and([m#MatrixToAtom_3 = 3;int(1..)]));int(1..)]
@@ -77,9 +107,27 @@ n#MatrixToAtom_3 <= sum([5,-1;int(1..)])
 
 --
 
-(n#MatrixToAtom_1 <= 4) -> (m#MatrixToAtom_1 = 1)
+m#MatrixToAtom_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#MatrixToAtom_1,1)
+
+--
+
+m#MatrixToAtom_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#MatrixToAtom_2,2)
+
+--
+
+m#MatrixToAtom_3 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#MatrixToAtom_3,3)
+
+--
+
+(n#MatrixToAtom_1 <= 4) -> (WatchedLiteral(m#MatrixToAtom_1,1))
    ~~> flatten_imply ([("Minion", 4200)])
-(__0) -> (m#MatrixToAtom_1 = 1)
+(__0) -> (WatchedLiteral(m#MatrixToAtom_1,1))
 new variables:
   find __0: bool
 new constraints:
@@ -93,15 +141,15 @@ Reify(n#MatrixToAtom_1 <= 4, __0)
 
 --
 
-(__0) -> (m#MatrixToAtom_1 = 1)
+(__0) -> (WatchedLiteral(m#MatrixToAtom_1,1))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(m#MatrixToAtom_1 = 1, __0)
+ReifyImply(WatchedLiteral(m#MatrixToAtom_1,1), __0)
 
 --
 
-(n#MatrixToAtom_2 <= 4) -> (m#MatrixToAtom_2 = 2)
+(n#MatrixToAtom_2 <= 4) -> (WatchedLiteral(m#MatrixToAtom_2,2))
    ~~> flatten_imply ([("Minion", 4200)])
-(__1) -> (m#MatrixToAtom_2 = 2)
+(__1) -> (WatchedLiteral(m#MatrixToAtom_2,2))
 new variables:
   find __1: bool
 new constraints:
@@ -115,15 +163,15 @@ Reify(n#MatrixToAtom_2 <= 4, __1)
 
 --
 
-(__1) -> (m#MatrixToAtom_2 = 2)
+(__1) -> (WatchedLiteral(m#MatrixToAtom_2,2))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(m#MatrixToAtom_2 = 2, __1)
+ReifyImply(WatchedLiteral(m#MatrixToAtom_2,2), __1)
 
 --
 
-(n#MatrixToAtom_3 <= 4) -> (m#MatrixToAtom_3 = 3)
+(n#MatrixToAtom_3 <= 4) -> (WatchedLiteral(m#MatrixToAtom_3,3))
    ~~> flatten_imply ([("Minion", 4200)])
-(__2) -> (m#MatrixToAtom_3 = 3)
+(__2) -> (WatchedLiteral(m#MatrixToAtom_3,3))
 new variables:
   find __2: bool
 new constraints:
@@ -137,9 +185,9 @@ Reify(n#MatrixToAtom_3 <= 4, __2)
 
 --
 
-(__2) -> (m#MatrixToAtom_3 = 3)
+(__2) -> (WatchedLiteral(m#MatrixToAtom_3,3))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(m#MatrixToAtom_3 = 3, __2)
+ReifyImply(WatchedLiteral(m#MatrixToAtom_3,3), __2)
 
 --
 
@@ -181,8 +229,8 @@ find __2: bool
 
 such that
 
-and([n#MatrixToAtom_1 = 5,n#MatrixToAtom_2 = 4,n#MatrixToAtom_3 = 3,n#MatrixToAtom_4 = 2,n#MatrixToAtom_5 = 1;int(1..)]),
-and([ReifyImply(m#MatrixToAtom_1 = 1, __0),ReifyImply(m#MatrixToAtom_2 = 2, __1),ReifyImply(m#MatrixToAtom_3 = 3, __2);int(1..)]),
+and([WatchedLiteral(n#MatrixToAtom_1,5),WatchedLiteral(n#MatrixToAtom_2,4),WatchedLiteral(n#MatrixToAtom_3,3),WatchedLiteral(n#MatrixToAtom_4,2),WatchedLiteral(n#MatrixToAtom_5,1);int(1..)]),
+and([ReifyImply(WatchedLiteral(m#MatrixToAtom_1,1), __0),ReifyImply(WatchedLiteral(m#MatrixToAtom_2,2), __1),ReifyImply(WatchedLiteral(m#MatrixToAtom_3,3), __2);int(1..)]),
 Reify(Ineq(n#MatrixToAtom_1, 4, 0), __0),
 Reify(Ineq(n#MatrixToAtom_2, 4, 0), __1),
 Reify(Ineq(n#MatrixToAtom_3, 4, 0), __2)

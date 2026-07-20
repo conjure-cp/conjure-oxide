@@ -46,6 +46,12 @@ c = 0
 
 --
 
+c = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(c,0)
+
+--
+
 a != SafeDiv(b, c)
    ~~> flatten_generic ([("Minion", 4200)])
 a != __0
@@ -71,6 +77,6 @@ find __0: int(0..3)
 
 such that
 
-or([a != __0,c = 0;int(1..)]),
+or([a != __0,WatchedLiteral(c,0);int(1..)]),
 DivEq(b, c, __0)
 

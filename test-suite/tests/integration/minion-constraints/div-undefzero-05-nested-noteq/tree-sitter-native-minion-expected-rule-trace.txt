@@ -82,6 +82,12 @@ z = 0
 
 --
 
+z = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z,0)
+
+--
+
 SafeDiv(x, SafeDiv(y, z)) != 10
    ~~> flatten_generic ([("Minion", 4200)])
 __0 != 10
@@ -130,7 +136,7 @@ find __1: int(0..5)
 
 such that
 
-or([__0 != 10,DivEq(y, z, 0),z = 0;int(1..)]),
+or([__0 != 10,DivEq(y, z, 0),WatchedLiteral(z,0);int(1..)]),
 DivEq(x, __1, __0),
 DivEq(y, z, __1)
 

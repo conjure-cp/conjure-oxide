@@ -147,6 +147,24 @@ and([y#RecordToTuple_1#TupleToAtom_1 = false,y#RecordToTuple_1#TupleToAtom_2 = 4
 
 --
 
+x#RecordToTuple_1#TupleToAtom_2 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#RecordToTuple_1#TupleToAtom_2,3)
+
+--
+
+y#RecordToTuple_1#TupleToAtom_1 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y#RecordToTuple_1#TupleToAtom_1,false)
+
+--
+
+y#RecordToTuple_1#TupleToAtom_2 = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y#RecordToTuple_1#TupleToAtom_2,4)
+
+--
+
 Final model:
 
 letting R be domain record {a: bool, b: int(0..9)}
@@ -166,7 +184,7 @@ find x#RecordToTuple_1#TupleToAtom_2: int(0..9)
 such that
 
 x#RecordToTuple_1#TupleToAtom_1,
-x#RecordToTuple_1#TupleToAtom_2 = 3,
-and([y#RecordToTuple_1#TupleToAtom_1 = false,y#RecordToTuple_1#TupleToAtom_2 = 4;int(1..)]),
+WatchedLiteral(x#RecordToTuple_1#TupleToAtom_2,3),
+and([WatchedLiteral(y#RecordToTuple_1#TupleToAtom_1,false),WatchedLiteral(y#RecordToTuple_1#TupleToAtom_2,4);int(1..)]),
 and([y#RecordToTuple_1#TupleToAtom_1 = z#RecordToTuple_1#TupleToAtom_1,y#RecordToTuple_1#TupleToAtom_2 = z#RecordToTuple_1#TupleToAtom_2;int(1..)])
 

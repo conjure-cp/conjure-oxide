@@ -38,17 +38,7 @@ new variables:
 
 sum([toInt(selected#MatrixToAtom_1),toInt(selected#MatrixToAtom_2),toInt(selected#MatrixToAtom_3),toInt(selected#MatrixToAtom_4);int(1..)]) = 1
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([__0, __1, __2, __3], 1),SumGeq([__0, __1, __2, __3], 1);int(1..)])
-new variables:
-  find __0: int(0..1)
-  find __1: int(0..1)
-  find __2: int(0..1)
-  find __3: int(0..1)
-new constraints:
-  __0 =aux toInt(selected#MatrixToAtom_1)
-  __1 =aux toInt(selected#MatrixToAtom_2)
-  __2 =aux toInt(selected#MatrixToAtom_3)
-  __3 =aux toInt(selected#MatrixToAtom_4)
+and([SumLeq([selected#MatrixToAtom_1, selected#MatrixToAtom_2, selected#MatrixToAtom_3, selected#MatrixToAtom_4], 1),SumGeq([selected#MatrixToAtom_1, selected#MatrixToAtom_2, selected#MatrixToAtom_3, selected#MatrixToAtom_4], 1);int(1..)])
 
 --
 
@@ -84,17 +74,17 @@ product([6,toInt(selected#MatrixToAtom_4);int(1..)])
 
 total_cost = sum([product([3,toInt(selected#MatrixToAtom_1);int(1..)]),product([2,toInt(selected#MatrixToAtom_2);int(1..)]),product([4,toInt(selected#MatrixToAtom_3);int(1..)]),product([6,toInt(selected#MatrixToAtom_4);int(1..)]);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([3, 2, 4, 6],[__4, __5, __6, __7],total_cost),FlatWeightedSumGeq([3, 2, 4, 6],[__4, __5, __6, __7],total_cost);int(1..)])
+and([FlatWeightedSumLeq([3, 2, 4, 6],[__0, __1, __2, __3],total_cost),FlatWeightedSumGeq([3, 2, 4, 6],[__0, __1, __2, __3],total_cost);int(1..)])
 new variables:
-  find __4: int(0..1)
-  find __5: int(0..1)
-  find __6: int(0..1)
-  find __7: int(0..1)
+  find __0: int(0..1)
+  find __1: int(0..1)
+  find __2: int(0..1)
+  find __3: int(0..1)
 new constraints:
-  __4 =aux product([toInt(selected#MatrixToAtom_1);int(1..)])
-  __5 =aux product([toInt(selected#MatrixToAtom_2);int(1..)])
-  __6 =aux product([toInt(selected#MatrixToAtom_3);int(1..)])
-  __7 =aux product([toInt(selected#MatrixToAtom_4);int(1..)])
+  __0 =aux product([toInt(selected#MatrixToAtom_1);int(1..)])
+  __1 =aux product([toInt(selected#MatrixToAtom_2);int(1..)])
+  __2 =aux product([toInt(selected#MatrixToAtom_3);int(1..)])
+  __3 =aux product([toInt(selected#MatrixToAtom_4);int(1..)])
 
 --
 
@@ -160,17 +150,15 @@ toInt(selected#MatrixToAtom_1)
 
 total_carbon = sum([toInt(selected#MatrixToAtom_1),product([4,toInt(selected#MatrixToAtom_2);int(1..)]),product([2,toInt(selected#MatrixToAtom_3);int(1..)]),product([5,toInt(selected#MatrixToAtom_4);int(1..)]);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([2, 5, 1, 4],[__10, __11, __8, __9],total_carbon),FlatWeightedSumGeq([2, 5, 1, 4],[__10, __11, __8, __9],total_carbon);int(1..)])
+and([FlatWeightedSumLeq([4, 2, 5, 1],[__4, __5, __6, selected#MatrixToAtom_1],total_carbon),FlatWeightedSumGeq([4, 2, 5, 1],[__4, __5, __6, selected#MatrixToAtom_1],total_carbon);int(1..)])
 new variables:
-  find __8: int(0..1)
-  find __9: int(0..1)
-  find __10: int(0..1)
-  find __11: int(0..1)
+  find __4: int(0..1)
+  find __5: int(0..1)
+  find __6: int(0..1)
 new constraints:
-  __8 =aux toInt(selected#MatrixToAtom_1)
-  __9 =aux product([toInt(selected#MatrixToAtom_2);int(1..)])
-  __10 =aux product([toInt(selected#MatrixToAtom_3);int(1..)])
-  __11 =aux product([toInt(selected#MatrixToAtom_4);int(1..)])
+  __4 =aux product([toInt(selected#MatrixToAtom_2);int(1..)])
+  __5 =aux product([toInt(selected#MatrixToAtom_3);int(1..)])
+  __6 =aux product([toInt(selected#MatrixToAtom_4);int(1..)])
 
 --
 
@@ -219,27 +207,17 @@ find __3: int(0..1)
 find __4: int(0..1)
 find __5: int(0..1)
 find __6: int(0..1)
-find __7: int(0..1)
-find __8: int(0..1)
-find __9: int(0..1)
-find __10: int(0..1)
-find __11: int(0..1)
 
 such that
 
-and([SumLeq([__0, __1, __2, __3], 1),SumGeq([__0, __1, __2, __3], 1);int(1..)]),
-and([FlatWeightedSumLeq([3, 2, 4, 6],[__4, __5, __6, __7],total_cost),FlatWeightedSumGeq([3, 2, 4, 6],[__4, __5, __6, __7],total_cost);int(1..)]),
-and([FlatWeightedSumLeq([2, 5, 1, 4],[__10, __11, __8, __9],total_carbon),FlatWeightedSumGeq([2, 5, 1, 4],[__10, __11, __8, __9],total_carbon);int(1..)]),
+and([SumLeq([selected#MatrixToAtom_1, selected#MatrixToAtom_2, selected#MatrixToAtom_3, selected#MatrixToAtom_4], 1),SumGeq([selected#MatrixToAtom_1, selected#MatrixToAtom_2, selected#MatrixToAtom_3, selected#MatrixToAtom_4], 1);int(1..)]),
+and([FlatWeightedSumLeq([3, 2, 4, 6],[__0, __1, __2, __3],total_cost),FlatWeightedSumGeq([3, 2, 4, 6],[__0, __1, __2, __3],total_cost);int(1..)]),
+and([FlatWeightedSumLeq([4, 2, 5, 1],[__4, __5, __6, selected#MatrixToAtom_1],total_carbon),FlatWeightedSumGeq([4, 2, 5, 1],[__4, __5, __6, selected#MatrixToAtom_1],total_carbon);int(1..)]),
 __0 =aux toInt(selected#MatrixToAtom_1),
 __1 =aux toInt(selected#MatrixToAtom_2),
 __2 =aux toInt(selected#MatrixToAtom_3),
 __3 =aux toInt(selected#MatrixToAtom_4),
-__4 =aux toInt(selected#MatrixToAtom_1),
-__5 =aux toInt(selected#MatrixToAtom_2),
-__6 =aux toInt(selected#MatrixToAtom_3),
-__7 =aux toInt(selected#MatrixToAtom_4),
-__8 =aux toInt(selected#MatrixToAtom_1),
-__9 =aux toInt(selected#MatrixToAtom_2),
-__10 =aux toInt(selected#MatrixToAtom_3),
-__11 =aux toInt(selected#MatrixToAtom_4)
+__4 =aux toInt(selected#MatrixToAtom_2),
+__5 =aux toInt(selected#MatrixToAtom_3),
+__6 =aux toInt(selected#MatrixToAtom_4)
 

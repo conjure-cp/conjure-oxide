@@ -42,15 +42,21 @@ new constraints:
 
 --
 
-__1 >= a
-   ~~> geq_to_ineq ([("Minion", 4100)])
-Ineq(a, __1, 0)
+__1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__1,2)
 
 --
 
 __1 >= 2
    ~~> geq_to_ineq ([("Minion", 4100)])
 Ineq(2, __1, 0)
+
+--
+
+__1 >= a
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(a, __1, 0)
 
 --
 
@@ -66,5 +72,5 @@ Ineq(__0, 2, 0),
 __0 =aux __1,
 Ineq(2, __1, 0),
 Ineq(a, __1, 0),
-or([__1 = 2,__1 = a;int(1..)])
+or([WatchedLiteral(__1,2),__1 = a;int(1..)])
 

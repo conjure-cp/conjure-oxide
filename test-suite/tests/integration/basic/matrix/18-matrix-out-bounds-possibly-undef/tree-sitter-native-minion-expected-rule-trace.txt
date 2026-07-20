@@ -100,13 +100,19 @@ and([SumLeq([a, b], __0),SumGeq([a, b], __0);int(1..)])
 
 (z) <-> (and([SafeIndex([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3;int(1..)],[sum([__0,2;int(1..)])]) = c,__inDomain(sum([a,b;int(1..)]),int(-1..1));int(1..)]))
    ~~> iff_to_eq ([("Minion", 4400)])
-z = and([SafeIndex([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3;int(1..)],[sum([__0,2;int(1..)])]) = c,__inDomain(sum([a,b;int(1..)]),int(-1..1));int(1..)])
+Reify(and([SafeIndex([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3;int(1..)],[sum([__0,2;int(1..)])]) = c,__inDomain(sum([a,b;int(1..)]),int(-1..1));int(1..)]), z)
 
 --
 
-z = and([SafeIndex([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3;int(1..)],[sum([__0,2;int(1..)])]) = c,__inDomain(sum([a,b;int(1..)]),int(-1..1));int(1..)])
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(and([SafeIndex([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3;int(1..)],[sum([__0,2;int(1..)])]) = c,__inDomain(sum([a,b;int(1..)]),int(-1..1));int(1..)]), z)
+m#MatrixToAtom_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#MatrixToAtom_2,1)
+
+--
+
+m#MatrixToAtom_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#MatrixToAtom_3,1)
 
 --
 
@@ -171,8 +177,8 @@ find __2: int(0..6)
 such that
 
 Reify(and([__minion_element_one([m#MatrixToAtom_1,m#MatrixToAtom_2,m#MatrixToAtom_3],__2,c),__minion_w_inintervalset(__1,[-1,1]);int(1..)]), z),
-m#MatrixToAtom_2 = 1,
-m#MatrixToAtom_3 = 1,
+WatchedLiteral(m#MatrixToAtom_2,1),
+WatchedLiteral(m#MatrixToAtom_3,1),
 and([SumLeq([a, b], __0),SumGeq([a, b], __0);int(1..)]),
 and([SumLeq([a, b], __1),SumGeq([a, b], __1);int(1..)]),
 and([SumLeq([2, __0], __2),SumGeq([2, __0], __2);int(1..)])
