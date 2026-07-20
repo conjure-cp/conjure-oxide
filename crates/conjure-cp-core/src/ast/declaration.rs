@@ -734,9 +734,7 @@ impl CategoryOf for DeclarationPtr {
     fn category_of(&self) -> Category {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::Find(decision_variable)
-            | DeclarationKind::FindAuxiliary(decision_variable) => {
-                decision_variable.category_of()
-            }
+            | DeclarationKind::FindAuxiliary(decision_variable) => decision_variable.category_of(),
             DeclarationKind::ValueLetting(expression, _)
             | DeclarationKind::TemporaryValueLetting(expression) => expression.category_of(),
             DeclarationKind::DomainLetting(_) => Category::Constant,

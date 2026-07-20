@@ -92,8 +92,8 @@ fn load_symbol_table(
         for_each_unrepresented_var(conjure_model, |name, var, decl| {
             // Machine-named finds and FindAuxiliary (including represented children of auxiliaries)
             // must not be branched on: they would otherwise create many duplicate user solutions.
-            let is_search_var = !decl.is_find_auxiliary()
-                && !matches!(name, conjure_ast::Name::Machine(_));
+            let is_search_var =
+                !decl.is_find_auxiliary() && !matches!(name, conjure_ast::Name::Machine(_));
             load_var(name, var, is_search_var, discrete_vars, minion_model)
         })?;
     }

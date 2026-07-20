@@ -340,8 +340,9 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
             // for abstract domains, we'll have to build a big mapping table, which is expensive...
             _ => {
                 // build a constraint mapping original indices integers
-                let mapped_idx =
-                    Reference::new(idx_auxvars.gen_find_auxiliary(&domain_int!(0..(dim_sz as i32 - 1))));
+                let mapped_idx = Reference::new(
+                    idx_auxvars.gen_find_auxiliary(&domain_int!(0..(dim_sz as i32 - 1))),
+                );
                 let mut eq_cases = Vec::new();
                 for idx_val in 0..dim_sz {
                     let orig_idx_val = mta.index_flat_to_lit(di, idx_val).unwrap_or_bug();

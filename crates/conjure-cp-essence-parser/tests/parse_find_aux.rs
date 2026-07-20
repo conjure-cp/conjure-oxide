@@ -6,10 +6,7 @@ use conjure_cp_essence_parser::parse_essence_file_native;
 
 #[test]
 fn parses_find_aux_as_find_auxiliary() {
-    let dir = std::env::temp_dir().join(format!(
-        "conjure-oxide-findaux-{}",
-        std::process::id()
-    ));
+    let dir = std::env::temp_dir().join(format!("conjure-oxide-findaux-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).expect("create temp dir");
     let path = dir.join("model.essence");
@@ -20,8 +17,8 @@ fn parses_find_aux_as_find_auxiliary() {
     .expect("write model");
 
     let context = Arc::new(RwLock::new(Context::default()));
-    let model = parse_essence_file_native(path.to_str().unwrap(), context)
-        .expect("parse findAux model");
+    let model =
+        parse_essence_file_native(path.to_str().unwrap(), context).expect("parse findAux model");
 
     let _ = std::fs::remove_dir_all(&dir);
 

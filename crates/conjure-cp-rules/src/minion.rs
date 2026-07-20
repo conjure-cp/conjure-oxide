@@ -2805,15 +2805,11 @@ mod tests {
         let to_int = Expr::ToInt(Metadata::new(), Moo::new(bool_var.clone()));
         let expr = Expr::Eq(
             Metadata::new(),
-            Moo::new(Expr::Sum(
-                Metadata::new(),
-                Moo::new(matrix_expr![to_int]),
-            )),
+            Moo::new(Expr::Sum(Metadata::new(), Moo::new(matrix_expr![to_int]))),
             Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(1)))),
         );
 
-        let rule =
-            get_rule_by_name("introduce_weighted_sumleq_sumgeq").expect("rule registered");
+        let rule = get_rule_by_name("introduce_weighted_sumleq_sumgeq").expect("rule registered");
         let result = rule
             .apply(&expr, &SymbolTable::new())
             .expect("sum of toInt(bool) should lower");
@@ -2849,15 +2845,11 @@ mod tests {
         let product = Expr::Product(Metadata::new(), Moo::new(matrix_expr![a, b]));
         let expr = Expr::Leq(
             Metadata::new(),
-            Moo::new(Expr::Sum(
-                Metadata::new(),
-                Moo::new(matrix_expr![product]),
-            )),
+            Moo::new(Expr::Sum(Metadata::new(), Moo::new(matrix_expr![product]))),
             Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(1)))),
         );
 
-        let rule =
-            get_rule_by_name("introduce_weighted_sumleq_sumgeq").expect("rule registered");
+        let rule = get_rule_by_name("introduce_weighted_sumleq_sumgeq").expect("rule registered");
         let result = rule
             .apply(&expr, &SymbolTable::new())
             .expect("sum of product(toInt(bool), toInt(bool)) should lower");

@@ -1938,9 +1938,9 @@ fn domain_needs_abstract_repr(domain: &crate::ast::DomainPtr) -> bool {
             UnresolvedDomain::Matrix(inner, idxs) => {
                 domain_needs_abstract_repr(inner) || idxs.iter().any(domain_needs_abstract_repr)
             }
-            UnresolvedDomain::Reference(re) => re
-                .domain()
-                .is_some_and(|d| domain_needs_abstract_repr(&d)),
+            UnresolvedDomain::Reference(re) => {
+                re.domain().is_some_and(|d| domain_needs_abstract_repr(&d))
+            }
             _ => true,
         },
     }
