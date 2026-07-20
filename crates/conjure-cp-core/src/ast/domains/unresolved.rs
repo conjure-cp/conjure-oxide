@@ -321,7 +321,7 @@ impl Display for UnresolvedDomain {
                 )
             }
             UnresolvedDomain::Tuple(domains) => {
-                write!(f, "tuple ({})", &domains.iter().join(","))
+                write!(f, "tuple ({})", domains.iter().join(","))
             }
             UnresolvedDomain::Record(entries) => {
                 let inners = entries.iter().map(|t| format!("{}", t)).join(", ");
