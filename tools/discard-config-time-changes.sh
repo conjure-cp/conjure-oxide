@@ -2,13 +2,12 @@
 #
 # discard-config-time-changes.sh
 #
-# Revert *-time fields in config.toml and stats.toml files to their committed (HEAD) values,
-# while keeping any other local edits.
+# Discard local edits to config.toml / stats.toml when the *only* difference
+# from HEAD is in keys ending in "-time" (e.g. translation-time, solve-time,
+# expected-time). If any non-time line differs, the file is left alone.
 #
 # Usage:
-#   ./tools/discard-config-time-changes.sh            # modified config.toml/stats.toml only
-#   ./tools/discard-config-time-changes.sh --all      # every tracked config.toml/stats.toml
-#                     (only when *-time fields are the sole diff from HEAD)
+#   ./tools/discard-config-time-changes.sh            # modified files only
 #   ./tools/discard-config-time-changes.sh --dry-run  # show what would change
 #
 set -euo pipefail
@@ -17,106 +16,46 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 
 dry_run=false
-all_files=false
 
 usage() {
   cat <<'EOF'
 Usage: discard-config-time-changes.sh [options]
 
-Revert keys ending in "-time" (e.g. translation-time, solve-time, expected-time)
-to their values in HEAD. Other lines in each config.toml or stats.toml are left unchanged.
+Restore config.toml / stats.toml from HEAD when the only local changes are
+*-time field values. Files with any other edits are skipped.
+
+Only considers files modified relative to HEAD.
 
 Options:
-  --all       Process every tracked config.toml and stats.toml (default: only modified files).
-              With --all, only reverts *-time fields when those are the sole diff from HEAD.
-  --dry-run   Print paths and diffs; do not write files
+  --dry-run   Print paths; do not write files
   -h, --help  Show this help
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --all) all_files=true; shift ;;
     --dry-run) dry_run=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ERROR: unknown option: $1" >&2; usage >&2; exit 1 ;;
   esac
 done
 
-restore_time_fields() {
-  local head_file="$1"
-  local work_file="$2"
-  local out_file="$3"
-
-  awk -v headpath="$head_file" '
+# Print file with *-time assignment lines removed (comments kept).
+without_time_fields() {
+  awk '
     function trim(s) {
       gsub(/^[[:space:]]+|[[:space:]]+$/, "", s)
       return s
     }
-
-    function time_key(line,    parts, key) {
-      if (line ~ /^[[:space:]]*#/) return ""
-      if (line !~ /-time[[:space:]]*=/) return ""
-      if (split(line, parts, "=") < 2) return ""
-      key = trim(parts[1])
-      if (key ~ /-time$/) return key
-      return ""
+    /^[[:space:]]*#/ { print; next }
+    /-time[[:space:]]*=/ {
+      if (split($0, parts, "=") >= 2 && trim(parts[1]) ~ /-time$/) next
     }
-
-    function section_id(section, key) {
-      if (section == "") return key
-      return section SUBSEP key
-    }
-
-    function read_file(path,    line, key, section) {
-      section = ""
-      while ((getline line < path) > 0) {
-        if (line ~ /^[[:space:]]*\[/) {
-          section = line
-          gsub(/^[[:space:]]*\[|\][[:space:]]*$/, "", section)
-          section = trim(section)
-          continue
-        }
-        key = time_key(line)
-        if (key != "") head[section_id(section, key)] = line
-      }
-      close(path)
-    }
-
-    BEGIN {
-      read_file(headpath)
-      section = ""
-    }
-
-    /^[[:space:]]*\[/ {
-      section = $0
-      gsub(/^[[:space:]]*\[|\][[:space:]]*$/, "", section)
-      section = trim(section)
-      print
-      next
-    }
-
-    {
-      key = time_key($0)
-      id = section_id(section, key)
-      if (key != "" && (id in head)) {
-        print head[id]
-      } else {
-        print
-      }
-    }
-  ' "$work_file" > "$out_file"
+    { print }
+  ' "$1"
 }
 
 cd "$REPO_ROOT"
-
-list_config_files() {
-  if [[ "$all_files" == true ]]; then
-    git ls-files -- '**/config.toml' '**/stats.toml'
-  else
-    git diff --name-only --diff-filter=ACMR HEAD -- '**/config.toml' '**/stats.toml'
-  fi
-}
 
 updated=0
 skipped=0
@@ -134,42 +73,37 @@ while IFS= read -r rel || [[ -n "$rel" ]]; do
   fi
 
   head_tmp="$(mktemp)"
-  out_tmp="$(mktemp)"
-  trap 'rm -f "$head_tmp" "$out_tmp"' RETURN
-
+  trap 'rm -f "$head_tmp"' RETURN
   git show "HEAD:$rel" > "$head_tmp"
 
-  restore_time_fields "$head_tmp" "$rel" "$out_tmp"
-
-  if [[ "$all_files" == true ]] && ! cmp -s "$head_tmp" "$out_tmp"; then
-    echo "SKIP (non-time changes present): $rel" >&2
+  if cmp -s "$head_tmp" "$rel"; then
     ((skipped+=1))
-    rm -f "$head_tmp" "$out_tmp"
+    rm -f "$head_tmp"
     trap - RETURN
     continue
   fi
 
-  if cmp -s "$rel" "$out_tmp"; then
+  if ! cmp -s <(without_time_fields "$head_tmp") <(without_time_fields "$rel"); then
+    echo "SKIP (non-time changes present): $rel" >&2
     ((skipped+=1))
-    rm -f "$head_tmp" "$out_tmp"
+    rm -f "$head_tmp"
     trap - RETURN
     continue
   fi
 
   if [[ "$dry_run" == true ]]; then
-    echo "Would update: $rel"
-    diff -u --label "$rel" --label "$rel (restored)" "$rel" "$out_tmp" || true
+    echo "Would restore: $rel"
+    diff -u --label "$rel (HEAD)" --label "$rel" "$head_tmp" "$rel" || true
     echo
   else
-    mv "$out_tmp" "$rel"
-    echo "Updated: $rel"
+    mv "$head_tmp" "$rel"
+    echo "Restored: $rel"
   fi
 
-  rm -f "$head_tmp"
-  [[ -f "$out_tmp" ]] && rm -f "$out_tmp"
+  [[ -f "$head_tmp" ]] && rm -f "$head_tmp"
   trap - RETURN
   ((updated+=1))
-done < <(list_config_files)
+done < <(git diff --name-only --diff-filter=ACMR HEAD -- '**/config.toml' '**/stats.toml')
 
 if [[ "$found" -eq 0 ]]; then
   echo "No config.toml or stats.toml files to process."
