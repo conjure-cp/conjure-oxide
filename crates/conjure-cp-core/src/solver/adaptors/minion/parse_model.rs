@@ -82,15 +82,18 @@ fn load_symbol_table(
         }
 
         // then add the rest as non-search vars
-        for_each_unrepresented_var(conjure_model, |name, var| {
+        for_each_unrepresented_var(conjure_model, |name, var, _decl| {
             if search_vars.contains(name) {
                 return Ok(());
             }
             load_var(name, var, false, discrete_vars, minion_model)
         })?;
     } else {
-        for_each_unrepresented_var(conjure_model, |name, var| {
-            let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
+        for_each_unrepresented_var(conjure_model, |name, var, decl| {
+            // Machine-named finds and FindAuxiliary (including represented children of auxiliaries)
+            // must not be branched on: they would otherwise create many duplicate user solutions.
+            let is_search_var = !decl.is_find_auxiliary()
+                && !matches!(name, conjure_ast::Name::Machine(_));
             load_var(name, var, is_search_var, discrete_vars, minion_model)
         })?;
     }
@@ -154,7 +157,11 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
 
 fn for_each_unrepresented_var(
     conjure_model: &ConjureModel,
-    mut f: impl FnMut(&conjure_ast::Name, &conjure_ast::DecisionVariable) -> Result<(), SolverError>,
+    mut f: impl FnMut(
+        &conjure_ast::Name,
+        &conjure_ast::DecisionVariable,
+        &conjure_ast::DeclarationPtr,
+    ) -> Result<(), SolverError>,
 ) -> Result<(), SolverError> {
     for (name, decl) in conjure_model.symbols().clone().into_iter_local() {
         let Some(var) = decl.as_find() else {
@@ -173,7 +180,7 @@ fn for_each_unrepresented_var(
             continue;
         }
 
-        f(&name, &var)?;
+        f(&name, &var, &decl)?;
     }
 
     Ok(())

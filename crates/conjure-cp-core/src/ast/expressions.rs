@@ -2576,7 +2576,9 @@ fn minus_operand_return_type(expr: &Expression) -> ReturnType {
         Expression::Atomic(_, Atom::Reference(reference)) => {
             let decl_kind = reference.ptr.kind().clone();
             match decl_kind {
-                DeclarationKind::Find(var) => var.return_type(),
+                DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
+                    var.return_type()
+                }
                 DeclarationKind::Given(domain)
                 | DeclarationKind::DomainLetting(domain) => domain.return_type(),
                 DeclarationKind::Quantified(inner) => inner.domain().return_type(),

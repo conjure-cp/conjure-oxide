@@ -565,10 +565,21 @@ impl SymbolTable {
         self.invalidate_context_hash_cache();
     }
 
-    /// Creates a new find declaration in this symbol table with a unique name, and returns its
-    /// declaration.
+    /// Creates a new [`DeclarationKind::Find`] declaration in this symbol table with a unique name.
+    ///
+    /// Prefer [`Self::gen_find_auxiliary`] for rewriter-introduced auxiliaries that must not be
+    /// branched on. Use this only when a generated searchable find is intentionally required.
     pub fn gen_find(&mut self, domain: &DomainPtr) -> DeclarationPtr {
         let decl = DeclarationPtr::new_find(self.gen_sym(), domain.clone());
+        self.insert(decl.clone());
+        decl
+    }
+
+    /// Creates a new auxiliary find declaration in this symbol table with a unique name.
+    ///
+    /// See [`DeclarationPtr::new_find_auxiliary`].
+    pub fn gen_find_auxiliary(&mut self, domain: &DomainPtr) -> DeclarationPtr {
+        let decl = DeclarationPtr::new_find_auxiliary(self.gen_sym(), domain.clone());
         self.insert(decl.clone());
         decl
     }

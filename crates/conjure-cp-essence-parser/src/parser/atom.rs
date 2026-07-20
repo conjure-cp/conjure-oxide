@@ -387,7 +387,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
 
         if let Some(decl) = lookup_result {
             let symbol_kind = match &decl.kind().clone() as &DeclarationKind {
-                DeclarationKind::Find(_) => SymbolKind::FindVar,
+                DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => SymbolKind::FindVar,
                 DeclarationKind::Given(_) => SymbolKind::GivenVar,
                 DeclarationKind::ValueLetting(_, _) => SymbolKind::LettingVar,
                 DeclarationKind::TemporaryValueLetting(_) => SymbolKind::LettingVar,

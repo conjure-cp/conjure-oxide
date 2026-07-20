@@ -130,11 +130,14 @@ pub fn parse_essence_with_context_and_map(
             "single_line_comment" => {}
             "language_declaration" => {}
             "find_statement" => {
-                let var_hashmap = parse_find_statement(&mut ctx, statement)?;
-                for (name, domain) in var_hashmap {
-                    model
-                        .symbols_mut()
-                        .insert(DeclarationPtr::new_find(name, domain));
+                let parsed = parse_find_statement(&mut ctx, statement)?;
+                for (name, domain) in parsed.declarations {
+                    let decl = if parsed.auxiliary {
+                        DeclarationPtr::new_find_auxiliary(name, domain)
+                    } else {
+                        DeclarationPtr::new_find(name, domain)
+                    };
+                    model.symbols_mut().insert(decl);
                 }
             }
             "given_statement" => {

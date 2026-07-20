@@ -191,7 +191,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         .or_else(|| minion_product_aux_domain_from_atoms(&y, &next_factor_atom))
         .ok_or(ApplicationError::DomainError)?;
 
-        let aux_decl = symbols.gen_find(&aux_domain);
+        let aux_decl = symbols.gen_find_auxiliary(&aux_domain);
         let aux_var = Atom::Reference(Reference::new(aux_decl));
 
         let new_top_expr = Expr::FlatProductEq(
@@ -505,7 +505,7 @@ fn flatten_weighted_sum_product_factor(
             )
         {
             let domain = expr.domain_of().ok_or(RuleNotApplicable)?;
-            let decl = symtab.gen_find(&domain);
+            let decl = symtab.gen_find_auxiliary(&domain);
             top_level_exprs.push(Expr::AuxDeclaration(
                 Metadata::new(),
                 Reference::new(decl.clone()),
@@ -540,7 +540,7 @@ fn flatten_weighted_sum_binary_product(
         .domain_of()
         .or_else(|| minion_product_aux_domain_from_atoms(&a_atom, &b_atom))
         .ok_or(RuleNotApplicable)?;
-    let decl = symtab.gen_find(&domain);
+    let decl = symtab.gen_find_auxiliary(&domain);
     let aux = Atom::Reference(Reference::new(decl));
 
     top_level_exprs.push(Expr::FlatProductEq(
@@ -872,7 +872,7 @@ fn introduce_lee_distance_atom(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 
     let diff_atom = flatten_lee_diff_to_atom(inner, &mut symbols, &mut new_tops)?;
 
-    let abs_atom = Atom::new_ref(symbols.gen_find(&abs_domain));
+    let abs_atom = Atom::new_ref(symbols.gen_find_auxiliary(&abs_domain));
     new_tops.push(Expr::FlatAbsEq(
         Metadata::new(),
         Moo::new(abs_atom.clone()),
@@ -880,7 +880,7 @@ fn introduce_lee_distance_atom(expr: &Expr, symbols: &SymbolTable) -> Applicatio
     ));
 
     let complement_domain = Domain::int(vec![Range::Bounded(0, alphabet_size)]);
-    let complement_atom = Atom::new_ref(symbols.gen_find(&complement_domain));
+    let complement_atom = Atom::new_ref(symbols.gen_find_auxiliary(&complement_domain));
     let alphabet_atom = Atom::Literal(Lit::Int(alphabet_size));
     new_tops.push(Expr::FlatSumLeq(
         Metadata::new(),
@@ -893,7 +893,7 @@ fn introduce_lee_distance_atom(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         alphabet_atom,
     ));
 
-    let result_atom = Atom::new_ref(symbols.gen_find(&result_domain));
+    let result_atom = Atom::new_ref(symbols.gen_find_auxiliary(&result_domain));
     new_tops.push(Expr::FlatMinEq(
         Metadata::new(),
         vec![abs_atom, complement_atom],
@@ -987,7 +987,7 @@ fn flatten_lee_diff_to_atom(
         let rhs_atom: Result<&Atom, _> = rhs.as_ref().try_into();
         if let (Ok(a), Ok(b)) = (lhs_atom, rhs_atom) {
             let domain = inner.domain_of().ok_or(ApplicationError::DomainError)?;
-            let diff = Atom::new_ref(symbols.gen_find(&domain));
+            let diff = Atom::new_ref(symbols.gen_find_auxiliary(&domain));
             let coefficients = vec![Lit::Int(1), Lit::Int(-1)];
             let vars = vec![a.clone(), b.clone()];
             top_level_exprs.push(Expr::FlatWeightedSumLeq(
@@ -1039,7 +1039,7 @@ fn introduce_mineq_from_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationRe
         )?);
     }
 
-    let aux = Atom::new_ref(symbols.gen_find(&domain));
+    let aux = Atom::new_ref(symbols.gen_find_auxiliary(&domain));
     new_tops.push(Expr::FlatMinEq(Metadata::new(), atoms, aux.clone()));
 
     Ok(RuleEffect::new(
@@ -1306,7 +1306,7 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
     let mut symbols = symbols.clone();
     let mut count_exprs = vec![];
     for _ in &values {
-        let decl = symbols.gen_find(&Domain::bool());
+        let decl = symbols.gen_find_auxiliary(&Domain::bool());
         count_exprs.push(Expr::Atomic(
             Metadata::new(),
             Atom::Reference(Reference::new(decl)),
@@ -2279,7 +2279,7 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                     continue;
                 }
 
-                let decl = symbols.gen_find(&domain);
+                let decl = symbols.gen_find_auxiliary(&domain);
 
                 top_level_exprs.push(Expr::AuxDeclaration(
                     Metadata::new(),

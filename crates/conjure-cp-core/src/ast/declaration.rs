@@ -243,6 +243,17 @@ impl DeclarationPtr {
         DeclarationPtr::new(name, kind)
     }
 
+    /// Creates a new auxiliary find declaration.
+    ///
+    /// Auxiliary finds are introduced by rewriting (for example, turning a top-level `exists`
+    /// into constraints), and can also be written in Essence as `findAux`.
+    /// They are decision variables for solvers, but must not be branched on during search:
+    /// different assignments to them must not produce distinct user-facing solutions.
+    pub fn new_find_auxiliary(name: Name, domain: DomainPtr) -> DeclarationPtr {
+        let kind = DeclarationKind::FindAuxiliary(DecisionVariable::new(domain));
+        DeclarationPtr::new(name, kind)
+    }
+
     /// Creates a new given declaration.
     ///
     /// # Examples
@@ -377,7 +388,9 @@ impl DeclarationPtr {
     /// ```
     pub fn domain(&self) -> Option<DomainPtr> {
         match &self.kind() as &DeclarationKind {
-            DeclarationKind::Find(var) => Some(var.domain_of()),
+            DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
+                Some(var.domain_of())
+            }
             DeclarationKind::ValueLetting(e, domain) => domain.clone().or_else(|| e.domain_of()),
             DeclarationKind::TemporaryValueLetting(e) => e.domain_of(),
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
@@ -385,6 +398,17 @@ impl DeclarationPtr {
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::QuantifiedExpr(expr) => expr.domain_of()?.element_domain(),
         }
+    }
+
+    /// Returns true if this declaration is an auxiliary find.
+    ///
+    /// Auxiliary finds are solver variables that must not be included in the search/branching
+    /// order (see [`DeclarationKind::FindAuxiliary`]).
+    pub fn is_find_auxiliary(&self) -> bool {
+        matches!(
+            &self.kind() as &DeclarationKind,
+            DeclarationKind::FindAuxiliary(_)
+        )
     }
 
     /// Gets the domain of the declaration and fully resolve it
@@ -424,25 +448,25 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a decision variable, if it is one.
+    ///
+    /// Both user [`DeclarationKind::Find`] and rewriter-introduced
+    /// [`DeclarationKind::FindAuxiliary`] declarations are treated as decision variables.
     pub fn as_find(&self) -> Option<MappedRwLockReadGuard<'_, DecisionVariable>> {
-        RwLockReadGuard::try_map(self.read(), |x| {
-            if let DeclarationKind::Find(var) = &x.kind {
-                Some(var)
-            } else {
-                None
-            }
+        RwLockReadGuard::try_map(self.read(), |x| match &x.kind {
+            DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => Some(var),
+            _ => None,
         })
         .ok()
     }
 
     /// This declaration as a mutable decision variable, if it is one.
+    ///
+    /// Both user [`DeclarationKind::Find`] and rewriter-introduced
+    /// [`DeclarationKind::FindAuxiliary`] declarations are treated as decision variables.
     pub fn as_find_mut(&mut self) -> Option<DeclarationMutGuard<'_, DecisionVariable>> {
-        RwLockWriteGuard::try_map(self.write(), |x| {
-            if let DeclarationKind::Find(var) = &mut x.kind {
-                Some(var)
-            } else {
-                None
-            }
+        RwLockWriteGuard::try_map(self.write(), |x| match &mut x.kind {
+            DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => Some(var),
+            _ => None,
         })
         .ok()
         .map(DeclarationMutGuard::new)
@@ -709,7 +733,10 @@ impl DeclarationPtr {
 impl CategoryOf for DeclarationPtr {
     fn category_of(&self) -> Category {
         match &self.kind() as &DeclarationKind {
-            DeclarationKind::Find(decision_variable) => decision_variable.category_of(),
+            DeclarationKind::Find(decision_variable)
+            | DeclarationKind::FindAuxiliary(decision_variable) => {
+                decision_variable.category_of()
+            }
             DeclarationKind::ValueLetting(expression, _)
             | DeclarationKind::TemporaryValueLetting(expression) => expression.category_of(),
             DeclarationKind::DomainLetting(_) => Category::Constant,
@@ -743,7 +770,7 @@ impl DefaultWithId for DeclarationPtr {
 impl Typeable for DeclarationPtr {
     fn return_type(&self) -> ReturnType {
         match &self.kind() as &DeclarationKind {
-            DeclarationKind::Find(var) => var.return_type(),
+            DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => var.return_type(),
             DeclarationKind::ValueLetting(expression, _)
             | DeclarationKind::TemporaryValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
@@ -849,6 +876,17 @@ fn biplate_declaration_kind_references(
                     let mut var2 = var.clone();
                     var2.domain = recons_domain(x);
                     DeclarationKind::Find(var2)
+                }),
+            )
+        }
+        DeclarationKind::FindAuxiliary(var) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(var.domain.clone());
+            (
+                tree,
+                Box::new(move |x| {
+                    let mut var2 = var.clone();
+                    var2.domain = recons_domain(x);
+                    DeclarationKind::FindAuxiliary(var2)
                 }),
             )
         }
@@ -1003,6 +1041,13 @@ impl Declaration {
 #[biplate(to=Declaration)]
 pub enum DeclarationKind {
     Find(DecisionVariable),
+
+    /// A rewriter-introduced or `findAux`-declared decision variable that must not be branched on
+    /// during search.
+    ///
+    /// Used for auxiliaries such as those created when rewriting `exists` into constraints.
+    FindAuxiliary(DecisionVariable),
+
     Given(DomainPtr),
     Quantified(Quantified),
     QuantifiedExpr(Expression),
@@ -1022,7 +1067,7 @@ impl DeclarationKind {
     fn hash_content<H: Hasher>(&self, state: &mut H, seen: &mut BTreeSet<ObjId>) {
         mem::discriminant(self).hash(state);
         match self {
-            DeclarationKind::Find(var) => {
+            DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
                 var.domain.hash(state);
                 for representation in &var.representations {
                     for repr in representation {

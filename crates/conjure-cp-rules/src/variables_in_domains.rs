@@ -69,10 +69,12 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         };
 
         domain_guards.extend(guards);
-        declaration_updates.push((
-            decl,
-            DeclarationKind::Find(DecisionVariable::new(widened_domain)),
-        ));
+        let updated_kind = if decl.is_find_auxiliary() {
+            DeclarationKind::FindAuxiliary(DecisionVariable::new(widened_domain))
+        } else {
+            DeclarationKind::Find(DecisionVariable::new(widened_domain))
+        };
+        declaration_updates.push((decl, updated_kind));
     }
 
     if declaration_updates.is_empty() {

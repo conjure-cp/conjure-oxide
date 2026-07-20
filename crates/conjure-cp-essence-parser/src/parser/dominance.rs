@@ -234,10 +234,14 @@ fn rewrite_references(expr: &Expression, to_previous_solution: bool) -> Expressi
                 let action = {
                     let kind = reference.ptr.kind();
                     match &*kind {
-                        DeclarationKind::Find(_) if to_previous_solution => {
+                        DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_)
+                            if to_previous_solution =>
+                        {
                             ReferenceRewriteAction::WrapInFromSolution
                         }
-                        DeclarationKind::Find(_) => ReferenceRewriteAction::LeaveAsIs,
+                        DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
+                            ReferenceRewriteAction::LeaveAsIs
+                        }
                         DeclarationKind::ValueLetting(_, _)
                         | DeclarationKind::TemporaryValueLetting(_) => {
                             ReferenceRewriteAction::ExpandValueLetting

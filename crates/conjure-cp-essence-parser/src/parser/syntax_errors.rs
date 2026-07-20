@@ -369,6 +369,7 @@ fn generate_malformed_line_message(line: usize, source: &str) -> String {
 
     let expected = match first.as_str() {
         "find" => "a find declaration statement",
+        "findAux" => "a findAux declaration statement",
         "letting" => "a letting declaration statement",
         "given" => "a given declaration statement",
         "where" => "an instantiation condition",

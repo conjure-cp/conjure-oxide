@@ -3,8 +3,8 @@
 use crate::ast::{Atom, Expression, Metadata, Model, Moo, Reference};
 use crate::bug;
 
-/// Introduces a find variable for a non-atomic optimisation objective and links it with an
-/// aux declaration constraint.
+/// Introduces an auxiliary find variable for a non-atomic optimisation objective and links it
+/// with an aux declaration constraint.
 ///
 /// Objectives that are already atoms (for example `minimising z`) are left unchanged.
 pub fn introduce_objective_auxiliary(mut model: Model) -> Model {
@@ -25,7 +25,7 @@ pub fn introduce_objective_auxiliary(mut model: Model) -> Model {
     };
 
     let mut symbols = model.symbols().clone();
-    let decl = symbols.gen_find(&domain);
+    let decl = symbols.gen_find_auxiliary(&domain);
     let aux_reference = Expression::Atomic(Metadata::new(), Atom::new_ref(decl.clone()));
     let aux_constraint =
         Expression::AuxDeclaration(Metadata::new(), Reference::new(decl), Moo::new(expr));

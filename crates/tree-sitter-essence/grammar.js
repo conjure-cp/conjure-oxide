@@ -67,9 +67,9 @@ module.exports = grammar ({
     //meta-variable (aka template argument)
     metavar: $ => seq("&", field("identifier", $.identifier)),
 
-    //find statements
+    //find / findAux statements (findAux before find so the longer keyword wins)
     find_statement: $ => seq(
-      field("find_keyword", "find"),
+      field("find_keyword", choice("findAux", "find")),
       field("variable_declaration", commaSep1($.variable_declaration))
     ),
 

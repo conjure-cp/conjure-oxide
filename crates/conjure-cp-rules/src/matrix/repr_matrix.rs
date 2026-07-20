@@ -38,7 +38,9 @@ register_rule_set!("ReprMatrixToAtom", ("Base"), |f: &SolverFamily| {
 fn decl_needs_matrix_to_atom_init(decl: &conjure_cp::ast::DeclarationPtr) -> bool {
     matches!(
         &decl.kind() as &DeclarationKind,
-        DeclarationKind::Find(..) | DeclarationKind::ValueLetting(..)
+        DeclarationKind::Find(..)
+            | DeclarationKind::FindAuxiliary(..)
+            | DeclarationKind::ValueLetting(..)
     ) && decl.reprs().is_empty()
         && decl
             .resolved_domain()
@@ -99,7 +101,7 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     for (_, decl) in symtab.iter_local() {
         guard!(
             // this is a variable or constant
-            matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Find(..) | DeclarationKind::ValueLetting(..)) &&
+            matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Find(..) | DeclarationKind::FindAuxiliary(..) | DeclarationKind::ValueLetting(..)) &&
             // ...which hasn't been represented yet
             decl.reprs().is_empty() &&
             // ...and its domain resolves to a matrix
@@ -339,7 +341,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
             _ => {
                 // build a constraint mapping original indices integers
                 let mapped_idx =
-                    Reference::new(idx_auxvars.gen_find(&domain_int!(0..(dim_sz as i32 - 1))));
+                    Reference::new(idx_auxvars.gen_find_auxiliary(&domain_int!(0..(dim_sz as i32 - 1))));
                 let mut eq_cases = Vec::new();
                 for idx_val in 0..dim_sz {
                     let orig_idx_val = mta.index_flat_to_lit(di, idx_val).unwrap_or_bug();

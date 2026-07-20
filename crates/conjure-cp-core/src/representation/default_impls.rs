@@ -54,10 +54,14 @@ where
     let mut counter = 1;
 
     match &decl.kind() as &DeclarationKind {
-        DeclarationKind::Find(_) => {
+        DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
             let declare_field_var = |dom: DomainPtr| {
                 let name = Name::repr(src_name.clone(), repr_name, &counter.to_string());
-                let mut field_decl = DeclarationPtr::new_find(name, dom);
+                let mut field_decl = if decl.is_find_auxiliary() {
+                    DeclarationPtr::new_find_auxiliary(name, dom)
+                } else {
+                    DeclarationPtr::new_find(name, dom)
+                };
                 *(field_decl.source_mut()) = Some(decl.clone());
                 symtab
                     .insert(field_decl.clone())

@@ -453,7 +453,7 @@ impl Display for Model {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (name, decl) in self.symbols().clone().into_iter_local() {
             match &decl.kind() as &DeclarationKind {
-                DeclarationKind::Find(_) => {
+                DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
                     writeln!(
                         f,
                         "{}",

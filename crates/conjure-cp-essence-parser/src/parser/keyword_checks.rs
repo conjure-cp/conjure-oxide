@@ -1,10 +1,11 @@
-const KEYWORDS: [&str; 24] = [
+const KEYWORDS: [&str; 25] = [
     "forall",
     "exists",
     "such",
     "that",
     "letting",
     "find",
+    "findAux",
     "minimise",
     "maximise",
     "subject",

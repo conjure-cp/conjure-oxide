@@ -256,7 +256,12 @@ pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) 
     let decl = symbol_table.lookup(var_name)?;
     let var = decl.as_find()?;
     let domain = &var.domain_of();
-    Some(format!("find {var_name}: {domain}"))
+    let keyword = if decl.is_find_auxiliary() {
+        "findAux"
+    } else {
+        "find"
+    };
+    Some(format!("{keyword} {var_name}: {domain}"))
 }
 
 /// Pretty prints, in essence syntax, the declaration for the given value letting.

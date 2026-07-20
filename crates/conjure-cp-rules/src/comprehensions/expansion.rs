@@ -49,9 +49,10 @@ fn simplify_expanded_ac_results(results: Vec<Expr>, ac_operator: ACOperatorKind)
     }
 }
 
-/// Rewrite top-level `exists` comprehensions into constraints over fresh machine `find`s.
+/// Rewrite top-level `exists` comprehensions into constraints over fresh auxiliary `find`s.
 ///
-/// `exists` is represented as `or([comprehension])`.
+/// `exists` is represented as `or([comprehension])`. The quantified variables become
+/// [`DeclarationKind::FindAuxiliary`] entries so Minion does not branch on them.
 #[register_rule("Base", 2003, [Root])]
 fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(metadata, constraints) = expr else {
@@ -310,7 +311,7 @@ fn rewrite_exists_comprehension_to_constraints(
         let domain = decl.domain()?;
         let rewritten_domain =
             replace_declaration_ptrs_in_domain(domain, &replacements_by_id, &replacements_by_name);
-        let fresh_decl = symbols.gen_find(&rewritten_domain);
+        let fresh_decl = symbols.gen_find_auxiliary(&rewritten_domain);
         replacements_by_id.insert(decl.id(), fresh_decl.clone());
         replacements_by_name.insert(decl.name().clone(), fresh_decl);
     }
