@@ -38,7 +38,7 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
         _ => {
             return Err(anyhow!(
                 "Unknown output format {}; supports [ast-json, expression-domains]",
-                &pretty_args.output_format
+                pretty_args.output_format
             ));
         }
     };
