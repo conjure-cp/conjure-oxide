@@ -13,7 +13,7 @@ use crate::{
     utils::{defer_aux_var, is_flat, rewrite_children, to_aux_var},
 };
 use conjure_cp::ast::categories::{Category, CategoryOf};
-use conjure_cp::ast::{Domain, GroundDomain, Moo, eval_constant};
+use conjure_cp::ast::{Domain, DomainPtr, GroundDomain, HasDomain, Moo, eval_constant};
 use conjure_cp::{
     ast::Metadata,
     ast::{
@@ -532,7 +532,12 @@ fn flatten_weighted_sum_binary_product(
             Expr::Atomic(Metadata::new(), b_atom.clone()),
         ]),
     );
-    let domain = product.domain_of().ok_or(RuleNotApplicable)?;
+    // Essence domain_of rejects bool arithmetic; after stripping toInt(bool) for
+    // Minion we still need an int aux domain (BOOL is 0/1 in the solver).
+    let domain = product
+        .domain_of()
+        .or_else(|| minion_product_aux_domain_from_atoms(&a_atom, &b_atom))
+        .ok_or(RuleNotApplicable)?;
     let decl = symtab.gen_find(&domain);
     let aux = Atom::Reference(Reference::new(decl));
 
@@ -544,6 +549,52 @@ fn flatten_weighted_sum_binary_product(
     ));
 
     Ok(aux)
+}
+
+/// Minion treats BOOL as 0/1. Use that only when emitting solver constraints —
+/// not for Essence typechecking / `domain_of`.
+fn minion_atom_as_i32_bounds(atom: &Atom) -> Option<(i32, i32)> {
+    let resolved = atom.domain_of().resolve().ok()?;
+    match resolved.as_ref() {
+        GroundDomain::Bool => Some((0, 1)),
+        GroundDomain::Int(ranges) => {
+            let mut lo = i32::MAX;
+            let mut hi = i32::MIN;
+            for range in ranges {
+                match range {
+                    Range::Single(x) => {
+                        lo = lo.min(*x);
+                        hi = hi.max(*x);
+                    }
+                    Range::Bounded(a, b) => {
+                        lo = lo.min(*a);
+                        hi = hi.max(*b);
+                    }
+                    _ => return None,
+                }
+            }
+            (lo <= hi).then_some((lo, hi))
+        }
+        _ => None,
+    }
+}
+
+fn minion_product_aux_domain_from_atoms(a: &Atom, b: &Atom) -> Option<DomainPtr> {
+    let (a_lo, a_hi) = minion_atom_as_i32_bounds(a)?;
+    let (b_lo, b_hi) = minion_atom_as_i32_bounds(b)?;
+    let corners = [
+        a_lo.checked_mul(b_lo)?,
+        a_lo.checked_mul(b_hi)?,
+        a_hi.checked_mul(b_lo)?,
+        a_hi.checked_mul(b_hi)?,
+    ];
+    let lo = *corners.iter().min()?;
+    let hi = *corners.iter().max()?;
+    if lo == hi {
+        Some(Domain::int(vec![Range::Single(lo)]))
+    } else {
+        Some(Domain::int(vec![Range::Bounded(lo, hi)]))
+    }
 }
 
 fn flatten_weighted_sum_term(
@@ -2779,6 +2830,51 @@ mod tests {
             }
             other => panic!("expected and of sumleq/sumgeq, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn introduce_weighted_sum_lowers_product_of_to_int_bools() {
+        // bibd/opd: sum([product([toInt(a), toInt(b)]), ...]) <= k
+        // Stripping toInt(bool) must not prevent FlatProductEq aux domain inference.
+        let a = Expr::ToInt(Metadata::new(), Moo::new(bool_atom("a")));
+        let b = Expr::ToInt(Metadata::new(), Moo::new(bool_atom("b")));
+        let product = Expr::Product(Metadata::new(), Moo::new(matrix_expr![a, b]));
+        let expr = Expr::Leq(
+            Metadata::new(),
+            Moo::new(Expr::Sum(
+                Metadata::new(),
+                Moo::new(matrix_expr![product]),
+            )),
+            Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(1)))),
+        );
+
+        let rule =
+            get_rule_by_name("introduce_weighted_sumleq_sumgeq").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("sum of product(toInt(bool), toInt(bool)) should lower");
+
+        assert!(
+            matches!(result.new_expression, Expr::FlatSumLeq(_, ref vars, _) if vars.len() == 1),
+            "expected FlatSumLeq over product aux, got {:?}",
+            result.new_expression
+        );
+        assert!(
+            result
+                .new_top
+                .iter()
+                .any(|c| matches!(c, Expr::FlatProductEq(_, _, _, _))),
+            "must post FlatProductEq over the bool atoms; got {:?}",
+            result.new_top
+        );
+        assert!(
+            !result
+                .new_top
+                .iter()
+                .any(|c| matches!(c, Expr::AuxDeclaration(_, _, e) if matches!(e.as_ref(), Expr::ToInt(_, _)))),
+            "toInt(bool) factors must not create toInt aux vars; got {:?}",
+            result.new_top
+        );
     }
 
     #[test]
