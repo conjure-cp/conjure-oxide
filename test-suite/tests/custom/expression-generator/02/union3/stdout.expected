@@ -2,30 +2,30 @@ find a: set of int(1..4)
 find b: set of int(1..4)
 find c: set of int(1..4)
 find d: set of int(1..4)
+find a#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
+find a#SetExplicitWithSize_2: int(0..4)
 find a#SetOccurrence_1: bool
 find a#SetOccurrence_2: bool
 find a#SetOccurrence_3: bool
 find a#SetOccurrence_4: bool
-find a#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
-find a#SetExplicitWithSize_2: int(0..4)
+find b#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
+find b#SetExplicitWithSize_2: int(0..4)
 find b#SetOccurrence_1: bool
 find b#SetOccurrence_2: bool
 find b#SetOccurrence_3: bool
 find b#SetOccurrence_4: bool
-find b#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
-find b#SetExplicitWithSize_2: int(0..4)
+find c#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
+find c#SetExplicitWithSize_2: int(0..4)
 find c#SetOccurrence_1: bool
 find c#SetOccurrence_2: bool
 find c#SetOccurrence_3: bool
 find c#SetOccurrence_4: bool
-find c#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
-find c#SetExplicitWithSize_2: int(0..4)
+find d#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
+find d#SetExplicitWithSize_2: int(0..4)
 find d#SetOccurrence_1: bool
 find d#SetOccurrence_2: bool
 find d#SetOccurrence_3: bool
 find d#SetOccurrence_4: bool
-find d#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
-find d#SetExplicitWithSize_2: int(0..4)
 find a#SetExplicitWithSize_1#MatrixToAtom_1: int(1..4)
 find a#SetExplicitWithSize_1#MatrixToAtom_2: int(1..4)
 find a#SetExplicitWithSize_1#MatrixToAtom_3: int(1..4)
@@ -42,10 +42,10 @@ find d#SetExplicitWithSize_1#MatrixToAtom_1: int(1..4)
 find d#SetExplicitWithSize_1#MatrixToAtom_2: int(1..4)
 find d#SetExplicitWithSize_1#MatrixToAtom_3: int(1..4)
 find d#SetExplicitWithSize_1#MatrixToAtom_4: int(1..4)
-find __0: matrix indexed by [int(1..)] of int(2..8)
-find __1: matrix indexed by [int(1..)] of int(2..8)
-find __2: matrix indexed by [int(1..)] of int(2..8)
-find __3: matrix indexed by [int(1..)] of int(2..8)
+findAux __0: matrix indexed by [int(1..)] of int(2..8)
+findAux __1: matrix indexed by [int(1..)] of int(2..8)
+findAux __2: matrix indexed by [int(1..)] of int(2..8)
+findAux __3: matrix indexed by [int(1..)] of int(2..8)
 
 such that
 
@@ -113,25 +113,25 @@ new variables:
   find d#SetOccurrence_3: bool
   find d#SetOccurrence_4: bool
 new constraints:
-  and([sum([toInt(a#SetOccurrence_1),toInt(a#SetOccurrence_2),toInt(a#SetOccurrence_3),toInt(a#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(a#SetOccurrence_1),toInt(a#SetOccurrence_2),toInt(a#SetOccurrence_3),toInt(a#SetOccurrence_4);int(1..)]) <= 4;int(1..)])
   or([a#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
   or([a#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
   or([a#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
+  and([sum([toInt(a#SetOccurrence_1),toInt(a#SetOccurrence_2),toInt(a#SetOccurrence_3),toInt(a#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(a#SetOccurrence_1),toInt(a#SetOccurrence_2),toInt(a#SetOccurrence_3),toInt(a#SetOccurrence_4);int(1..)]) <= 4;int(1..)])
   a = a
-  and([sum([toInt(b#SetOccurrence_1),toInt(b#SetOccurrence_2),toInt(b#SetOccurrence_3),toInt(b#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(b#SetOccurrence_1),toInt(b#SetOccurrence_2),toInt(b#SetOccurrence_3),toInt(b#SetOccurrence_4);int(1..)]) <= 4;int(1..)])
   or([b#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
   or([b#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
   or([b#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
+  and([sum([toInt(b#SetOccurrence_1),toInt(b#SetOccurrence_2),toInt(b#SetOccurrence_3),toInt(b#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(b#SetOccurrence_1),toInt(b#SetOccurrence_2),toInt(b#SetOccurrence_3),toInt(b#SetOccurrence_4);int(1..)]) <= 4;int(1..)])
   b = b
-  and([sum([toInt(c#SetOccurrence_1),toInt(c#SetOccurrence_2),toInt(c#SetOccurrence_3),toInt(c#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(c#SetOccurrence_1),toInt(c#SetOccurrence_2),toInt(c#SetOccurrence_3),toInt(c#SetOccurrence_4);int(1..)]) <= 4;int(1..)])
   or([c#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
   or([c#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
   or([c#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
+  and([sum([toInt(c#SetOccurrence_1),toInt(c#SetOccurrence_2),toInt(c#SetOccurrence_3),toInt(c#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(c#SetOccurrence_1),toInt(c#SetOccurrence_2),toInt(c#SetOccurrence_3),toInt(c#SetOccurrence_4);int(1..)]) <= 4;int(1..)])
   c = c
-  and([sum([toInt(d#SetOccurrence_1),toInt(d#SetOccurrence_2),toInt(d#SetOccurrence_3),toInt(d#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(d#SetOccurrence_1),toInt(d#SetOccurrence_2),toInt(d#SetOccurrence_3),toInt(d#SetOccurrence_4);int(1..)]) <= 4;int(1..)])
   or([d#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
   or([d#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
   or([d#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
+  and([sum([toInt(d#SetOccurrence_1),toInt(d#SetOccurrence_2),toInt(d#SetOccurrence_3),toInt(d#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(d#SetOccurrence_1),toInt(d#SetOccurrence_2),toInt(d#SetOccurrence_3),toInt(d#SetOccurrence_4);int(1..)]) <= 4;int(1..)])
   d = d
 
 --
@@ -227,47 +227,47 @@ flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..
 --
 
 sum(flatten([flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ];int(1..)]),flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ];int(1..)]);int(1..)])) = 10,
+true,
+true,
+true,
 and([sum([toInt(a#SetOccurrence_1),toInt(a#SetOccurrence_2),toInt(a#SetOccurrence_3),toInt(a#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(a#SetOccurrence_1),toInt(a#SetOccurrence_2),toInt(a#SetOccurrence_3),toInt(a#SetOccurrence_4);int(1..)]) <= 4;int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in a | __0 <- a ]),and([ __0 in a | __0 <- a ]);int(1..)]),
+true,
+true,
+true,
 and([sum([toInt(b#SetOccurrence_1),toInt(b#SetOccurrence_2),toInt(b#SetOccurrence_3),toInt(b#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(b#SetOccurrence_1),toInt(b#SetOccurrence_2),toInt(b#SetOccurrence_3),toInt(b#SetOccurrence_4);int(1..)]) <= 4;int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in b | __0 <- b ]),and([ __0 in b | __0 <- b ]);int(1..)]),
+true,
+true,
+true,
 and([sum([toInt(c#SetOccurrence_1),toInt(c#SetOccurrence_2),toInt(c#SetOccurrence_3),toInt(c#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(c#SetOccurrence_1),toInt(c#SetOccurrence_2),toInt(c#SetOccurrence_3),toInt(c#SetOccurrence_4);int(1..)]) <= 4;int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in c | __0 <- c ]),and([ __0 in c | __0 <- c ]);int(1..)]),
+true,
+true,
+true,
 and([sum([toInt(d#SetOccurrence_1),toInt(d#SetOccurrence_2),toInt(d#SetOccurrence_3),toInt(d#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(d#SetOccurrence_1),toInt(d#SetOccurrence_2),toInt(d#SetOccurrence_3),toInt(d#SetOccurrence_4);int(1..)]) <= 4;int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in d | __0 <- d ]),and([ __0 in d | __0 <- d ]);int(1..)])
    ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 sum(flatten([flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ];int(1..)]),flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ];int(1..)]);int(1..)])) = 10,
+true,
+true,
+true,
 and([sum([toInt(a#SetOccurrence_1),toInt(a#SetOccurrence_2),toInt(a#SetOccurrence_3),toInt(a#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(a#SetOccurrence_1),toInt(a#SetOccurrence_2),toInt(a#SetOccurrence_3),toInt(a#SetOccurrence_4);int(1..)]) <= 4;int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in a | __0 <- a ]),and([ __0 in a | __0 <- a ]);int(1..)]),
+true,
+true,
+true,
 and([sum([toInt(b#SetOccurrence_1),toInt(b#SetOccurrence_2),toInt(b#SetOccurrence_3),toInt(b#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(b#SetOccurrence_1),toInt(b#SetOccurrence_2),toInt(b#SetOccurrence_3),toInt(b#SetOccurrence_4);int(1..)]) <= 4;int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in b | __0 <- b ]),and([ __0 in b | __0 <- b ]);int(1..)]),
+true,
+true,
+true,
 and([sum([toInt(c#SetOccurrence_1),toInt(c#SetOccurrence_2),toInt(c#SetOccurrence_3),toInt(c#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(c#SetOccurrence_1),toInt(c#SetOccurrence_2),toInt(c#SetOccurrence_3),toInt(c#SetOccurrence_4);int(1..)]) <= 4;int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in c | __0 <- c ]),and([ __0 in c | __0 <- c ]);int(1..)]),
+true,
+true,
+true,
 and([sum([toInt(d#SetOccurrence_1),toInt(d#SetOccurrence_2),toInt(d#SetOccurrence_3),toInt(d#SetOccurrence_4);int(1..)]) >= 0,sum([toInt(d#SetOccurrence_1),toInt(d#SetOccurrence_2),toInt(d#SetOccurrence_3),toInt(d#SetOccurrence_4);int(1..)]) <= 4;int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in d | __0 <- d ]),and([ __0 in d | __0 <- d ]);int(1..)])
 new variables:
   find a#SetExplicitWithSize_1#MatrixToAtom_1: int(1..4)
@@ -341,8 +341,8 @@ flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <-
    ~~> flatten_matrix_literal ([("Minion", 1000)])
 flatten([__0,__1;int(1..)])
 new variables:
-  find __0: matrix indexed by [int(1..)] of int(2..8)
-  find __1: matrix indexed by [int(1..)] of int(2..8)
+  findAux __0: matrix indexed by [int(1..)] of int(2..8)
+  findAux __1: matrix indexed by [int(1..)] of int(2..8)
 new constraints:
   __0 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- c ]
   __1 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ]
@@ -353,8 +353,8 @@ flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..
    ~~> flatten_matrix_literal ([("Minion", 1000)])
 flatten([__2,__3;int(1..)])
 new variables:
-  find __2: matrix indexed by [int(1..)] of int(2..8)
-  find __3: matrix indexed by [int(1..)] of int(2..8)
+  findAux __2: matrix indexed by [int(1..)] of int(2..8)
+  findAux __3: matrix indexed by [int(1..)] of int(2..8)
 new constraints:
   __2 =aux [ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ]
   __3 =aux [ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ]
@@ -367,30 +367,30 @@ find a: set of int(1..4)
 find b: set of int(1..4)
 find c: set of int(1..4)
 find d: set of int(1..4)
+find a#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
+find a#SetExplicitWithSize_2: int(0..4)
 find a#SetOccurrence_1: bool
 find a#SetOccurrence_2: bool
 find a#SetOccurrence_3: bool
 find a#SetOccurrence_4: bool
-find a#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
-find a#SetExplicitWithSize_2: int(0..4)
+find b#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
+find b#SetExplicitWithSize_2: int(0..4)
 find b#SetOccurrence_1: bool
 find b#SetOccurrence_2: bool
 find b#SetOccurrence_3: bool
 find b#SetOccurrence_4: bool
-find b#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
-find b#SetExplicitWithSize_2: int(0..4)
+find c#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
+find c#SetExplicitWithSize_2: int(0..4)
 find c#SetOccurrence_1: bool
 find c#SetOccurrence_2: bool
 find c#SetOccurrence_3: bool
 find c#SetOccurrence_4: bool
-find c#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
-find c#SetExplicitWithSize_2: int(0..4)
+find d#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
+find d#SetExplicitWithSize_2: int(0..4)
 find d#SetOccurrence_1: bool
 find d#SetOccurrence_2: bool
 find d#SetOccurrence_3: bool
 find d#SetOccurrence_4: bool
-find d#SetExplicitWithSize_1: matrix indexed by [int(1..4)] of int(1..4)
-find d#SetExplicitWithSize_2: int(0..4)
 find a#SetExplicitWithSize_1#MatrixToAtom_1: int(1..4)
 find a#SetExplicitWithSize_1#MatrixToAtom_2: int(1..4)
 find a#SetExplicitWithSize_1#MatrixToAtom_3: int(1..4)
@@ -407,33 +407,33 @@ find d#SetExplicitWithSize_1#MatrixToAtom_1: int(1..4)
 find d#SetExplicitWithSize_1#MatrixToAtom_2: int(1..4)
 find d#SetExplicitWithSize_1#MatrixToAtom_3: int(1..4)
 find d#SetExplicitWithSize_1#MatrixToAtom_4: int(1..4)
-find __0: matrix indexed by [int(1..)] of int(2..8)
-find __1: matrix indexed by [int(1..)] of int(2..8)
-find __2: matrix indexed by [int(1..)] of int(2..8)
-find __3: matrix indexed by [int(1..)] of int(2..8)
+findAux __0: matrix indexed by [int(1..)] of int(2..8)
+findAux __1: matrix indexed by [int(1..)] of int(2..8)
+findAux __2: matrix indexed by [int(1..)] of int(2..8)
+findAux __3: matrix indexed by [int(1..)] of int(2..8)
 
 such that
 
 sum(flatten([flatten([__0,__1;int(1..)]),flatten([__2,__3;int(1..)]);int(1..)])) = 10,
+true,
+true,
+true,
 and([SumGeq([a#SetOccurrence_1, a#SetOccurrence_2, a#SetOccurrence_3, a#SetOccurrence_4], 0),SumLeq([a#SetOccurrence_1, a#SetOccurrence_2, a#SetOccurrence_3, a#SetOccurrence_4], 4);int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in a | __0 <- a ]),and([ __0 in a | __0 <- a ]);int(1..)]),
+true,
+true,
+true,
 and([SumGeq([b#SetOccurrence_1, b#SetOccurrence_2, b#SetOccurrence_3, b#SetOccurrence_4], 0),SumLeq([b#SetOccurrence_1, b#SetOccurrence_2, b#SetOccurrence_3, b#SetOccurrence_4], 4);int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in b | __0 <- b ]),and([ __0 in b | __0 <- b ]);int(1..)]),
+true,
+true,
+true,
 and([SumGeq([c#SetOccurrence_1, c#SetOccurrence_2, c#SetOccurrence_3, c#SetOccurrence_4], 0),SumLeq([c#SetOccurrence_1, c#SetOccurrence_2, c#SetOccurrence_3, c#SetOccurrence_4], 4);int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in c | __0 <- c ]),and([ __0 in c | __0 <- c ]);int(1..)]),
+true,
+true,
+true,
 and([SumGeq([d#SetOccurrence_1, d#SetOccurrence_2, d#SetOccurrence_3, d#SetOccurrence_4], 0),SumLeq([d#SetOccurrence_1, d#SetOccurrence_2, d#SetOccurrence_3, d#SetOccurrence_4], 4);int(1..)]),
-true,
-true,
-true,
 and([and([ __0 in d | __0 <- d ]),and([ __0 in d | __0 <- d ]);int(1..)]),
 __0 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- c ],
 __1 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ],

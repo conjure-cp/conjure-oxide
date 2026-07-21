@@ -231,21 +231,21 @@
 
 find x: set of int(1..5)
 find y: set of int(1..6)
+find x#SetExplicitWithSize_1: matrix indexed by [int(1..5)] of int(1..5)
+find x#SetExplicitWithSize_2: int(0..5)
 find x#SetOccurrence_1: bool
 find x#SetOccurrence_2: bool
 find x#SetOccurrence_3: bool
 find x#SetOccurrence_4: bool
 find x#SetOccurrence_5: bool
-find x#SetExplicitWithSize_1: matrix indexed by [int(1..5)] of int(1..5)
-find x#SetExplicitWithSize_2: int(0..5)
+find y#SetExplicitWithSize_1: matrix indexed by [int(1..6)] of int(1..6)
+find y#SetExplicitWithSize_2: int(0..6)
 find y#SetOccurrence_1: bool
 find y#SetOccurrence_2: bool
 find y#SetOccurrence_3: bool
 find y#SetOccurrence_4: bool
 find y#SetOccurrence_5: bool
 find y#SetOccurrence_6: bool
-find y#SetExplicitWithSize_1: matrix indexed by [int(1..6)] of int(1..6)
-find y#SetExplicitWithSize_2: int(0..6)
 find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..5)
 find x#SetExplicitWithSize_1#MatrixToAtom_2: int(1..5)
 find x#SetExplicitWithSize_1#MatrixToAtom_3: int(1..5)
@@ -301,18 +301,18 @@ new variables:
   find y#SetOccurrence_5: bool
   find y#SetOccurrence_6: bool
 new constraints:
-  and([sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5);int(1..)]) >= 0,sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5);int(1..)]) <= 5;int(1..)])
   or([x#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
   or([x#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
   or([x#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
   or([x#SetExplicitWithSize_2 < 5,([4;int(1..1)] <lex [5;int(1..1)]);int(1..)])
+  and([sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5);int(1..)]) >= 0,sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5);int(1..)]) <= 5;int(1..)])
   x = x
-  and([sum([toInt(y#SetOccurrence_1),toInt(y#SetOccurrence_2),toInt(y#SetOccurrence_3),toInt(y#SetOccurrence_4),toInt(y#SetOccurrence_5),toInt(y#SetOccurrence_6);int(1..)]) >= 0,sum([toInt(y#SetOccurrence_1),toInt(y#SetOccurrence_2),toInt(y#SetOccurrence_3),toInt(y#SetOccurrence_4),toInt(y#SetOccurrence_5),toInt(y#SetOccurrence_6);int(1..)]) <= 6;int(1..)])
   or([y#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
   or([y#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
   or([y#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
   or([y#SetExplicitWithSize_2 < 5,([4;int(1..1)] <lex [5;int(1..1)]);int(1..)])
   or([y#SetExplicitWithSize_2 < 6,([5;int(1..1)] <lex [6;int(1..1)]);int(1..)])
+  and([sum([toInt(y#SetOccurrence_1),toInt(y#SetOccurrence_2),toInt(y#SetOccurrence_3),toInt(y#SetOccurrence_4),toInt(y#SetOccurrence_5),toInt(y#SetOccurrence_6);int(1..)]) >= 0,sum([toInt(y#SetOccurrence_1),toInt(y#SetOccurrence_2),toInt(y#SetOccurrence_3),toInt(y#SetOccurrence_4),toInt(y#SetOccurrence_5),toInt(y#SetOccurrence_6);int(1..)]) <= 6;int(1..)])
   y = y
 
 --
@@ -360,33 +360,33 @@ and([ __0 in y | __0 <- y ])
 --
 
 sum([ i | i <- x, !(i in y) ]) = 2,
+true,
+true,
+true,
+true,
 and([sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5);int(1..)]) >= 0,sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5);int(1..)]) <= 5;int(1..)]),
-true,
-true,
-true,
-true,
 and([and([ __0 in x | __0 <- x ]),and([ __0 in x | __0 <- x ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
 and([sum([toInt(y#SetOccurrence_1),toInt(y#SetOccurrence_2),toInt(y#SetOccurrence_3),toInt(y#SetOccurrence_4),toInt(y#SetOccurrence_5),toInt(y#SetOccurrence_6);int(1..)]) >= 0,sum([toInt(y#SetOccurrence_1),toInt(y#SetOccurrence_2),toInt(y#SetOccurrence_3),toInt(y#SetOccurrence_4),toInt(y#SetOccurrence_5),toInt(y#SetOccurrence_6);int(1..)]) <= 6;int(1..)]),
-true,
-true,
-true,
-true,
-true,
 and([and([ __0 in y | __0 <- y ]),and([ __0 in y | __0 <- y ]);int(1..)])
    ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 sum([ i | i <- x, !(i in y) ]) = 2,
+true,
+true,
+true,
+true,
 and([sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5);int(1..)]) >= 0,sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5);int(1..)]) <= 5;int(1..)]),
-true,
-true,
-true,
-true,
 and([and([ __0 in x | __0 <- x ]),and([ __0 in x | __0 <- x ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
 and([sum([toInt(y#SetOccurrence_1),toInt(y#SetOccurrence_2),toInt(y#SetOccurrence_3),toInt(y#SetOccurrence_4),toInt(y#SetOccurrence_5),toInt(y#SetOccurrence_6);int(1..)]) >= 0,sum([toInt(y#SetOccurrence_1),toInt(y#SetOccurrence_2),toInt(y#SetOccurrence_3),toInt(y#SetOccurrence_4),toInt(y#SetOccurrence_5),toInt(y#SetOccurrence_6);int(1..)]) <= 6;int(1..)]),
-true,
-true,
-true,
-true,
-true,
 and([and([ __0 in y | __0 <- y ]),and([ __0 in y | __0 <- y ]);int(1..)])
 new variables:
   find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..5)
@@ -431,21 +431,21 @@ Final model:
 
 find x: set of int(1..5)
 find y: set of int(1..6)
+find x#SetExplicitWithSize_1: matrix indexed by [int(1..5)] of int(1..5)
+find x#SetExplicitWithSize_2: int(0..5)
 find x#SetOccurrence_1: bool
 find x#SetOccurrence_2: bool
 find x#SetOccurrence_3: bool
 find x#SetOccurrence_4: bool
 find x#SetOccurrence_5: bool
-find x#SetExplicitWithSize_1: matrix indexed by [int(1..5)] of int(1..5)
-find x#SetExplicitWithSize_2: int(0..5)
+find y#SetExplicitWithSize_1: matrix indexed by [int(1..6)] of int(1..6)
+find y#SetExplicitWithSize_2: int(0..6)
 find y#SetOccurrence_1: bool
 find y#SetOccurrence_2: bool
 find y#SetOccurrence_3: bool
 find y#SetOccurrence_4: bool
 find y#SetOccurrence_5: bool
 find y#SetOccurrence_6: bool
-find y#SetExplicitWithSize_1: matrix indexed by [int(1..6)] of int(1..6)
-find y#SetExplicitWithSize_2: int(0..6)
 find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..5)
 find x#SetExplicitWithSize_1#MatrixToAtom_2: int(1..5)
 find x#SetExplicitWithSize_1#MatrixToAtom_3: int(1..5)
@@ -461,17 +461,17 @@ find y#SetExplicitWithSize_1#MatrixToAtom_6: int(1..6)
 such that
 
 sum([ i | i <- x, !(i in y) ]) = 2,
+true,
+true,
+true,
+true,
 and([SumGeq([x#SetOccurrence_1, x#SetOccurrence_2, x#SetOccurrence_3, x#SetOccurrence_4, x#SetOccurrence_5], 0),SumLeq([x#SetOccurrence_1, x#SetOccurrence_2, x#SetOccurrence_3, x#SetOccurrence_4, x#SetOccurrence_5], 5);int(1..)]),
-true,
-true,
-true,
-true,
 and([and([ __0 in x | __0 <- x ]),and([ __0 in x | __0 <- x ]);int(1..)]),
+true,
+true,
+true,
+true,
+true,
 and([SumGeq([y#SetOccurrence_1, y#SetOccurrence_2, y#SetOccurrence_3, y#SetOccurrence_4, y#SetOccurrence_5, y#SetOccurrence_6], 0),SumLeq([y#SetOccurrence_1, y#SetOccurrence_2, y#SetOccurrence_3, y#SetOccurrence_4, y#SetOccurrence_5, y#SetOccurrence_6], 6);int(1..)]),
-true,
-true,
-true,
-true,
-true,
 and([and([ __0 in y | __0 <- y ]),and([ __0 in y | __0 <- y ]);int(1..)])
 
