@@ -1653,7 +1653,14 @@ fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
         }
     }
 
-    None
+    // Match the identity-padding used by [`pad_indexed_element_id_list`] / Minion `element_one`
+    // for partial permutations (e.g. `elementId([j,i;int(i,j)], k)`): values absent from the
+    // matrix map to themselves as indices. Without this, out-of-matrix lookups become unconstrained
+    // auxiliaries and lex constraints are weakened.
+    Some(Expr::Atomic(
+        Metadata::new(),
+        Atom::Literal(Lit::Int(search_value)),
+    ))
 }
 
 /// Introduces an auxiliary variable for `elementId` used as a matrix index.
@@ -1880,20 +1887,21 @@ fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> Appli
     )))
 }
 
-/// Drops `__n =aux matrix[elementId(..., k)]` when `k` is constant and not in the matrix.
+/// Rewrites `__n =aux matrix[elementId(..., k)]` when constant `k` is absent from the matrix.
 ///
-/// The auxiliary variable remains declared for use in lex constraints, but is not linked to an
-/// invalid index lookup.
+/// Uses the same identity-index fallback as [`fold_constant_element_id_to_index`]: the lookup
+/// becomes `matrix[k]`. Previously this dropped the aux link entirely, leaving unconstrained
+/// auxiliaries inside lex constraints.
 #[register_rule("Minion", 4450, [AuxDeclaration])]
 fn drop_invalid_constant_element_id_safeindex_aux(
     expr: &Expr,
     _: &SymbolTable,
 ) -> ApplicationResult {
-    let Expr::AuxDeclaration(_, _, inner) = expr else {
+    let Expr::AuxDeclaration(meta, reference, inner) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::SafeIndex(_, _, indices) = inner.as_ref() else {
+    let Expr::SafeIndex(index_meta, subject, indices) = inner.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -1905,15 +1913,26 @@ fn drop_invalid_constant_element_id_safeindex_aux(
         return Err(RuleNotApplicable);
     };
 
-    if fold_constant_element_id_to_index(&indices[0]).is_some() {
+    // Prefer the shared folder (including identity padding). If it succeeds, rewrite to a plain
+    // SafeIndex with that constant index; flatten_element_id_index / resolve paths usually handle
+    // this earlier, so this is a fallback.
+    let Some(index) = fold_constant_element_id_to_index(&indices[0]) else {
         return Err(RuleNotApplicable);
-    }
+    };
 
     if expr_int_literal(value.as_ref()).is_none() {
         return Err(RuleNotApplicable);
     }
 
-    Ok(RuleEffect::pure(true.into()))
+    Ok(RuleEffect::pure(Expr::AuxDeclaration(
+        meta.clone(),
+        reference.clone(),
+        Moo::new(Expr::SafeIndex(
+            index_meta.clone(),
+            subject.clone(),
+            vec![index],
+        )),
+    )))
 }
 
 /// Converts `__inDomain(a,domain) to w-inintervalset.
