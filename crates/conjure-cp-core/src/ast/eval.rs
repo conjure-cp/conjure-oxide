@@ -1021,7 +1021,20 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Participants(_, _) => todo!(),
         Expr::Party(_, _, _) => todo!(),
         Expr::Parts(_, _) => todo!(),
-        Expr::Card(_, _) => todo!(),
+        Expr::Card(_, collection) => {
+            let Lit::AbstractLiteral(collection) = eval_constant(collection)? else {
+                return None;
+            };
+            let length = match collection {
+                AbstractLiteral::Set(values)
+                | AbstractLiteral::MSet(values)
+                | AbstractLiteral::Matrix(values, _) => values.len(),
+                AbstractLiteral::Function(entries) => entries.len(),
+                AbstractLiteral::Relation(entries) => entries.len(),
+                _ => return None,
+            };
+            i32::try_from(length).ok().map(Lit::Int)
+        }
         Expr::LexLt(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
@@ -1399,6 +1412,20 @@ mod tests {
     fn local_evaluator_normalisation_terminates_on_already_folded_literal() {
         let expr = int_lit(5);
         assert!(normalise_evaluator_local(&expr).is_none());
+    }
+
+    #[test]
+    fn constant_set_cardinality_is_folded() {
+        let set = Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(vec![
+                Lit::Int(1),
+                Lit::Int(2),
+            ]))),
+        );
+        let cardinality = Expr::Card(Metadata::new(), Moo::new(set));
+
+        assert_eq!(eval_constant(&cardinality), Some(Lit::Int(2)));
     }
 
     #[test]

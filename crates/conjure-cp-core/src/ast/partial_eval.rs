@@ -950,7 +950,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::UnsafePow(_, _, _) => Err(RuleNotApplicable),
         Expr::SafePow(_, _, _) => Err(RuleNotApplicable),
         Expr::Minus(_, _, _) => Err(RuleNotApplicable),
-        Expr::Card(_, _) => todo!(),
+        Expr::Card(_, _) => Err(RuleNotApplicable),
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
@@ -1214,5 +1214,22 @@ mod tests {
         let expr = product(vec![int_lit(0), atom_ref("x")]);
         let reduced = run_partial_evaluator(&expr).unwrap().new_expression;
         assert_eq!(reduced, int_lit(0));
+    }
+
+    #[test]
+    fn symbolic_cardinality_is_left_for_representation_rules() {
+        let set = Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(crate::ast::Reference::new(DeclarationPtr::new_find(
+                Name::user("s"),
+                Domain::set(
+                    crate::ast::SetAttr::new_max_size(2),
+                    Domain::int(vec![Range::Bounded(1, 2)]),
+                ),
+            ))),
+        );
+        let cardinality = Expr::Card(Metadata::new(), Moo::new(set));
+
+        assert!(run_partial_evaluator_local(&cardinality).is_err());
     }
 }
