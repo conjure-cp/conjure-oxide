@@ -152,32 +152,38 @@ fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::User(Ustr::from(name));
     // value letting
-    if let Ok(value) = parse_expression(&arr[1], scope) {
-        let mut symtab = scope.write();
-        symtab
-            .insert(DeclarationPtr::new_value_letting(name.clone(), value))
-            .ok_or(Error::Parse(format!(
-                "Could not add {name} to symbol table as it already exists"
-            )))
-    } else {
-        // domain letting
-        let domain = &arr[1]
-            .as_object()
-            .ok_or(error!("Letting[1] is not an object".to_owned()))?["Domain"]
-            .as_object()
-            .ok_or(error!("Letting[1].Domain is not an object"))?
-            .iter()
-            .next()
-            .ok_or(error!("Letting[1].Domain is an empty object"))?;
+    match parse_expression(&arr[1], scope) {
+        Ok(value) => {
+            let mut symtab = scope.write();
+            symtab
+                .insert(DeclarationPtr::new_value_letting(name.clone(), value))
+                .ok_or(Error::Parse(format!(
+                    "Could not add {name} to symbol table as it already exists"
+                )))
+        }
+        Err(expression_error) => {
+            // A letting whose value is not an expression may be a domain letting. Use
+            // `get` here rather than indexing so an unsupported value expression is
+            // reported as a parse error instead of panicking on a missing `Domain` key.
+            let domain = arr[1]
+                .as_object()
+                .and_then(|value| value.get("Domain"))
+                .ok_or(expression_error)?
+                .as_object()
+                .ok_or(error!("Letting[1].Domain is not an object"))?
+                .iter()
+                .next()
+                .ok_or(error!("Letting[1].Domain is an empty object"))?;
 
-        let mut symtab = scope.write();
-        let domain = parse_domain(domain.0, domain.1, &mut symtab)?;
+            let mut symtab = scope.write();
+            let domain = parse_domain(domain.0, domain.1, &mut symtab)?;
 
-        symtab
-            .insert(DeclarationPtr::new_domain_letting(name.clone(), domain))
-            .ok_or(Error::Parse(format!(
-                "Could not add {name} to symbol table as it already exists"
-            )))
+            symtab
+                .insert(DeclarationPtr::new_domain_letting(name.clone(), domain))
+                .ok_or(Error::Parse(format!(
+                    "Could not add {name} to symbol table as it already exists"
+                )))
+        }
     }
 }
 
@@ -957,7 +963,15 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
         }
 
         Value::Object(constant) if constant.contains_key("ConstantAbstract") => {
-            parse_abstract_matrix_as_expr(obj, scope)
+            let literal = constant
+                .get("ConstantAbstract")
+                .and_then(Value::as_object)
+                .ok_or_else(|| fail("ConstantAbstract.as_object"))?;
+            if literal.contains_key("AbsLitMatrix") {
+                parse_abstract_matrix_as_expr(obj, scope)
+            } else {
+                parse_constant_abstract(literal, scope)
+            }
         }
 
         Value::Object(constant) if constant.contains_key("ConstantInt") => {
@@ -984,6 +998,33 @@ fn parse_abs_lit(abs_set: &Value, scope: &SymbolTablePtr) -> Result<Expression> 
         Metadata::new(),
         AbstractLiteral::Set(expressions),
     ))
+}
+
+fn parse_constant_abstract(
+    literal: &serde_json::Map<String, Value>,
+    scope: &SymbolTablePtr,
+) -> Result<Expression> {
+    if let Some(value) = literal.get("AbsLitSet") {
+        parse_abs_lit(value, scope)
+    } else if let Some(value) = literal.get("AbsLitMSet") {
+        parse_abs_mset(value, scope)
+    } else if let Some(value) = literal.get("AbsLitTuple") {
+        parse_abs_tuple(value, scope)
+    } else if let Some(value) = literal.get("AbsLitRecord") {
+        parse_abs_record(value, scope)
+    } else if let Some(value) = literal.get("AbsLitPartition") {
+        parse_abs_partition(value, scope)
+    } else if let Some(value) = literal.get("AbsLitFunction") {
+        parse_abs_function(value, scope)
+    } else if let Some(value) = literal.get("AbsLitVariant") {
+        parse_abs_variant(value, scope)
+    } else if let Some(value) = literal.get("AbsLitRelation") {
+        parse_abs_relation(value, scope)
+    } else if let Some(value) = literal.get("AbsLitSequence") {
+        parse_abs_sequence(value, scope)
+    } else {
+        Err(error!("Unhandled ConstantAbstract literal type"))
+    }
 }
 
 fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
@@ -1855,5 +1896,41 @@ mod tests {
         assert_eq!(re.name().clone(), Name::user("x"));
         assert!(re.domain_of().as_record().is_some());
         assert_eq!(field_name, Name::user("a"));
+    }
+
+    #[test]
+    fn parses_nested_constant_abstract_sets() {
+        let scope = SymbolTablePtr::new();
+        let value = json!({
+            "ConstantAbstract": {
+                "AbsLitSet": [
+                    {
+                        "ConstantAbstract": {
+                            "AbsLitSet": [
+                                { "ConstantInt": [{ "TagInt": [] }, 1] },
+                                { "ConstantInt": [{ "TagInt": [] }, 2] }
+                            ]
+                        }
+                    },
+                    {
+                        "ConstantAbstract": {
+                            "AbsLitSet": [
+                                { "ConstantInt": [{ "TagInt": [] }, 3] }
+                            ]
+                        }
+                    }
+                ]
+            }
+        });
+
+        let expr = parse_expression(&value, &scope).expect("nested constant sets should parse");
+        let Expression::AbstractLiteral(_, AbstractLiteral::Set(outer_values)) = expr else {
+            panic!("expected an outer set literal");
+        };
+        assert_eq!(outer_values.len(), 2);
+        assert!(outer_values.iter().all(|value| matches!(
+            value,
+            Expression::AbstractLiteral(_, AbstractLiteral::Set(_))
+        )));
     }
 }
