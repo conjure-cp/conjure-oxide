@@ -1,6 +1,7 @@
 use funcmap::FuncMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use ustr::Ustr;
@@ -40,6 +41,155 @@ impl HasDomain for Literal {
             Literal::Bool(_) => Domain::bool(),
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
         }
+    }
+}
+
+impl Literal {
+    /// Compare values using Essence-aware value ordering.
+    ///
+    /// Booleans and integers use their natural order, tuple-like values use
+    /// lexicographic order, and sets use lexicographic occurrence order over
+    /// ascending element values (`false < true`).
+    pub fn essence_cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (Literal::Bool(lhs), Literal::Bool(rhs)) => lhs.cmp(rhs),
+            (Literal::Int(lhs), Literal::Int(rhs)) => lhs.cmp(rhs),
+            (Literal::AbstractLiteral(lhs), Literal::AbstractLiteral(rhs)) => {
+                abstract_literal_essence_cmp(lhs, rhs)
+            }
+            _ => literal_kind(self).cmp(&literal_kind(other)),
+        }
+    }
+}
+
+fn literal_kind(literal: &Literal) -> u8 {
+    match literal {
+        Literal::Bool(_) => 0,
+        Literal::Int(_) => 1,
+        Literal::AbstractLiteral(_) => 2,
+    }
+}
+
+fn abstract_literal_essence_cmp(
+    lhs: &AbstractLiteral<Literal>,
+    rhs: &AbstractLiteral<Literal>,
+) -> Ordering {
+    match (lhs, rhs) {
+        (AbstractLiteral::Set(lhs), AbstractLiteral::Set(rhs)) => set_essence_cmp(lhs, rhs),
+        (AbstractLiteral::MSet(lhs), AbstractLiteral::MSet(rhs)) => sorted_literals_cmp(lhs, rhs),
+        (AbstractLiteral::Matrix(lhs, _), AbstractLiteral::Matrix(rhs, _))
+        | (AbstractLiteral::Tuple(lhs), AbstractLiteral::Tuple(rhs))
+        | (AbstractLiteral::Sequence(lhs), AbstractLiteral::Sequence(rhs)) => {
+            literal_slice_cmp(lhs, rhs)
+        }
+        (AbstractLiteral::Record(lhs), AbstractLiteral::Record(rhs)) => lhs
+            .iter()
+            .zip(rhs)
+            .find_map(|(lhs, rhs)| {
+                let ordering = lhs.name.to_string().cmp(&rhs.name.to_string());
+                (ordering != Ordering::Equal)
+                    .then_some(ordering)
+                    .or_else(|| {
+                        let ordering = lhs.value.essence_cmp(&rhs.value);
+                        (ordering != Ordering::Equal).then_some(ordering)
+                    })
+            })
+            .unwrap_or_else(|| lhs.len().cmp(&rhs.len())),
+        (AbstractLiteral::Function(lhs), AbstractLiteral::Function(rhs)) => lhs
+            .iter()
+            .zip(rhs)
+            .find_map(|((lhs_from, lhs_to), (rhs_from, rhs_to))| {
+                let ordering = lhs_from.essence_cmp(rhs_from);
+                (ordering != Ordering::Equal)
+                    .then_some(ordering)
+                    .or_else(|| {
+                        let ordering = lhs_to.essence_cmp(rhs_to);
+                        (ordering != Ordering::Equal).then_some(ordering)
+                    })
+            })
+            .unwrap_or_else(|| lhs.len().cmp(&rhs.len())),
+        (AbstractLiteral::Variant(lhs), AbstractLiteral::Variant(rhs)) => lhs
+            .name
+            .to_string()
+            .cmp(&rhs.name.to_string())
+            .then_with(|| lhs.value.essence_cmp(&rhs.value)),
+        (AbstractLiteral::Partition(lhs), AbstractLiteral::Partition(rhs))
+        | (AbstractLiteral::Relation(lhs), AbstractLiteral::Relation(rhs)) => lhs
+            .iter()
+            .zip(rhs)
+            .find_map(|(lhs, rhs)| {
+                let ordering = literal_slice_cmp(lhs, rhs);
+                (ordering != Ordering::Equal).then_some(ordering)
+            })
+            .unwrap_or_else(|| lhs.len().cmp(&rhs.len())),
+        _ => abstract_literal_kind(lhs).cmp(&abstract_literal_kind(rhs)),
+    }
+}
+
+fn abstract_literal_kind(literal: &AbstractLiteral<Literal>) -> u8 {
+    match literal {
+        AbstractLiteral::Set(_) => 0,
+        AbstractLiteral::MSet(_) => 1,
+        AbstractLiteral::Matrix(..) => 2,
+        AbstractLiteral::Tuple(_) => 3,
+        AbstractLiteral::Record(_) => 4,
+        AbstractLiteral::Sequence(_) => 5,
+        AbstractLiteral::Function(_) => 6,
+        AbstractLiteral::Variant(_) => 7,
+        AbstractLiteral::Partition(_) => 8,
+        AbstractLiteral::Relation(_) => 9,
+    }
+}
+
+fn literal_slice_cmp(lhs: &[Literal], rhs: &[Literal]) -> Ordering {
+    lhs.iter()
+        .zip(rhs)
+        .find_map(|(lhs, rhs)| {
+            let ordering = lhs.essence_cmp(rhs);
+            (ordering != Ordering::Equal).then_some(ordering)
+        })
+        .unwrap_or_else(|| lhs.len().cmp(&rhs.len()))
+}
+
+fn sorted_literals_cmp(lhs: &[Literal], rhs: &[Literal]) -> Ordering {
+    let mut lhs = lhs.iter().collect::<Vec<_>>();
+    let mut rhs = rhs.iter().collect::<Vec<_>>();
+    lhs.sort_by(|lhs, rhs| lhs.essence_cmp(rhs));
+    rhs.sort_by(|lhs, rhs| lhs.essence_cmp(rhs));
+    lhs.iter()
+        .zip(&rhs)
+        .find_map(|(lhs, rhs)| {
+            let ordering = lhs.essence_cmp(rhs);
+            (ordering != Ordering::Equal).then_some(ordering)
+        })
+        .unwrap_or_else(|| lhs.len().cmp(&rhs.len()))
+}
+
+/// Compare sets as occurrence vectors over the ordered union of their elements.
+fn set_essence_cmp(lhs: &[Literal], rhs: &[Literal]) -> Ordering {
+    let mut lhs = lhs.iter().collect::<Vec<_>>();
+    let mut rhs = rhs.iter().collect::<Vec<_>>();
+    lhs.sort_by(|lhs, rhs| lhs.essence_cmp(rhs));
+    rhs.sort_by(|lhs, rhs| lhs.essence_cmp(rhs));
+
+    let (mut lhs_index, mut rhs_index) = (0, 0);
+    while lhs_index < lhs.len() && rhs_index < rhs.len() {
+        match lhs[lhs_index].essence_cmp(rhs[rhs_index]) {
+            Ordering::Equal => {
+                lhs_index += 1;
+                rhs_index += 1;
+            }
+            // `lhs` contains the least differing element and `rhs` does not.
+            Ordering::Less => return Ordering::Greater,
+            // `rhs` contains the least differing element and `lhs` does not.
+            Ordering::Greater => return Ordering::Less,
+        }
+    }
+    match (lhs_index < lhs.len(), rhs_index < rhs.len()) {
+        (false, false) => Ordering::Equal,
+        (true, false) => Ordering::Greater,
+        (false, true) => Ordering::Less,
+        (true, true) => unreachable!(),
     }
 }
 
@@ -1015,6 +1165,57 @@ mod tests {
     use crate::ast::matrix::{flatten, partial_flatten, shape_of};
     use crate::{domain_int_ground, into_matrix, matrix, matrix_lit, range};
     use uniplate::Uniplate;
+
+    #[test]
+    fn essence_value_ordering_uses_occurrence_lex_for_sets() {
+        let set = |values: &[i32]| {
+            Literal::AbstractLiteral(AbstractLiteral::Set(
+                values.iter().copied().map(Literal::Int).collect(),
+            ))
+        };
+        let ordered = [
+            set(&[]),
+            set(&[3]),
+            set(&[2]),
+            set(&[2, 3]),
+            set(&[1]),
+            set(&[1, 3]),
+            set(&[1, 2]),
+            set(&[1, 2, 3]),
+        ];
+
+        for pair in ordered.windows(2) {
+            assert_eq!(pair[0].essence_cmp(&pair[1]), Ordering::Less);
+        }
+    }
+
+    #[test]
+    fn essence_value_ordering_is_lexicographic_for_tuples_and_matrices() {
+        let tuple = |values: &[i32]| {
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(
+                values.iter().copied().map(Literal::Int).collect(),
+            ))
+        };
+        assert_eq!(tuple(&[1, 2]).essence_cmp(&tuple(&[1, 3])), Ordering::Less);
+        assert_eq!(
+            tuple(&[1, 2]).essence_cmp(&tuple(&[1, 2, 0])),
+            Ordering::Less
+        );
+
+        let matrix = |values: &[i32]| {
+            Literal::AbstractLiteral(AbstractLiteral::Matrix(
+                values.iter().copied().map(Literal::Int).collect(),
+                Moo::new(GroundDomain::Int(vec![Range::Bounded(
+                    1,
+                    values.len() as i32,
+                )])),
+            ))
+        };
+        assert_eq!(
+            matrix(&[1, 2]).essence_cmp(&matrix(&[1, 3])),
+            Ordering::Less
+        );
+    }
 
     #[test]
     fn matrix_uniplate_universe() {

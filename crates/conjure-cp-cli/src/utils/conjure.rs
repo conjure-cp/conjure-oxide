@@ -514,7 +514,7 @@ pub fn solutions_to_json(solutions: &[BTreeMap<Name, Literal>]) -> JsonValue {
 /// Render solutions in the format produced by Conjure's `--solutions-in-one-file` option.
 pub fn solutions_to_essence(solutions: &[BTreeMap<Name, Literal>]) -> String {
     let mut solutions = solutions.iter().collect::<Vec<_>>();
-    solutions.sort_by_key(|solution| solution_to_json(solution).to_string());
+    solutions.sort_by(|lhs, rhs| solution_essence_cmp(lhs, rhs));
 
     let mut output = String::new();
     for (index, solution) in solutions.iter().enumerate() {
@@ -526,6 +526,24 @@ pub fn solutions_to_essence(solutions: &[BTreeMap<Name, Literal>]) -> String {
         output.push_str("\n\n");
     }
     output
+}
+
+fn solution_essence_cmp(
+    lhs: &BTreeMap<Name, Literal>,
+    rhs: &BTreeMap<Name, Literal>,
+) -> std::cmp::Ordering {
+    lhs.iter()
+        .zip(rhs)
+        .find_map(|((lhs_name, lhs_value), (rhs_name, rhs_value))| {
+            let ordering = lhs_name.cmp(rhs_name);
+            (ordering != std::cmp::Ordering::Equal)
+                .then_some(ordering)
+                .or_else(|| {
+                    let ordering = lhs_value.essence_cmp(rhs_value);
+                    (ordering != std::cmp::Ordering::Equal).then_some(ordering)
+                })
+        })
+        .unwrap_or_else(|| lhs.len().cmp(&rhs.len()))
 }
 
 fn solution_to_json(solution: &BTreeMap<Name, Literal>) -> JsonValue {
