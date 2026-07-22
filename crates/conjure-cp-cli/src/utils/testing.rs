@@ -20,7 +20,7 @@ use serde_json::{Error as JsonError, Value as JsonValue};
 
 use conjure_cp::error::Error;
 
-use crate::utils::conjure::solutions_to_json;
+use crate::utils::conjure::solutions_to_essence;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use conjure_cp::Model as ConjureModel;
@@ -255,37 +255,30 @@ pub fn minion_solutions_from_json(
     Ok(solutions)
 }
 
-/// Writes the minion solutions to a generated JSON file, and returns the JSON structure.
-pub fn save_solutions_json(
-    solutions: &Vec<BTreeMap<Name, Literal>>,
+/// Writes solutions in Conjure's multi-solution Essence format.
+pub fn save_solutions_essence(
+    solutions: &[BTreeMap<Name, Literal>],
     path: &str,
     test_name: &str,
     solver: SolverFamily,
-) -> Result<JsonValue, std::io::Error> {
-    let json_solutions = solutions_to_json(solutions);
-    let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
-
+) -> Result<String, std::io::Error> {
+    let rendered = solutions_to_essence(solutions);
     let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
-    std::fs::write(filename, format!("{generated_json_str}\n"))?;
+    let filename = format!("{path}/{test_name}-{solver_name}.generated.solutions");
+    std::fs::write(filename, &rendered)?;
 
-    Ok(json_solutions)
+    Ok(rendered)
 }
 
-pub fn read_solutions_json(
+pub fn read_solutions_essence(
     path: &str,
     test_name: &str,
     prefix: &str,
     solver: SolverFamily,
-) -> Result<JsonValue, anyhow::Error> {
+) -> Result<String, anyhow::Error> {
     let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}.{prefix}-solutions.json");
-    let expected_json_str = read_with_path(filename)?;
-
-    let expected_solutions: JsonValue =
-        sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
-
-    Ok(expected_solutions)
+    let filename = format!("{path}/{test_name}-{solver_name}.{prefix}.solutions");
+    Ok(read_with_path(filename)?)
 }
 
 /// Reads a default rule trace text file.

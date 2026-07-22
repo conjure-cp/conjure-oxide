@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
+use std::fmt::Write as _;
 use std::fs;
 use std::path::PathBuf;
 use std::string::ToString;
@@ -504,24 +505,66 @@ fn read_conjure_timings(
     Ok(Some(timings))
 }
 
-pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
-    let mut json_solutions = Vec::new();
-    for solution in solutions {
-        let mut json_solution = Map::new();
-        for (var_name, constant) in solution {
-            let serialized_constant = serde_json::to_value(constant).unwrap();
-            json_solution.insert(var_name.to_string(), serialized_constant);
-        }
-        json_solutions.push(JsonValue::Object(json_solution));
-    }
+pub fn solutions_to_json(solutions: &[BTreeMap<Name, Literal>]) -> JsonValue {
+    let json_solutions = solutions.iter().map(solution_to_json).collect();
     let ans = JsonValue::Array(json_solutions);
     sort_json_object(&ans, true)
+}
+
+/// Render solutions in the format produced by Conjure's `--solutions-in-one-file` option.
+pub fn solutions_to_essence(solutions: &[BTreeMap<Name, Literal>]) -> String {
+    let mut solutions = solutions.iter().collect::<Vec<_>>();
+    solutions.sort_by_key(|solution| solution_to_json(solution).to_string());
+
+    let mut output = String::new();
+    for (index, solution) in solutions.iter().enumerate() {
+        writeln!(output, "$ Solution: {:06}", index + 1).unwrap();
+        writeln!(output, "language Essence 1.3\n").unwrap();
+        for (name, value) in *solution {
+            writeln!(output, "letting {name} be {value}").unwrap();
+        }
+        output.push_str("\n\n");
+    }
+    output
+}
+
+fn solution_to_json(solution: &BTreeMap<Name, Literal>) -> JsonValue {
+    let mut json_solution = Map::new();
+    for (var_name, constant) in solution {
+        let serialized_constant = serde_json::to_value(constant).unwrap();
+        json_solution.insert(var_name.to_string(), serialized_constant);
+    }
+    sort_json_object(&JsonValue::Object(json_solution), false)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use conjure_cp::ast::{DeclarationPtr, Domain, Moo, Reference};
+
+    #[test]
+    fn renders_conjure_multi_solution_essence_format() {
+        let mut first = BTreeMap::new();
+        first.insert(Name::User("b".into()), Literal::Bool(false));
+        first.insert(Name::User("x".into()), Literal::Int(1));
+        let mut second = BTreeMap::new();
+        second.insert(Name::User("b".into()), Literal::Bool(true));
+        second.insert(Name::User("x".into()), Literal::Int(2));
+
+        assert_eq!(
+            solutions_to_essence(&[first, second]),
+            concat!(
+                "$ Solution: 000001\n",
+                "language Essence 1.3\n\n",
+                "letting b be false\n",
+                "letting x be 1\n\n\n",
+                "$ Solution: 000002\n",
+                "language Essence 1.3\n\n",
+                "letting b be true\n",
+                "letting x be 2\n\n\n",
+            )
+        );
+    }
 
     #[test]
     fn retroactive_pruning_removes_dominated_prior_solution() {

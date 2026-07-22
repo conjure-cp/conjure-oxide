@@ -30,8 +30,7 @@ use conjure_cp::{
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
-use serde_json::to_string_pretty;
+use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_essence, solutions_to_json};
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
@@ -97,7 +96,7 @@ pub struct Args {
     )]
     pub number_of_solutions: NumberOfSolutions,
 
-    /// Save solutions to the given JSON file
+    /// Save solutions to the given Essence `.solutions` file
     #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
     pub output: Option<PathBuf>,
 
@@ -364,12 +363,10 @@ fn run_solver(
     )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
-    let solutions_json = solutions_to_json(&solutions);
-    let solutions_str = to_string_pretty(&solutions_json)?;
+    let solutions_str = solutions_to_essence(&solutions);
     match out_file {
         None => {
-            println!("Solutions:");
-            println!("{solutions_str}");
+            print!("{solutions_str}");
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;

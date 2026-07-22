@@ -39,12 +39,12 @@ use conjure_cp::settings::{
     set_minion_discrete_threshold, set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
     set_rule_trace_verbose_enabled,
 };
-use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{
     ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
+    solutions_to_essence, solutions_to_json,
 };
 use conjure_cp_cli::utils::testing::save_stats_json;
-use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
+use conjure_cp_cli::utils::testing::{read_solutions_essence, save_solutions_essence};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
@@ -759,7 +759,7 @@ fn integration_test_inner(
             &solver_input_file,
             false,
         )?;
-        save_solutions_json(&solved, path, case_name, solver_fam)?;
+        save_solutions_essence(&solved, path, case_name, solver_fam)?;
         Some(solved)
     } else {
         None
@@ -795,7 +795,11 @@ fn integration_test_inner(
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
         if solutions.is_some() {
-            copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
+            let solver_name = solver_fam.as_str();
+            fs::copy(
+                format!("{path}/{case_name}-{solver_name}.generated.solutions"),
+                format!("{path}/{case_name}-{solver_name}.expected.solutions"),
+            )?;
         }
         if rule_trace_snapshots_enabled {
             copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
@@ -804,9 +808,9 @@ fn integration_test_inner(
 
     // Check Stage 3a (solutions)
     if let Some(solutions) = solutions.as_ref() {
-        let expected_solutions_json = read_solutions_json(path, case_name, "expected", solver_fam)?;
-        let username_solutions_json = solutions_to_json(solutions);
-        assert_eq!(username_solutions_json, expected_solutions_json);
+        let expected_solutions = read_solutions_essence(path, case_name, "expected", solver_fam)?;
+        let generated_solutions = solutions_to_essence(solutions);
+        assert_eq!(generated_solutions, expected_solutions);
     }
 
     if rule_trace_snapshots_enabled {
@@ -877,7 +881,7 @@ fn next_all_choice_path(decisions: &[HeuristicChoice]) -> Option<Vec<usize>> {
 fn expected_integration_files_for_case(case_name: &str, solver: SolverFamily) -> BTreeSet<String> {
     let solver_name = solver.as_str();
     BTreeSet::from([
-        format!("{case_name}-{solver_name}.expected-solutions.json"),
+        format!("{case_name}-{solver_name}.expected.solutions"),
         format!("{case_name}-{solver_name}-expected-rule-trace.txt"),
     ])
 }
@@ -1004,22 +1008,6 @@ fn copy_human_trace_generated_to_expected(
     Ok(())
 }
 
-fn copy_generated_to_expected(
-    path: &str,
-    test_name: &str,
-    stage: &str,
-    extension: &str,
-    solver: SolverFamily,
-) -> Result<(), std::io::Error> {
-    let marker = solver.as_str();
-
-    std::fs::copy(
-        format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
-        format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
-    )?;
-    Ok(())
-}
-
 fn record_integration_failure(
     test_dir: &str,
     record: FailureRecord,
@@ -1131,8 +1119,8 @@ fn copy_oxide_run_artifacts(path: &str, run_case: RunCase<'_>, message: &str) {
         &oxide_dir.join(format!("{case_name}-{solver}-generated-rule-trace.txt")),
     );
     let _ = copy_file_if_exists(
-        &test_dir.join(format!("{case_name}-{solver}.generated-solutions.json")),
-        &oxide_dir.join(format!("{case_name}-{solver}.generated-solutions.json")),
+        &test_dir.join(format!("{case_name}-{solver}.generated.solutions")),
+        &oxide_dir.join(format!("{case_name}-{solver}.generated.solutions")),
     );
 }
 

@@ -28,7 +28,7 @@ unsupported.
 1. Create a new directory under `test-suite/tests/integration/<folder>`.
 2. Add your `input.essence` file and (optionally) a `config.toml` to configure the solver.
    Integration run metadata is tracked separately in `stats.toml`.
-3. Run the following to generate the expected solution and JSON files:
+3. Run the following to generate the expected `.solutions` and rule-trace files:
 
 ```sh
 ACCEPT=true cargo nextest run -p test-suite
@@ -42,7 +42,7 @@ If you expect the rewritten AST to change (e.g. after a refactor), you can overw
 ACCEPT=true cargo nextest run -p test-suite
 ```
 
-Instead of comparing against the existing JSON files, the test harness will:
+Instead of comparing against the existing `.solutions` files, the test harness will:
 
 1. Run old Conjure on the same input.
 2. Run the new `conjure-oxide` implementation.
