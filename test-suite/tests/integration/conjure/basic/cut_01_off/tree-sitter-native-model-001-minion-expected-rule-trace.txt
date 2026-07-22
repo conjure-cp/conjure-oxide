@@ -1,0 +1,41 @@
+Model before rewriting:
+
+find x: set of int(1..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#SetOccurrence_1: bool
+  find x#SetOccurrence_2: bool
+  find x#SetOccurrence_3: bool
+new constraints:
+  and([sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3);int(1..)]) >= 0,sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3);int(1..)]) <= 3;int(1..)])
+
+--
+
+sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#SetOccurrence_1, x#SetOccurrence_2, x#SetOccurrence_3], 0)
+
+--
+
+sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3);int(1..)]) <= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#SetOccurrence_1, x#SetOccurrence_2, x#SetOccurrence_3], 3)
+
+--
+
+Final model:
+
+find x: set of int(1..3)
+find x#SetOccurrence_1: bool
+find x#SetOccurrence_2: bool
+find x#SetOccurrence_3: bool
+
+such that
+
+true,
+and([SumGeq([x#SetOccurrence_1, x#SetOccurrence_2, x#SetOccurrence_3], 0),SumLeq([x#SetOccurrence_1, x#SetOccurrence_2, x#SetOccurrence_3], 3);int(1..)])

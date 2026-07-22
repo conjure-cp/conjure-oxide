@@ -366,8 +366,7 @@ fn integration_test_inner_with_status(
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
     let seed = config.seed;
     let distinguish_rewriter = rewriters.len() > 1;
-    let distinguish_heuristic =
-        heuristics.len() > 1 || heuristics.first() != Some(&Heuristic::First);
+    let distinguish_heuristic = heuristics.len() > 1 || heuristics.first() != Some(&Heuristic::All);
     let distinguish_channelling =
         channelling_settings.len() > 1 || channelling_settings.first() != Some(&Channelling::No);
 

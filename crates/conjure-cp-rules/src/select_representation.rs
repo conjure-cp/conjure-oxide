@@ -1,6 +1,4 @@
 use crate::guard;
-use crate::representation::set_occurrence::SetOccurrence;
-use crate::representation::tuple_packed::TuplePacked;
 use crate::utils::as_comparison_op;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
 use conjure_cp::settings::{
@@ -9,7 +7,7 @@ use conjure_cp::settings::{
 };
 use conjure_cp::{
     ast::{Atom, DeclarationPtr, Expression as Expr, GroundDomain, SymbolTable},
-    representation::{ReprRule, ReprRulePtr, get_repr_rules},
+    representation::{ReprRulePtr, get_repr_rules},
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect as Reduction,
         register_rule, register_rule_set,
@@ -18,10 +16,6 @@ use conjure_cp::{
 use itertools::any;
 use std::collections::VecDeque;
 use uniplate::Uniplate;
-
-/// Representations intentionally excluded from automatic selection.
-/// Tuple packing has a dedicated rule set; occurrence is outside the marker-only set campaign.
-const SKIP_AUTO_SELECT: &[&str] = &[TuplePacked::NAME, SetOccurrence::NAME];
 
 // Representations of Essence abstract types down to Essence'
 // Applies for all solvers
@@ -98,7 +92,6 @@ fn choose_representation_rule(decl: &DeclarationPtr) -> Option<ReprRulePtr> {
     }
 
     let mut candidates: Vec<_> = get_repr_rules()
-        .filter(|rule| !SKIP_AUTO_SELECT.contains(&rule.name()))
         .filter_map(|rule| rule.probe_for(decl).ok().map(|score| (rule, score)))
         .collect();
     candidates.sort_by_key(|(rule, _)| rule.name());

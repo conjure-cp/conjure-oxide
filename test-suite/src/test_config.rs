@@ -527,7 +527,7 @@ impl Default for TestConfig {
                 "via-solver".to_string(),
                 "via-solver-ac".to_string(),
             ],
-            heuristic: vec!["f".to_string()],
+            heuristic: vec!["x".to_string()],
             channelling: vec!["no".to_string()],
             seed: 0,
             solver: {
@@ -604,7 +604,7 @@ impl TestConfig {
 
     pub fn configured_heuristics(&self) -> Result<Vec<Heuristic>, String> {
         let values = if self.heuristic.is_empty() {
-            vec!["f".to_string()]
+            vec!["x".to_string()]
         } else {
             self.heuristic.clone()
         };
