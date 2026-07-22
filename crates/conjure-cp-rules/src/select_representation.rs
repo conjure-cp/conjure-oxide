@@ -1,4 +1,5 @@
 use crate::guard;
+use crate::representation::set_occurrence::SetOccurrence;
 use crate::representation::tuple_packed::TuplePacked;
 use crate::utils::as_comparison_op;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
@@ -14,9 +15,9 @@ use itertools::any;
 use std::collections::VecDeque;
 use uniplate::Uniplate;
 
-/// Representations that should not be auto-selected by `select_representation`.
-/// These are managed by their own dedicated rule sets.
-const SKIP_AUTO_SELECT: &[&str] = &[TuplePacked::NAME];
+/// Representations intentionally excluded from automatic selection.
+/// Tuple packing has a dedicated rule set; occurrence is outside the marker-only set campaign.
+const SKIP_AUTO_SELECT: &[&str] = &[TuplePacked::NAME, SetOccurrence::NAME];
 
 // Representations of Essence abstract types down to Essence'
 // Applies for all solvers

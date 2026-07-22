@@ -1,19 +1,130 @@
 use super::prelude::*;
-use conjure_cp::ast::{Domain, GroundDomain, Range, Reference};
-use conjure_cp::{domain_int, essence_expr, range};
+use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference};
+use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 register_representation!(
-    SetExplicitWithSize
+    SetExplicitVarSizeWithMarker
     struct State<T> {
+        /// Inclusive lower and upper bounds for the marker.
         pub cardinality: (i32, i32),
+        /// Ordered values, padded after the active marker position.
         pub elems_matrix: T,
+        /// Number of active values in `elems_matrix`.
         pub set_size: T,
+        /// Canonical value stored in every inactive position.
         pub padding: Literal
+    }
+    impl State<DeclarationPtr> {
+        /// Return the value stored at a one-based representation slot.
+        pub fn slot_expr(&self, index: i32) -> Expression {
+            Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(Reference::new(self.elems_matrix.clone()).into()),
+                vec![index.into()],
+            )
+        }
+
+        /// Return whether a one-based representation slot is active.
+        pub fn slot_is_active_expr(&self, index: i32) -> Expression {
+            Expression::Leq(
+                Metadata::new(),
+                Moo::new(index.into()),
+                Moo::new(Reference::new(self.set_size.clone()).into()),
+            )
+        }
+
+        /// Lower membership to active-slot equality checks.
+        pub fn membership_expr(&self, member: Expression) -> Expression {
+            let (_, max) = self.cardinality;
+            let choices = (1..=max)
+                .map(|index| {
+                    let equality = Expression::Eq(
+                        Metadata::new(),
+                        Moo::new(self.slot_expr(index)),
+                        Moo::new(member.clone()),
+                    );
+                    Expression::And(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![self.slot_is_active_expr(index), equality]),
+                    )
+                })
+                .collect::<Vec<_>>();
+            Expression::Or(Metadata::new(), Moo::new(into_matrix_expr![choices]))
+        }
+
+        /// Lower subset inclusion to membership checks for every active slot.
+        pub fn subset_expr(&self, superset: Expression) -> Expression {
+            let (_, max) = self.cardinality;
+            let constraints = (1..=max)
+                .map(|index| {
+                    let inactive = Expression::Lt(
+                        Metadata::new(),
+                        Moo::new(Reference::new(self.set_size.clone()).into()),
+                        Moo::new(index.into()),
+                    );
+                    let membership = Expression::In(
+                        Metadata::new(),
+                        Moo::new(self.slot_expr(index)),
+                        Moo::new(superset.clone()),
+                    );
+                    Expression::Or(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![inactive, membership]),
+                    )
+                })
+                .collect::<Vec<_>>();
+            Expression::And(Metadata::new(), Moo::new(into_matrix_expr![constraints]))
+        }
+
+        /// Lower equality with a set literal through the marker and membership encoding.
+        pub fn equality_to_literal_expr(&self, elems: &[Literal]) -> Expression {
+            let size_equality = Expression::Eq(
+                Metadata::new(),
+                Moo::new(Reference::new(self.set_size.clone()).into()),
+                Moo::new((elems.len() as i32).into()),
+            );
+            let constraints = std::iter::once(size_equality)
+                .chain(
+                    elems
+                        .iter()
+                        .cloned()
+                        .map(|elem| self.membership_expr(elem.into())),
+                )
+                .collect::<Vec<_>>();
+            Expression::And(Metadata::new(), Moo::new(into_matrix_expr![constraints]))
+        }
+
+        /// Lower equality with another marker set through cardinality and active membership.
+        pub fn equality_expr(&self, other: &Self) -> Expression {
+            let size_equality = Expression::Eq(
+                Metadata::new(),
+                Moo::new(Reference::new(self.set_size.clone()).into()),
+                Moo::new(Reference::new(other.set_size.clone()).into()),
+            );
+            let (_, max) = self.cardinality;
+            let constraints = std::iter::once(size_equality)
+                .chain((1..=max).map(|index| {
+                    let inactive = Expression::Lt(
+                        Metadata::new(),
+                        Moo::new(Reference::new(self.set_size.clone()).into()),
+                        Moo::new(index.into()),
+                    );
+                    Expression::Or(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![
+                            inactive,
+                            other.membership_expr(self.slot_expr(index)),
+                        ]),
+                    )
+                }))
+                .collect::<Vec<_>>();
+            Expression::And(Metadata::new(), Moo::new(into_matrix_expr![constraints]))
+        }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
             dom.clone(),
-            SetExplicitWithSize::NAME,
+            SetExplicitVarSizeWithMarker::NAME,
             String::from(msg),
         );
         let Some(GroundDomain::Set(attr, inner_dom)) = dom.as_ground() else {
@@ -43,14 +154,39 @@ register_representation!(
     }
     fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
         let (_, max) = state.cardinality;
-        let _elems = Reference::from(state.elems_matrix.clone());
         let _size = Reference::from(state.set_size.clone());
-        (2..=max)
+        let mut constraints = (2..=max)
             .map(|_i| {
                 let _prev = _i - 1;
-                essence_expr!(r"(&_size < &_i) \/ (&_elems[&_prev] <lex &_elems[&_i])")
+                let prev_elem = state.slot_expr(_prev);
+                let elem = state.slot_expr(_i);
+                let ordering = Expression::LexLt(
+                    Metadata::new(),
+                    Moo::new(matrix_expr![prev_elem]),
+                    Moo::new(matrix_expr![elem]),
+                );
+                Expression::Or(
+                    Metadata::new(),
+                    Moo::new(matrix_expr![essence_expr!(&_size < &_i), ordering]),
+                )
             })
-            .collect()
+            .collect::<Vec<_>>();
+        // Inactive positions have one canonical value and are ignored by reconstruction.
+        constraints.extend((1..=max).map(|i| {
+            let elem = state.slot_expr(i);
+            Expression::Or(
+                Metadata::new(),
+                Moo::new(matrix_expr![
+                    essence_expr!(&i <= &_size),
+                    Expression::Eq(
+                        Metadata::new(),
+                        Moo::new(elem),
+                        Moo::new(state.padding.clone().into()),
+                    ),
+                ]),
+            )
+        }));
+        constraints
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
         let Literal::AbstractLiteral(AbstractLiteral::Set(mut elems)) = value else {

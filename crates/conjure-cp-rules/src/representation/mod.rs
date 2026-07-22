@@ -27,7 +27,7 @@ pub mod tuple_to_atom;
 
 pub use matrix_to_atom::MatrixToAtom;
 pub use record_to_tuple::RecordToTuple;
-pub use set_explicit::SetExplicitWithSize;
+pub use set_explicit::SetExplicitVarSizeWithMarker;
 pub use set_occurrence::SetOccurrence;
 pub use tuple_packed::TuplePacked;
 pub use tuple_to_atom::TupleToAtom;

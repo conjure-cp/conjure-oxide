@@ -7,8 +7,9 @@ use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
-    MatrixToAtom, RecordToTuple, SetExplicitWithSize, SetOccurrence, TuplePacked,
+    MatrixToAtom, RecordToTuple, SetExplicitVarSizeWithMarker, SetOccurrence, TuplePacked,
 };
+use uniplate::Uniplate;
 
 #[test]
 fn matrix_representation_initialises_and_maps_indices() {
@@ -149,12 +150,21 @@ fn occurrence_set_round_trips_and_enforces_cardinality() {
 #[test]
 fn explicit_set_round_trips_with_padding() {
     let domain = Domain::set(SetAttr::new_min_max_size(1, 3), domain_int!(1..4));
-    let state = <SetExplicitWithSize as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let state =
+        <SetExplicitVarSizeWithMarker as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
     let value =
         Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(4), Literal::Int(2)]));
 
     let assignment = state.down(value).unwrap();
     assert_eq!(assignment.set_size, Literal::Int(2));
+    assert_eq!(
+        assignment.elems_matrix,
+        Literal::from(conjure_cp::into_matrix!(vec![
+            Literal::Int(2),
+            Literal::Int(4),
+            Literal::Int(1),
+        ]))
+    );
     assert_eq!(
         assignment.up(),
         Literal::AbstractLiteral(AbstractLiteral::Set(
@@ -164,7 +174,16 @@ fn explicit_set_round_trips_with_padding() {
 
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
-    let (new_symbols, constraints) = SetExplicitWithSize::init_for(&mut declaration).unwrap();
+    let (new_symbols, constraints) =
+        SetExplicitVarSizeWithMarker::init_for(&mut declaration).unwrap();
     assert_eq!(new_symbols.iter_local().count(), 2);
-    assert_eq!(constraints.len(), 2);
+    assert_eq!(constraints.len(), 5);
+    assert_eq!(
+        constraints
+            .iter()
+            .flat_map(Uniplate::universe)
+            .filter(|expr| matches!(expr, Expression::SafeIndex(..)))
+            .count(),
+        7
+    );
 }
