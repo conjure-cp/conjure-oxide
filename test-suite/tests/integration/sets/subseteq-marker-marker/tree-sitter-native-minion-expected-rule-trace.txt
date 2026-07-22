@@ -1,0 +1,341 @@
+Model before rewriting:
+
+find a: set (maxSize 2) of int(1..2)
+find b: set (maxSize 2) of int(1..2)
+
+such that
+
+(a subsetEq b)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#SetExplicitVarSizeWithMarker_1: matrix indexed by [int(1..2)] of int(1..2)
+  find a#SetExplicitVarSizeWithMarker_2: int(0..2)
+new constraints:
+  or([a#SetExplicitVarSizeWithMarker_2 < 2,([SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)] <lex [SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)])
+  or([1 <= a#SetExplicitVarSizeWithMarker_2,SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]) = 1;int(1..)])
+  or([2 <= a#SetExplicitVarSizeWithMarker_2,SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]) = 1;int(1..)])
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#SetExplicitVarSizeWithMarker_1: matrix indexed by [int(1..2)] of int(1..2)
+  find b#SetExplicitVarSizeWithMarker_2: int(0..2)
+new constraints:
+  or([b#SetExplicitVarSizeWithMarker_2 < 2,([SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]);int(1..)] <lex [SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)])
+  or([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = 1;int(1..)])
+  or([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = 1;int(1..)])
+
+--
+
+(a subsetEq b)
+   ~~> subseteq_explicit_marker ([("ReprGeneral", 9500)])
+and([or([a#SetExplicitVarSizeWithMarker_2 < 1,SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]) in b;int(1..)]),or([a#SetExplicitVarSizeWithMarker_2 < 2,SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]) in b;int(1..)]);int(1..)])
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]) in b
+   ~~> in_explicit_marker ([("ReprGeneral", 9500)])
+or([and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]);int(1..)])
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]) in b
+   ~~> in_explicit_marker ([("ReprGeneral", 9500)])
+or([and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)])
+
+--
+
+or([a#SetExplicitVarSizeWithMarker_2 < 1,or([and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([a#SetExplicitVarSizeWithMarker_2 < 1,and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]);int(1..)])
+
+--
+
+or([a#SetExplicitVarSizeWithMarker_2 < 2,or([and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([a#SetExplicitVarSizeWithMarker_2 < 2,and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)])
+
+--
+
+and([or([a#SetExplicitVarSizeWithMarker_2 < 1,and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]);int(1..)]),or([a#SetExplicitVarSizeWithMarker_2 < 2,and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([a#SetExplicitVarSizeWithMarker_2 < 2,([SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)] <lex [SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)]),
+or([1 <= a#SetExplicitVarSizeWithMarker_2,SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]) = 1;int(1..)]),
+or([2 <= a#SetExplicitVarSizeWithMarker_2,SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]) = 1;int(1..)]),
+or([b#SetExplicitVarSizeWithMarker_2 < 2,([SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]);int(1..)] <lex [SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)]),
+or([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = 1;int(1..)]),
+or([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = 1;int(1..)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([or([a#SetExplicitVarSizeWithMarker_2 < 1,and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)]);int(1..)]),or([a#SetExplicitVarSizeWithMarker_2 < 2,and([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]),and([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)]);int(1..)]),
+or([a#SetExplicitVarSizeWithMarker_2 < 2,([SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]);int(1..)] <lex [SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)]),
+or([1 <= a#SetExplicitVarSizeWithMarker_2,SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1]) = 1;int(1..)]),
+or([2 <= a#SetExplicitVarSizeWithMarker_2,SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2]) = 1;int(1..)]),
+or([b#SetExplicitVarSizeWithMarker_2 < 2,([SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]);int(1..)] <lex [SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]);int(1..)]);int(1..)]),
+or([1 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1]) = 1;int(1..)]),
+or([2 <= b#SetExplicitVarSizeWithMarker_2,SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2]) = 1;int(1..)])
+new variables:
+  find a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1: int(1..2)
+  find a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2: int(1..2)
+  find b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1: int(1..2)
+  find b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2: int(1..2)
+
+--
+
+a#SetExplicitVarSizeWithMarker_2 < 2
+   ~~> lt_to_leq ([("Minion", 8400)])
+a#SetExplicitVarSizeWithMarker_2 <= sum([2,-1;int(1..)])
+
+--
+
+b#SetExplicitVarSizeWithMarker_2 < 2
+   ~~> lt_to_leq ([("Minion", 8400)])
+b#SetExplicitVarSizeWithMarker_2 <= sum([2,-1;int(1..)])
+
+--
+
+a#SetExplicitVarSizeWithMarker_2 < 1
+   ~~> lt_to_leq ([("Minion", 8400)])
+a#SetExplicitVarSizeWithMarker_2 <= sum([1,-1;int(1..)])
+
+--
+
+a#SetExplicitVarSizeWithMarker_2 < 2
+   ~~> lt_to_leq ([("Minion", 8400)])
+a#SetExplicitVarSizeWithMarker_2 <= sum([2,-1;int(1..)])
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2
+
+--
+
+SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1
+
+--
+
+SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2
+
+--
+
+SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1
+
+--
+
+SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2
+
+--
+
+SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1
+
+--
+
+SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1
+
+--
+
+SafeIndex(b#SetExplicitVarSizeWithMarker_1,[1])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2
+
+--
+
+SafeIndex(b#SetExplicitVarSizeWithMarker_1,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2
+
+--
+
+SafeIndex(a#SetExplicitVarSizeWithMarker_1,[2])
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2
+
+--
+
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1,1)
+
+--
+
+a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2,1)
+
+--
+
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1,1)
+
+--
+
+b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2,1)
+
+--
+
+a#SetExplicitVarSizeWithMarker_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(a#SetExplicitVarSizeWithMarker_2, 1, 0)
+
+--
+
+1 <= a#SetExplicitVarSizeWithMarker_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, a#SetExplicitVarSizeWithMarker_2, 0)
+
+--
+
+2 <= a#SetExplicitVarSizeWithMarker_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, a#SetExplicitVarSizeWithMarker_2, 0)
+
+--
+
+b#SetExplicitVarSizeWithMarker_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(b#SetExplicitVarSizeWithMarker_2, 1, 0)
+
+--
+
+1 <= b#SetExplicitVarSizeWithMarker_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, b#SetExplicitVarSizeWithMarker_2, 0)
+
+--
+
+2 <= b#SetExplicitVarSizeWithMarker_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, b#SetExplicitVarSizeWithMarker_2, 0)
+
+--
+
+a#SetExplicitVarSizeWithMarker_2 <= 0
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(a#SetExplicitVarSizeWithMarker_2, 0, 0)
+
+--
+
+a#SetExplicitVarSizeWithMarker_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(a#SetExplicitVarSizeWithMarker_2, 1, 0)
+
+--
+
+1 <= b#SetExplicitVarSizeWithMarker_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, b#SetExplicitVarSizeWithMarker_2, 0)
+
+--
+
+2 <= b#SetExplicitVarSizeWithMarker_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, b#SetExplicitVarSizeWithMarker_2, 0)
+
+--
+
+1 <= b#SetExplicitVarSizeWithMarker_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, b#SetExplicitVarSizeWithMarker_2, 0)
+
+--
+
+2 <= b#SetExplicitVarSizeWithMarker_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, b#SetExplicitVarSizeWithMarker_2, 0)
+
+--
+
+([a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1;int(1..)] <lex [a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1], [a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2])
+
+--
+
+([b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1;int(1..)] <lex [b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1], [b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2])
+
+--
+
+Final model:
+
+find a: set (maxSize 2) of int(1..2)
+find b: set (maxSize 2) of int(1..2)
+find a#SetExplicitVarSizeWithMarker_1: matrix indexed by [int(1..2)] of int(1..2)
+find a#SetExplicitVarSizeWithMarker_2: int(0..2)
+find b#SetExplicitVarSizeWithMarker_1: matrix indexed by [int(1..2)] of int(1..2)
+find b#SetExplicitVarSizeWithMarker_2: int(0..2)
+find a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1: int(1..2)
+find a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2: int(1..2)
+find b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1: int(1..2)
+find b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2: int(1..2)
+
+such that
+
+and([or([Ineq(a#SetExplicitVarSizeWithMarker_2, 0, 0),and([Ineq(1, b#SetExplicitVarSizeWithMarker_2, 0),b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1 = a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1;int(1..)]),and([Ineq(2, b#SetExplicitVarSizeWithMarker_2, 0),b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2 = a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1;int(1..)]);int(1..)]),or([Ineq(a#SetExplicitVarSizeWithMarker_2, 1, 0),and([Ineq(1, b#SetExplicitVarSizeWithMarker_2, 0),b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1 = a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2;int(1..)]),and([Ineq(2, b#SetExplicitVarSizeWithMarker_2, 0),b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2 = a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2;int(1..)]);int(1..)]);int(1..)]),
+or([Ineq(a#SetExplicitVarSizeWithMarker_2, 1, 0),FlatLexLt([a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1], [a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2]);int(1..)]),
+or([Ineq(1, a#SetExplicitVarSizeWithMarker_2, 0),WatchedLiteral(a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1,1);int(1..)]),
+or([Ineq(2, a#SetExplicitVarSizeWithMarker_2, 0),WatchedLiteral(a#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2,1);int(1..)]),
+or([Ineq(b#SetExplicitVarSizeWithMarker_2, 1, 0),FlatLexLt([b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1], [b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2]);int(1..)]),
+or([Ineq(1, b#SetExplicitVarSizeWithMarker_2, 0),WatchedLiteral(b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_1,1);int(1..)]),
+or([Ineq(2, b#SetExplicitVarSizeWithMarker_2, 0),WatchedLiteral(b#SetExplicitVarSizeWithMarker_1#MatrixToAtom_2,1);int(1..)])
+
