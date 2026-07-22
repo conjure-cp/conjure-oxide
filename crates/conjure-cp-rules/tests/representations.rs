@@ -143,6 +143,17 @@ fn packed_tuple_round_trips_integer_values() {
 }
 
 #[test]
+fn packed_tuple_hole_constraint_is_backend_neutral() {
+    let domain = Domain::tuple(vec![domain_int!(1, 3), domain_int!(5..6)]);
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = TuplePacked::init_for(&mut declaration).unwrap();
+
+    assert_eq!(constraints.len(), 1);
+    assert!(matches!(constraints[0], Expression::InDomain(..)));
+}
+
+#[test]
 fn occurrence_set_round_trips_and_enforces_cardinality() {
     let domain = Domain::set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
     let state = <SetOccurrence as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
@@ -224,6 +235,21 @@ fn packed_set_round_trips_and_uses_valid_subset_ranks() {
     let (new_symbols, constraints) = SetPacked::init_for(&mut declaration).unwrap();
     assert_eq!(new_symbols.iter_local().count(), 1);
     assert!(constraints.is_empty());
+
+    let representation = declaration.get_repr::<SetPacked>().unwrap();
+    let membership = representation.membership_expr(Expression::from(2));
+    assert!(
+        membership
+            .universe()
+            .iter()
+            .any(|expr| matches!(expr, Expression::InDomain(..)))
+    );
+    assert!(
+        membership
+            .universe()
+            .iter()
+            .all(|expr| !matches!(expr, Expression::MinionWInSet(..)))
+    );
 
     assert_eq!(SetPacked::compactness_score(domain.clone()).unwrap(), 6);
     assert_eq!(SetOccurrence::compactness_score(domain).unwrap(), 8);

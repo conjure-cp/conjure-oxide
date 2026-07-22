@@ -1,0 +1,82 @@
+use crate::shared::utils::rewrite_children;
+use conjure_cp::ast::{Domain, Expression as Expr, IntVal, Range, SymbolTable};
+use conjure_cp::into_matrix_expr;
+use conjure_cp::rule_engine::{
+    ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
+};
+
+/// Converts a matrix to a list if possible.
+///
+/// A list is a matrix with the unbounded domain `int(1..)`. Unlike matrices in general, lists can
+/// be resized; consequently, a lot more rules apply to them.
+///
+/// A matrix can be converted to a list if:
+///
+///  1. It has some contiguous domain `int(1..n)`.
+///
+///  2. It is a matrix literal (i.e. not a reference to a decision variable).
+///
+///  3. Its direct parent is a constraint, not another matrix or `AbstractLiteral`.
+///
+///    This prevents the conversion of rows in a 2d matrix from being turned into lists. If were
+///    to happen, the rows of the matrix might become different lengths, which is invalid!
+///
+///  4. The matrix is stored as `Expression` type inside (i.e. not as an `Atom` inside a Minion
+///     constraint)
+///
+/// Because of condition 4, and this rules low priority, this rule will not run post-flattening, so
+/// matrices that do not need to be converted to lists in order to get them ready for Minion will
+/// be left alone.
+// Match parents of matrix values whether they appear as `AbstractLiteral`
+// nodes or as `Atomic` literals wrapping a matrix.
+#[register_rule("Base", 2000, [* / AbstractLiteral, * / Atomic])]
+fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // match on the parent: do not apply this rule to things descended from abstract literal, or
+    // special language constructs like bubble.
+    //
+    // As Minion/ flat constraints do not have expression children, they are automatically
+    // excluded.
+
+    if matches!(
+        expr,
+        Expr::AbstractLiteral(_, _)
+            | Expr::Bubble(_, _, _)
+            | Expr::Atomic(_, _)
+             // not sure if this needs to be excluded, being cautious.
+            | Expr::DominanceRelation(_, _)
+    ) {
+        return Err(RuleNotApplicable);
+    }
+
+    let (new_expr, num_changed) = rewrite_children(expr, |child| {
+        // already a list => no change
+        if child.unwrap_list().is_some() {
+            return (child, false);
+        }
+
+        // not a matrix => no change
+        let Some((elems, domain)) = child.clone().unwrap_matrix_unchecked() else {
+            return (child, false);
+        };
+
+        let Some(ranges) = domain.as_int() else {
+            return (child, false);
+        };
+
+        // must be domain int(1..n)
+        let [Range::Bounded(IntVal::Const(1), _)] = ranges[..] else {
+            return (child, false);
+        };
+
+        (
+            into_matrix_expr![elems;Domain::int_ground(vec![Range::UnboundedR(1)])],
+            true,
+        )
+    });
+
+    if num_changed != 0 {
+        Ok(RuleEffect::pure(new_expr))
+    } else {
+        Err(RuleNotApplicable)
+    }
+}

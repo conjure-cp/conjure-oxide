@@ -4,23 +4,11 @@
 //!
 #![doc = include_str!("./rule_semantics.md")]
 
-mod base;
-mod bubble;
-mod comprehensions;
-mod lex;
-mod matrix;
-mod minion;
-mod normalisers;
-mod record;
+mod backends;
+mod passes;
 pub mod representation;
-mod sat;
-mod select_representation;
-mod set;
-mod tuple;
-mod utils;
-mod variables_in_domains;
-
-mod smt;
+mod shared;
+mod types;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
 /// are too expensive to do normally, or are implicit in the rule priorities and application order.
