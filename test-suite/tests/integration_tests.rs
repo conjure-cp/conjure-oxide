@@ -41,7 +41,7 @@ use conjure_cp::settings::{
 };
 use conjure_cp_cli::utils::conjure::{
     ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
-    solutions_to_essence, solutions_to_json,
+    solutions_to_essence,
 };
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{read_solutions_essence, save_solutions_essence};
@@ -775,18 +775,15 @@ fn integration_test_inner(
             .as_deref()
             .expect("oxide solutions should be present when solver ran");
 
-        let username_solutions = normalize_solutions_for_comparison(solutions);
+        let oxide_solutions = normalize_solutions_for_comparison(solutions);
         let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
 
-        let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
-        let mut username_solutions_json = solutions_to_json(&username_solutions);
-
-        conjure_solutions_json.sort_all_objects();
-        username_solutions_json.sort_all_objects();
+        let oxide_solutions = solutions_to_essence(&oxide_solutions);
+        let conjure_solutions = solutions_to_essence(&conjure_solutions);
 
         assert_eq!(
-            username_solutions_json, conjure_solutions_json,
-            "Solutions (<) do not match conjure (>)!"
+            oxide_solutions, conjure_solutions,
+            "Oxide solutions (<) do not match Conjure solutions (>)!"
         );
     }
 
