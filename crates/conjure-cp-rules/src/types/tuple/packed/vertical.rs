@@ -5,10 +5,7 @@ use crate::shared::utils::{
     tuple_expr_entries,
 };
 use crate::types::tuple::TupleComponents;
-use conjure_cp::ast::{
-    Atom, DomainPtr, Expression as Expr, GroundDomain, HasDomain, Literal, Metadata, Moo, Range,
-    Reference, SymbolTable,
-};
+use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, Reference, SymbolTable};
 use conjure_cp::bug_assert;
 use conjure_cp::essence_expr;
 use conjure_cp::representation::ReprRule;
@@ -17,70 +14,10 @@ use conjure_cp::rule_engine::{
     ApplicationResult, RuleEffect as Reduction, register_rule, register_rule_set,
 };
 use parking_lot::MappedRwLockReadGuard;
-use std::collections::VecDeque;
-use uniplate::Uniplate;
 
-register_rule_set!("ReprTuplePacked", ("Base"));
-
-/// Select the TuplePacked representation for comparison operations on integer tuples.
-/// Higher priority than the general representation-selection rules.
-#[register_rule(
-    "ReprTuplePacked",
-    10200,
-    [Eq, Neq, Lt, Gt, Leq, Geq, LexLt, LexGt, LexLeq, LexGeq]
-)]
-fn select_packed_for_comparison(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    guard!(
-        let Some((lhs, rhs)) = as_cmp_or_lex_op(expr) else {
-            return Err(RuleNotApplicable)
-        }
-    );
-
-    let lhs_needs = needs_packed_repr(lhs.as_ref());
-    let rhs_needs = needs_packed_repr(rhs.as_ref());
-    let lhs_is_ref = matches!(lhs.as_ref(), Expr::Atomic(_, Atom::Reference(_)));
-    let rhs_is_ref = matches!(rhs.as_ref(), Expr::Atomic(_, Atom::Reference(_)));
-
-    if !lhs_needs && !rhs_needs {
-        return Err(RuleNotApplicable);
-    }
-
-    // Do not mix a packed representation with a representation already chosen
-    // for the other variable. The general uniformity rule will align them.
-    if lhs_is_ref && rhs_is_ref && (!lhs_needs || !rhs_needs) {
-        return Err(RuleNotApplicable);
-    }
-
-    // Comparing the packed integers preserves tuple equality and lexicographic
-    // order only when both variables use the same mixed-radix layout. Tuples
-    // with different domains must fall back to the element-wise representation.
-    if lhs_needs
-        && rhs_needs
-        && lhs.domain_of().and_then(|d| d.resolve().ok())
-            != rhs.domain_of().and_then(|d| d.resolve().ok())
-    {
-        return Err(RuleNotApplicable);
-    }
-
-    let mut new_lhs: Expr = (*lhs).clone();
-    let mut new_rhs: Expr = (*rhs).clone();
-    let mut all_symbols = SymbolTable::new();
-    let mut all_constraints = Vec::new();
-
-    if lhs_needs {
-        let (symbols, constraints) = init_packed_repr(&mut new_lhs)?;
-        all_symbols.extend(symbols);
-        all_constraints.extend(constraints);
-    }
-    if rhs_needs {
-        let (symbols, constraints) = init_packed_repr(&mut new_rhs)?;
-        all_symbols.extend(symbols);
-        all_constraints.extend(constraints);
-    }
-
-    let new_expr = expr.with_children(VecDeque::from([new_lhs, new_rhs]));
-    Ok(Reduction::new(new_expr, all_constraints, all_symbols))
-}
+// Packed tuples are backend-neutral, so make their lowering rules available
+// for every solver family.
+register_rule_set!("ReprTuplePacked", ("Base"), |_| true);
 
 /// Equality of packed tuple variables.
 ///
@@ -282,56 +219,6 @@ fn tuple_channel_atom_packed(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         packed.packed_expr(),
         sum_expr,
     )))
-}
-
-/// True if `expr` is an unrepresented reference to a packable integer tuple.
-fn needs_packed_repr(expr: &Expr) -> bool {
-    matches!(
-        expr,
-        Expr::Atomic(_, Atom::Reference(re))
-            if re.repr.is_none() && is_packable_tuple_domain(&re.domain_of())
-    )
-}
-
-/// Select TuplePacked for the reference inside `expr`, returning symbols and constraints.
-fn init_packed_repr(
-    expr: &mut Expr,
-) -> Result<(SymbolTable, Vec<Expr>), conjure_cp::rule_engine::ApplicationError> {
-    if let Expr::Atomic(_, Atom::Reference(re)) = expr {
-        let (_, symbols, constraints) = re
-            .select_or_init_repr::<TuplePacked>()
-            .map_err(|_| RuleNotApplicable)?;
-        Ok((symbols, constraints))
-    } else {
-        Err(RuleNotApplicable)
-    }
-}
-
-/// Check if a domain is a packable tuple of bounded integers fitting in i32.
-/// Accepts both contiguous and non-contiguous ("holey") integer domains.
-fn is_packable_tuple_domain(domain: &DomainPtr) -> bool {
-    let Some(gd_tuple) = domain.as_tuple_ground() else {
-        return false;
-    };
-
-    let mut total: i64 = 1;
-    for elem_dom in gd_tuple {
-        guard!(
-            let GroundDomain::Int(ranges) = elem_dom.as_ref() &&
-            let Some(span) = Range::spanning(ranges).length() &&
-            span > 0
-            else {
-                return false;
-            }
-        );
-
-        total = total.saturating_mul(span as i64);
-        if total > i32::MAX as i64 {
-            return false;
-        }
-    }
-
-    total > 0
 }
 
 /// Build a scalar comparison matching the given (possibly lex) comparison operator.
