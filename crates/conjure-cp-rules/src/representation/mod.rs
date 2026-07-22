@@ -1,7 +1,7 @@
 //! Representation rule library
 
 /// Prelude for representation rule writing.
-mod prelude {
+pub(crate) mod prelude {
     #![allow(unused_imports)]
     pub use conjure_cp::{
         ast::Metadata,
@@ -15,21 +15,10 @@ mod prelude {
     };
 }
 
-pub mod matrix_components;
-pub mod record_to_tuple;
-mod sat_direct_int;
-mod sat_log_int;
-mod sat_order_int;
-pub mod set_explicit;
-pub mod set_occurrence;
-pub mod set_packed;
-pub mod tuple_components;
-pub mod tuple_packed;
-
-pub use matrix_components::MatrixComponents;
-pub use record_to_tuple::RecordToTuple;
-pub use set_explicit::SetExplicit;
-pub use set_occurrence::SetOccurrence;
-pub use set_packed::SetPacked;
-pub use tuple_components::TupleComponents;
-pub use tuple_packed::TuplePacked;
+pub use crate::matrix::components::MatrixComponents;
+pub use crate::record::tuple::RecordToTuple;
+pub use crate::set::explicit::SetExplicit;
+pub use crate::set::occurrence::SetOccurrence;
+pub use crate::set::packed::SetPacked;
+pub use crate::tuple::components::TupleComponents;
+pub use crate::tuple::packed::TuplePacked;

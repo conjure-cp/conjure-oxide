@@ -11,13 +11,12 @@ mod lex;
 mod matrix;
 mod minion;
 mod normalisers;
-mod records;
+mod record;
 pub mod representation;
 mod sat;
 mod select_representation;
-mod sets;
+mod set;
 mod tuple;
-mod tuple_packed;
 mod utils;
 mod variables_in_domains;
 
