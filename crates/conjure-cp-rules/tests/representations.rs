@@ -7,7 +7,7 @@ use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
-    MatrixToAtom, RecordToTuple, SetExplicit, SetOccurrence, TuplePacked,
+    MatrixToAtom, RecordToTuple, SetExplicit, SetOccurrence, SetPacked, TuplePacked,
 };
 use uniplate::Uniplate;
 
@@ -184,4 +184,30 @@ fn explicit_set_round_trips_with_padding() {
             .count(),
         7
     );
+}
+
+#[test]
+fn packed_set_round_trips_and_uses_valid_subset_ranks() {
+    let domain = Domain::set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
+    let state = <SetPacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let value =
+        Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(3), Literal::Int(1)]));
+
+    let assignment = state.down(value).unwrap();
+    assert_eq!(assignment.packed, Literal::Int(4));
+    assert_eq!(
+        assignment.up(),
+        Literal::AbstractLiteral(AbstractLiteral::Set(
+            vec![Literal::Int(1), Literal::Int(3),]
+        ))
+    );
+
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (new_symbols, constraints) = SetPacked::init_for(&mut declaration).unwrap();
+    assert_eq!(new_symbols.iter_local().count(), 1);
+    assert!(constraints.is_empty());
+
+    assert_eq!(SetPacked::compactness_score(domain.clone()).unwrap(), 6);
+    assert_eq!(SetOccurrence::compactness_score(domain).unwrap(), 8);
 }

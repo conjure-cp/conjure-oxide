@@ -104,9 +104,8 @@ register_representation!(
         state
             .occurs
             .iter()
-            .map(|(_, domain)| conjure_cp::representation::default_impls::domain_ast_depth(domain))
-            .max()
-            .unwrap_or(0)
+            .map(|(_, domain)| conjure_cp::representation::default_impls::domain_size(domain))
+            .fold(1usize, usize::saturating_mul)
     }
 );
 

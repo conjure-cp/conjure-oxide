@@ -22,6 +22,7 @@ mod sat_log_int;
 mod sat_order_int;
 pub mod set_explicit;
 pub mod set_occurrence;
+pub mod set_packed;
 pub mod tuple_packed;
 pub mod tuple_to_atom;
 
@@ -29,5 +30,6 @@ pub use matrix_to_atom::MatrixToAtom;
 pub use record_to_tuple::RecordToTuple;
 pub use set_explicit::SetExplicit;
 pub use set_occurrence::SetOccurrence;
+pub use set_packed::SetPacked;
 pub use tuple_packed::TuplePacked;
 pub use tuple_to_atom::TupleToAtom;

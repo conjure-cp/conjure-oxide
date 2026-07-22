@@ -157,9 +157,10 @@ pub struct GlobalArgs {
 
     /// Heuristic for selecting an answer when multiple modelling choices are applicable.
     ///
-    /// Possible values: `f` (first), `r` (random), `c` (minimum answer AST depth). This applies
-    /// both to representation choices and equally-applicable rewrite rules. `x` (all) is reserved
-    /// for model generation and is not supported by the CLI yet.
+    /// Possible values: `f` (first), `r` (random), `c` (compact). Compact minimises the
+    /// representation-domain size for representation choices and the resulting AST depth for
+    /// equally-applicable rewrite rules. `x` (all) is reserved for model generation and is not
+    /// supported by the CLI yet.
     #[arg(
         long,
         short = 'a',

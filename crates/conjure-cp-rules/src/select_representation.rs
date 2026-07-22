@@ -196,3 +196,27 @@ fn domain_needs_representation(domain: &DomainPtr) -> bool {
         },
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{Domain, SetAttr};
+    use conjure_cp::settings::set_heuristic;
+    use conjure_cp::{domain_int, range};
+
+    #[test]
+    fn compact_prefers_the_smallest_representation_domain() {
+        set_heuristic(Heuristic::Compact);
+        let mut symbols = SymbolTable::new();
+        let declaration = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(1, 2),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration).unwrap().name(),
+            "SetPacked"
+        );
+        set_heuristic(Heuristic::First);
+    }
+}

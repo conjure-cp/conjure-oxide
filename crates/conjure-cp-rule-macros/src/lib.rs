@@ -264,7 +264,7 @@ struct ReprDefArgs {
     /// Getting representation variables: `repr_vars: &State<DeclarationPtr> -> VecDeque<DeclarationPtr>`
     /// If not provided, we attempt to codegen one using uniplate
     repr_vars_fn: Option<ItemFn>,
-    /// Measuring the representation-domain AST depth. If omitted, this is generated using
+    /// Measuring the representation-domain size. If omitted, this is generated using
     /// uniplate; representations with non-uniplate containers can provide it explicitly.
     compactness_fn: Option<ItemFn>,
 }
@@ -441,9 +441,8 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         quote! {
             self.__collect_t_children()
                 .iter()
-                .map(default_impls::domain_ast_depth)
-                .max()
-                .unwrap_or(0)
+                .map(default_impls::domain_size)
+                .fold(1usize, usize::saturating_mul)
         }
     };
     let compactness_fn_toks = compactness_fn.map(|f| {

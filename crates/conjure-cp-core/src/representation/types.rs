@@ -22,7 +22,8 @@ pub trait ReprDomainLevel {
     where
         Self: Sized;
 
-    /// Maximum AST depth among the domains introduced by this representation.
+    /// Number of assignments admitted by the domains introduced by this representation.
+    /// Multiple representation-variable domains are combined as a Cartesian product.
     fn compactness_score(&self) -> usize;
 
     /// Construct a concrete instance of this representation
