@@ -3,7 +3,7 @@ use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference};
 use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 register_representation!(
-    SetExplicit
+    SetExplicit("explicit")
     struct State<T> {
         /// Inclusive lower and upper bounds for the marker.
         pub cardinality: (i32, i32),

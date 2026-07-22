@@ -7,9 +7,21 @@ use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
-    MatrixToAtom, RecordToTuple, SetExplicit, SetOccurrence, SetPacked, TuplePacked,
+    MatrixComponents, RecordToTuple, SetExplicit, SetOccurrence, SetPacked, TupleComponents,
+    TuplePacked,
 };
 use uniplate::Uniplate;
+
+#[test]
+fn representation_short_names_describe_the_generated_layout() {
+    assert_eq!(MatrixComponents::SHORT_NAME, "components");
+    assert_eq!(TupleComponents::SHORT_NAME, "components");
+    assert_eq!(SetPacked::SHORT_NAME, "packed");
+    assert_eq!(TuplePacked::SHORT_NAME, "packed");
+    assert_eq!(SetExplicit::SHORT_NAME, "explicit");
+    assert_eq!(SetOccurrence::SHORT_NAME, "occurrence");
+    assert_eq!(RecordToTuple::SHORT_NAME, "tuple");
+}
 
 #[test]
 fn matrix_representation_initialises_and_maps_indices() {
@@ -18,7 +30,7 @@ fn matrix_representation_initialises_and_maps_indices() {
         vec![Domain::bool(), domain_int!(1, 3, 5, 7)],
     );
 
-    let domain_state = <MatrixToAtom as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let domain_state = <MatrixComponents as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
     assert_eq!(domain_state.dimensions, vec![2, 4]);
     assert_eq!(domain_state.strides, vec![4, 1]);
     assert_eq!(
@@ -30,13 +42,18 @@ fn matrix_representation_initialises_and_maps_indices() {
 
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
-    let (new_symbols, constraints) = MatrixToAtom::init_for(&mut declaration).unwrap();
+    let (new_symbols, constraints) = MatrixComponents::init_for(&mut declaration).unwrap();
     assert!(constraints.is_empty());
     assert_eq!(new_symbols.iter_local().count(), 8);
-    assert!(declaration.get_repr::<MatrixToAtom>().is_some());
+    assert!(
+        new_symbols
+            .iter_local()
+            .all(|(name, _)| name.to_string().contains("#components_"))
+    );
+    assert!(declaration.get_repr::<MatrixComponents>().is_some());
 
     let detached = declaration.detach();
-    assert!(detached.get_repr::<MatrixToAtom>().is_some());
+    assert!(detached.get_repr::<MatrixComponents>().is_some());
 }
 
 #[test]

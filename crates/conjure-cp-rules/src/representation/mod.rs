@@ -15,7 +15,7 @@ mod prelude {
     };
 }
 
-pub mod matrix_to_atom;
+pub mod matrix_components;
 pub mod record_to_tuple;
 mod sat_direct_int;
 mod sat_log_int;
@@ -23,13 +23,13 @@ mod sat_order_int;
 pub mod set_explicit;
 pub mod set_occurrence;
 pub mod set_packed;
+pub mod tuple_components;
 pub mod tuple_packed;
-pub mod tuple_to_atom;
 
-pub use matrix_to_atom::MatrixToAtom;
+pub use matrix_components::MatrixComponents;
 pub use record_to_tuple::RecordToTuple;
 pub use set_explicit::SetExplicit;
 pub use set_occurrence::SetOccurrence;
 pub use set_packed::SetPacked;
+pub use tuple_components::TupleComponents;
 pub use tuple_packed::TuplePacked;
-pub use tuple_to_atom::TupleToAtom;

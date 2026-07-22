@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use crate::matrix::try_lower_const_unsafe_index_matrix_to_atom;
+use crate::matrix::try_lower_const_unsafe_index_matrix_components;
 use conjure_cp::{
     ast::{
         Atom, DecisionVariable, DeclarationKind, DeclarationPtr, Expression, Literal, Metadata,
@@ -84,8 +84,8 @@ pub(super) fn retain_quantified_solution_values(
 /// Simplifies an instantiated comprehension element before it enters the rewriter worklist.
 ///
 /// Applies constant folding and deep partial evaluation (including boolean `x = true` lowering in
-/// the `Eq` arm), and lowers constant in-bounds `MatrixToAtom` [`Expression::UnsafeIndex`] nodes
-/// using the same oracle as `unsafe_const_index_matrix_to_atom`, so ground tautologies and ground
+/// the `Eq` arm), and lowers constant in-bounds `MatrixComponents` [`Expression::UnsafeIndex`] nodes
+/// using the same oracle as `unsafe_const_index_matrix_components`, so ground tautologies and ground
 /// indexing from expansion do not each pay a per-site rewriter worklist update.
 pub(super) fn simplify_expression(mut expr: Expression) -> Expression {
     // Keep applying evaluators to a fixed point, or until no changes are made.
@@ -94,7 +94,7 @@ pub(super) fn simplify_expression(mut expr: Expression) -> Expression {
             if let Some(lit) = eval_constant(&subexpr) {
                 return Expression::Atomic(Metadata::new(), Atom::Literal(lit));
             }
-            if let Some(lowered) = try_lower_const_unsafe_index_matrix_to_atom(&subexpr) {
+            if let Some(lowered) = try_lower_const_unsafe_index_matrix_components(&subexpr) {
                 return lowered;
             }
             if let Ok(reduction) = run_partial_evaluator(&subexpr) {

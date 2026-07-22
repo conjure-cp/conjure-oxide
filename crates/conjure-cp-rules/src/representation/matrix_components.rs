@@ -16,7 +16,7 @@ pub enum IdxError {
 }
 
 register_representation!(
-    MatrixToAtom
+    MatrixComponents("components")
     struct State<T> {
         // Size of each dimension
         pub dimensions: Vec<usize>,
@@ -131,7 +131,7 @@ register_representation!(
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
-        let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(dom.clone(), MatrixToAtom::NAME, String::from(msg));
+        let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(dom.clone(), MatrixComponents::NAME, String::from(msg));
 
         let dom_gd = dom.resolve().ok().ok_or(domain_err("expected a ground domain"))?;
         let GroundDomain::Matrix(elem_dom, _) = dom_gd.as_ref() else {

@@ -6,7 +6,7 @@ use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range}
 const MAX_INNER_DOMAIN_SIZE: u32 = 30;
 
 register_representation!(
-    SetPacked
+    SetPacked("packed")
     struct State<T> {
         /// The single integer variable / domain / literal holding the subset rank.
         pub packed: T,

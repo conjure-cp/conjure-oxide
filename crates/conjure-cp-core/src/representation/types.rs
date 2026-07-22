@@ -84,6 +84,7 @@ pub type ReprGetOrInitResult<'a, D, E> =
 
 pub trait ReprRule: Send + Sync {
     const NAME: &'static str;
+    const SHORT_NAME: &'static str;
     const STORED: &'static dyn ReprRuleStored;
     type Assignment: ReprAssignment;
     type DeclLevel: ReprDeclLevel<Assignment = Self::Assignment>;

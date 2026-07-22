@@ -251,6 +251,8 @@ impl Parse for ReprStateType {
 struct ReprDefArgs {
     /// Name of this representation rule
     ident: Ident,
+    /// Short name used in generated representation-variable names and traces.
+    short_name: LitStr,
     /// Representation state type
     state_ty: ReprStateType,
     /// Initialisation at domain level: `init: (DomainPtr) -> Result<State<DomainPtr>, ReprInitError>`
@@ -272,6 +274,9 @@ struct ReprDefArgs {
 impl Parse for ReprDefArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         let ident = input.parse::<Ident>()?;
+        let short_name_content;
+        parenthesized!(short_name_content in input);
+        let short_name = short_name_content.parse::<LitStr>()?;
         let state_ty = input.parse::<ReprStateType>()?;
 
         // TODO: Exact syntax subject to change
@@ -316,6 +321,7 @@ impl Parse for ReprDefArgs {
 
         Ok(Self {
             ident,
+            short_name,
             state_ty,
             init_fn,
             structural_fn,
@@ -331,6 +337,7 @@ impl Parse for ReprDefArgs {
 pub fn register_representation(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as ReprDefArgs);
     let repr_ident = &args.ident;
+    let repr_short_name = &args.short_name;
     let repr_name_str = repr_ident.to_string();
 
     // prefix for generated names
@@ -554,6 +561,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         impl ReprRule for #repr_ident {
             const STORED: &'static dyn ReprRuleStored = &#repr_ident;
             const NAME: &'static str = #repr_name_str;
+            const SHORT_NAME: &'static str = #repr_short_name;
             type Assignment = #state_ident<Literal>;
             type DeclLevel = #state_ident<DeclarationPtr>;
             type DomainLevel = #state_ident<DomainPtr>;

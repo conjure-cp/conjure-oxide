@@ -1,5 +1,5 @@
 use crate::guard;
-use crate::representation::MatrixToAtom;
+use crate::representation::MatrixComponents;
 use crate::utils::{eval_to_usize, to_aux_var};
 use conjure_cp::ast::matrix::unflatten_matrix;
 use conjure_cp::ast::{
@@ -21,7 +21,7 @@ use std::cell::Cell;
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate};
 
-register_rule_set!("ReprMatrixToAtom", ("Base"), |f: &SolverFamily| {
+register_rule_set!("ReprMatrixComponents", ("Base"), |f: &SolverFamily| {
     if matches!(
         f,
         SolverFamily::Smt(TheoryConfig {
@@ -34,8 +34,8 @@ register_rule_set!("ReprMatrixToAtom", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
 });
 
-/// True when a local find/letting still needs `MatrixToAtom` initialised.
-fn decl_needs_matrix_to_atom_init(decl: &conjure_cp::ast::DeclarationPtr) -> bool {
+/// True when a local find/letting still needs `MatrixComponents` initialised.
+fn decl_needs_matrix_components_init(decl: &conjure_cp::ast::DeclarationPtr) -> bool {
     matches!(
         &decl.kind() as &DeclarationKind,
         DeclarationKind::Find(..)
@@ -47,54 +47,54 @@ fn decl_needs_matrix_to_atom_init(decl: &conjure_cp::ast::DeclarationPtr) -> boo
             .is_some_and(|gd| matches!(gd.as_ref(), GroundDomain::Matrix(..)))
 }
 
-/// True when a reference can select `MatrixToAtom` but has not yet done so.
-fn reference_needs_matrix_to_atom_selection(re: &Reference) -> bool {
-    re.repr.is_none() && re.ptr.reprs().has_repr(MatrixToAtom::STORED)
+/// True when a reference can select `MatrixComponents` but has not yet done so.
+fn reference_needs_matrix_components_selection(re: &Reference) -> bool {
+    re.repr.is_none() && re.ptr.reprs().has_repr(MatrixComponents::STORED)
 }
 
 /// True when a top-most `Reference` under the expression (via `Biplate`) still needs selection.
 ///
 /// Prefer this over `universe_bi`: that expands each `Reference` into declaration domains and
 /// dominated EFPA samples on the hot fail path. Top-most biplate children cover expression and
-/// in-expression domain refs; nested declaration-domain refs are not required for MatrixToAtom.
-fn expression_needs_matrix_to_atom_selection(expr: &Expression) -> bool {
+/// in-expression domain refs; nested declaration-domain refs are not required for MatrixComponents.
+fn expression_needs_matrix_components_selection(expr: &Expression) -> bool {
     Biplate::<Reference>::children_bi(expr)
         .into_iter()
-        .any(|re| reference_needs_matrix_to_atom_selection(&re))
+        .any(|re| reference_needs_matrix_components_selection(&re))
 }
 
-/// Select `MatrixToAtom` on top-most biplate `Reference` children (shallow `descend_bi`).
-fn select_matrix_to_atom_on_biplate_refs(expr: &Expression, changed: &Cell<bool>) -> Expression {
+/// Select `MatrixComponents` on top-most biplate `Reference` children (shallow `descend_bi`).
+fn select_matrix_components_on_biplate_refs(expr: &Expression, changed: &Cell<bool>) -> Expression {
     expr.descend_bi(&|mut re: Reference| {
-        if reference_needs_matrix_to_atom_selection(&re) {
-            let _ = re.select_repr_via(&MatrixToAtom);
+        if reference_needs_matrix_components_selection(&re) {
+            let _ = re.select_repr_via(&MatrixComponents);
             changed.set(true);
         }
         re
     })
 }
 
-/// Special-case repr selection for matrices as their only representation is MatrixToAtom
-#[register_rule("ReprMatrixToAtom", 8500, [Root])]
+/// Special-case repr selection for matrices as their only representation is MatrixComponents
+#[register_rule("ReprMatrixComponents", 8500, [Root])]
 fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
     let Expression::Root(..) = expr else {
         return Err(RuleNotApplicable);
     };
 
     // Hot fail path: Root is re-dirtied on almost every rewrite. Once every matrix declaration
-    // already exposes MatrixToAtom, do not walk Biplate::<Reference> over the whole model: that
+    // already exposes MatrixComponents, do not walk Biplate::<Reference> over the whole model: that
     // scan is O(model size) and dominates large post-expansion trees (e.g. lee-distance).
     //
     // References that emerge later from opaque comprehension bodies are selected by
     // [`select_mta_after_comprehension_expansion`] on the materialised AC node instead.
     let needs_decl_init = symtab
         .iter_local()
-        .any(|(_, decl)| decl_needs_matrix_to_atom_init(decl));
+        .any(|(_, decl)| decl_needs_matrix_components_init(decl));
     if !needs_decl_init {
         return Err(RuleNotApplicable);
     }
 
-    // Initialise MatrixToAtom for every matrix var in the symbol table
+    // Initialise MatrixComponents for every matrix var in the symbol table
     let mut new_symtab = symtab.clone();
     let mut new_constraints = Vec::new();
     let changed = Cell::new(false);
@@ -113,7 +113,7 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
             }
         );
 
-        let Ok((symbols, new_top)) = MatrixToAtom::init_for(&mut new_decl) else {
+        let Ok((symbols, new_top)) = MatrixComponents::init_for(&mut new_decl) else {
             continue;
         };
         new_symtab.update_insert(new_decl);
@@ -122,8 +122,8 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         changed.set(true);
     }
 
-    // Select MatrixToAtom on top-most biplate references already visible outside comprehensions.
-    let new_expr = select_matrix_to_atom_on_biplate_refs(expr, &changed);
+    // Select MatrixComponents on top-most biplate references already visible outside comprehensions.
+    let new_expr = select_matrix_components_on_biplate_refs(expr, &changed);
 
     // Avoid infinite loop
     if !changed.get() {
@@ -133,22 +133,22 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     }
 }
 
-/// Select `MatrixToAtom` on references that appear when comprehensions expand.
+/// Select `MatrixComponents` on references that appear when comprehensions expand.
 ///
 /// Comprehensions are Uniplate leaves, so [`select_repr_mta`] cannot see their bodies before
 /// expansion. After a comprehension becomes an AC argument list, select once on that node so later
 /// Root-level `select_repr_mta` attempts can stay O(declarations) rather than O(model).
-#[register_rule("ReprMatrixToAtom", 1990, [And, Or, Sum, Product])]
+#[register_rule("ReprMatrixComponents", 1990, [And, Or, Sum, Product])]
 fn select_mta_after_comprehension_expansion(
     expr: &Expression,
     _: &SymbolTable,
 ) -> ApplicationResult {
-    if !expression_needs_matrix_to_atom_selection(expr) {
+    if !expression_needs_matrix_components_selection(expr) {
         return Err(RuleNotApplicable);
     }
 
     let changed = Cell::new(false);
-    let new_expr = select_matrix_to_atom_on_biplate_refs(expr, &changed);
+    let new_expr = select_matrix_components_on_biplate_refs(expr, &changed);
     if !changed.get() {
         Err(RuleNotApplicable)
     } else {
@@ -156,10 +156,10 @@ fn select_mta_after_comprehension_expansion(
     }
 }
 
-/// Lowers a constant in-bounds [`Expression::UnsafeIndex`] of a `MatrixToAtom` subject to the atom.
+/// Lowers a constant in-bounds [`Expression::UnsafeIndex`] of a `MatrixComponents` subject to the atom.
 ///
 /// After comprehension expansion, indices are typically ground. The default pipeline is
-/// `index_to_bubble` (`UnsafeIndex` → `SafeIndex`) then [`index_matrix_to_atom`] (`SafeIndex` →
+/// `index_to_bubble` (`UnsafeIndex` → `SafeIndex`) then [`index_matrix_components`] (`SafeIndex` →
 /// atom), which costs two worklist updates per indexing site. This rule is the fused fast path for
 /// that case: same result as those two rules when every index is an in-bounds constant, so Bubble
 /// would not wrap a condition. Out-of-bounds or non-constant indices stay with `index_to_bubble`.
@@ -167,22 +167,24 @@ fn select_mta_after_comprehension_expansion(
 /// The same lowering is also applied during comprehension expansion simplification so ground
 /// indices never enter the rewriter worklist; this rule remains the oracle for any sites that
 /// become constant only after expansion.
-#[register_rule("ReprMatrixToAtom", 6500, [UnsafeIndex])]
-fn unsafe_const_index_matrix_to_atom(
+#[register_rule("ReprMatrixComponents", 6500, [UnsafeIndex])]
+fn unsafe_const_index_matrix_components(
     expr: &Expression,
     _symbols: &SymbolTable,
 ) -> ApplicationResult {
-    try_lower_const_unsafe_index_matrix_to_atom(expr)
+    try_lower_const_unsafe_index_matrix_components(expr)
         .map(Reduction::pure)
         .ok_or(RuleNotApplicable)
 }
 
-/// Attempts the fused constant `UnsafeIndex` → `MatrixToAtom` element lowering.
+/// Attempts the fused constant `UnsafeIndex` → `MatrixComponents` element lowering.
 ///
 /// Returns [`Some`] only when every index is a constant inside its dimension domain and no nested
 /// represented-matrix index remains below this node. Callers outside the rule engine (notably
 /// comprehension expansion simplification) use this to avoid paying a worklist update per site.
-pub(crate) fn try_lower_const_unsafe_index_matrix_to_atom(expr: &Expression) -> Option<Expression> {
+pub(crate) fn try_lower_const_unsafe_index_matrix_components(
+    expr: &Expression,
+) -> Option<Expression> {
     let Expression::UnsafeIndex(_, subject, indices) = expr else {
         return None;
     };
@@ -192,11 +194,16 @@ pub(crate) fn try_lower_const_unsafe_index_matrix_to_atom(expr: &Expression) -> 
     };
 
     // Nested represented-matrix indices must be lowered first (same invariant as SafeIndex path).
-    if expr.universe().iter().skip(1).any(is_matrix_to_atom_index) {
+    if expr
+        .universe()
+        .iter()
+        .skip(1)
+        .any(is_matrix_components_index)
+    {
         return None;
     }
 
-    let mta = re.ptr().get_repr::<MatrixToAtom>()?;
+    let mta = re.ptr().get_repr::<MatrixComponents>()?;
 
     if indices.len() != mta.index_domains.len() {
         return None;
@@ -218,12 +225,12 @@ pub(crate) fn try_lower_const_unsafe_index_matrix_to_atom(expr: &Expression) -> 
     assert_eq!(
         elems.len(),
         1,
-        "constant in-bounds MatrixToAtom index should yield one element"
+        "constant in-bounds MatrixComponents index should yield one element"
     );
     Some(elems.swap_remove(0))
 }
 
-/// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
+/// Using the matrix components representation rule, rewrite matrix indexing.
 /// ```plain
 /// find m: matrix indexed by [int(1..2), int(1..3), int(1..4)] of bool
 /// find x: int(1..3)
@@ -233,42 +240,47 @@ pub(crate) fn try_lower_const_unsafe_index_matrix_to_atom(expr: &Expression) -> 
 /// ~~>
 /// [m_1_1_2, m_1_2_2, m_1_3_2][x] = true
 /// ```
-#[register_rule("ReprMatrixToAtom", 5000, [SafeIndex])]
-fn index_matrix_to_atom(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+#[register_rule("ReprMatrixComponents", 5000, [SafeIndex])]
+fn index_matrix_components(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
     // Rewriting an outer index first can duplicate nested indices exponentially (e.g. m[m[i]]).
     // Defer it until every represented-matrix index below it has been rewritten.
-    if expr.universe().iter().skip(1).any(is_matrix_to_atom_index) {
+    if expr
+        .universe()
+        .iter()
+        .skip(1)
+        .any(is_matrix_components_index)
+    {
         return Err(RuleNotApplicable);
     }
-    index_matrix_to_atom_impl(expr, symbols)
+    index_matrix_components_impl(expr, symbols)
 }
 
-/// True when `expr` is a (safe or unsafe) index into a declaration with `MatrixToAtom` initialised.
-fn is_matrix_to_atom_index(expr: &Expression) -> bool {
+/// True when `expr` is a (safe or unsafe) index into a declaration with `MatrixComponents` initialised.
+fn is_matrix_components_index(expr: &Expression) -> bool {
     let subject = match expr {
         Expression::SafeIndex(_, subject, _) | Expression::UnsafeIndex(_, subject, _) => subject,
         _ => return false,
     };
     matches!(
         subject.as_ref(),
-        Expression::Atomic(_, Atom::Reference(re)) if re.ptr().get_repr::<MatrixToAtom>().is_some()
+        Expression::Atomic(_, Atom::Reference(re)) if re.ptr().get_repr::<MatrixComponents>().is_some()
     )
 }
 
-pub(crate) fn try_index_matrix_to_atom(
+pub(crate) fn try_index_matrix_components(
     expr: &Expression,
     symbols: &SymbolTable,
 ) -> ApplicationResult {
-    index_matrix_to_atom_impl(expr, symbols)
+    index_matrix_components_impl(expr, symbols)
 }
 
-fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+fn index_matrix_components_impl(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
     guard!(
         // this is a safe indexing expression
         let Expression::SafeIndex(_, subject, indices) = expr &&
         let Expression::Atomic(_, Atom::Reference(re)) = &**subject &&
-        // ...into a variable represented by MatrixToAtom
-        let Some(mta) = re.ptr().get_repr::<MatrixToAtom>()
+        // ...into a variable represented by MatrixComponents
+        let Some(mta) = re.ptr().get_repr::<MatrixComponents>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -383,14 +395,14 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
     ))
 }
 
-#[register_rule("ReprMatrixToAtom", 5000, [SafeSlice])]
-fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+#[register_rule("ReprMatrixComponents", 5000, [SafeSlice])]
+fn slice_matrix_components(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     guard!(
         // this is a safe slicing expression
         let Expression::SafeSlice(_, subject, dim_slices) = expr &&
         let Expression::Atomic(_, Atom::Reference(re)) = &**subject &&
-        // ...into a variable represented by MatrixToAtom
-        let Some(mta) = re.ptr().get_repr::<MatrixToAtom>()
+        // ...into a variable represented by MatrixComponents
+        let Some(mta) = re.ptr().get_repr::<MatrixComponents>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -469,14 +481,14 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
 /// ```plain
 /// flatten(x)
 /// ~>
-/// [x_MatrixToAtom_1, ..., x_MatrixToAtom_N]
+/// [x_MatrixComponents_1, ..., x_MatrixComponents_N]
 /// ```
-#[register_rule("ReprMatrixToAtom", 5000, [Flatten])]
+#[register_rule("ReprMatrixComponents", 5000, [Flatten])]
 fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expression::Flatten(_, dims, subj) = expr            &&
         let Expression::Atomic(_, Atom::Reference(re)) = &**subj &&
-        let Some(repr) = re.get_repr_as::<MatrixToAtom>()
+        let Some(repr) = re.get_repr_as::<MatrixComponents>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -492,10 +504,10 @@ fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> Applicat
 /// Converts a reference to a 1d-matrix not contained within an indexing or slicing expression to its atoms.
 ///
 /// Prefiltered to parents of atomic children: the rule only rewrites
-/// `Atomic`/`Reference` children that already have a [`MatrixToAtom`]
+/// `Atomic`/`Reference` children that already have a [`MatrixComponents`]
 /// representation. Keeping it universal previously dominated failed attempts
 /// on large post-expansion trees (solitaire_battleship).
-#[register_rule("ReprMatrixToAtom", 2000, [* / Atomic])]
+#[register_rule("ReprMatrixComponents", 2000, [* / Atomic])]
 fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationResult {
     if let Expression::SafeSlice(..)
     | Expression::UnsafeSlice(..)
@@ -512,7 +524,7 @@ fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationR
         .into_iter()
         .map(|expr| {
             if let Expression::Atomic(_, Atom::Reference(re)) = &expr
-                && let Some(mta) = re.ptr().get_repr::<MatrixToAtom>()
+                && let Some(mta) = re.ptr().get_repr::<MatrixComponents>()
             {
                 changed = true;
                 let elem_refs: Vec<Expression> =
@@ -554,7 +566,7 @@ mod tests {
             .expect("matrix find should insert");
 
         let mut decl_for_init = decl.clone();
-        let (extra, _tops) = MatrixToAtom::init_for(&mut decl_for_init).unwrap();
+        let (extra, _tops) = MatrixComponents::init_for(&mut decl_for_init).unwrap();
         symbols.update_insert(decl_for_init.clone());
         symbols.extend(extra);
 
@@ -574,8 +586,8 @@ mod tests {
     #[test]
     fn select_repr_mta_skips_expression_walk_when_decls_already_initialised() {
         let (symbols, root, decl) = matrix_and_unselected_refs(64);
-        assert!(decl.reprs().has_repr(MatrixToAtom::STORED));
-        assert!(expression_needs_matrix_to_atom_selection(&root));
+        assert!(decl.reprs().has_repr(MatrixComponents::STORED));
+        assert!(expression_needs_matrix_components_selection(&root));
 
         let rule = get_rule_by_name("select_repr_mta").expect("select_repr_mta registered");
         let err = rule.apply(&root, &symbols).unwrap_err();
@@ -589,12 +601,12 @@ mod tests {
             panic!("expected root");
         };
         let and_expr = &children[0];
-        assert!(expression_needs_matrix_to_atom_selection(and_expr));
+        assert!(expression_needs_matrix_components_selection(and_expr));
 
         let rule = get_rule_by_name("select_mta_after_comprehension_expansion")
             .expect("select_mta_after_comprehension_expansion registered");
         let result = rule.apply(and_expr, &symbols).expect("selection applies");
-        assert!(!expression_needs_matrix_to_atom_selection(
+        assert!(!expression_needs_matrix_components_selection(
             &result.new_expression
         ));
     }
@@ -611,20 +623,20 @@ mod tests {
             .insert(decl.clone())
             .expect("matrix find should insert");
         let mut decl_for_init = decl.clone();
-        let (extra, _tops) = MatrixToAtom::init_for(&mut decl_for_init).unwrap();
+        let (extra, _tops) = MatrixComponents::init_for(&mut decl_for_init).unwrap();
         symbols.update_insert(decl_for_init.clone());
         symbols.extend(extra);
         (symbols, decl_for_init)
     }
 
     #[test]
-    fn unsafe_const_index_matrix_to_atom_lowers_in_bounds_constants() {
+    fn unsafe_const_index_matrix_components_lowers_in_bounds_constants() {
         let (symbols, decl) = matrix_find_1d();
         let subject = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
         let expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(subject), vec![2.into()]);
 
-        let rule = get_rule_by_name("unsafe_const_index_matrix_to_atom")
-            .expect("unsafe_const_index_matrix_to_atom registered");
+        let rule = get_rule_by_name("unsafe_const_index_matrix_components")
+            .expect("unsafe_const_index_matrix_components registered");
         let result = rule
             .apply(&expr, &symbols)
             .expect("fused const index applies");
@@ -635,31 +647,31 @@ mod tests {
     }
 
     #[test]
-    fn try_lower_const_unsafe_index_matrix_to_atom_matches_rule() {
+    fn try_lower_const_unsafe_index_matrix_components_matches_rule() {
         let (_symbols, decl) = matrix_find_1d();
         let subject = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
         let expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(subject), vec![2.into()]);
 
-        let lowered = try_lower_const_unsafe_index_matrix_to_atom(&expr)
+        let lowered = try_lower_const_unsafe_index_matrix_components(&expr)
             .expect("helper should lower in-bounds constants");
         assert!(matches!(lowered, Expression::Atomic(_, Atom::Reference(_))));
-        assert!(try_lower_const_unsafe_index_matrix_to_atom(&Expression::from(true)).is_none());
+        assert!(try_lower_const_unsafe_index_matrix_components(&Expression::from(true)).is_none());
     }
 
     #[test]
-    fn unsafe_const_index_matrix_to_atom_refuses_out_of_bounds() {
+    fn unsafe_const_index_matrix_components_refuses_out_of_bounds() {
         let (symbols, decl) = matrix_find_1d();
         let subject = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
         let expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(subject), vec![9.into()]);
 
-        let rule = get_rule_by_name("unsafe_const_index_matrix_to_atom")
-            .expect("unsafe_const_index_matrix_to_atom registered");
+        let rule = get_rule_by_name("unsafe_const_index_matrix_components")
+            .expect("unsafe_const_index_matrix_components registered");
         let err = rule.apply(&expr, &symbols).unwrap_err();
         assert!(matches!(err, ApplicationError::RuleNotApplicable));
     }
 
     #[test]
-    fn unsafe_const_index_matrix_to_atom_refuses_non_constant_index() {
+    fn unsafe_const_index_matrix_components_refuses_non_constant_index() {
         let (symbols, decl) = matrix_find_1d();
         let idx_dom = Domain::int(vec![Range::Bounded(1, 3)]);
         let idx_decl = DeclarationPtr::new_find(Name::user("i"), idx_dom);
@@ -672,8 +684,8 @@ mod tests {
         let index = Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(idx_decl)));
         let expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(subject), vec![index]);
 
-        let rule = get_rule_by_name("unsafe_const_index_matrix_to_atom")
-            .expect("unsafe_const_index_matrix_to_atom registered");
+        let rule = get_rule_by_name("unsafe_const_index_matrix_components")
+            .expect("unsafe_const_index_matrix_components registered");
         let err = rule.apply(&expr, &symbols).unwrap_err();
         assert!(matches!(err, ApplicationError::RuleNotApplicable));
     }

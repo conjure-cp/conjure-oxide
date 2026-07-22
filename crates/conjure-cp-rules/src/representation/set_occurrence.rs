@@ -6,7 +6,7 @@ use std::collections::VecDeque;
 const MAX_INNER_DOMAIN_SIZE: u64 = 100;
 
 register_representation!(
-    SetOccurrence
+    SetOccurrence("occurrence")
     struct State<T> {
         pub cardinality: (i32, i32),
         pub occurs: Moo<Vec<(Literal, T)>>

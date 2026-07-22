@@ -2,7 +2,7 @@ use super::prelude::*;
 use conjure_cp::ast::Reference;
 
 register_representation!(
-    TupleToAtom
+    TupleComponents("components")
     struct State<T> {
         pub elems: Vec<T>
     }
@@ -16,7 +16,7 @@ register_representation!(
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(elems) = dom.as_tuple() else {
-            return Err(ReprInitError::UnsupportedDomain(dom, TupleToAtom::NAME, String::from("expected a tuple domain")));
+            return Err(ReprInitError::UnsupportedDomain(dom, TupleComponents::NAME, String::from("expected a tuple domain")));
         };
         Ok(State { elems })
     }

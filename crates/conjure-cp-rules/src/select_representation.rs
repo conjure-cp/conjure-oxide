@@ -172,7 +172,7 @@ fn domain_needs_representation(domain: &DomainPtr) -> bool {
             GroundDomain::Int(_) => false,
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
-            // `ReprMatrixToAtom`rule set
+            // `ReprMatrixComponents`rule set
             GroundDomain::Matrix(inner_dom, idx_doms) => {
                 domain_needs_representation(&inner_dom.into())
                     || any(idx_doms, |d| domain_needs_representation(&d.into()))
@@ -185,7 +185,7 @@ fn domain_needs_representation(domain: &DomainPtr) -> bool {
             UnresolvedDomain::Int(..) => false,
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
-            // `ReprMatrixToAtom`rule set
+            // `ReprMatrixComponents`rule set
             UnresolvedDomain::Matrix(inner_dom, idx_doms) => {
                 domain_needs_representation(inner_dom) || any(idx_doms, domain_needs_representation)
             }

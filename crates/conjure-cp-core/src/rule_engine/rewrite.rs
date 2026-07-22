@@ -1962,7 +1962,7 @@ fn model_needs_abstract_repr_rules(model: &Model) -> bool {
     }
 
     // Record/tuple/set *literals* also need ReprGeneral even without abstract finds.
-    // Matrix literals are handled by `ReprMatrixToAtom`, not these rule sets.
+    // Matrix literals are handled by `ReprMatrixComponents`, not these rule sets.
     for expr in model.root().universe() {
         match expr {
             Expr::AbstractLiteral(_, abs) if !matches!(abs, AbstractLiteral::Matrix(..)) => {

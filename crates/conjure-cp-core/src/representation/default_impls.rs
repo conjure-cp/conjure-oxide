@@ -58,7 +58,7 @@ where
     SF: Fn(&DecL) -> Vec<Expression>,
 {
     let src_name = decl.name();
-    let repr_name = <DomL as ReprDomainLevel>::RULE.name();
+    let repr_name = <DomL as ReprDomainLevel>::RULE.short_name();
     let mut symtab = SymbolTable::new();
     let mut counter = 1;
 

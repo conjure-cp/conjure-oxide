@@ -1,5 +1,5 @@
 use crate::guard;
-use crate::representation::tuple_to_atom::TupleToAtom;
+use crate::representation::tuple_components::TupleComponents;
 use crate::utils::{
     as_cmp_or_lex_op, as_eq_or_neq, collect_cmp_exprs, collect_eq_or_neq, is_tuple_lit,
     tuple_expr_entries,
@@ -15,16 +15,16 @@ use itertools::izip;
 /// ```plain
 /// x[1]
 /// ~>
-/// x_TupleToAtom_1
+/// x_TupleComponents_1
 /// ```
 #[register_rule("ReprGeneral", 9500, [SafeIndex])]
-fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn tuple_components_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::SafeIndex(_, subject, indices) = expr        &&
         let Expr::Atomic(_, Atom::Reference(re)) = &**subject  &&
         let Some(Expr::Atomic(_, idx)) = indices.first()       &&
         let Atom::Literal(Literal::Int(idx)) = idx             &&
-        let Some(repr) = re.get_repr_as::<TupleToAtom>()
+        let Some(repr) = re.get_repr_as::<TupleComponents>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -86,9 +86,9 @@ fn tuple_var_eq_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     guard!(
         let Expr::Atomic(_, Atom::Reference(re)) = lhs     &&
-        let Some(repr) = re.get_repr_as::<TupleToAtom>()   &&
+        let Some(repr) = re.get_repr_as::<TupleComponents>()   &&
         let Expr::Atomic(_, Atom::Reference(re2)) = rhs    &&
-        let Some(repr2) = re2.get_repr_as::<TupleToAtom>()
+        let Some(repr2) = re2.get_repr_as::<TupleComponents>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -116,7 +116,7 @@ fn tuple_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     guard!(
         let Expr::Atomic(_, Atom::Reference(re)) = lhs   &&
-        let Some(repr) = re.get_repr_as::<TupleToAtom>() &&
+        let Some(repr) = re.get_repr_as::<TupleComponents>() &&
         let Some(rhs_ents) = tuple_expr_entries(rhs)
         else {
             return Err(RuleNotApplicable);
@@ -156,8 +156,8 @@ fn tuple_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         let Some((lhs, rhs)) = as_cmp_or_lex_op(expr)               &&
         let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
         let Expr::Atomic(_, Atom::Reference(rhs_re)) = rhs.as_ref() &&
-        let Some(lhs_repr) = lhs_re.get_repr_as::<TupleToAtom>()    &&
-        let Some(rhs_repr) = rhs_re.get_repr_as::<TupleToAtom>()
+        let Some(lhs_repr) = lhs_re.get_repr_as::<TupleComponents>()    &&
+        let Some(rhs_repr) = rhs_re.get_repr_as::<TupleComponents>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -188,7 +188,7 @@ fn tuple_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         as_eq_or_neq(expr).is_err() && // equality handled separately
         let Some((lhs, rhs)) = as_cmp_or_lex_op(expr)               &&
         let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
-        let Some(lhs_repr) = lhs_re.get_repr_as::<TupleToAtom>()    &&
+        let Some(lhs_repr) = lhs_re.get_repr_as::<TupleComponents>()    &&
         let Some(rhs_ents) = tuple_expr_entries(&rhs)
         else {
             return Err(RuleNotApplicable);

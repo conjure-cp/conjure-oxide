@@ -4,7 +4,7 @@ use conjure_cp::ast::{Domain, Reference};
 use conjure_cp::utils::BiMap;
 
 register_representation!(
-    RecordToTuple
+    RecordToTuple("tuple")
     struct State<T> {
         // 0-based indices corresponding to each field
         pub indices: BiMap<Name, usize>,

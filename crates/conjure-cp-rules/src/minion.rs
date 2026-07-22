@@ -9,7 +9,7 @@ use std::{
 
 use crate::{
     extra_check,
-    matrix::try_index_matrix_to_atom,
+    matrix::try_index_matrix_components,
     utils::{defer_aux_var, is_flat, rewrite_children, to_aux_var},
 };
 use conjure_cp::ast::categories::{Category, CategoryOf};
@@ -1875,7 +1875,7 @@ fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> Appli
 
     let index = fold_constant_element_id_to_index(&indices[0]).ok_or(RuleNotApplicable)?;
     let safeindex = Expr::SafeIndex(index_meta.clone(), subject.clone(), vec![index]);
-    let RuleEffect { new_expression, .. } = try_index_matrix_to_atom(&safeindex, symbols)?;
+    let RuleEffect { new_expression, .. } = try_index_matrix_components(&safeindex, symbols)?;
 
     Ok(RuleEffect::pure(Expr::Eq(
         meta.clone(),
@@ -2179,7 +2179,7 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     //  Instead, we let the representation and vertical rules for matrices turn x[1,..] into a
     //  matrix literal.
     //
-    //  product(x[1,..]) ~~ slice_matrix_to_atom ~~> product([x11,x12,x13,x14])
+    //  product(x[1,..]) ~~ slice_matrix_components ~~> product([x11,x12,x13,x14])
 
     let Expr::Product(_, factors) = expr else {
         return Err(RuleNotApplicable);

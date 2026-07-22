@@ -1,6 +1,6 @@
 use crate::guard;
+use crate::representation::tuple_components::TupleComponents;
 use crate::representation::tuple_packed::TuplePacked;
-use crate::representation::tuple_to_atom::TupleToAtom;
 use crate::utils::{
     as_cmp_or_lex_op, as_eq_or_neq, collect_cmp_exprs, collect_eq_or_neq, eq_or_neq,
     tuple_expr_entries,
@@ -241,12 +241,12 @@ fn tuple_packed_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 }
 
-/// Channeling constraint between TupleToAtom and TuplePacked for the same variable.
-/// Handles equalities of the form `x#TupleToAtom = x#TuplePacked` (or reversed).
+/// Channeling constraint between TupleComponents and TuplePacked for the same variable.
+/// Handles equalities of the form `x#TupleComponents = x#TuplePacked` (or reversed).
 /// ```plain
-/// x#TupleToAtom = x#TuplePacked
+/// x#TupleComponents = x#TuplePacked
 /// ~>
-/// x_packed = sum_i (x_TupleToAtom_i - min_i) * stride_i
+/// x_packed = sum_i (x_TupleComponents_i - min_i) * stride_i
 /// ```
 #[register_rule("ReprTuplePacked", 9700, [Eq, Neq])]
 fn tuple_channel_atom_packed(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -376,11 +376,11 @@ fn unpack_entry(repr: &PackedState<'_>, index: usize) -> Expr {
 }
 
 type PackedState<'a> = MappedRwLockReadGuard<'a, <TuplePacked as ReprRule>::DeclLevel>;
-type ToAtomState<'a> = MappedRwLockReadGuard<'a, <TupleToAtom as ReprRule>::DeclLevel>;
+type ComponentsState<'a> = MappedRwLockReadGuard<'a, <TupleComponents as ReprRule>::DeclLevel>;
 fn as_channeling_pair<'a>(
     lhs: &'a Reference,
     rhs: &'a Reference,
-) -> Option<(PackedState<'a>, ToAtomState<'a>)> {
+) -> Option<(PackedState<'a>, ComponentsState<'a>)> {
     if lhs.ptr != rhs.ptr {
         return None;
     }
@@ -393,8 +393,8 @@ fn as_channeling_pair<'a>(
         _ => return None,
     };
     let atom = match (
-        lhs.get_repr_as::<TupleToAtom>(),
-        rhs.get_repr_as::<TupleToAtom>(),
+        lhs.get_repr_as::<TupleComponents>(),
+        rhs.get_repr_as::<TupleComponents>(),
     ) {
         (Some(lhs), None) => lhs,
         (None, Some(rhs)) => rhs,

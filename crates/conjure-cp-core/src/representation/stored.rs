@@ -67,6 +67,8 @@ impl<D: ReprDeclLevel> ReprStateStored for D {
 pub trait ReprRuleStored: Send + Sync {
     fn name(&self) -> &'static str;
 
+    fn short_name(&self) -> &'static str;
+
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult;
 
     fn init_for_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult;
@@ -94,6 +96,10 @@ pub trait ReprRuleStored: Send + Sync {
 impl<R: ReprRule> ReprRuleStored for R {
     fn name(&self) -> &'static str {
         R::NAME
+    }
+
+    fn short_name(&self) -> &'static str {
+        R::SHORT_NAME
     }
 
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult {

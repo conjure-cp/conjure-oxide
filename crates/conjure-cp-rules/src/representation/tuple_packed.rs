@@ -4,7 +4,7 @@ use conjure_cp::representation::ReprInitError;
 use conjure_cp::{domain_int, range};
 
 register_representation!(
-    TuplePacked
+    TuplePacked("packed")
     struct State<T> {
         /// The single packed integer variable / domain / literal
         pub packed: T,

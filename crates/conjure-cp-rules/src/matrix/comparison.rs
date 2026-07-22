@@ -9,7 +9,7 @@ use conjure_cp::{ast::matrix, essence_expr};
 /// E.g. a: matrix indexed by [int(1..2)] of int(1..2), b: matrix indexed by [int(2..3)] of int(1..2)
 /// a = b ~> a[1] = b[1] /\ a[2] = b[2] /\ a[3] = b[3]
 ///
-/// Must run before `index_matrix_to_atom` ("Base", 5000), otherwise matrix equality can be
+/// Must run before `index_matrix_components` ("Base", 5000), otherwise matrix equality can be
 /// rewritten into `int(1..)` indexed literals, losing finite index bounds for this rule.
 #[register_rule("Base", 3000, [Eq, Neq])]
 fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
