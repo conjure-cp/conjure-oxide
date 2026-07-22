@@ -12,7 +12,9 @@ use crate::parser::global_constraints::{
 use crate::util::TypecheckingContext;
 use crate::{child, field, named_child};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
-use conjure_cp_core::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Typeable};
+use conjure_cp_core::ast::{
+    Atom, Expression, GroundDomain, Literal, Metadata, Moo, ReturnType, Typeable,
+};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
@@ -444,12 +446,20 @@ fn parse_unary_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    let saved_context = ctx.typechecking_context;
+    if node.kind() == "abs_value" {
+        // Bars are overloaded for numeric absolute value and collection cardinality.
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+    }
     let Some(expr_node) = field!(recover, ctx, node, "expression") else {
+        ctx.typechecking_context = saved_context;
         return Ok(None);
     };
     let Some(inner) = parse_expression(ctx, expr_node)? else {
+        ctx.typechecking_context = saved_context;
         return Ok(None);
     };
+    ctx.typechecking_context = saved_context;
 
     match node.kind() {
         "negative_expr" => {
@@ -462,7 +472,17 @@ fn parse_unary_expression(
                 Ok(Some(Expression::Neg(Metadata::new(), Moo::new(inner))))
             }
         }
-        "abs_value" => Ok(Some(Expression::Abs(Metadata::new(), Moo::new(inner)))),
+        "abs_value" => {
+            let constructor = match inner.return_type() {
+                ReturnType::Matrix(_)
+                | ReturnType::Set(_)
+                | ReturnType::MSet(_)
+                | ReturnType::Relation(_)
+                | ReturnType::Function(_, _) => Expression::Card,
+                _ => Expression::Abs,
+            };
+            Ok(Some(constructor(Metadata::new(), Moo::new(inner))))
+        }
         "not_expr" => Ok(Some(Expression::Not(Metadata::new(), Moo::new(inner)))),
         "toInt_expr" => {
             let to_int_keyword_node = child!(node, 0, "toInt");

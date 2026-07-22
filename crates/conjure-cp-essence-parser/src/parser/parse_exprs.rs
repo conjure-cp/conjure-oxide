@@ -150,6 +150,36 @@ mod test {
     }
 
     #[test]
+    fn bars_distinguish_set_cardinality_from_integer_absolute_value() {
+        let symbols = SymbolTablePtr::new();
+        let set = DeclarationPtr::new_find(
+            Name::User("s".into()),
+            Domain::set(
+                conjure_cp_core::ast::SetAttr::new_max_size(2),
+                Domain::int(vec![conjure_cp_core::ast::Range::Bounded(1, 2)]),
+            ),
+        );
+        let integer = DeclarationPtr::new_find(
+            Name::User("x".into()),
+            Domain::int(vec![conjure_cp_core::ast::Range::Bounded(-2, 2)]),
+        );
+        symbols.write().insert(set).unwrap();
+        symbols.write().insert(integer).unwrap();
+
+        let set_expr = parse_expr("|s| = 1", symbols.clone()).unwrap().unwrap();
+        let Expression::Eq(_, set_left, _) = set_expr else {
+            panic!("expected set cardinality comparison");
+        };
+        assert!(matches!(*set_left, Expression::Card(..)));
+
+        let int_expr = parse_expr("|x| = 1", symbols).unwrap().unwrap();
+        let Expression::Eq(_, int_left, _) = int_expr else {
+            panic!("expected integer absolute-value comparison");
+        };
+        assert!(matches!(*int_left, Expression::Abs(..)));
+    }
+
+    #[test]
     pub fn test_parse_expression_annotations() {
         let symbols = SymbolTablePtr::new();
         let x = DeclarationPtr::new_find(

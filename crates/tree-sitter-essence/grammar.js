@@ -328,7 +328,7 @@ module.exports = grammar ({
 
     // Set comparisons: require set operands, return boolean
     set_comparison: $ => seq(
-      field("left", $.atom),
+      field("left", choice($.arithmetic_expr, $.atom)),
       field("operator", choice("in", "subset", "subsetEq", "supset", "supsetEq")),
       field("right", $.atom)
     ),
