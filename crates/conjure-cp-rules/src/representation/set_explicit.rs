@@ -3,7 +3,7 @@ use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference};
 use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 register_representation!(
-    SetExplicitVarSizeWithMarker
+    SetExplicit
     struct State<T> {
         /// Inclusive lower and upper bounds for the marker.
         pub cardinality: (i32, i32),
@@ -124,7 +124,7 @@ register_representation!(
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
             dom.clone(),
-            SetExplicitVarSizeWithMarker::NAME,
+            SetExplicit::NAME,
             String::from(msg),
         );
         let Some(GroundDomain::Set(attr, inner_dom)) = dom.as_ground() else {

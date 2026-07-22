@@ -1,11 +1,11 @@
 use crate::guard;
-use crate::representation::SetExplicitVarSizeWithMarker;
+use crate::representation::SetExplicit;
 use conjure_cp::ast::{AbstractLiteral, Atom, Expression as Expr, Literal, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-/// Lower equality between an explicit marker set and a set literal.
+/// Lower equality between an explicit set and a set literal.
 #[register_rule("ReprGeneral", 9500, [Eq])]
 fn eq_explicit_marker_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
@@ -25,22 +25,22 @@ fn eq_explicit_marker_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult
         ) => (reference, elems),
         _ => return Err(RuleNotApplicable),
     };
-    let Some(repr) = set.get_repr_as::<SetExplicitVarSizeWithMarker>() else {
+    let Some(repr) = set.get_repr_as::<SetExplicit>() else {
         return Err(RuleNotApplicable);
     };
 
     Ok(RuleEffect::pure(repr.equality_to_literal_expr(literal)))
 }
 
-/// Lower equality between two explicit marker sets.
+/// Lower equality between two explicit sets.
 #[register_rule("ReprGeneral", 9500, [Eq])]
 fn eq_explicit_marker(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::Eq(_, lhs, rhs) = expr &&
         let Expr::Atomic(_, Atom::Reference(lhs)) = lhs.as_ref() &&
         let Expr::Atomic(_, Atom::Reference(rhs)) = rhs.as_ref() &&
-        let Some(lhs_repr) = lhs.get_repr_as::<SetExplicitVarSizeWithMarker>() &&
-        let Some(rhs_repr) = rhs.get_repr_as::<SetExplicitVarSizeWithMarker>()
+        let Some(lhs_repr) = lhs.get_repr_as::<SetExplicit>() &&
+        let Some(rhs_repr) = rhs.get_repr_as::<SetExplicit>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -62,12 +62,10 @@ mod tests {
         let domain = Domain::set(SetAttr::new_max_size(2), domain_int!(1..3));
         let mut symbols = SymbolTable::new();
         let mut declaration = symbols.gen_find(&domain);
-        SetExplicitVarSizeWithMarker::init_for(&mut declaration).unwrap();
+        SetExplicit::init_for(&mut declaration).unwrap();
 
         let mut set_reference = Reference::new(declaration);
-        let _ = set_reference
-            .select_repr::<SetExplicitVarSizeWithMarker>()
-            .unwrap();
+        let _ = set_reference.select_repr::<SetExplicit>().unwrap();
         let literal = Literal::AbstractLiteral(AbstractLiteral::Set(vec![2.into(), 3.into()]));
         let equality = Expr::Eq(
             Metadata::new(),
@@ -104,7 +102,7 @@ mod tests {
                         Moo::new(
                             Reference::new(
                                 set_reference
-                                    .get_repr_as::<SetExplicitVarSizeWithMarker>()
+                                    .get_repr_as::<SetExplicit>()
                                     .unwrap()
                                     .set_size
                                     .clone(),
@@ -114,11 +112,11 @@ mod tests {
                         Moo::new(2.into()),
                     ),
                     set_reference
-                        .get_repr_as::<SetExplicitVarSizeWithMarker>()
+                        .get_repr_as::<SetExplicit>()
                         .unwrap()
                         .membership_expr(2.into()),
                     set_reference
-                        .get_repr_as::<SetExplicitVarSizeWithMarker>()
+                        .get_repr_as::<SetExplicit>()
                         .unwrap()
                         .membership_expr(3.into()),
                 ]),
@@ -132,13 +130,13 @@ mod tests {
         let mut symbols = SymbolTable::new();
         let mut lhs_declaration = symbols.gen_find(&domain);
         let mut rhs_declaration = symbols.gen_find(&domain);
-        SetExplicitVarSizeWithMarker::init_for(&mut lhs_declaration).unwrap();
-        SetExplicitVarSizeWithMarker::init_for(&mut rhs_declaration).unwrap();
+        SetExplicit::init_for(&mut lhs_declaration).unwrap();
+        SetExplicit::init_for(&mut rhs_declaration).unwrap();
 
         let mut lhs = Reference::new(lhs_declaration);
         let mut rhs = Reference::new(rhs_declaration);
-        let _ = lhs.select_repr::<SetExplicitVarSizeWithMarker>().unwrap();
-        let _ = rhs.select_repr::<SetExplicitVarSizeWithMarker>().unwrap();
+        let _ = lhs.select_repr::<SetExplicit>().unwrap();
+        let _ = rhs.select_repr::<SetExplicit>().unwrap();
         let equality = Expr::Eq(
             Metadata::new(),
             Moo::new(lhs.clone().into()),
@@ -159,9 +157,9 @@ mod tests {
         );
         assert_eq!(
             rewritten,
-            lhs.get_repr_as::<SetExplicitVarSizeWithMarker>()
+            lhs.get_repr_as::<SetExplicit>()
                 .unwrap()
-                .equality_expr(&rhs.get_repr_as::<SetExplicitVarSizeWithMarker>().unwrap())
+                .equality_expr(&rhs.get_repr_as::<SetExplicit>().unwrap())
         );
     }
 }

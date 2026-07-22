@@ -7,7 +7,7 @@ use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
-    MatrixToAtom, RecordToTuple, SetExplicitVarSizeWithMarker, SetOccurrence, TuplePacked,
+    MatrixToAtom, RecordToTuple, SetExplicit, SetOccurrence, TuplePacked,
 };
 use uniplate::Uniplate;
 
@@ -150,8 +150,7 @@ fn occurrence_set_round_trips_and_enforces_cardinality() {
 #[test]
 fn explicit_set_round_trips_with_padding() {
     let domain = Domain::set(SetAttr::new_min_max_size(1, 3), domain_int!(1..4));
-    let state =
-        <SetExplicitVarSizeWithMarker as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let state = <SetExplicit as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
     let value =
         Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(4), Literal::Int(2)]));
 
@@ -174,8 +173,7 @@ fn explicit_set_round_trips_with_padding() {
 
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
-    let (new_symbols, constraints) =
-        SetExplicitVarSizeWithMarker::init_for(&mut declaration).unwrap();
+    let (new_symbols, constraints) = SetExplicit::init_for(&mut declaration).unwrap();
     assert_eq!(new_symbols.iter_local().count(), 2);
     assert_eq!(constraints.len(), 5);
     assert_eq!(

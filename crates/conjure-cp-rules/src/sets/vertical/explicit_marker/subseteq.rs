@@ -1,17 +1,17 @@
 use crate::guard;
-use crate::representation::SetExplicitVarSizeWithMarker;
+use crate::representation::SetExplicit;
 use conjure_cp::ast::{Atom, Expression as Expr, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-/// Lower subset inclusion from an explicit marker set.
+/// Lower subset inclusion from an explicit set.
 #[register_rule("ReprGeneral", 9500, [SubsetEq])]
 fn subseteq_explicit_marker(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::SubsetEq(_, lhs, rhs) = expr &&
         let Expr::Atomic(_, Atom::Reference(lhs)) = lhs.as_ref() &&
-        let Some(lhs_repr) = lhs.get_repr_as::<SetExplicitVarSizeWithMarker>()
+        let Some(lhs_repr) = lhs.get_repr_as::<SetExplicit>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -33,12 +33,10 @@ mod tests {
         let domain = Domain::set(SetAttr::new_max_size(2), domain_int!(1..3));
         let mut symbols = SymbolTable::new();
         let mut declaration = symbols.gen_find(&domain);
-        SetExplicitVarSizeWithMarker::init_for(&mut declaration).unwrap();
+        SetExplicit::init_for(&mut declaration).unwrap();
 
         let mut set_reference = Reference::new(declaration);
-        let _ = set_reference
-            .select_repr::<SetExplicitVarSizeWithMarker>()
-            .unwrap();
+        let _ = set_reference.select_repr::<SetExplicit>().unwrap();
         let literal = Literal::AbstractLiteral(AbstractLiteral::Set(vec![1.into(), 2.into()]));
         let subset = Expr::SubsetEq(
             Metadata::new(),
@@ -53,7 +51,7 @@ mod tests {
         assert_eq!(
             rewritten,
             set_reference
-                .get_repr_as::<SetExplicitVarSizeWithMarker>()
+                .get_repr_as::<SetExplicit>()
                 .unwrap()
                 .subset_expr(literal.into())
         );

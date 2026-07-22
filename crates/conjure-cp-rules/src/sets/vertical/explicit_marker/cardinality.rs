@@ -1,5 +1,5 @@
 use crate::guard;
-use crate::representation::SetExplicitVarSizeWithMarker;
+use crate::representation::SetExplicit;
 use conjure_cp::ast::{Atom, Expression as Expr, Metadata, Reference, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
@@ -11,7 +11,7 @@ fn cardinality_explicit_marker(expr: &Expr, _: &SymbolTable) -> ApplicationResul
     guard!(
         let Expr::Card(_, set) = expr &&
         let Expr::Atomic(_, Atom::Reference(reference)) = set.as_ref() &&
-        let Some(repr) = reference.get_repr_as::<SetExplicitVarSizeWithMarker>()
+        let Some(repr) = reference.get_repr_as::<SetExplicit>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -35,13 +35,10 @@ mod tests {
         let domain = Domain::set(SetAttr::new_max_size(2), domain_int!(1..2));
         let mut symbols = SymbolTable::new();
         let mut declaration = symbols.gen_find(&domain);
-        SetExplicitVarSizeWithMarker::init_for(&mut declaration).unwrap();
+        SetExplicit::init_for(&mut declaration).unwrap();
 
         let mut set_reference = Reference::new(declaration);
-        let repr = set_reference
-            .select_repr::<SetExplicitVarSizeWithMarker>()
-            .unwrap()
-            .clone();
+        let repr = set_reference.select_repr::<SetExplicit>().unwrap().clone();
         let cardinality = Expr::Card(Metadata::new(), Moo::new(set_reference.into()));
 
         let rewritten = cardinality_explicit_marker(&cardinality, &symbols)

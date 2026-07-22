@@ -1,17 +1,17 @@
 use crate::guard;
-use crate::representation::SetExplicitVarSizeWithMarker;
+use crate::representation::SetExplicit;
 use conjure_cp::ast::{Atom, Expression as Expr, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-/// Lower membership in an explicit marker set to active-slot equality checks.
+/// Lower membership in an explicit set to active-slot equality checks.
 #[register_rule("ReprGeneral", 9500, [In])]
 fn in_explicit_marker(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::In(_, member, set) = expr &&
         let Expr::Atomic(_, Atom::Reference(reference)) = set.as_ref() &&
-        let Some(repr) = reference.get_repr_as::<SetExplicitVarSizeWithMarker>()
+        let Some(repr) = reference.get_repr_as::<SetExplicit>()
         else {
             return Err(RuleNotApplicable);
         }
@@ -33,12 +33,10 @@ mod tests {
         let domain = Domain::set(SetAttr::new_max_size(2), domain_int!(1..2));
         let mut symbols = SymbolTable::new();
         let mut declaration = symbols.gen_find(&domain);
-        SetExplicitVarSizeWithMarker::init_for(&mut declaration).unwrap();
+        SetExplicit::init_for(&mut declaration).unwrap();
 
         let mut set_reference = Reference::new(declaration);
-        let _ = set_reference
-            .select_repr::<SetExplicitVarSizeWithMarker>()
-            .unwrap();
+        let _ = set_reference.select_repr::<SetExplicit>().unwrap();
         let membership = Expr::In(
             Metadata::new(),
             Moo::new(1.into()),
