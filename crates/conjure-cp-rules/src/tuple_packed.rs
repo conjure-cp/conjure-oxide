@@ -1,7 +1,10 @@
 use crate::guard;
 use crate::representation::tuple_packed::TuplePacked;
 use crate::representation::tuple_to_atom::TupleToAtom;
-use crate::utils::{as_cmp_or_lex_op, as_eq_or_neq, eq_or_neq, tuple_expr_entries};
+use crate::utils::{
+    as_cmp_or_lex_op, as_eq_or_neq, collect_cmp_exprs, collect_eq_or_neq, eq_or_neq,
+    tuple_expr_entries,
+};
 use conjure_cp::ast::{
     Atom, DomainPtr, Expression as Expr, GroundDomain, HasDomain, Literal, Metadata, Moo, Range,
     Reference, SymbolTable,
@@ -82,7 +85,11 @@ fn select_packed_for_comparison(expr: &Expr, _: &SymbolTable) -> ApplicationResu
     Ok(Reduction::new(new_expr, all_constraints, all_symbols))
 }
 
-/// Equality of packed tuple variables
+/// Equality of packed tuple variables.
+///
+/// Matching layouts can be compared directly. Different layouts are decoded
+/// and compared element-wise because the same packed value can represent
+/// different tuples in each layout.
 /// ```plain
 /// x = y  (both TuplePacked)  ~>  x_packed = y_packed
 /// ```
@@ -98,7 +105,19 @@ fn tuple_packed_var_eq_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         else { return Err(RuleNotApplicable) }
     );
 
-    let new_expr = eq_or_neq(neq, lp.packed_expr(), rp.packed_expr());
+    bug_assert!(
+        lp.sizes.len() == rp.sizes.len(),
+        "equality on tuples with different shapes!"
+    );
+
+    let new_expr = if layouts_match(&lp, &rp) {
+        eq_or_neq(neq, lp.packed_expr(), rp.packed_expr())
+    } else {
+        collect_eq_or_neq(
+            neq,
+            unpack_entries(&lp).into_iter().zip(unpack_entries(&rp)),
+        )
+    };
     Ok(Reduction::pure(new_expr))
 }
 
@@ -127,7 +146,10 @@ fn tuple_packed_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(new_expr))
 }
 
-/// Comparison of packed tuple variables
+/// Comparison of packed tuple variables.
+///
+/// Matching layouts preserve lexicographic order directly. Different layouts
+/// are decoded before applying the tuple comparison.
 /// ```plain
 /// x > y  (both TuplePacked)  ~>  x_packed > y_packed
 /// ```
@@ -147,11 +169,17 @@ fn tuple_packed_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         else { return Err(RuleNotApplicable) }
     );
 
-    Ok(Reduction::pure(packed_cmp(
-        expr,
-        lp.packed_expr(),
-        rp.packed_expr(),
-    )))
+    bug_assert!(
+        lp.sizes.len() == rp.sizes.len(),
+        "comparison of tuples with different shapes!"
+    );
+
+    let new_expr = if layouts_match(&lp, &rp) {
+        packed_cmp(expr, lp.packed_expr(), rp.packed_expr())
+    } else {
+        collect_cmp_exprs(expr, unpack_entries(&lp), unpack_entries(&rp))
+    };
+    Ok(Reduction::pure(new_expr))
 }
 
 /// Comparison of packed tuple variable to a literal
@@ -199,18 +227,7 @@ fn tuple_packed_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let i = (*idx - 1) as usize;
     bug_assert!(i < repr.sizes.len(), "tuple indexing is out of bounds");
 
-    let packed = repr.packed_expr();
-    let stride = repr.strides[i];
-    let size = repr.sizes[i];
-    let min = repr.mins[i];
-
-    // (packed / stride) % size + min
-    let new_expr = match (stride, i) {
-        (1, _) if size == repr.total_size => essence_expr!(&packed + &min),
-        (1, _) => essence_expr!((&packed % &size) + &min),
-        (_, 0) => essence_expr!((&packed / &stride) + &min),
-        _ => essence_expr!(((&packed / &stride) % &size) + &min),
-    };
+    let new_expr = unpack_entry(&repr, i);
 
     let remaining = &indices[1..];
     if remaining.is_empty() {
@@ -330,6 +347,31 @@ fn packed_cmp(op: &Expr, lhs: Expr, rhs: Expr) -> Expr {
         Expr::Gt(..) | Expr::LexGt(..) => Expr::Gt(Metadata::new(), lhs, rhs),
         Expr::Geq(..) | Expr::LexGeq(..) => Expr::Geq(Metadata::new(), lhs, rhs),
         _ => unreachable!("packed_cmp: unexpected operator"),
+    }
+}
+
+fn layouts_match(lhs: &PackedState<'_>, rhs: &PackedState<'_>) -> bool {
+    lhs.sizes == rhs.sizes && lhs.mins == rhs.mins
+}
+
+fn unpack_entries(repr: &PackedState<'_>) -> Vec<Expr> {
+    (0..repr.sizes.len())
+        .map(|index| unpack_entry(repr, index))
+        .collect()
+}
+
+fn unpack_entry(repr: &PackedState<'_>, index: usize) -> Expr {
+    let packed = repr.packed_expr();
+    let stride = repr.strides[index];
+    let size = repr.sizes[index];
+    let min = repr.mins[index];
+
+    // (packed / stride) % size + min
+    match (stride, index) {
+        (1, _) if size == repr.total_size => essence_expr!(&packed + &min),
+        (1, _) => essence_expr!((&packed % &size) + &min),
+        (_, 0) => essence_expr!((&packed / &stride) + &min),
+        _ => essence_expr!(((&packed / &stride) % &size) + &min),
     }
 }
 
