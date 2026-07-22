@@ -1,6 +1,6 @@
 use super::prelude::*;
 use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference};
-use conjure_cp::{essence_expr, into_matrix_expr};
+use conjure_cp::{essence_expr, into_matrix_expr, matrix_expr};
 use std::collections::VecDeque;
 
 const MAX_INNER_DOMAIN_SIZE: u64 = 100;
@@ -10,6 +10,39 @@ register_representation!(
     struct State<T> {
         pub cardinality: (i32, i32),
         pub occurs: Moo<Vec<(Literal, T)>>
+    }
+    impl State<DeclarationPtr> {
+        pub fn cardinality_expr(&self) -> Expression {
+            let elems = self
+                .occurs
+                .iter()
+                .map(|(_, declaration)| {
+                    let reference = Reference::new(declaration.clone());
+                    essence_expr!(toInt(&reference))
+                })
+                .collect();
+            Expression::Sum(Metadata::new(), Moo::new(into_matrix_expr!(elems)))
+        }
+
+        pub fn membership_expr(&self, member: Expression) -> Expression {
+            let choices = self
+                .occurs
+                .iter()
+                .map(|(value, declaration)| {
+                    let value_matches = Expression::Eq(
+                        Metadata::new(),
+                        Moo::new(member.clone()),
+                        Moo::new(value.clone().into()),
+                    );
+                    let occurs = Reference::new(declaration.clone()).into();
+                    Expression::And(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![value_matches, occurs]),
+                    )
+                })
+                .collect();
+            Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(choices)))
+        }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
@@ -37,15 +70,7 @@ register_representation!(
     }
     fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
         let (min, max) = state.cardinality;
-        let elems: Vec<Expression> = state
-            .occurs
-            .iter()
-            .map(|(_, x)| {
-                let re = Reference::new(x.clone());
-                essence_expr!(toInt(&re))
-            })
-            .collect();
-        let count = Expression::Sum(Metadata::new(), Moo::new(into_matrix_expr!(elems)));
+        let count = state.cardinality_expr();
         if min == max {
             vec![essence_expr!(&count = &min)]
         } else {

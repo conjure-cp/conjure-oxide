@@ -1,6 +1,6 @@
 use super::prelude::*;
 use conjure_cp::ast::{GroundDomain, Moo, Range, Reference};
-use conjure_cp::{domain_int, range};
+use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 /// Packed masks use a signed `i32`, leaving 30 usable element bits.
 const MAX_INNER_DOMAIN_SIZE: u32 = 30;
@@ -24,6 +24,65 @@ register_representation!(
 
         pub fn packed_expr(&self) -> Expression {
             self.packed_ref().into()
+        }
+
+        pub fn cardinality_expr(&self) -> Expression {
+            let (min, max) = self.cardinality;
+            if min == max {
+                return (min as i32).into();
+            }
+            let mut next_block = 0u64;
+            let thresholds = (min..max)
+                .map(|cardinality| {
+                    next_block += binomial(self.elements.len() as u32, cardinality)
+                        .expect("validated packed set size");
+                    let threshold = i32::try_from(next_block)
+                        .expect("validated packed set rank fits in i32");
+                    let packed = self.packed_expr();
+                    essence_expr!(toInt(&packed >= &threshold))
+                })
+                .collect::<Vec<_>>();
+            let varying = Expression::Sum(
+                Metadata::new(),
+                Moo::new(into_matrix_expr!(thresholds)),
+            );
+            let min = min as i32;
+            essence_expr!(&varying + &min)
+        }
+
+        pub fn membership_expr(&self, member: Expression) -> Expression {
+            let choices = self
+                .elements
+                .iter()
+                .enumerate()
+                .map(|(index, value)| {
+                    let ranks = (0..self.total_size)
+                        .filter(|rank| {
+                            unrank_mask(
+                                *rank,
+                                self.elements.len() as u32,
+                                self.cardinality,
+                            ) & (1u32 << index)
+                                != 0
+                        })
+                        .collect();
+                    let rank_matches = Expression::MinionWInSet(
+                        Metadata::new(),
+                        Atom::Reference(self.packed_ref()),
+                        ranks,
+                    );
+                    let value_matches = Expression::Eq(
+                        Metadata::new(),
+                        Moo::new(member.clone()),
+                        Moo::new(value.clone().into()),
+                    );
+                    Expression::And(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![value_matches, rank_matches]),
+                    )
+                })
+                .collect();
+            Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(choices)))
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
