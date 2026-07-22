@@ -24,3 +24,44 @@ fn subset_to_subset_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => Err(RuleNotApplicable),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{AbstractLiteral, Literal};
+
+    #[test]
+    fn strict_set_subset_becomes_inclusion_and_inequality() {
+        let lhs = Expr::from(Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+            1.into(),
+        ])));
+        let rhs = Expr::from(Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+            1.into(),
+            2.into(),
+        ])));
+        let subset = Expr::Subset(
+            Metadata::new(),
+            Moo::new(lhs.clone()),
+            Moo::new(rhs.clone()),
+        );
+
+        let rewritten = subset_to_subset_eq_neq(&subset, &SymbolTable::new())
+            .unwrap()
+            .new_expression;
+
+        assert_eq!(
+            rewritten,
+            Expr::And(
+                Metadata::new(),
+                Moo::new(matrix_expr![
+                    Expr::SubsetEq(
+                        Metadata::new(),
+                        Moo::new(lhs.clone()),
+                        Moo::new(rhs.clone()),
+                    ),
+                    Expr::Neq(Metadata::new(), Moo::new(lhs), Moo::new(rhs)),
+                ]),
+            )
+        );
+    }
+}
