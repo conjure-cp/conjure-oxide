@@ -100,6 +100,14 @@ register_representation!(
             .map(|(_, declaration)| declaration.clone())
             .collect()
     }
+    fn compactness(state: &State<DomainPtr>) -> usize {
+        state
+            .occurs
+            .iter()
+            .map(|(_, domain)| conjure_cp::representation::default_impls::domain_ast_depth(domain))
+            .max()
+            .unwrap_or(0)
+    }
 );
 
 fn cardinality_bounds(size: &Range<i32>, inner_len: u64) -> Option<(i32, i32)> {

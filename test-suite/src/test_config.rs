@@ -1,6 +1,8 @@
 #![allow(unused)]
 
-use conjure_cp::settings::{Parser, QuantifiedExpander, Rewriter, SolverFamily};
+use conjure_cp::settings::{
+    Channelling, Heuristic, Parser, QuantifiedExpander, Rewriter, SolverFamily,
+};
 use serde::Deserialize;
 use serde::de::{self, Visitor};
 use std::fmt;
@@ -458,6 +460,20 @@ pub struct TestConfig {
     pub comprehension_expander: Vec<String>,
     #[serde(
         default,
+        rename = "heuristic",
+        deserialize_with = "deserialize_string_or_vec"
+    )]
+    pub heuristic: Vec<String>,
+    #[serde(
+        default,
+        rename = "channelling",
+        deserialize_with = "deserialize_string_or_vec"
+    )]
+    pub channelling: Vec<String>,
+    #[serde(default, rename = "seed")]
+    pub seed: u64,
+    #[serde(
+        default,
         rename = "solver",
         deserialize_with = "deserialize_string_or_vec"
     )]
@@ -511,6 +527,9 @@ impl Default for TestConfig {
                 "via-solver".to_string(),
                 "via-solver-ac".to_string(),
             ],
+            heuristic: vec!["f".to_string()],
+            channelling: vec!["no".to_string()],
+            seed: 0,
             solver: {
                 let mut solvers = vec![
                     "minion".to_string(),
@@ -581,6 +600,28 @@ impl TestConfig {
         };
 
         parse_values(&values)
+    }
+
+    pub fn configured_heuristics(&self) -> Result<Vec<Heuristic>, String> {
+        let values = if self.heuristic.is_empty() {
+            vec!["f".to_string()]
+        } else {
+            self.heuristic.clone()
+        };
+        parse_values(&values)
+    }
+
+    pub fn configured_channelling(&self) -> Result<Vec<Channelling>, String> {
+        let values = if self.channelling.is_empty() {
+            vec!["no".to_string()]
+        } else {
+            self.channelling.clone()
+        };
+        let configured: Vec<Channelling> = parse_values(&values)?;
+        if configured.contains(&Channelling::Yes) {
+            return Err("setting 'channelling=yes' is not supported yet".to_string());
+        }
+        Ok(configured)
     }
 
     pub fn configured_solvers(&self) -> Result<Vec<SolverFamily>, String> {

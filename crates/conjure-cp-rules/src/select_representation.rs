@@ -3,9 +3,13 @@ use crate::representation::set_occurrence::SetOccurrence;
 use crate::representation::tuple_packed::TuplePacked;
 use crate::utils::as_comparison_op;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
+use conjure_cp::settings::{
+    Channelling, Heuristic, channelling, heuristic, next_heuristic_all_index,
+    next_heuristic_random_index,
+};
 use conjure_cp::{
-    ast::{Atom, Expression as Expr, GroundDomain, SymbolTable},
-    representation::{ReprRule, get_repr_rules},
+    ast::{Atom, DeclarationPtr, Expression as Expr, GroundDomain, SymbolTable},
+    representation::{ReprRule, ReprRulePtr, get_repr_rules},
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect as Reduction,
         register_rule, register_rule_set,
@@ -36,20 +40,13 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     );
 
     let mut re = re.clone();
-    for rule in get_repr_rules() {
-        // Skip representations that are managed by their own rule sets
-        if SKIP_AUTO_SELECT.contains(&rule.name()) {
-            continue;
-        }
-        // Once we find an applicable representation, exit
-        let Ok((_, new_symbols, new_constraints)) = re.select_or_init_repr_via(rule) else {
-            continue;
-        };
-        return Ok(Reduction::new(re.into(), new_constraints, new_symbols));
-    }
-
-    // None of the representations worked
-    Err(RuleNotApplicable)
+    let Some(rule) = choose_representation_rule(re.ptr()) else {
+        return Err(RuleNotApplicable);
+    };
+    let (_, new_symbols, new_constraints) = re
+        .select_or_init_repr_via(rule)
+        .map_err(|_| RuleNotApplicable)?;
+    Ok(Reduction::new(re.into(), new_constraints, new_symbols))
 }
 
 /// Select a representation for unconstrained finds with abstract domains
@@ -73,27 +70,60 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
             }
         );
 
-        for rule in get_repr_rules() {
-            // Skip representations that are managed by their own rule sets
-            if SKIP_AUTO_SELECT.contains(&rule.name()) {
-                continue;
-            }
-            let mut decl = decl.clone();
-
-            // Once we find an applicable representation, exit
-            let Ok((new_symbols, new_constraints)) = rule.init_for(&mut decl) else {
-                continue;
-            };
-            symbols.update_insert(decl);
-            symbols.extend(new_symbols);
-            constraints.extend(new_constraints);
-        }
+        let Some(rule) = choose_representation_rule(&decl) else {
+            continue;
+        };
+        let mut decl = decl.clone();
+        let Ok((new_symbols, new_constraints)) = rule.init_for(&mut decl) else {
+            continue;
+        };
+        symbols.update_insert(decl);
+        symbols.extend(new_symbols);
+        constraints.extend(new_constraints);
     }
 
     if symbols.eq(symtab) && constraints.is_empty() {
         Err(RuleNotApplicable)
     } else {
         Ok(Reduction::new(expr.clone(), constraints, symbols))
+    }
+}
+
+/// Chooses one applicable representation without mutating the declaration.
+fn choose_representation_rule(decl: &DeclarationPtr) -> Option<ReprRulePtr> {
+    if channelling() == Channelling::No
+        && let Some(existing) = decl.reprs().iter().next().map(|(_, state)| state.rule())
+    {
+        return Some(existing);
+    }
+
+    let mut candidates: Vec<_> = get_repr_rules()
+        .filter(|rule| !SKIP_AUTO_SELECT.contains(&rule.name()))
+        .filter_map(|rule| rule.probe_for(decl).ok().map(|score| (rule, score)))
+        .collect();
+    candidates.sort_by_key(|(rule, _)| rule.name());
+
+    if candidates.len() == 1 {
+        return candidates.first().map(|(rule, _)| *rule);
+    }
+
+    match heuristic() {
+        Heuristic::First => candidates.first().map(|(rule, _)| *rule),
+        Heuristic::All if !candidates.is_empty() => {
+            let names: Vec<_> = candidates.iter().map(|(rule, _)| rule.name()).collect();
+            candidates
+                .get(next_heuristic_all_index(&names))
+                .map(|(rule, _)| *rule)
+        }
+        Heuristic::All => None,
+        Heuristic::Random if !candidates.is_empty() => candidates
+            .get(next_heuristic_random_index(candidates.len()))
+            .map(|(rule, _)| *rule),
+        Heuristic::Random => None,
+        Heuristic::Compact => candidates
+            .iter()
+            .min_by_key(|(rule, score)| (*score, rule.name()))
+            .map(|(rule, _)| *rule),
     }
 }
 

@@ -11,6 +11,17 @@ use crate::ast::{
 use crate::representation::ReprInstantiateError;
 use anyhow::anyhow;
 use funcmap::{FuncMap, TryFuncMap};
+use uniplate::Uniplate;
+
+/// Returns the depth of a domain AST, counting the root as depth one.
+pub fn domain_ast_depth(domain: &DomainPtr) -> usize {
+    1 + domain
+        .children()
+        .iter()
+        .map(domain_ast_depth)
+        .max()
+        .unwrap_or(0)
+}
 
 /// Implement [ReprDeclLevel::lookup_via] as a functor `S<DeclarationPtr> -> S<Literal>`.
 pub fn lookup_via_default_impl<DeclL, A>(

@@ -14,6 +14,14 @@ cargo nextest run -p test-suite
 
 Each test runs `conjure-oxide` on an `input.essence` file and checks that the rewritten AST and solver solutions match the expected output files stored in the test directory.
 
+`config.toml` may select one or several answer heuristics with `heuristic = "f"` or
+`heuristic = ["f", "c", "r", "x"]`. The strategies mean first, compact (minimum answer AST
+depth), seeded random, and all respectively. Set `seed = 123` for random runs. The `x` strategy
+replays every representation and equally-applicable-rule choice from a fresh parsed model and keeps
+separate `model-000`, `model-001`, … golden artifacts for every parser/rewriter/expander/solver
+configuration. Channelling is configured with `channelling = "no"`; `yes` is reserved but currently
+unsupported.
+
 ### Creating a new test
 
 1. Create a new directory under `test-suite/tests/integration/<folder>`.

@@ -264,6 +264,9 @@ struct ReprDefArgs {
     /// Getting representation variables: `repr_vars: &State<DeclarationPtr> -> VecDeque<DeclarationPtr>`
     /// If not provided, we attempt to codegen one using uniplate
     repr_vars_fn: Option<ItemFn>,
+    /// Measuring the representation-domain AST depth. If omitted, this is generated using
+    /// uniplate; representations with non-uniplate containers can provide it explicitly.
+    compactness_fn: Option<ItemFn>,
 }
 
 impl Parse for ReprDefArgs {
@@ -275,7 +278,7 @@ impl Parse for ReprDefArgs {
 
         let mut funcs = HashMap::<String, ItemFn>::new();
         let mut errors: Vec<syn::Error> = Vec::new();
-        for _ in 0..5 {
+        for _ in 0..6 {
             match input.parse::<ItemFn>() {
                 Ok(func) => {
                     let ident = func.sig.ident.to_string();
@@ -305,6 +308,7 @@ impl Parse for ReprDefArgs {
             ))
         })?;
         let repr_vars_fn = funcs.remove("repr_vars");
+        let compactness_fn = funcs.remove("compactness");
 
         if repr_vars_fn.is_none() && matches!(state_ty, ReprStateType::Path(..)) {
             return Err(input.error("A repr_vars implementation is required for external types"));
@@ -318,6 +322,7 @@ impl Parse for ReprDefArgs {
             down_fn,
             up_fn,
             repr_vars_fn,
+            compactness_fn,
         })
     }
 }
@@ -383,6 +388,10 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         .repr_vars_fn
         .as_ref()
         .map(|f| Ident::new(&format!("{}repr_vars", prefix), f.sig.ident.span()));
+    let prefixed_compactness = args
+        .compactness_fn
+        .as_ref()
+        .map(|f| Ident::new(&format!("{}compactness", prefix), f.sig.ident.span()));
 
     let mut init_fn = rename_fn(args.init_fn, &prefixed_init);
     let mut structural_fn = rename_fn(args.structural_fn, &prefixed_structural);
@@ -391,6 +400,9 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
     let mut repr_vars_fn = args
         .repr_vars_fn
         .map(|f| rename_fn(f, prefixed_repr_vars.as_ref().unwrap()));
+    let mut compactness_fn = args
+        .compactness_fn
+        .map(|f| rename_fn(f, prefixed_compactness.as_ref().unwrap()));
 
     if matches!(&args.state_ty, ReprStateType::Struct(..)) {
         init_fn = rename_ident_in_fn(init_fn, &user_state_ident, &state_ident);
@@ -398,6 +410,8 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         down_fn = rename_ident_in_fn(down_fn, &user_state_ident, &state_ident);
         up_fn = rename_ident_in_fn(up_fn, &user_state_ident, &state_ident);
         repr_vars_fn = repr_vars_fn.map(|f| rename_ident_in_fn(f, &user_state_ident, &state_ident));
+        compactness_fn =
+            compactness_fn.map(|f| rename_ident_in_fn(f, &user_state_ident, &state_ident));
     }
 
     // Rename idents in the user-provided impl
@@ -416,6 +430,23 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         quote! {self.__collect_t_children()}
     };
     let repr_vars_fn_toks = repr_vars_fn.map(|f| {
+        quote! {
+            #[allow(non_snake_case)]
+            #f
+        }
+    });
+    let compactness_impl = if compactness_fn.is_some() {
+        quote! {#prefixed_compactness(self)}
+    } else {
+        quote! {
+            self.__collect_t_children()
+                .iter()
+                .map(default_impls::domain_ast_depth)
+                .max()
+                .unwrap_or(0)
+        }
+    };
+    let compactness_fn_toks = compactness_fn.map(|f| {
         quote! {
             #[allow(non_snake_case)]
             #f
@@ -452,6 +483,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         #[allow(non_snake_case)]
         #up_fn
         #repr_vars_fn_toks
+        #compactness_fn_toks
 
         static #init_cache_ident: std::sync::LazyLock<FrozenMap<DomainPtr, Box<#state_ident<DomainPtr>>>> = std::sync::LazyLock::new(|| FrozenMap::new());
 
@@ -472,6 +504,10 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
                 let res = #prefixed_init(dom.clone())?;
                 let _ = #init_cache_ident.insert(dom, Box::new(res.clone()));
                 Ok(res)
+            }
+
+            fn compactness_score(&self) -> usize {
+                #compactness_impl
             }
 
             fn down(

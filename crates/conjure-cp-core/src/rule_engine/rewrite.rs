@@ -11,9 +11,9 @@ use crate::{
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{
-            RuleResult, VariableDeclarationSnapshot, log_rule_application,
-            root_variable_snapshot_for_default_trace, snapshot_symbols_after_effect,
-            try_rewrite_value_letting_once,
+            RuleResult, VariableDeclarationSnapshot, choose_rule_result_index,
+            log_rule_application, root_variable_snapshot_for_default_trace,
+            snapshot_symbols_after_effect, try_rewrite_value_letting_once,
         },
     },
     settings::{
@@ -2352,16 +2352,21 @@ fn try_rewrite_model<'ctx, 'rules>(
             }
         }
 
+        if !results.is_empty() {
+            if ctx.prop_multiple_equally_applicable {
+                assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
+            }
+            let selected =
+                choose_rule_result_index(results.iter().map(|(result, _, _, _, _)| result));
+            results.swap(0, selected);
+        }
+
         match results.as_slice() {
             [] => {
                 submodel.replace_root(arena.into_root_expression());
                 break;
             }
             [(result, level, expr, node_id, variable_snapshot_before), ..] => {
-                if ctx.prop_multiple_equally_applicable {
-                    assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
-                }
-
                 let effect = result.effect.materialise(&submodel.symbols());
                 let variable_snapshots = variable_snapshot_before.clone().map(|before| {
                     let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect);
@@ -2814,6 +2819,9 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
         if ctx.prop_multiple_equally_applicable {
             assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
         }
+
+        let selected = choose_rule_result_index(results.iter().map(|(result, _, _, _, _)| result));
+        results.swap(0, selected);
 
         let [(result, level, expr, node_id, variable_snapshot_before), ..] = results.as_slice()
         else {

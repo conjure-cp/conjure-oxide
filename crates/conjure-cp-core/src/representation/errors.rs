@@ -22,6 +22,15 @@ pub enum ReprInstantiateError {
     /// An instance of this representation already exists for this variable
     #[error("representation `{}` is already initialised for `{}`", .1, .0.name())]
     AlreadyExists(DeclarationPtr, &'static str),
+    /// Channelling is disabled and another representation has already been selected.
+    #[error(
+        "cannot initialise representation `{requested}` for `{declaration}` because it already uses `{existing}` and channelling is disabled"
+    )]
+    ConflictingRepresentation {
+        declaration: DeclarationPtr,
+        existing: &'static str,
+        requested: &'static str,
+    },
     /// The given variable had no domain
     #[error("declaration `{}` (`{}`) had no domain", .0.name(), .0)]
     NoDomain(DeclarationPtr),

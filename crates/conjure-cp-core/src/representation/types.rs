@@ -22,6 +22,9 @@ pub trait ReprDomainLevel {
     where
         Self: Sized;
 
+    /// Maximum AST depth among the domains introduced by this representation.
+    fn compactness_score(&self) -> usize;
+
     /// Construct a concrete instance of this representation
     /// Returns:
     /// - The declaration-level representation
@@ -85,6 +88,10 @@ pub trait ReprRule: Send + Sync {
     type DeclLevel: ReprDeclLevel<Assignment = Self::Assignment>;
     type DomainLevel: ReprDomainLevel<DeclLevel = Self::DeclLevel>;
 
+    fn compactness_score(dom: DomainPtr) -> Result<usize, ReprInitError> {
+        Ok(Self::DomainLevel::init(dom)?.compactness_score())
+    }
+
     fn get_or_init_for(
         decl: &'_ mut DeclarationPtr,
     ) -> ReprGetOrInitResult<'_, Self::DeclLevel, ReprError> {
@@ -104,6 +111,20 @@ pub trait ReprRule: Send + Sync {
     }
 
     fn init_for(decl: &mut DeclarationPtr) -> ReprResult {
+        if crate::settings::channelling() == crate::settings::Channelling::No {
+            let existing_rule = decl.reprs().iter().next().map(|(_, state)| state.rule());
+            if let Some(existing_rule) = existing_rule
+                && existing_rule.name() != Self::NAME
+            {
+                return Err(ReprInstantiateError::ConflictingRepresentation {
+                    declaration: decl.clone(),
+                    existing: existing_rule.name(),
+                    requested: Self::NAME,
+                }
+                .into());
+            }
+        }
+
         let dom = decl
             .domain()
             .ok_or(ReprInstantiateError::NoDomain(decl.clone()))?;

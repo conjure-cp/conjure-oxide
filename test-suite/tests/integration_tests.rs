@@ -32,10 +32,12 @@ use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditio
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
-    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
-    set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_default_rule_trace_enabled, set_minion_discrete_threshold,
-    set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
+    Channelling, Heuristic, HeuristicChoice, Parser, QuantifiedExpander, Rewriter, SolverFamily,
+    begin_heuristic_all_choices, heuristic_all_choices, set_channelling,
+    set_comprehension_expander, set_current_parser, set_current_rewriter,
+    set_current_solver_family, set_default_rule_trace_enabled, set_heuristic, set_heuristic_seed,
+    set_minion_discrete_threshold, set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
+    set_rule_trace_verbose_enabled,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{
@@ -68,6 +70,10 @@ struct RunCase<'a> {
     rewriter: Rewriter,
     comprehension_expander: QuantifiedExpander,
     solver: SolverFamily,
+    heuristic: Heuristic,
+    channelling: Channelling,
+    seed: u64,
+    choice_path: &'a [usize],
     case_name: &'a str,
 }
 
@@ -276,10 +282,13 @@ fn run_case_label(
     run_case: RunCase<'_>,
 ) -> String {
     format!(
-        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
+        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, heuristic={}, seed={}, channelling={}, solver={}",
         run_case.parser,
         run_case.rewriter,
         run_case.comprehension_expander,
+        run_case.heuristic,
+        run_case.seed,
+        run_case.channelling,
         run_case.solver.as_str()
     )
 }
@@ -349,6 +358,18 @@ fn integration_test_inner_with_status(
     let solvers = config
         .configured_solvers()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let heuristics = config
+        .configured_heuristics()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let channelling_settings = config
+        .configured_channelling()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let seed = config.seed;
+    let distinguish_rewriter = rewriters.len() > 1;
+    let distinguish_heuristic =
+        heuristics.len() > 1 || heuristics.first() != Some(&Heuristic::First);
+    let distinguish_channelling =
+        channelling_settings.len() > 1 || channelling_settings.first() != Some(&Channelling::No);
 
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
@@ -409,78 +430,71 @@ fn integration_test_inner_with_status(
         for parser in parsers.iter().copied() {
             for rewriter in rewriters.clone() {
                 for comprehension_expander in comprehension_expanders.clone() {
-                    for solver in solvers.clone() {
-                        let case_name = run_case_name(parser, comprehension_expander);
-                        let run_case = RunCase {
-                            parser,
-                            rewriter,
-                            comprehension_expander,
-                            solver,
-                            case_name: case_name.as_str(),
-                        };
-                        let run_label = run_case_label(path, essence_base, extension, run_case);
-                        let default_rule_trace_enabled = matches!(rewriter, Rewriter::Rewrite(_));
-                        set_rule_trace_enabled(rule_trace_snapshots_enabled);
-                        set_default_rule_trace_enabled(
-                            rule_trace_snapshots_enabled && default_rule_trace_enabled,
-                        );
-                        set_rule_trace_verbose_enabled(false);
-                        set_rule_trace_aggregates_enabled(false);
-                        let run_test = || {
-                            integration_test_inner(
-                                path,
-                                essence_base,
-                                extension,
-                                run_case,
-                                minion_discrete_threshold,
-                                number_of_solutions,
-                                keep_intermediate_solutions,
-                                conjure_solution_values.clone(),
-                                accept,
-                                rule_trace_snapshots_enabled,
-                            )
-                        };
-                        let run_timings = if rule_trace_snapshots_enabled {
-                            let file = File::create(format!(
-                                "{path}/{}-{}-generated-rule-trace.txt",
-                                run_case.case_name,
-                                run_case.solver.as_str()
-                            ))?;
-                            let subscriber = Arc::new(
-                                tracing_subscriber::registry().with(
-                                    fmt::layer()
-                                        .with_writer(file)
-                                        .with_level(false)
-                                        .without_time()
-                                        .with_target(false)
-                                        .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
-                                        .with_filter(FilterFn::new(|meta| {
-                                            meta.target() == "rule_engine_rule_trace"
-                                        })),
-                                ),
-                            )
-                                as Arc<dyn tracing::Subscriber + Send + Sync>;
-                            tracing::subscriber::with_default(subscriber, run_test)
-                        } else {
-                            run_test()
+                    for heuristic in heuristics.iter().copied() {
+                        for channelling in channelling_settings.iter().copied() {
+                            for solver in solvers.clone() {
+                                let base_case_name = run_case_name(
+                                    parser,
+                                    rewriter,
+                                    comprehension_expander,
+                                    heuristic,
+                                    channelling,
+                                    seed,
+                                    distinguish_rewriter,
+                                    distinguish_heuristic,
+                                    distinguish_channelling,
+                                );
+                                let mut choice_path = Vec::new();
+                                let mut model_index = 0usize;
+                                loop {
+                                    let case_name = if heuristic == Heuristic::All {
+                                        format!("{base_case_name}-model-{model_index:03}")
+                                    } else {
+                                        base_case_name.clone()
+                                    };
+                                    let run_case = RunCase {
+                                        parser,
+                                        rewriter,
+                                        comprehension_expander,
+                                        solver,
+                                        heuristic,
+                                        channelling,
+                                        seed,
+                                        choice_path: &choice_path,
+                                        case_name: case_name.as_str(),
+                                    };
+                                    let run_timings = execute_integration_run(
+                                        path,
+                                        essence_base,
+                                        extension,
+                                        run_case,
+                                        minion_discrete_threshold,
+                                        number_of_solutions,
+                                        keep_intermediate_solutions,
+                                        conjure_solution_values.clone(),
+                                        accept,
+                                        rule_trace_snapshots_enabled,
+                                    )?;
+                                    oxide_timings.add(run_timings);
+                                    allowed_expected_files.extend(
+                                        expected_integration_files_for_case(
+                                            run_case.case_name,
+                                            solver,
+                                        ),
+                                    );
+
+                                    if heuristic != Heuristic::All {
+                                        break;
+                                    }
+                                    let decisions = heuristic_all_choices();
+                                    let Some(next_path) = next_all_choice_path(&decisions) else {
+                                        break;
+                                    };
+                                    choice_path = next_path;
+                                    model_index += 1;
+                                }
+                            }
                         }
-                        .map_err(|err| {
-                            let message = format!("{run_label}: {err}");
-                            copy_oxide_run_artifacts(path, run_case, &message);
-                            let _ = try_capture_oxide_minion(
-                                path,
-                                essence_base,
-                                extension,
-                                run_case,
-                                minion_discrete_threshold,
-                            );
-                            std::io::Error::other(message)
-                        })?;
-                        oxide_timings.add(run_timings);
-                        allowed_expected_files.extend(expected_integration_files_for_case(
-                            run_case.case_name,
-                            solver,
-                        ));
                     }
                 }
             }
@@ -592,6 +606,77 @@ fn integration_test_inner_with_status(
 ///
 /// Returns an error if any stage fails due to a mismatch with expected results or file I/O issues.
 #[allow(clippy::unwrap_used)]
+#[allow(clippy::too_many_arguments)]
+fn execute_integration_run(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+    run_case: RunCase<'_>,
+    minion_discrete_threshold: usize,
+    number_of_solutions: NumberOfSolutions,
+    keep_intermediate_solutions: bool,
+    conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
+    accept: bool,
+    rule_trace_snapshots_enabled: bool,
+) -> Result<RunTimings, Box<dyn Error>> {
+    let run_label = run_case_label(path, essence_base, extension, run_case);
+    let default_rule_trace_enabled = matches!(run_case.rewriter, Rewriter::Rewrite(_));
+    set_rule_trace_enabled(rule_trace_snapshots_enabled);
+    set_default_rule_trace_enabled(rule_trace_snapshots_enabled && default_rule_trace_enabled);
+    set_rule_trace_verbose_enabled(false);
+    set_rule_trace_aggregates_enabled(false);
+    let run_test = || {
+        integration_test_inner(
+            path,
+            essence_base,
+            extension,
+            run_case,
+            minion_discrete_threshold,
+            number_of_solutions,
+            keep_intermediate_solutions,
+            conjure_solutions,
+            accept,
+            rule_trace_snapshots_enabled,
+        )
+    };
+    let result = if rule_trace_snapshots_enabled {
+        let file = File::create(format!(
+            "{path}/{}-{}-generated-rule-trace.txt",
+            run_case.case_name,
+            run_case.solver.as_str()
+        ))?;
+        let subscriber = Arc::new(
+            tracing_subscriber::registry().with(
+                fmt::layer()
+                    .with_writer(file)
+                    .with_level(false)
+                    .without_time()
+                    .with_target(false)
+                    .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
+                    .with_filter(FilterFn::new(|meta| {
+                        meta.target() == "rule_engine_rule_trace"
+                    })),
+            ),
+        ) as Arc<dyn tracing::Subscriber + Send + Sync>;
+        tracing::subscriber::with_default(subscriber, run_test)
+    } else {
+        run_test()
+    };
+
+    result.map_err(|err| {
+        let message = format!("{run_label}: {err}");
+        copy_oxide_run_artifacts(path, run_case, &message);
+        let _ = try_capture_oxide_minion(
+            path,
+            essence_base,
+            extension,
+            run_case,
+            minion_discrete_threshold,
+        );
+        std::io::Error::other(message).into()
+    })
+}
+
 fn integration_test_inner(
     path: &str,
     essence_base: &str,
@@ -617,6 +702,12 @@ fn integration_test_inner(
     set_comprehension_expander(comprehension_expander);
     set_current_solver_family(solver_fam);
     set_minion_discrete_threshold(minion_discrete_threshold);
+    set_heuristic(run_case.heuristic);
+    set_heuristic_seed(run_case.seed);
+    set_channelling(run_case.channelling);
+    if run_case.heuristic == Heuristic::All {
+        begin_heuristic_all_choices(run_case.choice_path.to_vec());
+    }
 
     let translation_started_at = Instant::now();
 
@@ -645,6 +736,11 @@ fn integration_test_inner(
 
     let Rewriter::Rewrite(config) = rewriter;
     let rewritten_model = rewrite_model(&model, &rule_sets, false, config)?;
+    // `x` enumerates translation-time modelling decisions. Solver-time CDP rewrites must not add
+    // branches to that model portfolio.
+    if run_case.heuristic == Heuristic::All {
+        set_heuristic(Heuristic::First);
+    }
     let translation_time_s = translation_started_at.elapsed().as_secs_f64();
 
     let solver_started_at = Instant::now();
@@ -732,8 +828,50 @@ fn integration_test_inner(
     })
 }
 
-fn run_case_name(parser: Parser, comprehension_expander: QuantifiedExpander) -> String {
-    format!("{parser}-{comprehension_expander}")
+fn run_case_name(
+    parser: Parser,
+    rewriter: Rewriter,
+    comprehension_expander: QuantifiedExpander,
+    heuristic: Heuristic,
+    channelling: Channelling,
+    seed: u64,
+    distinguish_rewriter: bool,
+    distinguish_heuristic: bool,
+    distinguish_channelling: bool,
+) -> String {
+    let mut name = format!("{parser}-{comprehension_expander}");
+    if distinguish_rewriter {
+        name.push_str(&format!("-{rewriter}"));
+    }
+    if distinguish_heuristic {
+        name.push_str(&format!("-heuristic-{heuristic}"));
+    }
+    if heuristic == Heuristic::Random {
+        name.push_str(&format!("-seed-{seed}"));
+    }
+    if distinguish_channelling {
+        name.push_str(&format!("-channelling-{channelling}"));
+    }
+    name
+}
+
+/// Advances a depth-first mixed-radix branch path using the choices observed during the latest
+/// replay. Earlier branches are replayed from a freshly parsed model, so no mutable AST state is
+/// shared between generated models.
+fn next_all_choice_path(decisions: &[HeuristicChoice]) -> Option<Vec<usize>> {
+    for decision_index in (0..decisions.len()).rev() {
+        let decision = &decisions[decision_index];
+        if decision.selected + 1 >= decision.options.len() {
+            continue;
+        }
+        let mut next: Vec<_> = decisions[..decision_index]
+            .iter()
+            .map(|decision| decision.selected)
+            .collect();
+        next.push(decision.selected + 1);
+        return Some(next);
+    }
+    None
 }
 
 /// Returns the expected snapshot files for an executed integration run case.
@@ -1016,6 +1154,12 @@ fn try_capture_oxide_minion(
     set_comprehension_expander(run_case.comprehension_expander);
     set_current_solver_family(run_case.solver);
     set_minion_discrete_threshold(minion_discrete_threshold);
+    set_heuristic(run_case.heuristic);
+    set_heuristic_seed(run_case.seed);
+    set_channelling(run_case.channelling);
+    if run_case.heuristic == Heuristic::All {
+        begin_heuristic_all_choices(run_case.choice_path.to_vec());
+    }
 
     let parsed_model = parse_unified_problem_model(
         path,

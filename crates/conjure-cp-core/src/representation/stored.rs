@@ -71,6 +71,10 @@ pub trait ReprRuleStored: Send + Sync {
 
     fn init_for_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult;
 
+    /// Checks applicability without mutating the source declaration and returns its compactness
+    /// score.
+    fn probe_for(&self, decl: &DeclarationPtr) -> Result<usize, ReprError>;
+
     fn get_or_init_for<'a>(
         &self,
         decl: &'a mut DeclarationPtr,
@@ -98,6 +102,16 @@ impl<R: ReprRule> ReprRuleStored for R {
 
     fn init_for_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult {
         R::init_for_if_not_exists(decl)
+    }
+
+    fn probe_for(&self, decl: &DeclarationPtr) -> Result<usize, ReprError> {
+        let domain = decl
+            .domain()
+            .ok_or_else(|| super::errors::ReprInstantiateError::NoDomain(decl.clone()))?;
+        let domain = domain.resolve().map(Into::into).unwrap_or(domain);
+        let mut detached = decl.clone().detach();
+        R::init_for(&mut detached)?;
+        R::compactness_score(domain).map_err(Into::into)
     }
 
     fn get_or_init_for<'a>(

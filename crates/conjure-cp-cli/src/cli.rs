@@ -4,8 +4,8 @@ use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
-    SolverFamily,
+    Channelling, DEFAULT_HEURISTIC_SEED, DEFAULT_MINION_DISCRETE_THRESHOLD, Heuristic,
+    Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp::solver::adaptors::MinionValueOrder;
 
@@ -155,6 +155,43 @@ pub struct GlobalArgs {
     )]
     pub comprehension_expander: QuantifiedExpander,
 
+    /// Heuristic for selecting an answer when multiple modelling choices are applicable.
+    ///
+    /// Possible values: `f` (first), `r` (random), `c` (minimum answer AST depth). This applies
+    /// both to representation choices and equally-applicable rewrite rules. `x` (all) is reserved
+    /// for model generation and is not supported by the CLI yet.
+    #[arg(
+        long,
+        short = 'a',
+        default_value_t = Heuristic::First,
+        value_parser = parse_cli_heuristic,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub heuristic: Heuristic,
+
+    /// Seed used by the random heuristic.
+    #[arg(
+        long,
+        default_value_t = DEFAULT_HEURISTIC_SEED,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub seed: u64,
+
+    /// Whether multiple representations of the same declaration may be channelled together.
+    ///
+    /// Possible values: `no`, `yes`. Channelling is disabled by default; `yes` is reserved but
+    /// not supported yet.
+    #[arg(
+        long,
+        default_value_t = Channelling::No,
+        value_parser = parse_cli_channelling,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub channelling: Channelling,
+
     /// Solver family to use.
     ///
     /// Possible values: `minion`, `sat`, `sat-log`, `sat-direct`, `sat-order`,
@@ -242,6 +279,22 @@ pub enum ShellTypes {
 
 fn parse_comprehension_expander(input: &str) -> Result<QuantifiedExpander, String> {
     input.parse()
+}
+
+fn parse_cli_heuristic(input: &str) -> Result<Heuristic, String> {
+    match input.parse::<Heuristic>()? {
+        Heuristic::All => {
+            Err("heuristic 'x' (all) is not supported by the command line yet".to_string())
+        }
+        heuristic => Ok(heuristic),
+    }
+}
+
+fn parse_cli_channelling(input: &str) -> Result<Channelling, String> {
+    match input.parse::<Channelling>()? {
+        Channelling::Yes => Err("channelling=yes is not supported yet".to_string()),
+        channelling => Ok(channelling),
+    }
 }
 
 fn parse_rewriter(input: &str) -> Result<Rewriter, String> {

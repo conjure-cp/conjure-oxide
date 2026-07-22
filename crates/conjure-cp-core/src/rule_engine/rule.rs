@@ -209,6 +209,10 @@ impl RuleEffect {
         materialise(symbols).materialise(symbols)
     }
 
+    pub(crate) fn is_deferred(&self) -> bool {
+        self.materialise.is_some()
+    }
+
     /// Adds declaration replacements that are committed only if this effect is selected.
     pub fn with_declaration_updates(
         mut self,

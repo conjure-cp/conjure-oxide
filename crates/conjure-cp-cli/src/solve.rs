@@ -18,8 +18,9 @@ use conjure_cp::{
     defaults::DEFAULT_RULE_SETS,
     rule_engine::{resolve_rule_sets, rewrite_model},
     settings::{
-        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
+        Rewriter, set_channelling, set_comprehension_expander, set_current_parser,
+        set_current_rewriter, set_current_solver_family, set_default_rule_trace_enabled,
+        set_heuristic, set_heuristic_seed, set_minion_discrete_threshold,
         set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
     },
     solver::Solver,
@@ -310,6 +311,16 @@ pub(crate) fn rewrite(
     let comprehension_expander = global_args.comprehension_expander;
     set_comprehension_expander(comprehension_expander);
     tracing::info!("Comprehension expander: {}", comprehension_expander);
+
+    set_heuristic(global_args.heuristic);
+    set_heuristic_seed(global_args.seed);
+    set_channelling(global_args.channelling);
+    tracing::info!(
+        "Heuristic: {}, seed: {}, channelling: {}",
+        global_args.heuristic,
+        global_args.seed,
+        global_args.channelling
+    );
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 

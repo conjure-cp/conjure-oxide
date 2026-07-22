@@ -1,4 +1,8 @@
-use std::{cell::Cell, fmt::Display, str::FromStr};
+use std::{
+    cell::{Cell, RefCell},
+    fmt::Display,
+    str::FromStr,
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -7,6 +11,182 @@ use strum_macros::{Display as StrumDisplay, EnumIter};
 use crate::bug;
 
 use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
+
+/// Strategy used when a modelling decision has more than one applicable answer.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Heuristic {
+    #[default]
+    First,
+    Random,
+    Compact,
+    /// Enumerate every applicable choice. This is supported by the integration model generator,
+    /// but is not accepted by the command-line interface yet.
+    All,
+}
+
+impl Display for Heuristic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::First => "f",
+            Self::Random => "r",
+            Self::Compact => "c",
+            Self::All => "x",
+        })
+    }
+}
+
+impl FromStr for Heuristic {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "f" | "first" => Ok(Self::First),
+            "r" | "random" => Ok(Self::Random),
+            "c" | "compact" => Ok(Self::Compact),
+            "x" | "all" => Ok(Self::All),
+            other => Err(format!(
+                "unknown heuristic '{other}'; expected one of: f, r, c, x"
+            )),
+        }
+    }
+}
+
+/// Whether a declaration may have more than one channelled representation.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Channelling {
+    #[default]
+    No,
+    Yes,
+}
+
+impl Display for Channelling {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::No => "no",
+            Self::Yes => "yes",
+        })
+    }
+}
+
+impl FromStr for Channelling {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "no" => Ok(Self::No),
+            "yes" => Ok(Self::Yes),
+            other => Err(format!(
+                "unknown channelling setting '{other}'; expected yes or no"
+            )),
+        }
+    }
+}
+
+pub const DEFAULT_HEURISTIC_SEED: u64 = 0;
+
+thread_local! {
+    static HEURISTIC: Cell<Heuristic> = const { Cell::new(Heuristic::First) };
+    static CHANNELLING: Cell<Channelling> = const { Cell::new(Channelling::No) };
+    static HEURISTIC_RANDOM_STATE: Cell<u64> = const { Cell::new(DEFAULT_HEURISTIC_SEED) };
+    static HEURISTIC_ALL_CHOICES: RefCell<AllChoicesState> =
+        const { RefCell::new(AllChoicesState::new()) };
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HeuristicChoice {
+    pub selected: usize,
+    pub options: Vec<String>,
+}
+
+#[derive(Debug)]
+struct AllChoicesState {
+    requested: Vec<usize>,
+    decisions: Vec<HeuristicChoice>,
+}
+
+impl AllChoicesState {
+    const fn new() -> Self {
+        Self {
+            requested: Vec::new(),
+            decisions: Vec::new(),
+        }
+    }
+}
+
+pub fn set_heuristic(heuristic: Heuristic) {
+    HEURISTIC.with(|current| current.set(heuristic));
+}
+
+pub fn heuristic() -> Heuristic {
+    HEURISTIC.with(Cell::get)
+}
+
+pub fn set_channelling(channelling: Channelling) {
+    CHANNELLING.with(|current| current.set(channelling));
+}
+
+pub fn channelling() -> Channelling {
+    CHANNELLING.with(Cell::get)
+}
+
+pub fn set_heuristic_seed(seed: u64) {
+    HEURISTIC_RANDOM_STATE.with(|state| state.set(seed));
+}
+
+/// Returns a deterministic pseudo-random index and advances the per-thread heuristic RNG.
+pub fn next_heuristic_random_index(upper_bound: usize) -> usize {
+    assert!(
+        upper_bound > 0,
+        "random choice requires at least one candidate"
+    );
+    HEURISTIC_RANDOM_STATE.with(|state| {
+        // SplitMix64: small, reproducible, and sufficient for choice ordering.
+        let next = state.get().wrapping_add(0x9e37_79b9_7f4a_7c15);
+        state.set(next);
+        let mut mixed = next;
+        mixed = (mixed ^ (mixed >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        mixed = (mixed ^ (mixed >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        mixed ^= mixed >> 31;
+        (mixed as usize) % upper_bound
+    })
+}
+
+/// Starts one replay of the `x` heuristic using the requested branch indices.
+pub fn begin_heuristic_all_choices(requested: Vec<usize>) {
+    HEURISTIC_ALL_CHOICES.with(|state| {
+        *state.borrow_mut() = AllChoicesState {
+            requested,
+            decisions: Vec::new(),
+        };
+    });
+}
+
+/// Selects the requested branch at the next `x` decision and records all available options.
+pub fn next_heuristic_all_index(options: &[&str]) -> usize {
+    assert!(
+        !options.is_empty(),
+        "all-choice requires at least one candidate"
+    );
+    HEURISTIC_ALL_CHOICES.with(|state| {
+        let mut state = state.borrow_mut();
+        let decision_index = state.decisions.len();
+        let selected = state.requested.get(decision_index).copied().unwrap_or(0);
+        assert!(
+            selected < options.len(),
+            "requested heuristic branch {selected} but only {} options exist",
+            options.len()
+        );
+        state.decisions.push(HeuristicChoice {
+            selected,
+            options: options.iter().map(|option| (*option).to_string()).collect(),
+        });
+        selected
+    })
+}
+
+pub fn heuristic_all_choices() -> Vec<HeuristicChoice> {
+    HEURISTIC_ALL_CHOICES.with(|state| state.borrow().decisions.clone())
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum Parser {
@@ -617,8 +797,41 @@ pub struct SolverArgs {
 
 #[cfg(test)]
 mod tests {
-    use super::{RewriteConfig, Rewriter};
+    use super::{
+        Channelling, Heuristic, RewriteConfig, Rewriter, begin_heuristic_all_choices,
+        heuristic_all_choices, next_heuristic_all_index, next_heuristic_random_index,
+        set_heuristic_seed,
+    };
     use std::str::FromStr;
+
+    #[test]
+    fn parses_answer_heuristics_and_channelling() {
+        assert_eq!(Heuristic::from_str("f"), Ok(Heuristic::First));
+        assert_eq!(Heuristic::from_str("random"), Ok(Heuristic::Random));
+        assert_eq!(Heuristic::from_str("c"), Ok(Heuristic::Compact));
+        assert_eq!(Heuristic::from_str("x"), Ok(Heuristic::All));
+        assert_eq!(Channelling::from_str("no"), Ok(Channelling::No));
+        assert_eq!(Channelling::from_str("yes"), Ok(Channelling::Yes));
+    }
+
+    #[test]
+    fn random_heuristic_is_reproducible_from_seed() {
+        set_heuristic_seed(42);
+        let first: Vec<_> = (0..8).map(|_| next_heuristic_random_index(7)).collect();
+        set_heuristic_seed(42);
+        let second: Vec<_> = (0..8).map(|_| next_heuristic_random_index(7)).collect();
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn all_heuristic_replays_and_records_choices() {
+        begin_heuristic_all_choices(vec![1]);
+        assert_eq!(next_heuristic_all_index(&["left", "right"]), 1);
+        assert_eq!(
+            heuristic_all_choices()[0].options,
+            vec!["left".to_string(), "right".to_string()]
+        );
+    }
 
     #[test]
     fn parses_rewrite_option_combinations() {
