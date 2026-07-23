@@ -9,11 +9,15 @@ use conjure_cp::{
     },
 };
 
+use super::is_set_valued_index;
+
 // A subsetEq B ~~> and([ i in B | i <- A ])
 #[register_rule("Base", 8700, [SubsetEq])]
 fn subseteq_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::SubsetEq(_, a, b) => {
+        Expr::SubsetEq(_, a, b)
+            if !is_set_valued_index(a.as_ref()) && !is_set_valued_index(b.as_ref()) =>
+        {
             let scope_ptr = SymbolTablePtr::new();
             *scope_ptr.write() = scope.clone();
             let mut comp_builder = ComprehensionBuilder::new(scope_ptr);
