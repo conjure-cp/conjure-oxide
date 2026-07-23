@@ -44,6 +44,10 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | Expr::Atomic(_, _)
              // not sure if this needs to be excluded, being cautious.
             | Expr::DominanceRelation(_, _)
+            // flatten_lex_lt_leq already accepts int(1..n) matrix literals, so converting
+            // first is redundant and creates fake optionality.
+            | Expr::LexLt(_, _, _)
+            | Expr::LexLeq(_, _, _)
     ) {
         return Err(RuleNotApplicable);
     }
