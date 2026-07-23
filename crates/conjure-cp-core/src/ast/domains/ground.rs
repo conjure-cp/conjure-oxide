@@ -360,6 +360,12 @@ impl GroundDomain {
                     Range::UnboundedL(n) => (0, n as u64),
                     Range::Bounded(min, max) => (min as u64, max as u64),
                 };
+                // Attributes may overshoot the inner domain (e.g. maxSize 3 of int(1..2));
+                // only cardinalities that fit can contribute members.
+                let max_sz = max_sz.min(inner_len);
+                if min_sz > max_sz {
+                    return Ok(0);
+                }
                 let mut ans = 0u64;
                 for sz in min_sz..=max_sz {
                     let c = count_combinations(inner_len, sz)?;
@@ -1586,6 +1592,13 @@ mod tests {
         assert_eq!(values[3], set_lit(vec![1, 2]));
         assert_eq!(values[4], set_lit(vec![1, 3]));
         assert_eq!(values[5], set_lit(vec![2, 3]));
+    }
+
+    #[test]
+    fn set_length_clamps_max_size_to_inner_domain() {
+        // maxSize 3 of int(1..2) is effectively maxSize 2: 2^2 = 4 subsets.
+        let dom = GroundDomain::Set(SetAttr::new_max_size(3), domain_int_ground!(1..2));
+        assert_eq!(dom.length().unwrap(), 4);
     }
 
     #[test]
