@@ -41,10 +41,16 @@ use conjure_cp::settings::{
 };
 use conjure_cp_cli::utils::conjure::{
     ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
-    solutions_to_essence,
+};
+use conjure_cp_cli::utils::json::sort_json_object;
+use conjure_cp_cli::utils::simplified_json::{
+    domains_from_model, solutions_to_simplified_json,
 };
 use conjure_cp_cli::utils::testing::save_stats_json;
-use conjure_cp_cli::utils::testing::{read_solutions_essence, save_solutions_essence};
+use conjure_cp_cli::utils::testing::{
+    read_solutions_essence, read_solutions_json, save_solutions_essence, save_solutions_json,
+    solutions_json_expected_exists,
+};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
@@ -733,6 +739,7 @@ fn integration_test_inner(
     let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
     let model = parsed_model;
+    let solution_domains = domains_from_model(&model);
 
     let Rewriter::Rewrite(config) = rewriter;
     let rewritten_model = rewrite_model(&model, &rule_sets, false, config)?;
@@ -760,6 +767,8 @@ fn integration_test_inner(
             &solver_input_file,
             false,
         )?;
+        // Prefer Conjure-compatible simplified JSON; keep Essence for legacy goldens / humans.
+        save_solutions_json(&solved, path, case_name, solver_fam)?;
         save_solutions_essence(&solved, path, case_name, solver_fam)?;
         Some(solved)
     } else {
@@ -779,11 +788,21 @@ fn integration_test_inner(
         let oxide_solutions = normalize_solutions_for_comparison(solutions);
         let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
 
-        let oxide_solutions = solutions_to_essence(&oxide_solutions);
-        let conjure_solutions = solutions_to_essence(&conjure_solutions);
+        // Compare via simplified JSON so matrix index-domain representation differences do not
+        // affect equality (Conjure and oxide may rebuild domains differently).
+        let oxide_json = sort_json_object(
+            &solutions_to_simplified_json(&oxide_solutions)
+                .expect("oxide solutions should encode as simplified JSON"),
+            true,
+        );
+        let conjure_json = sort_json_object(
+            &solutions_to_simplified_json(&conjure_solutions)
+                .expect("conjure solutions should encode as simplified JSON"),
+            true,
+        );
 
         assert_eq!(
-            oxide_solutions, conjure_solutions,
+            oxide_json, conjure_json,
             "Oxide solutions (<) do not match Conjure solutions (>)!"
         );
     }
@@ -794,6 +813,11 @@ fn integration_test_inner(
         // based on the test results, so they don't get done later.
         if solutions.is_some() {
             let solver_name = solver_fam.as_str();
+            fs::copy(
+                format!("{path}/{case_name}-{solver_name}.generated.solutions.json"),
+                format!("{path}/{case_name}-{solver_name}.expected.solutions.json"),
+            )?;
+            // Keep Essence goldens in sync while migrating.
             fs::copy(
                 format!("{path}/{case_name}-{solver_name}.generated.solutions"),
                 format!("{path}/{case_name}-{solver_name}.expected.solutions"),
@@ -806,9 +830,26 @@ fn integration_test_inner(
 
     // Check Stage 3a (solutions)
     if let Some(solutions) = solutions.as_ref() {
-        let expected_solutions = read_solutions_essence(path, case_name, "expected", solver_fam)?;
-        let generated_solutions = solutions_to_essence(solutions);
-        assert_eq!(generated_solutions, expected_solutions);
+        let oxide_solutions = normalize_solutions_for_comparison(solutions);
+        if solutions_json_expected_exists(path, case_name, solver_fam) {
+            let expected_solutions =
+                read_solutions_json(path, case_name, "expected", solver_fam, &solution_domains)?;
+            let expected_solutions = normalize_solutions_for_comparison(&expected_solutions);
+            let oxide_json =
+                sort_json_object(&solutions_to_simplified_json(&oxide_solutions)?, true);
+            let expected_json =
+                sort_json_object(&solutions_to_simplified_json(&expected_solutions)?, true);
+            assert_eq!(
+                oxide_json, expected_json,
+                "Generated solutions do not match the expected solutions!"
+            );
+        } else {
+            let expected_solutions =
+                read_solutions_essence(path, case_name, "expected", solver_fam)?;
+            let generated_solutions =
+                conjure_cp_cli::utils::conjure::solutions_to_essence(&oxide_solutions);
+            assert_eq!(generated_solutions, expected_solutions);
+        }
     }
 
     if rule_trace_snapshots_enabled {
@@ -880,6 +921,7 @@ fn expected_integration_files_for_case(case_name: &str, solver: SolverFamily) ->
     let solver_name = solver.as_str();
     BTreeSet::from([
         format!("{case_name}-{solver_name}.expected.solutions"),
+        format!("{case_name}-{solver_name}.expected.solutions.json"),
         format!("{case_name}-{solver_name}-expected-rule-trace.txt"),
     ])
 }
@@ -1119,6 +1161,10 @@ fn copy_oxide_run_artifacts(path: &str, run_case: RunCase<'_>, message: &str) {
     let _ = copy_file_if_exists(
         &test_dir.join(format!("{case_name}-{solver}.generated.solutions")),
         &oxide_dir.join(format!("{case_name}-{solver}.generated.solutions")),
+    );
+    let _ = copy_file_if_exists(
+        &test_dir.join(format!("{case_name}-{solver}.generated.solutions.json")),
+        &oxide_dir.join(format!("{case_name}-{solver}.generated.solutions.json")),
     );
 }
 
