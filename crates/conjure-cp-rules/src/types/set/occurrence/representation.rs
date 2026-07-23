@@ -43,6 +43,63 @@ register_representation!(
                 .collect();
             Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(choices)))
         }
+
+        /// Lower `self ⊆ superset` to implications over occurrence bits.
+        ///
+        /// For each domain element `e`: `occurs[e] → e ∈ superset`. This is the vertical
+        /// form of Conjure's horizontal `forAll i in A . i in B` once A is occurrence.
+        pub fn subset_expr(&self, superset: Expression) -> Expression {
+            let constraints = self
+                .occurs
+                .iter()
+                .map(|(value, declaration)| {
+                    let occurs: Expression = Reference::new(declaration.clone()).into();
+                    let membership = Expression::In(
+                        Metadata::new(),
+                        Moo::new(value.clone().into()),
+                        Moo::new(superset.clone()),
+                    );
+                    Expression::Or(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![
+                            Expression::Not(Metadata::new(), Moo::new(occurs)),
+                            membership,
+                        ]),
+                    )
+                })
+                .collect::<Vec<_>>();
+            Expression::And(Metadata::new(), Moo::new(into_matrix_expr![constraints]))
+        }
+
+        /// Lower equality with a set literal to per-element occurrence equalities.
+        pub fn equality_to_literal_expr(&self, elems: &[Literal]) -> Expression {
+            let constraints = self
+                .occurs
+                .iter()
+                .map(|(value, declaration)| {
+                    let should_occur = elems.iter().any(|elem| elem == value);
+                    Expression::Eq(
+                        Metadata::new(),
+                        Moo::new(Reference::new(declaration.clone()).into()),
+                        Moo::new(should_occur.into()),
+                    )
+                })
+                .collect::<Vec<_>>();
+            Expression::And(Metadata::new(), Moo::new(into_matrix_expr![constraints]))
+        }
+
+        /// Symmetry-ordering vector used by Conjure for occurrence sets: `[-toInt(bit)]`.
+        pub fn symmetry_ordering_expr(&self) -> Expression {
+            let entries = self
+                .occurs
+                .iter()
+                .map(|(_, declaration)| {
+                    let bit: Expression = Reference::new(declaration.clone()).into();
+                    essence_expr!(-(toInt(&bit)))
+                })
+                .collect::<Vec<_>>();
+            into_matrix_expr!(entries)
+        }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
@@ -143,5 +200,7 @@ fn cardinality_bounds(size: &Range<i32>, inner_len: u64) -> Option<(i32, i32)> {
         Range::UnboundedL(max) => (0, *max),
         Range::Bounded(min, max) => (*min, *max),
     };
-    (0 <= min && min <= max && max <= inner_len).then_some((min, max))
+    // Clamp oversized attributes (e.g. maxSize 3 of int(1..2)) to the inner domain.
+    let max = max.min(inner_len);
+    (0 <= min && min <= max).then_some((min, max))
 }
