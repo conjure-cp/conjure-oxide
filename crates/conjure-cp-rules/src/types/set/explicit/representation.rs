@@ -232,5 +232,7 @@ fn cardinality_bounds(size: &Range<i32>, inner_len: u64) -> Option<(i32, i32)> {
         Range::UnboundedL(max) => (0, *max),
         Range::Bounded(min, max) => (*min, *max),
     };
-    (0 <= min && min <= max && max <= inner_len).then_some((min, max))
+    // Clamp oversized attributes (e.g. maxSize 3 of int(1..2)) to the inner domain.
+    let max = max.min(inner_len);
+    (0 <= min && min <= max).then_some((min, max))
 }
