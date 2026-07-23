@@ -1,5 +1,5 @@
 use crate::guard;
-use crate::shared::utils::as_comparison_op;
+use crate::shared::utils::as_cmp_or_lex_op;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
 use conjure_cp::settings::{
     Channelling, Heuristic, channelling, heuristic, next_heuristic_all_index,
@@ -23,7 +23,7 @@ register_rule_set!("ReprGeneral", ("Base"), |_| true);
 
 /// Select a representation for abstract domains
 #[register_rule("ReprGeneral", 10000, [Atomic / Reference])]
-fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn select_representation(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::Atomic(_, Atom::Reference(re)) = expr &&
         domain_needs_representation(&re.domain_of()) &&
@@ -34,7 +34,7 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     );
 
     let mut re = re.clone();
-    let Some(rule) = choose_representation_rule(re.ptr()) else {
+    let Some(rule) = choose_representation_rule(re.ptr(), symtab) else {
         return Err(RuleNotApplicable);
     };
     let (_, new_symbols, new_constraints) = re
@@ -64,7 +64,7 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
             }
         );
 
-        let Some(rule) = choose_representation_rule(&decl) else {
+        let Some(rule) = choose_representation_rule(&decl, &symbols) else {
             continue;
         };
         let mut decl = decl.clone();
@@ -84,11 +84,23 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
 }
 
 /// Chooses one applicable representation without mutating the declaration.
-fn choose_representation_rule(decl: &DeclarationPtr) -> Option<ReprRulePtr> {
+///
+/// With channelling disabled, declarations that share an identical abstract domain reuse the
+/// representation already chosen for that domain. This mirrors Conjure applying one nested
+/// representation to a whole matrix-of-sets, rather than letting each matrix component pick
+/// independently under the `x` heuristic.
+fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> Option<ReprRulePtr> {
     if channelling() == Channelling::No
         && let Some(existing) = decl.reprs().iter().next().map(|(_, state)| state.rule())
     {
         return Some(existing);
+    }
+
+    if channelling() == Channelling::No
+        && let Some(dom) = decl.domain()
+        && let Some(rule) = representation_for_identical_domain(decl, &dom, symbols)
+    {
+        return Some(rule);
     }
 
     let mut candidates: Vec<_> = get_repr_rules()
@@ -120,6 +132,36 @@ fn choose_representation_rule(decl: &DeclarationPtr) -> Option<ReprRulePtr> {
     }
 }
 
+/// Find a representation already chosen for another declaration with the same domain.
+fn representation_for_identical_domain(
+    decl: &DeclarationPtr,
+    dom: &DomainPtr,
+    symbols: &SymbolTable,
+) -> Option<ReprRulePtr> {
+    for (name, other) in symbols.iter_local() {
+        if *name == *decl.name() {
+            continue;
+        }
+        let Some(other_dom) = other.domain() else {
+            continue;
+        };
+        if &other_dom != dom {
+            continue;
+        }
+        for (_, state) in other.reprs().iter() {
+            let rule = state.rule();
+            // MatrixComponents is a structural layout, not an abstract-domain representation.
+            if rule.name() == "components" {
+                continue;
+            }
+            if rule.probe_for(decl).is_ok() {
+                return Some(rule);
+            }
+        }
+    }
+    None
+}
+
 /// In a comparison operation, it is probably a good idea for the LHS and RHS to
 /// have the same representation, if applicable; E.g:
 /// ```plain
@@ -127,10 +169,10 @@ fn choose_representation_rule(decl: &DeclarationPtr) -> Option<ReprRulePtr> {
 /// ~>
 /// x#MyRepr > y#MyRepr
 /// ```
-#[register_rule("ReprGeneral", 10100, [Eq, Neq, Lt, Gt, Leq, Geq])]
+#[register_rule("ReprGeneral", 10100, [Eq, Neq, Lt, Gt, Leq, Geq, LexLt, LexLeq, LexGt, LexGeq])]
 fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard! {
-        let Some((lhs, rhs)) = as_comparison_op(expr)               &&
+        let Some((lhs, rhs)) = as_cmp_or_lex_op(expr)               &&
         let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
         let Expr::Atomic(_, Atom::Reference(rhs_re)) = rhs.as_ref()
         else {
@@ -214,7 +256,9 @@ mod tests {
         ));
 
         assert_eq!(
-            choose_representation_rule(&declaration).unwrap().name(),
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .name(),
             "SetPacked"
         );
         set_heuristic(Heuristic::First);
