@@ -32,6 +32,7 @@ use uniplate::Uniplate;
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ConjureRunTimings {
+    pub wall_clock_time_s: f64,
     pub translation_time_s: f64,
     pub conjure_translation_time_s: f64,
     pub savilerow_translation_time_s: f64,
@@ -472,6 +473,7 @@ fn read_conjure_timings(
     }
 
     let mut timings = ConjureRunTimings::default();
+    timings.wall_clock_time_s = conjure_solve_wall_time_s;
     for stats_file in stats_files {
         let stats_file = stats_file?;
         let stats: JsonValue = serde_json::from_str(&fs::read_to_string(&stats_file)?)?;

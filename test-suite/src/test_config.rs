@@ -254,6 +254,8 @@ pub struct RecordedRunStats {
     pub oxide_translation_time: f64,
     /// Time spent solving through conjure-oxide's configured solver, in seconds.
     pub oxide_solve_time: f64,
+    /// Wall-clock time of the complete `conjure solve` command, in seconds.
+    pub conjure_wall_clock_time: f64,
     /// Total Conjure plus Savile Row translation time, in seconds.
     pub conjure_translation_time: f64,
     /// Time spent by Conjure before Savile Row is invoked, in seconds.
@@ -273,6 +275,7 @@ pub fn upsert_recorded_run_stats(path: &Path, stats: RecordedRunStats) -> io::Re
     document["oxide"]["solve-time"] = value(stats.oxide_solve_time);
 
     ensure_table(&mut document, "conjure");
+    document["conjure"]["wall-clock-time"] = value(stats.conjure_wall_clock_time);
     document["conjure"]["translation-time"] = value(stats.conjure_translation_time);
     document["conjure"]["conjure-translation-time"] = value(stats.conjure_driver_translation_time);
     document["conjure"]["savilerow-translation-time"] = value(stats.savilerow_translation_time);
@@ -403,6 +406,10 @@ pub struct RecordedToolStats {
     /// Solver time in seconds.
     #[serde(rename = "solve-time")]
     pub solve_time: Option<f64>,
+
+    /// Wall-clock time of the complete tool command, in seconds, when available.
+    #[serde(rename = "wall-clock-time")]
+    pub wall_clock_time: Option<f64>,
 
     /// Conjure-only translation time in seconds, when available.
     #[serde(rename = "conjure-translation-time")]
@@ -632,5 +639,50 @@ impl TestConfig {
         self.solver
             .iter()
             .any(|solver| solver == "smt" || solver.starts_with("smt-"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn recorded_run_stats_adds_conjure_wall_clock_time_without_removing_existing_stats() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let path = temp_dir.path().join(STATS_FILE_NAME);
+        fs::write(
+            &path,
+            "expected-time = 30\nstatus = \"ok\"\n\n[rule-trace]\ntotal-rule-attempts = 42\n",
+        )
+        .unwrap();
+
+        upsert_recorded_run_stats(
+            &path,
+            RecordedRunStats {
+                oxide_translation_time: 1.0,
+                oxide_solve_time: 2.0,
+                conjure_wall_clock_time: 3.0,
+                conjure_translation_time: 4.0,
+                conjure_driver_translation_time: 5.0,
+                savilerow_translation_time: 6.0,
+                conjure_solve_time: 7.0,
+            },
+        )
+        .unwrap();
+
+        let contents = fs::read_to_string(&path).unwrap();
+        let document = contents.parse::<DocumentMut>().unwrap();
+        assert_eq!(document["expected-time"].as_integer(), Some(30));
+        assert_eq!(document["status"].as_str(), Some("ok"));
+        assert_eq!(
+            document["rule-trace"]["total-rule-attempts"].as_integer(),
+            Some(42)
+        );
+        assert_eq!(document["conjure"]["wall-clock-time"].as_float(), Some(3.0));
+        assert_eq!(
+            document["conjure"]["translation-time"].as_float(),
+            Some(4.0)
+        );
+        assert_eq!(document["conjure"]["solve-time"].as_float(), Some(7.0));
     }
 }

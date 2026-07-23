@@ -548,6 +548,7 @@ fn integration_test_inner_with_status(
                 RecordedRunStats {
                     oxide_translation_time: oxide_timings.translation_time_s,
                     oxide_solve_time: oxide_timings.solve_time_s,
+                    conjure_wall_clock_time: conjure_timings.wall_clock_time_s,
                     conjure_translation_time: conjure_timings.translation_time_s,
                     conjure_driver_translation_time: conjure_timings.conjure_translation_time_s,
                     savilerow_translation_time: conjure_timings.savilerow_translation_time_s,
