@@ -417,6 +417,12 @@ pub fn normalize_solutions_for_comparison(
         }
 
         for (k, v) in updates {
+            let v = match v {
+                Literal::AbstractLiteral(value) => {
+                    Literal::AbstractLiteral(normalize_set_literal_order(value))
+                }
+                value => value,
+            };
             solset.insert(k, v);
         }
     }
@@ -424,6 +430,16 @@ pub fn normalize_solutions_for_comparison(
     // Remove duplicates
     normalized = normalized.into_iter().unique().collect();
     normalized
+}
+
+fn normalize_set_literal_order(value: AbstractLiteral<Literal>) -> AbstractLiteral<Literal> {
+    value.transform(&|value| match value {
+        AbstractLiteral::Set(mut members) => {
+            members.sort_by(Literal::essence_cmp);
+            AbstractLiteral::Set(members)
+        }
+        value => value,
+    })
 }
 
 fn maybe_truncate_serialised_json(serialised: String, test_stage: &str) -> String {
@@ -455,4 +471,39 @@ fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<Strin
         .unwrap()
         .collect::<Result<Vec<_>, _>>()?;
     Ok(lines.join("\n"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn set(members: Vec<Literal>) -> Literal {
+        Literal::AbstractLiteral(AbstractLiteral::Set(members))
+    }
+
+    #[test]
+    fn solution_normalization_sorts_nested_set_members_by_essence_order() {
+        let inner_one_two = set(vec![Literal::Int(2), Literal::Int(1)]);
+        let inner_two = set(vec![Literal::Int(2)]);
+        let mut oxide_solution = BTreeMap::new();
+        oxide_solution.insert(
+            Name::User("x".into()),
+            set(vec![inner_two.clone(), inner_one_two.clone()]),
+        );
+        let mut conjure_solution = BTreeMap::new();
+        conjure_solution.insert(
+            Name::User("x".into()),
+            set(vec![inner_one_two, inner_two.clone()]),
+        );
+
+        let normalized_oxide = normalize_solutions_for_comparison(&[oxide_solution]);
+        let normalized_conjure = normalize_solutions_for_comparison(&[conjure_solution]);
+        let expected = set(vec![inner_two, set(vec![Literal::Int(1), Literal::Int(2)])]);
+
+        assert_eq!(normalized_oxide, normalized_conjure);
+        assert_eq!(
+            normalized_oxide[0].get(&Name::User("x".into())),
+            Some(&expected)
+        );
+    }
 }
