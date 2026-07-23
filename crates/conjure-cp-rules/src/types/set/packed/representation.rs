@@ -85,7 +85,56 @@ register_representation!(
                     )
                 })
                 .collect();
-            Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(choices)))
+                    Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(choices)))
+        }
+
+        /// Lower `self ⊆ superset` via membership of each packable element.
+        pub fn subset_expr(&self, superset: Expression) -> Expression {
+            let constraints = self
+                .elements
+                .iter()
+                .cloned()
+                .map(|value| {
+                    let in_self = self.membership_expr(value.clone().into());
+                    let in_super = Expression::In(
+                        Metadata::new(),
+                        Moo::new(value.into()),
+                        Moo::new(superset.clone()),
+                    );
+                    Expression::Or(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![
+                            Expression::Not(Metadata::new(), Moo::new(in_self)),
+                            in_super,
+                        ]),
+                    )
+                })
+                .collect::<Vec<_>>();
+            Expression::And(Metadata::new(), Moo::new(into_matrix_expr![constraints]))
+        }
+
+        /// Lower equality with a set literal to equality on the packed rank.
+        pub fn equality_to_literal_expr(&self, elems: &[Literal]) -> Option<Expression> {
+            let mut mask = 0u32;
+            for elem in elems {
+                let index = self.elements.iter().position(|candidate| candidate == elem)?;
+                let bit = 1u32 << index;
+                if mask & bit != 0 {
+                    return None;
+                }
+                mask |= bit;
+            }
+            let cardinality = mask.count_ones();
+            let (min, max) = self.cardinality;
+            if cardinality < min || cardinality > max {
+                return None;
+            }
+            let rank = rank_mask(mask, self.elements.len() as u32, min);
+            Some(Expression::Eq(
+                Metadata::new(),
+                Moo::new(self.packed_expr()),
+                Moo::new(rank.into()),
+            ))
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
@@ -255,7 +304,9 @@ fn cardinality_bounds(size: &Range<i32>, inner_len: u32) -> Option<(u32, u32)> {
         Range::UnboundedL(max) => (0, (*max).try_into().ok()?),
         Range::Bounded(min, max) => ((*min).try_into().ok()?, (*max).try_into().ok()?),
     };
-    (min <= max && max <= inner_len).then_some((min, max))
+    // Clamp oversized attributes (e.g. maxSize 3 of int(1..2)) to the inner domain.
+    let max = max.min(inner_len);
+    (min <= max).then_some((min, max))
 }
 
 #[cfg(test)]
