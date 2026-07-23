@@ -243,10 +243,15 @@ pub fn literal_from_simplified_json(
     value: &JsonValue,
     domain: Option<&DomainPtr>,
 ) -> anyhow::Result<Literal> {
-    if let Some(domain) = domain
-        && let Some(ground) = domain.as_ground()
-    {
-        return literal_from_simplified_json_with_ground(value, ground);
+    if let Some(domain) = domain {
+        if let Some(ground) = domain.as_ground() {
+            return literal_from_simplified_json_with_ground(value, ground);
+        }
+        // Domain lettings (e.g. `find x : R`) are unresolved until resolved through the symbol
+        // table; resolve them so records/sets/etc. are not misread as matrices.
+        if let Ok(ground) = domain.resolve() {
+            return literal_from_simplified_json_with_ground(value, ground.as_ref());
+        }
     }
     literal_from_simplified_json_unguided(value)
 }
@@ -500,20 +505,34 @@ fn literal_from_simplified_json_unguided(value: &JsonValue) -> anyhow::Result<Li
             Ok(Literal::AbstractLiteral(AbstractLiteral::Set(elems)))
         }
         JsonValue::Object(object) => {
-            let mut pairs = Vec::with_capacity(object.len());
-            for (key, item) in object {
-                let index: i32 = key
-                    .parse()
-                    .with_context(|| format!("unguided object key `{key}` is not an integer"))?;
-                pairs.push((index, literal_from_simplified_json_unguided(item)?));
+            let all_int_keys = object.keys().all(|key| key.parse::<i32>().is_ok());
+            if all_int_keys {
+                let mut pairs = Vec::with_capacity(object.len());
+                for (key, item) in object {
+                    let index: i32 = key
+                        .parse()
+                        .with_context(|| format!("unguided object key `{key}` is not an integer"))?;
+                    pairs.push((index, literal_from_simplified_json_unguided(item)?));
+                }
+                pairs.sort_by_key(|(i, _)| *i);
+                let keys: Vec<i32> = pairs.iter().map(|(i, _)| *i).collect();
+                let elems: Vec<_> = pairs.into_iter().map(|(_, v)| v).collect();
+                return Ok(Literal::AbstractLiteral(AbstractLiteral::Matrix(
+                    elems,
+                    infer_int_index_domain(&keys).into(),
+                )));
             }
-            pairs.sort_by_key(|(i, _)| *i);
-            let keys: Vec<i32> = pairs.iter().map(|(i, _)| *i).collect();
-            let elems: Vec<_> = pairs.into_iter().map(|(_, v)| v).collect();
-            Ok(Literal::AbstractLiteral(AbstractLiteral::Matrix(
-                elems,
-                infer_int_index_domain(&keys).into(),
-            )))
+
+            // Non-integer keys: treat as a record (Conjure simplified JSON).
+            let mut entries = Vec::with_capacity(object.len());
+            for (key, item) in object {
+                entries.push(Field {
+                    name: Name::user(key.as_str()),
+                    value: literal_from_simplified_json_unguided(item)?,
+                });
+            }
+            entries.sort_by(|a, b| a.name.cmp(&b.name));
+            Ok(Literal::AbstractLiteral(AbstractLiteral::Record(entries)))
         }
         JsonValue::Null => bail!("null is not a valid Essence literal"),
     }
@@ -640,5 +659,19 @@ mod tests {
         let rendered = solutions_to_simplified_json(&solutions).unwrap();
         let again = solutions_from_simplified_json(&rendered, &domains).unwrap();
         assert_eq!(again, solutions);
+    }
+
+    #[test]
+    fn unguided_object_with_named_fields_parses_as_record() {
+        let json = serde_json::json!({"a": true, "b": 3});
+        let literal = literal_from_simplified_json(&json, None).unwrap();
+        let Literal::AbstractLiteral(AbstractLiteral::Record(fields)) = literal else {
+            panic!("expected record, got {literal:?}");
+        };
+        assert_eq!(fields.len(), 2);
+        assert_eq!(fields[0].name, Name::user("a"));
+        assert_eq!(fields[0].value, Literal::Bool(true));
+        assert_eq!(fields[1].name, Name::user("b"));
+        assert_eq!(fields[1].value, Literal::Int(3));
     }
 }
