@@ -8,9 +8,8 @@ use std::time::Instant;
 
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{
-    Atom, DeclarationKind, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Name,
+    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Name,
 };
-use conjure_cp::bug;
 use conjure_cp::context::Context;
 use conjure_cp::settings::{configured_rule_trace_enabled, set_rule_trace_enabled};
 
@@ -21,13 +20,17 @@ use tempfile::tempdir;
 
 use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
-use conjure_cp::parse::tree_sitter::parse_essence_file;
+use conjure_cp::instantiate::instantiate_model;
+use conjure_cp::parse::tree_sitter::parse_essence_file_native;
+use crate::utils::simplified_json::{
+    domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
+    solutions_from_simplified_json_str,
+};
 use conjure_cp::representation::util::try_up;
 use conjure_cp::solver::Solver;
 
 use glob::glob;
 
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use uniplate::Uniplate;
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -397,6 +400,8 @@ pub fn get_solutions_from_conjure_with_stats(
     cmd.arg("solve")
         .arg(format!("--number-of-solutions={number_of_solutions_arg}"))
         .arg("--copy-solutions=no")
+        .arg("--solutions-in-one-file")
+        .arg("--output-format=json")
         .arg("-o")
         .arg(output_dir.path());
 
@@ -423,34 +428,25 @@ pub fn get_solutions_from_conjure_with_stats(
         )));
     }
 
+    let domains = domains_for_conjure_solutions(essence_file, param_file, Arc::clone(&context))?;
+
     let solutions_files: Vec<_> =
-        glob(&format!("{}/*.solution", output_dir.path().display()))?.collect();
+        glob(&format!("{}/*.solutions.json", output_dir.path().display()))?.collect();
+    if solutions_files.is_empty() {
+        // Unsatisfiable / no solutions: Conjure may omit the solutions file.
+        let timings = read_conjure_timings(output_dir.path(), conjure_solve_wall_time_s)?;
+        return Ok(ConjureSolutions {
+            solutions: Vec::new(),
+            timings,
+        });
+    }
 
-    let solutions_set: Vec<_> = solutions_files
-        .par_iter()
-        .map(|solutions_file| {
-            let solutions_file = solutions_file.as_ref().unwrap();
-            let model = parse_essence_file(solutions_file.to_str().unwrap(), Arc::clone(&context))
-                .expect("conjure solutions files to be parsable");
-
-            let mut solutions = BTreeMap::new();
-            for (name, decl) in model.symbols().clone().into_iter() {
-                match &decl.kind() as &DeclarationKind {
-                    conjure_cp::ast::DeclarationKind::ValueLetting(expression, _) => {
-                        let literal = expression
-                            .clone()
-                            .into_literal()
-                            .expect("lettings in a solution should only contain literals");
-                        solutions.insert(name, literal);
-                    }
-                    _ => {
-                        bug!("only expect value letting declarations in solutions")
-                    }
-                }
-            }
-            solutions
-        })
-        .collect();
+    let mut solutions_set = Vec::new();
+    for solutions_file in solutions_files {
+        let solutions_file = solutions_file?;
+        let text = fs::read_to_string(&solutions_file)?;
+        solutions_set.extend(solutions_from_simplified_json_str(&text, &domains)?);
+    }
 
     let timings = read_conjure_timings(output_dir.path(), conjure_solve_wall_time_s)?;
 
@@ -461,6 +457,32 @@ pub fn get_solutions_from_conjure_with_stats(
             .collect(),
         timings,
     })
+}
+
+fn domains_for_conjure_solutions(
+    essence_file: &str,
+    param_file: Option<&str>,
+    context: Arc<RwLock<Context<'static>>>,
+) -> Result<BTreeMap<Name, conjure_cp::ast::DomainPtr>, anyhow::Error> {
+    let problem = parse_essence_file_native(essence_file, Arc::clone(&context))?;
+    let unified = match param_file {
+        Some(param_path) if param_path.ends_with(".json") => {
+            let given_domains = domains_from_model(&problem);
+            let params = params_from_simplified_json_str(
+                &fs::read_to_string(param_path)?,
+                &given_domains,
+            )?;
+            let param_model =
+                param_model_from_assignments(params, &given_domains, Arc::clone(&context));
+            instantiate_model(problem, param_model)?
+        }
+        Some(param_path) => {
+            let param_model = parse_essence_file_native(param_path, Arc::clone(&context))?;
+            instantiate_model(problem, param_model)?
+        }
+        None => problem,
+    };
+    Ok(domains_from_model(&unified))
 }
 
 fn read_conjure_timings(
