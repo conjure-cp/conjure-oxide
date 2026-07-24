@@ -105,12 +105,7 @@ fn build_serde_as_type_inner(
                             .map(|input| NamedArg {
                                 attrs: input.attrs.clone(),
                                 name: input.name.clone(),
-                                ty: build_serde_as_type_inner(
-                                    &input.ty,
-                                    ident,
-                                    replacement,
-                                    true,
-                                ),
+                                ty: build_serde_as_type_inner(&input.ty, ident, replacement, true),
                             })
                             .collect();
                         new_args.output = match &args.output {
