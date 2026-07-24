@@ -1,6 +1,6 @@
 use syn::visit_mut::VisitMut;
 use syn::{
-    GenericArgument, Ident, PathArguments, ReturnType, Type, TypePath, parse_quote,
+    GenericArgument, Ident, NamedArg, PathArguments, ReturnType, Type, TypePath, parse_quote,
     punctuated::Punctuated,
 };
 
@@ -44,7 +44,7 @@ pub fn type_contains_ident(ty: &Type, ident: &Ident) -> bool {
                     syn::PathArguments::Parenthesized(args) => args
                         .inputs
                         .iter()
-                        .any(|inner_ty| type_contains_ident(inner_ty, ident)),
+                        .any(|input| type_contains_ident(&input.ty, ident)),
                     syn::PathArguments::None => false,
                 }
             })
@@ -102,7 +102,16 @@ fn build_serde_as_type_inner(
                         new_args.inputs = args
                             .inputs
                             .iter()
-                            .map(|input| build_serde_as_type_inner(input, ident, replacement, true))
+                            .map(|input| NamedArg {
+                                attrs: input.attrs.clone(),
+                                name: input.name.clone(),
+                                ty: build_serde_as_type_inner(
+                                    &input.ty,
+                                    ident,
+                                    replacement,
+                                    true,
+                                ),
+                            })
                             .collect();
                         new_args.output = match &args.output {
                             ReturnType::Default => ReturnType::Default,
