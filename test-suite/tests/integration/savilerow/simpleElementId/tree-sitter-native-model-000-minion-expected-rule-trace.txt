@@ -1,0 +1,105 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+(x <lex [ elementId([2,1;int(1..2)], x[k]) | k : int(1..5) ])
+
+--
+
+(x <lex [ elementId([2,1;int(1..2)], x[k]) | k : int(1..5) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+(x <lex [ elementId([2,1;int(1..2)], x[k]) | k : int(1..5) ])
+new variables:
+  find x#components_1: int(1..5)
+  find x#components_2: int(1..5)
+  find x#components_3: int(1..5)
+  find x#components_4: int(1..5)
+  find x#components_5: int(1..5)
+
+--
+
+(x <lex [ elementId([2,1;int(1..2)], x[k]) | k : int(1..5) ])
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5;int(1..5)] <lex [ elementId([2,1;int(1..2)], x[k]) | k : int(1..5) ])
+
+--
+
+[ elementId([2,1;int(1..2)], x[k]) | k : int(1..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[elementId([2,1;int(1..2)], x#components_1),elementId([2,1;int(1..2)], x#components_2),elementId([2,1;int(1..2)], x#components_3),elementId([2,1;int(1..2)], x#components_4),elementId([2,1;int(1..2)], x#components_5);int(1..)]
+
+--
+
+([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5;int(1..5)] <lex [elementId([2,1;int(1..2)], x#components_1),elementId([2,1;int(1..2)], x#components_2),elementId([2,1;int(1..2)], x#components_3),elementId([2,1;int(1..2)], x#components_4),elementId([2,1;int(1..2)], x#components_5);int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#components_1, x#components_2, x#components_3, x#components_4, x#components_5], [__0, __1, __2, __3, __4])
+new variables:
+  findAux __0: int(1..5)
+  findAux __1: int(1..5)
+  findAux __2: int(1..5)
+  findAux __3: int(1..5)
+  findAux __4: int(1..5)
+new constraints:
+  __0 =aux elementId([2,1;int(1..2)], x#components_1)
+  __1 =aux elementId([2,1;int(1..2)], x#components_2)
+  __2 =aux elementId([2,1;int(1..2)], x#components_3)
+  __3 =aux elementId([2,1;int(1..2)], x#components_4)
+  __4 =aux elementId([2,1;int(1..2)], x#components_5)
+
+--
+
+__0 =aux elementId([2,1;int(1..2)], x#components_1)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([2,1,3,4,5],__0,x#components_1)
+
+--
+
+__1 =aux elementId([2,1;int(1..2)], x#components_2)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([2,1,3,4,5],__1,x#components_2)
+
+--
+
+__2 =aux elementId([2,1;int(1..2)], x#components_3)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([2,1,3,4,5],__2,x#components_3)
+
+--
+
+__3 =aux elementId([2,1;int(1..2)], x#components_4)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([2,1,3,4,5],__3,x#components_4)
+
+--
+
+__4 =aux elementId([2,1;int(1..2)], x#components_5)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([2,1,3,4,5],__4,x#components_5)
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..5)] of int(1..5)
+find x#components_1: int(1..5)
+find x#components_2: int(1..5)
+find x#components_3: int(1..5)
+find x#components_4: int(1..5)
+find x#components_5: int(1..5)
+findAux __0: int(1..5)
+findAux __1: int(1..5)
+findAux __2: int(1..5)
+findAux __3: int(1..5)
+findAux __4: int(1..5)
+
+such that
+
+FlatLexLt([x#components_1, x#components_2, x#components_3, x#components_4, x#components_5], [__0, __1, __2, __3, __4]),
+__minion_element_one([2,1,3,4,5],__0,x#components_1),
+__minion_element_one([2,1,3,4,5],__1,x#components_2),
+__minion_element_one([2,1,3,4,5],__2,x#components_3),
+__minion_element_one([2,1,3,4,5],__3,x#components_4),
+__minion_element_one([2,1,3,4,5],__4,x#components_5)
+

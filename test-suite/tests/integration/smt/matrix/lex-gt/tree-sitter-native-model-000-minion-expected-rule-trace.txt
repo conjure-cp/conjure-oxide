@@ -1,0 +1,53 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(m >lex m2)
+
+--
+
+(m >lex m2)
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(m2 <lex m)
+
+--
+
+(m2 <lex m)
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+(m2 <lex m)
+new variables:
+  find m#components_1: int(1..2)
+  find m#components_2: int(1..2)
+  find m2#components_1: int(1..2)
+  find m2#components_2: int(1..2)
+
+--
+
+(m2 <lex m)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+([m2#components_1,m2#components_2;int(1..2)] <lex [m#components_1,m#components_2;int(1..2)])
+
+--
+
+([m2#components_1,m2#components_2;int(1..2)] <lex [m#components_1,m#components_2;int(1..2)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([m2#components_1, m2#components_2], [m#components_1, m#components_2])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+find m#components_1: int(1..2)
+find m#components_2: int(1..2)
+find m2#components_1: int(1..2)
+find m2#components_2: int(1..2)
+
+such that
+
+FlatLexLt([m2#components_1, m2#components_2], [m#components_1, m#components_2])
+

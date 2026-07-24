@@ -8,166 +8,166 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find x#SetExplicit_1: matrix indexed by [int(1..3)] of int(1..3)
-  find x#SetExplicit_2: int(0..3)
+  find x#explicit_1: matrix indexed by [int(1..3)] of int(1..3)
+  find x#explicit_2: int(0..3)
 new constraints:
-  or([x#SetExplicit_2 < 2,([SafeIndex(x#SetExplicit_1,[1]);int(1..)] <lex [SafeIndex(x#SetExplicit_1,[2]);int(1..)]);int(1..)])
-  or([x#SetExplicit_2 < 3,([SafeIndex(x#SetExplicit_1,[2]);int(1..)] <lex [SafeIndex(x#SetExplicit_1,[3]);int(1..)]);int(1..)])
-  or([1 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[1]) = 1;int(1..)])
-  or([2 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[2]) = 1;int(1..)])
-  or([3 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[3]) = 1;int(1..)])
+  or([x#explicit_2 < 2,([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 3,([SafeIndex(x#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)])
+  or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
+  or([3 <= x#explicit_2,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
 
 --
 
 true,
-or([x#SetExplicit_2 < 2,([SafeIndex(x#SetExplicit_1,[1]);int(1..)] <lex [SafeIndex(x#SetExplicit_1,[2]);int(1..)]);int(1..)]),
-or([x#SetExplicit_2 < 3,([SafeIndex(x#SetExplicit_1,[2]);int(1..)] <lex [SafeIndex(x#SetExplicit_1,[3]);int(1..)]);int(1..)]),
-or([1 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[1]) = 1;int(1..)]),
-or([2 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[2]) = 1;int(1..)]),
-or([3 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[3]) = 1;int(1..)])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+or([x#explicit_2 < 2,([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 3,([SafeIndex(x#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)]),
+or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([3 <= x#explicit_2,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
 true,
-or([x#SetExplicit_2 < 2,([SafeIndex(x#SetExplicit_1,[1]);int(1..)] <lex [SafeIndex(x#SetExplicit_1,[2]);int(1..)]);int(1..)]),
-or([x#SetExplicit_2 < 3,([SafeIndex(x#SetExplicit_1,[2]);int(1..)] <lex [SafeIndex(x#SetExplicit_1,[3]);int(1..)]);int(1..)]),
-or([1 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[1]) = 1;int(1..)]),
-or([2 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[2]) = 1;int(1..)]),
-or([3 <= x#SetExplicit_2,SafeIndex(x#SetExplicit_1,[3]) = 1;int(1..)])
+or([x#explicit_2 < 2,([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 3,([SafeIndex(x#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)]),
+or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([3 <= x#explicit_2,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
 new variables:
-  find x#SetExplicit_1#MatrixToAtom_1: int(1..3)
-  find x#SetExplicit_1#MatrixToAtom_2: int(1..3)
-  find x#SetExplicit_1#MatrixToAtom_3: int(1..3)
+  find x#explicit_1#components_1: int(1..3)
+  find x#explicit_1#components_2: int(1..3)
+  find x#explicit_1#components_3: int(1..3)
 
 --
 
-x#SetExplicit_2 < 2
+x#explicit_2 < 2
    ~~> lt_to_leq ([("Minion", 8400)])
-x#SetExplicit_2 <= sum([2,-1;int(1..)])
+x#explicit_2 <= sum([2,-1;int(1..)])
 
 --
 
-x#SetExplicit_2 < 3
+x#explicit_2 < 3
    ~~> lt_to_leq ([("Minion", 8400)])
-x#SetExplicit_2 <= sum([3,-1;int(1..)])
+x#explicit_2 <= sum([3,-1;int(1..)])
 
 --
 
-SafeIndex(x#SetExplicit_1,[1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-x#SetExplicit_1#MatrixToAtom_1
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
 
 --
 
-SafeIndex(x#SetExplicit_1,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-x#SetExplicit_1#MatrixToAtom_2
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
 
 --
 
-SafeIndex(x#SetExplicit_1,[3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-x#SetExplicit_1#MatrixToAtom_3
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
 
 --
 
-SafeIndex(x#SetExplicit_1,[1])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-x#SetExplicit_1#MatrixToAtom_1
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
 
 --
 
-SafeIndex(x#SetExplicit_1,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-x#SetExplicit_1#MatrixToAtom_2
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
 
 --
 
-SafeIndex(x#SetExplicit_1,[2])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-x#SetExplicit_1#MatrixToAtom_2
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
 
 --
 
-SafeIndex(x#SetExplicit_1,[3])
-   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-x#SetExplicit_1#MatrixToAtom_3
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
 
 --
 
-x#SetExplicit_1#MatrixToAtom_1 = 1
+x#explicit_1#components_1 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#SetExplicit_1#MatrixToAtom_1,1)
+WatchedLiteral(x#explicit_1#components_1,1)
 
 --
 
-x#SetExplicit_1#MatrixToAtom_2 = 1
+x#explicit_1#components_2 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#SetExplicit_1#MatrixToAtom_2,1)
+WatchedLiteral(x#explicit_1#components_2,1)
 
 --
 
-x#SetExplicit_1#MatrixToAtom_3 = 1
+x#explicit_1#components_3 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#SetExplicit_1#MatrixToAtom_3,1)
+WatchedLiteral(x#explicit_1#components_3,1)
 
 --
 
-x#SetExplicit_2 <= 1
+x#explicit_2 <= 1
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(x#SetExplicit_2, 1, 0)
+Ineq(x#explicit_2, 1, 0)
 
 --
 
-x#SetExplicit_2 <= 2
+x#explicit_2 <= 2
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(x#SetExplicit_2, 2, 0)
+Ineq(x#explicit_2, 2, 0)
 
 --
 
-1 <= x#SetExplicit_2
+1 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#SetExplicit_2, 0)
+Ineq(1, x#explicit_2, 0)
 
 --
 
-2 <= x#SetExplicit_2
+2 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(2, x#SetExplicit_2, 0)
+Ineq(2, x#explicit_2, 0)
 
 --
 
-3 <= x#SetExplicit_2
+3 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(3, x#SetExplicit_2, 0)
+Ineq(3, x#explicit_2, 0)
 
 --
 
-([x#SetExplicit_1#MatrixToAtom_1;int(1..)] <lex [x#SetExplicit_1#MatrixToAtom_2;int(1..)])
+([x#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLt([x#SetExplicit_1#MatrixToAtom_1], [x#SetExplicit_1#MatrixToAtom_2])
+FlatLexLt([x#explicit_1#components_1], [x#explicit_1#components_2])
 
 --
 
-([x#SetExplicit_1#MatrixToAtom_2;int(1..)] <lex [x#SetExplicit_1#MatrixToAtom_3;int(1..)])
+([x#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_3;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLt([x#SetExplicit_1#MatrixToAtom_2], [x#SetExplicit_1#MatrixToAtom_3])
+FlatLexLt([x#explicit_1#components_2], [x#explicit_1#components_3])
 
 --
 
 Final model:
 
 find x: set of int(1..3)
-find x#SetExplicit_1: matrix indexed by [int(1..3)] of int(1..3)
-find x#SetExplicit_2: int(0..3)
-find x#SetExplicit_1#MatrixToAtom_1: int(1..3)
-find x#SetExplicit_1#MatrixToAtom_2: int(1..3)
-find x#SetExplicit_1#MatrixToAtom_3: int(1..3)
+find x#explicit_1: matrix indexed by [int(1..3)] of int(1..3)
+find x#explicit_2: int(0..3)
+find x#explicit_1#components_1: int(1..3)
+find x#explicit_1#components_2: int(1..3)
+find x#explicit_1#components_3: int(1..3)
 
 such that
 
 true,
-or([Ineq(x#SetExplicit_2, 1, 0),FlatLexLt([x#SetExplicit_1#MatrixToAtom_1], [x#SetExplicit_1#MatrixToAtom_2]);int(1..)]),
-or([Ineq(x#SetExplicit_2, 2, 0),FlatLexLt([x#SetExplicit_1#MatrixToAtom_2], [x#SetExplicit_1#MatrixToAtom_3]);int(1..)]),
-or([Ineq(1, x#SetExplicit_2, 0),WatchedLiteral(x#SetExplicit_1#MatrixToAtom_1,1);int(1..)]),
-or([Ineq(2, x#SetExplicit_2, 0),WatchedLiteral(x#SetExplicit_1#MatrixToAtom_2,1);int(1..)]),
-or([Ineq(3, x#SetExplicit_2, 0),WatchedLiteral(x#SetExplicit_1#MatrixToAtom_3,1);int(1..)])
+or([Ineq(x#explicit_2, 1, 0),FlatLexLt([x#explicit_1#components_1], [x#explicit_1#components_2]);int(1..)]),
+or([Ineq(x#explicit_2, 2, 0),FlatLexLt([x#explicit_1#components_2], [x#explicit_1#components_3]);int(1..)]),
+or([Ineq(1, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_1,1);int(1..)]),
+or([Ineq(2, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_2,1);int(1..)]),
+or([Ineq(3, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_3,1);int(1..)])
 

@@ -1,0 +1,1361 @@
+Model before rewriting:
+
+letting n be 8
+letting values be [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]
+letting TEAMS be domain int(1..n)
+letting GAMES be domain int(1..((product([n,(n - 1);int(1..)]) / 2)))
+letting WEEKS be domain int(1..((n - 1)))
+letting PERIODS be domain int(1..((n / 2)))
+letting HOMEAWAY be domain int(1..2)
+find schedule: matrix indexed by [WEEKS, PERIODS, HOMEAWAY] of TEAMS
+find game: matrix indexed by [WEEKS, PERIODS] of GAMES
+
+such that
+
+and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
+and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
+allDifferent(flatten(game)),
+and([ and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | p : PERIODS ]) | w : WEEKS ]),
+and([ and([ schedule[w, p, 1] < schedule[w, p, 2] | p : PERIODS ]) | w : WEEKS ]),
+and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
+and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
+
+--
+
+and([ and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | p : PERIODS ]) | w : WEEKS ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ])
+
+--
+
+and([ and([ schedule[w, p, 1] < schedule[w, p, 2] | p : PERIODS ]) | w : WEEKS ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ])
+
+--
+
+and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
+and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
+allDifferent(flatten(game)),
+and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ]),
+and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ]),
+and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
+and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
+and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
+allDifferent(flatten(game)),
+and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ]),
+and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ]),
+and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
+and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
+new variables:
+  find game#components_1: int(1..28)
+  find game#components_10: int(1..28)
+  find game#components_11: int(1..28)
+  find game#components_12: int(1..28)
+  find game#components_13: int(1..28)
+  find game#components_14: int(1..28)
+  find game#components_15: int(1..28)
+  find game#components_16: int(1..28)
+  find game#components_17: int(1..28)
+  find game#components_18: int(1..28)
+  find game#components_19: int(1..28)
+  find game#components_2: int(1..28)
+  find game#components_20: int(1..28)
+  find game#components_21: int(1..28)
+  find game#components_22: int(1..28)
+  find game#components_23: int(1..28)
+  find game#components_24: int(1..28)
+  find game#components_25: int(1..28)
+  find game#components_26: int(1..28)
+  find game#components_27: int(1..28)
+  find game#components_28: int(1..28)
+  find game#components_3: int(1..28)
+  find game#components_4: int(1..28)
+  find game#components_5: int(1..28)
+  find game#components_6: int(1..28)
+  find game#components_7: int(1..28)
+  find game#components_8: int(1..28)
+  find game#components_9: int(1..28)
+  find schedule#components_1: int(1..8)
+  find schedule#components_10: int(1..8)
+  find schedule#components_11: int(1..8)
+  find schedule#components_12: int(1..8)
+  find schedule#components_13: int(1..8)
+  find schedule#components_14: int(1..8)
+  find schedule#components_15: int(1..8)
+  find schedule#components_16: int(1..8)
+  find schedule#components_17: int(1..8)
+  find schedule#components_18: int(1..8)
+  find schedule#components_19: int(1..8)
+  find schedule#components_2: int(1..8)
+  find schedule#components_20: int(1..8)
+  find schedule#components_21: int(1..8)
+  find schedule#components_22: int(1..8)
+  find schedule#components_23: int(1..8)
+  find schedule#components_24: int(1..8)
+  find schedule#components_25: int(1..8)
+  find schedule#components_26: int(1..8)
+  find schedule#components_27: int(1..8)
+  find schedule#components_28: int(1..8)
+  find schedule#components_29: int(1..8)
+  find schedule#components_3: int(1..8)
+  find schedule#components_30: int(1..8)
+  find schedule#components_31: int(1..8)
+  find schedule#components_32: int(1..8)
+  find schedule#components_33: int(1..8)
+  find schedule#components_34: int(1..8)
+  find schedule#components_35: int(1..8)
+  find schedule#components_36: int(1..8)
+  find schedule#components_37: int(1..8)
+  find schedule#components_38: int(1..8)
+  find schedule#components_39: int(1..8)
+  find schedule#components_4: int(1..8)
+  find schedule#components_40: int(1..8)
+  find schedule#components_41: int(1..8)
+  find schedule#components_42: int(1..8)
+  find schedule#components_43: int(1..8)
+  find schedule#components_44: int(1..8)
+  find schedule#components_45: int(1..8)
+  find schedule#components_46: int(1..8)
+  find schedule#components_47: int(1..8)
+  find schedule#components_48: int(1..8)
+  find schedule#components_49: int(1..8)
+  find schedule#components_5: int(1..8)
+  find schedule#components_50: int(1..8)
+  find schedule#components_51: int(1..8)
+  find schedule#components_52: int(1..8)
+  find schedule#components_53: int(1..8)
+  find schedule#components_54: int(1..8)
+  find schedule#components_55: int(1..8)
+  find schedule#components_56: int(1..8)
+  find schedule#components_6: int(1..8)
+  find schedule#components_7: int(1..8)
+  find schedule#components_8: int(1..8)
+  find schedule#components_9: int(1..8)
+
+--
+
+flatten(game)
+   ~~> flatten_matrix_components ([("ReprMatrixComponents", 5000)])
+[game#components_1,game#components_2,game#components_3,game#components_4,game#components_5,game#components_6,game#components_7,game#components_8,game#components_9,game#components_10,game#components_11,game#components_12,game#components_13,game#components_14,game#components_15,game#components_16,game#components_17,game#components_18,game#components_19,game#components_20,game#components_21,game#components_22,game#components_23,game#components_24,game#components_25,game#components_26,game#components_27,game#components_28;int(1..)]
+
+--
+
+allDifferent([game#components_1,game#components_2,game#components_3,game#components_4,game#components_5,game#components_6,game#components_7,game#components_8,game#components_9,game#components_10,game#components_11,game#components_12,game#components_13,game#components_14,game#components_15,game#components_16,game#components_17,game#components_18,game#components_19,game#components_20,game#components_21,game#components_22,game#components_23,game#components_24,game#components_25,game#components_26,game#components_27,game#components_28;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([game#components_1, game#components_2, game#components_3, game#components_4, game#components_5, game#components_6, game#components_7, game#components_8, game#components_9, game#components_10, game#components_11, game#components_12, game#components_13, game#components_14, game#components_15, game#components_16, game#components_17, game#components_18, game#components_19, game#components_20, game#components_21, game#components_22, game#components_23, game#components_24, game#components_25, game#components_26, game#components_27, game#components_28])
+
+--
+
+[ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[allDifferent(flatten(schedule[1,..,..])),allDifferent(flatten(schedule[2,..,..])),allDifferent(flatten(schedule[3,..,..])),allDifferent(flatten(schedule[4,..,..])),allDifferent(flatten(schedule[5,..,..])),allDifferent(flatten(schedule[6,..,..])),allDifferent(flatten(schedule[7,..,..]));int(1..)]
+
+--
+
+schedule[1,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[1,..,..])
+
+--
+
+schedule[2,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[2,..,..])
+
+--
+
+schedule[3,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[3,..,..])
+
+--
+
+schedule[4,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[4,..,..])
+
+--
+
+schedule[5,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[5,..,..])
+
+--
+
+schedule[6,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[6,..,..])
+
+--
+
+schedule[7,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[7,..,..])
+
+--
+
+SafeSlice(schedule,[1,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_1,schedule#components_2,schedule#components_3,schedule#components_4,schedule#components_5,schedule#components_6,schedule#components_7,schedule#components_8;int(1..)]
+
+--
+
+SafeSlice(schedule,[2,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_9,schedule#components_10,schedule#components_11,schedule#components_12,schedule#components_13,schedule#components_14,schedule#components_15,schedule#components_16;int(1..)]
+
+--
+
+SafeSlice(schedule,[3,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_17,schedule#components_18,schedule#components_19,schedule#components_20,schedule#components_21,schedule#components_22,schedule#components_23,schedule#components_24;int(1..)]
+
+--
+
+SafeSlice(schedule,[4,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_25,schedule#components_26,schedule#components_27,schedule#components_28,schedule#components_29,schedule#components_30,schedule#components_31,schedule#components_32;int(1..)]
+
+--
+
+SafeSlice(schedule,[5,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_33,schedule#components_34,schedule#components_35,schedule#components_36,schedule#components_37,schedule#components_38,schedule#components_39,schedule#components_40;int(1..)]
+
+--
+
+SafeSlice(schedule,[6,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_41,schedule#components_42,schedule#components_43,schedule#components_44,schedule#components_45,schedule#components_46,schedule#components_47,schedule#components_48;int(1..)]
+
+--
+
+SafeSlice(schedule,[7,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_49,schedule#components_50,schedule#components_51,schedule#components_52,schedule#components_53,schedule#components_54,schedule#components_55,schedule#components_56;int(1..)]
+
+--
+
+allDifferent(flatten([schedule#components_1,schedule#components_2,schedule#components_3,schedule#components_4,schedule#components_5,schedule#components_6,schedule#components_7,schedule#components_8;int(1..)]))
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([schedule#components_1, schedule#components_2, schedule#components_3, schedule#components_4, schedule#components_5, schedule#components_6, schedule#components_7, schedule#components_8])
+
+--
+
+allDifferent(flatten([schedule#components_9,schedule#components_10,schedule#components_11,schedule#components_12,schedule#components_13,schedule#components_14,schedule#components_15,schedule#components_16;int(1..)]))
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([schedule#components_9, schedule#components_10, schedule#components_11, schedule#components_12, schedule#components_13, schedule#components_14, schedule#components_15, schedule#components_16])
+
+--
+
+allDifferent(flatten([schedule#components_17,schedule#components_18,schedule#components_19,schedule#components_20,schedule#components_21,schedule#components_22,schedule#components_23,schedule#components_24;int(1..)]))
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([schedule#components_17, schedule#components_18, schedule#components_19, schedule#components_20, schedule#components_21, schedule#components_22, schedule#components_23, schedule#components_24])
+
+--
+
+allDifferent(flatten([schedule#components_25,schedule#components_26,schedule#components_27,schedule#components_28,schedule#components_29,schedule#components_30,schedule#components_31,schedule#components_32;int(1..)]))
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([schedule#components_25, schedule#components_26, schedule#components_27, schedule#components_28, schedule#components_29, schedule#components_30, schedule#components_31, schedule#components_32])
+
+--
+
+allDifferent(flatten([schedule#components_33,schedule#components_34,schedule#components_35,schedule#components_36,schedule#components_37,schedule#components_38,schedule#components_39,schedule#components_40;int(1..)]))
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([schedule#components_33, schedule#components_34, schedule#components_35, schedule#components_36, schedule#components_37, schedule#components_38, schedule#components_39, schedule#components_40])
+
+--
+
+allDifferent(flatten([schedule#components_41,schedule#components_42,schedule#components_43,schedule#components_44,schedule#components_45,schedule#components_46,schedule#components_47,schedule#components_48;int(1..)]))
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([schedule#components_41, schedule#components_42, schedule#components_43, schedule#components_44, schedule#components_45, schedule#components_46, schedule#components_47, schedule#components_48])
+
+--
+
+allDifferent(flatten([schedule#components_49,schedule#components_50,schedule#components_51,schedule#components_52,schedule#components_53,schedule#components_54,schedule#components_55,schedule#components_56;int(1..)]))
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([schedule#components_49, schedule#components_50, schedule#components_51, schedule#components_52, schedule#components_53, schedule#components_54, schedule#components_55, schedule#components_56])
+
+--
+
+[ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[atMost(flatten(schedule[..,1,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]),atMost(flatten(schedule[..,2,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]),atMost(flatten(schedule[..,3,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]),atMost(flatten(schedule[..,4,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]);int(1..)]
+
+--
+
+schedule[..,1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,1,..])
+
+--
+
+schedule[..,2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,2,..])
+
+--
+
+schedule[..,3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,3,..])
+
+--
+
+schedule[..,4,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,4,..])
+
+--
+
+SafeSlice(schedule,[..,1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_1,schedule#components_2,schedule#components_9,schedule#components_10,schedule#components_17,schedule#components_18,schedule#components_25,schedule#components_26,schedule#components_33,schedule#components_34,schedule#components_41,schedule#components_42,schedule#components_49,schedule#components_50;int(1..)]
+
+--
+
+SafeSlice(schedule,[..,2,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)]
+
+--
+
+SafeSlice(schedule,[..,3,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)]
+
+--
+
+SafeSlice(schedule,[..,4,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_7,schedule#components_8,schedule#components_15,schedule#components_16,schedule#components_23,schedule#components_24,schedule#components_31,schedule#components_32,schedule#components_39,schedule#components_40,schedule#components_47,schedule#components_48,schedule#components_55,schedule#components_56;int(1..)]
+
+--
+
+atMost(flatten([schedule#components_1,schedule#components_2,schedule#components_9,schedule#components_10,schedule#components_17,schedule#components_18,schedule#components_25,schedule#components_26,schedule#components_33,schedule#components_34,schedule#components_41,schedule#components_42,schedule#components_49,schedule#components_50;int(1..)]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+   ~~> unwrap_flatten_in_global_cardinality ([("Minion", 4050)])
+atMost([schedule#components_1,schedule#components_2,schedule#components_9,schedule#components_10,schedule#components_17,schedule#components_18,schedule#components_25,schedule#components_26,schedule#components_33,schedule#components_34,schedule#components_41,schedule#components_42,schedule#components_49,schedule#components_50;int(1..)], [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+
+--
+
+atMost(flatten([schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+   ~~> unwrap_flatten_in_global_cardinality ([("Minion", 4050)])
+atMost([schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)], [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+
+--
+
+atMost(flatten([schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+   ~~> unwrap_flatten_in_global_cardinality ([("Minion", 4050)])
+atMost([schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)], [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+
+--
+
+atMost(flatten([schedule#components_7,schedule#components_8,schedule#components_15,schedule#components_16,schedule#components_23,schedule#components_24,schedule#components_31,schedule#components_32,schedule#components_39,schedule#components_40,schedule#components_47,schedule#components_48,schedule#components_55,schedule#components_56;int(1..)]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+   ~~> unwrap_flatten_in_global_cardinality ([("Minion", 4050)])
+atMost([schedule#components_7,schedule#components_8,schedule#components_15,schedule#components_16,schedule#components_23,schedule#components_24,schedule#components_31,schedule#components_32,schedule#components_39,schedule#components_40,schedule#components_47,schedule#components_48,schedule#components_55,schedule#components_56;int(1..)], [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+
+--
+
+[ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[table([schedule#components_1,schedule#components_2,game#components_1;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_3,schedule#components_4,game#components_2;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_5,schedule#components_6,game#components_3;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_7,schedule#components_8,game#components_4;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_9,schedule#components_10,game#components_5;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_11,schedule#components_12,game#components_6;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_13,schedule#components_14,game#components_7;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_15,schedule#components_16,game#components_8;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_17,schedule#components_18,game#components_9;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_19,schedule#components_20,game#components_10;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_21,schedule#components_22,game#components_11;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_23,schedule#components_24,game#components_12;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_25,schedule#components_26,game#components_13;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_27,schedule#components_28,game#components_14;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_29,schedule#components_30,game#components_15;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_31,schedule#components_32,game#components_16;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_33,schedule#components_34,game#components_17;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_35,schedule#components_36,game#components_18;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_37,schedule#components_38,game#components_19;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_39,schedule#components_40,game#components_20;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_41,schedule#components_42,game#components_21;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_43,schedule#components_44,game#components_22;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_45,schedule#components_46,game#components_23;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_47,schedule#components_48,game#components_24;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_49,schedule#components_50,game#components_25;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_51,schedule#components_52,game#components_26;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_53,schedule#components_54,game#components_27;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]),table([schedule#components_55,schedule#components_56,game#components_28;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]);int(1..)]
+
+--
+
+[ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[schedule#components_1 < schedule#components_2,schedule#components_3 < schedule#components_4,schedule#components_5 < schedule#components_6,schedule#components_7 < schedule#components_8,schedule#components_9 < schedule#components_10,schedule#components_11 < schedule#components_12,schedule#components_13 < schedule#components_14,schedule#components_15 < schedule#components_16,schedule#components_17 < schedule#components_18,schedule#components_19 < schedule#components_20,schedule#components_21 < schedule#components_22,schedule#components_23 < schedule#components_24,schedule#components_25 < schedule#components_26,schedule#components_27 < schedule#components_28,schedule#components_29 < schedule#components_30,schedule#components_31 < schedule#components_32,schedule#components_33 < schedule#components_34,schedule#components_35 < schedule#components_36,schedule#components_37 < schedule#components_38,schedule#components_39 < schedule#components_40,schedule#components_41 < schedule#components_42,schedule#components_43 < schedule#components_44,schedule#components_45 < schedule#components_46,schedule#components_47 < schedule#components_48,schedule#components_49 < schedule#components_50,schedule#components_51 < schedule#components_52,schedule#components_53 < schedule#components_54,schedule#components_55 < schedule#components_56;int(1..)]
+
+--
+
+schedule#components_1 < schedule#components_2
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_1 <= sum([schedule#components_2,-1;int(1..)])
+
+--
+
+schedule#components_3 < schedule#components_4
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_3 <= sum([schedule#components_4,-1;int(1..)])
+
+--
+
+schedule#components_5 < schedule#components_6
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_5 <= sum([schedule#components_6,-1;int(1..)])
+
+--
+
+schedule#components_7 < schedule#components_8
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_7 <= sum([schedule#components_8,-1;int(1..)])
+
+--
+
+schedule#components_9 < schedule#components_10
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_9 <= sum([schedule#components_10,-1;int(1..)])
+
+--
+
+schedule#components_11 < schedule#components_12
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_11 <= sum([schedule#components_12,-1;int(1..)])
+
+--
+
+schedule#components_13 < schedule#components_14
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_13 <= sum([schedule#components_14,-1;int(1..)])
+
+--
+
+schedule#components_15 < schedule#components_16
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_15 <= sum([schedule#components_16,-1;int(1..)])
+
+--
+
+schedule#components_17 < schedule#components_18
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_17 <= sum([schedule#components_18,-1;int(1..)])
+
+--
+
+schedule#components_19 < schedule#components_20
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_19 <= sum([schedule#components_20,-1;int(1..)])
+
+--
+
+schedule#components_21 < schedule#components_22
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_21 <= sum([schedule#components_22,-1;int(1..)])
+
+--
+
+schedule#components_23 < schedule#components_24
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_23 <= sum([schedule#components_24,-1;int(1..)])
+
+--
+
+schedule#components_25 < schedule#components_26
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_25 <= sum([schedule#components_26,-1;int(1..)])
+
+--
+
+schedule#components_27 < schedule#components_28
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_27 <= sum([schedule#components_28,-1;int(1..)])
+
+--
+
+schedule#components_29 < schedule#components_30
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_29 <= sum([schedule#components_30,-1;int(1..)])
+
+--
+
+schedule#components_31 < schedule#components_32
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_31 <= sum([schedule#components_32,-1;int(1..)])
+
+--
+
+schedule#components_33 < schedule#components_34
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_33 <= sum([schedule#components_34,-1;int(1..)])
+
+--
+
+schedule#components_35 < schedule#components_36
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_35 <= sum([schedule#components_36,-1;int(1..)])
+
+--
+
+schedule#components_37 < schedule#components_38
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_37 <= sum([schedule#components_38,-1;int(1..)])
+
+--
+
+schedule#components_39 < schedule#components_40
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_39 <= sum([schedule#components_40,-1;int(1..)])
+
+--
+
+schedule#components_41 < schedule#components_42
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_41 <= sum([schedule#components_42,-1;int(1..)])
+
+--
+
+schedule#components_43 < schedule#components_44
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_43 <= sum([schedule#components_44,-1;int(1..)])
+
+--
+
+schedule#components_45 < schedule#components_46
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_45 <= sum([schedule#components_46,-1;int(1..)])
+
+--
+
+schedule#components_47 < schedule#components_48
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_47 <= sum([schedule#components_48,-1;int(1..)])
+
+--
+
+schedule#components_49 < schedule#components_50
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_49 <= sum([schedule#components_50,-1;int(1..)])
+
+--
+
+schedule#components_51 < schedule#components_52
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_51 <= sum([schedule#components_52,-1;int(1..)])
+
+--
+
+schedule#components_53 < schedule#components_54
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_53 <= sum([schedule#components_54,-1;int(1..)])
+
+--
+
+schedule#components_55 < schedule#components_56
+   ~~> lt_to_leq ([("Minion", 8400)])
+schedule#components_55 <= sum([schedule#components_56,-1;int(1..)])
+
+--
+
+schedule#components_1 <= sum([schedule#components_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_2], schedule#components_1)
+
+--
+
+schedule#components_3 <= sum([schedule#components_4,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_4], schedule#components_3)
+
+--
+
+schedule#components_5 <= sum([schedule#components_6,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_6], schedule#components_5)
+
+--
+
+schedule#components_7 <= sum([schedule#components_8,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_8], schedule#components_7)
+
+--
+
+schedule#components_9 <= sum([schedule#components_10,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_10], schedule#components_9)
+
+--
+
+schedule#components_11 <= sum([schedule#components_12,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_12], schedule#components_11)
+
+--
+
+schedule#components_13 <= sum([schedule#components_14,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_14], schedule#components_13)
+
+--
+
+schedule#components_15 <= sum([schedule#components_16,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_16], schedule#components_15)
+
+--
+
+schedule#components_17 <= sum([schedule#components_18,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_18], schedule#components_17)
+
+--
+
+schedule#components_19 <= sum([schedule#components_20,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_20], schedule#components_19)
+
+--
+
+schedule#components_21 <= sum([schedule#components_22,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_22], schedule#components_21)
+
+--
+
+schedule#components_23 <= sum([schedule#components_24,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_24], schedule#components_23)
+
+--
+
+schedule#components_25 <= sum([schedule#components_26,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_26], schedule#components_25)
+
+--
+
+schedule#components_27 <= sum([schedule#components_28,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_28], schedule#components_27)
+
+--
+
+schedule#components_29 <= sum([schedule#components_30,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_30], schedule#components_29)
+
+--
+
+schedule#components_31 <= sum([schedule#components_32,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_32], schedule#components_31)
+
+--
+
+schedule#components_33 <= sum([schedule#components_34,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_34], schedule#components_33)
+
+--
+
+schedule#components_35 <= sum([schedule#components_36,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_36], schedule#components_35)
+
+--
+
+schedule#components_37 <= sum([schedule#components_38,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_38], schedule#components_37)
+
+--
+
+schedule#components_39 <= sum([schedule#components_40,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_40], schedule#components_39)
+
+--
+
+schedule#components_41 <= sum([schedule#components_42,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_42], schedule#components_41)
+
+--
+
+schedule#components_43 <= sum([schedule#components_44,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_44], schedule#components_43)
+
+--
+
+schedule#components_45 <= sum([schedule#components_46,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_46], schedule#components_45)
+
+--
+
+schedule#components_47 <= sum([schedule#components_48,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_48], schedule#components_47)
+
+--
+
+schedule#components_49 <= sum([schedule#components_50,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_50], schedule#components_49)
+
+--
+
+schedule#components_51 <= sum([schedule#components_52,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_52], schedule#components_51)
+
+--
+
+schedule#components_53 <= sum([schedule#components_54,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_54], schedule#components_53)
+
+--
+
+schedule#components_55 <= sum([schedule#components_56,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, schedule#components_56], schedule#components_55)
+
+--
+
+[ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(flatten(schedule[2,..,..]) >lex flatten(schedule[1,..,..])),(flatten(schedule[3,..,..]) >lex flatten(schedule[2,..,..])),(flatten(schedule[4,..,..]) >lex flatten(schedule[3,..,..])),(flatten(schedule[5,..,..]) >lex flatten(schedule[4,..,..])),(flatten(schedule[6,..,..]) >lex flatten(schedule[5,..,..])),(flatten(schedule[7,..,..]) >lex flatten(schedule[6,..,..]));int(1..)]
+
+--
+
+(flatten(schedule[2,..,..]) >lex flatten(schedule[1,..,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[1,..,..]) <lex flatten(schedule[2,..,..]))
+
+--
+
+(flatten(schedule[3,..,..]) >lex flatten(schedule[2,..,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[2,..,..]) <lex flatten(schedule[3,..,..]))
+
+--
+
+(flatten(schedule[4,..,..]) >lex flatten(schedule[3,..,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[3,..,..]) <lex flatten(schedule[4,..,..]))
+
+--
+
+(flatten(schedule[5,..,..]) >lex flatten(schedule[4,..,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[4,..,..]) <lex flatten(schedule[5,..,..]))
+
+--
+
+(flatten(schedule[6,..,..]) >lex flatten(schedule[5,..,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[5,..,..]) <lex flatten(schedule[6,..,..]))
+
+--
+
+(flatten(schedule[7,..,..]) >lex flatten(schedule[6,..,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[6,..,..]) <lex flatten(schedule[7,..,..]))
+
+--
+
+schedule[1,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[1,..,..])
+
+--
+
+schedule[2,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[2,..,..])
+
+--
+
+schedule[2,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[2,..,..])
+
+--
+
+schedule[3,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[3,..,..])
+
+--
+
+schedule[3,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[3,..,..])
+
+--
+
+schedule[4,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[4,..,..])
+
+--
+
+schedule[4,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[4,..,..])
+
+--
+
+schedule[5,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[5,..,..])
+
+--
+
+schedule[5,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[5,..,..])
+
+--
+
+schedule[6,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[6,..,..])
+
+--
+
+schedule[6,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[6,..,..])
+
+--
+
+schedule[7,..,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[7,..,..])
+
+--
+
+SafeSlice(schedule,[1,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_1,schedule#components_2,schedule#components_3,schedule#components_4,schedule#components_5,schedule#components_6,schedule#components_7,schedule#components_8;int(1..)]
+
+--
+
+SafeSlice(schedule,[2,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_9,schedule#components_10,schedule#components_11,schedule#components_12,schedule#components_13,schedule#components_14,schedule#components_15,schedule#components_16;int(1..)]
+
+--
+
+SafeSlice(schedule,[2,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_9,schedule#components_10,schedule#components_11,schedule#components_12,schedule#components_13,schedule#components_14,schedule#components_15,schedule#components_16;int(1..)]
+
+--
+
+SafeSlice(schedule,[3,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_17,schedule#components_18,schedule#components_19,schedule#components_20,schedule#components_21,schedule#components_22,schedule#components_23,schedule#components_24;int(1..)]
+
+--
+
+SafeSlice(schedule,[3,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_17,schedule#components_18,schedule#components_19,schedule#components_20,schedule#components_21,schedule#components_22,schedule#components_23,schedule#components_24;int(1..)]
+
+--
+
+SafeSlice(schedule,[4,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_25,schedule#components_26,schedule#components_27,schedule#components_28,schedule#components_29,schedule#components_30,schedule#components_31,schedule#components_32;int(1..)]
+
+--
+
+SafeSlice(schedule,[4,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_25,schedule#components_26,schedule#components_27,schedule#components_28,schedule#components_29,schedule#components_30,schedule#components_31,schedule#components_32;int(1..)]
+
+--
+
+SafeSlice(schedule,[5,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_33,schedule#components_34,schedule#components_35,schedule#components_36,schedule#components_37,schedule#components_38,schedule#components_39,schedule#components_40;int(1..)]
+
+--
+
+SafeSlice(schedule,[5,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_33,schedule#components_34,schedule#components_35,schedule#components_36,schedule#components_37,schedule#components_38,schedule#components_39,schedule#components_40;int(1..)]
+
+--
+
+SafeSlice(schedule,[6,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_41,schedule#components_42,schedule#components_43,schedule#components_44,schedule#components_45,schedule#components_46,schedule#components_47,schedule#components_48;int(1..)]
+
+--
+
+SafeSlice(schedule,[6,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_41,schedule#components_42,schedule#components_43,schedule#components_44,schedule#components_45,schedule#components_46,schedule#components_47,schedule#components_48;int(1..)]
+
+--
+
+SafeSlice(schedule,[7,..,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_49,schedule#components_50,schedule#components_51,schedule#components_52,schedule#components_53,schedule#components_54,schedule#components_55,schedule#components_56;int(1..)]
+
+--
+
+[ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(flatten(schedule[..,2,..]) >=lex flatten(schedule[..,1,..])),(flatten(schedule[..,3,..]) >=lex flatten(schedule[..,2,..])),(flatten(schedule[..,4,..]) >=lex flatten(schedule[..,3,..]));int(1..)]
+
+--
+
+(flatten(schedule[..,2,..]) >=lex flatten(schedule[..,1,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[..,1,..]) <=lex flatten(schedule[..,2,..]))
+
+--
+
+(flatten(schedule[..,3,..]) >=lex flatten(schedule[..,2,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[..,2,..]) <=lex flatten(schedule[..,3,..]))
+
+--
+
+(flatten(schedule[..,4,..]) >=lex flatten(schedule[..,3,..]))
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(flatten(schedule[..,3,..]) <=lex flatten(schedule[..,4,..]))
+
+--
+
+schedule[..,1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,1,..])
+
+--
+
+schedule[..,2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,2,..])
+
+--
+
+schedule[..,2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,2,..])
+
+--
+
+schedule[..,3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,3,..])
+
+--
+
+schedule[..,3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,3,..])
+
+--
+
+schedule[..,4,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(schedule,[..,4,..])
+
+--
+
+SafeSlice(schedule,[..,1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_1,schedule#components_2,schedule#components_9,schedule#components_10,schedule#components_17,schedule#components_18,schedule#components_25,schedule#components_26,schedule#components_33,schedule#components_34,schedule#components_41,schedule#components_42,schedule#components_49,schedule#components_50;int(1..)]
+
+--
+
+SafeSlice(schedule,[..,2,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)]
+
+--
+
+SafeSlice(schedule,[..,2,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)]
+
+--
+
+SafeSlice(schedule,[..,3,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)]
+
+--
+
+SafeSlice(schedule,[..,3,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)]
+
+--
+
+SafeSlice(schedule,[..,4,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[schedule#components_7,schedule#components_8,schedule#components_15,schedule#components_16,schedule#components_23,schedule#components_24,schedule#components_31,schedule#components_32,schedule#components_39,schedule#components_40,schedule#components_47,schedule#components_48,schedule#components_55,schedule#components_56;int(1..)]
+
+--
+
+atMost([schedule#components_1,schedule#components_2,schedule#components_9,schedule#components_10,schedule#components_17,schedule#components_18,schedule#components_25,schedule#components_26,schedule#components_33,schedule#components_34,schedule#components_41,schedule#components_42,schedule#components_49,schedule#components_50;int(1..)], [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+   ~~> matrix_to_list ([("Base", 2000)])
+atMost([schedule#components_1,schedule#components_2,schedule#components_9,schedule#components_10,schedule#components_17,schedule#components_18,schedule#components_25,schedule#components_26,schedule#components_33,schedule#components_34,schedule#components_41,schedule#components_42,schedule#components_49,schedule#components_50;int(1..)], [2,2,2,2;int(1..)], [1,2,3,4;int(1..)])
+
+--
+
+atMost([schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)], [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+   ~~> matrix_to_list ([("Base", 2000)])
+atMost([schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)], [2,2,2,2;int(1..)], [1,2,3,4;int(1..)])
+
+--
+
+atMost([schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)], [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+   ~~> matrix_to_list ([("Base", 2000)])
+atMost([schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)], [2,2,2,2;int(1..)], [1,2,3,4;int(1..)])
+
+--
+
+atMost([schedule#components_7,schedule#components_8,schedule#components_15,schedule#components_16,schedule#components_23,schedule#components_24,schedule#components_31,schedule#components_32,schedule#components_39,schedule#components_40,schedule#components_47,schedule#components_48,schedule#components_55,schedule#components_56;int(1..)], [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)])
+   ~~> matrix_to_list ([("Base", 2000)])
+atMost([schedule#components_7,schedule#components_8,schedule#components_15,schedule#components_16,schedule#components_23,schedule#components_24,schedule#components_31,schedule#components_32,schedule#components_39,schedule#components_40,schedule#components_47,schedule#components_48,schedule#components_55,schedule#components_56;int(1..)], [2,2,2,2;int(1..)], [1,2,3,4;int(1..)])
+
+--
+
+table([schedule#components_1,schedule#components_2,game#components_1;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_1,schedule#components_2,game#components_1;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_3,schedule#components_4,game#components_2;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_3,schedule#components_4,game#components_2;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_5,schedule#components_6,game#components_3;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_5,schedule#components_6,game#components_3;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_7,schedule#components_8,game#components_4;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_7,schedule#components_8,game#components_4;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_9,schedule#components_10,game#components_5;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_9,schedule#components_10,game#components_5;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_11,schedule#components_12,game#components_6;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_11,schedule#components_12,game#components_6;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_13,schedule#components_14,game#components_7;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_13,schedule#components_14,game#components_7;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_15,schedule#components_16,game#components_8;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_15,schedule#components_16,game#components_8;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_17,schedule#components_18,game#components_9;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_17,schedule#components_18,game#components_9;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_19,schedule#components_20,game#components_10;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_19,schedule#components_20,game#components_10;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_21,schedule#components_22,game#components_11;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_21,schedule#components_22,game#components_11;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_23,schedule#components_24,game#components_12;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_23,schedule#components_24,game#components_12;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_25,schedule#components_26,game#components_13;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_25,schedule#components_26,game#components_13;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_27,schedule#components_28,game#components_14;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_27,schedule#components_28,game#components_14;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_29,schedule#components_30,game#components_15;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_29,schedule#components_30,game#components_15;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_31,schedule#components_32,game#components_16;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_31,schedule#components_32,game#components_16;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_33,schedule#components_34,game#components_17;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_33,schedule#components_34,game#components_17;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_35,schedule#components_36,game#components_18;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_35,schedule#components_36,game#components_18;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_37,schedule#components_38,game#components_19;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_37,schedule#components_38,game#components_19;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_39,schedule#components_40,game#components_20;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_39,schedule#components_40,game#components_20;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_41,schedule#components_42,game#components_21;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_41,schedule#components_42,game#components_21;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_43,schedule#components_44,game#components_22;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_43,schedule#components_44,game#components_22;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_45,schedule#components_46,game#components_23;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_45,schedule#components_46,game#components_23;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_47,schedule#components_48,game#components_24;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_47,schedule#components_48,game#components_24;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_49,schedule#components_50,game#components_25;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_49,schedule#components_50,game#components_25;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_51,schedule#components_52,game#components_26;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_51,schedule#components_52,game#components_26;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_53,schedule#components_54,game#components_27;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_53,schedule#components_54,game#components_27;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+table([schedule#components_55,schedule#components_56,game#components_28;int(1..3)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([schedule#components_55,schedule#components_56,game#components_28;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)])
+
+--
+
+(flatten([schedule#components_1,schedule#components_2,schedule#components_3,schedule#components_4,schedule#components_5,schedule#components_6,schedule#components_7,schedule#components_8;int(1..)]) <lex flatten([schedule#components_9,schedule#components_10,schedule#components_11,schedule#components_12,schedule#components_13,schedule#components_14,schedule#components_15,schedule#components_16;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([schedule#components_1, schedule#components_2, schedule#components_3, schedule#components_4, schedule#components_5, schedule#components_6, schedule#components_7, schedule#components_8], [schedule#components_9, schedule#components_10, schedule#components_11, schedule#components_12, schedule#components_13, schedule#components_14, schedule#components_15, schedule#components_16])
+
+--
+
+(flatten([schedule#components_9,schedule#components_10,schedule#components_11,schedule#components_12,schedule#components_13,schedule#components_14,schedule#components_15,schedule#components_16;int(1..)]) <lex flatten([schedule#components_17,schedule#components_18,schedule#components_19,schedule#components_20,schedule#components_21,schedule#components_22,schedule#components_23,schedule#components_24;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([schedule#components_9, schedule#components_10, schedule#components_11, schedule#components_12, schedule#components_13, schedule#components_14, schedule#components_15, schedule#components_16], [schedule#components_17, schedule#components_18, schedule#components_19, schedule#components_20, schedule#components_21, schedule#components_22, schedule#components_23, schedule#components_24])
+
+--
+
+(flatten([schedule#components_17,schedule#components_18,schedule#components_19,schedule#components_20,schedule#components_21,schedule#components_22,schedule#components_23,schedule#components_24;int(1..)]) <lex flatten([schedule#components_25,schedule#components_26,schedule#components_27,schedule#components_28,schedule#components_29,schedule#components_30,schedule#components_31,schedule#components_32;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([schedule#components_17, schedule#components_18, schedule#components_19, schedule#components_20, schedule#components_21, schedule#components_22, schedule#components_23, schedule#components_24], [schedule#components_25, schedule#components_26, schedule#components_27, schedule#components_28, schedule#components_29, schedule#components_30, schedule#components_31, schedule#components_32])
+
+--
+
+(flatten([schedule#components_25,schedule#components_26,schedule#components_27,schedule#components_28,schedule#components_29,schedule#components_30,schedule#components_31,schedule#components_32;int(1..)]) <lex flatten([schedule#components_33,schedule#components_34,schedule#components_35,schedule#components_36,schedule#components_37,schedule#components_38,schedule#components_39,schedule#components_40;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([schedule#components_25, schedule#components_26, schedule#components_27, schedule#components_28, schedule#components_29, schedule#components_30, schedule#components_31, schedule#components_32], [schedule#components_33, schedule#components_34, schedule#components_35, schedule#components_36, schedule#components_37, schedule#components_38, schedule#components_39, schedule#components_40])
+
+--
+
+(flatten([schedule#components_33,schedule#components_34,schedule#components_35,schedule#components_36,schedule#components_37,schedule#components_38,schedule#components_39,schedule#components_40;int(1..)]) <lex flatten([schedule#components_41,schedule#components_42,schedule#components_43,schedule#components_44,schedule#components_45,schedule#components_46,schedule#components_47,schedule#components_48;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([schedule#components_33, schedule#components_34, schedule#components_35, schedule#components_36, schedule#components_37, schedule#components_38, schedule#components_39, schedule#components_40], [schedule#components_41, schedule#components_42, schedule#components_43, schedule#components_44, schedule#components_45, schedule#components_46, schedule#components_47, schedule#components_48])
+
+--
+
+(flatten([schedule#components_41,schedule#components_42,schedule#components_43,schedule#components_44,schedule#components_45,schedule#components_46,schedule#components_47,schedule#components_48;int(1..)]) <lex flatten([schedule#components_49,schedule#components_50,schedule#components_51,schedule#components_52,schedule#components_53,schedule#components_54,schedule#components_55,schedule#components_56;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([schedule#components_41, schedule#components_42, schedule#components_43, schedule#components_44, schedule#components_45, schedule#components_46, schedule#components_47, schedule#components_48], [schedule#components_49, schedule#components_50, schedule#components_51, schedule#components_52, schedule#components_53, schedule#components_54, schedule#components_55, schedule#components_56])
+
+--
+
+(flatten([schedule#components_1,schedule#components_2,schedule#components_9,schedule#components_10,schedule#components_17,schedule#components_18,schedule#components_25,schedule#components_26,schedule#components_33,schedule#components_34,schedule#components_41,schedule#components_42,schedule#components_49,schedule#components_50;int(1..)]) <=lex flatten([schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([schedule#components_1, schedule#components_2, schedule#components_9, schedule#components_10, schedule#components_17, schedule#components_18, schedule#components_25, schedule#components_26, schedule#components_33, schedule#components_34, schedule#components_41, schedule#components_42, schedule#components_49, schedule#components_50], [schedule#components_3, schedule#components_4, schedule#components_11, schedule#components_12, schedule#components_19, schedule#components_20, schedule#components_27, schedule#components_28, schedule#components_35, schedule#components_36, schedule#components_43, schedule#components_44, schedule#components_51, schedule#components_52])
+
+--
+
+(flatten([schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)]) <=lex flatten([schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([schedule#components_3, schedule#components_4, schedule#components_11, schedule#components_12, schedule#components_19, schedule#components_20, schedule#components_27, schedule#components_28, schedule#components_35, schedule#components_36, schedule#components_43, schedule#components_44, schedule#components_51, schedule#components_52], [schedule#components_5, schedule#components_6, schedule#components_13, schedule#components_14, schedule#components_21, schedule#components_22, schedule#components_29, schedule#components_30, schedule#components_37, schedule#components_38, schedule#components_45, schedule#components_46, schedule#components_53, schedule#components_54])
+
+--
+
+(flatten([schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)]) <=lex flatten([schedule#components_7,schedule#components_8,schedule#components_15,schedule#components_16,schedule#components_23,schedule#components_24,schedule#components_31,schedule#components_32,schedule#components_39,schedule#components_40,schedule#components_47,schedule#components_48,schedule#components_55,schedule#components_56;int(1..)]))
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([schedule#components_5, schedule#components_6, schedule#components_13, schedule#components_14, schedule#components_21, schedule#components_22, schedule#components_29, schedule#components_30, schedule#components_37, schedule#components_38, schedule#components_45, schedule#components_46, schedule#components_53, schedule#components_54], [schedule#components_7, schedule#components_8, schedule#components_15, schedule#components_16, schedule#components_23, schedule#components_24, schedule#components_31, schedule#components_32, schedule#components_39, schedule#components_40, schedule#components_47, schedule#components_48, schedule#components_55, schedule#components_56])
+
+--
+
+Final model:
+
+letting n be 8
+letting values be [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..6)]
+letting TEAMS be domain int(1..n)
+letting GAMES be domain int(1..((product([n,(n - 1);int(1..)]) / 2)))
+letting WEEKS be domain int(1..((n - 1)))
+letting PERIODS be domain int(1..((n / 2)))
+letting HOMEAWAY be domain int(1..2)
+find schedule: matrix indexed by [WEEKS, PERIODS, HOMEAWAY] of TEAMS
+find game: matrix indexed by [WEEKS, PERIODS] of GAMES
+letting values#components_1 be 1
+letting values#components_2 be 2
+letting values#components_3 be 1
+letting values#components_4 be 1
+letting values#components_5 be 3
+letting values#components_6 be 2
+letting values#components_7 be 1
+letting values#components_8 be 4
+letting values#components_9 be 3
+letting values#components_10 be 2
+letting values#components_11 be 3
+letting values#components_12 be 4
+letting values#components_13 be 2
+letting values#components_14 be 4
+letting values#components_15 be 5
+letting values#components_16 be 3
+letting values#components_17 be 4
+letting values#components_18 be 6
+find schedule#components_1: int(1..8)
+find schedule#components_2: int(1..8)
+find schedule#components_3: int(1..8)
+find schedule#components_4: int(1..8)
+find schedule#components_5: int(1..8)
+find schedule#components_6: int(1..8)
+find schedule#components_7: int(1..8)
+find schedule#components_8: int(1..8)
+find schedule#components_9: int(1..8)
+find schedule#components_10: int(1..8)
+find schedule#components_11: int(1..8)
+find schedule#components_12: int(1..8)
+find schedule#components_13: int(1..8)
+find schedule#components_14: int(1..8)
+find schedule#components_15: int(1..8)
+find schedule#components_16: int(1..8)
+find schedule#components_17: int(1..8)
+find schedule#components_18: int(1..8)
+find schedule#components_19: int(1..8)
+find schedule#components_20: int(1..8)
+find schedule#components_21: int(1..8)
+find schedule#components_22: int(1..8)
+find schedule#components_23: int(1..8)
+find schedule#components_24: int(1..8)
+find schedule#components_25: int(1..8)
+find schedule#components_26: int(1..8)
+find schedule#components_27: int(1..8)
+find schedule#components_28: int(1..8)
+find schedule#components_29: int(1..8)
+find schedule#components_30: int(1..8)
+find schedule#components_31: int(1..8)
+find schedule#components_32: int(1..8)
+find schedule#components_33: int(1..8)
+find schedule#components_34: int(1..8)
+find schedule#components_35: int(1..8)
+find schedule#components_36: int(1..8)
+find schedule#components_37: int(1..8)
+find schedule#components_38: int(1..8)
+find schedule#components_39: int(1..8)
+find schedule#components_40: int(1..8)
+find schedule#components_41: int(1..8)
+find schedule#components_42: int(1..8)
+find schedule#components_43: int(1..8)
+find schedule#components_44: int(1..8)
+find schedule#components_45: int(1..8)
+find schedule#components_46: int(1..8)
+find schedule#components_47: int(1..8)
+find schedule#components_48: int(1..8)
+find schedule#components_49: int(1..8)
+find schedule#components_50: int(1..8)
+find schedule#components_51: int(1..8)
+find schedule#components_52: int(1..8)
+find schedule#components_53: int(1..8)
+find schedule#components_54: int(1..8)
+find schedule#components_55: int(1..8)
+find schedule#components_56: int(1..8)
+find game#components_1: int(1..28)
+find game#components_2: int(1..28)
+find game#components_3: int(1..28)
+find game#components_4: int(1..28)
+find game#components_5: int(1..28)
+find game#components_6: int(1..28)
+find game#components_7: int(1..28)
+find game#components_8: int(1..28)
+find game#components_9: int(1..28)
+find game#components_10: int(1..28)
+find game#components_11: int(1..28)
+find game#components_12: int(1..28)
+find game#components_13: int(1..28)
+find game#components_14: int(1..28)
+find game#components_15: int(1..28)
+find game#components_16: int(1..28)
+find game#components_17: int(1..28)
+find game#components_18: int(1..28)
+find game#components_19: int(1..28)
+find game#components_20: int(1..28)
+find game#components_21: int(1..28)
+find game#components_22: int(1..28)
+find game#components_23: int(1..28)
+find game#components_24: int(1..28)
+find game#components_25: int(1..28)
+find game#components_26: int(1..28)
+find game#components_27: int(1..28)
+find game#components_28: int(1..28)
+
+such that
+
+and([__flat_alldiff([schedule#components_1, schedule#components_2, schedule#components_3, schedule#components_4, schedule#components_5, schedule#components_6, schedule#components_7, schedule#components_8]),__flat_alldiff([schedule#components_9, schedule#components_10, schedule#components_11, schedule#components_12, schedule#components_13, schedule#components_14, schedule#components_15, schedule#components_16]),__flat_alldiff([schedule#components_17, schedule#components_18, schedule#components_19, schedule#components_20, schedule#components_21, schedule#components_22, schedule#components_23, schedule#components_24]),__flat_alldiff([schedule#components_25, schedule#components_26, schedule#components_27, schedule#components_28, schedule#components_29, schedule#components_30, schedule#components_31, schedule#components_32]),__flat_alldiff([schedule#components_33, schedule#components_34, schedule#components_35, schedule#components_36, schedule#components_37, schedule#components_38, schedule#components_39, schedule#components_40]),__flat_alldiff([schedule#components_41, schedule#components_42, schedule#components_43, schedule#components_44, schedule#components_45, schedule#components_46, schedule#components_47, schedule#components_48]),__flat_alldiff([schedule#components_49, schedule#components_50, schedule#components_51, schedule#components_52, schedule#components_53, schedule#components_54, schedule#components_55, schedule#components_56]);int(1..)]),
+and([atMost([schedule#components_1,schedule#components_2,schedule#components_9,schedule#components_10,schedule#components_17,schedule#components_18,schedule#components_25,schedule#components_26,schedule#components_33,schedule#components_34,schedule#components_41,schedule#components_42,schedule#components_49,schedule#components_50;int(1..)], [2,2,2,2;int(1..)], [1,2,3,4;int(1..)]),atMost([schedule#components_3,schedule#components_4,schedule#components_11,schedule#components_12,schedule#components_19,schedule#components_20,schedule#components_27,schedule#components_28,schedule#components_35,schedule#components_36,schedule#components_43,schedule#components_44,schedule#components_51,schedule#components_52;int(1..)], [2,2,2,2;int(1..)], [1,2,3,4;int(1..)]),atMost([schedule#components_5,schedule#components_6,schedule#components_13,schedule#components_14,schedule#components_21,schedule#components_22,schedule#components_29,schedule#components_30,schedule#components_37,schedule#components_38,schedule#components_45,schedule#components_46,schedule#components_53,schedule#components_54;int(1..)], [2,2,2,2;int(1..)], [1,2,3,4;int(1..)]),atMost([schedule#components_7,schedule#components_8,schedule#components_15,schedule#components_16,schedule#components_23,schedule#components_24,schedule#components_31,schedule#components_32,schedule#components_39,schedule#components_40,schedule#components_47,schedule#components_48,schedule#components_55,schedule#components_56;int(1..)], [2,2,2,2;int(1..)], [1,2,3,4;int(1..)]);int(1..)]),
+__flat_alldiff([game#components_1, game#components_2, game#components_3, game#components_4, game#components_5, game#components_6, game#components_7, game#components_8, game#components_9, game#components_10, game#components_11, game#components_12, game#components_13, game#components_14, game#components_15, game#components_16, game#components_17, game#components_18, game#components_19, game#components_20, game#components_21, game#components_22, game#components_23, game#components_24, game#components_25, game#components_26, game#components_27, game#components_28]),
+and([table([schedule#components_1,schedule#components_2,game#components_1;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_3,schedule#components_4,game#components_2;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_5,schedule#components_6,game#components_3;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_7,schedule#components_8,game#components_4;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_9,schedule#components_10,game#components_5;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_11,schedule#components_12,game#components_6;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_13,schedule#components_14,game#components_7;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_15,schedule#components_16,game#components_8;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_17,schedule#components_18,game#components_9;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_19,schedule#components_20,game#components_10;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_21,schedule#components_22,game#components_11;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_23,schedule#components_24,game#components_12;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_25,schedule#components_26,game#components_13;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_27,schedule#components_28,game#components_14;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_29,schedule#components_30,game#components_15;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_31,schedule#components_32,game#components_16;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_33,schedule#components_34,game#components_17;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_35,schedule#components_36,game#components_18;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_37,schedule#components_38,game#components_19;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_39,schedule#components_40,game#components_20;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_41,schedule#components_42,game#components_21;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_43,schedule#components_44,game#components_22;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_45,schedule#components_46,game#components_23;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_47,schedule#components_48,game#components_24;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_49,schedule#components_50,game#components_25;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_51,schedule#components_52,game#components_26;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_53,schedule#components_54,game#components_27;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]),table([schedule#components_55,schedule#components_56,game#components_28;int(1..)], [[1,2,1;int(1..3)],[1,3,2;int(1..3)],[1,4,3;int(1..3)],[2,3,4;int(1..3)],[2,4,5;int(1..3)],[3,4,6;int(1..3)];int(1..)]);int(1..)]),
+and([SumGeq([-1, schedule#components_2], schedule#components_1),SumGeq([-1, schedule#components_4], schedule#components_3),SumGeq([-1, schedule#components_6], schedule#components_5),SumGeq([-1, schedule#components_8], schedule#components_7),SumGeq([-1, schedule#components_10], schedule#components_9),SumGeq([-1, schedule#components_12], schedule#components_11),SumGeq([-1, schedule#components_14], schedule#components_13),SumGeq([-1, schedule#components_16], schedule#components_15),SumGeq([-1, schedule#components_18], schedule#components_17),SumGeq([-1, schedule#components_20], schedule#components_19),SumGeq([-1, schedule#components_22], schedule#components_21),SumGeq([-1, schedule#components_24], schedule#components_23),SumGeq([-1, schedule#components_26], schedule#components_25),SumGeq([-1, schedule#components_28], schedule#components_27),SumGeq([-1, schedule#components_30], schedule#components_29),SumGeq([-1, schedule#components_32], schedule#components_31),SumGeq([-1, schedule#components_34], schedule#components_33),SumGeq([-1, schedule#components_36], schedule#components_35),SumGeq([-1, schedule#components_38], schedule#components_37),SumGeq([-1, schedule#components_40], schedule#components_39),SumGeq([-1, schedule#components_42], schedule#components_41),SumGeq([-1, schedule#components_44], schedule#components_43),SumGeq([-1, schedule#components_46], schedule#components_45),SumGeq([-1, schedule#components_48], schedule#components_47),SumGeq([-1, schedule#components_50], schedule#components_49),SumGeq([-1, schedule#components_52], schedule#components_51),SumGeq([-1, schedule#components_54], schedule#components_53),SumGeq([-1, schedule#components_56], schedule#components_55);int(1..)]),
+and([FlatLexLt([schedule#components_1, schedule#components_2, schedule#components_3, schedule#components_4, schedule#components_5, schedule#components_6, schedule#components_7, schedule#components_8], [schedule#components_9, schedule#components_10, schedule#components_11, schedule#components_12, schedule#components_13, schedule#components_14, schedule#components_15, schedule#components_16]),FlatLexLt([schedule#components_9, schedule#components_10, schedule#components_11, schedule#components_12, schedule#components_13, schedule#components_14, schedule#components_15, schedule#components_16], [schedule#components_17, schedule#components_18, schedule#components_19, schedule#components_20, schedule#components_21, schedule#components_22, schedule#components_23, schedule#components_24]),FlatLexLt([schedule#components_17, schedule#components_18, schedule#components_19, schedule#components_20, schedule#components_21, schedule#components_22, schedule#components_23, schedule#components_24], [schedule#components_25, schedule#components_26, schedule#components_27, schedule#components_28, schedule#components_29, schedule#components_30, schedule#components_31, schedule#components_32]),FlatLexLt([schedule#components_25, schedule#components_26, schedule#components_27, schedule#components_28, schedule#components_29, schedule#components_30, schedule#components_31, schedule#components_32], [schedule#components_33, schedule#components_34, schedule#components_35, schedule#components_36, schedule#components_37, schedule#components_38, schedule#components_39, schedule#components_40]),FlatLexLt([schedule#components_33, schedule#components_34, schedule#components_35, schedule#components_36, schedule#components_37, schedule#components_38, schedule#components_39, schedule#components_40], [schedule#components_41, schedule#components_42, schedule#components_43, schedule#components_44, schedule#components_45, schedule#components_46, schedule#components_47, schedule#components_48]),FlatLexLt([schedule#components_41, schedule#components_42, schedule#components_43, schedule#components_44, schedule#components_45, schedule#components_46, schedule#components_47, schedule#components_48], [schedule#components_49, schedule#components_50, schedule#components_51, schedule#components_52, schedule#components_53, schedule#components_54, schedule#components_55, schedule#components_56]);int(1..)]),
+and([FlatLexLeq([schedule#components_1, schedule#components_2, schedule#components_9, schedule#components_10, schedule#components_17, schedule#components_18, schedule#components_25, schedule#components_26, schedule#components_33, schedule#components_34, schedule#components_41, schedule#components_42, schedule#components_49, schedule#components_50], [schedule#components_3, schedule#components_4, schedule#components_11, schedule#components_12, schedule#components_19, schedule#components_20, schedule#components_27, schedule#components_28, schedule#components_35, schedule#components_36, schedule#components_43, schedule#components_44, schedule#components_51, schedule#components_52]),FlatLexLeq([schedule#components_3, schedule#components_4, schedule#components_11, schedule#components_12, schedule#components_19, schedule#components_20, schedule#components_27, schedule#components_28, schedule#components_35, schedule#components_36, schedule#components_43, schedule#components_44, schedule#components_51, schedule#components_52], [schedule#components_5, schedule#components_6, schedule#components_13, schedule#components_14, schedule#components_21, schedule#components_22, schedule#components_29, schedule#components_30, schedule#components_37, schedule#components_38, schedule#components_45, schedule#components_46, schedule#components_53, schedule#components_54]),FlatLexLeq([schedule#components_5, schedule#components_6, schedule#components_13, schedule#components_14, schedule#components_21, schedule#components_22, schedule#components_29, schedule#components_30, schedule#components_37, schedule#components_38, schedule#components_45, schedule#components_46, schedule#components_53, schedule#components_54], [schedule#components_7, schedule#components_8, schedule#components_15, schedule#components_16, schedule#components_23, schedule#components_24, schedule#components_31, schedule#components_32, schedule#components_39, schedule#components_40, schedule#components_47, schedule#components_48, schedule#components_55, schedule#components_56]);int(1..)])
+

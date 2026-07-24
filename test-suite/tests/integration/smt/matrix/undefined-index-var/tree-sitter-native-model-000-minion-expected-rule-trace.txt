@@ -1,0 +1,91 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..2)] of bool
+find x: int(1..3)
+
+such that
+
+m[x]
+
+--
+
+m[x]
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+m[x]
+new variables:
+  find m#components_1: bool
+  find m#components_2: bool
+
+--
+
+m[x]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[x]) @ __inDomain(x,int(1..2))}
+
+--
+
+{SafeIndex(m,[x]) @ __inDomain(x,int(1..2))}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m,[x]),__inDomain(x,int(1..2));int(1..)])
+
+--
+
+SafeIndex(m,[x])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,(x - 1);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(x - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(x - 1);int(1..)])
+
+--
+
+product([(x - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(x - 1)
+
+--
+
+(x - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x,-(1);int(1..)])
+
+--
+
+sum([sum([x,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([x,-1,1;int(1..)])
+
+--
+
+sum([x;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+x
+
+--
+
+SafeIndex([m#components_1,m#components_2;int(1..)],[x])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([m#components_1,m#components_2],x,true)
+
+--
+
+__inDomain(x,int(1..2))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(x,[1,2])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..2)] of bool
+find x: int(1..3)
+find m#components_1: bool
+find m#components_2: bool
+
+such that
+
+and([__minion_element_one([m#components_1,m#components_2],x,true),__minion_w_inintervalset(x,[1,2]);int(1..)])
+

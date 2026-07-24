@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find a: set (minSize 1) of int(1..2)
+find b: set (minSize 1) of int(1..2)
+
+such that
+
+a = b
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#packed_1: int(0..2)
+
+--
+
+a = b
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+a = b
+new variables:
+  find b#packed_1: int(0..2)
+
+--
+
+a = b
+   ~~> eq_packed ([("ReprGeneral", 9500)])
+a#packed_1 = b#packed_1
+
+--
+
+Final model:
+
+find a: set (minSize 1) of int(1..2)
+find b: set (minSize 1) of int(1..2)
+find a#packed_1: int(0..2)
+find b#packed_1: int(0..2)
+
+such that
+
+a#packed_1 = b#packed_1
+

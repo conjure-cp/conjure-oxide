@@ -1,0 +1,98 @@
+Model before rewriting:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set (size 1) of int(1..3)
+
+such that
+
+and([(c subsetEq b),!((c subsetEq a));int(1..)])
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#occurrence_1: bool
+  find c#occurrence_2: bool
+  find c#occurrence_3: bool
+new constraints:
+  sum([toInt(c#occurrence_1),toInt(c#occurrence_2),toInt(c#occurrence_3);int(1..)]) = 1
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+
+--
+
+(c subsetEq {1,2})
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(c#occurrence_1),1 in {1,2};int(1..)]),or([!(c#occurrence_2),2 in {1,2};int(1..)]),or([!(c#occurrence_3),3 in {1,2};int(1..)]);int(1..)])
+
+--
+
+(c subsetEq {2,3})
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(c#occurrence_1),1 in {2,3};int(1..)]),or([!(c#occurrence_2),2 in {2,3};int(1..)]),or([!(c#occurrence_3),3 in {2,3};int(1..)]);int(1..)])
+
+--
+
+and([or([!(c#occurrence_3);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+or([!(c#occurrence_3);int(1..)])
+
+--
+
+or([!(c#occurrence_3);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+!(c#occurrence_3)
+
+--
+
+and([or([!(c#occurrence_1);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+or([!(c#occurrence_1);int(1..)])
+
+--
+
+or([!(c#occurrence_1);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+!(c#occurrence_1)
+
+--
+
+!(!(c#occurrence_1))
+   ~~> remove_double_negation ([("Base", 8400)])
+c#occurrence_1
+
+--
+
+sum([toInt(c#occurrence_1),toInt(c#occurrence_2),toInt(c#occurrence_3);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([c#occurrence_1, c#occurrence_2, c#occurrence_3], 1),SumGeq([c#occurrence_1, c#occurrence_2, c#occurrence_3], 1);int(1..)])
+
+--
+
+!(c#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(c#occurrence_3,false)
+
+--
+
+Final model:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set (size 1) of int(1..3)
+find c#occurrence_1: bool
+find c#occurrence_2: bool
+find c#occurrence_3: bool
+
+such that
+
+and([WatchedLiteral(c#occurrence_3,false),c#occurrence_1;int(1..)]),
+and([SumLeq([c#occurrence_1, c#occurrence_2, c#occurrence_3], 1),SumGeq([c#occurrence_1, c#occurrence_2, c#occurrence_3], 1);int(1..)])
+

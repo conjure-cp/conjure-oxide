@@ -1,0 +1,92 @@
+Model before rewriting:
+
+find s: set of int(1..2)
+
+such that
+
+|s| in s
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#occurrence_1: bool
+  find s#occurrence_2: bool
+new constraints:
+  and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+|s| in s
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([|s| = 1,s#occurrence_1;int(1..)]),and([|s| = 2,s#occurrence_2;int(1..)]);int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_occurrence ([("ReprGeneral", 9500)])
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_occurrence ([("ReprGeneral", 9500)])
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([s#occurrence_1, s#occurrence_2], 0)
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([s#occurrence_1, s#occurrence_2], 2)
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([s#occurrence_1, s#occurrence_2], 1),SumGeq([s#occurrence_1, s#occurrence_2], 1);int(1..)])
+
+--
+
+and([and([SumLeq([s#occurrence_1, s#occurrence_2], 1),SumGeq([s#occurrence_1, s#occurrence_2], 1);int(1..)]),s#occurrence_1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([s#occurrence_1, s#occurrence_2], 1),SumGeq([s#occurrence_1, s#occurrence_2], 1),s#occurrence_1;int(1..)])
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([s#occurrence_1, s#occurrence_2], 2),SumGeq([s#occurrence_1, s#occurrence_2], 2);int(1..)])
+
+--
+
+and([and([SumLeq([s#occurrence_1, s#occurrence_2], 2),SumGeq([s#occurrence_1, s#occurrence_2], 2);int(1..)]),s#occurrence_2;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([s#occurrence_1, s#occurrence_2], 2),SumGeq([s#occurrence_1, s#occurrence_2], 2),s#occurrence_2;int(1..)])
+
+--
+
+Final model:
+
+find s: set of int(1..2)
+find s#occurrence_1: bool
+find s#occurrence_2: bool
+
+such that
+
+or([and([SumLeq([s#occurrence_1, s#occurrence_2], 1),SumGeq([s#occurrence_1, s#occurrence_2], 1),s#occurrence_1;int(1..)]),and([SumLeq([s#occurrence_1, s#occurrence_2], 2),SumGeq([s#occurrence_1, s#occurrence_2], 2),s#occurrence_2;int(1..)]);int(1..)]),
+and([SumGeq([s#occurrence_1, s#occurrence_2], 0),SumLeq([s#occurrence_1, s#occurrence_2], 2);int(1..)])
+

@@ -1,0 +1,126 @@
+Model before rewriting:
+
+find a: set (maxSize 2) of int(1..2)
+find b: set (maxSize 2) of int(1..2)
+
+such that
+
+(a subsetEq b)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#occurrence_1: bool
+  find a#occurrence_2: bool
+new constraints:
+  and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) >= 0,sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#occurrence_1: bool
+  find b#occurrence_2: bool
+new constraints:
+  and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+(a subsetEq b)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(a#occurrence_1),1 in b;int(1..)]),or([!(a#occurrence_2),2 in b;int(1..)]);int(1..)])
+
+--
+
+1 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([1 = 1,b#occurrence_1;int(1..)]),and([1 = 2,b#occurrence_2;int(1..)]);int(1..)])
+
+--
+
+2 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([2 = 1,b#occurrence_1;int(1..)]),and([2 = 2,b#occurrence_2;int(1..)]);int(1..)])
+
+--
+
+or([and([b#occurrence_1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([b#occurrence_1;int(1..)])
+
+--
+
+or([and([b#occurrence_2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([b#occurrence_2;int(1..)])
+
+--
+
+and([b#occurrence_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+b#occurrence_1
+
+--
+
+and([b#occurrence_2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+b#occurrence_2
+
+--
+
+sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([a#occurrence_1, a#occurrence_2], 0)
+
+--
+
+sum([toInt(a#occurrence_1),toInt(a#occurrence_2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([a#occurrence_1, a#occurrence_2], 2)
+
+--
+
+sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([b#occurrence_1, b#occurrence_2], 0)
+
+--
+
+sum([toInt(b#occurrence_1),toInt(b#occurrence_2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([b#occurrence_1, b#occurrence_2], 2)
+
+--
+
+!(a#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(a#occurrence_1,false)
+
+--
+
+!(a#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(a#occurrence_2,false)
+
+--
+
+Final model:
+
+find a: set (maxSize 2) of int(1..2)
+find b: set (maxSize 2) of int(1..2)
+find a#occurrence_1: bool
+find a#occurrence_2: bool
+find b#occurrence_1: bool
+find b#occurrence_2: bool
+
+such that
+
+and([or([WatchedLiteral(a#occurrence_1,false),b#occurrence_1;int(1..)]),or([WatchedLiteral(a#occurrence_2,false),b#occurrence_2;int(1..)]);int(1..)]),
+and([SumGeq([a#occurrence_1, a#occurrence_2], 0),SumLeq([a#occurrence_1, a#occurrence_2], 2);int(1..)]),
+and([SumGeq([b#occurrence_1, b#occurrence_2], 0),SumLeq([b#occurrence_1, b#occurrence_2], 2);int(1..)])
+

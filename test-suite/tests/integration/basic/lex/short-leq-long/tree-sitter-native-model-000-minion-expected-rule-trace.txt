@@ -1,0 +1,49 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..2)] of int(1..2)
+find y: matrix indexed by [int(1..3)] of int(1..2)
+
+such that
+
+(x <=lex y)
+
+--
+
+(x <=lex y)
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+(x <=lex y)
+new variables:
+  find x#components_1: int(1..2)
+  find x#components_2: int(1..2)
+  find y#components_1: int(1..2)
+  find y#components_2: int(1..2)
+  find y#components_3: int(1..2)
+
+--
+
+(x <=lex y)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+([x#components_1,x#components_2;int(1..2)] <=lex [y#components_1,y#components_2,y#components_3;int(1..3)])
+
+--
+
+([x#components_1,x#components_2;int(1..2)] <=lex [y#components_1,y#components_2,y#components_3;int(1..3)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#components_1, x#components_2], [y#components_1, y#components_2])
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..2)] of int(1..2)
+find y: matrix indexed by [int(1..3)] of int(1..2)
+find x#components_1: int(1..2)
+find x#components_2: int(1..2)
+find y#components_1: int(1..2)
+find y#components_2: int(1..2)
+find y#components_3: int(1..2)
+
+such that
+
+FlatLexLeq([x#components_1, x#components_2], [y#components_1, y#components_2])
+

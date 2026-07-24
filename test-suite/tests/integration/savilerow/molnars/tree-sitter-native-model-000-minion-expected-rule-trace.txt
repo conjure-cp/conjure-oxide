@@ -1,0 +1,601 @@
+Model before rewriting:
+
+letting k be 3
+letting dommax be 4
+letting RANGE be domain int(0..((k - 1)))
+find M: matrix indexed by [RANGE, RANGE] of int((-(dommax))..-2, 0, 2..dommax)
+find det: int(-1, 1)
+find squaredet: int(-1, 1)
+
+such that
+
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
+and([ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]),
+and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
+true
+
+--
+
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
+and([ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]),
+and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
+true
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
+and([ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]),
+and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
+true
+new variables:
+  find M#components_1: int(-4..-2, 0, 2..4)
+  find M#components_2: int(-4..-2, 0, 2..4)
+  find M#components_3: int(-4..-2, 0, 2..4)
+  find M#components_4: int(-4..-2, 0, 2..4)
+  find M#components_5: int(-4..-2, 0, 2..4)
+  find M#components_6: int(-4..-2, 0, 2..4)
+  find M#components_7: int(-4..-2, 0, 2..4)
+  find M#components_8: int(-4..-2, 0, 2..4)
+  find M#components_9: int(-4..-2, 0, 2..4)
+
+--
+
+[ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(M[0,..] <=lex M[1,..]),(M[1,..] <=lex M[2,..]);int(1..)]
+
+--
+
+M[0,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M,[0,..])
+
+--
+
+M[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M,[1,..])
+
+--
+
+M[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M,[1,..])
+
+--
+
+M[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M,[2,..])
+
+--
+
+SafeSlice(M,[0,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[M#components_1,M#components_2,M#components_3;int(1..)]
+
+--
+
+SafeSlice(M,[1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[M#components_4,M#components_5,M#components_6;int(1..)]
+
+--
+
+SafeSlice(M,[1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[M#components_4,M#components_5,M#components_6;int(1..)]
+
+--
+
+SafeSlice(M,[2,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[M#components_7,M#components_8,M#components_9;int(1..)]
+
+--
+
+[ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(M[..,0] <=lex M[..,1]),(M[..,1] <=lex M[..,2]);int(1..)]
+
+--
+
+M[..,0]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M,[..,0])
+
+--
+
+M[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M,[..,1])
+
+--
+
+M[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M,[..,1])
+
+--
+
+M[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M,[..,2])
+
+--
+
+SafeSlice(M,[..,0])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[M#components_1,M#components_4,M#components_7;int(1..)]
+
+--
+
+SafeSlice(M,[..,1])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[M#components_2,M#components_5,M#components_8;int(1..)]
+
+--
+
+SafeSlice(M,[..,1])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[M#components_2,M#components_5,M#components_8;int(1..)]
+
+--
+
+SafeSlice(M,[..,2])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[M#components_3,M#components_6,M#components_9;int(1..)]
+
+--
+
+[ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([1,product([M#components_1,M#components_5,M#components_9;int(1..)]);int(1..)]),product([-1,product([M#components_1,M#components_6,M#components_8;int(1..)]);int(1..)]),product([-1,product([M#components_2,M#components_4,M#components_9;int(1..)]);int(1..)]),product([1,product([M#components_2,M#components_6,M#components_7;int(1..)]);int(1..)]),product([1,product([M#components_3,M#components_4,M#components_8;int(1..)]);int(1..)]),product([-1,product([M#components_3,M#components_5,M#components_7;int(1..)]);int(1..)]);int(1..)]
+
+--
+
+product([1,product([M#components_1,M#components_5,M#components_9;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M#components_1,M#components_5,M#components_9;int(1..)])
+
+--
+
+product([-1,product([M#components_1,M#components_6,M#components_8;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#components_1,M#components_6,M#components_8;int(1..)])
+
+--
+
+product([-1,product([M#components_2,M#components_4,M#components_9;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#components_2,M#components_4,M#components_9;int(1..)])
+
+--
+
+product([1,product([M#components_2,M#components_6,M#components_7;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M#components_2,M#components_6,M#components_7;int(1..)])
+
+--
+
+product([1,product([M#components_3,M#components_4,M#components_8;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M#components_3,M#components_4,M#components_8;int(1..)])
+
+--
+
+product([-1,product([M#components_3,M#components_5,M#components_7;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#components_3,M#components_5,M#components_7;int(1..)])
+
+--
+
+product([1,M#components_1,M#components_5,M#components_9;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_1,M#components_5,M#components_9;int(1..)])
+
+--
+
+product([1,M#components_2,M#components_6,M#components_7;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_2,M#components_6,M#components_7;int(1..)])
+
+--
+
+product([1,M#components_3,M#components_4,M#components_8;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_3,M#components_4,M#components_8;int(1..)])
+
+--
+
+sum([product([M#components_1,M#components_5,M#components_9;int(1..)]),product([-1,M#components_1,M#components_6,M#components_8;int(1..)]),product([-1,M#components_2,M#components_4,M#components_9;int(1..)]),product([M#components_2,M#components_6,M#components_7;int(1..)]),product([M#components_3,M#components_4,M#components_8;int(1..)]),product([-1,M#components_3,M#components_5,M#components_7;int(1..)]);int(1..)]) = det
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det);int(1..)])
+new variables:
+  findAux __0: int(-64..64)
+  findAux __1: int(-64..64)
+  findAux __2: int(-64..64)
+  findAux __3: int(-64..64)
+  findAux __4: int(-64..64)
+  findAux __5: int(-64..64)
+new constraints:
+  __0 =aux product([M#components_1,M#components_5,M#components_9;int(1..)])
+  __1 =aux product([M#components_6,M#components_8,M#components_1;int(1..)])
+  __2 =aux product([M#components_4,M#components_9,M#components_2;int(1..)])
+  __3 =aux product([M#components_2,M#components_6,M#components_7;int(1..)])
+  __4 =aux product([M#components_3,M#components_4,M#components_8;int(1..)])
+  __5 =aux product([M#components_5,M#components_7,M#components_3;int(1..)])
+
+--
+
+__0 =aux product([M#components_1,M#components_5,M#components_9;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_9,__6,__0)
+new variables:
+  findAux __6: int(-16..16)
+new constraints:
+  FlatProductEq(M#components_5,M#components_1,__6)
+
+--
+
+__1 =aux product([M#components_6,M#components_8,M#components_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_1,__7,__1)
+new variables:
+  findAux __7: int(-16..16)
+new constraints:
+  FlatProductEq(M#components_8,M#components_6,__7)
+
+--
+
+__2 =aux product([M#components_4,M#components_9,M#components_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_2,__8,__2)
+new variables:
+  findAux __8: int(-16..16)
+new constraints:
+  FlatProductEq(M#components_9,M#components_4,__8)
+
+--
+
+__3 =aux product([M#components_2,M#components_6,M#components_7;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_7,__9,__3)
+new variables:
+  findAux __9: int(-16..16)
+new constraints:
+  FlatProductEq(M#components_6,M#components_2,__9)
+
+--
+
+__4 =aux product([M#components_3,M#components_4,M#components_8;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_8,__10,__4)
+new variables:
+  findAux __10: int(-16..16)
+new constraints:
+  FlatProductEq(M#components_4,M#components_3,__10)
+
+--
+
+__5 =aux product([M#components_5,M#components_7,M#components_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_3,__11,__5)
+new variables:
+  findAux __11: int(-16..16)
+new constraints:
+  FlatProductEq(M#components_7,M#components_5,__11)
+
+--
+
+[ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([1,product([product([M#components_1,M#components_1;int(1..)]),product([M#components_5,M#components_5;int(1..)]),product([M#components_9,M#components_9;int(1..)]);int(1..)]);int(1..)]),product([-1,product([product([M#components_1,M#components_1;int(1..)]),product([M#components_6,M#components_6;int(1..)]),product([M#components_8,M#components_8;int(1..)]);int(1..)]);int(1..)]),product([-1,product([product([M#components_2,M#components_2;int(1..)]),product([M#components_4,M#components_4;int(1..)]),product([M#components_9,M#components_9;int(1..)]);int(1..)]);int(1..)]),product([1,product([product([M#components_2,M#components_2;int(1..)]),product([M#components_6,M#components_6;int(1..)]),product([M#components_7,M#components_7;int(1..)]);int(1..)]);int(1..)]),product([1,product([product([M#components_3,M#components_3;int(1..)]),product([M#components_4,M#components_4;int(1..)]),product([M#components_8,M#components_8;int(1..)]);int(1..)]);int(1..)]),product([-1,product([product([M#components_3,M#components_3;int(1..)]),product([M#components_5,M#components_5;int(1..)]),product([M#components_7,M#components_7;int(1..)]);int(1..)]);int(1..)]);int(1..)]
+
+--
+
+product([1,product([product([M#components_1,M#components_1;int(1..)]),product([M#components_5,M#components_5;int(1..)]),product([M#components_9,M#components_9;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M#components_1,M#components_1,M#components_5,M#components_5,M#components_9,M#components_9;int(1..)])
+
+--
+
+product([-1,product([product([M#components_1,M#components_1;int(1..)]),product([M#components_6,M#components_6;int(1..)]),product([M#components_8,M#components_8;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#components_1,M#components_1,M#components_6,M#components_6,M#components_8,M#components_8;int(1..)])
+
+--
+
+product([-1,product([product([M#components_2,M#components_2;int(1..)]),product([M#components_4,M#components_4;int(1..)]),product([M#components_9,M#components_9;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#components_2,M#components_2,M#components_4,M#components_4,M#components_9,M#components_9;int(1..)])
+
+--
+
+product([1,product([product([M#components_2,M#components_2;int(1..)]),product([M#components_6,M#components_6;int(1..)]),product([M#components_7,M#components_7;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M#components_2,M#components_2,M#components_6,M#components_6,M#components_7,M#components_7;int(1..)])
+
+--
+
+product([1,product([product([M#components_3,M#components_3;int(1..)]),product([M#components_4,M#components_4;int(1..)]),product([M#components_8,M#components_8;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([1,M#components_3,M#components_3,M#components_4,M#components_4,M#components_8,M#components_8;int(1..)])
+
+--
+
+product([-1,product([product([M#components_3,M#components_3;int(1..)]),product([M#components_5,M#components_5;int(1..)]),product([M#components_7,M#components_7;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#components_3,M#components_3,M#components_5,M#components_5,M#components_7,M#components_7;int(1..)])
+
+--
+
+product([1,M#components_1,M#components_1,M#components_5,M#components_5,M#components_9,M#components_9;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_1,M#components_1,M#components_5,M#components_5,M#components_9,M#components_9;int(1..)])
+
+--
+
+product([1,M#components_2,M#components_2,M#components_6,M#components_6,M#components_7,M#components_7;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_2,M#components_2,M#components_6,M#components_6,M#components_7,M#components_7;int(1..)])
+
+--
+
+product([1,M#components_3,M#components_3,M#components_4,M#components_4,M#components_8,M#components_8;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([M#components_3,M#components_3,M#components_4,M#components_4,M#components_8,M#components_8;int(1..)])
+
+--
+
+sum([product([M#components_1,M#components_1,M#components_5,M#components_5,M#components_9,M#components_9;int(1..)]),product([-1,M#components_1,M#components_1,M#components_6,M#components_6,M#components_8,M#components_8;int(1..)]),product([-1,M#components_2,M#components_2,M#components_4,M#components_4,M#components_9,M#components_9;int(1..)]),product([M#components_2,M#components_2,M#components_6,M#components_6,M#components_7,M#components_7;int(1..)]),product([M#components_3,M#components_3,M#components_4,M#components_4,M#components_8,M#components_8;int(1..)]),product([-1,M#components_3,M#components_3,M#components_5,M#components_5,M#components_7,M#components_7;int(1..)]);int(1..)]) = squaredet
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__12, __13, __14, __15, __16, __17],squaredet),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__12, __13, __14, __15, __16, __17],squaredet);int(1..)])
+new variables:
+  findAux __12: int(-4096..4096)
+  findAux __13: int(-4096..4096)
+  findAux __14: int(-4096..4096)
+  findAux __15: int(-4096..4096)
+  findAux __16: int(-4096..4096)
+  findAux __17: int(-4096..4096)
+new constraints:
+  __12 =aux product([M#components_1,M#components_1,M#components_5,M#components_5,M#components_9,M#components_9;int(1..)])
+  __13 =aux product([M#components_1,M#components_6,M#components_6,M#components_8,M#components_8,M#components_1;int(1..)])
+  __14 =aux product([M#components_2,M#components_4,M#components_4,M#components_9,M#components_9,M#components_2;int(1..)])
+  __15 =aux product([M#components_2,M#components_2,M#components_6,M#components_6,M#components_7,M#components_7;int(1..)])
+  __16 =aux product([M#components_3,M#components_3,M#components_4,M#components_4,M#components_8,M#components_8;int(1..)])
+  __17 =aux product([M#components_3,M#components_5,M#components_5,M#components_7,M#components_7,M#components_3;int(1..)])
+
+--
+
+__12 =aux product([M#components_1,M#components_1,M#components_5,M#components_5,M#components_9,M#components_9;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_9,__21,__12)
+new variables:
+  findAux __18: int(-16..16)
+  findAux __19: int(-64..64)
+  findAux __20: int(-256..256)
+  findAux __21: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#components_9,M#components_5,__18)
+  FlatProductEq(__18,M#components_5,__19)
+  FlatProductEq(__19,M#components_1,__20)
+  FlatProductEq(__20,M#components_1,__21)
+
+--
+
+__13 =aux product([M#components_1,M#components_6,M#components_6,M#components_8,M#components_8,M#components_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_1,__25,__13)
+new variables:
+  findAux __22: int(-16..16)
+  findAux __23: int(-64..64)
+  findAux __24: int(-256..256)
+  findAux __25: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#components_8,M#components_8,__22)
+  FlatProductEq(__22,M#components_6,__23)
+  FlatProductEq(__23,M#components_6,__24)
+  FlatProductEq(__24,M#components_1,__25)
+
+--
+
+__14 =aux product([M#components_2,M#components_4,M#components_4,M#components_9,M#components_9,M#components_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_2,__29,__14)
+new variables:
+  findAux __26: int(-16..16)
+  findAux __27: int(-64..64)
+  findAux __28: int(-256..256)
+  findAux __29: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#components_9,M#components_9,__26)
+  FlatProductEq(__26,M#components_4,__27)
+  FlatProductEq(__27,M#components_4,__28)
+  FlatProductEq(__28,M#components_2,__29)
+
+--
+
+__15 =aux product([M#components_2,M#components_2,M#components_6,M#components_6,M#components_7,M#components_7;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_7,__33,__15)
+new variables:
+  findAux __30: int(-16..16)
+  findAux __31: int(-64..64)
+  findAux __32: int(-256..256)
+  findAux __33: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#components_7,M#components_6,__30)
+  FlatProductEq(__30,M#components_6,__31)
+  FlatProductEq(__31,M#components_2,__32)
+  FlatProductEq(__32,M#components_2,__33)
+
+--
+
+__16 =aux product([M#components_3,M#components_3,M#components_4,M#components_4,M#components_8,M#components_8;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_8,__37,__16)
+new variables:
+  findAux __34: int(-16..16)
+  findAux __35: int(-64..64)
+  findAux __36: int(-256..256)
+  findAux __37: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#components_8,M#components_4,__34)
+  FlatProductEq(__34,M#components_4,__35)
+  FlatProductEq(__35,M#components_3,__36)
+  FlatProductEq(__36,M#components_3,__37)
+
+--
+
+__17 =aux product([M#components_3,M#components_5,M#components_5,M#components_7,M#components_7,M#components_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(M#components_3,__41,__17)
+new variables:
+  findAux __38: int(-16..16)
+  findAux __39: int(-64..64)
+  findAux __40: int(-256..256)
+  findAux __41: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#components_7,M#components_7,__38)
+  FlatProductEq(__38,M#components_5,__39)
+  FlatProductEq(__39,M#components_5,__40)
+  FlatProductEq(__40,M#components_3,__41)
+
+--
+
+([M#components_1,M#components_2,M#components_3;int(1..)] <=lex [M#components_4,M#components_5,M#components_6;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([M#components_1, M#components_2, M#components_3], [M#components_4, M#components_5, M#components_6])
+
+--
+
+([M#components_4,M#components_5,M#components_6;int(1..)] <=lex [M#components_7,M#components_8,M#components_9;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([M#components_4, M#components_5, M#components_6], [M#components_7, M#components_8, M#components_9])
+
+--
+
+([M#components_1,M#components_4,M#components_7;int(1..)] <=lex [M#components_2,M#components_5,M#components_8;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([M#components_1, M#components_4, M#components_7], [M#components_2, M#components_5, M#components_8])
+
+--
+
+([M#components_2,M#components_5,M#components_8;int(1..)] <=lex [M#components_3,M#components_6,M#components_9;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([M#components_2, M#components_5, M#components_8], [M#components_3, M#components_6, M#components_9])
+
+--
+
+Final model:
+
+letting k be 3
+letting dommax be 4
+letting RANGE be domain int(0..((k - 1)))
+find M: matrix indexed by [RANGE, RANGE] of int((-(dommax))..-2, 0, 2..dommax)
+find det: int(-1, 1)
+find squaredet: int(-1, 1)
+find M#components_1: int(-4..-2, 0, 2..4)
+find M#components_2: int(-4..-2, 0, 2..4)
+find M#components_3: int(-4..-2, 0, 2..4)
+find M#components_4: int(-4..-2, 0, 2..4)
+find M#components_5: int(-4..-2, 0, 2..4)
+find M#components_6: int(-4..-2, 0, 2..4)
+find M#components_7: int(-4..-2, 0, 2..4)
+find M#components_8: int(-4..-2, 0, 2..4)
+find M#components_9: int(-4..-2, 0, 2..4)
+findAux __0: int(-64..64)
+findAux __1: int(-64..64)
+findAux __2: int(-64..64)
+findAux __3: int(-64..64)
+findAux __4: int(-64..64)
+findAux __5: int(-64..64)
+findAux __6: int(-16..16)
+findAux __7: int(-16..16)
+findAux __8: int(-16..16)
+findAux __9: int(-16..16)
+findAux __10: int(-16..16)
+findAux __11: int(-16..16)
+findAux __12: int(-4096..4096)
+findAux __13: int(-4096..4096)
+findAux __14: int(-4096..4096)
+findAux __15: int(-4096..4096)
+findAux __16: int(-4096..4096)
+findAux __17: int(-4096..4096)
+findAux __18: int(-16..16)
+findAux __19: int(-64..64)
+findAux __20: int(-256..256)
+findAux __21: int(-1024..1024)
+findAux __22: int(-16..16)
+findAux __23: int(-64..64)
+findAux __24: int(-256..256)
+findAux __25: int(-1024..1024)
+findAux __26: int(-16..16)
+findAux __27: int(-64..64)
+findAux __28: int(-256..256)
+findAux __29: int(-1024..1024)
+findAux __30: int(-16..16)
+findAux __31: int(-64..64)
+findAux __32: int(-256..256)
+findAux __33: int(-1024..1024)
+findAux __34: int(-16..16)
+findAux __35: int(-64..64)
+findAux __36: int(-256..256)
+findAux __37: int(-1024..1024)
+findAux __38: int(-16..16)
+findAux __39: int(-64..64)
+findAux __40: int(-256..256)
+findAux __41: int(-1024..1024)
+
+such that
+
+and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__0, __1, __2, __3, __4, __5],det);int(1..)]),
+and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__12, __13, __14, __15, __16, __17],squaredet),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__12, __13, __14, __15, __16, __17],squaredet);int(1..)]),
+and([FlatLexLeq([M#components_1, M#components_2, M#components_3], [M#components_4, M#components_5, M#components_6]),FlatLexLeq([M#components_4, M#components_5, M#components_6], [M#components_7, M#components_8, M#components_9]);int(1..)]),
+and([FlatLexLeq([M#components_1, M#components_4, M#components_7], [M#components_2, M#components_5, M#components_8]),FlatLexLeq([M#components_2, M#components_5, M#components_8], [M#components_3, M#components_6, M#components_9]);int(1..)]),
+true,
+FlatProductEq(M#components_9,__6,__0),
+FlatProductEq(M#components_1,__7,__1),
+FlatProductEq(M#components_2,__8,__2),
+FlatProductEq(M#components_7,__9,__3),
+FlatProductEq(M#components_8,__10,__4),
+FlatProductEq(M#components_3,__11,__5),
+FlatProductEq(M#components_5,M#components_1,__6),
+FlatProductEq(M#components_8,M#components_6,__7),
+FlatProductEq(M#components_9,M#components_4,__8),
+FlatProductEq(M#components_6,M#components_2,__9),
+FlatProductEq(M#components_4,M#components_3,__10),
+FlatProductEq(M#components_7,M#components_5,__11),
+FlatProductEq(M#components_9,__21,__12),
+FlatProductEq(M#components_1,__25,__13),
+FlatProductEq(M#components_2,__29,__14),
+FlatProductEq(M#components_7,__33,__15),
+FlatProductEq(M#components_8,__37,__16),
+FlatProductEq(M#components_3,__41,__17),
+FlatProductEq(M#components_9,M#components_5,__18),
+FlatProductEq(__18,M#components_5,__19),
+FlatProductEq(__19,M#components_1,__20),
+FlatProductEq(__20,M#components_1,__21),
+FlatProductEq(M#components_8,M#components_8,__22),
+FlatProductEq(__22,M#components_6,__23),
+FlatProductEq(__23,M#components_6,__24),
+FlatProductEq(__24,M#components_1,__25),
+FlatProductEq(M#components_9,M#components_9,__26),
+FlatProductEq(__26,M#components_4,__27),
+FlatProductEq(__27,M#components_4,__28),
+FlatProductEq(__28,M#components_2,__29),
+FlatProductEq(M#components_7,M#components_6,__30),
+FlatProductEq(__30,M#components_6,__31),
+FlatProductEq(__31,M#components_2,__32),
+FlatProductEq(__32,M#components_2,__33),
+FlatProductEq(M#components_8,M#components_4,__34),
+FlatProductEq(__34,M#components_4,__35),
+FlatProductEq(__35,M#components_3,__36),
+FlatProductEq(__36,M#components_3,__37),
+FlatProductEq(M#components_7,M#components_7,__38),
+FlatProductEq(__38,M#components_5,__39),
+FlatProductEq(__39,M#components_5,__40),
+FlatProductEq(__40,M#components_3,__41)
+

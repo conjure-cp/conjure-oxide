@@ -1,0 +1,223 @@
+Model before rewriting:
+
+letting n be 4
+letting cost be [3,2,4,6;int(1..4)]
+letting carbon be [1,4,2,5;int(1..4)]
+find selected: matrix indexed by [int(1..n)] of bool
+find total_cost: int(0..20)
+find total_carbon: int(0..20)
+
+such that
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+new variables:
+  find selected#components_1: bool
+  find selected#components_2: bool
+  find selected#components_3: bool
+  find selected#components_4: bool
+
+--
+
+[ toInt(selected[i]) | i : int(1..n) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4);int(1..)]
+
+--
+
+sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([selected#components_1, selected#components_2, selected#components_3, selected#components_4], 1),SumGeq([selected#components_1, selected#components_2, selected#components_3, selected#components_4], 1);int(1..)])
+
+--
+
+[ cost[i] | i : int(1..n), selected[i] ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(selected#components_1),3;int(1..)]),product([toInt(selected#components_2),2;int(1..)]),product([toInt(selected#components_3),4;int(1..)]),product([toInt(selected#components_4),6;int(1..)]);int(1..)]
+
+--
+
+product([toInt(selected#components_1),3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,toInt(selected#components_1);int(1..)])
+
+--
+
+product([toInt(selected#components_2),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(selected#components_2);int(1..)])
+
+--
+
+product([toInt(selected#components_3),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(selected#components_3);int(1..)])
+
+--
+
+product([toInt(selected#components_4),6;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([6,toInt(selected#components_4);int(1..)])
+
+--
+
+total_cost = sum([product([3,toInt(selected#components_1);int(1..)]),product([2,toInt(selected#components_2);int(1..)]),product([4,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([3, 2, 4, 6],[__0, __1, __2, __3],total_cost),FlatWeightedSumGeq([3, 2, 4, 6],[__0, __1, __2, __3],total_cost);int(1..)])
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+new constraints:
+  __0 =aux product([toInt(selected#components_1);int(1..)])
+  __1 =aux product([toInt(selected#components_2);int(1..)])
+  __2 =aux product([toInt(selected#components_3);int(1..)])
+  __3 =aux product([toInt(selected#components_4);int(1..)])
+
+--
+
+product([toInt(selected#components_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_1)
+
+--
+
+product([toInt(selected#components_2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_2)
+
+--
+
+product([toInt(selected#components_3);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_3)
+
+--
+
+product([toInt(selected#components_4);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_4)
+
+--
+
+[ carbon[i] | i : int(1..n), selected[i] ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(selected#components_1),1;int(1..)]),product([toInt(selected#components_2),4;int(1..)]),product([toInt(selected#components_3),2;int(1..)]),product([toInt(selected#components_4),5;int(1..)]);int(1..)]
+
+--
+
+product([toInt(selected#components_1),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(selected#components_1);int(1..)])
+
+--
+
+product([toInt(selected#components_2),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(selected#components_2);int(1..)])
+
+--
+
+product([toInt(selected#components_3),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(selected#components_3);int(1..)])
+
+--
+
+product([toInt(selected#components_4),5;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([5,toInt(selected#components_4);int(1..)])
+
+--
+
+product([toInt(selected#components_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_1)
+
+--
+
+total_carbon = sum([toInt(selected#components_1),product([4,toInt(selected#components_2);int(1..)]),product([2,toInt(selected#components_3);int(1..)]),product([5,toInt(selected#components_4);int(1..)]);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([4, 2, 5, 1],[__4, __5, __6, selected#components_1],total_carbon),FlatWeightedSumGeq([4, 2, 5, 1],[__4, __5, __6, selected#components_1],total_carbon);int(1..)])
+new variables:
+  findAux __4: int(0..1)
+  findAux __5: int(0..1)
+  findAux __6: int(0..1)
+new constraints:
+  __4 =aux product([toInt(selected#components_2);int(1..)])
+  __5 =aux product([toInt(selected#components_3);int(1..)])
+  __6 =aux product([toInt(selected#components_4);int(1..)])
+
+--
+
+product([toInt(selected#components_2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_2)
+
+--
+
+product([toInt(selected#components_3);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_3)
+
+--
+
+product([toInt(selected#components_4);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_4)
+
+--
+
+Final model:
+
+letting n be 4
+letting cost be [3,2,4,6;int(1..4)]
+letting carbon be [1,4,2,5;int(1..4)]
+find selected: matrix indexed by [int(1..n)] of bool
+find total_cost: int(0..20)
+find total_carbon: int(0..20)
+letting cost#components_1 be 3
+letting cost#components_2 be 2
+letting cost#components_3 be 4
+letting cost#components_4 be 6
+letting carbon#components_1 be 1
+letting carbon#components_2 be 4
+letting carbon#components_3 be 2
+letting carbon#components_4 be 5
+find selected#components_1: bool
+find selected#components_2: bool
+find selected#components_3: bool
+find selected#components_4: bool
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: int(0..1)
+findAux __5: int(0..1)
+findAux __6: int(0..1)
+
+such that
+
+and([SumLeq([selected#components_1, selected#components_2, selected#components_3, selected#components_4], 1),SumGeq([selected#components_1, selected#components_2, selected#components_3, selected#components_4], 1);int(1..)]),
+and([FlatWeightedSumLeq([3, 2, 4, 6],[__0, __1, __2, __3],total_cost),FlatWeightedSumGeq([3, 2, 4, 6],[__0, __1, __2, __3],total_cost);int(1..)]),
+and([FlatWeightedSumLeq([4, 2, 5, 1],[__4, __5, __6, selected#components_1],total_carbon),FlatWeightedSumGeq([4, 2, 5, 1],[__4, __5, __6, selected#components_1],total_carbon);int(1..)]),
+__0 =aux toInt(selected#components_1),
+__1 =aux toInt(selected#components_2),
+__2 =aux toInt(selected#components_3),
+__3 =aux toInt(selected#components_4),
+__4 =aux toInt(selected#components_2),
+__5 =aux toInt(selected#components_3),
+__6 =aux toInt(selected#components_4)
+

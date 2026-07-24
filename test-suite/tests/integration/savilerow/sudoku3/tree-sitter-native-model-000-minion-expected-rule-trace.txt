@@ -1,0 +1,820 @@
+Model before rewriting:
+
+letting VALUES be domain int(0..9)
+letting RANGE be domain int(1..9)
+letting values be [[5,3,0,0,7,0,0,0,0;int(1..9)],[6,0,0,1,9,5,0,0,0;int(1..9)],[0,9,8,0,0,0,0,6,0;int(1..9)],[8,0,0,0,6,0,0,0,3;int(1..9)],[4,0,0,8,0,3,0,0,1;int(1..9)],[7,0,0,0,2,0,0,0,6;int(1..9)],[0,6,0,0,0,0,2,8,0;int(1..9)],[0,0,0,4,1,9,0,0,5;int(1..9)],[0,0,0,0,8,0,0,7,9;int(1..9)];int(1..9)]
+find field: matrix indexed by [RANGE, RANGE] of RANGE
+
+such that
+
+and([ allDifferent(field[row,..]) | row : RANGE ]),
+and([ allDifferent(field[..,col]) | col : RANGE ]),
+and([ and([ (and([col1 != col2,row1 != row2;int(1..)])) -> (field[sum([row1,product([i,3;int(1..)]);int(1..)]), sum([col1,product([j,3;int(1..)]);int(1..)])] != field[sum([row2,product([i,3;int(1..)]);int(1..)]), sum([col2,product([j,3;int(1..)]);int(1..)])]) | col1 : int(1..3), col2 : int(1..3), row1 : int(1..3), row2 : int(1..3) ]) | i : int(0..2), j : int(0..2) ]),
+and([ (values[row, col] > 0) -> (field[row, col] = values[row, col]) | row : RANGE, col : RANGE ])
+
+--
+
+and([ and([ (and([col1 != col2,row1 != row2;int(1..)])) -> (field[sum([row1,product([i,3;int(1..)]);int(1..)]), sum([col1,product([j,3;int(1..)]);int(1..)])] != field[sum([row2,product([i,3;int(1..)]);int(1..)]), sum([col2,product([j,3;int(1..)]);int(1..)])]) | col1 : int(1..3), col2 : int(1..3), row1 : int(1..3), row2 : int(1..3) ]) | i : int(0..2), j : int(0..2) ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (and([col1 != col2,row1 != row2;int(1..)])) -> (field[sum([row1,product([i,3;int(1..)]);int(1..)]), sum([col1,product([j,3;int(1..)]);int(1..)])] != field[sum([row2,product([i,3;int(1..)]);int(1..)]), sum([col2,product([j,3;int(1..)]);int(1..)])]) | i : int(0..2), j : int(0..2), col1 : int(1..3), col2 : int(1..3), row1 : int(1..3), row2 : int(1..3) ])
+
+--
+
+and([ allDifferent(field[row,..]) | row : RANGE ]),
+and([ allDifferent(field[..,col]) | col : RANGE ]),
+and([ (and([col1 != col2,row1 != row2;int(1..)])) -> (field[sum([row1,product([i,3;int(1..)]);int(1..)]), sum([col1,product([j,3;int(1..)]);int(1..)])] != field[sum([row2,product([i,3;int(1..)]);int(1..)]), sum([col2,product([j,3;int(1..)]);int(1..)])]) | i : int(0..2), j : int(0..2), col1 : int(1..3), col2 : int(1..3), row1 : int(1..3), row2 : int(1..3) ]),
+and([ (values[row, col] > 0) -> (field[row, col] = values[row, col]) | row : RANGE, col : RANGE ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ allDifferent(field[row,..]) | row : RANGE ]),
+and([ allDifferent(field[..,col]) | col : RANGE ]),
+and([ (and([col1 != col2,row1 != row2;int(1..)])) -> (field[sum([row1,product([i,3;int(1..)]);int(1..)]), sum([col1,product([j,3;int(1..)]);int(1..)])] != field[sum([row2,product([i,3;int(1..)]);int(1..)]), sum([col2,product([j,3;int(1..)]);int(1..)])]) | i : int(0..2), j : int(0..2), col1 : int(1..3), col2 : int(1..3), row1 : int(1..3), row2 : int(1..3) ]),
+and([ (values[row, col] > 0) -> (field[row, col] = values[row, col]) | row : RANGE, col : RANGE ])
+new variables:
+  find field#components_1: int(1..9)
+  find field#components_10: int(1..9)
+  find field#components_11: int(1..9)
+  find field#components_12: int(1..9)
+  find field#components_13: int(1..9)
+  find field#components_14: int(1..9)
+  find field#components_15: int(1..9)
+  find field#components_16: int(1..9)
+  find field#components_17: int(1..9)
+  find field#components_18: int(1..9)
+  find field#components_19: int(1..9)
+  find field#components_2: int(1..9)
+  find field#components_20: int(1..9)
+  find field#components_21: int(1..9)
+  find field#components_22: int(1..9)
+  find field#components_23: int(1..9)
+  find field#components_24: int(1..9)
+  find field#components_25: int(1..9)
+  find field#components_26: int(1..9)
+  find field#components_27: int(1..9)
+  find field#components_28: int(1..9)
+  find field#components_29: int(1..9)
+  find field#components_3: int(1..9)
+  find field#components_30: int(1..9)
+  find field#components_31: int(1..9)
+  find field#components_32: int(1..9)
+  find field#components_33: int(1..9)
+  find field#components_34: int(1..9)
+  find field#components_35: int(1..9)
+  find field#components_36: int(1..9)
+  find field#components_37: int(1..9)
+  find field#components_38: int(1..9)
+  find field#components_39: int(1..9)
+  find field#components_4: int(1..9)
+  find field#components_40: int(1..9)
+  find field#components_41: int(1..9)
+  find field#components_42: int(1..9)
+  find field#components_43: int(1..9)
+  find field#components_44: int(1..9)
+  find field#components_45: int(1..9)
+  find field#components_46: int(1..9)
+  find field#components_47: int(1..9)
+  find field#components_48: int(1..9)
+  find field#components_49: int(1..9)
+  find field#components_5: int(1..9)
+  find field#components_50: int(1..9)
+  find field#components_51: int(1..9)
+  find field#components_52: int(1..9)
+  find field#components_53: int(1..9)
+  find field#components_54: int(1..9)
+  find field#components_55: int(1..9)
+  find field#components_56: int(1..9)
+  find field#components_57: int(1..9)
+  find field#components_58: int(1..9)
+  find field#components_59: int(1..9)
+  find field#components_6: int(1..9)
+  find field#components_60: int(1..9)
+  find field#components_61: int(1..9)
+  find field#components_62: int(1..9)
+  find field#components_63: int(1..9)
+  find field#components_64: int(1..9)
+  find field#components_65: int(1..9)
+  find field#components_66: int(1..9)
+  find field#components_67: int(1..9)
+  find field#components_68: int(1..9)
+  find field#components_69: int(1..9)
+  find field#components_7: int(1..9)
+  find field#components_70: int(1..9)
+  find field#components_71: int(1..9)
+  find field#components_72: int(1..9)
+  find field#components_73: int(1..9)
+  find field#components_74: int(1..9)
+  find field#components_75: int(1..9)
+  find field#components_76: int(1..9)
+  find field#components_77: int(1..9)
+  find field#components_78: int(1..9)
+  find field#components_79: int(1..9)
+  find field#components_8: int(1..9)
+  find field#components_80: int(1..9)
+  find field#components_81: int(1..9)
+  find field#components_9: int(1..9)
+
+--
+
+[ allDifferent(field[row,..]) | row : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[allDifferent(field[1,..]),allDifferent(field[2,..]),allDifferent(field[3,..]),allDifferent(field[4,..]),allDifferent(field[5,..]),allDifferent(field[6,..]),allDifferent(field[7,..]),allDifferent(field[8,..]),allDifferent(field[9,..]);int(1..)]
+
+--
+
+field[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[1,..])
+
+--
+
+field[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[2,..])
+
+--
+
+field[3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[3,..])
+
+--
+
+field[4,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[4,..])
+
+--
+
+field[5,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[5,..])
+
+--
+
+field[6,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[6,..])
+
+--
+
+field[7,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[7,..])
+
+--
+
+field[8,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[8,..])
+
+--
+
+field[9,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[9,..])
+
+--
+
+SafeSlice(field,[1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_1,field#components_2,field#components_3,field#components_4,field#components_5,field#components_6,field#components_7,field#components_8,field#components_9;int(1..)]
+
+--
+
+SafeSlice(field,[2,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_10,field#components_11,field#components_12,field#components_13,field#components_14,field#components_15,field#components_16,field#components_17,field#components_18;int(1..)]
+
+--
+
+SafeSlice(field,[3,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_19,field#components_20,field#components_21,field#components_22,field#components_23,field#components_24,field#components_25,field#components_26,field#components_27;int(1..)]
+
+--
+
+SafeSlice(field,[4,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_28,field#components_29,field#components_30,field#components_31,field#components_32,field#components_33,field#components_34,field#components_35,field#components_36;int(1..)]
+
+--
+
+SafeSlice(field,[5,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_37,field#components_38,field#components_39,field#components_40,field#components_41,field#components_42,field#components_43,field#components_44,field#components_45;int(1..)]
+
+--
+
+SafeSlice(field,[6,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_46,field#components_47,field#components_48,field#components_49,field#components_50,field#components_51,field#components_52,field#components_53,field#components_54;int(1..)]
+
+--
+
+SafeSlice(field,[7,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_55,field#components_56,field#components_57,field#components_58,field#components_59,field#components_60,field#components_61,field#components_62,field#components_63;int(1..)]
+
+--
+
+SafeSlice(field,[8,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_64,field#components_65,field#components_66,field#components_67,field#components_68,field#components_69,field#components_70,field#components_71,field#components_72;int(1..)]
+
+--
+
+SafeSlice(field,[9,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_73,field#components_74,field#components_75,field#components_76,field#components_77,field#components_78,field#components_79,field#components_80,field#components_81;int(1..)]
+
+--
+
+allDifferent([field#components_1,field#components_2,field#components_3,field#components_4,field#components_5,field#components_6,field#components_7,field#components_8,field#components_9;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_1, field#components_2, field#components_3, field#components_4, field#components_5, field#components_6, field#components_7, field#components_8, field#components_9])
+
+--
+
+allDifferent([field#components_10,field#components_11,field#components_12,field#components_13,field#components_14,field#components_15,field#components_16,field#components_17,field#components_18;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_10, field#components_11, field#components_12, field#components_13, field#components_14, field#components_15, field#components_16, field#components_17, field#components_18])
+
+--
+
+allDifferent([field#components_19,field#components_20,field#components_21,field#components_22,field#components_23,field#components_24,field#components_25,field#components_26,field#components_27;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_19, field#components_20, field#components_21, field#components_22, field#components_23, field#components_24, field#components_25, field#components_26, field#components_27])
+
+--
+
+allDifferent([field#components_28,field#components_29,field#components_30,field#components_31,field#components_32,field#components_33,field#components_34,field#components_35,field#components_36;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_28, field#components_29, field#components_30, field#components_31, field#components_32, field#components_33, field#components_34, field#components_35, field#components_36])
+
+--
+
+allDifferent([field#components_37,field#components_38,field#components_39,field#components_40,field#components_41,field#components_42,field#components_43,field#components_44,field#components_45;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_37, field#components_38, field#components_39, field#components_40, field#components_41, field#components_42, field#components_43, field#components_44, field#components_45])
+
+--
+
+allDifferent([field#components_46,field#components_47,field#components_48,field#components_49,field#components_50,field#components_51,field#components_52,field#components_53,field#components_54;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_46, field#components_47, field#components_48, field#components_49, field#components_50, field#components_51, field#components_52, field#components_53, field#components_54])
+
+--
+
+allDifferent([field#components_55,field#components_56,field#components_57,field#components_58,field#components_59,field#components_60,field#components_61,field#components_62,field#components_63;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_55, field#components_56, field#components_57, field#components_58, field#components_59, field#components_60, field#components_61, field#components_62, field#components_63])
+
+--
+
+allDifferent([field#components_64,field#components_65,field#components_66,field#components_67,field#components_68,field#components_69,field#components_70,field#components_71,field#components_72;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_64, field#components_65, field#components_66, field#components_67, field#components_68, field#components_69, field#components_70, field#components_71, field#components_72])
+
+--
+
+allDifferent([field#components_73,field#components_74,field#components_75,field#components_76,field#components_77,field#components_78,field#components_79,field#components_80,field#components_81;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_73, field#components_74, field#components_75, field#components_76, field#components_77, field#components_78, field#components_79, field#components_80, field#components_81])
+
+--
+
+[ allDifferent(field[..,col]) | col : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[allDifferent(field[..,1]),allDifferent(field[..,2]),allDifferent(field[..,3]),allDifferent(field[..,4]),allDifferent(field[..,5]),allDifferent(field[..,6]),allDifferent(field[..,7]),allDifferent(field[..,8]),allDifferent(field[..,9]);int(1..)]
+
+--
+
+field[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,1])
+
+--
+
+field[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,2])
+
+--
+
+field[..,3]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,3])
+
+--
+
+field[..,4]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,4])
+
+--
+
+field[..,5]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,5])
+
+--
+
+field[..,6]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,6])
+
+--
+
+field[..,7]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,7])
+
+--
+
+field[..,8]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,8])
+
+--
+
+field[..,9]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,9])
+
+--
+
+SafeSlice(field,[..,1])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_1,field#components_10,field#components_19,field#components_28,field#components_37,field#components_46,field#components_55,field#components_64,field#components_73;int(1..)]
+
+--
+
+SafeSlice(field,[..,2])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_2,field#components_11,field#components_20,field#components_29,field#components_38,field#components_47,field#components_56,field#components_65,field#components_74;int(1..)]
+
+--
+
+SafeSlice(field,[..,3])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_3,field#components_12,field#components_21,field#components_30,field#components_39,field#components_48,field#components_57,field#components_66,field#components_75;int(1..)]
+
+--
+
+SafeSlice(field,[..,4])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_4,field#components_13,field#components_22,field#components_31,field#components_40,field#components_49,field#components_58,field#components_67,field#components_76;int(1..)]
+
+--
+
+SafeSlice(field,[..,5])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_5,field#components_14,field#components_23,field#components_32,field#components_41,field#components_50,field#components_59,field#components_68,field#components_77;int(1..)]
+
+--
+
+SafeSlice(field,[..,6])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_6,field#components_15,field#components_24,field#components_33,field#components_42,field#components_51,field#components_60,field#components_69,field#components_78;int(1..)]
+
+--
+
+SafeSlice(field,[..,7])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_7,field#components_16,field#components_25,field#components_34,field#components_43,field#components_52,field#components_61,field#components_70,field#components_79;int(1..)]
+
+--
+
+SafeSlice(field,[..,8])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_8,field#components_17,field#components_26,field#components_35,field#components_44,field#components_53,field#components_62,field#components_71,field#components_80;int(1..)]
+
+--
+
+SafeSlice(field,[..,9])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_9,field#components_18,field#components_27,field#components_36,field#components_45,field#components_54,field#components_63,field#components_72,field#components_81;int(1..)]
+
+--
+
+allDifferent([field#components_1,field#components_10,field#components_19,field#components_28,field#components_37,field#components_46,field#components_55,field#components_64,field#components_73;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_1, field#components_10, field#components_19, field#components_28, field#components_37, field#components_46, field#components_55, field#components_64, field#components_73])
+
+--
+
+allDifferent([field#components_2,field#components_11,field#components_20,field#components_29,field#components_38,field#components_47,field#components_56,field#components_65,field#components_74;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_2, field#components_11, field#components_20, field#components_29, field#components_38, field#components_47, field#components_56, field#components_65, field#components_74])
+
+--
+
+allDifferent([field#components_3,field#components_12,field#components_21,field#components_30,field#components_39,field#components_48,field#components_57,field#components_66,field#components_75;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_3, field#components_12, field#components_21, field#components_30, field#components_39, field#components_48, field#components_57, field#components_66, field#components_75])
+
+--
+
+allDifferent([field#components_4,field#components_13,field#components_22,field#components_31,field#components_40,field#components_49,field#components_58,field#components_67,field#components_76;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_4, field#components_13, field#components_22, field#components_31, field#components_40, field#components_49, field#components_58, field#components_67, field#components_76])
+
+--
+
+allDifferent([field#components_5,field#components_14,field#components_23,field#components_32,field#components_41,field#components_50,field#components_59,field#components_68,field#components_77;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_5, field#components_14, field#components_23, field#components_32, field#components_41, field#components_50, field#components_59, field#components_68, field#components_77])
+
+--
+
+allDifferent([field#components_6,field#components_15,field#components_24,field#components_33,field#components_42,field#components_51,field#components_60,field#components_69,field#components_78;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_6, field#components_15, field#components_24, field#components_33, field#components_42, field#components_51, field#components_60, field#components_69, field#components_78])
+
+--
+
+allDifferent([field#components_7,field#components_16,field#components_25,field#components_34,field#components_43,field#components_52,field#components_61,field#components_70,field#components_79;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_7, field#components_16, field#components_25, field#components_34, field#components_43, field#components_52, field#components_61, field#components_70, field#components_79])
+
+--
+
+allDifferent([field#components_8,field#components_17,field#components_26,field#components_35,field#components_44,field#components_53,field#components_62,field#components_71,field#components_80;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_8, field#components_17, field#components_26, field#components_35, field#components_44, field#components_53, field#components_62, field#components_71, field#components_80])
+
+--
+
+allDifferent([field#components_9,field#components_18,field#components_27,field#components_36,field#components_45,field#components_54,field#components_63,field#components_72,field#components_81;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_9, field#components_18, field#components_27, field#components_36, field#components_45, field#components_54, field#components_63, field#components_72, field#components_81])
+
+--
+
+[ (and([col1 != col2,row1 != row2;int(1..)])) -> (field[sum([row1,product([i,3;int(1..)]);int(1..)]), sum([col1,product([j,3;int(1..)]);int(1..)])] != field[sum([row2,product([i,3;int(1..)]);int(1..)]), sum([col2,product([j,3;int(1..)]);int(1..)])]) | i : int(0..2), j : int(0..2), col1 : int(1..3), col2 : int(1..3), row1 : int(1..3), row2 : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[field#components_1 != field#components_11,field#components_1 != field#components_20,field#components_10 != field#components_2,field#components_10 != field#components_20,field#components_19 != field#components_2,field#components_19 != field#components_11,field#components_1 != field#components_12,field#components_1 != field#components_21,field#components_10 != field#components_3,field#components_10 != field#components_21,field#components_19 != field#components_3,field#components_19 != field#components_12,field#components_2 != field#components_10,field#components_2 != field#components_19,field#components_11 != field#components_1,field#components_11 != field#components_19,field#components_20 != field#components_1,field#components_20 != field#components_10,field#components_2 != field#components_12,field#components_2 != field#components_21,field#components_11 != field#components_3,field#components_11 != field#components_21,field#components_20 != field#components_3,field#components_20 != field#components_12,field#components_3 != field#components_10,field#components_3 != field#components_19,field#components_12 != field#components_1,field#components_12 != field#components_19,field#components_21 != field#components_1,field#components_21 != field#components_10,field#components_3 != field#components_11,field#components_3 != field#components_20,field#components_12 != field#components_2,field#components_12 != field#components_20,field#components_21 != field#components_2,field#components_21 != field#components_11,field#components_4 != field#components_14,field#components_4 != field#components_23,field#components_13 != field#components_5,field#components_13 != field#components_23,field#components_22 != field#components_5,field#components_22 != field#components_14,field#components_4 != field#components_15,field#components_4 != field#components_24,field#components_13 != field#components_6,field#components_13 != field#components_24,field#components_22 != field#components_6,field#components_22 != field#components_15,field#components_5 != field#components_13,field#components_5 != field#components_22,field#components_14 != field#components_4,field#components_14 != field#components_22,field#components_23 != field#components_4,field#components_23 != field#components_13,field#components_5 != field#components_15,field#components_5 != field#components_24,field#components_14 != field#components_6,field#components_14 != field#components_24,field#components_23 != field#components_6,field#components_23 != field#components_15,field#components_6 != field#components_13,field#components_6 != field#components_22,field#components_15 != field#components_4,field#components_15 != field#components_22,field#components_24 != field#components_4,field#components_24 != field#components_13,field#components_6 != field#components_14,field#components_6 != field#components_23,field#components_15 != field#components_5,field#components_15 != field#components_23,field#components_24 != field#components_5,field#components_24 != field#components_14,field#components_7 != field#components_17,field#components_7 != field#components_26,field#components_16 != field#components_8,field#components_16 != field#components_26,field#components_25 != field#components_8,field#components_25 != field#components_17,field#components_7 != field#components_18,field#components_7 != field#components_27,field#components_16 != field#components_9,field#components_16 != field#components_27,field#components_25 != field#components_9,field#components_25 != field#components_18,field#components_8 != field#components_16,field#components_8 != field#components_25,field#components_17 != field#components_7,field#components_17 != field#components_25,field#components_26 != field#components_7,field#components_26 != field#components_16,field#components_8 != field#components_18,field#components_8 != field#components_27,field#components_17 != field#components_9,field#components_17 != field#components_27,field#components_26 != field#components_9,field#components_26 != field#components_18,field#components_9 != field#components_16,field#components_9 != field#components_25,field#components_18 != field#components_7,field#components_18 != field#components_25,field#components_27 != field#components_7,field#components_27 != field#components_16,field#components_9 != field#components_17,field#components_9 != field#components_26,field#components_18 != field#components_8,field#components_18 != field#components_26,field#components_27 != field#components_8,field#components_27 != field#components_17,field#components_28 != field#components_38,field#components_28 != field#components_47,field#components_37 != field#components_29,field#components_37 != field#components_47,field#components_46 != field#components_29,field#components_46 != field#components_38,field#components_28 != field#components_39,field#components_28 != field#components_48,field#components_37 != field#components_30,field#components_37 != field#components_48,field#components_46 != field#components_30,field#components_46 != field#components_39,field#components_29 != field#components_37,field#components_29 != field#components_46,field#components_38 != field#components_28,field#components_38 != field#components_46,field#components_47 != field#components_28,field#components_47 != field#components_37,field#components_29 != field#components_39,field#components_29 != field#components_48,field#components_38 != field#components_30,field#components_38 != field#components_48,field#components_47 != field#components_30,field#components_47 != field#components_39,field#components_30 != field#components_37,field#components_30 != field#components_46,field#components_39 != field#components_28,field#components_39 != field#components_46,field#components_48 != field#components_28,field#components_48 != field#components_37,field#components_30 != field#components_38,field#components_30 != field#components_47,field#components_39 != field#components_29,field#components_39 != field#components_47,field#components_48 != field#components_29,field#components_48 != field#components_38,field#components_31 != field#components_41,field#components_31 != field#components_50,field#components_40 != field#components_32,field#components_40 != field#components_50,field#components_49 != field#components_32,field#components_49 != field#components_41,field#components_31 != field#components_42,field#components_31 != field#components_51,field#components_40 != field#components_33,field#components_40 != field#components_51,field#components_49 != field#components_33,field#components_49 != field#components_42,field#components_32 != field#components_40,field#components_32 != field#components_49,field#components_41 != field#components_31,field#components_41 != field#components_49,field#components_50 != field#components_31,field#components_50 != field#components_40,field#components_32 != field#components_42,field#components_32 != field#components_51,field#components_41 != field#components_33,field#components_41 != field#components_51,field#components_50 != field#components_33,field#components_50 != field#components_42,field#components_33 != field#components_40,field#components_33 != field#components_49,field#components_42 != field#components_31,field#components_42 != field#components_49,field#components_51 != field#components_31,field#components_51 != field#components_40,field#components_33 != field#components_41,field#components_33 != field#components_50,field#components_42 != field#components_32,field#components_42 != field#components_50,field#components_51 != field#components_32,field#components_51 != field#components_41,field#components_34 != field#components_44,field#components_34 != field#components_53,field#components_43 != field#components_35,field#components_43 != field#components_53,field#components_52 != field#components_35,field#components_52 != field#components_44,field#components_34 != field#components_45,field#components_34 != field#components_54,field#components_43 != field#components_36,field#components_43 != field#components_54,field#components_52 != field#components_36,field#components_52 != field#components_45,field#components_35 != field#components_43,field#components_35 != field#components_52,field#components_44 != field#components_34,field#components_44 != field#components_52,field#components_53 != field#components_34,field#components_53 != field#components_43,field#components_35 != field#components_45,field#components_35 != field#components_54,field#components_44 != field#components_36,field#components_44 != field#components_54,field#components_53 != field#components_36,field#components_53 != field#components_45,field#components_36 != field#components_43,field#components_36 != field#components_52,field#components_45 != field#components_34,field#components_45 != field#components_52,field#components_54 != field#components_34,field#components_54 != field#components_43,field#components_36 != field#components_44,field#components_36 != field#components_53,field#components_45 != field#components_35,field#components_45 != field#components_53,field#components_54 != field#components_35,field#components_54 != field#components_44,field#components_55 != field#components_65,field#components_55 != field#components_74,field#components_64 != field#components_56,field#components_64 != field#components_74,field#components_73 != field#components_56,field#components_73 != field#components_65,field#components_55 != field#components_66,field#components_55 != field#components_75,field#components_64 != field#components_57,field#components_64 != field#components_75,field#components_73 != field#components_57,field#components_73 != field#components_66,field#components_56 != field#components_64,field#components_56 != field#components_73,field#components_65 != field#components_55,field#components_65 != field#components_73,field#components_74 != field#components_55,field#components_74 != field#components_64,field#components_56 != field#components_66,field#components_56 != field#components_75,field#components_65 != field#components_57,field#components_65 != field#components_75,field#components_74 != field#components_57,field#components_74 != field#components_66,field#components_57 != field#components_64,field#components_57 != field#components_73,field#components_66 != field#components_55,field#components_66 != field#components_73,field#components_75 != field#components_55,field#components_75 != field#components_64,field#components_57 != field#components_65,field#components_57 != field#components_74,field#components_66 != field#components_56,field#components_66 != field#components_74,field#components_75 != field#components_56,field#components_75 != field#components_65,field#components_58 != field#components_68,field#components_58 != field#components_77,field#components_67 != field#components_59,field#components_67 != field#components_77,field#components_76 != field#components_59,field#components_76 != field#components_68,field#components_58 != field#components_69,field#components_58 != field#components_78,field#components_67 != field#components_60,field#components_67 != field#components_78,field#components_76 != field#components_60,field#components_76 != field#components_69,field#components_59 != field#components_67,field#components_59 != field#components_76,field#components_68 != field#components_58,field#components_68 != field#components_76,field#components_77 != field#components_58,field#components_77 != field#components_67,field#components_59 != field#components_69,field#components_59 != field#components_78,field#components_68 != field#components_60,field#components_68 != field#components_78,field#components_77 != field#components_60,field#components_77 != field#components_69,field#components_60 != field#components_67,field#components_60 != field#components_76,field#components_69 != field#components_58,field#components_69 != field#components_76,field#components_78 != field#components_58,field#components_78 != field#components_67,field#components_60 != field#components_68,field#components_60 != field#components_77,field#components_69 != field#components_59,field#components_69 != field#components_77,field#components_78 != field#components_59,field#components_78 != field#components_68,field#components_61 != field#components_71,field#components_61 != field#components_80,field#components_70 != field#components_62,field#components_70 != field#components_80,field#components_79 != field#components_62,field#components_79 != field#components_71,field#components_61 != field#components_72,field#components_61 != field#components_81,field#components_70 != field#components_63,field#components_70 != field#components_81,field#components_79 != field#components_63,field#components_79 != field#components_72,field#components_62 != field#components_70,field#components_62 != field#components_79,field#components_71 != field#components_61,field#components_71 != field#components_79,field#components_80 != field#components_61,field#components_80 != field#components_70,field#components_62 != field#components_72,field#components_62 != field#components_81,field#components_71 != field#components_63,field#components_71 != field#components_81,field#components_80 != field#components_63,field#components_80 != field#components_72,field#components_63 != field#components_70,field#components_63 != field#components_79,field#components_72 != field#components_61,field#components_72 != field#components_79,field#components_81 != field#components_61,field#components_81 != field#components_70,field#components_63 != field#components_71,field#components_63 != field#components_80,field#components_72 != field#components_62,field#components_72 != field#components_80,field#components_81 != field#components_62,field#components_81 != field#components_71;int(1..)]
+
+--
+
+[ (values[row, col] > 0) -> (field[row, col] = values[row, col]) | row : RANGE, col : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[field#components_1 = 5,field#components_2 = 3,field#components_5 = 7,field#components_10 = 6,field#components_13 = 1,field#components_14 = 9,field#components_15 = 5,field#components_20 = 9,field#components_21 = 8,field#components_26 = 6,field#components_28 = 8,field#components_32 = 6,field#components_36 = 3,field#components_37 = 4,field#components_40 = 8,field#components_42 = 3,field#components_45 = 1,field#components_46 = 7,field#components_50 = 2,field#components_54 = 6,field#components_56 = 6,field#components_61 = 2,field#components_62 = 8,field#components_67 = 4,field#components_68 = 1,field#components_69 = 9,field#components_72 = 5,field#components_77 = 8,field#components_80 = 7,field#components_81 = 9;int(1..)]
+
+--
+
+field#components_1 = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_1,5)
+
+--
+
+field#components_2 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_2,3)
+
+--
+
+field#components_5 = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_5,7)
+
+--
+
+field#components_10 = 6
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_10,6)
+
+--
+
+field#components_13 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_13,1)
+
+--
+
+field#components_14 = 9
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_14,9)
+
+--
+
+field#components_15 = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_15,5)
+
+--
+
+field#components_20 = 9
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_20,9)
+
+--
+
+field#components_21 = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_21,8)
+
+--
+
+field#components_26 = 6
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_26,6)
+
+--
+
+field#components_28 = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_28,8)
+
+--
+
+field#components_32 = 6
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_32,6)
+
+--
+
+field#components_36 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_36,3)
+
+--
+
+field#components_37 = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_37,4)
+
+--
+
+field#components_40 = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_40,8)
+
+--
+
+field#components_42 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_42,3)
+
+--
+
+field#components_45 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_45,1)
+
+--
+
+field#components_46 = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_46,7)
+
+--
+
+field#components_50 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_50,2)
+
+--
+
+field#components_54 = 6
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_54,6)
+
+--
+
+field#components_56 = 6
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_56,6)
+
+--
+
+field#components_61 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_61,2)
+
+--
+
+field#components_62 = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_62,8)
+
+--
+
+field#components_67 = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_67,4)
+
+--
+
+field#components_68 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_68,1)
+
+--
+
+field#components_69 = 9
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_69,9)
+
+--
+
+field#components_72 = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_72,5)
+
+--
+
+field#components_77 = 8
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_77,8)
+
+--
+
+field#components_80 = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_80,7)
+
+--
+
+field#components_81 = 9
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_81,9)
+
+--
+
+Final model:
+
+letting VALUES be domain int(0..9)
+letting RANGE be domain int(1..9)
+letting values be [[5,3,0,0,7,0,0,0,0;int(1..9)],[6,0,0,1,9,5,0,0,0;int(1..9)],[0,9,8,0,0,0,0,6,0;int(1..9)],[8,0,0,0,6,0,0,0,3;int(1..9)],[4,0,0,8,0,3,0,0,1;int(1..9)],[7,0,0,0,2,0,0,0,6;int(1..9)],[0,6,0,0,0,0,2,8,0;int(1..9)],[0,0,0,4,1,9,0,0,5;int(1..9)],[0,0,0,0,8,0,0,7,9;int(1..9)];int(1..9)]
+find field: matrix indexed by [RANGE, RANGE] of RANGE
+letting values#components_1 be 5
+letting values#components_2 be 3
+letting values#components_3 be 0
+letting values#components_4 be 0
+letting values#components_5 be 7
+letting values#components_6 be 0
+letting values#components_7 be 0
+letting values#components_8 be 0
+letting values#components_9 be 0
+letting values#components_10 be 6
+letting values#components_11 be 0
+letting values#components_12 be 0
+letting values#components_13 be 1
+letting values#components_14 be 9
+letting values#components_15 be 5
+letting values#components_16 be 0
+letting values#components_17 be 0
+letting values#components_18 be 0
+letting values#components_19 be 0
+letting values#components_20 be 9
+letting values#components_21 be 8
+letting values#components_22 be 0
+letting values#components_23 be 0
+letting values#components_24 be 0
+letting values#components_25 be 0
+letting values#components_26 be 6
+letting values#components_27 be 0
+letting values#components_28 be 8
+letting values#components_29 be 0
+letting values#components_30 be 0
+letting values#components_31 be 0
+letting values#components_32 be 6
+letting values#components_33 be 0
+letting values#components_34 be 0
+letting values#components_35 be 0
+letting values#components_36 be 3
+letting values#components_37 be 4
+letting values#components_38 be 0
+letting values#components_39 be 0
+letting values#components_40 be 8
+letting values#components_41 be 0
+letting values#components_42 be 3
+letting values#components_43 be 0
+letting values#components_44 be 0
+letting values#components_45 be 1
+letting values#components_46 be 7
+letting values#components_47 be 0
+letting values#components_48 be 0
+letting values#components_49 be 0
+letting values#components_50 be 2
+letting values#components_51 be 0
+letting values#components_52 be 0
+letting values#components_53 be 0
+letting values#components_54 be 6
+letting values#components_55 be 0
+letting values#components_56 be 6
+letting values#components_57 be 0
+letting values#components_58 be 0
+letting values#components_59 be 0
+letting values#components_60 be 0
+letting values#components_61 be 2
+letting values#components_62 be 8
+letting values#components_63 be 0
+letting values#components_64 be 0
+letting values#components_65 be 0
+letting values#components_66 be 0
+letting values#components_67 be 4
+letting values#components_68 be 1
+letting values#components_69 be 9
+letting values#components_70 be 0
+letting values#components_71 be 0
+letting values#components_72 be 5
+letting values#components_73 be 0
+letting values#components_74 be 0
+letting values#components_75 be 0
+letting values#components_76 be 0
+letting values#components_77 be 8
+letting values#components_78 be 0
+letting values#components_79 be 0
+letting values#components_80 be 7
+letting values#components_81 be 9
+find field#components_1: int(1..9)
+find field#components_2: int(1..9)
+find field#components_3: int(1..9)
+find field#components_4: int(1..9)
+find field#components_5: int(1..9)
+find field#components_6: int(1..9)
+find field#components_7: int(1..9)
+find field#components_8: int(1..9)
+find field#components_9: int(1..9)
+find field#components_10: int(1..9)
+find field#components_11: int(1..9)
+find field#components_12: int(1..9)
+find field#components_13: int(1..9)
+find field#components_14: int(1..9)
+find field#components_15: int(1..9)
+find field#components_16: int(1..9)
+find field#components_17: int(1..9)
+find field#components_18: int(1..9)
+find field#components_19: int(1..9)
+find field#components_20: int(1..9)
+find field#components_21: int(1..9)
+find field#components_22: int(1..9)
+find field#components_23: int(1..9)
+find field#components_24: int(1..9)
+find field#components_25: int(1..9)
+find field#components_26: int(1..9)
+find field#components_27: int(1..9)
+find field#components_28: int(1..9)
+find field#components_29: int(1..9)
+find field#components_30: int(1..9)
+find field#components_31: int(1..9)
+find field#components_32: int(1..9)
+find field#components_33: int(1..9)
+find field#components_34: int(1..9)
+find field#components_35: int(1..9)
+find field#components_36: int(1..9)
+find field#components_37: int(1..9)
+find field#components_38: int(1..9)
+find field#components_39: int(1..9)
+find field#components_40: int(1..9)
+find field#components_41: int(1..9)
+find field#components_42: int(1..9)
+find field#components_43: int(1..9)
+find field#components_44: int(1..9)
+find field#components_45: int(1..9)
+find field#components_46: int(1..9)
+find field#components_47: int(1..9)
+find field#components_48: int(1..9)
+find field#components_49: int(1..9)
+find field#components_50: int(1..9)
+find field#components_51: int(1..9)
+find field#components_52: int(1..9)
+find field#components_53: int(1..9)
+find field#components_54: int(1..9)
+find field#components_55: int(1..9)
+find field#components_56: int(1..9)
+find field#components_57: int(1..9)
+find field#components_58: int(1..9)
+find field#components_59: int(1..9)
+find field#components_60: int(1..9)
+find field#components_61: int(1..9)
+find field#components_62: int(1..9)
+find field#components_63: int(1..9)
+find field#components_64: int(1..9)
+find field#components_65: int(1..9)
+find field#components_66: int(1..9)
+find field#components_67: int(1..9)
+find field#components_68: int(1..9)
+find field#components_69: int(1..9)
+find field#components_70: int(1..9)
+find field#components_71: int(1..9)
+find field#components_72: int(1..9)
+find field#components_73: int(1..9)
+find field#components_74: int(1..9)
+find field#components_75: int(1..9)
+find field#components_76: int(1..9)
+find field#components_77: int(1..9)
+find field#components_78: int(1..9)
+find field#components_79: int(1..9)
+find field#components_80: int(1..9)
+find field#components_81: int(1..9)
+
+such that
+
+and([__flat_alldiff([field#components_1, field#components_2, field#components_3, field#components_4, field#components_5, field#components_6, field#components_7, field#components_8, field#components_9]),__flat_alldiff([field#components_10, field#components_11, field#components_12, field#components_13, field#components_14, field#components_15, field#components_16, field#components_17, field#components_18]),__flat_alldiff([field#components_19, field#components_20, field#components_21, field#components_22, field#components_23, field#components_24, field#components_25, field#components_26, field#components_27]),__flat_alldiff([field#components_28, field#components_29, field#components_30, field#components_31, field#components_32, field#components_33, field#components_34, field#components_35, field#components_36]),__flat_alldiff([field#components_37, field#components_38, field#components_39, field#components_40, field#components_41, field#components_42, field#components_43, field#components_44, field#components_45]),__flat_alldiff([field#components_46, field#components_47, field#components_48, field#components_49, field#components_50, field#components_51, field#components_52, field#components_53, field#components_54]),__flat_alldiff([field#components_55, field#components_56, field#components_57, field#components_58, field#components_59, field#components_60, field#components_61, field#components_62, field#components_63]),__flat_alldiff([field#components_64, field#components_65, field#components_66, field#components_67, field#components_68, field#components_69, field#components_70, field#components_71, field#components_72]),__flat_alldiff([field#components_73, field#components_74, field#components_75, field#components_76, field#components_77, field#components_78, field#components_79, field#components_80, field#components_81]);int(1..)]),
+and([__flat_alldiff([field#components_1, field#components_10, field#components_19, field#components_28, field#components_37, field#components_46, field#components_55, field#components_64, field#components_73]),__flat_alldiff([field#components_2, field#components_11, field#components_20, field#components_29, field#components_38, field#components_47, field#components_56, field#components_65, field#components_74]),__flat_alldiff([field#components_3, field#components_12, field#components_21, field#components_30, field#components_39, field#components_48, field#components_57, field#components_66, field#components_75]),__flat_alldiff([field#components_4, field#components_13, field#components_22, field#components_31, field#components_40, field#components_49, field#components_58, field#components_67, field#components_76]),__flat_alldiff([field#components_5, field#components_14, field#components_23, field#components_32, field#components_41, field#components_50, field#components_59, field#components_68, field#components_77]),__flat_alldiff([field#components_6, field#components_15, field#components_24, field#components_33, field#components_42, field#components_51, field#components_60, field#components_69, field#components_78]),__flat_alldiff([field#components_7, field#components_16, field#components_25, field#components_34, field#components_43, field#components_52, field#components_61, field#components_70, field#components_79]),__flat_alldiff([field#components_8, field#components_17, field#components_26, field#components_35, field#components_44, field#components_53, field#components_62, field#components_71, field#components_80]),__flat_alldiff([field#components_9, field#components_18, field#components_27, field#components_36, field#components_45, field#components_54, field#components_63, field#components_72, field#components_81]);int(1..)]),
+and([field#components_1 != field#components_11,field#components_1 != field#components_20,field#components_10 != field#components_2,field#components_10 != field#components_20,field#components_19 != field#components_2,field#components_19 != field#components_11,field#components_1 != field#components_12,field#components_1 != field#components_21,field#components_10 != field#components_3,field#components_10 != field#components_21,field#components_19 != field#components_3,field#components_19 != field#components_12,field#components_2 != field#components_10,field#components_2 != field#components_19,field#components_11 != field#components_1,field#components_11 != field#components_19,field#components_20 != field#components_1,field#components_20 != field#components_10,field#components_2 != field#components_12,field#components_2 != field#components_21,field#components_11 != field#components_3,field#components_11 != field#components_21,field#components_20 != field#components_3,field#components_20 != field#components_12,field#components_3 != field#components_10,field#components_3 != field#components_19,field#components_12 != field#components_1,field#components_12 != field#components_19,field#components_21 != field#components_1,field#components_21 != field#components_10,field#components_3 != field#components_11,field#components_3 != field#components_20,field#components_12 != field#components_2,field#components_12 != field#components_20,field#components_21 != field#components_2,field#components_21 != field#components_11,field#components_4 != field#components_14,field#components_4 != field#components_23,field#components_13 != field#components_5,field#components_13 != field#components_23,field#components_22 != field#components_5,field#components_22 != field#components_14,field#components_4 != field#components_15,field#components_4 != field#components_24,field#components_13 != field#components_6,field#components_13 != field#components_24,field#components_22 != field#components_6,field#components_22 != field#components_15,field#components_5 != field#components_13,field#components_5 != field#components_22,field#components_14 != field#components_4,field#components_14 != field#components_22,field#components_23 != field#components_4,field#components_23 != field#components_13,field#components_5 != field#components_15,field#components_5 != field#components_24,field#components_14 != field#components_6,field#components_14 != field#components_24,field#components_23 != field#components_6,field#components_23 != field#components_15,field#components_6 != field#components_13,field#components_6 != field#components_22,field#components_15 != field#components_4,field#components_15 != field#components_22,field#components_24 != field#components_4,field#components_24 != field#components_13,field#components_6 != field#components_14,field#components_6 != field#components_23,field#components_15 != field#components_5,field#components_15 != field#components_23,field#components_24 != field#components_5,field#components_24 != field#components_14,field#components_7 != field#components_17,field#components_7 != field#components_26,field#components_16 != field#components_8,field#components_16 != field#components_26,field#components_25 != field#components_8,field#components_25 != field#components_17,field#components_7 != field#components_18,field#components_7 != field#components_27,field#components_16 != field#components_9,field#components_16 != field#components_27,field#components_25 != field#components_9,field#components_25 != field#components_18,field#components_8 != field#components_16,field#components_8 != field#components_25,field#components_17 != field#components_7,field#components_17 != field#components_25,field#components_26 != field#components_7,field#components_26 != field#components_16,field#components_8 != field#components_18,field#components_8 != field#components_27,field#components_17 != field#components_9,field#components_17 != field#components_27,field#components_26 != field#components_9,field#components_26 != field#components_18,field#components_9 != field#components_16,field#components_9 != field#components_25,field#components_18 != field#components_7,field#components_18 != field#components_25,field#components_27 != field#components_7,field#components_27 != field#components_16,field#components_9 != field#components_17,field#components_9 != field#components_26,field#components_18 != field#components_8,field#components_18 != field#components_26,field#components_27 != field#components_8,field#components_27 != field#components_17,field#components_28 != field#components_38,field#components_28 != field#components_47,field#components_37 != field#components_29,field#components_37 != field#components_47,field#components_46 != field#components_29,field#components_46 != field#components_38,field#components_28 != field#components_39,field#components_28 != field#components_48,field#components_37 != field#components_30,field#components_37 != field#components_48,field#components_46 != field#components_30,field#components_46 != field#components_39,field#components_29 != field#components_37,field#components_29 != field#components_46,field#components_38 != field#components_28,field#components_38 != field#components_46,field#components_47 != field#components_28,field#components_47 != field#components_37,field#components_29 != field#components_39,field#components_29 != field#components_48,field#components_38 != field#components_30,field#components_38 != field#components_48,field#components_47 != field#components_30,field#components_47 != field#components_39,field#components_30 != field#components_37,field#components_30 != field#components_46,field#components_39 != field#components_28,field#components_39 != field#components_46,field#components_48 != field#components_28,field#components_48 != field#components_37,field#components_30 != field#components_38,field#components_30 != field#components_47,field#components_39 != field#components_29,field#components_39 != field#components_47,field#components_48 != field#components_29,field#components_48 != field#components_38,field#components_31 != field#components_41,field#components_31 != field#components_50,field#components_40 != field#components_32,field#components_40 != field#components_50,field#components_49 != field#components_32,field#components_49 != field#components_41,field#components_31 != field#components_42,field#components_31 != field#components_51,field#components_40 != field#components_33,field#components_40 != field#components_51,field#components_49 != field#components_33,field#components_49 != field#components_42,field#components_32 != field#components_40,field#components_32 != field#components_49,field#components_41 != field#components_31,field#components_41 != field#components_49,field#components_50 != field#components_31,field#components_50 != field#components_40,field#components_32 != field#components_42,field#components_32 != field#components_51,field#components_41 != field#components_33,field#components_41 != field#components_51,field#components_50 != field#components_33,field#components_50 != field#components_42,field#components_33 != field#components_40,field#components_33 != field#components_49,field#components_42 != field#components_31,field#components_42 != field#components_49,field#components_51 != field#components_31,field#components_51 != field#components_40,field#components_33 != field#components_41,field#components_33 != field#components_50,field#components_42 != field#components_32,field#components_42 != field#components_50,field#components_51 != field#components_32,field#components_51 != field#components_41,field#components_34 != field#components_44,field#components_34 != field#components_53,field#components_43 != field#components_35,field#components_43 != field#components_53,field#components_52 != field#components_35,field#components_52 != field#components_44,field#components_34 != field#components_45,field#components_34 != field#components_54,field#components_43 != field#components_36,field#components_43 != field#components_54,field#components_52 != field#components_36,field#components_52 != field#components_45,field#components_35 != field#components_43,field#components_35 != field#components_52,field#components_44 != field#components_34,field#components_44 != field#components_52,field#components_53 != field#components_34,field#components_53 != field#components_43,field#components_35 != field#components_45,field#components_35 != field#components_54,field#components_44 != field#components_36,field#components_44 != field#components_54,field#components_53 != field#components_36,field#components_53 != field#components_45,field#components_36 != field#components_43,field#components_36 != field#components_52,field#components_45 != field#components_34,field#components_45 != field#components_52,field#components_54 != field#components_34,field#components_54 != field#components_43,field#components_36 != field#components_44,field#components_36 != field#components_53,field#components_45 != field#components_35,field#components_45 != field#components_53,field#components_54 != field#components_35,field#components_54 != field#components_44,field#components_55 != field#components_65,field#components_55 != field#components_74,field#components_64 != field#components_56,field#components_64 != field#components_74,field#components_73 != field#components_56,field#components_73 != field#components_65,field#components_55 != field#components_66,field#components_55 != field#components_75,field#components_64 != field#components_57,field#components_64 != field#components_75,field#components_73 != field#components_57,field#components_73 != field#components_66,field#components_56 != field#components_64,field#components_56 != field#components_73,field#components_65 != field#components_55,field#components_65 != field#components_73,field#components_74 != field#components_55,field#components_74 != field#components_64,field#components_56 != field#components_66,field#components_56 != field#components_75,field#components_65 != field#components_57,field#components_65 != field#components_75,field#components_74 != field#components_57,field#components_74 != field#components_66,field#components_57 != field#components_64,field#components_57 != field#components_73,field#components_66 != field#components_55,field#components_66 != field#components_73,field#components_75 != field#components_55,field#components_75 != field#components_64,field#components_57 != field#components_65,field#components_57 != field#components_74,field#components_66 != field#components_56,field#components_66 != field#components_74,field#components_75 != field#components_56,field#components_75 != field#components_65,field#components_58 != field#components_68,field#components_58 != field#components_77,field#components_67 != field#components_59,field#components_67 != field#components_77,field#components_76 != field#components_59,field#components_76 != field#components_68,field#components_58 != field#components_69,field#components_58 != field#components_78,field#components_67 != field#components_60,field#components_67 != field#components_78,field#components_76 != field#components_60,field#components_76 != field#components_69,field#components_59 != field#components_67,field#components_59 != field#components_76,field#components_68 != field#components_58,field#components_68 != field#components_76,field#components_77 != field#components_58,field#components_77 != field#components_67,field#components_59 != field#components_69,field#components_59 != field#components_78,field#components_68 != field#components_60,field#components_68 != field#components_78,field#components_77 != field#components_60,field#components_77 != field#components_69,field#components_60 != field#components_67,field#components_60 != field#components_76,field#components_69 != field#components_58,field#components_69 != field#components_76,field#components_78 != field#components_58,field#components_78 != field#components_67,field#components_60 != field#components_68,field#components_60 != field#components_77,field#components_69 != field#components_59,field#components_69 != field#components_77,field#components_78 != field#components_59,field#components_78 != field#components_68,field#components_61 != field#components_71,field#components_61 != field#components_80,field#components_70 != field#components_62,field#components_70 != field#components_80,field#components_79 != field#components_62,field#components_79 != field#components_71,field#components_61 != field#components_72,field#components_61 != field#components_81,field#components_70 != field#components_63,field#components_70 != field#components_81,field#components_79 != field#components_63,field#components_79 != field#components_72,field#components_62 != field#components_70,field#components_62 != field#components_79,field#components_71 != field#components_61,field#components_71 != field#components_79,field#components_80 != field#components_61,field#components_80 != field#components_70,field#components_62 != field#components_72,field#components_62 != field#components_81,field#components_71 != field#components_63,field#components_71 != field#components_81,field#components_80 != field#components_63,field#components_80 != field#components_72,field#components_63 != field#components_70,field#components_63 != field#components_79,field#components_72 != field#components_61,field#components_72 != field#components_79,field#components_81 != field#components_61,field#components_81 != field#components_70,field#components_63 != field#components_71,field#components_63 != field#components_80,field#components_72 != field#components_62,field#components_72 != field#components_80,field#components_81 != field#components_62,field#components_81 != field#components_71;int(1..)]),
+and([WatchedLiteral(field#components_1,5),WatchedLiteral(field#components_2,3),WatchedLiteral(field#components_5,7),WatchedLiteral(field#components_10,6),WatchedLiteral(field#components_13,1),WatchedLiteral(field#components_14,9),WatchedLiteral(field#components_15,5),WatchedLiteral(field#components_20,9),WatchedLiteral(field#components_21,8),WatchedLiteral(field#components_26,6),WatchedLiteral(field#components_28,8),WatchedLiteral(field#components_32,6),WatchedLiteral(field#components_36,3),WatchedLiteral(field#components_37,4),WatchedLiteral(field#components_40,8),WatchedLiteral(field#components_42,3),WatchedLiteral(field#components_45,1),WatchedLiteral(field#components_46,7),WatchedLiteral(field#components_50,2),WatchedLiteral(field#components_54,6),WatchedLiteral(field#components_56,6),WatchedLiteral(field#components_61,2),WatchedLiteral(field#components_62,8),WatchedLiteral(field#components_67,4),WatchedLiteral(field#components_68,1),WatchedLiteral(field#components_69,9),WatchedLiteral(field#components_72,5),WatchedLiteral(field#components_77,8),WatchedLiteral(field#components_80,7),WatchedLiteral(field#components_81,9);int(1..)])
+

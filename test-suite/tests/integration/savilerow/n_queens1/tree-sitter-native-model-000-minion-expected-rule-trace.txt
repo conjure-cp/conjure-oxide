@@ -1,0 +1,701 @@
+Model before rewriting:
+
+letting n be 8
+letting AMOUNT_QUEENS be domain int(0..((n - 1)))
+find q1: matrix indexed by [AMOUNT_QUEENS] of AMOUNT_QUEENS
+find q2: matrix indexed by [AMOUNT_QUEENS] of int((-((n - 1)))..((n - 1)))
+find q3: matrix indexed by [AMOUNT_QUEENS] of int(0..(product([(n - 1),2;int(1..)])))
+
+such that
+
+allDifferent(q1),
+allDifferent(q2),
+allDifferent(q3),
+q1[0] = 0,
+q2[0] = 0,
+q3[0] = 0,
+and([ and([and([and([q1[i] >= sum([q2[i],i;int(1..)]),q2[i] >= (q1[i] - i);int(1..)]),q3[i] >= sum([q1[i],i;int(1..)]);int(1..)]),q1[i] >= (q3[i] - i);int(1..)]) | i : AMOUNT_QUEENS ]),
+and([ and([q2[i] <= ((n - 1) - i),q2[i] >= -(i);int(1..)]) | i : AMOUNT_QUEENS ]),
+and([ and([q3[i] <= sum([i,(n - 1);int(1..)]),q3[i] >= i;int(1..)]) | i : AMOUNT_QUEENS ])
+
+--
+
+allDifferent(q1),
+allDifferent(q2),
+allDifferent(q3),
+q1[0] = 0,
+q2[0] = 0,
+q3[0] = 0,
+and([ and([and([and([q1[i] >= sum([q2[i],i;int(1..)]),q2[i] >= (q1[i] - i);int(1..)]),q3[i] >= sum([q1[i],i;int(1..)]);int(1..)]),q1[i] >= (q3[i] - i);int(1..)]) | i : AMOUNT_QUEENS ]),
+and([ and([q2[i] <= ((n - 1) - i),q2[i] >= -(i);int(1..)]) | i : AMOUNT_QUEENS ]),
+and([ and([q3[i] <= sum([i,(n - 1);int(1..)]),q3[i] >= i;int(1..)]) | i : AMOUNT_QUEENS ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+allDifferent(q1),
+allDifferent(q2),
+allDifferent(q3),
+q1[0] = 0,
+q2[0] = 0,
+q3[0] = 0,
+and([ and([and([and([q1[i] >= sum([q2[i],i;int(1..)]),q2[i] >= (q1[i] - i);int(1..)]),q3[i] >= sum([q1[i],i;int(1..)]);int(1..)]),q1[i] >= (q3[i] - i);int(1..)]) | i : AMOUNT_QUEENS ]),
+and([ and([q2[i] <= ((n - 1) - i),q2[i] >= -(i);int(1..)]) | i : AMOUNT_QUEENS ]),
+and([ and([q3[i] <= sum([i,(n - 1);int(1..)]),q3[i] >= i;int(1..)]) | i : AMOUNT_QUEENS ])
+new variables:
+  find q1#components_1: int(0..7)
+  find q1#components_2: int(0..7)
+  find q1#components_3: int(0..7)
+  find q1#components_4: int(0..7)
+  find q1#components_5: int(0..7)
+  find q1#components_6: int(0..7)
+  find q1#components_7: int(0..7)
+  find q1#components_8: int(0..7)
+  find q2#components_1: int(-7..7)
+  find q2#components_2: int(-7..7)
+  find q2#components_3: int(-7..7)
+  find q2#components_4: int(-7..7)
+  find q2#components_5: int(-7..7)
+  find q2#components_6: int(-7..7)
+  find q2#components_7: int(-7..7)
+  find q2#components_8: int(-7..7)
+  find q3#components_1: int(0..14)
+  find q3#components_2: int(0..14)
+  find q3#components_3: int(0..14)
+  find q3#components_4: int(0..14)
+  find q3#components_5: int(0..14)
+  find q3#components_6: int(0..14)
+  find q3#components_7: int(0..14)
+  find q3#components_8: int(0..14)
+
+--
+
+q1[0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+q1#components_1
+
+--
+
+q2[0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+q2#components_1
+
+--
+
+q3[0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+q3#components_1
+
+--
+
+q1#components_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(q1#components_1,0)
+
+--
+
+q2#components_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(q2#components_1,0)
+
+--
+
+q3#components_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(q3#components_1,0)
+
+--
+
+allDifferent(q1)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([q1#components_1,q1#components_2,q1#components_3,q1#components_4,q1#components_5,q1#components_6,q1#components_7,q1#components_8;int(0..7)])
+
+--
+
+allDifferent([q1#components_1,q1#components_2,q1#components_3,q1#components_4,q1#components_5,q1#components_6,q1#components_7,q1#components_8;int(0..7)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([q1#components_1, q1#components_2, q1#components_3, q1#components_4, q1#components_5, q1#components_6, q1#components_7, q1#components_8])
+
+--
+
+allDifferent(q2)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([q2#components_1,q2#components_2,q2#components_3,q2#components_4,q2#components_5,q2#components_6,q2#components_7,q2#components_8;int(0..7)])
+
+--
+
+allDifferent([q2#components_1,q2#components_2,q2#components_3,q2#components_4,q2#components_5,q2#components_6,q2#components_7,q2#components_8;int(0..7)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([q2#components_1, q2#components_2, q2#components_3, q2#components_4, q2#components_5, q2#components_6, q2#components_7, q2#components_8])
+
+--
+
+allDifferent(q3)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([q3#components_1,q3#components_2,q3#components_3,q3#components_4,q3#components_5,q3#components_6,q3#components_7,q3#components_8;int(0..7)])
+
+--
+
+allDifferent([q3#components_1,q3#components_2,q3#components_3,q3#components_4,q3#components_5,q3#components_6,q3#components_7,q3#components_8;int(0..7)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([q3#components_1, q3#components_2, q3#components_3, q3#components_4, q3#components_5, q3#components_6, q3#components_7, q3#components_8])
+
+--
+
+[ and([and([and([q1[i] >= sum([q2[i],i;int(1..)]),q2[i] >= (q1[i] - i);int(1..)]),q3[i] >= sum([q1[i],i;int(1..)]);int(1..)]),q1[i] >= (q3[i] - i);int(1..)]) | i : AMOUNT_QUEENS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([and([and([q1#components_1 >= sum([q2#components_1,0;int(1..)]),q2#components_1 >= (q1#components_1 - 0);int(1..)]),q3#components_1 >= sum([q1#components_1,0;int(1..)]);int(1..)]),q1#components_1 >= (q3#components_1 - 0);int(1..)]),and([and([and([q1#components_2 >= sum([q2#components_2,1;int(1..)]),q2#components_2 >= (q1#components_2 - 1);int(1..)]),q3#components_2 >= sum([q1#components_2,1;int(1..)]);int(1..)]),q1#components_2 >= (q3#components_2 - 1);int(1..)]),and([and([and([q1#components_3 >= sum([q2#components_3,2;int(1..)]),q2#components_3 >= (q1#components_3 - 2);int(1..)]),q3#components_3 >= sum([q1#components_3,2;int(1..)]);int(1..)]),q1#components_3 >= (q3#components_3 - 2);int(1..)]),and([and([and([q1#components_4 >= sum([q2#components_4,3;int(1..)]),q2#components_4 >= (q1#components_4 - 3);int(1..)]),q3#components_4 >= sum([q1#components_4,3;int(1..)]);int(1..)]),q1#components_4 >= (q3#components_4 - 3);int(1..)]),and([and([and([q1#components_5 >= sum([q2#components_5,4;int(1..)]),q2#components_5 >= (q1#components_5 - 4);int(1..)]),q3#components_5 >= sum([q1#components_5,4;int(1..)]);int(1..)]),q1#components_5 >= (q3#components_5 - 4);int(1..)]),and([and([and([q1#components_6 >= sum([q2#components_6,5;int(1..)]),q2#components_6 >= (q1#components_6 - 5);int(1..)]),q3#components_6 >= sum([q1#components_6,5;int(1..)]);int(1..)]),q1#components_6 >= (q3#components_6 - 5);int(1..)]),and([and([and([q1#components_7 >= sum([q2#components_7,6;int(1..)]),q2#components_7 >= (q1#components_7 - 6);int(1..)]),q3#components_7 >= sum([q1#components_7,6;int(1..)]);int(1..)]),q1#components_7 >= (q3#components_7 - 6);int(1..)]),and([and([and([q1#components_8 >= sum([q2#components_8,7;int(1..)]),q2#components_8 >= (q1#components_8 - 7);int(1..)]),q3#components_8 >= sum([q1#components_8,7;int(1..)]);int(1..)]),q1#components_8 >= (q3#components_8 - 7);int(1..)]);int(1..)]
+
+--
+
+and([and([and([and([q1#components_1 >= sum([q2#components_1,0;int(1..)]),q2#components_1 >= (q1#components_1 - 0);int(1..)]),q3#components_1 >= sum([q1#components_1,0;int(1..)]);int(1..)]),q1#components_1 >= (q3#components_1 - 0);int(1..)]),and([and([and([q1#components_2 >= sum([q2#components_2,1;int(1..)]),q2#components_2 >= (q1#components_2 - 1);int(1..)]),q3#components_2 >= sum([q1#components_2,1;int(1..)]);int(1..)]),q1#components_2 >= (q3#components_2 - 1);int(1..)]),and([and([and([q1#components_3 >= sum([q2#components_3,2;int(1..)]),q2#components_3 >= (q1#components_3 - 2);int(1..)]),q3#components_3 >= sum([q1#components_3,2;int(1..)]);int(1..)]),q1#components_3 >= (q3#components_3 - 2);int(1..)]),and([and([and([q1#components_4 >= sum([q2#components_4,3;int(1..)]),q2#components_4 >= (q1#components_4 - 3);int(1..)]),q3#components_4 >= sum([q1#components_4,3;int(1..)]);int(1..)]),q1#components_4 >= (q3#components_4 - 3);int(1..)]),and([and([and([q1#components_5 >= sum([q2#components_5,4;int(1..)]),q2#components_5 >= (q1#components_5 - 4);int(1..)]),q3#components_5 >= sum([q1#components_5,4;int(1..)]);int(1..)]),q1#components_5 >= (q3#components_5 - 4);int(1..)]),and([and([and([q1#components_6 >= sum([q2#components_6,5;int(1..)]),q2#components_6 >= (q1#components_6 - 5);int(1..)]),q3#components_6 >= sum([q1#components_6,5;int(1..)]);int(1..)]),q1#components_6 >= (q3#components_6 - 5);int(1..)]),and([and([and([q1#components_7 >= sum([q2#components_7,6;int(1..)]),q2#components_7 >= (q1#components_7 - 6);int(1..)]),q3#components_7 >= sum([q1#components_7,6;int(1..)]);int(1..)]),q1#components_7 >= (q3#components_7 - 6);int(1..)]),and([and([and([q1#components_8 >= sum([q2#components_8,7;int(1..)]),q2#components_8 >= (q1#components_8 - 7);int(1..)]),q3#components_8 >= sum([q1#components_8,7;int(1..)]);int(1..)]),q1#components_8 >= (q3#components_8 - 7);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([q1#components_1 >= sum([q2#components_1,0;int(1..)]),q2#components_1 >= (q1#components_1 - 0),q3#components_1 >= sum([q1#components_1,0;int(1..)]),q1#components_1 >= (q3#components_1 - 0),q1#components_2 >= sum([q2#components_2,1;int(1..)]),q2#components_2 >= (q1#components_2 - 1),q3#components_2 >= sum([q1#components_2,1;int(1..)]),q1#components_2 >= (q3#components_2 - 1),q1#components_3 >= sum([q2#components_3,2;int(1..)]),q2#components_3 >= (q1#components_3 - 2),q3#components_3 >= sum([q1#components_3,2;int(1..)]),q1#components_3 >= (q3#components_3 - 2),q1#components_4 >= sum([q2#components_4,3;int(1..)]),q2#components_4 >= (q1#components_4 - 3),q3#components_4 >= sum([q1#components_4,3;int(1..)]),q1#components_4 >= (q3#components_4 - 3),q1#components_5 >= sum([q2#components_5,4;int(1..)]),q2#components_5 >= (q1#components_5 - 4),q3#components_5 >= sum([q1#components_5,4;int(1..)]),q1#components_5 >= (q3#components_5 - 4),q1#components_6 >= sum([q2#components_6,5;int(1..)]),q2#components_6 >= (q1#components_6 - 5),q3#components_6 >= sum([q1#components_6,5;int(1..)]),q1#components_6 >= (q3#components_6 - 5),q1#components_7 >= sum([q2#components_7,6;int(1..)]),q2#components_7 >= (q1#components_7 - 6),q3#components_7 >= sum([q1#components_7,6;int(1..)]),q1#components_7 >= (q3#components_7 - 6),q1#components_8 >= sum([q2#components_8,7;int(1..)]),q2#components_8 >= (q1#components_8 - 7),q3#components_8 >= sum([q1#components_8,7;int(1..)]),q1#components_8 >= (q3#components_8 - 7);int(1..)])
+
+--
+
+(q1#components_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#components_1,-(0);int(1..)])
+
+--
+
+(q3#components_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q3#components_1,-(0);int(1..)])
+
+--
+
+(q1#components_2 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#components_2,-(1);int(1..)])
+
+--
+
+(q3#components_2 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q3#components_2,-(1);int(1..)])
+
+--
+
+(q1#components_3 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#components_3,-(2);int(1..)])
+
+--
+
+(q3#components_3 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q3#components_3,-(2);int(1..)])
+
+--
+
+(q1#components_4 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#components_4,-(3);int(1..)])
+
+--
+
+(q3#components_4 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q3#components_4,-(3);int(1..)])
+
+--
+
+(q1#components_5 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#components_5,-(4);int(1..)])
+
+--
+
+(q3#components_5 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q3#components_5,-(4);int(1..)])
+
+--
+
+(q1#components_6 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#components_6,-(5);int(1..)])
+
+--
+
+(q3#components_6 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q3#components_6,-(5);int(1..)])
+
+--
+
+(q1#components_7 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#components_7,-(6);int(1..)])
+
+--
+
+(q3#components_7 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q3#components_7,-(6);int(1..)])
+
+--
+
+(q1#components_8 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#components_8,-(7);int(1..)])
+
+--
+
+(q3#components_8 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q3#components_8,-(7);int(1..)])
+
+--
+
+q1#components_1 >= sum([q2#components_1,0;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([0, q2#components_1], q1#components_1)
+
+--
+
+q2#components_1 >= sum([q1#components_1,0;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([0, q1#components_1], q2#components_1)
+
+--
+
+q3#components_1 >= sum([q1#components_1,0;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([0, q1#components_1], q3#components_1)
+
+--
+
+q1#components_1 >= sum([q3#components_1,0;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([0, q3#components_1], q1#components_1)
+
+--
+
+q1#components_2 >= sum([q2#components_2,1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([1, q2#components_2], q1#components_2)
+
+--
+
+q2#components_2 >= sum([q1#components_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-1, q1#components_2], q2#components_2)
+
+--
+
+q3#components_2 >= sum([q1#components_2,1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([1, q1#components_2], q3#components_2)
+
+--
+
+q1#components_2 >= sum([q3#components_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-1, q3#components_2], q1#components_2)
+
+--
+
+q1#components_3 >= sum([q2#components_3,2;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([2, q2#components_3], q1#components_3)
+
+--
+
+q2#components_3 >= sum([q1#components_3,-2;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-2, q1#components_3], q2#components_3)
+
+--
+
+q3#components_3 >= sum([q1#components_3,2;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([2, q1#components_3], q3#components_3)
+
+--
+
+q1#components_3 >= sum([q3#components_3,-2;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-2, q3#components_3], q1#components_3)
+
+--
+
+q1#components_4 >= sum([q2#components_4,3;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([3, q2#components_4], q1#components_4)
+
+--
+
+q2#components_4 >= sum([q1#components_4,-3;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-3, q1#components_4], q2#components_4)
+
+--
+
+q3#components_4 >= sum([q1#components_4,3;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([3, q1#components_4], q3#components_4)
+
+--
+
+q1#components_4 >= sum([q3#components_4,-3;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-3, q3#components_4], q1#components_4)
+
+--
+
+q1#components_5 >= sum([q2#components_5,4;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([4, q2#components_5], q1#components_5)
+
+--
+
+q2#components_5 >= sum([q1#components_5,-4;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-4, q1#components_5], q2#components_5)
+
+--
+
+q3#components_5 >= sum([q1#components_5,4;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([4, q1#components_5], q3#components_5)
+
+--
+
+q1#components_5 >= sum([q3#components_5,-4;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-4, q3#components_5], q1#components_5)
+
+--
+
+q1#components_6 >= sum([q2#components_6,5;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([5, q2#components_6], q1#components_6)
+
+--
+
+q2#components_6 >= sum([q1#components_6,-5;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-5, q1#components_6], q2#components_6)
+
+--
+
+q3#components_6 >= sum([q1#components_6,5;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([5, q1#components_6], q3#components_6)
+
+--
+
+q1#components_6 >= sum([q3#components_6,-5;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-5, q3#components_6], q1#components_6)
+
+--
+
+q1#components_7 >= sum([q2#components_7,6;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([6, q2#components_7], q1#components_7)
+
+--
+
+q2#components_7 >= sum([q1#components_7,-6;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-6, q1#components_7], q2#components_7)
+
+--
+
+q3#components_7 >= sum([q1#components_7,6;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([6, q1#components_7], q3#components_7)
+
+--
+
+q1#components_7 >= sum([q3#components_7,-6;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-6, q3#components_7], q1#components_7)
+
+--
+
+q1#components_8 >= sum([q2#components_8,7;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([7, q2#components_8], q1#components_8)
+
+--
+
+q2#components_8 >= sum([q1#components_8,-7;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-7, q1#components_8], q2#components_8)
+
+--
+
+q3#components_8 >= sum([q1#components_8,7;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([7, q1#components_8], q3#components_8)
+
+--
+
+q1#components_8 >= sum([q3#components_8,-7;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([-7, q3#components_8], q1#components_8)
+
+--
+
+[ and([q2[i] <= ((n - 1) - i),q2[i] >= -(i);int(1..)]) | i : AMOUNT_QUEENS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([q2#components_1 <= 7,q2#components_1 >= 0;int(1..)]),and([q2#components_2 <= 6,q2#components_2 >= -1;int(1..)]),and([q2#components_3 <= 5,q2#components_3 >= -2;int(1..)]),and([q2#components_4 <= 4,q2#components_4 >= -3;int(1..)]),and([q2#components_5 <= 3,q2#components_5 >= -4;int(1..)]),and([q2#components_6 <= 2,q2#components_6 >= -5;int(1..)]),and([q2#components_7 <= 1,q2#components_7 >= -6;int(1..)]),and([q2#components_8 <= 0,q2#components_8 >= -7;int(1..)]);int(1..)]
+
+--
+
+and([and([q2#components_1 <= 7,q2#components_1 >= 0;int(1..)]),and([q2#components_2 <= 6,q2#components_2 >= -1;int(1..)]),and([q2#components_3 <= 5,q2#components_3 >= -2;int(1..)]),and([q2#components_4 <= 4,q2#components_4 >= -3;int(1..)]),and([q2#components_5 <= 3,q2#components_5 >= -4;int(1..)]),and([q2#components_6 <= 2,q2#components_6 >= -5;int(1..)]),and([q2#components_7 <= 1,q2#components_7 >= -6;int(1..)]),and([q2#components_8 <= 0,q2#components_8 >= -7;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([q2#components_1 <= 7,q2#components_1 >= 0,q2#components_2 <= 6,q2#components_2 >= -1,q2#components_3 <= 5,q2#components_3 >= -2,q2#components_4 <= 4,q2#components_4 >= -3,q2#components_5 <= 3,q2#components_5 >= -4,q2#components_6 <= 2,q2#components_6 >= -5,q2#components_7 <= 1,q2#components_7 >= -6,q2#components_8 <= 0,q2#components_8 >= -7;int(1..)])
+
+--
+
+q2#components_1 <= 7
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q2#components_1, 7, 0)
+
+--
+
+q2#components_1 >= 0
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, q2#components_1, 0)
+
+--
+
+q2#components_2 <= 6
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q2#components_2, 6, 0)
+
+--
+
+q2#components_2 >= -1
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(-1, q2#components_2, 0)
+
+--
+
+q2#components_3 <= 5
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q2#components_3, 5, 0)
+
+--
+
+q2#components_3 >= -2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(-2, q2#components_3, 0)
+
+--
+
+q2#components_4 <= 4
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q2#components_4, 4, 0)
+
+--
+
+q2#components_4 >= -3
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(-3, q2#components_4, 0)
+
+--
+
+q2#components_5 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q2#components_5, 3, 0)
+
+--
+
+q2#components_5 >= -4
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(-4, q2#components_5, 0)
+
+--
+
+q2#components_6 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q2#components_6, 2, 0)
+
+--
+
+q2#components_6 >= -5
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(-5, q2#components_6, 0)
+
+--
+
+q2#components_7 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q2#components_7, 1, 0)
+
+--
+
+q2#components_7 >= -6
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(-6, q2#components_7, 0)
+
+--
+
+q2#components_8 <= 0
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q2#components_8, 0, 0)
+
+--
+
+q2#components_8 >= -7
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(-7, q2#components_8, 0)
+
+--
+
+[ and([q3[i] <= sum([i,(n - 1);int(1..)]),q3[i] >= i;int(1..)]) | i : AMOUNT_QUEENS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([q3#components_1 <= 7,q3#components_1 >= 0;int(1..)]),and([q3#components_2 <= 8,q3#components_2 >= 1;int(1..)]),and([q3#components_3 <= 9,q3#components_3 >= 2;int(1..)]),and([q3#components_4 <= 10,q3#components_4 >= 3;int(1..)]),and([q3#components_5 <= 11,q3#components_5 >= 4;int(1..)]),and([q3#components_6 <= 12,q3#components_6 >= 5;int(1..)]),and([q3#components_7 <= 13,q3#components_7 >= 6;int(1..)]),and([q3#components_8 <= 14,q3#components_8 >= 7;int(1..)]);int(1..)]
+
+--
+
+and([and([q3#components_1 <= 7,q3#components_1 >= 0;int(1..)]),and([q3#components_2 <= 8,q3#components_2 >= 1;int(1..)]),and([q3#components_3 <= 9,q3#components_3 >= 2;int(1..)]),and([q3#components_4 <= 10,q3#components_4 >= 3;int(1..)]),and([q3#components_5 <= 11,q3#components_5 >= 4;int(1..)]),and([q3#components_6 <= 12,q3#components_6 >= 5;int(1..)]),and([q3#components_7 <= 13,q3#components_7 >= 6;int(1..)]),and([q3#components_8 <= 14,q3#components_8 >= 7;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([q3#components_1 <= 7,q3#components_1 >= 0,q3#components_2 <= 8,q3#components_2 >= 1,q3#components_3 <= 9,q3#components_3 >= 2,q3#components_4 <= 10,q3#components_4 >= 3,q3#components_5 <= 11,q3#components_5 >= 4,q3#components_6 <= 12,q3#components_6 >= 5,q3#components_7 <= 13,q3#components_7 >= 6,q3#components_8 <= 14,q3#components_8 >= 7;int(1..)])
+
+--
+
+q3#components_1 <= 7
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q3#components_1, 7, 0)
+
+--
+
+q3#components_1 >= 0
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, q3#components_1, 0)
+
+--
+
+q3#components_2 <= 8
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q3#components_2, 8, 0)
+
+--
+
+q3#components_2 >= 1
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(1, q3#components_2, 0)
+
+--
+
+q3#components_3 <= 9
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q3#components_3, 9, 0)
+
+--
+
+q3#components_3 >= 2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(2, q3#components_3, 0)
+
+--
+
+q3#components_4 <= 10
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q3#components_4, 10, 0)
+
+--
+
+q3#components_4 >= 3
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(3, q3#components_4, 0)
+
+--
+
+q3#components_5 <= 11
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q3#components_5, 11, 0)
+
+--
+
+q3#components_5 >= 4
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(4, q3#components_5, 0)
+
+--
+
+q3#components_6 <= 12
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q3#components_6, 12, 0)
+
+--
+
+q3#components_6 >= 5
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(5, q3#components_6, 0)
+
+--
+
+q3#components_7 <= 13
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q3#components_7, 13, 0)
+
+--
+
+q3#components_7 >= 6
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(6, q3#components_7, 0)
+
+--
+
+q3#components_8 <= 14
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(q3#components_8, 14, 0)
+
+--
+
+q3#components_8 >= 7
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(7, q3#components_8, 0)
+
+--
+
+Final model:
+
+letting n be 8
+letting AMOUNT_QUEENS be domain int(0..((n - 1)))
+find q1: matrix indexed by [AMOUNT_QUEENS] of AMOUNT_QUEENS
+find q2: matrix indexed by [AMOUNT_QUEENS] of int((-((n - 1)))..((n - 1)))
+find q3: matrix indexed by [AMOUNT_QUEENS] of int(0..(product([(n - 1),2;int(1..)])))
+find q1#components_1: int(0..7)
+find q1#components_2: int(0..7)
+find q1#components_3: int(0..7)
+find q1#components_4: int(0..7)
+find q1#components_5: int(0..7)
+find q1#components_6: int(0..7)
+find q1#components_7: int(0..7)
+find q1#components_8: int(0..7)
+find q2#components_1: int(-7..7)
+find q2#components_2: int(-7..7)
+find q2#components_3: int(-7..7)
+find q2#components_4: int(-7..7)
+find q2#components_5: int(-7..7)
+find q2#components_6: int(-7..7)
+find q2#components_7: int(-7..7)
+find q2#components_8: int(-7..7)
+find q3#components_1: int(0..14)
+find q3#components_2: int(0..14)
+find q3#components_3: int(0..14)
+find q3#components_4: int(0..14)
+find q3#components_5: int(0..14)
+find q3#components_6: int(0..14)
+find q3#components_7: int(0..14)
+find q3#components_8: int(0..14)
+
+such that
+
+__flat_alldiff([q1#components_1, q1#components_2, q1#components_3, q1#components_4, q1#components_5, q1#components_6, q1#components_7, q1#components_8]),
+__flat_alldiff([q2#components_1, q2#components_2, q2#components_3, q2#components_4, q2#components_5, q2#components_6, q2#components_7, q2#components_8]),
+__flat_alldiff([q3#components_1, q3#components_2, q3#components_3, q3#components_4, q3#components_5, q3#components_6, q3#components_7, q3#components_8]),
+WatchedLiteral(q1#components_1,0),
+WatchedLiteral(q2#components_1,0),
+WatchedLiteral(q3#components_1,0),
+and([SumLeq([0, q2#components_1], q1#components_1),SumLeq([0, q1#components_1], q2#components_1),SumLeq([0, q1#components_1], q3#components_1),SumLeq([0, q3#components_1], q1#components_1),SumLeq([1, q2#components_2], q1#components_2),SumLeq([-1, q1#components_2], q2#components_2),SumLeq([1, q1#components_2], q3#components_2),SumLeq([-1, q3#components_2], q1#components_2),SumLeq([2, q2#components_3], q1#components_3),SumLeq([-2, q1#components_3], q2#components_3),SumLeq([2, q1#components_3], q3#components_3),SumLeq([-2, q3#components_3], q1#components_3),SumLeq([3, q2#components_4], q1#components_4),SumLeq([-3, q1#components_4], q2#components_4),SumLeq([3, q1#components_4], q3#components_4),SumLeq([-3, q3#components_4], q1#components_4),SumLeq([4, q2#components_5], q1#components_5),SumLeq([-4, q1#components_5], q2#components_5),SumLeq([4, q1#components_5], q3#components_5),SumLeq([-4, q3#components_5], q1#components_5),SumLeq([5, q2#components_6], q1#components_6),SumLeq([-5, q1#components_6], q2#components_6),SumLeq([5, q1#components_6], q3#components_6),SumLeq([-5, q3#components_6], q1#components_6),SumLeq([6, q2#components_7], q1#components_7),SumLeq([-6, q1#components_7], q2#components_7),SumLeq([6, q1#components_7], q3#components_7),SumLeq([-6, q3#components_7], q1#components_7),SumLeq([7, q2#components_8], q1#components_8),SumLeq([-7, q1#components_8], q2#components_8),SumLeq([7, q1#components_8], q3#components_8),SumLeq([-7, q3#components_8], q1#components_8);int(1..)]),
+and([Ineq(q2#components_1, 7, 0),Ineq(0, q2#components_1, 0),Ineq(q2#components_2, 6, 0),Ineq(-1, q2#components_2, 0),Ineq(q2#components_3, 5, 0),Ineq(-2, q2#components_3, 0),Ineq(q2#components_4, 4, 0),Ineq(-3, q2#components_4, 0),Ineq(q2#components_5, 3, 0),Ineq(-4, q2#components_5, 0),Ineq(q2#components_6, 2, 0),Ineq(-5, q2#components_6, 0),Ineq(q2#components_7, 1, 0),Ineq(-6, q2#components_7, 0),Ineq(q2#components_8, 0, 0),Ineq(-7, q2#components_8, 0);int(1..)]),
+and([Ineq(q3#components_1, 7, 0),Ineq(0, q3#components_1, 0),Ineq(q3#components_2, 8, 0),Ineq(1, q3#components_2, 0),Ineq(q3#components_3, 9, 0),Ineq(2, q3#components_3, 0),Ineq(q3#components_4, 10, 0),Ineq(3, q3#components_4, 0),Ineq(q3#components_5, 11, 0),Ineq(4, q3#components_5, 0),Ineq(q3#components_6, 12, 0),Ineq(5, q3#components_6, 0),Ineq(q3#components_7, 13, 0),Ineq(6, q3#components_7, 0),Ineq(q3#components_8, 14, 0),Ineq(7, q3#components_8, 0);int(1..)])
+

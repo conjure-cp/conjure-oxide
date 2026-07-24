@@ -1,0 +1,45 @@
+Model before rewriting:
+
+find i: int(1..1)
+find j: int(1..1)
+find m: matrix indexed by [int(0..1)] of bool
+
+such that
+
+!(m[sum([i,j;int(1..)])])
+
+--
+
+!(m[sum([i,j;int(1..)])])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+!(m[sum([i,j;int(1..)])])
+new variables:
+  find m#components_1: bool
+  find m#components_2: bool
+
+--
+
+m[sum([i,j;int(1..)])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[sum([i,j;int(1..)])]) @ false}
+
+--
+
+{SafeIndex(m,[sum([i,j;int(1..)])]) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m,[sum([i,j;int(1..)])]),false;int(1..)])
+
+--
+
+Final model:
+
+find i: int(1..1)
+find j: int(1..1)
+find m: matrix indexed by [int(0..1)] of bool
+find m#components_1: bool
+find m#components_2: bool
+
+such that
+
+true
+

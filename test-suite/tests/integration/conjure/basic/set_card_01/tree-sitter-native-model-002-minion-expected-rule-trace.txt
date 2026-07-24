@@ -1,0 +1,69 @@
+Model before rewriting:
+
+find s: set (size 1) of int(1..2)
+
+such that
+
+|s| in s
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#packed_1: int(0..1)
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+|s| in s
+   ~~> membership_packed ([("ReprGeneral", 9500)])
+or([and([|s| = 1,__inDomain(s#packed_1,int(0));int(1..)]),and([|s| = 2,__inDomain(s#packed_1,int(1));int(1..)]);int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_packed ([("ReprGeneral", 9500)])
+1
+
+--
+
+|s|
+   ~~> cardinality_packed ([("ReprGeneral", 9500)])
+1
+
+--
+
+or([and([__inDomain(s#packed_1,int(0));int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__inDomain(s#packed_1,int(0));int(1..)])
+
+--
+
+and([__inDomain(s#packed_1,int(0));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__inDomain(s#packed_1,int(0))
+
+--
+
+__inDomain(s#packed_1,int(0))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(s#packed_1,[0,0])
+
+--
+
+Final model:
+
+find s: set (size 1) of int(1..2)
+find s#packed_1: int(0..1)
+
+such that
+
+__minion_w_inintervalset(s#packed_1,[0,0])
+

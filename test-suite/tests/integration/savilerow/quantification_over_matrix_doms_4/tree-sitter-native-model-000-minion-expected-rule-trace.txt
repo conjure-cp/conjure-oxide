@@ -1,0 +1,62 @@
+Model before rewriting:
+
+letting a be 5
+letting b be 3
+letting c be 7
+find x: int(1..20)
+
+such that
+
+or([ allDifferent(flatten(i)) | i : matrix indexed by [int(a, b..c), int(a..b, c)] of int(0..9) ])
+
+--
+
+or([ allDifferent(flatten(i)) | i : matrix indexed by [int(a, b..c), int(a..b, c)] of int(0..9) ])
+   ~~> exists_quantified_to_finds ([("Base", 2003)])
+allDifferent(flatten(__0))
+new variables:
+  findAux __0: matrix indexed by [int(a, b..c), int(a..b, c)] of int(0..9)
+
+--
+
+allDifferent(flatten(__0))
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+allDifferent(flatten(__0))
+new variables:
+  findAux __0#components_1: int(0..9)
+  findAux __0#components_2: int(0..9)
+  findAux __0#components_3: int(0..9)
+  findAux __0#components_4: int(0..9)
+  findAux __0#components_5: int(0..9)
+
+--
+
+flatten(__0)
+   ~~> flatten_matrix_components ([("ReprMatrixComponents", 5000)])
+[__0#components_1,__0#components_2,__0#components_3,__0#components_4,__0#components_5;int(1..)]
+
+--
+
+allDifferent([__0#components_1,__0#components_2,__0#components_3,__0#components_4,__0#components_5;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([__0#components_1, __0#components_2, __0#components_3, __0#components_4, __0#components_5])
+
+--
+
+Final model:
+
+letting a be 5
+letting b be 3
+letting c be 7
+find x: int(1..20)
+findAux __0: matrix indexed by [int(a, b..c), int(a..b, c)] of int(0..9)
+findAux __0#components_1: int(0..9)
+findAux __0#components_2: int(0..9)
+findAux __0#components_3: int(0..9)
+findAux __0#components_4: int(0..9)
+findAux __0#components_5: int(0..9)
+
+such that
+
+__flat_alldiff([__0#components_1, __0#components_2, __0#components_3, __0#components_4, __0#components_5])
+

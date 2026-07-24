@@ -170,36 +170,41 @@
 
 
 find x: set of int(1..10)
-find x#SetExplicitWithSize_1: matrix indexed by [int(1..10)] of int(1..10)
-find x#SetExplicitWithSize_2: int(0..10)
-find x#SetOccurrence_1: bool
-find x#SetOccurrence_2: bool
-find x#SetOccurrence_3: bool
-find x#SetOccurrence_4: bool
-find x#SetOccurrence_5: bool
-find x#SetOccurrence_6: bool
-find x#SetOccurrence_7: bool
-find x#SetOccurrence_8: bool
-find x#SetOccurrence_9: bool
-find x#SetOccurrence_10: bool
-find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_2: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_3: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_4: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_5: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_6: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_7: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_8: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_9: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_10: int(1..10)
+find x#explicit_1: matrix indexed by [int(1..10)] of int(1..10)
+find x#explicit_2: int(0..10)
+find x#explicit_1#components_1: int(1..10)
+find x#explicit_1#components_2: int(1..10)
+find x#explicit_1#components_3: int(1..10)
+find x#explicit_1#components_4: int(1..10)
+find x#explicit_1#components_5: int(1..10)
+find x#explicit_1#components_6: int(1..10)
+find x#explicit_1#components_7: int(1..10)
+find x#explicit_1#components_8: int(1..10)
+find x#explicit_1#components_9: int(1..10)
+find x#explicit_1#components_10: int(1..10)
 
 such that
 
 sum([ i | i <- x ]) = 2,
-SumGeq([x#SetOccurrence_1, x#SetOccurrence_10, x#SetOccurrence_2, x#SetOccurrence_3, x#SetOccurrence_4, x#SetOccurrence_5, x#SetOccurrence_6, x#SetOccurrence_7, x#SetOccurrence_8, x#SetOccurrence_9], 0),
-SumLeq([x#SetOccurrence_1, x#SetOccurrence_10, x#SetOccurrence_2, x#SetOccurrence_3, x#SetOccurrence_4, x#SetOccurrence_5, x#SetOccurrence_6, x#SetOccurrence_7, x#SetOccurrence_8, x#SetOccurrence_9], 10),
-and([ __0 in x | __0 <- x ]),
-and([ __0 in x | __0 <- x ])
+or([Ineq(x#explicit_2, 1, 0),FlatLexLt([x#explicit_1#components_1], [x#explicit_1#components_2]);int(1..)]),
+or([Ineq(x#explicit_2, 2, 0),FlatLexLt([x#explicit_1#components_2], [x#explicit_1#components_3]);int(1..)]),
+or([Ineq(x#explicit_2, 3, 0),FlatLexLt([x#explicit_1#components_3], [x#explicit_1#components_4]);int(1..)]),
+or([Ineq(x#explicit_2, 4, 0),FlatLexLt([x#explicit_1#components_4], [x#explicit_1#components_5]);int(1..)]),
+or([Ineq(x#explicit_2, 5, 0),FlatLexLt([x#explicit_1#components_5], [x#explicit_1#components_6]);int(1..)]),
+or([Ineq(x#explicit_2, 6, 0),FlatLexLt([x#explicit_1#components_6], [x#explicit_1#components_7]);int(1..)]),
+or([Ineq(x#explicit_2, 7, 0),FlatLexLt([x#explicit_1#components_7], [x#explicit_1#components_8]);int(1..)]),
+or([Ineq(x#explicit_2, 8, 0),FlatLexLt([x#explicit_1#components_8], [x#explicit_1#components_9]);int(1..)]),
+or([Ineq(x#explicit_2, 9, 0),FlatLexLt([x#explicit_1#components_9], [x#explicit_1#components_10]);int(1..)]),
+or([Ineq(1, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_1,1);int(1..)]),
+or([Ineq(2, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_2,1);int(1..)]),
+or([Ineq(3, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_3,1);int(1..)]),
+or([Ineq(4, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_4,1);int(1..)]),
+or([Ineq(5, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_5,1);int(1..)]),
+or([Ineq(6, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_6,1);int(1..)]),
+or([Ineq(7, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_7,1);int(1..)]),
+or([Ineq(8, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_8,1);int(1..)]),
+or([Ineq(9, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_9,1);int(1..)]),
+or([Ineq(10, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_10,1);int(1..)])
 
 Model before rewriting:
 
@@ -215,140 +220,572 @@ sum([ i | i <- x ]) = 2
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 sum([ i | i <- x ]) = 2
 new variables:
-  find x#SetExplicitWithSize_1: matrix indexed by [int(1..10)] of int(1..10)
-  find x#SetExplicitWithSize_2: int(0..10)
-  find x#SetOccurrence_1: bool
-  find x#SetOccurrence_10: bool
-  find x#SetOccurrence_2: bool
-  find x#SetOccurrence_3: bool
-  find x#SetOccurrence_4: bool
-  find x#SetOccurrence_5: bool
-  find x#SetOccurrence_6: bool
-  find x#SetOccurrence_7: bool
-  find x#SetOccurrence_8: bool
-  find x#SetOccurrence_9: bool
+  find x#explicit_1: matrix indexed by [int(1..10)] of int(1..10)
+  find x#explicit_2: int(0..10)
 new constraints:
-  or([x#SetExplicitWithSize_2 < 2,([1;int(1..1)] <lex [2;int(1..1)]);int(1..)])
-  or([x#SetExplicitWithSize_2 < 3,([2;int(1..1)] <lex [3;int(1..1)]);int(1..)])
-  or([x#SetExplicitWithSize_2 < 4,([3;int(1..1)] <lex [4;int(1..1)]);int(1..)])
-  or([x#SetExplicitWithSize_2 < 5,([4;int(1..1)] <lex [5;int(1..1)]);int(1..)])
-  or([x#SetExplicitWithSize_2 < 6,([5;int(1..1)] <lex [6;int(1..1)]);int(1..)])
-  or([x#SetExplicitWithSize_2 < 7,([6;int(1..1)] <lex [7;int(1..1)]);int(1..)])
-  or([x#SetExplicitWithSize_2 < 8,([7;int(1..1)] <lex [8;int(1..1)]);int(1..)])
-  or([x#SetExplicitWithSize_2 < 9,([8;int(1..1)] <lex [9;int(1..1)]);int(1..)])
-  or([x#SetExplicitWithSize_2 < 10,([9;int(1..1)] <lex [10;int(1..1)]);int(1..)])
-  and([sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5),toInt(x#SetOccurrence_6),toInt(x#SetOccurrence_7),toInt(x#SetOccurrence_8),toInt(x#SetOccurrence_9),toInt(x#SetOccurrence_10);int(1..)]) >= 0,sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5),toInt(x#SetOccurrence_6),toInt(x#SetOccurrence_7),toInt(x#SetOccurrence_8),toInt(x#SetOccurrence_9),toInt(x#SetOccurrence_10);int(1..)]) <= 10;int(1..)])
-  x = x
-
---
-
-x = x
-   ~~> eq_to_subset_eq ([("Base", 8800)])
-and([(x subsetEq x),(x subsetEq x);int(1..)])
-
---
-
-(x subsetEq x)
-   ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in x | __0 <- x ])
-
---
-
-(x subsetEq x)
-   ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in x | __0 <- x ])
+  or([x#explicit_2 < 2,([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 3,([SafeIndex(x#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 4,([SafeIndex(x#explicit_1,[3]);int(1..)] <lex [SafeIndex(x#explicit_1,[4]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 5,([SafeIndex(x#explicit_1,[4]);int(1..)] <lex [SafeIndex(x#explicit_1,[5]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 6,([SafeIndex(x#explicit_1,[5]);int(1..)] <lex [SafeIndex(x#explicit_1,[6]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 7,([SafeIndex(x#explicit_1,[6]);int(1..)] <lex [SafeIndex(x#explicit_1,[7]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 8,([SafeIndex(x#explicit_1,[7]);int(1..)] <lex [SafeIndex(x#explicit_1,[8]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 9,([SafeIndex(x#explicit_1,[8]);int(1..)] <lex [SafeIndex(x#explicit_1,[9]);int(1..)]);int(1..)])
+  or([x#explicit_2 < 10,([SafeIndex(x#explicit_1,[9]);int(1..)] <lex [SafeIndex(x#explicit_1,[10]);int(1..)]);int(1..)])
+  or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
+  or([3 <= x#explicit_2,SafeIndex(x#explicit_1,[3]) = 1;int(1..)])
+  or([4 <= x#explicit_2,SafeIndex(x#explicit_1,[4]) = 1;int(1..)])
+  or([5 <= x#explicit_2,SafeIndex(x#explicit_1,[5]) = 1;int(1..)])
+  or([6 <= x#explicit_2,SafeIndex(x#explicit_1,[6]) = 1;int(1..)])
+  or([7 <= x#explicit_2,SafeIndex(x#explicit_1,[7]) = 1;int(1..)])
+  or([8 <= x#explicit_2,SafeIndex(x#explicit_1,[8]) = 1;int(1..)])
+  or([9 <= x#explicit_2,SafeIndex(x#explicit_1,[9]) = 1;int(1..)])
+  or([10 <= x#explicit_2,SafeIndex(x#explicit_1,[10]) = 1;int(1..)])
 
 --
 
 sum([ i | i <- x ]) = 2,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-and([sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5),toInt(x#SetOccurrence_6),toInt(x#SetOccurrence_7),toInt(x#SetOccurrence_8),toInt(x#SetOccurrence_9),toInt(x#SetOccurrence_10);int(1..)]) >= 0,sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5),toInt(x#SetOccurrence_6),toInt(x#SetOccurrence_7),toInt(x#SetOccurrence_8),toInt(x#SetOccurrence_9),toInt(x#SetOccurrence_10);int(1..)]) <= 10;int(1..)]),
-and([and([ __0 in x | __0 <- x ]),and([ __0 in x | __0 <- x ]);int(1..)])
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+or([x#explicit_2 < 2,([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 3,([SafeIndex(x#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 4,([SafeIndex(x#explicit_1,[3]);int(1..)] <lex [SafeIndex(x#explicit_1,[4]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 5,([SafeIndex(x#explicit_1,[4]);int(1..)] <lex [SafeIndex(x#explicit_1,[5]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 6,([SafeIndex(x#explicit_1,[5]);int(1..)] <lex [SafeIndex(x#explicit_1,[6]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 7,([SafeIndex(x#explicit_1,[6]);int(1..)] <lex [SafeIndex(x#explicit_1,[7]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 8,([SafeIndex(x#explicit_1,[7]);int(1..)] <lex [SafeIndex(x#explicit_1,[8]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 9,([SafeIndex(x#explicit_1,[8]);int(1..)] <lex [SafeIndex(x#explicit_1,[9]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 10,([SafeIndex(x#explicit_1,[9]);int(1..)] <lex [SafeIndex(x#explicit_1,[10]);int(1..)]);int(1..)]),
+or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([3 <= x#explicit_2,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+or([4 <= x#explicit_2,SafeIndex(x#explicit_1,[4]) = 1;int(1..)]),
+or([5 <= x#explicit_2,SafeIndex(x#explicit_1,[5]) = 1;int(1..)]),
+or([6 <= x#explicit_2,SafeIndex(x#explicit_1,[6]) = 1;int(1..)]),
+or([7 <= x#explicit_2,SafeIndex(x#explicit_1,[7]) = 1;int(1..)]),
+or([8 <= x#explicit_2,SafeIndex(x#explicit_1,[8]) = 1;int(1..)]),
+or([9 <= x#explicit_2,SafeIndex(x#explicit_1,[9]) = 1;int(1..)]),
+or([10 <= x#explicit_2,SafeIndex(x#explicit_1,[10]) = 1;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
 sum([ i | i <- x ]) = 2,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-and([sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5),toInt(x#SetOccurrence_6),toInt(x#SetOccurrence_7),toInt(x#SetOccurrence_8),toInt(x#SetOccurrence_9),toInt(x#SetOccurrence_10);int(1..)]) >= 0,sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5),toInt(x#SetOccurrence_6),toInt(x#SetOccurrence_7),toInt(x#SetOccurrence_8),toInt(x#SetOccurrence_9),toInt(x#SetOccurrence_10);int(1..)]) <= 10;int(1..)]),
-and([and([ __0 in x | __0 <- x ]),and([ __0 in x | __0 <- x ]);int(1..)])
+or([x#explicit_2 < 2,([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 3,([SafeIndex(x#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1,[3]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 4,([SafeIndex(x#explicit_1,[3]);int(1..)] <lex [SafeIndex(x#explicit_1,[4]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 5,([SafeIndex(x#explicit_1,[4]);int(1..)] <lex [SafeIndex(x#explicit_1,[5]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 6,([SafeIndex(x#explicit_1,[5]);int(1..)] <lex [SafeIndex(x#explicit_1,[6]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 7,([SafeIndex(x#explicit_1,[6]);int(1..)] <lex [SafeIndex(x#explicit_1,[7]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 8,([SafeIndex(x#explicit_1,[7]);int(1..)] <lex [SafeIndex(x#explicit_1,[8]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 9,([SafeIndex(x#explicit_1,[8]);int(1..)] <lex [SafeIndex(x#explicit_1,[9]);int(1..)]);int(1..)]),
+or([x#explicit_2 < 10,([SafeIndex(x#explicit_1,[9]);int(1..)] <lex [SafeIndex(x#explicit_1,[10]);int(1..)]);int(1..)]),
+or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
+or([3 <= x#explicit_2,SafeIndex(x#explicit_1,[3]) = 1;int(1..)]),
+or([4 <= x#explicit_2,SafeIndex(x#explicit_1,[4]) = 1;int(1..)]),
+or([5 <= x#explicit_2,SafeIndex(x#explicit_1,[5]) = 1;int(1..)]),
+or([6 <= x#explicit_2,SafeIndex(x#explicit_1,[6]) = 1;int(1..)]),
+or([7 <= x#explicit_2,SafeIndex(x#explicit_1,[7]) = 1;int(1..)]),
+or([8 <= x#explicit_2,SafeIndex(x#explicit_1,[8]) = 1;int(1..)]),
+or([9 <= x#explicit_2,SafeIndex(x#explicit_1,[9]) = 1;int(1..)]),
+or([10 <= x#explicit_2,SafeIndex(x#explicit_1,[10]) = 1;int(1..)])
 new variables:
-  find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_10: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_2: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_3: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_4: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_5: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_6: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_7: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_8: int(1..10)
-  find x#SetExplicitWithSize_1#MatrixToAtom_9: int(1..10)
+  find x#explicit_1#components_1: int(1..10)
+  find x#explicit_1#components_10: int(1..10)
+  find x#explicit_1#components_2: int(1..10)
+  find x#explicit_1#components_3: int(1..10)
+  find x#explicit_1#components_4: int(1..10)
+  find x#explicit_1#components_5: int(1..10)
+  find x#explicit_1#components_6: int(1..10)
+  find x#explicit_1#components_7: int(1..10)
+  find x#explicit_1#components_8: int(1..10)
+  find x#explicit_1#components_9: int(1..10)
 
 --
 
-sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5),toInt(x#SetOccurrence_6),toInt(x#SetOccurrence_7),toInt(x#SetOccurrence_8),toInt(x#SetOccurrence_9),toInt(x#SetOccurrence_10);int(1..)]) >= 0
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([x#SetOccurrence_1, x#SetOccurrence_10, x#SetOccurrence_2, x#SetOccurrence_3, x#SetOccurrence_4, x#SetOccurrence_5, x#SetOccurrence_6, x#SetOccurrence_7, x#SetOccurrence_8, x#SetOccurrence_9], 0)
+x#explicit_2 < 2
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([2,-1;int(1..)])
 
 --
 
-sum([toInt(x#SetOccurrence_1),toInt(x#SetOccurrence_2),toInt(x#SetOccurrence_3),toInt(x#SetOccurrence_4),toInt(x#SetOccurrence_5),toInt(x#SetOccurrence_6),toInt(x#SetOccurrence_7),toInt(x#SetOccurrence_8),toInt(x#SetOccurrence_9),toInt(x#SetOccurrence_10);int(1..)]) <= 10
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([x#SetOccurrence_1, x#SetOccurrence_10, x#SetOccurrence_2, x#SetOccurrence_3, x#SetOccurrence_4, x#SetOccurrence_5, x#SetOccurrence_6, x#SetOccurrence_7, x#SetOccurrence_8, x#SetOccurrence_9], 10)
+x#explicit_2 < 3
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([3,-1;int(1..)])
+
+--
+
+x#explicit_2 < 4
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([4,-1;int(1..)])
+
+--
+
+x#explicit_2 < 5
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([5,-1;int(1..)])
+
+--
+
+x#explicit_2 < 6
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([6,-1;int(1..)])
+
+--
+
+x#explicit_2 < 7
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([7,-1;int(1..)])
+
+--
+
+x#explicit_2 < 8
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([8,-1;int(1..)])
+
+--
+
+x#explicit_2 < 9
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([9,-1;int(1..)])
+
+--
+
+x#explicit_2 < 10
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_2 <= sum([10,-1;int(1..)])
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+SafeIndex(x#explicit_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_4
+
+--
+
+SafeIndex(x#explicit_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_5
+
+--
+
+SafeIndex(x#explicit_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_6
+
+--
+
+SafeIndex(x#explicit_1,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_7
+
+--
+
+SafeIndex(x#explicit_1,[8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_8
+
+--
+
+SafeIndex(x#explicit_1,[9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_9
+
+--
+
+SafeIndex(x#explicit_1,[10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_10
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+SafeIndex(x#explicit_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_4
+
+--
+
+SafeIndex(x#explicit_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_4
+
+--
+
+SafeIndex(x#explicit_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_5
+
+--
+
+SafeIndex(x#explicit_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_5
+
+--
+
+SafeIndex(x#explicit_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_6
+
+--
+
+SafeIndex(x#explicit_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_6
+
+--
+
+SafeIndex(x#explicit_1,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_7
+
+--
+
+SafeIndex(x#explicit_1,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_7
+
+--
+
+SafeIndex(x#explicit_1,[8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_8
+
+--
+
+SafeIndex(x#explicit_1,[8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_8
+
+--
+
+SafeIndex(x#explicit_1,[9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_9
+
+--
+
+SafeIndex(x#explicit_1,[9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_9
+
+--
+
+SafeIndex(x#explicit_1,[10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_10
+
+--
+
+x#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1,1)
+
+--
+
+x#explicit_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2,1)
+
+--
+
+x#explicit_1#components_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_3,1)
+
+--
+
+x#explicit_1#components_4 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_4,1)
+
+--
+
+x#explicit_1#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_5,1)
+
+--
+
+x#explicit_1#components_6 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_6,1)
+
+--
+
+x#explicit_1#components_7 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_7,1)
+
+--
+
+x#explicit_1#components_8 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_8,1)
+
+--
+
+x#explicit_1#components_9 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_9,1)
+
+--
+
+x#explicit_1#components_10 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_10,1)
+
+--
+
+x#explicit_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 1, 0)
+
+--
+
+x#explicit_2 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 2, 0)
+
+--
+
+x#explicit_2 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 3, 0)
+
+--
+
+x#explicit_2 <= 4
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 4, 0)
+
+--
+
+x#explicit_2 <= 5
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 5, 0)
+
+--
+
+x#explicit_2 <= 6
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 6, 0)
+
+--
+
+x#explicit_2 <= 7
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 7, 0)
+
+--
+
+x#explicit_2 <= 8
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 8, 0)
+
+--
+
+x#explicit_2 <= 9
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 9, 0)
+
+--
+
+1 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_2, 0)
+
+--
+
+2 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#explicit_2, 0)
+
+--
+
+3 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#explicit_2, 0)
+
+--
+
+4 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#explicit_2, 0)
+
+--
+
+5 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#explicit_2, 0)
+
+--
+
+6 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#explicit_2, 0)
+
+--
+
+7 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(7, x#explicit_2, 0)
+
+--
+
+8 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(8, x#explicit_2, 0)
+
+--
+
+9 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(9, x#explicit_2, 0)
+
+--
+
+10 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(10, x#explicit_2, 0)
+
+--
+
+([x#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_1], [x#explicit_1#components_2])
+
+--
+
+([x#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_3;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_2], [x#explicit_1#components_3])
+
+--
+
+([x#explicit_1#components_3;int(1..)] <lex [x#explicit_1#components_4;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_3], [x#explicit_1#components_4])
+
+--
+
+([x#explicit_1#components_4;int(1..)] <lex [x#explicit_1#components_5;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_4], [x#explicit_1#components_5])
+
+--
+
+([x#explicit_1#components_5;int(1..)] <lex [x#explicit_1#components_6;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_5], [x#explicit_1#components_6])
+
+--
+
+([x#explicit_1#components_6;int(1..)] <lex [x#explicit_1#components_7;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_6], [x#explicit_1#components_7])
+
+--
+
+([x#explicit_1#components_7;int(1..)] <lex [x#explicit_1#components_8;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_7], [x#explicit_1#components_8])
+
+--
+
+([x#explicit_1#components_8;int(1..)] <lex [x#explicit_1#components_9;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_8], [x#explicit_1#components_9])
+
+--
+
+([x#explicit_1#components_9;int(1..)] <lex [x#explicit_1#components_10;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_9], [x#explicit_1#components_10])
 
 --
 
 Final model:
 
 find x: set of int(1..10)
-find x#SetExplicitWithSize_1: matrix indexed by [int(1..10)] of int(1..10)
-find x#SetExplicitWithSize_2: int(0..10)
-find x#SetOccurrence_1: bool
-find x#SetOccurrence_2: bool
-find x#SetOccurrence_3: bool
-find x#SetOccurrence_4: bool
-find x#SetOccurrence_5: bool
-find x#SetOccurrence_6: bool
-find x#SetOccurrence_7: bool
-find x#SetOccurrence_8: bool
-find x#SetOccurrence_9: bool
-find x#SetOccurrence_10: bool
-find x#SetExplicitWithSize_1#MatrixToAtom_1: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_2: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_3: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_4: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_5: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_6: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_7: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_8: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_9: int(1..10)
-find x#SetExplicitWithSize_1#MatrixToAtom_10: int(1..10)
+find x#explicit_1: matrix indexed by [int(1..10)] of int(1..10)
+find x#explicit_2: int(0..10)
+find x#explicit_1#components_1: int(1..10)
+find x#explicit_1#components_2: int(1..10)
+find x#explicit_1#components_3: int(1..10)
+find x#explicit_1#components_4: int(1..10)
+find x#explicit_1#components_5: int(1..10)
+find x#explicit_1#components_6: int(1..10)
+find x#explicit_1#components_7: int(1..10)
+find x#explicit_1#components_8: int(1..10)
+find x#explicit_1#components_9: int(1..10)
+find x#explicit_1#components_10: int(1..10)
 
 such that
 
 sum([ i | i <- x ]) = 2,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-true,
-and([SumGeq([x#SetOccurrence_1, x#SetOccurrence_10, x#SetOccurrence_2, x#SetOccurrence_3, x#SetOccurrence_4, x#SetOccurrence_5, x#SetOccurrence_6, x#SetOccurrence_7, x#SetOccurrence_8, x#SetOccurrence_9], 0),SumLeq([x#SetOccurrence_1, x#SetOccurrence_10, x#SetOccurrence_2, x#SetOccurrence_3, x#SetOccurrence_4, x#SetOccurrence_5, x#SetOccurrence_6, x#SetOccurrence_7, x#SetOccurrence_8, x#SetOccurrence_9], 10);int(1..)]),
-and([and([ __0 in x | __0 <- x ]),and([ __0 in x | __0 <- x ]);int(1..)])
+or([Ineq(x#explicit_2, 1, 0),FlatLexLt([x#explicit_1#components_1], [x#explicit_1#components_2]);int(1..)]),
+or([Ineq(x#explicit_2, 2, 0),FlatLexLt([x#explicit_1#components_2], [x#explicit_1#components_3]);int(1..)]),
+or([Ineq(x#explicit_2, 3, 0),FlatLexLt([x#explicit_1#components_3], [x#explicit_1#components_4]);int(1..)]),
+or([Ineq(x#explicit_2, 4, 0),FlatLexLt([x#explicit_1#components_4], [x#explicit_1#components_5]);int(1..)]),
+or([Ineq(x#explicit_2, 5, 0),FlatLexLt([x#explicit_1#components_5], [x#explicit_1#components_6]);int(1..)]),
+or([Ineq(x#explicit_2, 6, 0),FlatLexLt([x#explicit_1#components_6], [x#explicit_1#components_7]);int(1..)]),
+or([Ineq(x#explicit_2, 7, 0),FlatLexLt([x#explicit_1#components_7], [x#explicit_1#components_8]);int(1..)]),
+or([Ineq(x#explicit_2, 8, 0),FlatLexLt([x#explicit_1#components_8], [x#explicit_1#components_9]);int(1..)]),
+or([Ineq(x#explicit_2, 9, 0),FlatLexLt([x#explicit_1#components_9], [x#explicit_1#components_10]);int(1..)]),
+or([Ineq(1, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_1,1);int(1..)]),
+or([Ineq(2, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_2,1);int(1..)]),
+or([Ineq(3, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_3,1);int(1..)]),
+or([Ineq(4, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_4,1);int(1..)]),
+or([Ineq(5, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_5,1);int(1..)]),
+or([Ineq(6, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_6,1);int(1..)]),
+or([Ineq(7, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_7,1);int(1..)]),
+or([Ineq(8, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_8,1);int(1..)]),
+or([Ineq(9, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_9,1);int(1..)]),
+or([Ineq(10, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_10,1);int(1..)])
 

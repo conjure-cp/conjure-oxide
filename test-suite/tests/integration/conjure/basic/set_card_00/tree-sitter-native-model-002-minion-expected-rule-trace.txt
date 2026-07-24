@@ -1,0 +1,215 @@
+Model before rewriting:
+
+find s: set of int(1..2)
+
+such that
+
+|s| in s
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#packed_1: int(0..3)
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+|s| in s
+   ~~> membership_packed ([("ReprGeneral", 9500)])
+or([and([|s| = 1,__inDomain(s#packed_1,int(1, 3));int(1..)]),and([|s| = 2,__inDomain(s#packed_1,int(2..3));int(1..)]);int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_packed ([("ReprGeneral", 9500)])
+sum([sum([toInt(s#packed_1 >= 1),toInt(s#packed_1 >= 3);int(1..)]),0;int(1..)])
+
+--
+
+|s|
+   ~~> cardinality_packed ([("ReprGeneral", 9500)])
+sum([sum([toInt(s#packed_1 >= 1),toInt(s#packed_1 >= 3);int(1..)]),0;int(1..)])
+
+--
+
+sum([sum([toInt(s#packed_1 >= 1),toInt(s#packed_1 >= 3);int(1..)]),0;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([toInt(s#packed_1 >= 1),toInt(s#packed_1 >= 3),0;int(1..)])
+
+--
+
+sum([sum([toInt(s#packed_1 >= 1),toInt(s#packed_1 >= 3);int(1..)]),0;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([toInt(s#packed_1 >= 1),toInt(s#packed_1 >= 3),0;int(1..)])
+
+--
+
+sum([toInt(s#packed_1 >= 1),toInt(s#packed_1 >= 3),0;int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([0, __0, __1], 1),SumGeq([0, __0, __1], 1);int(1..)])
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+new constraints:
+  __0 =aux toInt(s#packed_1 >= 1)
+  __1 =aux toInt(s#packed_1 >= 3)
+
+--
+
+and([and([SumLeq([0, __0, __1], 1),SumGeq([0, __0, __1], 1);int(1..)]),__inDomain(s#packed_1,int(1, 3));int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([0, __0, __1], 1),SumGeq([0, __0, __1], 1),__inDomain(s#packed_1,int(1, 3));int(1..)])
+
+--
+
+sum([toInt(s#packed_1 >= 1),toInt(s#packed_1 >= 3),0;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([0, __2, __3], 2),SumGeq([0, __2, __3], 2);int(1..)])
+new variables:
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+new constraints:
+  __2 =aux toInt(s#packed_1 >= 1)
+  __3 =aux toInt(s#packed_1 >= 3)
+
+--
+
+and([and([SumLeq([0, __2, __3], 2),SumGeq([0, __2, __3], 2);int(1..)]),__inDomain(s#packed_1,int(2..3));int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([0, __2, __3], 2),SumGeq([0, __2, __3], 2),__inDomain(s#packed_1,int(2..3));int(1..)])
+
+--
+
+__inDomain(s#packed_1,int(1, 3))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(s#packed_1,[1,1,3,3])
+
+--
+
+__inDomain(s#packed_1,int(2..3))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(s#packed_1,[2,3])
+
+--
+
+toInt(s#packed_1 >= 1)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__4)
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux s#packed_1 >= 1
+
+--
+
+__4 =aux s#packed_1 >= 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(s#packed_1 >= 1, __4)
+
+--
+
+toInt(s#packed_1 >= 3)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__5)
+new variables:
+  findAux __5: bool
+new constraints:
+  __5 =aux s#packed_1 >= 3
+
+--
+
+__5 =aux s#packed_1 >= 3
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(s#packed_1 >= 3, __5)
+
+--
+
+toInt(s#packed_1 >= 1)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__6)
+new variables:
+  findAux __6: bool
+new constraints:
+  __6 =aux s#packed_1 >= 1
+
+--
+
+__6 =aux s#packed_1 >= 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(s#packed_1 >= 1, __6)
+
+--
+
+toInt(s#packed_1 >= 3)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__7)
+new variables:
+  findAux __7: bool
+new constraints:
+  __7 =aux s#packed_1 >= 3
+
+--
+
+__7 =aux s#packed_1 >= 3
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(s#packed_1 >= 3, __7)
+
+--
+
+s#packed_1 >= 1
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(1, s#packed_1, 0)
+
+--
+
+s#packed_1 >= 3
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(3, s#packed_1, 0)
+
+--
+
+s#packed_1 >= 1
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(1, s#packed_1, 0)
+
+--
+
+s#packed_1 >= 3
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(3, s#packed_1, 0)
+
+--
+
+Final model:
+
+find s: set of int(1..2)
+find s#packed_1: int(0..3)
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+
+such that
+
+or([and([SumLeq([0, __0, __1], 1),SumGeq([0, __0, __1], 1),__minion_w_inintervalset(s#packed_1,[1,1,3,3]);int(1..)]),and([SumLeq([0, __2, __3], 2),SumGeq([0, __2, __3], 2),__minion_w_inintervalset(s#packed_1,[2,3]);int(1..)]);int(1..)]),
+__0 =aux toInt(__4),
+__1 =aux toInt(__5),
+__2 =aux toInt(__6),
+__3 =aux toInt(__7),
+Reify(Ineq(1, s#packed_1, 0), __4),
+Reify(Ineq(3, s#packed_1, 0), __5),
+Reify(Ineq(1, s#packed_1, 0), __6),
+Reify(Ineq(3, s#packed_1, 0), __7)
+

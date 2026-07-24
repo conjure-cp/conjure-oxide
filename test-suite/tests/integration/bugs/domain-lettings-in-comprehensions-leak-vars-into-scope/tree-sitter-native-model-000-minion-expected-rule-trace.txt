@@ -1,0 +1,57 @@
+Model before rewriting:
+
+letting DOM be domain int(1..3)
+find a: matrix indexed by [DOM] of DOM
+
+such that
+
+and([ a[i] = i | i : DOM ])
+
+--
+
+and([ a[i] = i | i : DOM ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ a[i] = i | i : DOM ])
+new variables:
+  find a#components_1: int(1..3)
+  find a#components_2: int(1..3)
+  find a#components_3: int(1..3)
+
+--
+
+[ a[i] = i | i : DOM ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[a#components_1 = 1,a#components_2 = 2,a#components_3 = 3;int(1..)]
+
+--
+
+a#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(a#components_1,1)
+
+--
+
+a#components_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(a#components_2,2)
+
+--
+
+a#components_3 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(a#components_3,3)
+
+--
+
+Final model:
+
+letting DOM be domain int(1..3)
+find a: matrix indexed by [DOM] of DOM
+find a#components_1: int(1..3)
+find a#components_2: int(1..3)
+find a#components_3: int(1..3)
+
+such that
+
+and([WatchedLiteral(a#components_1,1),WatchedLiteral(a#components_2,2),WatchedLiteral(a#components_3,3);int(1..)])
+
