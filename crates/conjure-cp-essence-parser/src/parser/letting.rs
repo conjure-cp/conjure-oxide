@@ -34,6 +34,7 @@ use conjure_cp_core::ast::{
 /// (e.g. BIBD `letting b be (l*v*(v-1))/(k*(k-1))`).
 fn value_letting_domain(expr: &Expression) -> Option<DomainPtr> {
     match expr.return_type() {
+        ReturnType::Bool => Some(Domain::bool()),
         ReturnType::Int => {
             if let Some(Literal::Int(value)) = eval_constant(expr) {
                 return Some(Domain::int(vec![Range::Single(value)]));
@@ -42,7 +43,6 @@ fn value_letting_domain(expr: &Expression) -> Option<DomainPtr> {
                 .ok()
                 .map(|value| Domain::int(vec![Range::Single(value)]))
         }
-        ReturnType::Bool => Some(Domain::bool()),
         _ => expr.domain_of(),
     }
 }

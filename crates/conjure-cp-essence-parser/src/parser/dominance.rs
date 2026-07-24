@@ -156,24 +156,6 @@ fn build_pareto_constraints(
     let previous = lift_to_previous_solution(&current);
 
     match current.return_type() {
-        ReturnType::Int => Some(match direction {
-            ParetoDirection::Minimising => (
-                Expression::Leq(
-                    Metadata::new(),
-                    Moo::new(current.clone()),
-                    Moo::new(previous.clone()),
-                ),
-                Expression::Lt(Metadata::new(), Moo::new(current), Moo::new(previous)),
-            ),
-            ParetoDirection::Maximising => (
-                Expression::Geq(
-                    Metadata::new(),
-                    Moo::new(current.clone()),
-                    Moo::new(previous.clone()),
-                ),
-                Expression::Gt(Metadata::new(), Moo::new(current), Moo::new(previous)),
-            ),
-        }),
         ReturnType::Bool => Some(match direction {
             ParetoDirection::Minimising => (
                 Expression::Imply(
@@ -202,6 +184,24 @@ fn build_pareto_constraints(
                     ],
                     false,
                 ),
+            ),
+        }),
+        ReturnType::Int => Some(match direction {
+            ParetoDirection::Minimising => (
+                Expression::Leq(
+                    Metadata::new(),
+                    Moo::new(current.clone()),
+                    Moo::new(previous.clone()),
+                ),
+                Expression::Lt(Metadata::new(), Moo::new(current), Moo::new(previous)),
+            ),
+            ParetoDirection::Maximising => (
+                Expression::Geq(
+                    Metadata::new(),
+                    Moo::new(current.clone()),
+                    Moo::new(previous.clone()),
+                ),
+                Expression::Gt(Metadata::new(), Moo::new(current), Moo::new(previous)),
             ),
         }),
         found => {

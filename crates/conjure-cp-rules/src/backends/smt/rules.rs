@@ -21,14 +21,14 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let dom = domain.resolve().map_err(|_| RuleNotApplicable)?;
     let new_expr = match dom.as_ref() {
+        GroundDomain::Empty(_) => Ok(Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::Bool(false)),
+        )),
         // Bool values are always in the bool domain
         GroundDomain::Bool => Ok(Expr::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool(true)),
-        )),
-        GroundDomain::Empty(_) => Ok(Expr::Atomic(
-            Metadata::new(),
-            Atom::Literal(Literal::Bool(false)),
         )),
         GroundDomain::Int(ranges) => {
             let elements: Vec<_> = ranges

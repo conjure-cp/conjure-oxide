@@ -56,6 +56,7 @@ impl DomainPtr {
 #[biplate(to=Reference)]
 #[biplate(to=IntVal)]
 #[path_prefix(conjure_cp::ast)]
+/// Variants are ordered from fully resolved to unresolved; keep broad matches in this order.
 pub enum Domain {
     /// A fully resolved domain
     Ground(Moo<GroundDomain>),

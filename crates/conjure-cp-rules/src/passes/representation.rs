@@ -301,7 +301,7 @@ fn domain_needs_representation(domain: &DomainPtr) -> bool {
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
             // These domains are concrete for all solvers
-            GroundDomain::Bool | GroundDomain::Empty(..) => false,
+            GroundDomain::Empty(..) | GroundDomain::Bool => false,
             // SAT integer encodings remain on the legacy representation path.
             GroundDomain::Int(_) => false,
             // Represent matrices if they have abstract types inside them;

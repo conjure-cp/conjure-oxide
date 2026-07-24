@@ -477,8 +477,8 @@ fn parse_unary_expression(
                 ReturnType::Matrix(_)
                 | ReturnType::Set(_)
                 | ReturnType::MSet(_)
-                | ReturnType::Relation(_)
-                | ReturnType::Function(_, _) => Expression::Card,
+                | ReturnType::Function(_, _)
+                | ReturnType::Relation(_) => Expression::Card,
                 _ => Expression::Abs,
             };
             Ok(Some(constructor(Metadata::new(), Moo::new(inner))))
@@ -929,19 +929,19 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
     };
 
     match ground.as_ref() {
+        GroundDomain::Empty(_) => TypecheckingContext::Unknown,
         GroundDomain::Bool => TypecheckingContext::Boolean,
         GroundDomain::Int(_) => TypecheckingContext::Arithmetic,
-        GroundDomain::Set(_, _) => TypecheckingContext::Set,
-        GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
-        GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
         GroundDomain::Tuple(_) => TypecheckingContext::Tuple,
         GroundDomain::Record(_) => TypecheckingContext::Record,
-        GroundDomain::Partition(_, _) => TypecheckingContext::Partition,
+        GroundDomain::Variant(_) => TypecheckingContext::Unknown,
+        GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
         GroundDomain::Sequence(_, _) => TypecheckingContext::Sequence,
-        GroundDomain::Function(_, _, _)
-        | GroundDomain::Variant(_)
-        | GroundDomain::Relation(_, _)
-        | GroundDomain::Empty(_) => TypecheckingContext::Unknown,
+        GroundDomain::Set(_, _) => TypecheckingContext::Set,
+        GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
+        GroundDomain::Function(_, _, _) => TypecheckingContext::Unknown,
+        GroundDomain::Relation(_, _) => TypecheckingContext::Unknown,
+        GroundDomain::Partition(_, _) => TypecheckingContext::Partition,
     }
 }
 

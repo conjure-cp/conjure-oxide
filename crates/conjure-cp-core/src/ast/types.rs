@@ -5,28 +5,24 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
+/// Variants use the project-wide type/domain ordering; keep broad matches in the same order.
 pub enum ReturnType {
-    Int,
+    /// A type which is not known locally, but can be inferred from context.
+    ///
+    /// Type unification will resolve this to the contextual type.
+    Unknown,
     Bool,
-    Matrix(Box<ReturnType>),
-    Set(Box<ReturnType>),
-    MSet(Box<ReturnType>),
+    Int,
     Tuple(Vec<ReturnType>),
-    Sequence(Box<ReturnType>),
     Record(Vec<Field<ReturnType>>),
     Variant(Vec<Field<ReturnType>>),
+    Matrix(Box<ReturnType>),
+    Sequence(Box<ReturnType>),
+    Set(Box<ReturnType>),
+    MSet(Box<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
     Relation(Vec<ReturnType>),
     Partition(Box<ReturnType>),
-
-    /// An unknown type
-    ///
-    /// This can be found inside the types of empty abstract literals.
-    ///
-    /// To understand why, consider the typing of a set literal.  We construct the type of a set
-    /// literal by looking at the type of its items (e.g. {1,2,3} is type `set(int)`, as 1 is an
-    /// int). However, if it has no items, we can't do this, so we give it the type `set(unknown)`.
-    Unknown,
 }
 
 impl ReturnType {
@@ -35,9 +31,9 @@ impl ReturnType {
     pub fn elem_type(&self) -> Option<ReturnType> {
         match self {
             ReturnType::Matrix(e)
+            | ReturnType::Sequence(e)
             | ReturnType::Set(e)
-            | ReturnType::MSet(e)
-            | ReturnType::Sequence(e) => Some(*e.clone()),
+            | ReturnType::MSet(e) => Some(*e.clone()),
             _ => None,
         }
     }
@@ -57,12 +53,9 @@ impl Display for Field<ReturnType> {
 impl Display for ReturnType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            ReturnType::Unknown => write!(f, "?"),
             ReturnType::Bool => write!(f, "bool"),
             ReturnType::Int => write!(f, "int"),
-            ReturnType::Matrix(inner) => write!(f, "matrix of {inner}"),
-            ReturnType::Set(inner) => write!(f, "set of {inner}"),
-            ReturnType::MSet(inner) => write!(f, "mset of {inner}"),
-            ReturnType::Sequence(inner) => write!(f, "sequence of {inner}"),
             ReturnType::Tuple(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
                 write!(f, "tuple of ({inners})")
@@ -75,6 +68,10 @@ impl Display for ReturnType {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
                 write!(f, "variant {{{inners}}}")
             }
+            ReturnType::Matrix(inner) => write!(f, "matrix of {inner}"),
+            ReturnType::Sequence(inner) => write!(f, "sequence of {inner}"),
+            ReturnType::Set(inner) => write!(f, "set of {inner}"),
+            ReturnType::MSet(inner) => write!(f, "mset of {inner}"),
             ReturnType::Function(ty1, ty2) => {
                 write!(f, "function of ({ty1} --> {ty2})")
             }
@@ -83,7 +80,6 @@ impl Display for ReturnType {
                 write!(f, "relation of ({inners})")
             }
             ReturnType::Partition(inner) => write!(f, "partition of {inner}"),
-            ReturnType::Unknown => write!(f, "?"),
         }
     }
 }

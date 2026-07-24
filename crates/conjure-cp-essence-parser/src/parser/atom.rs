@@ -464,19 +464,19 @@ fn typecheck_variable(
 
     // Determine what type we actually have
     let actual = match ground_domain.as_ref() {
+        GroundDomain::Empty(_) => "empty",
         GroundDomain::Bool => "bool",
         GroundDomain::Int(_) => "int",
-        GroundDomain::Matrix(_, _) => "matrix",
-        GroundDomain::Set(_, _) => "set",
-        GroundDomain::MSet(_, _) => "mset",
         GroundDomain::Tuple(_) => "tuple",
         GroundDomain::Record(_) => "record",
-        GroundDomain::Function(_, _, _) => "function",
         GroundDomain::Variant(_) => "variant",
+        GroundDomain::Matrix(_, _) => "matrix",
+        GroundDomain::Sequence(_, _) => "sequence",
+        GroundDomain::Set(_, _) => "set",
+        GroundDomain::MSet(_, _) => "mset",
+        GroundDomain::Function(_, _, _) => "function",
         GroundDomain::Relation(_, _) => "relation",
         GroundDomain::Partition(_, _) => "partition",
-        GroundDomain::Sequence(_, _) => "sequence",
-        GroundDomain::Empty(_) => "empty",
     };
 
     // If types match, no error

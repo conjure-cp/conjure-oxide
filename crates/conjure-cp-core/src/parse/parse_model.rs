@@ -812,8 +812,8 @@ fn unary_operator(op_name: &str, inner: Option<&Expression>) -> Option<UnaryOp> 
                     ReturnType::Matrix(_)
                     | ReturnType::Set(_)
                     | ReturnType::MSet(_)
-                    | ReturnType::Relation(_)
-                    | ReturnType::Function(_, _) => Some(Expression::Card),
+                    | ReturnType::Function(_, _)
+                    | ReturnType::Relation(_) => Some(Expression::Card),
                     _ => None,
                 }
             } else {

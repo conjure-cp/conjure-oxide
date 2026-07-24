@@ -2623,6 +2623,10 @@ impl Typeable for Expression {
             Expression::UnsafeIndex(_, subject, idx) | Expression::SafeIndex(_, subject, idx) => {
                 let subject_ty = subject.return_type();
                 match subject_ty {
+                    // TODO: We can implement indexing for these eventually
+                    ReturnType::Tuple(_) | ReturnType::Record(_) | ReturnType::Variant(_) => {
+                        ReturnType::Unknown
+                    }
                     ReturnType::Matrix(_) => {
                         // For n-dimensional matrices, unwrap the element type until
                         // we either get to the innermost element type or the last index
@@ -2635,10 +2639,6 @@ impl Typeable for Expression {
                             idx_len -= 1;
                         }
                         elem_typ
-                    }
-                    // TODO: We can implement indexing for these eventually
-                    ReturnType::Record(_) | ReturnType::Tuple(_) | ReturnType::Variant(_) => {
-                        ReturnType::Unknown
                     }
                     _ => bug!(
                         "Invalid indexing operation: expected the operand to be a collection, got {self}: {subject_ty}"
@@ -2826,14 +2826,14 @@ impl Typeable for Expression {
             Expression::ToSet(_, other) => {
                 let subject = other.return_type();
                 match subject {
+                    ReturnType::Matrix(domain) => ReturnType::Set(Box::new(*domain)),
+                    ReturnType::MSet(domain) => ReturnType::Set(Box::new(*domain)),
                     ReturnType::Function(domain, codomain) => {
                         ReturnType::Set(Box::new(ReturnType::Tuple(vec![*domain, *codomain])))
                     }
                     ReturnType::Relation(domains) => {
                         ReturnType::Set(Box::new(ReturnType::Tuple(domains)))
                     }
-                    ReturnType::MSet(domain) => ReturnType::Set(Box::new(*domain)),
-                    ReturnType::Matrix(domain) => ReturnType::Set(Box::new(*domain)),
                     _ => bug!(
                         "Invalid toSet operation: expected the operand to be a mset, matrix, relation, or function, got {self}: {subject}"
                     ),
@@ -2842,13 +2842,13 @@ impl Typeable for Expression {
             Expression::ToMSet(_, other) => {
                 let subject = other.return_type();
                 match subject {
+                    ReturnType::Set(domain) => ReturnType::MSet(Box::new(*domain)),
                     ReturnType::Function(domain, codomain) => {
                         ReturnType::MSet(Box::new(ReturnType::Tuple(vec![*domain, *codomain])))
                     }
                     ReturnType::Relation(domains) => {
                         ReturnType::MSet(Box::new(ReturnType::Tuple(domains)))
                     }
-                    ReturnType::Set(domain) => ReturnType::MSet(Box::new(*domain)),
                     _ => bug!(
                         "Invalid toMSet operation: expected the operand to be a set, relation, or function, got {self}: {subject}"
                     ),

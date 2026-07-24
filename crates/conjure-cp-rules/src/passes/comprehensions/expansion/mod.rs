@@ -462,6 +462,47 @@ fn rewrite_int_ranges_in_unresolved_domain(
                 rewrite_int_range(range, replacements_by_id, replacements_by_name);
             }
         }
+        UnresolvedDomain::Tuple(inner_domains) => {
+            for inner_domain in inner_domains {
+                rewrite_int_ranges_in_domain_ptr(
+                    inner_domain,
+                    replacements_by_id,
+                    replacements_by_name,
+                );
+            }
+        }
+        UnresolvedDomain::Record(entries) => {
+            for entry in entries {
+                rewrite_int_ranges_in_domain_ptr(
+                    &mut entry.value,
+                    replacements_by_id,
+                    replacements_by_name,
+                );
+            }
+        }
+        UnresolvedDomain::Variant(entries) => {
+            for entry in entries {
+                rewrite_int_ranges_in_domain_ptr(
+                    &mut entry.value,
+                    replacements_by_id,
+                    replacements_by_name,
+                );
+            }
+        }
+        UnresolvedDomain::Matrix(inner, index_domains) => {
+            rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
+            for index_domain in index_domains {
+                rewrite_int_ranges_in_domain_ptr(
+                    index_domain,
+                    replacements_by_id,
+                    replacements_by_name,
+                );
+            }
+        }
+        UnresolvedDomain::Sequence(attr, inner) => {
+            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
+            rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
+        }
         UnresolvedDomain::Set(attr, inner) => {
             rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
@@ -475,23 +516,15 @@ fn rewrite_int_ranges_in_unresolved_domain(
             );
             rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
         }
-        UnresolvedDomain::Matrix(inner, index_domains) => {
-            rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
-            for index_domain in index_domains {
-                rewrite_int_ranges_in_domain_ptr(
-                    index_domain,
-                    replacements_by_id,
-                    replacements_by_name,
-                );
-            }
+        UnresolvedDomain::Function(attr, domain, codomain) => {
+            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
+            rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
+            rewrite_int_ranges_in_domain_ptr(codomain, replacements_by_id, replacements_by_name);
         }
-        UnresolvedDomain::Tuple(inner_domains) => {
-            for inner_domain in inner_domains {
-                rewrite_int_ranges_in_domain_ptr(
-                    inner_domain,
-                    replacements_by_id,
-                    replacements_by_name,
-                );
+        UnresolvedDomain::Relation(attr, domains) => {
+            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
+            for domain in domains {
+                rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
             }
         }
         UnresolvedDomain::Partition(attr, inner) => {
@@ -503,40 +536,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
             rewrite_int_range(&mut attr.part_len, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
         }
-        UnresolvedDomain::Sequence(attr, inner) => {
-            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
-            rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
-        }
         UnresolvedDomain::Reference(_) => {}
-        UnresolvedDomain::Record(entries) => {
-            for entry in entries {
-                rewrite_int_ranges_in_domain_ptr(
-                    &mut entry.value,
-                    replacements_by_id,
-                    replacements_by_name,
-                );
-            }
-        }
-        UnresolvedDomain::Function(attr, domain, codomain) => {
-            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
-            rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
-            rewrite_int_ranges_in_domain_ptr(codomain, replacements_by_id, replacements_by_name);
-        }
-        UnresolvedDomain::Variant(entries) => {
-            for entry in entries {
-                rewrite_int_ranges_in_domain_ptr(
-                    &mut entry.value,
-                    replacements_by_id,
-                    replacements_by_name,
-                );
-            }
-        }
-        UnresolvedDomain::Relation(attr, domains) => {
-            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
-            for domain in domains {
-                rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
-            }
-        }
     }
 }
 

@@ -201,6 +201,7 @@ fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, boo
     }
 
     match (expr_domain.as_ref(), lit) {
+        (GroundDomain::Bool, Lit::Bool(_)) => None,
         (GroundDomain::Int(ranges), Lit::Int(value)) => {
             let [range] = ranges.as_slice() else {
                 return None;
@@ -215,7 +216,6 @@ fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, boo
                 None
             }
         }
-        (GroundDomain::Bool, Lit::Bool(_)) => None,
         _ => None,
     }
 }

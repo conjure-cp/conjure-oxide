@@ -261,6 +261,7 @@ fn literal_from_simplified_json_with_ground(
     domain: &GroundDomain,
 ) -> anyhow::Result<Literal> {
     match domain {
+        GroundDomain::Empty(_) => bail!("cannot parse a value for an empty domain"),
         GroundDomain::Bool => match value {
             JsonValue::Bool(b) => Ok(Literal::Bool(*b)),
             JsonValue::Number(n) => match n.as_i64() {
@@ -271,26 +272,6 @@ fn literal_from_simplified_json_with_ground(
             _ => bail!("expected a boolean"),
         },
         GroundDomain::Int(_) => Ok(Literal::Int(json_to_i32(value)?)),
-        GroundDomain::Set(_, inner) => {
-            let JsonValue::Array(items) = value else {
-                bail!("expected a JSON array for a set");
-            };
-            let mut elems = Vec::with_capacity(items.len());
-            for item in items {
-                elems.push(literal_from_simplified_json_with_ground(item, inner)?);
-            }
-            Ok(Literal::AbstractLiteral(AbstractLiteral::Set(elems)))
-        }
-        GroundDomain::MSet(_, inner) => {
-            let JsonValue::Array(items) = value else {
-                bail!("expected a JSON array for a multiset");
-            };
-            let mut elems = Vec::with_capacity(items.len());
-            for item in items {
-                elems.push(literal_from_simplified_json_with_ground(item, inner)?);
-            }
-            Ok(Literal::AbstractLiteral(AbstractLiteral::MSet(elems)))
-        }
         GroundDomain::Tuple(inners) => {
             let JsonValue::Array(items) = value else {
                 bail!("expected a JSON array for a tuple");
@@ -325,6 +306,7 @@ fn literal_from_simplified_json_with_ground(
             }
             Ok(Literal::AbstractLiteral(AbstractLiteral::Record(entries)))
         }
+        GroundDomain::Variant(_) => literal_from_simplified_json_unguided(value),
         GroundDomain::Matrix(inner, index_domains) => {
             matrix_from_simplified_json(value, inner.as_ref(), index_domains)
         }
@@ -339,11 +321,30 @@ fn literal_from_simplified_json_with_ground(
             JsonValue::Object(object) => sequence_from_object(object, inner),
             _ => bail!("expected a JSON array for a sequence"),
         },
+        GroundDomain::Set(_, inner) => {
+            let JsonValue::Array(items) = value else {
+                bail!("expected a JSON array for a set");
+            };
+            let mut elems = Vec::with_capacity(items.len());
+            for item in items {
+                elems.push(literal_from_simplified_json_with_ground(item, inner)?);
+            }
+            Ok(Literal::AbstractLiteral(AbstractLiteral::Set(elems)))
+        }
+        GroundDomain::MSet(_, inner) => {
+            let JsonValue::Array(items) = value else {
+                bail!("expected a JSON array for a multiset");
+            };
+            let mut elems = Vec::with_capacity(items.len());
+            for item in items {
+                elems.push(literal_from_simplified_json_with_ground(item, inner)?);
+            }
+            Ok(Literal::AbstractLiteral(AbstractLiteral::MSet(elems)))
+        }
         GroundDomain::Function(_, from, to) => {
             function_from_simplified_json(value, from.as_ref(), to.as_ref())
         }
-        GroundDomain::Empty(_) => bail!("cannot parse a value for an empty domain"),
-        GroundDomain::Partition(_, _) | GroundDomain::Relation(_, _) | GroundDomain::Variant(_) => {
+        GroundDomain::Relation(_, _) | GroundDomain::Partition(_, _) => {
             literal_from_simplified_json_unguided(value)
         }
     }

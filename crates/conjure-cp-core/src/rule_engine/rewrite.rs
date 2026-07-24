@@ -1924,7 +1924,7 @@ fn domain_needs_abstract_repr(domain: &crate::ast::DomainPtr) -> bool {
     use crate::ast::{Domain, GroundDomain, UnresolvedDomain};
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
-            GroundDomain::Bool | GroundDomain::Empty(..) | GroundDomain::Int(_) => false,
+            GroundDomain::Empty(..) | GroundDomain::Bool | GroundDomain::Int(_) => false,
             GroundDomain::Matrix(inner, idxs) => {
                 domain_needs_abstract_repr(&(*inner).clone().into())
                     || idxs
