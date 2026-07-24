@@ -800,12 +800,11 @@ fn integration_test_inner(
         }
     }
 
-    // Check Stage 3a (solutions)
-    if let Some(solutions) = solutions.as_ref() {
-        let oxide_solutions = normalize_solutions_for_comparison(solutions);
+    // Check Stage 3a (solutions). Compare the Essence artefacts as written — do not re-render
+    // through `normalize_solutions_for_comparison`, which blanks matrix index domains.
+    if solutions.is_some() {
         let expected_solutions = read_solutions_essence(path, case_name, "expected", solver_fam)?;
-        let generated_solutions =
-            conjure_cp_cli::utils::conjure::solutions_to_essence(&oxide_solutions);
+        let generated_solutions = read_solutions_essence(path, case_name, "generated", solver_fam)?;
         assert_eq!(generated_solutions, expected_solutions);
     }
 
