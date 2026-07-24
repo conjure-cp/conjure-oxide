@@ -19,7 +19,7 @@ use conjure_cp::{
     settings::{
         Rewriter, set_channelling, set_comprehension_expander, set_current_parser,
         set_current_rewriter, set_current_solver_family, set_default_rule_trace_enabled,
-        set_heuristic, set_heuristic_seed, set_minion_discrete_threshold,
+        set_heuristic, set_heuristic_responses, set_heuristic_seed, set_minion_discrete_threshold,
         set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
     },
     solver::Solver,
@@ -368,11 +368,13 @@ pub(crate) fn rewrite(
 
     set_heuristic(global_args.heuristic);
     set_heuristic_seed(global_args.seed);
+    set_heuristic_responses(global_args.responses.clone());
     set_channelling(global_args.channelling);
     tracing::info!(
-        "Heuristic: {}, seed: {}, channelling: {}",
+        "Heuristic: {}, seed: {}, responses: {:?}, channelling: {}",
         global_args.heuristic,
         global_args.seed,
+        global_args.responses,
         global_args.channelling
     );
 

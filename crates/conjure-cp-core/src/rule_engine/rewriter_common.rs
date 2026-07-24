@@ -10,7 +10,8 @@ use crate::ast::{
 };
 use crate::settings::{
     Heuristic, default_rule_trace_enabled, heuristic, next_heuristic_all_index,
-    next_heuristic_random_index, rule_trace_aggregates_enabled, rule_trace_enabled,
+    next_heuristic_interactive_index, next_heuristic_random_index, rule_trace_aggregates_enabled,
+    rule_trace_enabled,
 };
 
 use itertools::Itertools;
@@ -80,6 +81,13 @@ where
             })
             .map(|(index, _)| index)
             .unwrap_or(0),
+        Heuristic::Interactive => {
+            let names: Vec<_> = results
+                .iter()
+                .map(|result| result.rule_data.rule.name)
+                .collect();
+            next_heuristic_interactive_index(&names)
+        }
         Heuristic::All => {
             let names: Vec<_> = results
                 .iter()
@@ -376,7 +384,8 @@ mod tests {
     use crate::rule_engine::{ApplicationError, Rule, RuleSet};
     use crate::settings::{
         Heuristic, begin_heuristic_all_choices, heuristic, heuristic_all_choices,
-        set_default_rule_trace_enabled, set_heuristic, set_rule_trace_enabled,
+        set_default_rule_trace_enabled, set_heuristic, set_heuristic_responses,
+        set_rule_trace_enabled,
     };
 
     fn test_rule_set_applies(_: &crate::settings::SolverFamily) -> bool {
@@ -493,5 +502,16 @@ mod tests {
             heuristic_all_choices()[0].options,
             vec!["first-rule".to_string(), "second-rule".to_string()]
         );
+    }
+
+    #[test]
+    fn interactive_heuristic_uses_one_based_responses() {
+        let _guard = HeuristicGuard::set(Heuristic::Interactive);
+        set_heuristic_responses(vec![2]);
+        let results = [
+            heuristic_result(&FIRST_RULE, Literal::Bool(true).into()),
+            heuristic_result(&SECOND_RULE, Literal::Bool(false).into()),
+        ];
+        assert_eq!(choose_rule_result_index(results.iter()), 1);
     }
 }

@@ -1,9 +1,10 @@
 use crate::guard;
 use crate::shared::utils::as_cmp_or_lex_op;
+use conjure_cp::ast::pretty::pretty_find_with_representation;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
 use conjure_cp::settings::{
     Channelling, Heuristic, channelling, heuristic, next_heuristic_all_index,
-    next_heuristic_random_index,
+    next_heuristic_interactive_index, next_heuristic_random_index,
 };
 use conjure_cp::{
     ast::{Atom, DeclarationPtr, Expression as Expr, GroundDomain, Moo, SymbolTable},
@@ -198,6 +199,20 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
                 .map(|(rule, _)| *rule)
         }
         Heuristic::All => None,
+        Heuristic::Interactive if !candidates.is_empty() => {
+            let labels: Vec<_> = candidates
+                .iter()
+                .map(|(rule, _)| {
+                    pretty_find_with_representation(decl, rule.short_name())
+                        .unwrap_or_else(|| rule.name().to_string())
+                })
+                .collect();
+            let label_refs: Vec<_> = labels.iter().map(String::as_str).collect();
+            candidates
+                .get(next_heuristic_interactive_index(&label_refs))
+                .map(|(rule, _)| *rule)
+        }
+        Heuristic::Interactive => None,
         Heuristic::Random if !candidates.is_empty() => candidates
             .get(next_heuristic_random_index(candidates.len()))
             .map(|(rule, _)| *rule),

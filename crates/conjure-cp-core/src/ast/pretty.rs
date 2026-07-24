@@ -291,8 +291,25 @@ fn format_domain_with_selected_representation(
     }
 }
 
+/// Pretty-print a find/findAux declaration with `repr` annotated on its domain.
+///
+/// Example: `find x: set{packed} (maxSize 3) of int(1..4)`.
+pub fn pretty_find_with_representation(
+    decl: &crate::ast::DeclarationPtr,
+    repr: &str,
+) -> Option<String> {
+    let domain = decl.domain()?;
+    let domain_str = format_domain_with_representation(&domain, repr);
+    let keyword = if decl.is_find_auxiliary() {
+        "findAux"
+    } else {
+        "find"
+    };
+    Some(format!("{keyword} {}: {domain_str}", decl.name()))
+}
+
 /// Print `domain` as usual, but with `repr` as the top-level set representation preference.
-fn format_domain_with_representation(domain: &crate::ast::DomainPtr, repr: &str) -> String {
+pub fn format_domain_with_representation(domain: &crate::ast::DomainPtr, repr: &str) -> String {
     use crate::ast::{Domain, GroundDomain, UnresolvedDomain};
 
     match domain.as_ref() {

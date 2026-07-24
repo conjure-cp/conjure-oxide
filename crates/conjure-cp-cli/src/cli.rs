@@ -40,7 +40,9 @@ pub enum Command {
 #[command(
     author,
     about = "Conjure Oxide: Automated Constraints Modelling Toolkit",
-    before_help = "Full documentation can be found online at: https://conjure-cp.github.io/conjure-oxide"
+    before_help = "Full documentation can be found online at: https://conjure-cp.github.io/conjure-oxide",
+    // Free `-h` for `--heuristic`; help remains available as `--help`.
+    disable_help_flag = true
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -56,6 +58,10 @@ pub struct Cli {
 
 #[derive(Debug, Clone, Args)]
 pub struct GlobalArgs {
+    /// Print help
+    #[arg(long, action = clap::ArgAction::Help, global = true)]
+    pub help: (),
+
     /// Extra rule sets to enable
     #[arg(long, value_name = "EXTRA_RULE_SETS", global = true)]
     pub extra_rule_sets: Vec<String>,
@@ -157,19 +163,33 @@ pub struct GlobalArgs {
 
     /// Heuristic for selecting an answer when multiple modelling choices are applicable.
     ///
-    /// Possible values: `f` (first), `r` (random), `c` (compact). Compact minimises the
-    /// representation-domain size for representation choices and the resulting AST depth for
-    /// equally-applicable rewrite rules. `x` (all) is reserved for model generation and is not
+    /// Possible values: `f` (first), `r` (random), `c` (compact), `i` (interactive). Compact
+    /// minimises the representation-domain size for representation choices and the resulting AST
+    /// depth for equally-applicable rewrite rules. Interactive prompts on stderr, or uses
+    /// `--responses` when provided. `x` (all) is reserved for model generation and is not
     /// supported by the CLI yet.
     #[arg(
         long,
-        short = 'a',
+        short = 'h',
         default_value_t = Heuristic::First,
         value_parser = parse_cli_heuristic,
         global = true,
         help_heading = CONFIGURATION_HELP_HEADING
     )]
     pub heuristic: Heuristic,
+
+    /// Comma-separated 1-based answers for the interactive heuristic (`-h i`).
+    ///
+    /// If provided, these are used as the answers during interactive model generation instead of
+    /// prompting the user.
+    #[arg(
+        long,
+        value_name = "INTS",
+        value_delimiter = ',',
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub responses: Vec<usize>,
 
     /// Seed used by the random heuristic.
     #[arg(

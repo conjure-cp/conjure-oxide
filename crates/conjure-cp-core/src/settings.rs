@@ -1,6 +1,8 @@
 use std::{
     cell::{Cell, RefCell},
+    collections::VecDeque,
     fmt::Display,
+    io::{self, BufRead, Write},
     str::FromStr,
 };
 
@@ -19,6 +21,8 @@ pub enum Heuristic {
     First,
     Random,
     Compact,
+    /// Prompt on stdin, or consume values from [`set_heuristic_responses`].
+    Interactive,
     /// Enumerate every applicable choice. This is supported by the integration model generator,
     /// but is not accepted by the command-line interface yet.
     All,
@@ -30,6 +34,7 @@ impl Display for Heuristic {
             Self::First => "f",
             Self::Random => "r",
             Self::Compact => "c",
+            Self::Interactive => "i",
             Self::All => "x",
         })
     }
@@ -43,9 +48,10 @@ impl FromStr for Heuristic {
             "f" | "first" => Ok(Self::First),
             "r" | "random" => Ok(Self::Random),
             "c" | "compact" => Ok(Self::Compact),
+            "i" | "interactive" => Ok(Self::Interactive),
             "x" | "all" => Ok(Self::All),
             other => Err(format!(
-                "unknown heuristic '{other}'; expected one of: f, r, c, x"
+                "unknown heuristic '{other}'; expected one of: f, r, c, i, x"
             )),
         }
     }
@@ -90,6 +96,8 @@ thread_local! {
     static HEURISTIC_RANDOM_STATE: Cell<u64> = const { Cell::new(DEFAULT_HEURISTIC_SEED) };
     static HEURISTIC_ALL_CHOICES: RefCell<AllChoicesState> =
         const { RefCell::new(AllChoicesState::new()) };
+    /// 1-based answers for the interactive heuristic, matching Conjure's `--responses`.
+    static HEURISTIC_RESPONSES: RefCell<VecDeque<usize>> = const { RefCell::new(VecDeque::new()) };
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -131,6 +139,21 @@ pub fn channelling() -> Channelling {
 
 pub fn set_heuristic_seed(seed: u64) {
     HEURISTIC_RANDOM_STATE.with(|state| state.set(seed));
+}
+
+/// Sets the 1-based answers consumed by the interactive heuristic (`i`).
+///
+/// When provided (e.g. via `--responses`), these are used instead of prompting on stdin.
+/// Values must be in `1..=n` for a decision with `n` options, matching Conjure.
+pub fn set_heuristic_responses(responses: Vec<usize>) {
+    HEURISTIC_RESPONSES.with(|state| {
+        *state.borrow_mut() = VecDeque::from(responses);
+    });
+}
+
+/// Clears any remaining interactive responses.
+pub fn clear_heuristic_responses() {
+    HEURISTIC_RESPONSES.with(|state| state.borrow_mut().clear());
 }
 
 /// Returns a deterministic pseudo-random index and advances the per-thread heuristic RNG.
@@ -186,6 +209,63 @@ pub fn next_heuristic_all_index(options: &[&str]) -> usize {
 
 pub fn heuristic_all_choices() -> Vec<HeuristicChoice> {
     HEURISTIC_ALL_CHOICES.with(|state| state.borrow().decisions.clone())
+}
+
+/// Selects an option for the interactive heuristic (`i`).
+///
+/// Options are printed 1-based. Prefers the next value from [`set_heuristic_responses`]; otherwise
+/// prompts on stdin (empty input picks option 1), matching Conjure.
+pub fn next_heuristic_interactive_index(options: &[&str]) -> usize {
+    assert!(
+        !options.is_empty(),
+        "interactive choice requires at least one candidate"
+    );
+
+    for (index, option) in options.iter().enumerate() {
+        eprintln!("{}. {}", index + 1, option);
+    }
+
+    let recorded = HEURISTIC_RESPONSES.with(|state| state.borrow_mut().pop_front());
+    let one_based = match recorded {
+        Some(recorded) => {
+            eprintln!("Response: {recorded}");
+            assert!(
+                recorded >= 1 && recorded <= options.len(),
+                "recorded response {recorded} out of range; expected a value between 1 and {}",
+                options.len()
+            );
+            recorded
+        }
+        None => prompt_heuristic_interactive_choice(options.len()),
+    };
+    one_based - 1
+}
+
+fn prompt_heuristic_interactive_choice(option_count: usize) -> usize {
+    let stdin = io::stdin();
+    let mut stdout = io::stderr();
+    loop {
+        eprint!("Pick option: ");
+        let _ = stdout.flush();
+        let mut line = String::new();
+        if stdin.lock().read_line(&mut line).is_err() {
+            eprintln!("Failed to read interactive heuristic response; defaulting to 1");
+            return 1;
+        }
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            return 1;
+        }
+        match trimmed.parse::<usize>() {
+            Ok(value) if value >= 1 && value <= option_count => return value,
+            Ok(_) => {
+                eprintln!("Enter a value between 1 and {option_count}");
+            }
+            Err(_) => {
+                eprintln!("Enter an integer value.");
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -799,7 +879,8 @@ pub struct SolverArgs {
 mod tests {
     use super::{
         Channelling, Heuristic, RewriteConfig, Rewriter, begin_heuristic_all_choices,
-        heuristic_all_choices, next_heuristic_all_index, next_heuristic_random_index,
+        clear_heuristic_responses, heuristic_all_choices, next_heuristic_all_index,
+        next_heuristic_interactive_index, next_heuristic_random_index, set_heuristic_responses,
         set_heuristic_seed,
     };
     use std::str::FromStr;
@@ -809,9 +890,19 @@ mod tests {
         assert_eq!(Heuristic::from_str("f"), Ok(Heuristic::First));
         assert_eq!(Heuristic::from_str("random"), Ok(Heuristic::Random));
         assert_eq!(Heuristic::from_str("c"), Ok(Heuristic::Compact));
+        assert_eq!(Heuristic::from_str("i"), Ok(Heuristic::Interactive));
+        assert_eq!(Heuristic::from_str("interactive"), Ok(Heuristic::Interactive));
         assert_eq!(Heuristic::from_str("x"), Ok(Heuristic::All));
         assert_eq!(Channelling::from_str("no"), Ok(Channelling::No));
         assert_eq!(Channelling::from_str("yes"), Ok(Channelling::Yes));
+    }
+
+    #[test]
+    fn interactive_heuristic_consumes_one_based_responses() {
+        set_heuristic_responses(vec![2, 1]);
+        assert_eq!(next_heuristic_interactive_index(&["left", "right"]), 1);
+        assert_eq!(next_heuristic_interactive_index(&["a", "b", "c"]), 0);
+        clear_heuristic_responses();
     }
 
     #[test]
