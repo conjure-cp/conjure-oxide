@@ -49,11 +49,11 @@ fn effect_ast_depth(effect: &RuleEffect) -> usize {
 fn rule_result_compact_depth(result: &RuleResult<'_>) -> usize {
     // Deferred effects deliberately cannot be materialised speculatively. Prefer a concrete
     // effect when compactness can actually be measured.
-    result
-        .effect
-        .is_deferred()
-        .then_some(usize::MAX)
-        .unwrap_or_else(|| effect_ast_depth(&result.effect))
+    if result.effect.is_deferred() {
+        usize::MAX
+    } else {
+        effect_ast_depth(&result.effect)
+    }
 }
 
 /// Chooses between rules applicable at the same priority and focus.

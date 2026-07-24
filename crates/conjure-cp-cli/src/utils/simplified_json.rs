@@ -7,11 +7,11 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
-use anyhow::{anyhow, bail, Context as _};
+use anyhow::{Context as _, anyhow, bail};
+use conjure_cp::Model;
 use conjure_cp::ast::{
     AbstractLiteral, DeclarationPtr, DomainPtr, Field, GroundDomain, Literal, Moo, Name, Range,
 };
-use conjure_cp::Model;
 use serde_json::{Map, Number, Value as JsonValue};
 
 use crate::utils::json::sort_json_object;
@@ -21,7 +21,7 @@ pub fn solutions_to_simplified_json(
     solutions: &[BTreeMap<Name, Literal>],
 ) -> anyhow::Result<JsonValue> {
     let mut sorted = solutions.to_vec();
-    sorted.sort_by(|lhs, rhs| solution_key_cmp(lhs, rhs));
+    sorted.sort_by(solution_key_cmp);
     let mut items = Vec::with_capacity(sorted.len());
     for solution in &sorted {
         items.push(solution_to_simplified_json(solution)?);
@@ -343,9 +343,9 @@ fn literal_from_simplified_json_with_ground(
             function_from_simplified_json(value, from.as_ref(), to.as_ref())
         }
         GroundDomain::Empty(_) => bail!("cannot parse a value for an empty domain"),
-        GroundDomain::Partition(_, _)
-        | GroundDomain::Relation(_, _)
-        | GroundDomain::Variant(_) => literal_from_simplified_json_unguided(value),
+        GroundDomain::Partition(_, _) | GroundDomain::Relation(_, _) | GroundDomain::Variant(_) => {
+            literal_from_simplified_json_unguided(value)
+        }
     }
 }
 
@@ -397,7 +397,10 @@ fn matrix_from_simplified_json(
         JsonValue::Array(items) => {
             let mut elems = Vec::with_capacity(items.len());
             for item in items {
-                elems.push(literal_from_simplified_json_with_ground(item, &elem_domain)?);
+                elems.push(literal_from_simplified_json_with_ground(
+                    item,
+                    &elem_domain,
+                )?);
             }
             let n = i32::try_from(elems.len()).context("matrix too large")?;
             let index_domain = GroundDomain::Int(vec![Range::Bounded(1, n)]);
@@ -509,9 +512,9 @@ fn literal_from_simplified_json_unguided(value: &JsonValue) -> anyhow::Result<Li
             if all_int_keys {
                 let mut pairs = Vec::with_capacity(object.len());
                 for (key, item) in object {
-                    let index: i32 = key
-                        .parse()
-                        .with_context(|| format!("unguided object key `{key}` is not an integer"))?;
+                    let index: i32 = key.parse().with_context(|| {
+                        format!("unguided object key `{key}` is not an integer")
+                    })?;
                     pairs.push((index, literal_from_simplified_json_unguided(item)?));
                 }
                 pairs.sort_by_key(|(i, _)| *i);
@@ -589,11 +592,9 @@ pub fn param_model_from_assignments(
     let mut model = Model::new(context);
     for (name, literal) in params {
         let decl = match given_domains.get(&name) {
-            Some(domain) => DeclarationPtr::new_value_letting_with_domain(
-                name,
-                literal.into(),
-                domain.clone(),
-            ),
+            Some(domain) => {
+                DeclarationPtr::new_value_letting_with_domain(name, literal.into(), domain.clone())
+            }
             None => DeclarationPtr::new_value_letting(name, literal.into()),
         };
         model.symbols_mut().update_insert(decl);

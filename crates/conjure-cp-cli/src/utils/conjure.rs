@@ -7,9 +7,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 
 use conjure_cp::ast::categories::{Category, CategoryOf};
-use conjure_cp::ast::{
-    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Name,
-};
+use conjure_cp::ast::{Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Name};
 use conjure_cp::context::Context;
 use conjure_cp::settings::{configured_rule_trace_enabled, set_rule_trace_enabled};
 
@@ -19,13 +17,13 @@ use itertools::Itertools as _;
 use tempfile::tempdir;
 
 use crate::utils::json::sort_json_object;
-use conjure_cp::Model;
-use conjure_cp::instantiate::instantiate_model;
-use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use crate::utils::simplified_json::{
     domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
     solutions_from_simplified_json_str,
 };
+use conjure_cp::Model;
+use conjure_cp::instantiate::instantiate_model;
+use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::representation::util::try_up;
 use conjure_cp::solver::Solver;
 
@@ -468,10 +466,8 @@ fn domains_for_conjure_solutions(
     let unified = match param_file {
         Some(param_path) if param_path.ends_with(".json") => {
             let given_domains = domains_from_model(&problem);
-            let params = params_from_simplified_json_str(
-                &fs::read_to_string(param_path)?,
-                &given_domains,
-            )?;
+            let params =
+                params_from_simplified_json_str(&fs::read_to_string(param_path)?, &given_domains)?;
             let param_model =
                 param_model_from_assignments(params, &given_domains, Arc::clone(&context));
             instantiate_model(problem, param_model)?
@@ -494,8 +490,10 @@ fn read_conjure_timings(
         return Ok(None);
     }
 
-    let mut timings = ConjureRunTimings::default();
-    timings.wall_clock_time_s = conjure_solve_wall_time_s;
+    let mut timings = ConjureRunTimings {
+        wall_clock_time_s: conjure_solve_wall_time_s,
+        ..Default::default()
+    };
     for stats_file in stats_files {
         let stats_file = stats_file?;
         let stats: JsonValue = serde_json::from_str(&fs::read_to_string(&stats_file)?)?;

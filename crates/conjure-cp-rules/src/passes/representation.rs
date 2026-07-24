@@ -131,7 +131,7 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
             }
         );
 
-        let Some(rule) = choose_representation_rule(&decl, &symbols) else {
+        let Some(rule) = choose_representation_rule(decl, &symbols) else {
             continue;
         };
         let mut decl = decl.clone();
@@ -392,10 +392,8 @@ mod tests {
 
         set_heuristic(Heuristic::First);
         let mut symbols = SymbolTable::new();
-        let declaration = symbols.gen_find(&Domain::set(
-            SetAttr::new_max_size(3),
-            domain_int!(1..4),
-        ));
+        let declaration =
+            symbols.gen_find(&Domain::set(SetAttr::new_max_size(3), domain_int!(1..4)));
         let re = Reference::new(declaration.clone());
         let annotated = Expression::TypeAnnotation(
             Metadata::new(),

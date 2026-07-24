@@ -891,7 +891,10 @@ mod tests {
         assert_eq!(Heuristic::from_str("random"), Ok(Heuristic::Random));
         assert_eq!(Heuristic::from_str("c"), Ok(Heuristic::Compact));
         assert_eq!(Heuristic::from_str("i"), Ok(Heuristic::Interactive));
-        assert_eq!(Heuristic::from_str("interactive"), Ok(Heuristic::Interactive));
+        assert_eq!(
+            Heuristic::from_str("interactive"),
+            Ok(Heuristic::Interactive)
+        );
         assert_eq!(Heuristic::from_str("x"), Ok(Heuristic::All));
         assert_eq!(Channelling::from_str("no"), Ok(Channelling::No));
         assert_eq!(Channelling::from_str("yes"), Ok(Channelling::Yes));

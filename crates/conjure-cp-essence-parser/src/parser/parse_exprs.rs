@@ -228,7 +228,10 @@ mod test {
             panic!("expected domain annotation");
         };
         assert_eq!(domain.representation_preference(), Some("packed"));
-        assert_eq!(domain.to_string(), "set{packed} of int(-2147483647..2147483647)");
+        assert_eq!(
+            domain.to_string(),
+            "set{packed} of int(-2147483647..2147483647)"
+        );
 
         let type_ann = parse_expr("x :: set{occurrence} of int", symbols.clone())
             .unwrap()
@@ -239,12 +242,9 @@ mod test {
         };
         assert_eq!(ty_domain.representation_preference(), Some("occurrence"));
 
-        let nested = parse_expr(
-            "x : set{explicit} of set{occurrence} of int",
-            symbols,
-        )
-        .unwrap()
-        .unwrap();
+        let nested = parse_expr("x : set{explicit} of set{occurrence} of int", symbols)
+            .unwrap()
+            .unwrap();
         let Expression::DomainAnnotation(_, _, nested_domain) = nested else {
             panic!("expected domain annotation");
         };
@@ -333,7 +333,8 @@ mod test {
         // Parentheses may wrap as Atomic-ish structure; accept TypeAnnotation directly or inside.
         let rhs_str = rhs.to_string();
         assert!(
-            rhs_str.contains("set{packed}") || matches!(rhs.as_ref(), Expression::TypeAnnotation(_, _, _)),
+            rhs_str.contains("set{packed}")
+                || matches!(rhs.as_ref(), Expression::TypeAnnotation(_, _, _)),
             "expected annotated set on rhs, got {rhs:?}"
         );
     }

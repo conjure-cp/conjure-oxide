@@ -3,7 +3,7 @@
 use std::time::Duration;
 use std::{
     fs::File,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::exit,
     sync::{Arc, RwLock},
 };
@@ -419,10 +419,7 @@ fn run_solver(
 /// output matches Conjure's simplified JSON (`true`/`false`).
 fn coerce_bools_in_solutions(
     solutions: &[std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::Literal>],
-    domains: &std::collections::BTreeMap<
-        conjure_cp::ast::Name,
-        conjure_cp::ast::DomainPtr,
-    >,
+    domains: &std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::DomainPtr>,
 ) -> Vec<std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::Literal>> {
     use conjure_cp::ast::{GroundDomain, Literal, Name};
     solutions
@@ -486,11 +483,7 @@ fn write_solutions(
     Ok(())
 }
 
-fn per_solution_output_path(
-    base: &PathBuf,
-    index: usize,
-    format: OutputFormat,
-) -> PathBuf {
+fn per_solution_output_path(base: &Path, index: usize, format: OutputFormat) -> PathBuf {
     let stem = base
         .file_stem()
         .and_then(|s| s.to_str())

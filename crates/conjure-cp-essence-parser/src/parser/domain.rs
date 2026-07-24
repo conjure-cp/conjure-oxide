@@ -370,9 +370,9 @@ pub fn parse_set_domain(
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;
 
-    let representation = set_domain.child_by_field_name("representation").map(|node| {
-        ctx.source_code[node.start_byte()..node.end_byte()].to_string()
-    });
+    let representation = set_domain
+        .child_by_field_name("representation")
+        .map(|node| ctx.source_code[node.start_byte()..node.end_byte()].to_string());
 
     for child in named_children(&set_domain) {
         match child.kind() {

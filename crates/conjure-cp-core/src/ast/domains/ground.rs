@@ -1223,8 +1223,7 @@ impl GroundDomain {
                 inner.has_representation_preference()
                     || idxs.iter().any(|d| d.has_representation_preference())
             }
-            GroundDomain::Tuple(inners)
-            | GroundDomain::Relation(_, inners) => {
+            GroundDomain::Tuple(inners) | GroundDomain::Relation(_, inners) => {
                 inners.iter().any(|d| d.has_representation_preference())
             }
             GroundDomain::Record(entries) | GroundDomain::Variant(entries) => entries
