@@ -23,9 +23,6 @@ use conjure_cp::error::Error;
 use crate::utils::conjure::solutions_to_essence;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
-use crate::utils::simplified_json::{
-    solutions_from_simplified_json_str, solutions_to_simplified_json_string,
-};
 use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
@@ -273,20 +270,6 @@ pub fn save_solutions_essence(
     Ok(rendered)
 }
 
-/// Writes solutions in Conjure's simplified JSON format (`--solutions-in-one-file`).
-pub fn save_solutions_json(
-    solutions: &[BTreeMap<Name, Literal>],
-    path: &str,
-    test_name: &str,
-    solver: SolverFamily,
-) -> Result<String, anyhow::Error> {
-    let rendered = solutions_to_simplified_json_string(solutions)?;
-    let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}.generated.solutions.json");
-    std::fs::write(&filename, &rendered)?;
-    Ok(rendered)
-}
-
 pub fn read_solutions_essence(
     path: &str,
     test_name: &str,
@@ -296,33 +279,6 @@ pub fn read_solutions_essence(
     let solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}-{solver_name}.{prefix}.solutions");
     Ok(read_with_path(filename)?)
-}
-
-/// Reads solutions from a simplified JSON golden/generated file.
-pub fn read_solutions_json(
-    path: &str,
-    test_name: &str,
-    prefix: &str,
-    solver: SolverFamily,
-    domains: &BTreeMap<Name, conjure_cp::ast::DomainPtr>,
-) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}.{prefix}.solutions.json");
-    let text = read_with_path(filename)?;
-    solutions_from_simplified_json_str(&text, domains)
-}
-
-/// Whether a JSON solutions golden file exists for this case.
-pub fn solutions_json_expected_exists(
-    path: &str,
-    test_name: &str,
-    solver: SolverFamily,
-) -> bool {
-    let solver_name = solver.as_str();
-    Path::new(&format!(
-        "{path}/{test_name}-{solver_name}.expected.solutions.json"
-    ))
-    .exists()
 }
 
 /// Reads a default rule trace text file.
@@ -471,9 +427,28 @@ pub fn normalize_solutions_for_comparison(
         }
     }
 
-    // Remove duplicates
+    // Remove duplicates and put solutions in a stable order for set-equality compares.
     normalized = normalized.into_iter().unique().collect();
+    normalized.sort_by(solution_essence_cmp);
     normalized
+}
+
+fn solution_essence_cmp(
+    lhs: &BTreeMap<Name, Literal>,
+    rhs: &BTreeMap<Name, Literal>,
+) -> std::cmp::Ordering {
+    lhs.iter()
+        .zip(rhs)
+        .find_map(|((lhs_name, lhs_value), (rhs_name, rhs_value))| {
+            let ordering = lhs_name.cmp(rhs_name);
+            (ordering != std::cmp::Ordering::Equal)
+                .then_some(ordering)
+                .or_else(|| {
+                    let ordering = lhs_value.essence_cmp(rhs_value);
+                    (ordering != std::cmp::Ordering::Equal).then_some(ordering)
+                })
+        })
+        .unwrap_or_else(|| lhs.len().cmp(&rhs.len()))
 }
 
 fn normalize_set_literal_order(value: AbstractLiteral<Literal>) -> AbstractLiteral<Literal> {
