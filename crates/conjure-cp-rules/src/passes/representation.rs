@@ -6,8 +6,8 @@ use conjure_cp::settings::{
     next_heuristic_random_index,
 };
 use conjure_cp::{
-    ast::{Atom, DeclarationPtr, Expression as Expr, GroundDomain, SymbolTable},
-    representation::{ReprRulePtr, get_repr_rules},
+    ast::{Atom, DeclarationPtr, Expression as Expr, GroundDomain, Moo, SymbolTable},
+    representation::{ReprRulePtr, get_applicable_repr_by_short_name, get_repr_rules},
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect as Reduction,
         register_rule, register_rule_set,
@@ -20,6 +20,72 @@ use uniplate::Uniplate;
 // Representations of Essence abstract types down to Essence'
 // Applies for all solvers
 register_rule_set!("ReprGeneral", ("Base"), |_| true);
+
+/// Select a representation named in a `: domain` or `:: type` annotation.
+///
+/// Example: `1 in (x :: set{packed} of int)` selects the packed representation for this use of `x`.
+/// Using different representations at different call sites requires channelling (`--channelling yes`).
+#[register_rule("ReprGeneral", 10200, [In, TypeAnnotation, DomainAnnotation])]
+fn select_representation_from_annotation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::In(meta, left, right) => {
+            let Some((selected, symbols, constraints)) =
+                select_repr_from_annotated_expr(right.as_ref())?
+            else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(Reduction::new(
+                Expr::In(meta.clone(), left.clone(), Moo::new(selected)),
+                constraints,
+                symbols,
+            ))
+        }
+        Expr::TypeAnnotation(_, _, _) | Expr::DomainAnnotation(_, _, _) => {
+            let Some((selected, symbols, constraints)) = select_repr_from_annotated_expr(expr)?
+            else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(Reduction::new(selected, constraints, symbols))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
+
+/// If `expr` is a type/domain annotation that names a representation on a reference, select it.
+fn select_repr_from_annotated_expr(
+    expr: &Expr,
+) -> Result<Option<(Expr, SymbolTable, Vec<Expr>)>, conjure_cp::rule_engine::ApplicationError> {
+    let (inner, domain) = match expr {
+        Expr::TypeAnnotation(_, inner, domain) | Expr::DomainAnnotation(_, inner, domain) => {
+            (inner, domain)
+        }
+        _ => return Ok(None),
+    };
+
+    let Some(pref) = domain.representation_preference() else {
+        return Ok(None);
+    };
+
+    let Expr::Atomic(_, Atom::Reference(re)) = inner.as_ref() else {
+        return Ok(None);
+    };
+
+    if let Some(existing) = re.repr
+        && existing.short_name() == pref
+    {
+        return Ok(Some((re.clone().into(), SymbolTable::new(), Vec::new())));
+    }
+
+    let Some(rule) = get_applicable_repr_by_short_name(re.ptr(), pref) else {
+        return Ok(None);
+    };
+
+    let mut re = re.clone();
+    let (_, symbols, constraints) = re
+        .update_or_init_repr_via(rule)
+        .map_err(|_| RuleNotApplicable)?;
+    Ok(Some((re.into(), symbols, constraints)))
+}
 
 /// Select a representation for abstract domains
 #[register_rule("ReprGeneral", 10000, [Atomic / Reference])]
@@ -107,6 +173,17 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
         .filter_map(|rule| rule.probe_for(decl).ok().map(|score| (rule, score)))
         .collect();
     candidates.sort_by_key(|(rule, _)| rule.name());
+
+    // User-specified representation preference on the domain (e.g. set{packed}) defaults the choice
+    // when that representation is applicable.
+    if let Some(dom) = decl.domain()
+        && let Some(pref) = dom.representation_preference()
+        && let Some((rule, _)) = candidates
+            .iter()
+            .find(|(rule, _)| rule.short_name() == pref)
+    {
+        return Some(*rule);
+    }
 
     if candidates.len() == 1 {
         return candidates.first().map(|(rule, _)| *rule);
@@ -262,5 +339,68 @@ mod tests {
             "SetPacked"
         );
         set_heuristic(Heuristic::First);
+    }
+
+    #[test]
+    fn domain_representation_preference_defaults_the_choice() {
+        set_heuristic(Heuristic::First);
+        let mut symbols = SymbolTable::new();
+        let declaration = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(1, 2).with_representation("packed"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "packed"
+        );
+
+        let declaration = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(1, 2).with_representation("explicit"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "explicit"
+        );
+    }
+
+    #[test]
+    fn annotation_selects_packed_representation() {
+        use conjure_cp::ast::{Atom, Expression, Metadata, Moo, Reference};
+        use conjure_cp::representation::get_applicable_repr_by_short_name;
+
+        set_heuristic(Heuristic::First);
+        let mut symbols = SymbolTable::new();
+        let declaration = symbols.gen_find(&Domain::set(
+            SetAttr::new_max_size(3),
+            domain_int!(1..4),
+        ));
+        let re = Reference::new(declaration.clone());
+        let annotated = Expression::TypeAnnotation(
+            Metadata::new(),
+            Moo::new(re.into()),
+            Domain::set(
+                SetAttr::<i32>::default().with_representation("packed"),
+                domain_int!(1..4),
+            ),
+        );
+
+        let result = select_representation_from_annotation(&annotated, &symbols).unwrap();
+        let Expression::Atomic(_, Atom::Reference(selected)) = result.new_expression else {
+            panic!("expected a reference, got {}", result.new_expression);
+        };
+        assert_eq!(selected.get_repr().unwrap().0.short_name(), "packed");
+        assert_eq!(
+            get_applicable_repr_by_short_name(&declaration, "packed")
+                .unwrap()
+                .name(),
+            "SetPacked"
+        );
     }
 }

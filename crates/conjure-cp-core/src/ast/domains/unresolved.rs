@@ -240,6 +240,98 @@ impl UnresolvedDomain {
             _ => None,
         }
     }
+
+    /// True if any set domain in this tree has a representation preference.
+    pub fn has_representation_preference(&self) -> bool {
+        match self {
+            UnresolvedDomain::Set(attr, inner) => {
+                attr.representation.is_some() || inner.has_representation_preference()
+            }
+            UnresolvedDomain::MSet(_, inner)
+            | UnresolvedDomain::Partition(_, inner)
+            | UnresolvedDomain::Sequence(_, inner) => inner.has_representation_preference(),
+            UnresolvedDomain::Matrix(inner, idxs) => {
+                inner.has_representation_preference()
+                    || idxs.iter().any(|d| d.has_representation_preference())
+            }
+            UnresolvedDomain::Tuple(inners) | UnresolvedDomain::Relation(_, inners) => {
+                inners.iter().any(|d| d.has_representation_preference())
+            }
+            UnresolvedDomain::Record(entries) | UnresolvedDomain::Variant(entries) => entries
+                .iter()
+                .any(|f| f.value.has_representation_preference()),
+            UnresolvedDomain::Function(_, dom, cdom) => {
+                dom.has_representation_preference() || cdom.has_representation_preference()
+            }
+            UnresolvedDomain::Reference(re) => re
+                .domain()
+                .is_some_and(|d| d.has_representation_preference()),
+            UnresolvedDomain::Int(_) => false,
+        }
+    }
+
+    /// Format this domain in Essence type style, omitting size attributes and integer ranges.
+    pub fn as_type_string(&self) -> String {
+        match self {
+            UnresolvedDomain::Reference(re) => re.to_string(),
+            UnresolvedDomain::Int(_) => "int".to_string(),
+            UnresolvedDomain::Set(attrs, inner) => {
+                let mut out = String::from("set");
+                if let Some(repr) = &attrs.representation {
+                    out.push('{');
+                    out.push_str(repr);
+                    out.push('}');
+                }
+                out.push_str(" of ");
+                out.push_str(&inner.as_type_string());
+                out
+            }
+            UnresolvedDomain::MSet(_, inner) => format!("mset of {}", inner.as_type_string()),
+            UnresolvedDomain::Partition(_, inner) => {
+                format!("partition from {}", inner.as_type_string())
+            }
+            UnresolvedDomain::Sequence(_, inner) => {
+                format!("sequence of {}", inner.as_type_string())
+            }
+            UnresolvedDomain::Matrix(inner, idxs) => {
+                let idxs = idxs.iter().map(|d| d.as_type_string()).join(", ");
+                format!("matrix indexed by [{idxs}] of {}", inner.as_type_string())
+            }
+            UnresolvedDomain::Tuple(inners) => {
+                format!(
+                    "tuple ({})",
+                    inners.iter().map(|d| d.as_type_string()).join(", ")
+                )
+            }
+            UnresolvedDomain::Record(entries) => {
+                let inners = entries
+                    .iter()
+                    .map(|f| format!("{}: {}", f.name, f.value.as_type_string()))
+                    .join(", ");
+                format!("record {{{inners}}}")
+            }
+            UnresolvedDomain::Variant(entries) => {
+                let inners = entries
+                    .iter()
+                    .map(|f| format!("{}: {}", f.name, f.value.as_type_string()))
+                    .join(", ");
+                format!("variant {{{inners}}}")
+            }
+            UnresolvedDomain::Function(_, dom, cdom) => {
+                format!(
+                    "function {} --> {}",
+                    dom.as_type_string(),
+                    cdom.as_type_string()
+                )
+            }
+            UnresolvedDomain::Relation(_, inners) => {
+                format!(
+                    "relation of ({})",
+                    inners.iter().map(|d| d.as_type_string()).join(" * ")
+                )
+            }
+        }
+    }
 }
 
 impl Typeable for UnresolvedDomain {
@@ -312,11 +404,15 @@ impl Display for UnresolvedDomain {
                 }
             }
             UnresolvedDomain::Set(attrs, inner_dom) => {
+                write!(f, "set")?;
+                if let Some(repr) = &attrs.representation {
+                    write!(f, "{{{repr}}}")?;
+                }
                 let attrs = attrs.to_string();
                 if attrs.is_empty() {
-                    write!(f, "set of {inner_dom}")
+                    write!(f, " of {inner_dom}")
                 } else {
-                    write!(f, "set {attrs} of {inner_dom}")
+                    write!(f, " {attrs} of {inner_dom}")
                 }
             }
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),

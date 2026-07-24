@@ -1209,6 +1209,95 @@ impl GroundDomain {
             _ => None,
         }
     }
+
+    /// True if any set domain in this tree has a representation preference.
+    pub fn has_representation_preference(&self) -> bool {
+        match self {
+            GroundDomain::Set(attr, inner) => {
+                attr.representation.is_some() || inner.has_representation_preference()
+            }
+            GroundDomain::MSet(_, inner)
+            | GroundDomain::Partition(_, inner)
+            | GroundDomain::Sequence(_, inner) => inner.has_representation_preference(),
+            GroundDomain::Matrix(inner, idxs) => {
+                inner.has_representation_preference()
+                    || idxs.iter().any(|d| d.has_representation_preference())
+            }
+            GroundDomain::Tuple(inners)
+            | GroundDomain::Relation(_, inners) => {
+                inners.iter().any(|d| d.has_representation_preference())
+            }
+            GroundDomain::Record(entries) | GroundDomain::Variant(entries) => entries
+                .iter()
+                .any(|f| f.value.has_representation_preference()),
+            GroundDomain::Function(_, dom, cdom) => {
+                dom.has_representation_preference() || cdom.has_representation_preference()
+            }
+            GroundDomain::Empty(_) | GroundDomain::Bool | GroundDomain::Int(_) => false,
+        }
+    }
+
+    /// Format this domain in Essence type style, omitting size attributes and integer ranges.
+    pub fn as_type_string(&self) -> String {
+        match self {
+            GroundDomain::Empty(ty) => format!("empty({ty})"),
+            GroundDomain::Bool => "bool".to_string(),
+            GroundDomain::Int(_) => "int".to_string(),
+            GroundDomain::Set(attrs, inner) => {
+                let mut out = String::from("set");
+                if let Some(repr) = &attrs.representation {
+                    out.push('{');
+                    out.push_str(repr);
+                    out.push('}');
+                }
+                out.push_str(" of ");
+                out.push_str(&inner.as_type_string());
+                out
+            }
+            GroundDomain::MSet(_, inner) => format!("mset of {}", inner.as_type_string()),
+            GroundDomain::Sequence(_, inner) => format!("sequence of {}", inner.as_type_string()),
+            GroundDomain::Matrix(inner, idxs) => {
+                let idxs = idxs.iter().map(|d| d.as_type_string()).join(", ");
+                format!("matrix indexed by [{idxs}] of {}", inner.as_type_string())
+            }
+            GroundDomain::Tuple(inners) => {
+                format!(
+                    "tuple ({})",
+                    inners.iter().map(|d| d.as_type_string()).join(", ")
+                )
+            }
+            GroundDomain::Record(entries) => {
+                let inners = entries
+                    .iter()
+                    .map(|f| format!("{}: {}", f.name, f.value.as_type_string()))
+                    .join(", ");
+                format!("record {{{inners}}}")
+            }
+            GroundDomain::Variant(entries) => {
+                let inners = entries
+                    .iter()
+                    .map(|f| format!("{}: {}", f.name, f.value.as_type_string()))
+                    .join(", ");
+                format!("variant {{{inners}}}")
+            }
+            GroundDomain::Function(_, dom, cdom) => {
+                format!(
+                    "function {} --> {}",
+                    dom.as_type_string(),
+                    cdom.as_type_string()
+                )
+            }
+            GroundDomain::Relation(_, inners) => {
+                format!(
+                    "relation of ({})",
+                    inners.iter().map(|d| d.as_type_string()).join(" * ")
+                )
+            }
+            GroundDomain::Partition(_, inner) => {
+                format!("partition from {}", inner.as_type_string())
+            }
+        }
+    }
 }
 
 impl Typeable for GroundDomain {
@@ -1279,11 +1368,15 @@ impl Display for GroundDomain {
                 }
             }
             GroundDomain::Set(attrs, inner_dom) => {
+                write!(f, "set")?;
+                if let Some(repr) = &attrs.representation {
+                    write!(f, "{{{repr}}}")?;
+                }
                 let attrs = attrs.to_string();
                 if attrs.is_empty() {
-                    write!(f, "set of {inner_dom}")
+                    write!(f, " of {inner_dom}")
                 } else {
-                    write!(f, "set {attrs} of {inner_dom}")
+                    write!(f, " {attrs} of {inner_dom}")
                 }
             }
             GroundDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),

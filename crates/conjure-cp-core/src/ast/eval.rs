@@ -256,7 +256,7 @@ fn fold_constant_expression(expr: &Expr, constant: Lit) -> Option<Expr> {
     }
 
     let folded = Expr::Atomic(Metadata::new(), Atom::Literal(constant));
-    if let Expr::TypeAnnotation(_, _, ty) = expr
+    if let Expr::TypeAnnotation(_, _, domain) = expr
         && let Expr::Atomic(
             _,
             Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
@@ -266,7 +266,7 @@ fn fold_constant_expression(expr: &Expr, constant: Lit) -> Option<Expr> {
         return Some(Expr::TypeAnnotation(
             Metadata::new(),
             Moo::new(folded),
-            ty.clone(),
+            domain.clone(),
         ));
     }
 

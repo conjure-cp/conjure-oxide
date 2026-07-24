@@ -14,18 +14,34 @@ pub fn get_repr_rules() -> impl Iterator<Item = ReprRulePtr> {
 }
 
 pub fn get_repr_by_name(name: &str) -> Option<ReprRulePtr> {
-    let mut idx = -1;
-    for i in 0..REPR_RULES_DISTRIBUTED_SLICE.len() {
-        if REPR_RULES_DISTRIBUTED_SLICE[i].name() == name {
-            idx = i as i32;
-            break;
-        }
-    }
-    if idx >= 0 {
-        Some(REPR_RULES_DISTRIBUTED_SLICE[idx as usize])
-    } else {
-        None
-    }
+    REPR_RULES_DISTRIBUTED_SLICE
+        .iter()
+        .copied()
+        .find(|rule| rule.name() == name)
+}
+
+/// Look up a representation rule by its Essence short name (e.g. `"packed"`, `"occurrence"`).
+///
+/// If multiple rules share the same short name (e.g. set and tuple both use `"packed"`), the first
+/// registration wins. Prefer [`get_applicable_repr_by_short_name`] when a declaration is available.
+pub fn get_repr_by_short_name(short_name: &str) -> Option<ReprRulePtr> {
+    REPR_RULES_DISTRIBUTED_SLICE
+        .iter()
+        .copied()
+        .find(|rule| rule.short_name() == short_name)
+}
+
+/// Look up a representation by short name that is applicable to `decl`.
+///
+/// Disambiguates shared short names such as `"packed"` (set vs tuple) via [`ReprRuleStored::probe_for`].
+pub fn get_applicable_repr_by_short_name(
+    decl: &crate::ast::DeclarationPtr,
+    short_name: &str,
+) -> Option<ReprRulePtr> {
+    REPR_RULES_DISTRIBUTED_SLICE
+        .iter()
+        .copied()
+        .find(|rule| rule.short_name() == short_name && rule.probe_for(decl).is_ok())
 }
 
 impl Serialize for ReprRulePtr {

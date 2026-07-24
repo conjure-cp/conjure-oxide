@@ -158,6 +158,7 @@ module.exports = grammar ({
 
     set_domain: $ => seq(
         "set",
+        optional(seq("{", field("representation", $.identifier), "}")),
         optional(seq("(", $.set_attributes, ")")),
         "of",
         field("value_domain", $.domain)
@@ -328,9 +329,9 @@ module.exports = grammar ({
 
     // Set comparisons: require set operands, return boolean
     set_comparison: $ => seq(
-      field("left", choice($.arithmetic_expr, $.atom)),
+      field("left", choice($.arithmetic_expr, $.annotation_expr, $.atom)),
       field("operator", choice("in", "subset", "subsetEq", "supset", "supsetEq")),
-      field("right", $.atom)
+      field("right", choice($.annotation_expr, $.atom))
     ),
 
     all_diff_comparison: $ => prec(-10, seq(
@@ -407,7 +408,7 @@ module.exports = grammar ({
       field("pareto_expression", $.pareto_expression)
     )),
 
-    sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
+    sub_atom_expr: $ => seq("(", field("expression", choice($.annotation_expr, $.atom)), ")"),
 
     tuple: $ => prec(-5,choice(
       // explicit tuple value using the 'tuple' keyword (allows empty, singleton, multi-arity)
@@ -598,6 +599,7 @@ module.exports = grammar ({
 
     annotation_set_domain: $ => seq(
       "set",
+      optional(seq("{", field("representation", $.identifier), "}")),
       optional(seq("(", $.set_attributes, ")")),
       "of",
       field("value_domain", $.annotation_domain)

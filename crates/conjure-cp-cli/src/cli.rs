@@ -182,8 +182,9 @@ pub struct GlobalArgs {
 
     /// Whether multiple representations of the same declaration may be channelled together.
     ///
-    /// Possible values: `no`, `yes`. Channelling is disabled by default; `yes` is reserved but
-    /// not supported yet.
+    /// Possible values: `no`, `yes`. Channelling is disabled by default. Enable `yes` to allow
+    /// different representations of the same variable at different call sites, e.g.
+    /// `1 in (x :: set{packed} of int) /\ 2 in (x :: set{occurrence} of int)`.
     #[arg(
         long,
         default_value_t = Channelling::No,
@@ -292,10 +293,7 @@ fn parse_cli_heuristic(input: &str) -> Result<Heuristic, String> {
 }
 
 fn parse_cli_channelling(input: &str) -> Result<Channelling, String> {
-    match input.parse::<Channelling>()? {
-        Channelling::Yes => Err("channelling=yes is not supported yet".to_string()),
-        channelling => Ok(channelling),
-    }
+    input.parse::<Channelling>()
 }
 
 fn parse_rewriter(input: &str) -> Result<Rewriter, String> {

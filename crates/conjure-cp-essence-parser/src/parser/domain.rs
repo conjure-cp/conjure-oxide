@@ -370,8 +370,15 @@ pub fn parse_set_domain(
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;
 
+    let representation = set_domain.child_by_field_name("representation").map(|node| {
+        ctx.source_code[node.start_byte()..node.end_byte()].to_string()
+    });
+
     for child in named_children(&set_domain) {
         match child.kind() {
+            "identifier" => {
+                // Representation preference is handled via the `representation` field above.
+            }
             "set_attributes" => {
                 // Check if we have both minSize and maxSize (minMax case)
                 let min_value_node = child.child_by_field_name("min_value");
@@ -408,7 +415,7 @@ pub fn parse_set_domain(
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
             }
-            "domain" => {
+            "domain" | "annotation_domain" => {
                 let Some(parsed_domain) = parse_domain(ctx, child)? else {
                     return Ok(None);
                 };
@@ -429,7 +436,11 @@ pub fn parse_set_domain(
         let set_keyword_node = child!(set_domain, 0, "set");
         // No documentation available for set domain, using fallback description
         ctx.add_span_and_doc_hover(&set_keyword_node, "set", SymbolKind::Domain, None, None);
-        Ok(Some(Domain::set(set_attribute.unwrap_or_default(), domain)))
+        let mut attr = set_attribute.unwrap_or_default();
+        if let Some(repr) = representation {
+            attr = attr.with_representation(repr);
+        }
+        Ok(Some(Domain::set(attr, domain)))
     } else {
         ctx.record_error(RecoverableParseError::new(
             "Set domain must have a value domain".to_string(),

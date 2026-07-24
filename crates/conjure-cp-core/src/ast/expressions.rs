@@ -128,10 +128,10 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
-    /// Type annotation expression: `expr : type`.
-    TypeAnnotation(Metadata, Moo<Expression>, ReturnType),
+    /// Type annotation expression: `expr :: type`.
+    TypeAnnotation(Metadata, Moo<Expression>, DomainPtr),
 
-    /// Domain annotation expression: `expr :: domain`.
+    /// Domain annotation expression: `expr : domain`.
     DomainAnnotation(Metadata, Moo<Expression>, DomainPtr),
 
     /// Asserts that the given variant of a variant expression is in use.
@@ -780,14 +780,16 @@ fn matrix_element_domain(e: &Expression) -> Option<DomainPtr> {
 
 fn empty_matrix_integer_element_domain(e: &Expression) -> Option<DomainPtr> {
     match e {
-        Expression::TypeAnnotation(_, inner, ReturnType::Matrix(elem_type)) => {
+        Expression::TypeAnnotation(_, inner, domain) => {
             if !Moo::unwrap_or_clone(inner.clone())
                 .unwrap_matrix_unchecked()
                 .is_some_and(|(elems, _)| elems.is_empty())
             {
                 return None;
             }
-            if elem_type.as_ref() == &ReturnType::Int {
+            if let ReturnType::Matrix(elem_type) = domain.return_type()
+                && elem_type.as_ref() == &ReturnType::Int
+            {
                 Some(Domain::int_ground(vec![Range::Unbounded]))
             } else {
                 None
@@ -1522,13 +1524,13 @@ impl Expression {
             Expression::Active(..) => Some(Domain::bool()),
             Expression::ToSet(_, other) => {
                 if let Some((attrs, dom, codom)) = other.domain_of()?.as_function() {
-                    let set_attrs = SetAttr { size: attrs.size };
+                    let set_attrs = SetAttr::new(attrs.size);
                     Some(Domain::set(set_attrs, Domain::tuple(vec![dom, codom])))
                 } else if let Some((attrs, doms)) = other.domain_of()?.as_relation() {
-                    let set_attrs = SetAttr { size: attrs.size };
+                    let set_attrs = SetAttr::new(attrs.size);
                     Some(Domain::set(set_attrs, Domain::tuple(doms)))
                 } else if let Some((attrs, dom)) = other.domain_of()?.as_mset() {
-                    let set_attrs = SetAttr { size: attrs.size };
+                    let set_attrs = SetAttr::new(attrs.size);
                     Some(Domain::set(set_attrs, dom))
                 } else if let Some((dom, dimensions)) = other.domain_of()?.as_matrix() {
                     // We combine all matrix domains into a tuple
@@ -2284,8 +2286,12 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
-            Expression::TypeAnnotation(_, expr, ty) => {
-                write!(f, "{}", pretty_expression_type_annotation(expr, ty))
+            Expression::TypeAnnotation(_, expr, domain) => {
+                write!(
+                    f,
+                    "{}",
+                    pretty_expression_type_annotation(expr, domain.as_type_string())
+                )
             }
             Expression::DomainAnnotation(_, expr, domain) => {
                 write!(f, "{}", pretty_expression_domain_annotation(expr, domain))
@@ -2650,7 +2656,7 @@ impl Typeable for Expression {
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Metavar(_, _) => ReturnType::Unknown,
             Expression::Atomic(_, atom) => atom.return_type(),
-            Expression::TypeAnnotation(_, _, ty) => ty.clone(),
+            Expression::TypeAnnotation(_, _, domain) => domain.return_type(),
             Expression::DomainAnnotation(_, _, domain) => domain.return_type(),
             Expression::Abs(_, _) => ReturnType::Int,
             Expression::Sum(_, _) => ReturnType::Int,
@@ -3233,9 +3239,9 @@ impl Expression {
             | Expression::Card(_, m1) => {
                 child_hash(child_hashes).hash(&mut hasher);
             }
-            Expression::TypeAnnotation(_, m1, ty) => {
+            Expression::TypeAnnotation(_, m1, domain) => {
                 child_hash(child_hashes).hash(&mut hasher);
-                ty.hash(&mut hasher);
+                domain.hash(&mut hasher);
             }
             Expression::DomainAnnotation(_, m1, domain) => {
                 child_hash(child_hashes).hash(&mut hasher);

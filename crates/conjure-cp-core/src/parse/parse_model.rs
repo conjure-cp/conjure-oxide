@@ -225,7 +225,7 @@ fn parse_domain(
                 .and_then(|v| v.as_object())
                 .ok_or(error!("Set size attributes is not an object"))?;
             let size = parse_size_attr(size, symbols)?;
-            let attr: SetAttr<IntVal> = SetAttr { size };
+            let attr: SetAttr<IntVal> = SetAttr::new(size);
             Ok(Domain::set(attr, domain))
         }
         "DomainMSet" => {

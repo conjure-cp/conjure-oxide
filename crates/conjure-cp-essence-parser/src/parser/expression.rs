@@ -876,7 +876,7 @@ pub fn parse_annotation_expression(
             Ok(Some(Expression::TypeAnnotation(
                 Metadata::new(),
                 Moo::new(left),
-                domain.return_type(),
+                domain,
             )))
         }
         "domain_annotation" => {

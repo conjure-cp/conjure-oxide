@@ -516,6 +516,40 @@ impl Domain {
         None
     }
 
+    /// User-specified representation preference on this domain, if any (Essence short name).
+    ///
+    /// For set domains this is the optional name in `set{packed} of …`. Nested preferences on
+    /// element domains are not returned here; only the preference attached to this domain node.
+    pub fn representation_preference(&self) -> Option<&str> {
+        if let Some(GroundDomain::Set(attr, _)) = self.as_ground() {
+            return attr.representation.as_deref();
+        }
+        if let Some(UnresolvedDomain::Set(attr, _)) = self.as_unresolved() {
+            return attr.representation.as_deref();
+        }
+        None
+    }
+
+    /// Whether any representation preference appears anywhere in this domain tree.
+    pub fn has_representation_preference(&self) -> bool {
+        if self.representation_preference().is_some() {
+            return true;
+        }
+        match self {
+            Domain::Ground(gd) => gd.has_representation_preference(),
+            Domain::Unresolved(ud) => ud.has_representation_preference(),
+        }
+    }
+
+    /// Format this domain in Essence type style (`int`, `set{packed} of int`, …),
+    /// omitting size attributes and integer ranges.
+    pub fn as_type_string(&self) -> String {
+        match self {
+            Domain::Ground(gd) => gd.as_type_string(),
+            Domain::Unresolved(ud) => ud.as_type_string(),
+        }
+    }
+
     /// If this is a mset domain, get its attributes and a pointer to its element domain.
     pub fn as_mset(&self) -> Option<(MSetAttr<IntVal>, DomainPtr)> {
         if let Some(GroundDomain::MSet(attr, inner_dom)) = self.as_ground() {
@@ -1044,6 +1078,33 @@ mod tests {
         // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
         let s = Domain::set(SetAttr::new_max_size(2), domain_int!(1..3));
         assert_eq!(s.length(), Ok(7));
+    }
+
+    #[test]
+    fn test_set_representation_preference_display() {
+        let s = Domain::set(
+            SetAttr::new_max_size(3).with_representation("packed"),
+            domain_int!(1..4),
+        );
+        assert_eq!(s.to_string(), "set{packed} (maxSize 3) of int(1..4)");
+        assert_eq!(s.as_type_string(), "set{packed} of int");
+        assert_eq!(s.representation_preference(), Some("packed"));
+
+        let nested = Domain::set(
+            SetAttr::<IntVal>::default().with_representation("explicit"),
+            Domain::set(
+                SetAttr::<IntVal>::default().with_representation("occurrence"),
+                domain_int!(1..2),
+            ),
+        );
+        assert_eq!(
+            nested.to_string(),
+            "set{explicit} of set{occurrence} of int(1..2)"
+        );
+        assert_eq!(
+            nested.as_type_string(),
+            "set{explicit} of set{occurrence} of int"
+        );
     }
 
     #[test]

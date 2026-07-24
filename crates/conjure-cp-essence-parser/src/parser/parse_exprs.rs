@@ -61,7 +61,7 @@ mod test {
     #[allow(unused)]
     use conjure_cp_core::ast::{
         Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name, ReturnType,
-        SymbolTable,
+        SymbolTable, Typeable,
     };
     #[allow(unused)]
     use std::collections::HashMap;
@@ -201,15 +201,60 @@ mod test {
         assert_eq!(domain_annotation.to_string(), "x : int(1..3)");
 
         let type_annotation = parse_expr("x :: int", symbols.clone()).unwrap().unwrap();
-        assert_eq!(
+        assert!(matches!(
             type_annotation,
-            Expression::TypeAnnotation(
-                Metadata::new(),
-                Moo::new(Expression::Atomic(Metadata::new(), Atom::new_ref(x))),
-                ReturnType::Int
-            )
-        );
+            Expression::TypeAnnotation(_, _, _)
+        ));
+        assert_eq!(type_annotation.return_type(), ReturnType::Int);
         assert_eq!(type_annotation.to_string(), "x :: int");
+    }
+
+    #[test]
+    pub fn test_parse_set_representation_preference() {
+        let symbols = SymbolTablePtr::new();
+        let x = DeclarationPtr::new_find(
+            Name::User("x".into()),
+            Domain::set(
+                conjure_cp_core::ast::SetAttr::new_max_size(3),
+                Domain::int(vec![conjure_cp_core::ast::Range::Bounded(1, 4)]),
+            ),
+        );
+        symbols.write().insert(x).unwrap();
+
+        let find_domain = parse_expr("x : set{packed} of int", symbols.clone())
+            .unwrap()
+            .unwrap();
+        let Expression::DomainAnnotation(_, _, domain) = find_domain else {
+            panic!("expected domain annotation");
+        };
+        assert_eq!(domain.representation_preference(), Some("packed"));
+        assert_eq!(domain.to_string(), "set{packed} of int(-2147483647..2147483647)");
+
+        let type_ann = parse_expr("x :: set{occurrence} of int", symbols.clone())
+            .unwrap()
+            .unwrap();
+        assert_eq!(type_ann.to_string(), "x :: set{occurrence} of int");
+        let Expression::TypeAnnotation(_, _, ty_domain) = type_ann else {
+            panic!("expected type annotation");
+        };
+        assert_eq!(ty_domain.representation_preference(), Some("occurrence"));
+
+        let nested = parse_expr(
+            "x : set{explicit} of set{occurrence} of int",
+            symbols,
+        )
+        .unwrap()
+        .unwrap();
+        let Expression::DomainAnnotation(_, _, nested_domain) = nested else {
+            panic!("expected domain annotation");
+        };
+        assert_eq!(nested_domain.representation_preference(), Some("explicit"));
+        let (_, inner) = nested_domain.as_set().unwrap();
+        assert_eq!(inner.representation_preference(), Some("occurrence"));
+        assert_eq!(
+            nested_domain.to_string(),
+            "set{explicit} of set{occurrence} of int(-2147483647..2147483647)"
+        );
     }
 
     #[test]
@@ -248,5 +293,48 @@ mod test {
             panic!("expected a domain annotation");
         };
         assert!(matches!(*inner, Expression::Sum(_, _)));
+    }
+
+    #[test]
+    pub fn test_parse_in_with_repr_annotation() {
+        let symbols = SymbolTablePtr::new();
+        let x = DeclarationPtr::new_find(
+            Name::User("x".into()),
+            Domain::set(
+                conjure_cp_core::ast::SetAttr::new_max_size(3),
+                Domain::int(vec![conjure_cp_core::ast::Range::Bounded(1, 4)]),
+            ),
+        );
+        symbols.write().insert(x).unwrap();
+
+        let expr = parse_expr("1 in x :: set{packed} of int", symbols.clone())
+            .unwrap()
+            .unwrap();
+        println!("no parens: {expr}");
+        assert!(
+            matches!(expr, Expression::In(_, _, _)),
+            "expected In, got {expr:?}"
+        );
+        let Expression::In(_, _, rhs) = &expr else {
+            unreachable!()
+        };
+        assert!(
+            matches!(rhs.as_ref(), Expression::TypeAnnotation(_, _, _)),
+            "expected type annotation on in-rhs, got {rhs:?}"
+        );
+
+        let expr = parse_expr("1 in (x :: set{packed} of int)", symbols)
+            .unwrap()
+            .unwrap();
+        println!("with parens: {expr}");
+        let Expression::In(_, _, rhs) = expr else {
+            panic!("expected In, got {expr:?}");
+        };
+        // Parentheses may wrap as Atomic-ish structure; accept TypeAnnotation directly or inside.
+        let rhs_str = rhs.to_string();
+        assert!(
+            rhs_str.contains("set{packed}") || matches!(rhs.as_ref(), Expression::TypeAnnotation(_, _, _)),
+            "expected annotated set on rhs, got {rhs:?}"
+        );
     }
 }

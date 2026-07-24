@@ -251,17 +251,74 @@ mod tests {
 /// find a: int(1..5)
 /// ```
 ///
+/// When a representation has been selected for an abstract domain, the domain is printed with
+/// that representation's short name, e.g. `find x: set{occurrence} (maxSize 3) of int(1..4)`.
+///
 /// Returns None if the symbol is not in the symbol table, or if it is not a variable.
 pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
     let decl = symbol_table.lookup(var_name)?;
     let var = decl.as_find()?;
-    let domain = &var.domain_of();
+    let domain = var.domain_of();
+    let domain_str = format_domain_with_selected_representation(&decl, &domain);
     let keyword = if decl.is_find_auxiliary() {
         "findAux"
     } else {
         "find"
     };
-    Some(format!("{keyword} {var_name}: {domain}"))
+    Some(format!("{keyword} {var_name}: {domain_str}"))
+}
+
+/// Format a domain for display, overlaying a selected representation short name when present.
+fn format_domain_with_selected_representation(
+    decl: &crate::ast::DeclarationPtr,
+    domain: &crate::ast::DomainPtr,
+) -> String {
+    let selected = decl.reprs().iter().find_map(|(_, state)| {
+        let rule = state.rule();
+        // MatrixComponents is structural layout, not an abstract-domain representation name.
+        if rule.short_name() == "components" {
+            None
+        } else {
+            Some(rule.short_name())
+        }
+    });
+
+    match selected {
+        Some(short_name) if domain.representation_preference() != Some(short_name) => {
+            format_domain_with_representation(domain, short_name)
+        }
+        _ => domain.to_string(),
+    }
+}
+
+/// Print `domain` as usual, but with `repr` as the top-level set representation preference.
+fn format_domain_with_representation(domain: &crate::ast::DomainPtr, repr: &str) -> String {
+    use crate::ast::{Domain, GroundDomain, UnresolvedDomain};
+
+    match domain.as_ref() {
+        Domain::Ground(gd) => match gd.as_ref() {
+            GroundDomain::Set(attrs, inner) => {
+                let size = attrs.to_string();
+                if size.is_empty() {
+                    format!("set{{{repr}}} of {inner}")
+                } else {
+                    format!("set{{{repr}}} {size} of {inner}")
+                }
+            }
+            _ => domain.to_string(),
+        },
+        Domain::Unresolved(ud) => match ud.as_ref() {
+            UnresolvedDomain::Set(attrs, inner) => {
+                let size = attrs.to_string();
+                if size.is_empty() {
+                    format!("set{{{repr}}} of {inner}")
+                } else {
+                    format!("set{{{repr}}} {size} of {inner}")
+                }
+            }
+            _ => domain.to_string(),
+        },
+    }
 }
 
 /// Pretty prints, in essence syntax, the declaration for the given value letting.
