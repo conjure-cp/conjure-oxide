@@ -49,6 +49,7 @@ People *love* thorough bug reports. I'm not even kidding.
 - Run `make check` in the project directory to automatically check for hygiene.
 - Run `make fix` to apply fixes automatically.
 - Use `make fix-dirty` when there are uncommitted changes.
+- This is not strictly enforced, but we want to use a consistent ordering of type/domain/expression variants, unless there is a good reason not to do so. The codebase contains several places where we match on (almost) all variants of an enum. For code like this, stick to the same ordering that is used in the enum definition.
 
 ## House rules
 
