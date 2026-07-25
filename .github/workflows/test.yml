@@ -38,6 +38,8 @@ jobs:
     name: Test
 
     timeout-minutes: 120
+    # Nightly Rust is advisory: keep running it, but don't block merges on breakage.
+    continue-on-error: ${{ matrix.rust_release == 'nightly' }}
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
