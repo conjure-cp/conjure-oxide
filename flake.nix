@@ -1,5 +1,5 @@
 {
-  description = "A basic Nix Flake for Rust development";
+  description = "A Nix Flake for Conjure Oxide development";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -16,6 +16,8 @@
           python3
           jre
           z3
+          pkgs.mdbook
+          gh
         ];
 
         # System libraries go here (e.g. openssl, pkg-config)
@@ -43,6 +45,12 @@
           version = "nightly";
 
           src = pkgs.fetchzip {
+
+            # NOTE: here, there is some scope for changes in future
+            # we can use the following line in order to always use the latest release
+            # url = "https://github.com/conjure-cp/conjure/releases/latest/conjure-nightly-linux-with-solvers.zip";
+            # However, this is not `nix-like' because the source is not immutable. 
+
             url = "https://github.com/conjure-cp/conjure/releases/download/nightly/conjure-nightly-linux-with-solvers.zip";
             # Replace with the hash `nix build` reports on first run.
             sha256 = "sha256-5G9id0dYRqL56RMNbM6vWwE5lev62prtN4a18N4pNtI=";
