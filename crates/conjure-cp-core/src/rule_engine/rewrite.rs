@@ -2515,11 +2515,11 @@ fn try_rewrite_model<'ctx, 'rules>(
 
                 #[cfg(debug_assertions)]
                 {
+                    // Check well-formedness without rebuilding the live arena: a rebuild would
+                    // renumber nodes and can change subsequent full-scan order vs release builds.
                     submodel.replace_root(arena.clone().into_root_expression());
                     let assertion_context = format!("rewriter after applying rule '{rule_name}'");
                     debug_assert_model_well_formed(submodel, &assertion_context);
-                    arena = ExpressionArena::from_root(take_model_root(submodel));
-                    reset_rule_applicability_memo(ctx);
                 }
 
                 did_rewrite = true;
@@ -3003,15 +3003,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
             let (rebuilt_surfaces, rebuilt_value_letting_surfaces) =
                 build_worklist_surfaces(submodel, rebuilt_root);
             surfaces = rebuilt_surfaces;
-            #[cfg(not(debug_assertions))]
-            {
-                value_letting_surfaces = rebuilt_value_letting_surfaces;
-                scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
-            }
-            #[cfg(debug_assertions)]
-            {
-                let _ = rebuilt_value_letting_surfaces;
-            }
+            value_letting_surfaces = rebuilt_value_letting_surfaces;
+            scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
             reset_rule_applicability_memo(ctx);
         } else {
             if has_model_side_effects {
@@ -3051,13 +3044,11 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
 
         #[cfg(debug_assertions)]
         {
+            // Well-formedness only: do not rebuild surfaces/scheduler here. A full rebuild after
+            // every rule changes same-priority sibling order vs release (incremental enqueue).
             write_worklist_surfaces_to_model(submodel, &surfaces);
             let assertion_context = format!("rewriter after applying rule '{rule_name}'");
             debug_assert_model_well_formed(submodel, &assertion_context);
-            let rebuilt_root = ExpressionArena::from_root(take_model_root(submodel));
-            (surfaces, value_letting_surfaces) = build_worklist_surfaces(submodel, rebuilt_root);
-            scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
-            reset_rule_applicability_memo(ctx);
         }
 
         did_rewrite = true;
