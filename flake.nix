@@ -17,6 +17,7 @@
           jre
           z3
           pkgs.mdbook
+          git
           gh
         ];
 
