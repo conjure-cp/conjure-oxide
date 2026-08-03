@@ -1,0 +1,504 @@
+Model before rewriting:
+
+find x: set (minSize 2) of tuple (int(1..4), int(3..6))
+
+such that
+
+and([ pair[1] = pair[2] | pair <- x ])
+
+--
+
+and([ pair[1] = pair[2] | pair <- x ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ pair[1] = pair[2] | pair <- x ])
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_10: bool
+  find x#occurrence_11: bool
+  find x#occurrence_12: bool
+  find x#occurrence_13: bool
+  find x#occurrence_14: bool
+  find x#occurrence_15: bool
+  find x#occurrence_16: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+  find x#occurrence_5: bool
+  find x#occurrence_6: bool
+  find x#occurrence_7: bool
+  find x#occurrence_8: bool
+  find x#occurrence_9: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6),toInt(x#occurrence_7),toInt(x#occurrence_8),toInt(x#occurrence_9),toInt(x#occurrence_10),toInt(x#occurrence_11),toInt(x#occurrence_12),toInt(x#occurrence_13),toInt(x#occurrence_14),toInt(x#occurrence_15),toInt(x#occurrence_16);int(1..)]) >= 2,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6),toInt(x#occurrence_7),toInt(x#occurrence_8),toInt(x#occurrence_9),toInt(x#occurrence_10),toInt(x#occurrence_11),toInt(x#occurrence_12),toInt(x#occurrence_13),toInt(x#occurrence_14),toInt(x#occurrence_15),toInt(x#occurrence_16);int(1..)]) <= 16;int(1..)])
+
+--
+
+[ pair[1] = pair[2] | pair <- x ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ pair[1] = pair[2] | pair : tuple (int(1..4), int(3..6)), pair in x ]
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6),toInt(x#occurrence_7),toInt(x#occurrence_8),toInt(x#occurrence_9),toInt(x#occurrence_10),toInt(x#occurrence_11),toInt(x#occurrence_12),toInt(x#occurrence_13),toInt(x#occurrence_14),toInt(x#occurrence_15),toInt(x#occurrence_16);int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#occurrence_1, x#occurrence_10, x#occurrence_11, x#occurrence_12, x#occurrence_13, x#occurrence_14, x#occurrence_15, x#occurrence_16, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 2)
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6),toInt(x#occurrence_7),toInt(x#occurrence_8),toInt(x#occurrence_9),toInt(x#occurrence_10),toInt(x#occurrence_11),toInt(x#occurrence_12),toInt(x#occurrence_13),toInt(x#occurrence_14),toInt(x#occurrence_15),toInt(x#occurrence_16);int(1..)]) <= 16
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#occurrence_1, x#occurrence_10, x#occurrence_11, x#occurrence_12, x#occurrence_13, x#occurrence_14, x#occurrence_15, x#occurrence_16, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 16)
+
+--
+
+[ pair[1] = pair[2] | pair : tuple (int(1..4), int(3..6)), pair in x ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[!((1,3) in x),!((1,4) in x),!((1,5) in x),!((1,6) in x),!((2,3) in x),!((2,4) in x),!((2,5) in x),!((2,6) in x),!((3,4) in x),!((3,5) in x),!((3,6) in x),!((4,3) in x),!((4,5) in x),!((4,6) in x);int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+(1,3) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(1,3) = (1,3),x#occurrence_1;int(1..)]),and([(1,3) = (1,4),x#occurrence_2;int(1..)]),and([(1,3) = (1,5),x#occurrence_3;int(1..)]),and([(1,3) = (1,6),x#occurrence_4;int(1..)]),and([(1,3) = (2,3),x#occurrence_5;int(1..)]),and([(1,3) = (2,4),x#occurrence_6;int(1..)]),and([(1,3) = (2,5),x#occurrence_7;int(1..)]),and([(1,3) = (2,6),x#occurrence_8;int(1..)]),and([(1,3) = (3,3),x#occurrence_9;int(1..)]),and([(1,3) = (3,4),x#occurrence_10;int(1..)]),and([(1,3) = (3,5),x#occurrence_11;int(1..)]),and([(1,3) = (3,6),x#occurrence_12;int(1..)]),and([(1,3) = (4,3),x#occurrence_13;int(1..)]),and([(1,3) = (4,4),x#occurrence_14;int(1..)]),and([(1,3) = (4,5),x#occurrence_15;int(1..)]),and([(1,3) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(1,4) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(1,4) = (1,3),x#occurrence_1;int(1..)]),and([(1,4) = (1,4),x#occurrence_2;int(1..)]),and([(1,4) = (1,5),x#occurrence_3;int(1..)]),and([(1,4) = (1,6),x#occurrence_4;int(1..)]),and([(1,4) = (2,3),x#occurrence_5;int(1..)]),and([(1,4) = (2,4),x#occurrence_6;int(1..)]),and([(1,4) = (2,5),x#occurrence_7;int(1..)]),and([(1,4) = (2,6),x#occurrence_8;int(1..)]),and([(1,4) = (3,3),x#occurrence_9;int(1..)]),and([(1,4) = (3,4),x#occurrence_10;int(1..)]),and([(1,4) = (3,5),x#occurrence_11;int(1..)]),and([(1,4) = (3,6),x#occurrence_12;int(1..)]),and([(1,4) = (4,3),x#occurrence_13;int(1..)]),and([(1,4) = (4,4),x#occurrence_14;int(1..)]),and([(1,4) = (4,5),x#occurrence_15;int(1..)]),and([(1,4) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(1,5) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(1,5) = (1,3),x#occurrence_1;int(1..)]),and([(1,5) = (1,4),x#occurrence_2;int(1..)]),and([(1,5) = (1,5),x#occurrence_3;int(1..)]),and([(1,5) = (1,6),x#occurrence_4;int(1..)]),and([(1,5) = (2,3),x#occurrence_5;int(1..)]),and([(1,5) = (2,4),x#occurrence_6;int(1..)]),and([(1,5) = (2,5),x#occurrence_7;int(1..)]),and([(1,5) = (2,6),x#occurrence_8;int(1..)]),and([(1,5) = (3,3),x#occurrence_9;int(1..)]),and([(1,5) = (3,4),x#occurrence_10;int(1..)]),and([(1,5) = (3,5),x#occurrence_11;int(1..)]),and([(1,5) = (3,6),x#occurrence_12;int(1..)]),and([(1,5) = (4,3),x#occurrence_13;int(1..)]),and([(1,5) = (4,4),x#occurrence_14;int(1..)]),and([(1,5) = (4,5),x#occurrence_15;int(1..)]),and([(1,5) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(1,6) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(1,6) = (1,3),x#occurrence_1;int(1..)]),and([(1,6) = (1,4),x#occurrence_2;int(1..)]),and([(1,6) = (1,5),x#occurrence_3;int(1..)]),and([(1,6) = (1,6),x#occurrence_4;int(1..)]),and([(1,6) = (2,3),x#occurrence_5;int(1..)]),and([(1,6) = (2,4),x#occurrence_6;int(1..)]),and([(1,6) = (2,5),x#occurrence_7;int(1..)]),and([(1,6) = (2,6),x#occurrence_8;int(1..)]),and([(1,6) = (3,3),x#occurrence_9;int(1..)]),and([(1,6) = (3,4),x#occurrence_10;int(1..)]),and([(1,6) = (3,5),x#occurrence_11;int(1..)]),and([(1,6) = (3,6),x#occurrence_12;int(1..)]),and([(1,6) = (4,3),x#occurrence_13;int(1..)]),and([(1,6) = (4,4),x#occurrence_14;int(1..)]),and([(1,6) = (4,5),x#occurrence_15;int(1..)]),and([(1,6) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(2,3) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(2,3) = (1,3),x#occurrence_1;int(1..)]),and([(2,3) = (1,4),x#occurrence_2;int(1..)]),and([(2,3) = (1,5),x#occurrence_3;int(1..)]),and([(2,3) = (1,6),x#occurrence_4;int(1..)]),and([(2,3) = (2,3),x#occurrence_5;int(1..)]),and([(2,3) = (2,4),x#occurrence_6;int(1..)]),and([(2,3) = (2,5),x#occurrence_7;int(1..)]),and([(2,3) = (2,6),x#occurrence_8;int(1..)]),and([(2,3) = (3,3),x#occurrence_9;int(1..)]),and([(2,3) = (3,4),x#occurrence_10;int(1..)]),and([(2,3) = (3,5),x#occurrence_11;int(1..)]),and([(2,3) = (3,6),x#occurrence_12;int(1..)]),and([(2,3) = (4,3),x#occurrence_13;int(1..)]),and([(2,3) = (4,4),x#occurrence_14;int(1..)]),and([(2,3) = (4,5),x#occurrence_15;int(1..)]),and([(2,3) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(2,4) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(2,4) = (1,3),x#occurrence_1;int(1..)]),and([(2,4) = (1,4),x#occurrence_2;int(1..)]),and([(2,4) = (1,5),x#occurrence_3;int(1..)]),and([(2,4) = (1,6),x#occurrence_4;int(1..)]),and([(2,4) = (2,3),x#occurrence_5;int(1..)]),and([(2,4) = (2,4),x#occurrence_6;int(1..)]),and([(2,4) = (2,5),x#occurrence_7;int(1..)]),and([(2,4) = (2,6),x#occurrence_8;int(1..)]),and([(2,4) = (3,3),x#occurrence_9;int(1..)]),and([(2,4) = (3,4),x#occurrence_10;int(1..)]),and([(2,4) = (3,5),x#occurrence_11;int(1..)]),and([(2,4) = (3,6),x#occurrence_12;int(1..)]),and([(2,4) = (4,3),x#occurrence_13;int(1..)]),and([(2,4) = (4,4),x#occurrence_14;int(1..)]),and([(2,4) = (4,5),x#occurrence_15;int(1..)]),and([(2,4) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(2,5) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(2,5) = (1,3),x#occurrence_1;int(1..)]),and([(2,5) = (1,4),x#occurrence_2;int(1..)]),and([(2,5) = (1,5),x#occurrence_3;int(1..)]),and([(2,5) = (1,6),x#occurrence_4;int(1..)]),and([(2,5) = (2,3),x#occurrence_5;int(1..)]),and([(2,5) = (2,4),x#occurrence_6;int(1..)]),and([(2,5) = (2,5),x#occurrence_7;int(1..)]),and([(2,5) = (2,6),x#occurrence_8;int(1..)]),and([(2,5) = (3,3),x#occurrence_9;int(1..)]),and([(2,5) = (3,4),x#occurrence_10;int(1..)]),and([(2,5) = (3,5),x#occurrence_11;int(1..)]),and([(2,5) = (3,6),x#occurrence_12;int(1..)]),and([(2,5) = (4,3),x#occurrence_13;int(1..)]),and([(2,5) = (4,4),x#occurrence_14;int(1..)]),and([(2,5) = (4,5),x#occurrence_15;int(1..)]),and([(2,5) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(2,6) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(2,6) = (1,3),x#occurrence_1;int(1..)]),and([(2,6) = (1,4),x#occurrence_2;int(1..)]),and([(2,6) = (1,5),x#occurrence_3;int(1..)]),and([(2,6) = (1,6),x#occurrence_4;int(1..)]),and([(2,6) = (2,3),x#occurrence_5;int(1..)]),and([(2,6) = (2,4),x#occurrence_6;int(1..)]),and([(2,6) = (2,5),x#occurrence_7;int(1..)]),and([(2,6) = (2,6),x#occurrence_8;int(1..)]),and([(2,6) = (3,3),x#occurrence_9;int(1..)]),and([(2,6) = (3,4),x#occurrence_10;int(1..)]),and([(2,6) = (3,5),x#occurrence_11;int(1..)]),and([(2,6) = (3,6),x#occurrence_12;int(1..)]),and([(2,6) = (4,3),x#occurrence_13;int(1..)]),and([(2,6) = (4,4),x#occurrence_14;int(1..)]),and([(2,6) = (4,5),x#occurrence_15;int(1..)]),and([(2,6) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(3,4) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(3,4) = (1,3),x#occurrence_1;int(1..)]),and([(3,4) = (1,4),x#occurrence_2;int(1..)]),and([(3,4) = (1,5),x#occurrence_3;int(1..)]),and([(3,4) = (1,6),x#occurrence_4;int(1..)]),and([(3,4) = (2,3),x#occurrence_5;int(1..)]),and([(3,4) = (2,4),x#occurrence_6;int(1..)]),and([(3,4) = (2,5),x#occurrence_7;int(1..)]),and([(3,4) = (2,6),x#occurrence_8;int(1..)]),and([(3,4) = (3,3),x#occurrence_9;int(1..)]),and([(3,4) = (3,4),x#occurrence_10;int(1..)]),and([(3,4) = (3,5),x#occurrence_11;int(1..)]),and([(3,4) = (3,6),x#occurrence_12;int(1..)]),and([(3,4) = (4,3),x#occurrence_13;int(1..)]),and([(3,4) = (4,4),x#occurrence_14;int(1..)]),and([(3,4) = (4,5),x#occurrence_15;int(1..)]),and([(3,4) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(3,5) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(3,5) = (1,3),x#occurrence_1;int(1..)]),and([(3,5) = (1,4),x#occurrence_2;int(1..)]),and([(3,5) = (1,5),x#occurrence_3;int(1..)]),and([(3,5) = (1,6),x#occurrence_4;int(1..)]),and([(3,5) = (2,3),x#occurrence_5;int(1..)]),and([(3,5) = (2,4),x#occurrence_6;int(1..)]),and([(3,5) = (2,5),x#occurrence_7;int(1..)]),and([(3,5) = (2,6),x#occurrence_8;int(1..)]),and([(3,5) = (3,3),x#occurrence_9;int(1..)]),and([(3,5) = (3,4),x#occurrence_10;int(1..)]),and([(3,5) = (3,5),x#occurrence_11;int(1..)]),and([(3,5) = (3,6),x#occurrence_12;int(1..)]),and([(3,5) = (4,3),x#occurrence_13;int(1..)]),and([(3,5) = (4,4),x#occurrence_14;int(1..)]),and([(3,5) = (4,5),x#occurrence_15;int(1..)]),and([(3,5) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(3,6) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(3,6) = (1,3),x#occurrence_1;int(1..)]),and([(3,6) = (1,4),x#occurrence_2;int(1..)]),and([(3,6) = (1,5),x#occurrence_3;int(1..)]),and([(3,6) = (1,6),x#occurrence_4;int(1..)]),and([(3,6) = (2,3),x#occurrence_5;int(1..)]),and([(3,6) = (2,4),x#occurrence_6;int(1..)]),and([(3,6) = (2,5),x#occurrence_7;int(1..)]),and([(3,6) = (2,6),x#occurrence_8;int(1..)]),and([(3,6) = (3,3),x#occurrence_9;int(1..)]),and([(3,6) = (3,4),x#occurrence_10;int(1..)]),and([(3,6) = (3,5),x#occurrence_11;int(1..)]),and([(3,6) = (3,6),x#occurrence_12;int(1..)]),and([(3,6) = (4,3),x#occurrence_13;int(1..)]),and([(3,6) = (4,4),x#occurrence_14;int(1..)]),and([(3,6) = (4,5),x#occurrence_15;int(1..)]),and([(3,6) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(4,3) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(4,3) = (1,3),x#occurrence_1;int(1..)]),and([(4,3) = (1,4),x#occurrence_2;int(1..)]),and([(4,3) = (1,5),x#occurrence_3;int(1..)]),and([(4,3) = (1,6),x#occurrence_4;int(1..)]),and([(4,3) = (2,3),x#occurrence_5;int(1..)]),and([(4,3) = (2,4),x#occurrence_6;int(1..)]),and([(4,3) = (2,5),x#occurrence_7;int(1..)]),and([(4,3) = (2,6),x#occurrence_8;int(1..)]),and([(4,3) = (3,3),x#occurrence_9;int(1..)]),and([(4,3) = (3,4),x#occurrence_10;int(1..)]),and([(4,3) = (3,5),x#occurrence_11;int(1..)]),and([(4,3) = (3,6),x#occurrence_12;int(1..)]),and([(4,3) = (4,3),x#occurrence_13;int(1..)]),and([(4,3) = (4,4),x#occurrence_14;int(1..)]),and([(4,3) = (4,5),x#occurrence_15;int(1..)]),and([(4,3) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(4,5) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(4,5) = (1,3),x#occurrence_1;int(1..)]),and([(4,5) = (1,4),x#occurrence_2;int(1..)]),and([(4,5) = (1,5),x#occurrence_3;int(1..)]),and([(4,5) = (1,6),x#occurrence_4;int(1..)]),and([(4,5) = (2,3),x#occurrence_5;int(1..)]),and([(4,5) = (2,4),x#occurrence_6;int(1..)]),and([(4,5) = (2,5),x#occurrence_7;int(1..)]),and([(4,5) = (2,6),x#occurrence_8;int(1..)]),and([(4,5) = (3,3),x#occurrence_9;int(1..)]),and([(4,5) = (3,4),x#occurrence_10;int(1..)]),and([(4,5) = (3,5),x#occurrence_11;int(1..)]),and([(4,5) = (3,6),x#occurrence_12;int(1..)]),and([(4,5) = (4,3),x#occurrence_13;int(1..)]),and([(4,5) = (4,4),x#occurrence_14;int(1..)]),and([(4,5) = (4,5),x#occurrence_15;int(1..)]),and([(4,5) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+(4,6) in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([(4,6) = (1,3),x#occurrence_1;int(1..)]),and([(4,6) = (1,4),x#occurrence_2;int(1..)]),and([(4,6) = (1,5),x#occurrence_3;int(1..)]),and([(4,6) = (1,6),x#occurrence_4;int(1..)]),and([(4,6) = (2,3),x#occurrence_5;int(1..)]),and([(4,6) = (2,4),x#occurrence_6;int(1..)]),and([(4,6) = (2,5),x#occurrence_7;int(1..)]),and([(4,6) = (2,6),x#occurrence_8;int(1..)]),and([(4,6) = (3,3),x#occurrence_9;int(1..)]),and([(4,6) = (3,4),x#occurrence_10;int(1..)]),and([(4,6) = (3,5),x#occurrence_11;int(1..)]),and([(4,6) = (3,6),x#occurrence_12;int(1..)]),and([(4,6) = (4,3),x#occurrence_13;int(1..)]),and([(4,6) = (4,4),x#occurrence_14;int(1..)]),and([(4,6) = (4,5),x#occurrence_15;int(1..)]),and([(4,6) = (4,6),x#occurrence_16;int(1..)]);int(1..)])
+
+--
+
+or([and([x#occurrence_1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_1;int(1..)])
+
+--
+
+or([and([x#occurrence_2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_2;int(1..)])
+
+--
+
+or([and([x#occurrence_3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_3;int(1..)])
+
+--
+
+or([and([x#occurrence_4;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_4;int(1..)])
+
+--
+
+or([and([x#occurrence_5;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_5;int(1..)])
+
+--
+
+or([and([x#occurrence_6;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_6;int(1..)])
+
+--
+
+or([and([x#occurrence_7;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_7;int(1..)])
+
+--
+
+or([and([x#occurrence_8;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_8;int(1..)])
+
+--
+
+or([and([x#occurrence_10;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_10;int(1..)])
+
+--
+
+or([and([x#occurrence_11;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_11;int(1..)])
+
+--
+
+or([and([x#occurrence_12;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_12;int(1..)])
+
+--
+
+or([and([x#occurrence_13;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_13;int(1..)])
+
+--
+
+or([and([x#occurrence_15;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_15;int(1..)])
+
+--
+
+or([and([x#occurrence_16;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_16;int(1..)])
+
+--
+
+and([x#occurrence_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_1
+
+--
+
+and([x#occurrence_2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_2
+
+--
+
+and([x#occurrence_3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_3
+
+--
+
+and([x#occurrence_4;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_4
+
+--
+
+and([x#occurrence_5;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_5
+
+--
+
+and([x#occurrence_6;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_6
+
+--
+
+and([x#occurrence_7;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_7
+
+--
+
+and([x#occurrence_8;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_8
+
+--
+
+and([x#occurrence_10;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_10
+
+--
+
+and([x#occurrence_11;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_11
+
+--
+
+and([x#occurrence_12;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_12
+
+--
+
+and([x#occurrence_13;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_13
+
+--
+
+and([x#occurrence_15;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_15
+
+--
+
+and([x#occurrence_16;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_16
+
+--
+
+!(x#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_1,false)
+
+--
+
+!(x#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_2,false)
+
+--
+
+!(x#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_3,false)
+
+--
+
+!(x#occurrence_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_4,false)
+
+--
+
+!(x#occurrence_5)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_5,false)
+
+--
+
+!(x#occurrence_6)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_6,false)
+
+--
+
+!(x#occurrence_7)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_7,false)
+
+--
+
+!(x#occurrence_8)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_8,false)
+
+--
+
+!(x#occurrence_10)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_10,false)
+
+--
+
+!(x#occurrence_11)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_11,false)
+
+--
+
+!(x#occurrence_12)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_12,false)
+
+--
+
+!(x#occurrence_13)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_13,false)
+
+--
+
+!(x#occurrence_15)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_15,false)
+
+--
+
+!(x#occurrence_16)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_16,false)
+
+--
+
+Final model:
+
+find x: set{occurrence} (minSize 2) of tuple (int(1..4), int(3..6))
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find x#occurrence_5: bool
+find x#occurrence_6: bool
+find x#occurrence_7: bool
+find x#occurrence_8: bool
+find x#occurrence_9: bool
+find x#occurrence_10: bool
+find x#occurrence_11: bool
+find x#occurrence_12: bool
+find x#occurrence_13: bool
+find x#occurrence_14: bool
+find x#occurrence_15: bool
+find x#occurrence_16: bool
+
+such that
+
+and([WatchedLiteral(x#occurrence_1,false),WatchedLiteral(x#occurrence_2,false),WatchedLiteral(x#occurrence_3,false),WatchedLiteral(x#occurrence_4,false),WatchedLiteral(x#occurrence_5,false),WatchedLiteral(x#occurrence_6,false),WatchedLiteral(x#occurrence_7,false),WatchedLiteral(x#occurrence_8,false),WatchedLiteral(x#occurrence_10,false),WatchedLiteral(x#occurrence_11,false),WatchedLiteral(x#occurrence_12,false),WatchedLiteral(x#occurrence_13,false),WatchedLiteral(x#occurrence_15,false),WatchedLiteral(x#occurrence_16,false);int(1..)]),
+and([SumGeq([x#occurrence_1, x#occurrence_10, x#occurrence_11, x#occurrence_12, x#occurrence_13, x#occurrence_14, x#occurrence_15, x#occurrence_16, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 2),SumLeq([x#occurrence_1, x#occurrence_10, x#occurrence_11, x#occurrence_12, x#occurrence_13, x#occurrence_14, x#occurrence_15, x#occurrence_16, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6, x#occurrence_7, x#occurrence_8, x#occurrence_9], 16);int(1..)])
+

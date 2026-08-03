@@ -1,0 +1,160 @@
+Model before rewriting:
+
+letting s be {{3,5}}
+find x: int(0..9)
+
+such that
+
+or([ x in innerSet | innerSet <- s ])
+
+--
+
+or([ x in innerSet | innerSet <- s ])
+   ~~> exists_quantified_to_finds ([("Base", 2003)])
+x in __0
+new variables:
+  findAux __0: set of int(3, 5)
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+new variables:
+  findAux __0#explicit_1: matrix indexed by [int(1..2)] of int(3, 5)
+  findAux __0#explicit_2: int(0..2)
+new constraints:
+  or([__0#explicit_2 < 2,([SafeIndex(__0#explicit_1,[1]);int(1..)] <lex [SafeIndex(__0#explicit_1,[2]);int(1..)]);int(1..)])
+  or([1 <= __0#explicit_2,SafeIndex(__0#explicit_1,[1]) = 3;int(1..)])
+  or([2 <= __0#explicit_2,SafeIndex(__0#explicit_1,[2]) = 3;int(1..)])
+
+--
+
+x in __0
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= __0#explicit_2,SafeIndex(__0#explicit_1,[1]) = x;int(1..)]),and([2 <= __0#explicit_2,SafeIndex(__0#explicit_1,[2]) = x;int(1..)]);int(1..)])
+
+--
+
+or([and([1 <= __0#explicit_2,SafeIndex(__0#explicit_1,[1]) = x;int(1..)]),and([2 <= __0#explicit_2,SafeIndex(__0#explicit_1,[2]) = x;int(1..)]);int(1..)]),
+or([__0#explicit_2 < 2,([SafeIndex(__0#explicit_1,[1]);int(1..)] <lex [SafeIndex(__0#explicit_1,[2]);int(1..)]);int(1..)]),
+or([1 <= __0#explicit_2,SafeIndex(__0#explicit_1,[1]) = 3;int(1..)]),
+or([2 <= __0#explicit_2,SafeIndex(__0#explicit_1,[2]) = 3;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+or([and([1 <= __0#explicit_2,SafeIndex(__0#explicit_1,[1]) = x;int(1..)]),and([2 <= __0#explicit_2,SafeIndex(__0#explicit_1,[2]) = x;int(1..)]);int(1..)]),
+or([__0#explicit_2 < 2,([SafeIndex(__0#explicit_1,[1]);int(1..)] <lex [SafeIndex(__0#explicit_1,[2]);int(1..)]);int(1..)]),
+or([1 <= __0#explicit_2,SafeIndex(__0#explicit_1,[1]) = 3;int(1..)]),
+or([2 <= __0#explicit_2,SafeIndex(__0#explicit_1,[2]) = 3;int(1..)])
+new variables:
+  findAux __0#explicit_1#components_1: int(3, 5)
+  findAux __0#explicit_1#components_2: int(3, 5)
+
+--
+
+__0#explicit_2 < 2
+   ~~> lt_to_leq ([("Minion", 8400)])
+__0#explicit_2 <= sum([2,-1;int(1..)])
+
+--
+
+SafeIndex(__0#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+__0#explicit_1#components_1
+
+--
+
+SafeIndex(__0#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+__0#explicit_1#components_2
+
+--
+
+SafeIndex(__0#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+__0#explicit_1#components_1
+
+--
+
+SafeIndex(__0#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+__0#explicit_1#components_2
+
+--
+
+SafeIndex(__0#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+__0#explicit_1#components_1
+
+--
+
+SafeIndex(__0#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+__0#explicit_1#components_2
+
+--
+
+__0#explicit_1#components_1 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__0#explicit_1#components_1,3)
+
+--
+
+__0#explicit_1#components_2 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__0#explicit_1#components_2,3)
+
+--
+
+__0#explicit_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__0#explicit_2, 1, 0)
+
+--
+
+1 <= __0#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, __0#explicit_2, 0)
+
+--
+
+2 <= __0#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, __0#explicit_2, 0)
+
+--
+
+1 <= __0#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, __0#explicit_2, 0)
+
+--
+
+2 <= __0#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, __0#explicit_2, 0)
+
+--
+
+([__0#explicit_1#components_1;int(1..)] <lex [__0#explicit_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([__0#explicit_1#components_1], [__0#explicit_1#components_2])
+
+--
+
+Final model:
+
+letting s be {{3,5}}
+find x: int(0..9)
+findAux __0: set{explicit} of int(3, 5)
+findAux __0#explicit_1: matrix indexed by [int(1..2)] of int(3, 5)
+findAux __0#explicit_2: int(0..2)
+findAux __0#explicit_1#components_1: int(3, 5)
+findAux __0#explicit_1#components_2: int(3, 5)
+
+such that
+
+or([and([Ineq(1, __0#explicit_2, 0),__0#explicit_1#components_1 = x;int(1..)]),and([Ineq(2, __0#explicit_2, 0),__0#explicit_1#components_2 = x;int(1..)]);int(1..)]),
+or([Ineq(__0#explicit_2, 1, 0),FlatLexLt([__0#explicit_1#components_1], [__0#explicit_1#components_2]);int(1..)]),
+or([Ineq(1, __0#explicit_2, 0),WatchedLiteral(__0#explicit_1#components_1,3);int(1..)]),
+or([Ineq(2, __0#explicit_2, 0),WatchedLiteral(__0#explicit_1#components_2,3);int(1..)])
+

@@ -1,0 +1,94 @@
+Model before rewriting:
+
+find x: set (size 2) of int(1..3)
+
+such that
+
+and([ i in x | i : int(1..2) ])
+
+--
+
+and([ i in x | i : int(1..2) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ i in x | i : int(1..2) ])
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+new constraints:
+  sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3);int(1..)]) = 2
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3], 2),SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3], 2);int(1..)])
+
+--
+
+[ i in x | i : int(1..2) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1 in x,2 in x;int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([1 = 1,x#occurrence_1;int(1..)]),and([1 = 2,x#occurrence_2;int(1..)]),and([1 = 3,x#occurrence_3;int(1..)]);int(1..)])
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([2 = 1,x#occurrence_1;int(1..)]),and([2 = 2,x#occurrence_2;int(1..)]),and([2 = 3,x#occurrence_3;int(1..)]);int(1..)])
+
+--
+
+or([and([x#occurrence_1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_1;int(1..)])
+
+--
+
+or([and([x#occurrence_2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#occurrence_2;int(1..)])
+
+--
+
+and([x#occurrence_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_1
+
+--
+
+and([x#occurrence_2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_2
+
+--
+
+Final model:
+
+find x: set{occurrence} (size 2) of int(1..3)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+
+such that
+
+and([x#occurrence_1,x#occurrence_2;int(1..)]),
+and([SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3], 2),SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3], 2);int(1..)])
+

@@ -1,0 +1,81 @@
+Model before rewriting:
+
+letting s be {{3,5},{5,3,4,3,5}}
+find x: int(0..9)
+
+such that
+
+or([ x in innerSet | innerSet <- s ])
+
+--
+
+or([ x in innerSet | innerSet <- s ])
+   ~~> exists_quantified_to_finds ([("Base", 2003)])
+x in __0
+new variables:
+  findAux __0: set of int(3..5)
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+new variables:
+  findAux __0#occurrence_1: bool
+  findAux __0#occurrence_2: bool
+  findAux __0#occurrence_3: bool
+new constraints:
+  and([sum([toInt(__0#occurrence_1),toInt(__0#occurrence_2),toInt(__0#occurrence_3);int(1..)]) >= 0,sum([toInt(__0#occurrence_1),toInt(__0#occurrence_2),toInt(__0#occurrence_3);int(1..)]) <= 3;int(1..)])
+
+--
+
+x in __0
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+or([and([x = 3,__0#occurrence_1;int(1..)]),and([x = 4,__0#occurrence_2;int(1..)]),and([x = 5,__0#occurrence_3;int(1..)]);int(1..)])
+
+--
+
+sum([toInt(__0#occurrence_1),toInt(__0#occurrence_2),toInt(__0#occurrence_3);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([__0#occurrence_1, __0#occurrence_2, __0#occurrence_3], 0)
+
+--
+
+sum([toInt(__0#occurrence_1),toInt(__0#occurrence_2),toInt(__0#occurrence_3);int(1..)]) <= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([__0#occurrence_1, __0#occurrence_2, __0#occurrence_3], 3)
+
+--
+
+x = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,3)
+
+--
+
+x = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,4)
+
+--
+
+x = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,5)
+
+--
+
+Final model:
+
+letting s be {{3,5},{5,3,4,3,5}}
+find x: int(0..9)
+findAux __0: set{occurrence} of int(3..5)
+findAux __0#occurrence_1: bool
+findAux __0#occurrence_2: bool
+findAux __0#occurrence_3: bool
+
+such that
+
+or([and([WatchedLiteral(x,3),__0#occurrence_1;int(1..)]),and([WatchedLiteral(x,4),__0#occurrence_2;int(1..)]),and([WatchedLiteral(x,5),__0#occurrence_3;int(1..)]);int(1..)]),
+and([SumGeq([__0#occurrence_1, __0#occurrence_2, __0#occurrence_3], 0),SumLeq([__0#occurrence_1, __0#occurrence_2, __0#occurrence_3], 3);int(1..)])
+
