@@ -1,0 +1,64 @@
+Model before rewriting:
+
+letting g be mset()
+find x: mset (maxSize 4, maxOccur(2)) of int(1..2)
+
+such that
+
+g = x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#occurrence_1: int(0..2)
+  find x#occurrence_2: int(0..2)
+new constraints:
+  and([sum([x#occurrence_1,x#occurrence_2;int(1..)]) >= 0,sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4;int(1..)])
+
+--
+
+mset() = x
+   ~~> equality_occurrence_mset_literal ([("ReprGeneral", 9500)])
+and([x#occurrence_1 = 0,x#occurrence_2 = 0;int(1..)])
+
+--
+
+sum([x#occurrence_1,x#occurrence_2;int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#occurrence_1, x#occurrence_2], 0)
+
+--
+
+sum([x#occurrence_1,x#occurrence_2;int(1..)]) <= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#occurrence_1, x#occurrence_2], 4)
+
+--
+
+x#occurrence_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#occurrence_1,0)
+
+--
+
+x#occurrence_2 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#occurrence_2,0)
+
+--
+
+Final model:
+
+letting g be mset()
+find x: mset (maxSize 4, maxOccur(2)) of int(1..2)
+find x#occurrence_1: int(0..2)
+find x#occurrence_2: int(0..2)
+
+such that
+
+and([WatchedLiteral(x#occurrence_1,0),WatchedLiteral(x#occurrence_2,0);int(1..)]),
+and([SumGeq([x#occurrence_1, x#occurrence_2], 0),SumLeq([x#occurrence_1, x#occurrence_2], 4);int(1..)])
+
