@@ -119,6 +119,7 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
 
     let mut symbols = symtab.clone();
     let mut constraints = Vec::<Expr>::new();
+    let mut changed = false;
     for (_, decl) in symtab.iter_local() {
         // We want unrepresented decision vars!
         guard!(
@@ -141,9 +142,14 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
         symbols.update_insert(decl);
         symbols.extend(new_symbols);
         constraints.extend(new_constraints);
+        changed = true;
     }
 
-    if symbols.eq(symtab) && constraints.is_empty() {
+    // Representation initialisation may introduce no constraints and DeclarationPtr clone-on-write
+    // updates are not reliably observable through SymbolTable equality. Record successful
+    // initialisation explicitly so zero-constraint layouts (matrix components/packed) still dirty
+    // the root and expose their auxiliary declarations.
+    if !changed {
         Err(RuleNotApplicable)
     } else {
         Ok(Reduction::new(expr.clone(), constraints, symbols))
