@@ -69,6 +69,7 @@ struct RunCase<'a> {
     rewriter: Rewriter,
     comprehension_expander: QuantifiedExpander,
     solver: SolverFamily,
+    extra_rule_sets: &'a [String],
     heuristic: Heuristic,
     channelling: Channelling,
     seed: u64,
@@ -455,6 +456,7 @@ fn integration_test_inner_with_status(
                                         rewriter,
                                         comprehension_expander,
                                         solver,
+                                        extra_rule_sets: &config.extra_rule_sets,
                                         heuristic,
                                         channelling,
                                         seed,
@@ -728,6 +730,7 @@ fn integration_test_inner(
 
     let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
     rules_to_load.extend(extra_rules);
+    rules_to_load.extend(run_case.extra_rule_sets.iter().map(String::as_str));
 
     let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
@@ -1158,6 +1161,7 @@ fn try_capture_oxide_minion(
     }
     let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
     rules_to_load.extend(extra_rules);
+    rules_to_load.extend(run_case.extra_rule_sets.iter().map(String::as_str));
     let rule_sets = resolve_rule_sets(run_case.solver, &rules_to_load)?;
 
     let Rewriter::Rewrite(config) = run_case.rewriter;

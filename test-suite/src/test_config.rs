@@ -487,6 +487,13 @@ pub struct TestConfig {
     pub solver: Vec<String>,
 
     #[serde(
+        default,
+        rename = "extra-rule-sets",
+        deserialize_with = "deserialize_string_or_vec"
+    )]
+    pub extra_rule_sets: Vec<String>,
+
+    #[serde(
         default = "default_minion_discrete_threshold",
         rename = "minion-discrete-threshold"
     )]
@@ -559,6 +566,7 @@ impl Default for TestConfig {
                 }
                 solvers
             },
+            extra_rule_sets: Vec::new(),
             minion_discrete_threshold: default_minion_discrete_threshold(),
             skip_conjure_validation: String::new(),
             number_of_solutions: NumberOfSolutions::All,
