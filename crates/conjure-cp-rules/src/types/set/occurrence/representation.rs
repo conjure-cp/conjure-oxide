@@ -77,7 +77,9 @@ register_representation!(
                 .occurs
                 .iter()
                 .map(|(value, declaration)| {
-                    let should_occur = elems.iter().any(|elem| elem == value);
+                    let should_occur = elems
+                        .iter()
+                        .any(|elem| elem.essence_cmp(value).is_eq());
                     Expression::Eq(
                         Metadata::new(),
                         Moo::new(Reference::new(declaration.clone()).into()),
@@ -148,14 +150,16 @@ register_representation!(
             ));
         }
 
-        let mut occurs: Vec<(Literal, Literal)> =
-            elems.into_iter().map(|x| (x, true.into())).collect();
-        for (lit, _) in state.occurs.iter() {
-            if !occurs.iter().any(|(value, _)| value == lit) {
-                occurs.push((lit.clone(), false.into()));
-            }
-        }
-        occurs.sort_by_key(|(value, _)| value.to_string());
+        let occurs = state
+            .occurs
+            .iter()
+            .map(|(value, _)| {
+                let present = elems
+                    .iter()
+                    .any(|elem| elem.essence_cmp(value).is_eq());
+                (value.clone(), present.into())
+            })
+            .collect();
 
         Ok(State {
             occurs: Moo::new(occurs),

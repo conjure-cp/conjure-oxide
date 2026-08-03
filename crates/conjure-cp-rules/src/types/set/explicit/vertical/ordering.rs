@@ -1,9 +1,9 @@
 use crate::types::set::explicit::SetExplicit;
 use conjure_cp::ast::{Atom, Expression as Expr, Metadata, Moo, Reference, SymbolTable};
-use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
+use conjure_cp::{into_matrix_expr, matrix_expr};
 
 fn singleton_reference(expr: &Expr) -> Option<Reference> {
     let values = expr.unwrap_list()?;
@@ -35,17 +35,19 @@ fn lex_explicit_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .get_repr_as::<SetExplicit>()
         .ok_or(RuleNotApplicable)?;
 
-    let lhs_size: Expr = Reference::new(lhs_repr.set_size.clone()).into();
-    let rhs_size: Expr = Reference::new(rhs_repr.set_size.clone()).into();
-    let lhs_values = Expr::Flatten(
-        Metadata::new(),
-        None,
-        Moo::new(Reference::new(lhs_repr.elems_matrix.clone()).into()),
+    let lhs_size = lhs_repr.cardinality_expr();
+    let rhs_size = rhs_repr.cardinality_expr();
+    let (_, lhs_max) = lhs_repr.cardinality;
+    let (_, rhs_max) = rhs_repr.cardinality;
+    let lhs_values = into_matrix_expr!(
+        (1..=lhs_max)
+            .map(|index| lhs_repr.slot_expr(index))
+            .collect()
     );
-    let rhs_values = Expr::Flatten(
-        Metadata::new(),
-        None,
-        Moo::new(Reference::new(rhs_repr.elems_matrix.clone()).into()),
+    let rhs_values = into_matrix_expr!(
+        (1..=rhs_max)
+            .map(|index| rhs_repr.slot_expr(index))
+            .collect()
     );
     let compare_values = match expr {
         Expr::LexLt(..) => Expr::LexLt(Metadata::new(), Moo::new(lhs_values), Moo::new(rhs_values)),
@@ -118,7 +120,7 @@ mod tests {
                 .iter()
                 .filter(|node| matches!(node, Expr::Flatten(..)))
                 .count(),
-            2
+            0
         );
         assert_eq!(
             nodes

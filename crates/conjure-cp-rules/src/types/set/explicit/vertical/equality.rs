@@ -100,14 +100,10 @@ mod tests {
                     Expr::Eq(
                         Metadata::new(),
                         Moo::new(
-                            Reference::new(
-                                set_reference
-                                    .get_repr_as::<SetExplicit>()
-                                    .unwrap()
-                                    .set_size
-                                    .clone(),
-                            )
-                            .into()
+                            set_reference
+                                .get_repr_as::<SetExplicit>()
+                                .unwrap()
+                                .cardinality_expr()
                         ),
                         Moo::new(2.into()),
                     ),

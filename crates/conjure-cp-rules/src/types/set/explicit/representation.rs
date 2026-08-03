@@ -9,18 +9,31 @@ register_representation!(
         pub cardinality: (i32, i32),
         /// Ordered values, padded after the active marker position.
         pub elems_matrix: T,
-        /// Number of active values in `elems_matrix`.
-        pub set_size: T,
+        /// Number of active values in `elems_matrix`, omitted for fixed-size sets.
+        pub set_size: Option<T>,
         /// Canonical value stored in every inactive position.
         pub padding: Literal
     }
     impl State<DeclarationPtr> {
+        /// Return the set cardinality, using the marker when the size is variable.
+        pub fn cardinality_expr(&self) -> Expression {
+            match &self.set_size {
+                Some(set_size) => Reference::new(set_size.clone()).into(),
+                None => self.cardinality.0.into(),
+            }
+        }
+
         /// Return the value stored at a one-based representation slot.
         pub fn slot_expr(&self, index: i32) -> Expression {
+            self.slot_expr_at(index.into())
+        }
+
+        /// Return the value stored at a representation-slot expression.
+        pub fn slot_expr_at(&self, index: Expression) -> Expression {
             Expression::SafeIndex(
                 Metadata::new(),
                 Moo::new(Reference::new(self.elems_matrix.clone()).into()),
-                vec![index.into()],
+                vec![index],
             )
         }
 
@@ -29,7 +42,7 @@ register_representation!(
             Expression::Leq(
                 Metadata::new(),
                 Moo::new(index.into()),
-                Moo::new(Reference::new(self.set_size.clone()).into()),
+                Moo::new(self.cardinality_expr()),
             )
         }
 
@@ -59,7 +72,7 @@ register_representation!(
                 .map(|index| {
                     let inactive = Expression::Lt(
                         Metadata::new(),
-                        Moo::new(Reference::new(self.set_size.clone()).into()),
+                        Moo::new(self.cardinality_expr()),
                         Moo::new(index.into()),
                     );
                     let membership = Expression::In(
@@ -80,7 +93,7 @@ register_representation!(
         pub fn equality_to_literal_expr(&self, elems: &[Literal]) -> Expression {
             let size_equality = Expression::Eq(
                 Metadata::new(),
-                Moo::new(Reference::new(self.set_size.clone()).into()),
+                Moo::new(self.cardinality_expr()),
                 Moo::new((elems.len() as i32).into()),
             );
             let constraints = std::iter::once(size_equality)
@@ -98,15 +111,15 @@ register_representation!(
         pub fn equality_expr(&self, other: &Self) -> Expression {
             let size_equality = Expression::Eq(
                 Metadata::new(),
-                Moo::new(Reference::new(self.set_size.clone()).into()),
-                Moo::new(Reference::new(other.set_size.clone()).into()),
+                Moo::new(self.cardinality_expr()),
+                Moo::new(other.cardinality_expr()),
             );
             let (_, max) = self.cardinality;
             let constraints = std::iter::once(size_equality)
                 .chain((1..=max).map(|index| {
                     let inactive = Expression::Lt(
                         Metadata::new(),
-                        Moo::new(Reference::new(self.set_size.clone()).into()),
+                        Moo::new(self.cardinality_expr()),
                         Moo::new(index.into()),
                     );
                     Expression::Or(
@@ -143,7 +156,7 @@ register_representation!(
             .map_err(|e| domain_err(&format!("could not enumerate set domain: {e}")))?
             .next()
             .ok_or_else(|| domain_err("set inner domain is empty"))?;
-        let set_size = domain_int!(min..max);
+        let set_size = (min != max).then(|| domain_int!(min..max));
         let elems_matrix = Domain::matrix(inner_dom.clone().into(), vec![domain_int!(1..max)]);
         Ok(State {
             elems_matrix,
@@ -154,7 +167,7 @@ register_representation!(
     }
     fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
         let (_, max) = state.cardinality;
-        let _size = Reference::from(state.set_size.clone());
+        let _size = state.cardinality_expr();
         let mut constraints = (2..=max)
             .map(|_i| {
                 let _prev = _i - 1;
@@ -206,7 +219,7 @@ register_representation!(
         elems.resize(max as usize, state.padding.clone());
         Ok(State {
             cardinality,
-            set_size: Literal::from(elems_sz),
+            set_size: (min != max).then(|| Literal::from(elems_sz)),
             elems_matrix: Literal::from(into_matrix!(elems)),
             padding: state.padding.clone(),
         })
@@ -215,8 +228,10 @@ register_representation!(
         let Literal::AbstractLiteral(AbstractLiteral::Matrix(mut elems, _)) = state.elems_matrix else {
             bug!("expected set elements to be a matrix, got {}", state.elems_matrix)
         };
-        let Literal::Int(set_size) = state.set_size else {
-            bug!("expected set size to be an integer, got {}", state.set_size)
+        let set_size = match state.set_size {
+            Some(Literal::Int(set_size)) => set_size,
+            Some(other) => bug!("expected set size to be an integer, got {other}"),
+            None => state.cardinality.0,
         };
         elems.truncate(set_size as usize);
         Literal::AbstractLiteral(AbstractLiteral::Set(elems))
