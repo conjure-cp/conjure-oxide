@@ -1,14 +1,14 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
-    AbstractLiteral, Domain, Expression, Literal, Metadata, Moo, Name, Reference, SetAttr,
-    SymbolTable, run_partial_evaluator,
+    AbstractLiteral, Domain, Expression, Literal, MSetAttr, Metadata, Moo, Name, Reference,
+    SetAttr, SymbolTable, run_partial_evaluator,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
-    MatrixComponents, RecordToTuple, SetExplicit, SetOccurrence, SetPacked, TupleComponents,
-    TuplePacked,
+    MSetExplicit, MSetOccurrence, MSetPacked, MatrixComponents, RecordToTuple, SetExplicit,
+    SetOccurrence, SetPacked, TupleComponents, TuplePacked,
 };
 use uniplate::Uniplate;
 
@@ -313,4 +313,64 @@ fn packed_set_supports_non_integer_elements() {
     let assignment = state.down(value.clone()).unwrap();
     assert_eq!(assignment.packed, Literal::Int(2));
     assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn explicit_mset_round_trips_and_omits_fixed_size_marker() {
+    let domain = Domain::mset(MSetAttr::new(range!(3), range!(0..2)), domain_int!(1..2));
+    let state = <MSetExplicit as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
+        Literal::Int(2),
+        Literal::Int(1),
+        Literal::Int(2),
+    ]));
+
+    let assignment = state.down(value).unwrap();
+    assert!(assignment.mset_size.is_none());
+    assert_eq!(
+        assignment.up(),
+        Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
+            Literal::Int(1),
+            Literal::Int(2),
+            Literal::Int(2),
+        ]))
+    );
+}
+
+#[test]
+fn occurrence_mset_supports_non_integer_elements() {
+    let domain = Domain::mset(
+        MSetAttr::new(range!(0..3), range!(0..2)),
+        Domain::tuple(vec![Domain::bool(), domain_int!(1..2)]),
+    );
+    let state = <MSetOccurrence as ReprRule>::DomainLevel::init(domain).unwrap();
+    let element = Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+        Literal::Bool(true),
+        Literal::Int(2),
+    ]));
+    let value = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![element.clone(), element]));
+
+    assert_eq!(state.down(value.clone()).unwrap().up(), value);
+    assert!(
+        state
+            .occurs
+            .iter()
+            .all(|(key, _)| matches!(key, Literal::AbstractLiteral(AbstractLiteral::Tuple(_))))
+    );
+}
+
+#[test]
+fn packed_mset_round_trips_mixed_radix_counts() {
+    let domain = Domain::mset(MSetAttr::new(range!(1..4), range!(0..2)), Domain::bool());
+    let state = <MSetPacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
+        Literal::Bool(false),
+        Literal::Bool(true),
+        Literal::Bool(true),
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.packed, Literal::Int(7));
+    assert_eq!(assignment.up(), value);
+    assert_eq!(MSetPacked::compactness_score(domain).unwrap(), 8);
 }
