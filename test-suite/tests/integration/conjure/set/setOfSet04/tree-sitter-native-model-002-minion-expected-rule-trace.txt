@@ -1,0 +1,469 @@
+Model before rewriting:
+
+find x: set (size 2) of set (maxSize 3) of int(1..2)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#explicit_1: matrix indexed by [int(1..2)] of set (maxSize 3) of int(1..2)
+new constraints:
+  or([2 < 2,([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)])
+  or([1 <= 2,SafeIndex(x#explicit_1,[1]) = {};int(1..)])
+  or([2 <= 2,SafeIndex(x#explicit_1,[2]) = {};int(1..)])
+
+--
+
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+new variables:
+  find x#explicit_1#components_1: set (maxSize 3) of int(1..2)
+  find x#explicit_1#components_2: set (maxSize 3) of int(1..2)
+
+--
+
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+
+--
+
+true,
+or([([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+or([([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)]),
+true,
+true
+new variables:
+  find x#explicit_1#components_1#packed_1: int(0..3)
+  find x#explicit_1#components_2#packed_1: int(0..3)
+new constraints:
+  and([sum([(x#explicit_1#components_1#packed_1 / 1) % 2,(x#explicit_1#components_1#packed_1 / 2) % 2;int(1..)]) >= 0,sum([(x#explicit_1#components_1#packed_1 / 1) % 2,(x#explicit_1#components_1#packed_1 / 2) % 2;int(1..)]) <= 2;int(1..)])
+  and([sum([(x#explicit_1#components_2#packed_1 / 1) % 2,(x#explicit_1#components_2#packed_1 / 2) % 2;int(1..)]) >= 0,sum([(x#explicit_1#components_2#packed_1 / 1) % 2,(x#explicit_1#components_2#packed_1 / 2) % 2;int(1..)]) <= 2;int(1..)])
+
+--
+
+or([([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)])
+
+--
+
+(x#explicit_1#components_1#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#explicit_1#components_1#packed_1, 1) @ 1 != 0}
+
+--
+
+SafeDiv(x#explicit_1#components_1#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 1),2) @ 2 != 0}
+
+--
+
+(x#explicit_1#components_1#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#explicit_1#components_1#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeDiv(x#explicit_1#components_1#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 2),2) @ 2 != 0}
+
+--
+
+(x#explicit_1#components_1#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#explicit_1#components_1#packed_1, 1) @ 1 != 0}
+
+--
+
+SafeDiv(x#explicit_1#components_1#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 1),2) @ 2 != 0}
+
+--
+
+(x#explicit_1#components_1#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#explicit_1#components_1#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeDiv(x#explicit_1#components_1#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 2),2) @ 2 != 0}
+
+--
+
+(x#explicit_1#components_2#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#explicit_1#components_2#packed_1, 1) @ 1 != 0}
+
+--
+
+SafeDiv(x#explicit_1#components_2#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 1),2) @ 2 != 0}
+
+--
+
+(x#explicit_1#components_2#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#explicit_1#components_2#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeDiv(x#explicit_1#components_2#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 2),2) @ 2 != 0}
+
+--
+
+(x#explicit_1#components_2#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#explicit_1#components_2#packed_1, 1) @ 1 != 0}
+
+--
+
+SafeDiv(x#explicit_1#components_2#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 1),2) @ 2 != 0}
+
+--
+
+(x#explicit_1#components_2#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#explicit_1#components_2#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeDiv(x#explicit_1#components_2#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 2),2) @ 2 != 0}
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+x#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+([x#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2;int(1..)])
+   ~~> lex_packed_sets ([("ReprGeneral", 9500)])
+x#explicit_1#components_1#packed_1 < x#explicit_1#components_2#packed_1
+
+--
+
+x#explicit_1#components_1#packed_1 < x#explicit_1#components_2#packed_1
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_1#components_1#packed_1 <= sum([x#explicit_1#components_2#packed_1,-1;int(1..)])
+
+--
+
+x#explicit_1#components_1#packed_1 <= sum([x#explicit_1#components_2#packed_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, x#explicit_1#components_2#packed_1], x#explicit_1#components_1#packed_1)
+
+--
+
+sum([SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 1),2),SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 2),2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([__0, __1], 0)
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+new constraints:
+  __0 =aux SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 1),2)
+  __1 =aux SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 2),2)
+
+--
+
+sum([SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 1),2),SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 2),2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([__2, __3], 2)
+new variables:
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+new constraints:
+  __2 =aux SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 1),2)
+  __3 =aux SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 2),2)
+
+--
+
+sum([SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 1),2),SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 2),2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([__4, __5], 0)
+new variables:
+  findAux __4: int(0..1)
+  findAux __5: int(0..1)
+new constraints:
+  __4 =aux SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 1),2)
+  __5 =aux SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 2),2)
+
+--
+
+sum([SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 1),2),SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 2),2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([__6, __7], 2)
+new variables:
+  findAux __6: int(0..1)
+  findAux __7: int(0..1)
+new constraints:
+  __6 =aux SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 1),2)
+  __7 =aux SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 2),2)
+
+--
+
+SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 1),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__8,2)
+new variables:
+  findAux __8: int(0..3)
+new constraints:
+  __8 =aux SafeDiv(x#explicit_1#components_1#packed_1, 1)
+
+--
+
+__0 =aux SafeMod(__8,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__8, 2, __0)
+
+--
+
+__8 =aux SafeDiv(x#explicit_1#components_1#packed_1, 1)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#explicit_1#components_1#packed_1, 1, __8)
+
+--
+
+SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__9,2)
+new variables:
+  findAux __9: int(0..1)
+new constraints:
+  __9 =aux SafeDiv(x#explicit_1#components_1#packed_1, 2)
+
+--
+
+__1 =aux SafeMod(__9,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__9, 2, __1)
+
+--
+
+__9 =aux SafeDiv(x#explicit_1#components_1#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#explicit_1#components_1#packed_1, 2, __9)
+
+--
+
+SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 1),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__10,2)
+new variables:
+  findAux __10: int(0..3)
+new constraints:
+  __10 =aux SafeDiv(x#explicit_1#components_1#packed_1, 1)
+
+--
+
+__2 =aux SafeMod(__10,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__10, 2, __2)
+
+--
+
+__10 =aux SafeDiv(x#explicit_1#components_1#packed_1, 1)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#explicit_1#components_1#packed_1, 1, __10)
+
+--
+
+SafeMod(SafeDiv(x#explicit_1#components_1#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__11,2)
+new variables:
+  findAux __11: int(0..1)
+new constraints:
+  __11 =aux SafeDiv(x#explicit_1#components_1#packed_1, 2)
+
+--
+
+__3 =aux SafeMod(__11,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__11, 2, __3)
+
+--
+
+__11 =aux SafeDiv(x#explicit_1#components_1#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#explicit_1#components_1#packed_1, 2, __11)
+
+--
+
+SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 1),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__12,2)
+new variables:
+  findAux __12: int(0..3)
+new constraints:
+  __12 =aux SafeDiv(x#explicit_1#components_2#packed_1, 1)
+
+--
+
+__4 =aux SafeMod(__12,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__12, 2, __4)
+
+--
+
+__12 =aux SafeDiv(x#explicit_1#components_2#packed_1, 1)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#explicit_1#components_2#packed_1, 1, __12)
+
+--
+
+SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__13,2)
+new variables:
+  findAux __13: int(0..1)
+new constraints:
+  __13 =aux SafeDiv(x#explicit_1#components_2#packed_1, 2)
+
+--
+
+__5 =aux SafeMod(__13,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__13, 2, __5)
+
+--
+
+__13 =aux SafeDiv(x#explicit_1#components_2#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#explicit_1#components_2#packed_1, 2, __13)
+
+--
+
+SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 1),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__14,2)
+new variables:
+  findAux __14: int(0..3)
+new constraints:
+  __14 =aux SafeDiv(x#explicit_1#components_2#packed_1, 1)
+
+--
+
+__6 =aux SafeMod(__14,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__14, 2, __6)
+
+--
+
+__14 =aux SafeDiv(x#explicit_1#components_2#packed_1, 1)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#explicit_1#components_2#packed_1, 1, __14)
+
+--
+
+SafeMod(SafeDiv(x#explicit_1#components_2#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__15,2)
+new variables:
+  findAux __15: int(0..1)
+new constraints:
+  __15 =aux SafeDiv(x#explicit_1#components_2#packed_1, 2)
+
+--
+
+__7 =aux SafeMod(__15,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__15, 2, __7)
+
+--
+
+__15 =aux SafeDiv(x#explicit_1#components_2#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#explicit_1#components_2#packed_1, 2, __15)
+
+--
+
+Final model:
+
+find x: set{explicit} (size 2) of set (maxSize 3) of int(1..2)
+find x#explicit_1: matrix indexed by [int(1..2)] of set (maxSize 3) of int(1..2)
+find x#explicit_1#components_1: set{packed} (maxSize 3) of int(1..2)
+find x#explicit_1#components_2: set{packed} (maxSize 3) of int(1..2)
+find x#explicit_1#components_1#packed_1: int(0..3)
+find x#explicit_1#components_2#packed_1: int(0..3)
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: int(0..1)
+findAux __5: int(0..1)
+findAux __6: int(0..1)
+findAux __7: int(0..1)
+findAux __8: int(0..3)
+findAux __9: int(0..1)
+findAux __10: int(0..3)
+findAux __11: int(0..1)
+findAux __12: int(0..3)
+findAux __13: int(0..1)
+findAux __14: int(0..3)
+findAux __15: int(0..1)
+
+such that
+
+true,
+SumGeq([-1, x#explicit_1#components_2#packed_1], x#explicit_1#components_1#packed_1),
+true,
+true,
+and([SumGeq([__0, __1], 0),SumLeq([__2, __3], 2);int(1..)]),
+and([SumGeq([__4, __5], 0),SumLeq([__6, __7], 2);int(1..)]),
+ModEq(__8, 2, __0),
+ModEq(__9, 2, __1),
+ModEq(__10, 2, __2),
+ModEq(__11, 2, __3),
+ModEq(__12, 2, __4),
+ModEq(__13, 2, __5),
+ModEq(__14, 2, __6),
+ModEq(__15, 2, __7),
+DivEq(x#explicit_1#components_1#packed_1, 1, __8),
+DivEq(x#explicit_1#components_1#packed_1, 2, __9),
+DivEq(x#explicit_1#components_1#packed_1, 1, __10),
+DivEq(x#explicit_1#components_1#packed_1, 2, __11),
+DivEq(x#explicit_1#components_2#packed_1, 1, __12),
+DivEq(x#explicit_1#components_2#packed_1, 2, __13),
+DivEq(x#explicit_1#components_2#packed_1, 1, __14),
+DivEq(x#explicit_1#components_2#packed_1, 2, __15)
+
