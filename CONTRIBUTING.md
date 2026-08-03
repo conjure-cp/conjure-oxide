@@ -69,6 +69,7 @@ These project conventions are more specific than the general guidance above.
 
 - Document all top-level public functions, structs, enums, and type aliases with brief rustdocs.
 - Document public fields and enum variants when their meaning is not completely obvious.
+- Put representation-dependent rules under `types/<type>/<representation>/vertical`; reserve `types/<type>/horizontal` for representation-independent rules.
 
 ### Test Runs
 
