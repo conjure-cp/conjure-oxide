@@ -1,5 +1,5 @@
 use crate::shared::representation_prelude::*;
-use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference};
+use conjure_cp::ast::{GroundDomain, Moo, Range, Reference, eval_constant};
 use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 /// Packed masks use a signed `i32`, leaving 30 usable element bits.
@@ -8,13 +8,13 @@ const MAX_INNER_DOMAIN_SIZE: u32 = 30;
 register_representation!(
     SetPacked("packed")
     struct State<T> {
-        /// The single integer variable / domain / literal holding the subset rank.
+        /// The single integer variable, domain, or literal holding the subset bit mask.
         pub packed: T,
         /// Inner-domain values in bit-position order.
         pub elements: Moo<Vec<Literal>>,
         /// Inclusive cardinality bounds.
         pub cardinality: (u32, u32),
-        /// Number of valid sets represented by `packed`.
+        /// Number of bit masks represented by `packed`, including cardinality-invalid masks.
         pub total_size: i32
     }
     impl State<DeclarationPtr> {
@@ -31,49 +31,39 @@ register_representation!(
             if min == max {
                 return (min as i32).into();
             }
-            let mut next_block = 0u64;
-            let thresholds = (min..max)
-                .map(|cardinality| {
-                    next_block += binomial(self.elements.len() as u32, cardinality)
-                        .expect("validated packed set size");
-                    let threshold = i32::try_from(next_block)
-                        .expect("validated packed set rank fits in i32");
-                    let packed = self.packed_expr();
-                    essence_expr!(toInt(&packed >= &threshold))
-                })
+            self.decoded_cardinality_expr()
+        }
+
+        fn decoded_cardinality_expr(&self) -> Expression {
+            let bits = (0..self.elements.len())
+                .map(|index| self.bit_expr(index))
                 .collect::<Vec<_>>();
-            let varying = Expression::Sum(
-                Metadata::new(),
-                Moo::new(into_matrix_expr!(thresholds)),
-            );
-            let min = min as i32;
-            essence_expr!(&varying + &min)
+            Expression::Sum(Metadata::new(), Moo::new(into_matrix_expr!(bits)))
+        }
+
+        fn bit_expr(&self, index: usize) -> Expression {
+            let divisor = 1i32
+                .checked_shl(index as u32)
+                .expect("validated packed set bit index");
+            let packed = self.packed_expr();
+            essence_expr!((&packed / &divisor) % 2)
         }
 
         pub fn membership_expr(&self, member: Expression) -> Expression {
+            if let Some(value) = eval_constant(&member) {
+                return self
+                    .elements
+                    .iter()
+                    .position(|candidate| candidate.essence_cmp(&value).is_eq())
+                    .map(|index| self.element_occurs_expr(index))
+                    .unwrap_or_else(|| false.into());
+            }
+
             let choices = self
                 .elements
                 .iter()
                 .enumerate()
                 .map(|(index, value)| {
-                    let ranks: Vec<i32> = (0..self.total_size)
-                        .filter(|rank| {
-                            unrank_mask(
-                                *rank,
-                                self.elements.len() as u32,
-                                self.cardinality,
-                            ) & (1u32 << index)
-                                != 0
-                        })
-                        .collect();
-                    let rank_domain = Domain::int(
-                        ranks.into_iter().map(Range::Single).collect(),
-                    );
-                    let rank_matches = Expression::InDomain(
-                        Metadata::new(),
-                        Moo::new(self.packed_expr()),
-                        rank_domain,
-                    );
                     let value_matches = Expression::Eq(
                         Metadata::new(),
                         Moo::new(member.clone()),
@@ -81,11 +71,20 @@ register_representation!(
                     );
                     Expression::And(
                         Metadata::new(),
-                        Moo::new(matrix_expr![value_matches, rank_matches]),
+                        Moo::new(matrix_expr![value_matches, self.element_occurs_expr(index)]),
                     )
                 })
                 .collect();
-                    Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(choices)))
+            Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(choices)))
+        }
+
+        /// Return whether the element at `index` occurs in the packed rank.
+        pub fn element_occurs_expr(&self, index: usize) -> Expression {
+            Expression::Eq(
+                Metadata::new(),
+                Moo::new(self.bit_expr(index)),
+                Moo::new(1.into()),
+            )
         }
 
         /// Lower `self ⊆ superset` via membership of each packable element.
@@ -117,7 +116,10 @@ register_representation!(
         pub fn equality_to_literal_expr(&self, elems: &[Literal]) -> Option<Expression> {
             let mut mask = 0u32;
             for elem in elems {
-                let index = self.elements.iter().position(|candidate| candidate == elem)?;
+                let index = self
+                    .elements
+                    .iter()
+                    .position(|candidate| candidate.essence_cmp(elem).is_eq())?;
                 let bit = 1u32 << index;
                 if mask & bit != 0 {
                     return None;
@@ -129,11 +131,10 @@ register_representation!(
             if cardinality < min || cardinality > max {
                 return None;
             }
-            let rank = rank_mask(mask, self.elements.len() as u32, min);
             Some(Expression::Eq(
                 Metadata::new(),
                 Moo::new(self.packed_expr()),
-                Moo::new(rank.into()),
+                Moo::new((mask as i32).into()),
             ))
         }
     }
@@ -155,7 +156,7 @@ register_representation!(
         if inner_len > MAX_INNER_DOMAIN_SIZE {
             return Err(domain_err("set inner domain is too large"));
         }
-        let cardinality @ (min, max) = cardinality_bounds(&attr.size, inner_len)
+        let cardinality = cardinality_bounds(&attr.size, inner_len)
             .ok_or_else(|| domain_err("invalid or unsupported set cardinality"))?;
         let elements = Moo::new(
             inner_dom
@@ -163,17 +164,23 @@ register_representation!(
                 .map_err(|e| domain_err(&format!("could not enumerate set domain: {e}")))?
                 .collect(),
         );
-        let total_size = (min..=max).try_fold(0u64, |total, size| {
-            total.checked_add(binomial(inner_len, size)?)
-        })
-            .and_then(|size| i32::try_from(size).ok())
+        let total_size = 1i32
+            .checked_shl(inner_len)
             .ok_or_else(|| domain_err("packed representation would overflow i32"))?;
         let packed = domain_int!(0..(total_size - 1));
 
         Ok(State { packed, elements, cardinality, total_size })
     }
-    fn structural(_: &State<DeclarationPtr>) -> Vec<Expression> {
-        vec![]
+    fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
+        let (min, max) = state.cardinality;
+        let cardinality = state.decoded_cardinality_expr();
+        let min = min as i32;
+        let max = max as i32;
+        if min == max {
+            vec![essence_expr!(&cardinality = &min)]
+        } else {
+            vec![essence_expr!(r"(&cardinality >= &min) /\ (&cardinality <= &max)")]
+        }
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
         let Literal::AbstractLiteral(AbstractLiteral::Set(elems)) = value else {
@@ -183,7 +190,11 @@ register_representation!(
 
         let mut mask = 0i32;
         for elem in &elems {
-            let Some(index) = state.elements.iter().position(|candidate| candidate == elem) else {
+            let Some(index) = state
+                .elements
+                .iter()
+                .position(|candidate| candidate.essence_cmp(elem).is_eq())
+            else {
                 return Err(ReprDownError::BadValue(
                     original,
                     format!("element {elem} is outside the set inner domain"),
@@ -206,94 +217,46 @@ register_representation!(
                 "set cardinality is outside the domain bounds".to_string(),
             ));
         }
-        let rank = rank_mask(mask as u32, state.elements.len() as u32, min);
-
         Ok(State {
-            packed: Literal::Int(rank),
+            packed: Literal::Int(mask),
             elements: state.elements.clone(),
             cardinality: state.cardinality,
             total_size: state.total_size,
         })
     }
     fn up(state: State<Literal>) -> Literal {
-        let Literal::Int(rank) = state.packed else {
+        let Literal::Int(mask) = state.packed else {
             bug!("expected an integer literal for packed set value, got {}", state.packed);
         };
-        if rank < 0 || rank >= state.total_size {
-            bug!("packed set rank {rank} is outside its representation domain");
+        if mask < 0 || mask >= state.total_size {
+            bug!("packed set mask {mask} is outside its representation domain");
         }
-        let mask = unrank_mask(
-            rank,
-            state.elements.len() as u32,
-            state.cardinality,
-        );
         let mut elems = state
             .elements
             .iter()
             .enumerate()
-            .filter(|(index, _)| mask & (1u32 << index) != 0)
+            .filter(|(index, _)| mask & (1i32 << index) != 0)
             .map(|(_, elem)| elem.clone())
             .collect::<Vec<_>>();
         elems.sort_by_key(ToString::to_string);
         Literal::AbstractLiteral(AbstractLiteral::Set(elems))
     }
+    fn compactness(state: &State<DomainPtr>) -> usize {
+        let (min, max) = state.cardinality;
+        (min..=max)
+            .map(|size| binomial(state.elements.len() as u32, size))
+            .fold(0usize, usize::saturating_add)
+    }
 );
 
-fn binomial(n: u32, k: u32) -> Option<u64> {
+fn binomial(n: u32, k: u32) -> usize {
     if k > n {
-        return Some(0);
+        return 0;
     }
     let k = k.min(n - k);
-    (1..=k).try_fold(1u64, |value, i| {
-        value
-            .checked_mul(u64::from(n - k + i))?
-            .checked_div(u64::from(i))
+    (1..=k).fold(1usize, |value, i| {
+        value.saturating_mul((n - k + i) as usize) / i as usize
     })
-}
-
-/// Rank a mask first by cardinality, then by colexicographic combination order.
-fn rank_mask(mask: u32, inner_len: u32, min_cardinality: u32) -> i32 {
-    let cardinality = mask.count_ones();
-    let cardinality_offset = (min_cardinality..cardinality)
-        .map(|size| binomial(inner_len, size).expect("validated packed set size"))
-        .sum::<u64>();
-    let mut seen = 0u32;
-    let colex_rank = (0..inner_len)
-        .filter(|index| mask & (1u32 << index) != 0)
-        .map(|index| {
-            seen += 1;
-            binomial(index, seen).expect("set bit has a valid combination rank")
-        })
-        .sum::<u64>();
-    i32::try_from(cardinality_offset + colex_rank).expect("validated packed set rank")
-}
-
-fn unrank_mask(rank: i32, inner_len: u32, (min, max): (u32, u32)) -> u32 {
-    let mut rank = rank as u64;
-    let cardinality = (min..=max)
-        .find(|size| {
-            let block_size = binomial(inner_len, *size).expect("validated packed set size");
-            if rank < block_size {
-                true
-            } else {
-                rank -= block_size;
-                false
-            }
-        })
-        .expect("validated packed set rank has a cardinality block");
-
-    let mut mask = 0u32;
-    let mut upper = inner_len;
-    for selected in (1..=cardinality).rev() {
-        let index = (selected - 1..upper)
-            .rev()
-            .find(|index| binomial(*index, selected).is_some_and(|value| value <= rank))
-            .expect("valid colexicographic rank has a set bit");
-        rank -= binomial(index, selected).expect("selected a valid set bit");
-        mask |= 1u32 << index;
-        upper = index;
-    }
-    mask
 }
 
 fn cardinality_bounds(size: &Range<i32>, inner_len: u32) -> Option<(u32, u32)> {
@@ -307,25 +270,4 @@ fn cardinality_bounds(size: &Range<i32>, inner_len: u32) -> Option<(u32, u32)> {
     // Clamp oversized attributes (e.g. maxSize 3 of int(1..2)) to the inner domain.
     let max = max.min(inner_len);
     (min <= max).then_some((min, max))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn combinatorial_ranks_round_trip() {
-        for inner_len in 0..=10 {
-            for min in 0..=inner_len {
-                for max in min..=inner_len {
-                    for mask in 0..(1u32 << inner_len) {
-                        if (min..=max).contains(&mask.count_ones()) {
-                            let rank = rank_mask(mask, inner_len, min);
-                            assert_eq!(unrank_mask(rank, inner_len, (min, max)), mask);
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
