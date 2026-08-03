@@ -1,26 +1,95 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
-    AbstractLiteral, Domain, Expression, Literal, MSetAttr, Metadata, Moo, Name, Reference,
-    SetAttr, SymbolTable, run_partial_evaluator,
+    AbstractLiteral, Domain, Expression, GroundDomain, Literal, MSetAttr, Metadata, Moo, Name,
+    Reference, SetAttr, SymbolTable, run_partial_evaluator,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
-    MSetExplicit, MSetOccurrence, MSetPacked, MatrixComponents, RecordToTuple, SetExplicit,
-    SetOccurrence, SetPacked, TupleComponents, TuplePacked,
+    MSetExplicit, MSetOccurrence, MSetPacked, MatrixComponents, MatrixPacked, RecordToTuple,
+    SetExplicit, SetOccurrence, SetPacked, TupleComponents, TuplePacked,
 };
 use uniplate::Uniplate;
 
 #[test]
 fn representation_short_names_describe_the_generated_layout() {
     assert_eq!(MatrixComponents::SHORT_NAME, "components");
+    assert_eq!(MatrixPacked::SHORT_NAME, "packed");
     assert_eq!(TupleComponents::SHORT_NAME, "components");
     assert_eq!(SetPacked::SHORT_NAME, "packed");
     assert_eq!(TuplePacked::SHORT_NAME, "packed");
     assert_eq!(SetExplicit::SHORT_NAME, "explicit");
     assert_eq!(SetOccurrence::SHORT_NAME, "occurrence");
     assert_eq!(RecordToTuple::SHORT_NAME, "tuple");
+}
+
+#[test]
+fn packed_matrix_round_trips_primitive_values_and_weird_indices() {
+    let inner_indices = GroundDomain::Int(vec![
+        conjure_cp::ast::Range::Single(1),
+        conjure_cp::ast::Range::Single(3),
+    ]);
+    let domain = Domain::matrix(
+        domain_int!(2..4),
+        vec![Domain::bool(), Domain::from(inner_indices.clone()).into()],
+    );
+    let row = |values| {
+        Literal::AbstractLiteral(AbstractLiteral::Matrix(
+            values,
+            Moo::new(inner_indices.clone()),
+        ))
+    };
+    let value = Literal::AbstractLiteral(AbstractLiteral::Matrix(
+        vec![
+            row(vec![Literal::Int(2), Literal::Int(4)]),
+            row(vec![Literal::Int(3), Literal::Int(2)]),
+        ],
+        Moo::new(GroundDomain::Bool),
+    ));
+
+    let state = <MatrixPacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.packed, Literal::Int(21));
+    assert_eq!(assignment.up(), value);
+    assert_eq!(MatrixPacked::compactness_score(domain.clone()).unwrap(), 81);
+
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (new_symbols, constraints) = MatrixPacked::init_for(&mut declaration).unwrap();
+    assert_eq!(new_symbols.iter_local().count(), 1);
+    assert!(constraints.is_empty());
+    let decoded = declaration
+        .get_repr::<MatrixPacked>()
+        .unwrap()
+        .decoded_matrix();
+    assert_eq!(
+        decoded
+            .universe()
+            .iter()
+            .filter(|expr| matches!(expr, Expression::SafeIndex(..)))
+            .count(),
+        4
+    );
+}
+
+#[test]
+fn packed_matrix_uses_conjure_boolean_symmetry_order() {
+    let domain = Domain::matrix(Domain::bool(), vec![domain_int!(1..2)]);
+    let state = <MatrixPacked as ReprRule>::DomainLevel::init(domain).unwrap();
+    assert_eq!(
+        state.values.as_ref(),
+        &[Literal::Bool(true), Literal::Bool(false)]
+    );
+    let value = Literal::AbstractLiteral(AbstractLiteral::Matrix(
+        vec![Literal::Bool(true), Literal::Bool(false)],
+        Moo::new(GroundDomain::Int(vec![conjure_cp::ast::Range::Bounded(
+            1, 2,
+        )])),
+    ));
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.packed, Literal::Int(1));
+    assert_eq!(assignment.up(), value);
 }
 
 #[test]
