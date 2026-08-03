@@ -12,7 +12,7 @@ use syn::{
     TypePath, bracketed, parenthesized, parse::Parse, parse::ParseStream, parse_macro_input,
 };
 
-use crate::util::{rename_ident_in_impl, type_is_ident};
+use crate::util::{rename_ident_in_impl, type_is_ident, type_is_option_of_ident};
 use util::{build_serde_as_type, rename_fn, rename_ident_in_fn, type_contains_ident};
 
 /// Parsed arguments for `#[register_rule(...)]`.
@@ -626,6 +626,10 @@ fn generate_struct_def(
                             collect_children_exprs.push(quote! {
                                 children.push_back(self.#field_ident.clone());
                             });
+                        } else if type_is_option_of_ident(&f.ty, &generic_param_ident) {
+                            collect_children_exprs.push(quote! {
+                                children.extend(self.#field_ident.iter().cloned());
+                            });
                         } else {
                             collect_children_exprs.push(quote! {
                                 children.extend(
@@ -671,6 +675,10 @@ fn generate_struct_def(
                         if type_is_ident(&f.ty, &generic_param_ident) {
                             collect_children_exprs.push(quote! {
                                 children.push_back(self.#index.clone());
+                            });
+                        } else if type_is_option_of_ident(&f.ty, &generic_param_ident) {
+                            collect_children_exprs.push(quote! {
+                                children.extend(self.#index.iter().cloned());
                             });
                         } else {
                             collect_children_exprs.push(quote! {

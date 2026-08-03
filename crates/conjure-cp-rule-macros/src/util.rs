@@ -11,6 +11,27 @@ pub fn type_is_ident(ty: &Type, ident: &Ident) -> bool {
     }
 }
 
+/// Check whether a type is `Option<ident>`.
+pub fn type_is_option_of_ident(ty: &Type, ident: &Ident) -> bool {
+    let Type::Path(path) = ty else {
+        return false;
+    };
+    let Some(segment) = path.path.segments.last() else {
+        return false;
+    };
+    if segment.ident != "Option" {
+        return false;
+    }
+    let PathArguments::AngleBracketed(arguments) = &segment.arguments else {
+        return false;
+    };
+    let [GenericArgument::Type(inner)] = arguments.args.iter().collect::<Vec<_>>().as_slice()
+    else {
+        return false;
+    };
+    type_is_ident(inner, ident)
+}
+
 /// Check whether a type path *is* exactly a given ident
 pub fn type_path_is_ident(tp: &TypePath, ident: &Ident) -> bool {
     tp.qself.is_none()

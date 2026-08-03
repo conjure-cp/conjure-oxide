@@ -465,22 +465,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
         }
         Expr::In(_, a, b) => {
-            if let (
-                Expr::Atomic(_, Atom::Literal(Lit::Int(c))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(d)))),
-            ) = (a.as_ref(), b.as_ref())
-            {
-                for lit in d.iter() {
-                    if let Lit::Int(x) = lit
-                        && c == x
-                    {
-                        return Some(Lit::Bool(true));
-                    }
-                }
-                Some(Lit::Bool(false))
-            } else {
-                None
-            }
+            let member = eval_constant(a)?;
+            let collection = eval_constant(b)?;
+            let values = generator_values_from_constant_collection(&collection)?;
+            Some(Lit::Bool(values.iter().any(|value| {
+                value.essence_cmp(&member) == CmpOrdering::Equal
+            })))
         }
         Expr::FromSolution(_, _) => None,
         Expr::DominanceRelation(_, _) => None,
@@ -614,10 +604,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::AbstractLiteral(into_matrix![elems]))
         }
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
-        Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
-            .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
-            .map(Lit::Bool),
-        Expr::Neq(_, a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Lit::Bool),
+        Expr::Eq(_, a, b) => Some(Lit::Bool(
+            eval_constant(a)?.essence_cmp(&eval_constant(b)?) == CmpOrdering::Equal,
+        )),
+        Expr::Neq(_, a, b) => Some(Lit::Bool(
+            eval_constant(a)?.essence_cmp(&eval_constant(b)?) != CmpOrdering::Equal,
+        )),
         Expr::Lt(_, a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Lit::Bool),
         Expr::Gt(_, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Lit::Bool),
         Expr::Leq(_, a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Lit::Bool),
@@ -1209,14 +1201,9 @@ where
         return items.iter().map(unwrap_expr).collect();
     }
 
-    let Lit::AbstractLiteral(list) = eval_constant(expr)? else {
-        return None;
-    };
-
-    let items = list.unwrap_list()?;
-    items
-        .iter()
-        .cloned()
+    let collection = eval_constant(expr)?;
+    generator_values_from_constant_collection(&collection)?
+        .into_iter()
         .map(TryInto::try_into)
         .collect::<Result<Vec<_>, _>>()
         .ok()
@@ -1426,6 +1413,71 @@ mod tests {
         let cardinality = Expr::Card(Metadata::new(), Moo::new(set));
 
         assert_eq!(eval_constant(&cardinality), Some(Lit::Int(2)));
+    }
+
+    #[test]
+    fn constant_set_minimum_and_maximum_are_folded() {
+        let set = Expr::from(Lit::AbstractLiteral(AbstractLiteral::Set(vec![
+            Lit::Int(4),
+            Lit::Int(1),
+            Lit::Int(3),
+        ])));
+
+        assert_eq!(
+            eval_constant(&Expr::Min(Metadata::new(), Moo::new(set.clone()))),
+            Some(Lit::Int(1))
+        );
+        assert_eq!(
+            eval_constant(&Expr::Max(Metadata::new(), Moo::new(set))),
+            Some(Lit::Int(4))
+        );
+    }
+
+    #[test]
+    fn constant_set_membership_supports_composite_values() {
+        let member =
+            Lit::AbstractLiteral(AbstractLiteral::Tuple(vec![Lit::Bool(true), Lit::Int(2)]));
+        let set = Lit::AbstractLiteral(AbstractLiteral::Set(vec![member.clone()]));
+        let membership = Expr::In(
+            Metadata::new(),
+            Moo::new(Expr::from(member)),
+            Moo::new(Expr::from(set)),
+        );
+
+        assert_eq!(eval_constant(&membership), Some(Lit::Bool(true)));
+    }
+
+    #[test]
+    fn constant_equality_supports_composite_values() {
+        let tuple = Lit::AbstractLiteral(AbstractLiteral::Tuple(vec![Lit::Int(1), Lit::Int(3)]));
+        let equal = Expr::Eq(
+            Metadata::new(),
+            Moo::new(Expr::from(tuple.clone())),
+            Moo::new(Expr::from(tuple)),
+        );
+        let unequal = Expr::Neq(
+            Metadata::new(),
+            Moo::new(Expr::from(Lit::AbstractLiteral(AbstractLiteral::Tuple(
+                vec![Lit::Int(1), Lit::Int(3)],
+            )))),
+            Moo::new(Expr::from(Lit::AbstractLiteral(AbstractLiteral::Tuple(
+                vec![Lit::Int(1), Lit::Int(4)],
+            )))),
+        );
+
+        assert_eq!(eval_constant(&equal), Some(Lit::Bool(true)));
+        assert_eq!(eval_constant(&unequal), Some(Lit::Bool(true)));
+
+        let set_equality = Expr::Eq(
+            Metadata::new(),
+            Moo::new(Expr::from(Lit::AbstractLiteral(AbstractLiteral::Set(
+                vec![Lit::Int(1), Lit::Int(2)],
+            )))),
+            Moo::new(Expr::from(Lit::AbstractLiteral(AbstractLiteral::Set(
+                vec![Lit::Int(2), Lit::Int(1)],
+            )))),
+        );
+        assert_eq!(eval_constant(&set_equality), Some(Lit::Bool(true)));
     }
 
     #[test]

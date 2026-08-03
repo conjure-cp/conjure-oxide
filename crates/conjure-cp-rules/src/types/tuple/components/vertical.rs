@@ -10,6 +10,17 @@ use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, RuleEffect as Reduction, register_rule};
 use itertools::izip;
 
+fn comparison_reference(expr: &Expr) -> Option<Reference> {
+    if let Expr::Atomic(_, Atom::Reference(reference)) = expr {
+        return Some(reference.clone());
+    }
+    let values = expr.unwrap_list()?;
+    let [Expr::Atomic(_, Atom::Reference(reference))] = values.as_slice() else {
+        return None;
+    };
+    Some(reference.clone())
+}
+
 /// Indexing into a tuple variable
 /// ```plain
 /// x[1]
@@ -122,8 +133,8 @@ fn tuple_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         as_eq_or_neq(expr).is_err() && // equality handled separately
         let Some((lhs, rhs)) = as_cmp_or_lex_op(expr)               &&
-        let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
-        let Expr::Atomic(_, Atom::Reference(rhs_re)) = rhs.as_ref() &&
+        let Some(lhs_re) = comparison_reference(lhs.as_ref())       &&
+        let Some(rhs_re) = comparison_reference(rhs.as_ref())       &&
         let Some(lhs_repr) = lhs_re.get_repr_as::<TupleComponents>()    &&
         let Some(rhs_repr) = rhs_re.get_repr_as::<TupleComponents>()
         else {

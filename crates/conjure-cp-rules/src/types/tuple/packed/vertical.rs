@@ -15,6 +15,17 @@ use conjure_cp::rule_engine::{
 };
 use parking_lot::MappedRwLockReadGuard;
 
+fn comparison_reference(expr: &Expr) -> Option<Reference> {
+    if let Expr::Atomic(_, Atom::Reference(reference)) = expr {
+        return Some(reference.clone());
+    }
+    let values = expr.unwrap_list()?;
+    let [Expr::Atomic(_, Atom::Reference(reference))] = values.as_slice() else {
+        return None;
+    };
+    Some(reference.clone())
+}
+
 // Packed tuples are backend-neutral, so make their lowering rules available
 // for every solver family.
 register_rule_set!("ReprTuplePacked", ("Base"), |_| true);
@@ -96,8 +107,8 @@ fn tuple_packed_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         as_eq_or_neq(expr).is_err() &&
         let Some((lhs, rhs)) = as_cmp_or_lex_op(expr)               &&
-        let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
-        let Expr::Atomic(_, Atom::Reference(rhs_re)) = rhs.as_ref() &&
+        let Some(lhs_re) = comparison_reference(lhs.as_ref())       &&
+        let Some(rhs_re) = comparison_reference(rhs.as_ref())       &&
         let Some(lp) = lhs_re.get_repr_as::<TuplePacked>()          &&
         let Some(rp) = rhs_re.get_repr_as::<TuplePacked>()
         else { return Err(RuleNotApplicable) }
