@@ -176,6 +176,26 @@ fn occurrence_set_round_trips_and_enforces_cardinality() {
 }
 
 #[test]
+fn occurrence_set_supports_non_integer_elements() {
+    let element_domain = Domain::tuple(vec![Domain::bool(), domain_int!(1..2)]);
+    let domain = Domain::set(SetAttr::new_size(1), element_domain);
+    let state = <SetOccurrence as ReprRule>::DomainLevel::init(domain).unwrap();
+    let element = Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+        Literal::Bool(true),
+        Literal::Int(2),
+    ]));
+    let value = Literal::AbstractLiteral(AbstractLiteral::Set(vec![element]));
+
+    assert_eq!(state.down(value.clone()).unwrap().up(), value);
+    assert!(
+        state
+            .occurs
+            .iter()
+            .all(|(key, _)| matches!(key, Literal::AbstractLiteral(AbstractLiteral::Tuple(_))))
+    );
+}
+
+#[test]
 fn explicit_set_round_trips_with_padding() {
     let domain = Domain::set(SetAttr::new_min_max_size(1, 3), domain_int!(1..4));
     let state = <SetExplicit as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
@@ -183,7 +203,7 @@ fn explicit_set_round_trips_with_padding() {
         Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(4), Literal::Int(2)]));
 
     let assignment = state.down(value).unwrap();
-    assert_eq!(assignment.set_size, Literal::Int(2));
+    assert_eq!(assignment.set_size, Some(Literal::Int(2)));
     assert_eq!(
         assignment.elems_matrix,
         Literal::from(conjure_cp::into_matrix!(vec![
@@ -215,14 +235,43 @@ fn explicit_set_round_trips_with_padding() {
 }
 
 #[test]
-fn packed_set_round_trips_and_uses_valid_subset_ranks() {
+fn fixed_explicit_set_omits_the_cardinality_marker() {
+    let domain = Domain::set(SetAttr::new_size(2), domain_int!(1..3));
+    let state = <SetExplicit as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let value =
+        Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(3), Literal::Int(1)]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.set_size, None);
+    assert_eq!(
+        assignment.up(),
+        Literal::AbstractLiteral(AbstractLiteral::Set(
+            vec![Literal::Int(1), Literal::Int(3),]
+        ))
+    );
+
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (new_symbols, _) = SetExplicit::init_for(&mut declaration).unwrap();
+    assert_eq!(new_symbols.iter_local().count(), 1);
+    assert!(
+        declaration
+            .get_repr::<SetExplicit>()
+            .unwrap()
+            .set_size
+            .is_none()
+    );
+}
+
+#[test]
+fn packed_set_round_trips_and_enforces_cardinality() {
     let domain = Domain::set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
     let state = <SetPacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
     let value =
         Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(3), Literal::Int(1)]));
 
     let assignment = state.down(value).unwrap();
-    assert_eq!(assignment.packed, Literal::Int(4));
+    assert_eq!(assignment.packed, Literal::Int(5));
     assert_eq!(
         assignment.up(),
         Literal::AbstractLiteral(AbstractLiteral::Set(
@@ -234,7 +283,7 @@ fn packed_set_round_trips_and_uses_valid_subset_ranks() {
     let mut declaration = symbols.gen_find(&domain);
     let (new_symbols, constraints) = SetPacked::init_for(&mut declaration).unwrap();
     assert_eq!(new_symbols.iter_local().count(), 1);
-    assert!(constraints.is_empty());
+    assert_eq!(constraints.len(), 1);
 
     let representation = declaration.get_repr::<SetPacked>().unwrap();
     let membership = representation.membership_expr(Expression::from(2));
@@ -242,7 +291,7 @@ fn packed_set_round_trips_and_uses_valid_subset_ranks() {
         membership
             .universe()
             .iter()
-            .any(|expr| matches!(expr, Expression::InDomain(..)))
+            .any(|expr| matches!(expr, Expression::UnsafeMod(..)))
     );
     assert!(
         membership
@@ -253,4 +302,15 @@ fn packed_set_round_trips_and_uses_valid_subset_ranks() {
 
     assert_eq!(SetPacked::compactness_score(domain.clone()).unwrap(), 6);
     assert_eq!(SetOccurrence::compactness_score(domain).unwrap(), 8);
+}
+
+#[test]
+fn packed_set_supports_non_integer_elements() {
+    let domain = Domain::set(SetAttr::new_min_max_size(1, 2), Domain::bool());
+    let state = <SetPacked as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Bool(true)]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.packed, Literal::Int(2));
+    assert_eq!(assignment.up(), value);
 }
