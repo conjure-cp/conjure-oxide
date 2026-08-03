@@ -411,6 +411,23 @@ pub fn normalize_solutions_for_comparison(
                         });
                         updates.push((k, Literal::AbstractLiteral(set)));
                     }
+                    Literal::AbstractLiteral(AbstractLiteral::MSet(members)) => {
+                        let mset = AbstractLiteral::MSet(members).transform(&move |x| match x {
+                            AbstractLiteral::MSet(members) => {
+                                let members = members
+                                    .into_iter()
+                                    .map(|x| match x {
+                                        Literal::Bool(false) => Literal::Int(0),
+                                        Literal::Bool(true) => Literal::Int(1),
+                                        x => x,
+                                    })
+                                    .collect_vec();
+                                AbstractLiteral::MSet(members)
+                            }
+                            x => x,
+                        });
+                        updates.push((k, Literal::AbstractLiteral(mset)));
+                    }
                     e => bug!("unexpected literal type: {e:?}"),
                 }
             }
@@ -456,6 +473,10 @@ fn normalize_set_literal_order(value: AbstractLiteral<Literal>) -> AbstractLiter
         AbstractLiteral::Set(mut members) => {
             members.sort_by(Literal::essence_cmp);
             AbstractLiteral::Set(members)
+        }
+        AbstractLiteral::MSet(mut members) => {
+            members.sort_by(Literal::essence_cmp);
+            AbstractLiteral::MSet(members)
         }
         value => value,
     })
