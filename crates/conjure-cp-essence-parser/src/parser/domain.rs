@@ -8,8 +8,8 @@ use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, Literal, Moo, Name, Range,
-    Reference, SetAttr,
+    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, Literal, MSetAttr, Moo,
+    Name, Range, Reference, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -74,6 +74,7 @@ pub fn parse_domain(
         "matrix_domain" | "annotation_matrix_domain" => parse_matrix_domain(ctx, domain),
         "record_domain" | "annotation_record_domain" => parse_record_domain(ctx, domain),
         "set_domain" | "annotation_set_domain" => parse_set_domain(ctx, domain),
+        "mset_domain" | "annotation_mset_domain" => parse_mset_domain(ctx, domain),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("{} is not a supported domain type", domain.kind()),
@@ -82,6 +83,77 @@ pub fn parse_domain(
             Ok(None)
         }
     }
+}
+
+fn parse_mset_domain(
+    ctx: &mut ParseContext,
+    mset_domain: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let _representation = mset_domain
+        .child_by_field_name("representation")
+        .map(|node| ctx.source_code[node.start_byte()..node.end_byte()].to_string());
+    let mut size = Range::Unbounded;
+    let mut occurrence = Range::Unbounded;
+    let mut min_size = None;
+    let mut max_size = None;
+    let mut min_occurrence = None;
+    let mut max_occurrence = None;
+    let mut value_domain = None;
+
+    for child in named_children(&mset_domain) {
+        match child.kind() {
+            "identifier" => {}
+            "mset_attributes" => {
+                for attribute in named_children(&child) {
+                    let Some(value_node) = attribute.child_by_field_name("value") else {
+                        return Ok(None);
+                    };
+                    let Some(value) = parse_int(ctx, &value_node) else {
+                        return Ok(None);
+                    };
+                    let name = attribute
+                        .child_by_field_name("attribute")
+                        .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
+                        .unwrap_or_default();
+                    match name {
+                        "size" => size = Range::Single(value),
+                        "minSize" => min_size = Some(value),
+                        "maxSize" => max_size = Some(value),
+                        "minOccur" => min_occurrence = Some(value),
+                        "maxOccur" => max_occurrence = Some(value),
+                        _ => return Ok(None),
+                    }
+                }
+            }
+            "domain" | "annotation_domain" => value_domain = parse_domain(ctx, child)?,
+            _ => {}
+        }
+    }
+
+    if !matches!(size, Range::Single(_)) {
+        size = match (min_size, max_size) {
+            (Some(min), Some(max)) => Range::Bounded(min, max),
+            (Some(min), None) => Range::UnboundedR(min),
+            (None, Some(max)) => Range::UnboundedL(max),
+            (None, None) => Range::Unbounded,
+        };
+    }
+    occurrence = match (min_occurrence, max_occurrence) {
+        (Some(min), Some(max)) => Range::Bounded(min, max),
+        (Some(min), None) => Range::UnboundedR(min),
+        (None, Some(max)) => Range::UnboundedL(max),
+        (None, None) => occurrence,
+    };
+
+    let Some(value_domain) = value_domain else {
+        ctx.record_error(RecoverableParseError::new(
+            "Multiset domain must have a value domain".to_string(),
+            Some(mset_domain.range()),
+        ));
+        return Ok(None);
+    };
+    let attrs = MSetAttr::new(size, occurrence);
+    Ok(Some(Domain::mset(attrs, value_domain)))
 }
 
 fn get_declaration_ptr_from_identifier(

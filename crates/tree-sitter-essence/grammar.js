@@ -97,7 +97,7 @@ module.exports = grammar ({
       field("matrix_domain", $.matrix_domain),
       field("record_domain", $.record_domain),
       field("set_domain", $.set_domain),
-      field("set_domain", $.set_domain),
+      field("mset_domain", $.mset_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -186,10 +186,35 @@ module.exports = grammar ({
       )
     ),
 
+    mset_domain: $ => seq(
+      "mset",
+      optional(seq("{", field("representation", $.identifier), "}")),
+      optional(seq("(", $.mset_attributes, ")")),
+      "of",
+      field("value_domain", $.domain)
+    ),
+
+    mset_attributes: $ => commaSep1($.mset_attribute),
+
+    mset_attribute: $ => choice(
+      seq(field("attribute", "size"), field("value", $.integer)),
+      seq(field("attribute", "minSize"), field("value", $.integer)),
+      seq(field("attribute", "maxSize"), field("value", $.integer)),
+      seq(field("attribute", "minOccur"), field("value", $.integer)),
+      seq(field("attribute", "maxOccur"), field("value", $.integer))
+    ),
+
     set_literal: $ => seq(
       "{",
       field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
       "}"
+    ),
+
+    mset_literal: $ => seq(
+      "mset",
+      "(",
+      optional(field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)))),
+      ")"
     ),
 
     name_domain_pair: $ => seq(
@@ -400,6 +425,7 @@ module.exports = grammar ({
       field("from_solution", $.from_solution),
       field("index_or_slice", $.index_or_slice),
       field("set_literal", $.set_literal),
+      field("mset_literal", $.mset_literal),
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
       field("element_id", $.element_id),
@@ -523,6 +549,7 @@ module.exports = grammar ({
       $.tuple,
       $.record,
       $.set_literal,
+      $.mset_literal,
       $.index_or_slice,
       $.flatten,
       $.element_id
@@ -536,6 +563,7 @@ module.exports = grammar ({
       field("matrix_domain", $.annotation_matrix_domain),
       field("record_domain", $.annotation_record_domain),
       field("set_domain", $.annotation_set_domain),
+      field("mset_domain", $.annotation_mset_domain),
     ),
 
     annotation_int_domain: $ => seq(
@@ -601,6 +629,14 @@ module.exports = grammar ({
       "set",
       optional(seq("{", field("representation", $.identifier), "}")),
       optional(seq("(", $.set_attributes, ")")),
+      "of",
+      field("value_domain", $.annotation_domain)
+    ),
+
+    annotation_mset_domain: $ => seq(
+      "mset",
+      optional(seq("{", field("representation", $.identifier), "}")),
+      optional(seq("(", $.mset_attributes, ")")),
       "of",
       field("value_domain", $.annotation_domain)
     ),

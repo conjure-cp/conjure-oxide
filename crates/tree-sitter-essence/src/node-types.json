@@ -343,6 +343,16 @@
           }
         ]
       },
+      "mset_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "annotation_mset_domain",
+            "named": true
+          }
+        ]
+      },
       "record_domain": {
         "multiple": false,
         "required": false,
@@ -485,6 +495,42 @@
     }
   },
   {
+    "type": "annotation_mset_domain",
+    "named": true,
+    "fields": {
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "value_domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "annotation_domain",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "mset_attributes",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "annotation_name_domain_pair",
     "named": true,
     "fields": {
@@ -623,6 +669,10 @@
         },
         {
           "type": "metavar",
+          "named": true
+        },
+        {
+          "type": "mset_literal",
           "named": true
         },
         {
@@ -917,6 +967,16 @@
         "types": [
           {
             "type": "metavar",
+            "named": true
+          }
+        ]
+      },
+      "mset_literal": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "mset_literal",
             "named": true
           }
         ]
@@ -1274,6 +1334,16 @@
         "types": [
           {
             "type": "matrix_domain",
+            "named": true
+          }
+        ]
+      },
+      "mset_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "mset_domain",
             "named": true
           }
         ]
@@ -2381,6 +2451,131 @@
         "types": [
           {
             "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "mset_attribute",
+    "named": true,
+    "fields": {
+      "attribute": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "maxOccur",
+            "named": false
+          },
+          {
+            "type": "maxSize",
+            "named": false
+          },
+          {
+            "type": "minOccur",
+            "named": false
+          },
+          {
+            "type": "minSize",
+            "named": false
+          },
+          {
+            "type": "size",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "integer",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "mset_attributes",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "mset_attribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "mset_domain",
+    "named": true,
+    "fields": {
+      "representation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "value_domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "domain",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "mset_attributes",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "mset_literal",
+    "named": true,
+    "fields": {
+      "element": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
             "named": true
           }
         ]
@@ -3924,7 +4119,8 @@
   },
   {
     "type": "language_declaration",
-    "named": true
+    "named": true,
+    "extra": true
   },
   {
     "type": "letting",
@@ -3936,6 +4132,10 @@
   },
   {
     "type": "max",
+    "named": false
+  },
+  {
+    "type": "maxOccur",
     "named": false
   },
   {
@@ -3951,11 +4151,19 @@
     "named": false
   },
   {
+    "type": "minOccur",
+    "named": false
+  },
+  {
     "type": "minSize",
     "named": false
   },
   {
     "type": "minimising",
+    "named": false
+  },
+  {
+    "type": "mset",
     "named": false
   },
   {
@@ -3992,7 +4200,8 @@
   },
   {
     "type": "single_line_comment",
-    "named": true
+    "named": true,
+    "extra": true
   },
   {
     "type": "size",

@@ -78,7 +78,7 @@ pub fn parse_atom(
                 Atom::Literal(lit),
             )))
         }
-        "matrix" | "record" | "tuple" | "set_literal" => {
+        "matrix" | "record" | "tuple" | "set_literal" | "mset_literal" => {
             let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);
             };

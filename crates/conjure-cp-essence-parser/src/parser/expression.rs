@@ -24,8 +24,8 @@ pub fn parse_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" | "primary_atom" | "constant" | "identifier" | "metavar" | "matrix" | "record"
-        | "tuple" | "set_literal" | "comprehension" | "index_or_slice" | "flatten"
-        | "element_id" | "table" | "negative_table" => parse_atom(ctx, &node),
+        | "tuple" | "set_literal" | "mset_literal" | "comprehension" | "index_or_slice"
+        | "flatten" | "element_id" | "table" | "negative_table" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
