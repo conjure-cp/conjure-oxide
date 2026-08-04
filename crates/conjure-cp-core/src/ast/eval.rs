@@ -29,6 +29,24 @@ fn eval_constant_set(expr: &Expr) -> Option<Vec<Lit>> {
     Some(values)
 }
 
+/// Compare literals only when their outer Essence literal kinds agree.
+///
+/// Inner types are guaranteed by expression type checking; keeping this guard here also makes
+/// direct evaluator calls on unlike primitive or abstract literal kinds safely unevaluable.
+fn equal_constant_literals(lhs: &Lit, rhs: &Lit) -> Option<bool> {
+    match (lhs, rhs) {
+        (Lit::Int(_), Lit::Int(_)) | (Lit::Bool(_), Lit::Bool(_)) => {
+            Some(lhs.essence_cmp(rhs) == CmpOrdering::Equal)
+        }
+        (Lit::AbstractLiteral(lhs_abstract), Lit::AbstractLiteral(rhs_abstract))
+            if std::mem::discriminant(lhs_abstract) == std::mem::discriminant(rhs_abstract) =>
+        {
+            Some(lhs.essence_cmp(rhs) == CmpOrdering::Equal)
+        }
+        _ => None,
+    }
+}
+
 /// Simplify an expression to a constant using only constants already present at this node.
 ///
 /// This is intended for the rewriter: child expressions should have been simplified by the
@@ -604,12 +622,14 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::AbstractLiteral(into_matrix![elems]))
         }
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
-        Expr::Eq(_, a, b) => Some(Lit::Bool(
-            eval_constant(a)?.essence_cmp(&eval_constant(b)?) == CmpOrdering::Equal,
-        )),
-        Expr::Neq(_, a, b) => Some(Lit::Bool(
-            eval_constant(a)?.essence_cmp(&eval_constant(b)?) != CmpOrdering::Equal,
-        )),
+        Expr::Eq(_, a, b) => Some(Lit::Bool(equal_constant_literals(
+            &eval_constant(a)?,
+            &eval_constant(b)?,
+        )?)),
+        Expr::Neq(_, a, b) => Some(Lit::Bool(!equal_constant_literals(
+            &eval_constant(a)?,
+            &eval_constant(b)?,
+        )?)),
         Expr::Lt(_, a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Lit::Bool),
         Expr::Gt(_, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Lit::Bool),
         Expr::Leq(_, a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Lit::Bool),

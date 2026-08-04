@@ -939,6 +939,23 @@ fn eval_const_eq_mixed() {
 }
 
 #[test]
+fn eval_const_neq_mixed() {
+    let expr = Expression::Neq(
+        Metadata::new(),
+        Moo::new(Expression::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::Int(1)),
+        )),
+        Moo::new(Expression::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::Bool(true)),
+        )),
+    );
+    let result = eval_constant(&expr);
+    assert_eq!(result, None);
+}
+
+#[test]
 fn eval_const_sum_mixed() {
     let expr = Expression::Sum(
         Metadata::new(),
