@@ -1007,8 +1007,12 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::Participants(_, _) => todo!(),
         Expr::Party(_, _, _) => todo!(),
         Expr::Parts(_, _) => todo!(),
-        Expr::Subsequence(_, _, _) => todo!(),
-        Expr::Substring(_, _, _) => todo!(),
+        // Semantic lowering lives in the sequence horizontal rules (an ordinary registered rule
+        // set), not here; the partial evaluator only offers extra constant-folding, which
+        // `eval.rs`'s `Expr::Subsequence`/`Expr::Substring` arms already cover for the
+        // fully-constant case.
+        Expr::Subsequence(_, _, _) => Err(RuleNotApplicable),
+        Expr::Substring(_, _, _) => Err(RuleNotApplicable),
         Expr::LexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::LexLeq(_, _, _) => Err(RuleNotApplicable),
         Expr::LexGt(_, _, _) => Err(RuleNotApplicable),

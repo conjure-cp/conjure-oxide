@@ -24,10 +24,9 @@ pub fn parse_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" | "primary_atom" | "constant" | "identifier" | "metavar" | "matrix" | "record"
-        | "variant" | "tuple" | "set_literal" | "mset_literal" | "comprehension"
-        | "index_or_slice" | "flatten" | "element_id" | "table" | "negative_table" => {
-            parse_atom(ctx, &node)
-        }
+        | "variant" | "tuple" | "set_literal" | "mset_literal" | "sequence_literal"
+        | "comprehension" | "index_or_slice" | "flatten" | "element_id" | "table"
+        | "negative_table" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
@@ -180,6 +179,11 @@ fn parse_comparison_expression(
         "set_comparison" => {
             // Set comparisons require set operands (except 'in', which is hadled later)
             ctx.typechecking_context = TypecheckingContext::Set;
+            parse_binary_expression(ctx, &inner)
+        }
+        "sequence_comparison" => {
+            // Sequence comparisons (substring/subsequence) require sequence operands
+            ctx.typechecking_context = TypecheckingContext::Sequence;
             parse_binary_expression(ctx, &inner)
         }
         "all_diff_comparison" => {
@@ -521,6 +525,7 @@ fn parse_unary_expression(
                 ReturnType::Matrix(_)
                 | ReturnType::Set(_)
                 | ReturnType::MSet(_)
+                | ReturnType::Sequence(_)
                 | ReturnType::Function(_, _)
                 | ReturnType::Relation(_) => Expression::Card,
                 _ => Expression::Abs,
@@ -815,6 +820,22 @@ pub fn parse_binary_expression(
         "supsetEq" => {
             doc_name = "L_supsetEq";
             Ok(Some(Expression::SupsetEq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "substring" => {
+            doc_name = "L_substring";
+            Ok(Some(Expression::Substring(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "subsequence" => {
+            doc_name = "L_subsequence";
+            Ok(Some(Expression::Subsequence(
                 Metadata::new(),
                 Moo::new(left),
                 Moo::new(right),

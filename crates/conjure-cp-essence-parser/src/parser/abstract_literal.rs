@@ -23,6 +23,7 @@ pub fn parse_abstract(
         "matrix" => parse_matrix(ctx, node),
         "set_literal" => parse_set_literal(ctx, node),
         "mset_literal" => parse_mset_literal(ctx, node),
+        "sequence_literal" => parse_sequence_literal(ctx, node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected abstract literal, got: {}", node.kind()),
@@ -51,6 +52,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
     let got = match node.kind() {
         "set_literal" => "set",
         "mset_literal" => "mset",
+        "sequence_literal" => "sequence",
         "matrix" => "matrix",
         "tuple" => "tuple",
         "record" => "record",
@@ -297,5 +299,31 @@ fn parse_mset_literal(
         Ok(None)
     } else {
         Ok(Some(AbstractLiteral::MSet(elements)))
+    }
+}
+
+fn parse_sequence_literal(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    let saved_ctx = ctx.typechecking_context;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
+    let mut elements = Vec::new();
+    let mut had_error = false;
+    for child in named_children(node) {
+        ctx.typechecking_context = saved_inner_ctx;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+        let Some(expression) = parse_expression(ctx, child)? else {
+            had_error = true;
+            continue;
+        };
+        elements.push(expression);
+    }
+    ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Sequence(elements)))
     }
 }

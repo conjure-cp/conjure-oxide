@@ -1048,6 +1048,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let length = match collection {
                 AbstractLiteral::Set(values)
                 | AbstractLiteral::MSet(values)
+                | AbstractLiteral::Sequence(values)
                 | AbstractLiteral::Matrix(values, _) => values.len(),
                 AbstractLiteral::Function(entries) => entries.len(),
                 AbstractLiteral::Relation(entries) => entries.len(),

@@ -444,6 +444,24 @@ pub fn normalize_solutions_for_comparison(
                         });
                         updates.push((k, Literal::AbstractLiteral(mset)));
                     }
+                    Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) => {
+                        let sequence =
+                            AbstractLiteral::Sequence(elems).transform(&move |x| match x {
+                                AbstractLiteral::Sequence(elems) => {
+                                    let elems = elems
+                                        .into_iter()
+                                        .map(|x| match x {
+                                            Literal::Bool(false) => Literal::Int(0),
+                                            Literal::Bool(true) => Literal::Int(1),
+                                            x => x,
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Sequence(elems)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(sequence)));
+                    }
                     e => bug!("unexpected literal type: {e:?}"),
                 }
             }

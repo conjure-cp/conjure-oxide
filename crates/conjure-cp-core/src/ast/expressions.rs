@@ -1736,9 +1736,15 @@ impl Expression {
                 } else if let Some((attrs, dom, codom)) = domain.as_function() {
                     let size = Self::function_elements_size(attrs, &dom, &codom);
                     size.map(|size| Domain::int(vec![size]))
+                } else if let Some((attrs, _dom)) = domain.as_sequence() {
+                    // Unlike a set/mset, a sequence's length is not bounded by its inner
+                    // domain's size (repeated elements are allowed), so the attribute's own
+                    // size range is already the tightest bound available here.
+                    let attrs_gd = attrs.resolve().ok()?;
+                    Some(Domain::int(vec![attrs_gd.size]))
                 } else {
                     bug!(
-                        "Domain of {self} needed to be a matrix, set, mset, relation, or function for cardinality"
+                        "Domain of {self} needed to be a matrix, set, mset, sequence, relation, or function for cardinality"
                     )
                 }
             }

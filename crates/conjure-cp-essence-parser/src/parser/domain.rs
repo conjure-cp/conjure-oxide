@@ -9,7 +9,7 @@ use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
     Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, Literal, MSetAttr, Moo,
-    Name, Range, Reference, SetAttr,
+    Name, Range, Reference, SequenceAttr, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -76,6 +76,7 @@ pub fn parse_domain(
         "variant_domain" | "annotation_variant_domain" => parse_variant_domain(ctx, domain),
         "set_domain" | "annotation_set_domain" => parse_set_domain(ctx, domain),
         "mset_domain" | "annotation_mset_domain" => parse_mset_domain(ctx, domain),
+        "sequence_domain" | "annotation_sequence_domain" => parse_sequence_domain(ctx, domain),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("{} is not a supported domain type", domain.kind()),
@@ -458,6 +459,78 @@ fn parse_variant_domain(
     let keyword = child!(variant_domain, 0, "variant");
     ctx.add_span_and_doc_hover(&keyword, "variant", SymbolKind::Domain, None, None);
     Ok(Some(Domain::variant(entries)))
+}
+
+fn parse_sequence_domain(
+    ctx: &mut ParseContext,
+    sequence_domain: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let mut size = Range::Unbounded;
+    let mut min_size = None;
+    let mut max_size = None;
+    let mut value_domain: Option<DomainPtr> = None;
+
+    for child in named_children(&sequence_domain) {
+        match child.kind() {
+            "sequence_attributes" => {
+                for attribute in named_children(&child) {
+                    let Some(value_node) = attribute.child_by_field_name("value") else {
+                        return Ok(None);
+                    };
+                    let Some(value) = parse_int(ctx, &value_node) else {
+                        return Ok(None);
+                    };
+                    let name = attribute
+                        .child_by_field_name("attribute")
+                        .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
+                        .unwrap_or_default();
+                    match name {
+                        "size" => size = Range::Single(value),
+                        "minSize" => min_size = Some(value),
+                        "maxSize" => max_size = Some(value),
+                        _ => return Ok(None),
+                    }
+                }
+            }
+            "domain" | "annotation_domain" => value_domain = parse_domain(ctx, child)?,
+            _ => {}
+        }
+    }
+
+    if !matches!(size, Range::Single(_)) {
+        size = match (min_size, max_size) {
+            (Some(min), Some(max)) => Range::Bounded(min, max),
+            (Some(min), None) => Range::UnboundedR(min),
+            (None, Some(max)) => Range::UnboundedL(max),
+            (None, None) => Range::Unbounded,
+        };
+    }
+
+    let Some(value_domain) = value_domain else {
+        ctx.record_error(RecoverableParseError::new(
+            "Sequence domain must have a value domain".to_string(),
+            Some(sequence_domain.range()),
+        ));
+        return Ok(None);
+    };
+
+    // Adding sequence keyword to the source map with hover info from documentation
+    let sequence_keyword_node = child!(sequence_domain, 0, "sequence");
+    ctx.add_span_and_doc_hover(
+        &sequence_keyword_node,
+        "sequence",
+        SymbolKind::Domain,
+        None,
+        None,
+    );
+
+    // Jectivity attributes (injective/surjective/bijective) are not yet exposed via
+    // grammar syntax; only the size attribute is parsed here.
+    let attrs = SequenceAttr {
+        size,
+        ..SequenceAttr::default()
+    };
+    Ok(Some(Domain::sequence(attrs, value_domain)))
 }
 
 pub fn parse_set_domain(

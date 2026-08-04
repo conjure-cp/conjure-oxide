@@ -262,7 +262,9 @@ impl UnresolvedDomain {
                 inner.has_representation_preference()
                     || idxs.iter().any(|d| d.has_representation_preference())
             }
-            UnresolvedDomain::Sequence(_, inner) => inner.has_representation_preference(),
+            UnresolvedDomain::Sequence(attr, inner) => {
+                attr.representation.is_some() || inner.has_representation_preference()
+            }
             UnresolvedDomain::Set(attr, inner) => {
                 attr.representation.is_some() || inner.has_representation_preference()
             }

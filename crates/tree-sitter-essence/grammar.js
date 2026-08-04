@@ -99,6 +99,7 @@ module.exports = grammar ({
       field("variant_domain", $.variant_domain),
       field("set_domain", $.set_domain),
       field("mset_domain", $.mset_domain),
+      field("sequence_domain", $.sequence_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -212,6 +213,25 @@ module.exports = grammar ({
       seq(field("attribute", "maxOccur"), field("value", $.integer))
     ),
 
+    // e.g. sequence (size 2) of int(1..3), sequence (maxSize 3) of int(0..2),
+    // sequence (minSize 1, maxSize 2) of int(1..3), or bare sequence of int(1..3).
+    // Note: the grammar itself does not require a size bound here; that is
+    // enforced downstream by domain-construction logic, mirroring set/mset.
+    sequence_domain: $ => seq(
+      "sequence",
+      optional(seq("(", $.sequence_attributes, ")")),
+      "of",
+      field("value_domain", $.domain)
+    ),
+
+    sequence_attributes: $ => commaSep1($.sequence_attribute),
+
+    sequence_attribute: $ => choice(
+      seq(field("attribute", "size"), field("value", $.integer)),
+      seq(field("attribute", "minSize"), field("value", $.integer)),
+      seq(field("attribute", "maxSize"), field("value", $.integer))
+    ),
+
     set_literal: $ => seq(
       "{",
       field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
@@ -220,6 +240,13 @@ module.exports = grammar ({
 
     mset_literal: $ => seq(
       "mset",
+      "(",
+      optional(field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)))),
+      ")"
+    ),
+
+    sequence_literal: $ => seq(
+      "sequence",
       "(",
       optional(field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)))),
       ")"
@@ -344,6 +371,7 @@ module.exports = grammar ({
       $.lex_comparison,
       $.equality_comparison,
       $.set_comparison,
+      $.sequence_comparison,
       $.all_diff_comparison,
       $.all_different_except_comparison,
       $.global_cardinality_comparison
@@ -374,6 +402,13 @@ module.exports = grammar ({
     set_comparison: $ => seq(
       field("left", choice($.arithmetic_expr, $.annotation_expr, $.atom)),
       field("operator", choice("in", "subset", "subsetEq", "supset", "supsetEq")),
+      field("right", choice($.annotation_expr, $.atom))
+    ),
+
+    // Sequence comparisons: 's substring t' / 's subsequence t', return boolean
+    sequence_comparison: $ => seq(
+      field("left", choice($.arithmetic_expr, $.annotation_expr, $.atom)),
+      field("operator", choice("substring", "subsequence")),
       field("right", choice($.annotation_expr, $.atom))
     ),
 
@@ -445,6 +480,7 @@ module.exports = grammar ({
       field("index_or_slice", $.index_or_slice),
       field("set_literal", $.set_literal),
       field("mset_literal", $.mset_literal),
+      field("sequence_literal", $.sequence_literal),
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
       field("element_id", $.element_id),
@@ -577,6 +613,7 @@ module.exports = grammar ({
       $.variant,
       $.set_literal,
       $.mset_literal,
+      $.sequence_literal,
       $.index_or_slice,
       $.flatten,
       $.element_id
@@ -592,6 +629,7 @@ module.exports = grammar ({
       field("variant_domain", $.annotation_variant_domain),
       field("set_domain", $.annotation_set_domain),
       field("mset_domain", $.annotation_mset_domain),
+      field("sequence_domain", $.annotation_sequence_domain),
     ),
 
     annotation_int_domain: $ => seq(
@@ -672,6 +710,13 @@ module.exports = grammar ({
       "mset",
       optional(seq("{", field("representation", $.identifier), "}")),
       optional(seq("(", $.mset_attributes, ")")),
+      "of",
+      field("value_domain", $.annotation_domain)
+    ),
+
+    annotation_sequence_domain: $ => seq(
+      "sequence",
+      optional(seq("(", $.sequence_attributes, ")")),
       "of",
       field("value_domain", $.annotation_domain)
     ),

@@ -1,5 +1,5 @@
 use crate::ast::domains::attrs::PartitionAttr;
-use crate::ast::domains::{MSetAttr, SequenceAttr};
+use crate::ast::domains::{JectivityAttr, MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
     AbstractLiteral, DomainOpError, FuncAttr, HasDomain, Literal, Moo, Name, RelAttr, SetAttr,
@@ -128,6 +128,12 @@ impl GroundDomain {
                 MSetAttr::default(),
                 Moo::new(in1.union(in2)?),
             )),
+            (GroundDomain::Sequence(_, in1), GroundDomain::Sequence(_, in2)) => Ok(
+                GroundDomain::Sequence(SequenceAttr::default(), Moo::new(in1.union(in2)?)),
+            ),
+            (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
             (GroundDomain::Relation(_, in1s), GroundDomain::Relation(_, in2s)) => {
                 let mut inners = Vec::new();
                 for (in1, in2) in zip(in1s, in2s) {
@@ -141,10 +147,6 @@ impl GroundDomain {
             #[allow(unreachable_patterns)]
             (GroundDomain::Variant(_), _) | (_, GroundDomain::Variant(_)) => {
                 todo!("union variant domains")
-            }
-            #[allow(unreachable_patterns)]
-            (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
-                todo!("union sequence domains")
             }
             #[allow(unreachable_patterns)]
             (GroundDomain::Function(..), _) | (_, GroundDomain::Function(..)) => {
@@ -318,8 +320,27 @@ impl GroundDomain {
 
                 Ok(Box::new(iter))
             }
-            GroundDomain::Sequence(..) => {
-                todo!("Enumerating sequence domains is not yet supported")
+            GroundDomain::Sequence(attrs, inner_dom) => {
+                if attrs.jectivity != JectivityAttr::None {
+                    // Injective/surjective/bijective sequence enumeration is not yet needed by any
+                    // in-scope case (the two exhaustive tests using it are deferred pending enum
+                    // support), so it is left unimplemented rather than guessed at untested.
+                    todo!("Enumerating jective sequence domains is not yet supported")
+                }
+
+                let min_sz = attrs.size.low().copied().unwrap_or(0).max(0);
+                let max_sz = attrs.size.high().copied().ok_or(DomainOpError::Unbounded)?;
+
+                let pool = inner_dom.values()?.collect_vec();
+
+                let iter = (min_sz..=max_sz)
+                    .flat_map(move |sz| {
+                        std::iter::repeat_n(pool.clone(), sz.max(0) as usize)
+                            .multi_cartesian_product()
+                    })
+                    .map(|elems| Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)));
+
+                Ok(Box::new(iter))
             }
             GroundDomain::Set(attrs, inner_dom) => {
                 let n: Int = inner_dom.len_usize()?.try_into()?;
@@ -406,10 +427,31 @@ impl GroundDomain {
                 })?;
                 inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
             }
-            GroundDomain::Sequence(_, _) => {
-                // If jectivity is not set, the sequence can have any permutation.
-                //
-                todo!("Length bound currently not supported");
+            GroundDomain::Sequence(seq_attr, inner_domain) => {
+                if seq_attr.jectivity != JectivityAttr::None {
+                    // See the matching note on `values()` above: not yet needed by any in-scope case.
+                    todo!("Length bound of jective sequences is not yet supported");
+                }
+
+                let inner_len = inner_domain.length()?;
+                let min_sz = seq_attr.size.low().copied().unwrap_or(0).max(0) as u64;
+                let max_sz = seq_attr
+                    .size
+                    .high()
+                    .copied()
+                    .ok_or(DomainOpError::Unbounded)? as u64;
+
+                if min_sz > max_sz {
+                    return Ok(0);
+                }
+
+                let mut ans = 0u64;
+                for sz in min_sz..=max_sz {
+                    let sz: u32 = sz.try_into().map_err(|_| DomainOpError::TooLarge)?;
+                    let c = inner_len.checked_pow(sz).ok_or(DomainOpError::TooLarge)?;
+                    ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
             }
             GroundDomain::Set(set_attr, inner_domain) => {
                 let inner_len = inner_domain.length()?;
@@ -1269,7 +1311,9 @@ impl GroundDomain {
                 inner.has_representation_preference()
                     || idxs.iter().any(|d| d.has_representation_preference())
             }
-            GroundDomain::Sequence(_, inner) => inner.has_representation_preference(),
+            GroundDomain::Sequence(attr, inner) => {
+                attr.representation.is_some() || inner.has_representation_preference()
+            }
             GroundDomain::Set(attr, inner) => {
                 attr.representation.is_some() || inner.has_representation_preference()
             }

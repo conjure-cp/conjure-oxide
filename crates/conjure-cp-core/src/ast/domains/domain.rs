@@ -519,13 +519,20 @@ impl Domain {
 
     /// User-specified representation preference on this domain, if any (Essence short name).
     ///
-    /// For set domains this is the optional name in `set{packed} of …`. Nested preferences on
-    /// element domains are not returned here; only the preference attached to this domain node.
+    /// For set and sequence domains this is the optional name in `set{packed} of …` /
+    /// `sequence{packed} of …`. Nested preferences on element domains are not returned here;
+    /// only the preference attached to this domain node.
     pub fn representation_preference(&self) -> Option<&str> {
         if let Some(GroundDomain::Set(attr, _)) = self.as_ground() {
             return attr.representation.as_deref();
         }
         if let Some(UnresolvedDomain::Set(attr, _)) = self.as_unresolved() {
+            return attr.representation.as_deref();
+        }
+        if let Some(GroundDomain::Sequence(attr, _)) = self.as_ground() {
+            return attr.representation.as_deref();
+        }
+        if let Some(UnresolvedDomain::Sequence(attr, _)) = self.as_unresolved() {
             return attr.representation.as_deref();
         }
         None

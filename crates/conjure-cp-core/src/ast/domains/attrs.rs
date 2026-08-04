@@ -161,6 +161,19 @@ impl<A: Display> Display for FuncAttr<A> {
 pub struct SequenceAttr<A = Int> {
     pub size: Range<A>,
     pub jectivity: JectivityAttr,
+    /// Optional user-facing representation preference (short name), e.g. `"packed"`.
+    ///
+    /// Written in Essence as `sequence{packed} of …`. When present, representation selection
+    /// heuristics default to this representation if it is applicable.
+    pub representation: Option<String>,
+}
+
+impl<A> SequenceAttr<A> {
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A> Default for SequenceAttr<A> {
@@ -168,6 +181,7 @@ impl<A> Default for SequenceAttr<A> {
         SequenceAttr {
             size: Range::Unbounded,
             jectivity: JectivityAttr::None,
+            representation: None,
         }
     }
 }
