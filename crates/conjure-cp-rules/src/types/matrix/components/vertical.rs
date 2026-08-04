@@ -1,10 +1,10 @@
 use super::MatrixComponents;
 use crate::guard;
-use crate::shared::utils::{eval_to_usize, to_aux_var};
-use conjure_cp::ast::matrix::unflatten_matrix;
+use crate::shared::representation_prelude::matrix::{flatten, unflatten_matrix};
+use crate::shared::utils::{as_eq_or_neq, collect_eq_or_neq, eval_to_usize, to_aux_var};
 use conjure_cp::ast::{
-    Atom, DeclarationKind, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, Reference,
-    SymbolTable, eval_constant,
+    AbstractLiteral, Atom, DeclarationKind, DomainPtr, Expression, GroundDomain, Literal, Metadata,
+    Moo, Range, Reference, SymbolTable, eval_constant,
 };
 use conjure_cp::bug::UnwrapOrBug;
 use conjure_cp::into_matrix_expr;
@@ -33,6 +33,44 @@ register_rule_set!("ReprMatrixComponents", ("Base"), |f: &SolverFamily| {
     }
     matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
 });
+
+/// Compare a component-represented matrix with a matrix literal element by element.
+#[register_rule("ReprMatrixComponents", 9400, [Eq, Neq])]
+fn matrix_components_var_eq_literal(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
+    let Some((components, literal)) =
+        [(&lhs, &rhs), (&rhs, &lhs)]
+            .into_iter()
+            .find_map(|(variable, literal)| {
+                let Expression::Atomic(_, Atom::Reference(reference)) = variable else {
+                    return None;
+                };
+                let components = reference.get_repr_as::<MatrixComponents>()?;
+                let Literal::AbstractLiteral(literal @ AbstractLiteral::Matrix(..)) =
+                    eval_constant(literal)?
+                else {
+                    return None;
+                };
+                Some((components, literal))
+            })
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let values = flatten(&literal).cloned().collect::<Vec<_>>();
+    if components.elements.len() != values.len() {
+        return Err(RuleNotApplicable);
+    }
+    Ok(Reduction::pure(collect_eq_or_neq(
+        neq,
+        components
+            .elements
+            .iter()
+            .cloned()
+            .map(Reference::new)
+            .zip(values),
+    )))
+}
 
 /// True when a local find/letting still needs `MatrixComponents` initialised.
 fn decl_needs_matrix_components_init(decl: &conjure_cp::ast::DeclarationPtr) -> bool {
@@ -693,5 +731,29 @@ mod tests {
             .expect("unsafe_const_index_matrix_components registered");
         let err = rule.apply(&expr, &symbols).unwrap_err();
         assert!(matches!(err, ApplicationError::RuleNotApplicable));
+    }
+
+    #[test]
+    fn matrix_components_equality_to_literal_compares_each_element() {
+        let (symbols, decl) = matrix_find_1d();
+        let mut reference = Reference::new(decl);
+        let _ = reference.select_repr::<MatrixComponents>().unwrap();
+        let literal = Literal::AbstractLiteral(AbstractLiteral::Matrix(
+            vec![Literal::Int(1), Literal::Int(2), Literal::Int(3)],
+            Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 3)])),
+        ));
+        let equality = Expression::Eq(
+            Metadata::new(),
+            Moo::new(Expression::from(reference)),
+            Moo::new(Expression::from(literal)),
+        );
+
+        let lowered = matrix_components_var_eq_literal(&equality, &symbols)
+            .unwrap()
+            .new_expression;
+        let Expression::And(_, comparisons) = lowered else {
+            panic!("expected element-wise conjunction");
+        };
+        assert_eq!(comparisons.unwrap_list().unwrap().len(), 3);
     }
 }
