@@ -1,0 +1,131 @@
+Model before rewriting:
+
+find x: tuple (bool, int(1..4))
+
+such that
+
+x[1] = false,
+x[2] = 2
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..7)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[1]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[1]) @ and([1 >= 1,1 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[1])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 4),1;int(1..)])])
+
+--
+
+x[2]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[2]) @ and([2 >= 1,2 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[2])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+sum([x#packed_1 % 4,1;int(1..)])
+
+--
+
+x#packed_1 % 4
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#packed_1,4) @ 4 != 0}
+
+--
+
+(x#packed_1 / 4)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#packed_1, 4) @ 4 != 0}
+
+--
+
+sum([SafeMod(x#packed_1,4),1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __0], 2),SumGeq([1, __0], 2);int(1..)])
+new variables:
+  findAux __0: int(0..3)
+new constraints:
+  __0 =aux SafeMod(x#packed_1,4)
+
+--
+
+SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])]) = false
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])]), false)
+
+--
+
+__0 =aux SafeMod(x#packed_1,4)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x#packed_1, 4, __0)
+
+--
+
+SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([true,false;int(1..)],[__1])
+new variables:
+  findAux __1: int(1..2)
+new constraints:
+  __1 =aux sum([SafeDiv(x#packed_1, 4),1;int(1..)])
+
+--
+
+__1 =aux sum([SafeDiv(x#packed_1, 4),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __2], __1),SumGeq([1, __2], __1);int(1..)])
+new variables:
+  findAux __2: int(0..1)
+new constraints:
+  __2 =aux SafeDiv(x#packed_1, 4)
+
+--
+
+SafeIndex([true,false;int(1..)],[__1])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([true,false],__1,true)
+
+--
+
+__2 =aux SafeDiv(x#packed_1, 4)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#packed_1, 4, __2)
+
+--
+
+Final model:
+
+find x: tuple (bool, int(1..4))
+find x#packed_1: int(0..7)
+findAux __0: int(0..3)
+findAux __1: int(1..2)
+findAux __2: int(0..1)
+
+such that
+
+Reify(__minion_element_one([true,false],__1,true), false),
+and([SumLeq([1, __0], 2),SumGeq([1, __0], 2);int(1..)]),
+ModEq(x#packed_1, 4, __0),
+and([SumLeq([1, __2], __1),SumGeq([1, __2], __1);int(1..)]),
+DivEq(x#packed_1, 4, __2)
+
