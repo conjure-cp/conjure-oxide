@@ -2640,7 +2640,9 @@ impl Typeable for Expression {
                                 .cloned()
                                 .unwrap_or(ReturnType::Unknown)
                         }
-                        ReturnType::Matrix(element_type) => *element_type,
+                        // Matrix return types do not encode dimensionality: one or more indices
+                        // select the declared element type.
+                        ReturnType::Matrix(element_type) => return *element_type,
                         // Record and variant indices need their field-name context to determine a
                         // result type. Unknown can likewise be resolved by later typechecking.
                         ReturnType::Record(_) | ReturnType::Variant(_) | ReturnType::Unknown => {

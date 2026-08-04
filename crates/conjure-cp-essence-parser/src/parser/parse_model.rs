@@ -377,6 +377,21 @@ mod test {
     }
 
     #[test]
+    pub fn test_multi_dimensional_matrix_index_return_type() {
+        let src = "
+        find a : matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+        such that a[1,1] = 1
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let constraints = model.constraints();
+        let Expression::Eq(_, lhs, _) = &constraints[0] else {
+            panic!("expected an equality constraint");
+        };
+        assert_eq!(lhs.return_type(), ReturnType::Int);
+    }
+
+    #[test]
     pub fn value_letting_retains_symbolic_integer_domain() {
         let src = "
         given v: int(1..)
