@@ -1,0 +1,193 @@
+Model before rewriting:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+
+such that
+
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[a] = true
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([x#packed_1 = 0,true = true;int(1..)]),and([x#packed_1 = 1,true = false;int(1..)]);int(1..)])
+
+--
+
+x[b] = 0
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([x#packed_1 = 2,0 = 0;int(1..)]),and([x#packed_1 = 3,0 = 4;int(1..)]);int(1..)])
+
+--
+
+active(x, a)
+   ~~> variant_packed_active ([("ReprVariantPacked", 9800)])
+and([x#packed_1 >= 0,x#packed_1 < 2;int(1..)])
+
+--
+
+active(x, b)
+   ~~> variant_packed_active ([("ReprVariantPacked", 9800)])
+and([x#packed_1 >= 2,x#packed_1 < 4;int(1..)])
+
+--
+
+or([and([x#packed_1 = 0;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#packed_1 = 0;int(1..)])
+
+--
+
+or([and([x#packed_1 = 2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#packed_1 = 2;int(1..)])
+
+--
+
+and([x#packed_1 = 0;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#packed_1 = 0
+
+--
+
+and([x#packed_1 = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#packed_1 = 2
+
+--
+
+x#packed_1 < 2
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#packed_1 <= sum([2,-1;int(1..)])
+
+--
+
+x#packed_1 < 4
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#packed_1 <= sum([4,-1;int(1..)])
+
+--
+
+x#packed_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#packed_1,0)
+
+--
+
+x#packed_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#packed_1,2)
+
+--
+
+(and([x#packed_1 >= 0,x#packed_1 <= 1;int(1..)])) -> (WatchedLiteral(x#packed_1,0))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__0) -> (WatchedLiteral(x#packed_1,0))
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux and([x#packed_1 >= 0,x#packed_1 <= 1;int(1..)])
+
+--
+
+(__0) -> (WatchedLiteral(x#packed_1,0))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#packed_1,0), __0)
+
+--
+
+__0 =aux and([x#packed_1 >= 0,x#packed_1 <= 1;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#packed_1 >= 0,x#packed_1 <= 1;int(1..)]), __0)
+
+--
+
+(and([x#packed_1 >= 2,x#packed_1 <= 3;int(1..)])) -> (WatchedLiteral(x#packed_1,2))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__1) -> (WatchedLiteral(x#packed_1,2))
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux and([x#packed_1 >= 2,x#packed_1 <= 3;int(1..)])
+
+--
+
+(__1) -> (WatchedLiteral(x#packed_1,2))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#packed_1,2), __1)
+
+--
+
+__1 =aux and([x#packed_1 >= 2,x#packed_1 <= 3;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#packed_1 >= 2,x#packed_1 <= 3;int(1..)]), __1)
+
+--
+
+x#packed_1 >= 0
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, x#packed_1, 0)
+
+--
+
+x#packed_1 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#packed_1, 1, 0)
+
+--
+
+x#packed_1 >= 2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#packed_1, 0)
+
+--
+
+x#packed_1 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#packed_1, 3, 0)
+
+--
+
+Final model:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find x#packed_1: int(0..3)
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+ReifyImply(WatchedLiteral(x#packed_1,0), __0),
+ReifyImply(WatchedLiteral(x#packed_1,2), __1),
+Reify(and([Ineq(0, x#packed_1, 0),Ineq(x#packed_1, 1, 0);int(1..)]), __0),
+Reify(and([Ineq(2, x#packed_1, 0),Ineq(x#packed_1, 3, 0);int(1..)]), __1)
+

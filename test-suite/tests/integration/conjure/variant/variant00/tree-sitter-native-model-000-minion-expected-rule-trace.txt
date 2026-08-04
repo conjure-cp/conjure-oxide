@@ -1,0 +1,618 @@
+Model before rewriting:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find y1: V
+find y2: V
+find z: V
+find t1: V
+find t2: V
+find someInt: int(0)
+
+such that
+
+x[a] = true,
+y1 = variant{a = false},
+y2 = variant{b = 4},
+x = z,
+t1 = variant{b = someInt},
+t2 = variant{b = t1[b]}
+
+--
+
+y1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y1
+new variables:
+  find y1#components_1: int(1..2)
+  find y1#components_2: bool
+  find y1#components_3: int(0, 4)
+new constraints:
+  (y1#components_1 != 1) -> (y1#components_2 = false)
+  (y1#components_1 != 2) -> (y1#components_3 = 0)
+
+--
+
+y2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y2
+new variables:
+  find y2#components_1: int(1..2)
+  find y2#components_2: bool
+  find y2#components_3: int(0, 4)
+new constraints:
+  (y2#components_1 != 1) -> (y2#components_2 = false)
+  (y2#components_1 != 2) -> (y2#components_3 = 0)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#components_1: int(1..2)
+  find x#components_2: bool
+  find x#components_3: int(0, 4)
+new constraints:
+  (x#components_1 != 1) -> (x#components_2 = false)
+  (x#components_1 != 2) -> (x#components_3 = 0)
+
+--
+
+x = z
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x = z
+new variables:
+  find z#components_1: int(1..2)
+  find z#components_2: bool
+  find z#components_3: int(0, 4)
+new constraints:
+  (z#components_1 != 1) -> (z#components_2 = false)
+  (z#components_1 != 2) -> (z#components_3 = 0)
+
+--
+
+t1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1
+new variables:
+  find t1#components_1: int(1..2)
+  find t1#components_2: bool
+  find t1#components_3: int(0, 4)
+new constraints:
+  (t1#components_1 != 1) -> (t1#components_2 = false)
+  (t1#components_1 != 2) -> (t1#components_3 = 0)
+
+--
+
+t2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t2
+new variables:
+  find t2#components_1: int(1..2)
+  find t2#components_2: bool
+  find t2#components_3: int(0, 4)
+new constraints:
+  (t2#components_1 != 1) -> (t2#components_2 = false)
+  (t2#components_1 != 2) -> (t2#components_3 = 0)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+t1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1
+
+--
+
+x[a] = true
+   ~~> variant_components_field_eq ([("ReprGeneral", 9900)])
+and([x#components_1 = 1,x#components_2 = true;int(1..)])
+
+--
+
+x = z
+   ~~> variant_components_var_eq_var ([("ReprGeneral", 9700)])
+and([x#components_1 = z#components_1,x#components_2 = z#components_2,x#components_3 = z#components_3;int(1..)])
+
+--
+
+y1 = variant{a = false}
+   ~~> variant_components_var_eq_lit ([("ReprGeneral", 9700)])
+and([y1#components_1 = 1,y1#components_2 = false;int(1..)])
+
+--
+
+y2 = variant{b = 4}
+   ~~> variant_components_var_eq_lit ([("ReprGeneral", 9700)])
+and([y2#components_1 = 2,y2#components_3 = 4;int(1..)])
+
+--
+
+t1 = variant{b = someInt}
+   ~~> variant_components_var_eq_lit ([("ReprGeneral", 9700)])
+and([t1#components_1 = 2,t1#components_3 = someInt;int(1..)])
+
+--
+
+t2 = variant{b = t1[b]}
+   ~~> variant_components_var_eq_lit ([("ReprGeneral", 9700)])
+and([t2#components_1 = 2,t2#components_3 = t1[b];int(1..)])
+
+--
+
+t2#components_3 = t1[b]
+   ~~> variant_components_field_eq ([("ReprGeneral", 9900)])
+and([t1#components_1 = 2,t1#components_3 = t2#components_3;int(1..)])
+
+--
+
+and([t2#components_1 = 2,and([t1#components_1 = 2,t1#components_3 = t2#components_3;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([t2#components_1 = 2,t1#components_1 = 2,t1#components_3 = t2#components_3;int(1..)])
+
+--
+
+y1#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y1#components_2,false)
+
+--
+
+y1#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y1#components_3,0)
+
+--
+
+y2#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y2#components_2,false)
+
+--
+
+y2#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y2#components_3,0)
+
+--
+
+x#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_2,false)
+
+--
+
+x#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_3,0)
+
+--
+
+z#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z#components_2,false)
+
+--
+
+z#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(z#components_3,0)
+
+--
+
+t1#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t1#components_2,false)
+
+--
+
+t1#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t1#components_3,0)
+
+--
+
+t2#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t2#components_2,false)
+
+--
+
+t2#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t2#components_3,0)
+
+--
+
+x#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_1,1)
+
+--
+
+y1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y1#components_1,1)
+
+--
+
+y1#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y1#components_2,false)
+
+--
+
+y2#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y2#components_1,2)
+
+--
+
+y2#components_3 = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y2#components_3,4)
+
+--
+
+t1#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t1#components_1,2)
+
+--
+
+t2#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t2#components_1,2)
+
+--
+
+t1#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(t1#components_1,2)
+
+--
+
+(y1#components_1 != 1) -> (WatchedLiteral(y1#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__0) -> (WatchedLiteral(y1#components_2,false))
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux y1#components_1 != 1
+
+--
+
+(__0) -> (WatchedLiteral(y1#components_2,false))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(y1#components_2,false), __0)
+
+--
+
+__0 =aux y1#components_1 != 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(y1#components_1 != 1, __0)
+
+--
+
+(y1#components_1 != 2) -> (WatchedLiteral(y1#components_3,0))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__1) -> (WatchedLiteral(y1#components_3,0))
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux y1#components_1 != 2
+
+--
+
+(__1) -> (WatchedLiteral(y1#components_3,0))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(y1#components_3,0), __1)
+
+--
+
+__1 =aux y1#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(y1#components_1 != 2, __1)
+
+--
+
+(y2#components_1 != 1) -> (WatchedLiteral(y2#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__2) -> (WatchedLiteral(y2#components_2,false))
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux y2#components_1 != 1
+
+--
+
+(__2) -> (WatchedLiteral(y2#components_2,false))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(y2#components_2,false), __2)
+
+--
+
+__2 =aux y2#components_1 != 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(y2#components_1 != 1, __2)
+
+--
+
+(y2#components_1 != 2) -> (WatchedLiteral(y2#components_3,0))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> (WatchedLiteral(y2#components_3,0))
+new variables:
+  findAux __3: bool
+new constraints:
+  __3 =aux y2#components_1 != 2
+
+--
+
+(__3) -> (WatchedLiteral(y2#components_3,0))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(y2#components_3,0), __3)
+
+--
+
+__3 =aux y2#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(y2#components_1 != 2, __3)
+
+--
+
+(x#components_1 != 1) -> (WatchedLiteral(x#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__4) -> (WatchedLiteral(x#components_2,false))
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux x#components_1 != 1
+
+--
+
+(__4) -> (WatchedLiteral(x#components_2,false))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#components_2,false), __4)
+
+--
+
+__4 =aux x#components_1 != 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x#components_1 != 1, __4)
+
+--
+
+(x#components_1 != 2) -> (WatchedLiteral(x#components_3,0))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__5) -> (WatchedLiteral(x#components_3,0))
+new variables:
+  findAux __5: bool
+new constraints:
+  __5 =aux x#components_1 != 2
+
+--
+
+(__5) -> (WatchedLiteral(x#components_3,0))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#components_3,0), __5)
+
+--
+
+__5 =aux x#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x#components_1 != 2, __5)
+
+--
+
+(z#components_1 != 1) -> (WatchedLiteral(z#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__6) -> (WatchedLiteral(z#components_2,false))
+new variables:
+  findAux __6: bool
+new constraints:
+  __6 =aux z#components_1 != 1
+
+--
+
+(__6) -> (WatchedLiteral(z#components_2,false))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(z#components_2,false), __6)
+
+--
+
+__6 =aux z#components_1 != 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(z#components_1 != 1, __6)
+
+--
+
+(z#components_1 != 2) -> (WatchedLiteral(z#components_3,0))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__7) -> (WatchedLiteral(z#components_3,0))
+new variables:
+  findAux __7: bool
+new constraints:
+  __7 =aux z#components_1 != 2
+
+--
+
+(__7) -> (WatchedLiteral(z#components_3,0))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(z#components_3,0), __7)
+
+--
+
+__7 =aux z#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(z#components_1 != 2, __7)
+
+--
+
+(t1#components_1 != 1) -> (WatchedLiteral(t1#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__8) -> (WatchedLiteral(t1#components_2,false))
+new variables:
+  findAux __8: bool
+new constraints:
+  __8 =aux t1#components_1 != 1
+
+--
+
+(__8) -> (WatchedLiteral(t1#components_2,false))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(t1#components_2,false), __8)
+
+--
+
+__8 =aux t1#components_1 != 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(t1#components_1 != 1, __8)
+
+--
+
+(t1#components_1 != 2) -> (WatchedLiteral(t1#components_3,0))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__9) -> (WatchedLiteral(t1#components_3,0))
+new variables:
+  findAux __9: bool
+new constraints:
+  __9 =aux t1#components_1 != 2
+
+--
+
+(__9) -> (WatchedLiteral(t1#components_3,0))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(t1#components_3,0), __9)
+
+--
+
+__9 =aux t1#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(t1#components_1 != 2, __9)
+
+--
+
+(t2#components_1 != 1) -> (WatchedLiteral(t2#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__10) -> (WatchedLiteral(t2#components_2,false))
+new variables:
+  findAux __10: bool
+new constraints:
+  __10 =aux t2#components_1 != 1
+
+--
+
+(__10) -> (WatchedLiteral(t2#components_2,false))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(t2#components_2,false), __10)
+
+--
+
+__10 =aux t2#components_1 != 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(t2#components_1 != 1, __10)
+
+--
+
+(t2#components_1 != 2) -> (WatchedLiteral(t2#components_3,0))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__11) -> (WatchedLiteral(t2#components_3,0))
+new variables:
+  findAux __11: bool
+new constraints:
+  __11 =aux t2#components_1 != 2
+
+--
+
+(__11) -> (WatchedLiteral(t2#components_3,0))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(t2#components_3,0), __11)
+
+--
+
+__11 =aux t2#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(t2#components_1 != 2, __11)
+
+--
+
+Final model:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find y1: V
+find y2: V
+find z: V
+find t1: V
+find t2: V
+find someInt: int(0)
+find y1#components_1: int(1..2)
+find y1#components_2: bool
+find y1#components_3: int(0, 4)
+find y2#components_1: int(1..2)
+find y2#components_2: bool
+find y2#components_3: int(0, 4)
+find x#components_1: int(1..2)
+find x#components_2: bool
+find x#components_3: int(0, 4)
+find z#components_1: int(1..2)
+find z#components_2: bool
+find z#components_3: int(0, 4)
+find t1#components_1: int(1..2)
+find t1#components_2: bool
+find t1#components_3: int(0, 4)
+find t2#components_1: int(1..2)
+find t2#components_2: bool
+find t2#components_3: int(0, 4)
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+
+such that
+
+and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]),
+and([WatchedLiteral(y1#components_1,1),WatchedLiteral(y1#components_2,false);int(1..)]),
+and([WatchedLiteral(y2#components_1,2),WatchedLiteral(y2#components_3,4);int(1..)]),
+and([x#components_1 = z#components_1,x#components_2 = z#components_2,x#components_3 = z#components_3;int(1..)]),
+and([WatchedLiteral(t1#components_1,2),t1#components_3 = someInt;int(1..)]),
+and([WatchedLiteral(t2#components_1,2),WatchedLiteral(t1#components_1,2),t1#components_3 = t2#components_3;int(1..)]),
+ReifyImply(WatchedLiteral(y1#components_2,false), __0),
+ReifyImply(WatchedLiteral(y1#components_3,0), __1),
+ReifyImply(WatchedLiteral(y2#components_2,false), __2),
+ReifyImply(WatchedLiteral(y2#components_3,0), __3),
+ReifyImply(WatchedLiteral(x#components_2,false), __4),
+ReifyImply(WatchedLiteral(x#components_3,0), __5),
+ReifyImply(WatchedLiteral(z#components_2,false), __6),
+ReifyImply(WatchedLiteral(z#components_3,0), __7),
+ReifyImply(WatchedLiteral(t1#components_2,false), __8),
+ReifyImply(WatchedLiteral(t1#components_3,0), __9),
+ReifyImply(WatchedLiteral(t2#components_2,false), __10),
+ReifyImply(WatchedLiteral(t2#components_3,0), __11),
+Reify(y1#components_1 != 1, __0),
+Reify(y1#components_1 != 2, __1),
+Reify(y2#components_1 != 1, __2),
+Reify(y2#components_1 != 2, __3),
+Reify(x#components_1 != 1, __4),
+Reify(x#components_1 != 2, __5),
+Reify(z#components_1 != 1, __6),
+Reify(z#components_1 != 2, __7),
+Reify(t1#components_1 != 1, __8),
+Reify(t1#components_1 != 2, __9),
+Reify(t2#components_1 != 1, __10),
+Reify(t2#components_1 != 2, __11)
+

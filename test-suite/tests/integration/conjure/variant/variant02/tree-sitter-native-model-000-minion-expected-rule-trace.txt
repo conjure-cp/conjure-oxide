@@ -1,0 +1,220 @@
+Model before rewriting:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+
+such that
+
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#components_1: int(1..2)
+  find x#components_2: bool
+  find x#components_3: int(0, 4)
+new constraints:
+  (x#components_1 != 1) -> (x#components_2 = false)
+  (x#components_1 != 2) -> (x#components_3 = 0)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[a] = true
+   ~~> variant_components_field_eq ([("ReprGeneral", 9900)])
+and([x#components_1 = 1,x#components_2 = true;int(1..)])
+
+--
+
+x[b] = 0
+   ~~> variant_components_field_eq ([("ReprGeneral", 9900)])
+and([x#components_1 = 2,x#components_3 = 0;int(1..)])
+
+--
+
+active(x, a)
+   ~~> variant_components_active ([("ReprGeneral", 9800)])
+x#components_1 = 1
+
+--
+
+active(x, b)
+   ~~> variant_components_active ([("ReprGeneral", 9800)])
+x#components_1 = 2
+
+--
+
+x#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_1,1)
+
+--
+
+x#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_1,2)
+
+--
+
+x#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_2,false)
+
+--
+
+x#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_3,0)
+
+--
+
+x#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_1,1)
+
+--
+
+x#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_1,2)
+
+--
+
+x#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_3,0)
+
+--
+
+(WatchedLiteral(x#components_1,1)) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__0) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux WatchedLiteral(x#components_1,1)
+
+--
+
+(__0) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]), __0)
+
+--
+
+__0 =aux WatchedLiteral(x#components_1,1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(x#components_1,1), __0)
+
+--
+
+(WatchedLiteral(x#components_1,2)) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__1) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux WatchedLiteral(x#components_1,2)
+
+--
+
+(__1) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]), __1)
+
+--
+
+__1 =aux WatchedLiteral(x#components_1,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(x#components_1,2), __1)
+
+--
+
+(x#components_1 != 1) -> (WatchedLiteral(x#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__2) -> (WatchedLiteral(x#components_2,false))
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux x#components_1 != 1
+
+--
+
+(__2) -> (WatchedLiteral(x#components_2,false))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#components_2,false), __2)
+
+--
+
+__2 =aux x#components_1 != 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x#components_1 != 1, __2)
+
+--
+
+(x#components_1 != 2) -> (WatchedLiteral(x#components_3,0))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> (WatchedLiteral(x#components_3,0))
+new variables:
+  findAux __3: bool
+new constraints:
+  __3 =aux x#components_1 != 2
+
+--
+
+(__3) -> (WatchedLiteral(x#components_3,0))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#components_3,0), __3)
+
+--
+
+__3 =aux x#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x#components_1 != 2, __3)
+
+--
+
+Final model:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find x#components_1: int(1..2)
+find x#components_2: bool
+find x#components_3: int(0, 4)
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+ReifyImply(and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]), __0),
+ReifyImply(and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]), __1),
+ReifyImply(WatchedLiteral(x#components_2,false), __2),
+ReifyImply(WatchedLiteral(x#components_3,0), __3),
+Reify(WatchedLiteral(x#components_1,1), __0),
+Reify(WatchedLiteral(x#components_1,2), __1),
+Reify(x#components_1 != 1, __2),
+Reify(x#components_1 != 2, __3)
+

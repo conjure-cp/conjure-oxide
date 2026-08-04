@@ -42,6 +42,9 @@ use conjure_cp::settings::{
 use conjure_cp_cli::utils::conjure::{
     ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
 };
+use conjure_cp_cli::utils::simplified_json::{
+    domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
+};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{read_solutions_essence, save_solutions_essence};
 #[allow(clippy::single_component_path_imports, unused_imports)]
@@ -294,12 +297,21 @@ fn run_case_label(
 }
 
 fn param_file_in_test_dir(path: &str) -> Option<String> {
-    fs::read_dir(path).ok().and_then(|entries| {
-        entries
-            .filter_map(|entry| entry.ok())
-            .find(|entry| entry.path().extension().is_some_and(|ext| ext == "param"))
-            .map(|entry| entry.path().to_string_lossy().to_string())
-    })
+    let entries = fs::read_dir(path).ok()?;
+    let paths = entries
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .collect::<Vec<_>>();
+    paths
+        .iter()
+        .find(|path| path.extension().is_some_and(|ext| ext == "param"))
+        .or_else(|| {
+            paths.iter().find(|path| {
+                path.file_name()
+                    .is_some_and(|name| name == "input.param.json")
+            })
+        })
+        .map(|path| path.to_string_lossy().to_string())
 }
 
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
@@ -970,6 +982,7 @@ fn clean_test_dir_for_accept(
             || file_name == "config.toml"
             || file_name == "stats.toml"
             || file_name == DIAGNOSTICS_DIR
+            || file_name == "input.param.json"
             || entry_path.extension().is_some_and(|ext| ext == "param")
         {
             continue;
@@ -1078,9 +1091,16 @@ fn parse_unified_problem_model(
         return Ok(problem_model);
     };
 
-    let param_model = match parser {
-        Parser::TreeSitter => parse_essence_file_native(param_path, context)?,
-        Parser::ViaConjure => parse_essence_file(param_path, context)?,
+    let param_model = if param_path.ends_with(".json") {
+        let domains = domains_from_model(&problem_model);
+        let assignments =
+            params_from_simplified_json_str(&fs::read_to_string(param_path)?, &domains)?;
+        param_model_from_assignments(assignments, &domains, context)
+    } else {
+        match parser {
+            Parser::TreeSitter => parse_essence_file_native(param_path, context)?,
+            Parser::ViaConjure => parse_essence_file(param_path, context)?,
+        }
     };
 
     Ok(instantiate_model(problem_model, param_model)?)
