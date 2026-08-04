@@ -1,0 +1,134 @@
+Model before rewriting:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+
+such that
+
+x[a] = true,
+x[b] = 3,
+y = record {a = false,b = 4},
+y = z
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#packed_1: int(0..19)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y = z
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+y = z
+new variables:
+  find z#packed_1: int(0..19)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..19)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[a] = true
+   ~~> record_packed_field_eq_lit ([("ReprRecordPacked", 9800)])
+or([(x#packed_1 / 10) = 0;int(1..)])
+
+--
+
+x[b] = 3
+   ~~> record_packed_field_eq_lit ([("ReprRecordPacked", 9800)])
+or([x#packed_1 % 10 = 3;int(1..)])
+
+--
+
+y = z
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+y#packed_1 = z#packed_1
+
+--
+
+y = record {a = false,b = 4}
+   ~~> record_packed_var_eq_lit ([("ReprRecordPacked", 9700)])
+y#packed_1 = 14
+
+--
+
+or([(x#packed_1 / 10) = 0;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(x#packed_1 / 10) = 0
+
+--
+
+or([x#packed_1 % 10 = 3;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+x#packed_1 % 10 = 3
+
+--
+
+(x#packed_1 / 10)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#packed_1, 10) @ 10 != 0}
+
+--
+
+x#packed_1 % 10
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#packed_1,10) @ 10 != 0}
+
+--
+
+y#packed_1 = 14
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y#packed_1,14)
+
+--
+
+SafeDiv(x#packed_1, 10) = 0
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#packed_1, 10, 0)
+
+--
+
+SafeMod(x#packed_1,10) = 3
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x#packed_1, 10, 3)
+
+--
+
+Final model:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+find y#packed_1: int(0..19)
+find z#packed_1: int(0..19)
+find x#packed_1: int(0..19)
+
+such that
+
+DivEq(x#packed_1, 10, 0),
+ModEq(x#packed_1, 10, 3),
+WatchedLiteral(y#packed_1,14),
+y#packed_1 = z#packed_1

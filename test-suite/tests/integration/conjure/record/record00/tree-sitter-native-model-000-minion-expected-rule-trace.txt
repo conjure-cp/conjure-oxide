@@ -1,0 +1,116 @@
+Model before rewriting:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+
+such that
+
+x[a] = true,
+x[b] = 3,
+y = record {a = false,b = 4},
+y = z
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#components_1: bool
+  find y#components_2: int(0..9)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y = z
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+y = z
+new variables:
+  find z#components_1: bool
+  find z#components_2: int(0..9)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#components_1: bool
+  find x#components_2: int(0..9)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[a]
+   ~~> record_components_field ([("ReprGeneral", 9500)])
+x#components_1
+
+--
+
+x[b]
+   ~~> record_components_field ([("ReprGeneral", 9500)])
+x#components_2
+
+--
+
+y = z
+   ~~> record_components_var_eq_var ([("ReprGeneral", 9400)])
+and([y#components_1 = z#components_1,y#components_2 = z#components_2;int(1..)])
+
+--
+
+y = record {a = false,b = 4}
+   ~~> record_components_var_eq_lit ([("ReprGeneral", 9400)])
+and([y#components_1 = false,y#components_2 = 4;int(1..)])
+
+--
+
+x#components_2 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_2,3)
+
+--
+
+y#components_1 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y#components_1,false)
+
+--
+
+y#components_2 = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y#components_2,4)
+
+--
+
+Final model:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+find y#components_1: bool
+find y#components_2: int(0..9)
+find z#components_1: bool
+find z#components_2: int(0..9)
+find x#components_1: bool
+find x#components_2: int(0..9)
+
+such that
+
+x#components_1,
+WatchedLiteral(x#components_2,3),
+and([WatchedLiteral(y#components_1,false),WatchedLiteral(y#components_2,4);int(1..)]),
+and([y#components_1 = z#components_1,y#components_2 = z#components_2;int(1..)])

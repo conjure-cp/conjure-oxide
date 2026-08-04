@@ -1,0 +1,117 @@
+Model before rewriting:
+
+find x: set of record {isEven: bool, theVal: int(1..3)}
+
+such that
+
+and([ (i[theVal] % 2 = 0) <-> (i[isEven]) | i <- x ])
+
+--
+
+and([ (i[theVal] % 2 = 0) <-> (i[isEven]) | i <- x ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (i[theVal] % 2 = 0) <-> (i[isEven]) | i <- x ])
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+  find x#occurrence_5: bool
+  find x#occurrence_6: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6);int(1..)]) <= 6;int(1..)])
+
+--
+
+[ (i[theVal] % 2 = 0) <-> (i[isEven]) | i <- x ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (i[theVal] % 2 = 0) <-> (i[isEven]) | i : record {isEven: bool, theVal: int(1..3)}, i in x ]
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6], 0)
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5),toInt(x#occurrence_6);int(1..)]) <= 6
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6], 6)
+
+--
+
+[ (i[theVal] % 2 = 0) <-> (i[isEven]) | i : record {isEven: bool, theVal: int(1..3)}, i in x ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[!(record {isEven = false,theVal = 2} in x),!(record {isEven = true,theVal = 1} in x),!(record {isEven = true,theVal = 3} in x);int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+record {isEven = false,theVal = 2} in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+record {isEven = true,theVal = 1} in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_4
+
+--
+
+record {isEven = true,theVal = 3} in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_6
+
+--
+
+!(x#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_2,false)
+
+--
+
+!(x#occurrence_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_4,false)
+
+--
+
+!(x#occurrence_6)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_6,false)
+
+--
+
+Final model:
+
+find x: set{occurrence} of record {isEven: bool, theVal: int(1..3)}
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find x#occurrence_5: bool
+find x#occurrence_6: bool
+
+such that
+
+and([WatchedLiteral(x#occurrence_2,false),WatchedLiteral(x#occurrence_4,false),WatchedLiteral(x#occurrence_6,false);int(1..)]),
+and([SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6], 0),SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5, x#occurrence_6], 6);int(1..)])
