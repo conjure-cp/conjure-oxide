@@ -1,14 +1,14 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
-    AbstractLiteral, Domain, Expression, GroundDomain, Literal, MSetAttr, Moo, Name, SetAttr,
-    SymbolTable,
+    AbstractLiteral, Domain, Expression, GroundDomain, Literal, MSetAttr, Moo, Name, SequenceAttr,
+    SetAttr, SymbolTable,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
     MSetExplicit, MSetOccurrence, MSetPacked, MatrixComponents, MatrixPacked, RecordComponents,
-    RecordPacked, SetExplicit, SetOccurrence, SetPacked, TupleComponents, TuplePacked,
-    VariantComponents, VariantPacked,
+    RecordPacked, SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked,
+    TupleComponents, TuplePacked, VariantComponents, VariantPacked,
 };
 use uniplate::Uniplate;
 
@@ -25,6 +25,8 @@ fn representation_short_names_describe_the_generated_layout() {
     assert_eq!(RecordPacked::SHORT_NAME, "packed");
     assert_eq!(VariantComponents::SHORT_NAME, "components");
     assert_eq!(VariantPacked::SHORT_NAME, "packed");
+    assert_eq!(SequenceExplicit::SHORT_NAME, "explicit");
+    assert_eq!(SequencePacked::SHORT_NAME, "packed");
 }
 
 #[test]
@@ -547,4 +549,99 @@ fn packed_mset_round_trips_mixed_radix_counts() {
     assert_eq!(assignment.packed, Literal::Int(7));
     assert_eq!(assignment.up(), value);
     assert_eq!(MSetPacked::compactness_score(domain).unwrap(), 8);
+}
+
+fn sequence_attr(size: conjure_cp::ast::Range<i32>) -> SequenceAttr {
+    SequenceAttr {
+        size,
+        jectivity: conjure_cp::ast::JectivityAttr::None,
+        representation: None,
+    }
+}
+
+#[test]
+fn explicit_sequence_round_trips_fixed_length() {
+    let domain = Domain::sequence(sequence_attr(range!(2)), domain_int!(1..3));
+    let state = <SequenceExplicit as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Sequence(vec![
+        Literal::Int(3),
+        Literal::Int(1),
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert!(assignment.length.is_none());
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn explicit_sequence_pads_variable_length_with_the_first_domain_value() {
+    let domain = Domain::sequence(sequence_attr(range!(0..3)), domain_int!(1..3));
+    let state = <SequenceExplicit as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Sequence(vec![Literal::Int(2)]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.length, Some(Literal::Int(1)));
+    let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) = &assignment.values_matrix
+    else {
+        panic!("expected a matrix");
+    };
+    // Order is preserved; inactive positions are padded with the domain's first value (not
+    // sorted, unlike a set's canonical symmetry-breaking padding).
+    assert_eq!(
+        elems,
+        &vec![Literal::Int(2), Literal::Int(1), Literal::Int(1)]
+    );
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn packed_sequence_round_trips_and_preserves_order() {
+    let domain = Domain::sequence(sequence_attr(range!(0..2)), domain_int!(1..3));
+    let state = <SequencePacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Sequence(vec![
+        Literal::Int(3),
+        Literal::Int(1),
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    let packed = assignment.packed.clone();
+    assert_eq!(assignment.up(), value);
+
+    // A different order must encode to a different packed value.
+    let reversed = Literal::AbstractLiteral(AbstractLiteral::Sequence(vec![
+        Literal::Int(1),
+        Literal::Int(3),
+    ]));
+    let reversed_assignment = state.down(reversed.clone()).unwrap();
+    assert_ne!(packed, reversed_assignment.packed);
+    assert_eq!(reversed_assignment.up(), reversed);
+
+    // length digit (0..=2, radix 3) * two value digits (int(1..3), radix 3 each)
+    assert_eq!(
+        SequencePacked::compactness_score(domain).unwrap(),
+        3 * 3 * 3
+    );
+}
+
+#[test]
+fn packed_sequence_supports_a_fixed_length_with_no_length_digit() {
+    let domain = Domain::sequence(sequence_attr(range!(2)), Domain::bool());
+    let state = <SequencePacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Sequence(vec![
+        Literal::Bool(false),
+        Literal::Bool(true),
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+    assert_eq!(SequencePacked::compactness_score(domain).unwrap(), 4);
+}
+
+#[test]
+fn explicit_sequence_rejects_unbounded_size() {
+    let domain = Domain::sequence(
+        sequence_attr(conjure_cp::ast::Range::Unbounded),
+        domain_int!(1..3),
+    );
+    assert!(<SequenceExplicit as ReprRule>::DomainLevel::init(domain).is_err());
 }
