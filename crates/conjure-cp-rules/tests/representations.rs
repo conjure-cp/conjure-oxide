@@ -212,14 +212,49 @@ fn packed_tuple_round_trips_integer_values() {
 }
 
 #[test]
-fn packed_tuple_hole_constraint_is_backend_neutral() {
+fn packed_tuple_round_trips_boolean_and_nested_values() {
+    let domain = Domain::tuple(vec![
+        Domain::bool(),
+        Domain::tuple(vec![Domain::bool(), domain_int!(1..2)]),
+    ]);
+    let state = <TuplePacked as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+        Literal::Bool(false),
+        Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+            Literal::Bool(true),
+            Literal::Int(2),
+        ])),
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.packed, Literal::Int(5));
+    assert_eq!(assignment.up(), value);
+    assert_eq!(
+        state.values[0],
+        vec![Literal::Bool(true), Literal::Bool(false)]
+    );
+}
+
+#[test]
+fn packed_tuple_uses_dense_holey_integer_digits() {
     let domain = Domain::tuple(vec![domain_int!(1, 3), domain_int!(5..6)]);
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = TuplePacked::init_for(&mut declaration).unwrap();
 
-    assert_eq!(constraints.len(), 1);
-    assert!(matches!(constraints[0], Expression::InDomain(..)));
+    assert!(constraints.is_empty());
+    assert_eq!(TuplePacked::compactness_score(domain).unwrap(), 4);
+}
+
+#[test]
+fn packed_tuple_supports_the_nullary_tuple() {
+    let domain = Domain::tuple(vec![]);
+    let state = <TuplePacked as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.packed, Literal::Int(0));
+    assert_eq!(assignment.up(), value);
 }
 
 #[test]
