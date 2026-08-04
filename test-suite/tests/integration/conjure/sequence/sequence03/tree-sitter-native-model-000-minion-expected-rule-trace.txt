@@ -1,0 +1,81 @@
+Model before rewriting:
+
+find x: sequence (minSize 1, maxSize 2) of int(1..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#explicit_1: matrix indexed by [int(1..2)] of int(1..3)
+  find x#explicit_2: int(1..2)
+new constraints:
+  or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)])
+  or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
+
+--
+
+true,
+or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true,
+or([1 <= x#explicit_2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),
+or([2 <= x#explicit_2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
+new variables:
+  find x#explicit_1#components_1: int(1..3)
+  find x#explicit_1#components_2: int(1..3)
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1,1)
+
+--
+
+x#explicit_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2,1)
+
+--
+
+1 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_2, 0)
+
+--
+
+2 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#explicit_2, 0)
+
+--
+
+Final model:
+
+find x: sequence (minSize 1, maxSize 2) of int(1..3)
+find x#explicit_1: matrix indexed by [int(1..2)] of int(1..3)
+find x#explicit_2: int(1..2)
+find x#explicit_1#components_1: int(1..3)
+find x#explicit_1#components_2: int(1..3)
+
+such that
+
+true,
+or([Ineq(1, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_1,1);int(1..)]),
+or([Ineq(2, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_2,1);int(1..)])
+
