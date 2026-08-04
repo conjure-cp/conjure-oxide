@@ -171,7 +171,7 @@ pub struct GlobalArgs {
     #[arg(
         long,
         short = 'h',
-        default_value_t = Heuristic::First,
+        default_value_t = Heuristic::Compact,
         value_parser = parse_cli_heuristic,
         global = true,
         help_heading = CONFIGURATION_HELP_HEADING
@@ -336,5 +336,16 @@ fn parse_minion_value_order(input: &str) -> Result<MinionValueOrder, String> {
         other => Err(format!(
             "unknown minion value order '{other}', expected one of: ascend, descend, random"
         )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn compact_is_the_default_cli_heuristic() {
+        let cli = Cli::try_parse_from(["conjure-oxide", "solve", "model.essence"]).unwrap();
+        assert_eq!(cli.global_args.heuristic, Heuristic::Compact);
     }
 }

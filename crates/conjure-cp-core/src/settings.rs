@@ -17,9 +17,9 @@ use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
 /// Strategy used when a modelling decision has more than one applicable answer.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Heuristic {
-    #[default]
     First,
     Random,
+    #[default]
     Compact,
     /// Prompt on stdin, or consume values from [`set_heuristic_responses`].
     Interactive,
@@ -91,7 +91,7 @@ impl FromStr for Channelling {
 pub const DEFAULT_HEURISTIC_SEED: u64 = 0;
 
 thread_local! {
-    static HEURISTIC: Cell<Heuristic> = const { Cell::new(Heuristic::First) };
+    static HEURISTIC: Cell<Heuristic> = const { Cell::new(Heuristic::Compact) };
     static CHANNELLING: Cell<Channelling> = const { Cell::new(Channelling::No) };
     static HEURISTIC_RANDOM_STATE: Cell<u64> = const { Cell::new(DEFAULT_HEURISTIC_SEED) };
     static HEURISTIC_ALL_CHOICES: RefCell<AllChoicesState> =
@@ -884,6 +884,11 @@ mod tests {
         set_heuristic_seed,
     };
     use std::str::FromStr;
+
+    #[test]
+    fn compact_is_the_default_heuristic() {
+        assert_eq!(Heuristic::default(), Heuristic::Compact);
+    }
 
     #[test]
     fn parses_answer_heuristics_and_channelling() {
