@@ -1,0 +1,267 @@
+Model before rewriting:
+
+find x: tuple (bool, tuple (bool, int(1..4)))
+
+such that
+
+toInt(x[1]) = x[2, 2] % 2,
+x[2, 1] = true
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..15)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[2, 1]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[2, 1]) @ and([2 >= 1,2 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[2, 1])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+SafeIndex([true,true,true,true,false,false,false,false;int(1..)],[sum([x#packed_1 % 8,1;int(1..)])])
+
+--
+
+x[1]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[1]) @ and([1 >= 1,1 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[1])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 8),1;int(1..)])])
+
+--
+
+x[2, 2]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[2, 2]) @ and([2 >= 1,2 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[2, 2])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([x#packed_1 % 8,1;int(1..)])])
+
+--
+
+x#packed_1 % 8
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#packed_1,8) @ 8 != 0}
+
+--
+
+(x#packed_1 / 8)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#packed_1, 8) @ 8 != 0}
+
+--
+
+x#packed_1 % 8
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#packed_1,8) @ 8 != 0}
+
+--
+
+SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]),2) @ 2 != 0}
+
+--
+
+SafeIndex([true,true,true,true,false,false,false,false;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]) = true
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SafeIndex([true,true,true,true,false,false,false,false;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]), true)
+
+--
+
+toInt(SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 8),1;int(1..)])])) = SafeMod(SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]),2)
+   ~~> flatten_eq ([("Minion", 4200)])
+__0 = __1
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+new constraints:
+  __0 =aux toInt(SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 8),1;int(1..)])]))
+  __1 =aux SafeMod(SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]),2)
+
+--
+
+SafeIndex([true,true,true,true,false,false,false,false;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([true,true,true,true,false,false,false,false;int(1..)],[__2])
+new variables:
+  findAux __2: int(1..8)
+new constraints:
+  __2 =aux sum([SafeMod(x#packed_1,8),1;int(1..)])
+
+--
+
+__2 =aux sum([SafeMod(x#packed_1,8),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __3], __2),SumGeq([1, __3], __2);int(1..)])
+new variables:
+  findAux __3: int(0..7)
+new constraints:
+  __3 =aux SafeMod(x#packed_1,8)
+
+--
+
+SafeIndex([true,true,true,true,false,false,false,false;int(1..)],[__2])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([true,true,true,true,false,false,false,false],__2,true)
+
+--
+
+__3 =aux SafeMod(x#packed_1,8)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x#packed_1, 8, __3)
+
+--
+
+SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 8),1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([true,false;int(1..)],[__4])
+new variables:
+  findAux __4: int(1..2)
+new constraints:
+  __4 =aux sum([SafeDiv(x#packed_1, 8),1;int(1..)])
+
+--
+
+__4 =aux sum([SafeDiv(x#packed_1, 8),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __5], __4),SumGeq([1, __5], __4);int(1..)])
+new variables:
+  findAux __5: int(0..1)
+new constraints:
+  __5 =aux SafeDiv(x#packed_1, 8)
+
+--
+
+SafeIndex([true,false;int(1..)],[__4])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([true,false],__4,true)
+
+--
+
+__5 =aux SafeDiv(x#packed_1, 8)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#packed_1, 8, __5)
+
+--
+
+toInt(__minion_element_one([true,false],__4,true))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__6)
+new variables:
+  findAux __6: bool
+new constraints:
+  __6 =aux __minion_element_one([true,false],__4,true)
+
+--
+
+__6 =aux __minion_element_one([true,false],__4,true)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_element_one([true,false],__4,true), __6)
+
+--
+
+SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[__7])
+new variables:
+  findAux __7: int(1..8)
+new constraints:
+  __7 =aux sum([SafeMod(x#packed_1,8),1;int(1..)])
+
+--
+
+__7 =aux sum([SafeMod(x#packed_1,8),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __8], __7),SumGeq([1, __8], __7);int(1..)])
+new variables:
+  findAux __8: int(0..7)
+new constraints:
+  __8 =aux SafeMod(x#packed_1,8)
+
+--
+
+__8 =aux SafeMod(x#packed_1,8)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x#packed_1, 8, __8)
+
+--
+
+SafeMod(SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[__7]),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__9,2)
+new variables:
+  findAux __9: int(1..4)
+new constraints:
+  __9 =aux SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[__7])
+
+--
+
+__9 =aux SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[__7])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([1,2,3,4,1,2,3,4],__7,__9)
+
+--
+
+__1 =aux SafeMod(__9,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__9, 2, __1)
+
+--
+
+Final model:
+
+find x: tuple (bool, tuple (bool, int(1..4)))
+find x#packed_1: int(0..15)
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(1..8)
+findAux __3: int(0..7)
+findAux __4: int(1..2)
+findAux __5: int(0..1)
+findAux __6: bool
+findAux __7: int(1..8)
+findAux __8: int(0..7)
+findAux __9: int(1..4)
+
+such that
+
+__0 = __1,
+Reify(__minion_element_one([true,true,true,true,false,false,false,false],__2,true), true),
+__0 =aux toInt(__6),
+ModEq(__9, 2, __1),
+and([SumLeq([1, __3], __2),SumGeq([1, __3], __2);int(1..)]),
+ModEq(x#packed_1, 8, __3),
+and([SumLeq([1, __5], __4),SumGeq([1, __5], __4);int(1..)]),
+DivEq(x#packed_1, 8, __5),
+Reify(__minion_element_one([true,false],__4,true), __6),
+and([SumLeq([1, __8], __7),SumGeq([1, __8], __7);int(1..)]),
+ModEq(x#packed_1, 8, __8),
+__minion_element_one([1,2,3,4,1,2,3,4],__7,__9)
+
