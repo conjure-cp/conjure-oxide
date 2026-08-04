@@ -4,6 +4,8 @@ find x: tuple (bool, tuple (bool, int(1..4)))
 
 such that
 
+toInt(x[1]) = x[2][2] % 2,
+x[2][1] = true,
 toInt(x[1]) = x[2, 2] % 2,
 x[2, 1] = true
 
@@ -30,14 +32,48 @@ x
 
 --
 
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+toInt(x[1]) = x[2][2] % 2,
+x[2][1] = true,
 toInt(x[1]) = x[2, 2] % 2,
 x[2, 1] = true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+toInt(x[1]) = x[2][2] % 2,
+x[2][1] = true,
 toInt(x[1]) = x[2, 2] % 2,
 x[2, 1] = true
 new variables:
   find x#components_2#components_1: bool
   find x#components_2#components_2: int(1..4)
+
+--
+
+x[2][1]
+   ~~> merge_chained_tuple_indices ([("Bubble", 8050)])
+x[2, 1]
+
+--
+
+x[2][2]
+   ~~> merge_chained_tuple_indices ([("Bubble", 8050)])
+x[2, 2]
 
 --
 
@@ -62,6 +98,66 @@ x#components_2
 SafeIndex(x#components_2,[1])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 x#components_2#components_1
+
+--
+
+x[2, 1]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[2, 1]) @ and([2 >= 1,2 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[2, 1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+SafeIndex(x#components_2,[1])
+
+--
+
+x#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_2
+
+--
+
+SafeIndex(x#components_2,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#components_2#components_1
+
+--
+
+x[2, 2]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[2, 2]) @ and([2 >= 1,2 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[2, 2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+SafeIndex(x#components_2,[2])
+
+--
+
+x#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_2
+
+--
+
+SafeIndex(x#components_2,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#components_2#components_2
+
+--
+
+x[1]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[1]) @ and([1 >= 1,1 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#components_1
 
 --
 
@@ -107,6 +203,12 @@ x#components_2#components_2 % 2
 
 --
 
+x#components_2#components_2 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#components_2#components_2,2) @ 2 != 0}
+
+--
+
 toInt(x#components_1) = SafeMod(x#components_2#components_2,2)
    ~~> flatten_eq ([("Minion", 4200)])
 __0 = __1
@@ -119,9 +221,27 @@ new constraints:
 
 --
 
+toInt(x#components_1) = SafeMod(x#components_2#components_2,2)
+   ~~> flatten_eq ([("Minion", 4200)])
+__2 = __3
+new variables:
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+new constraints:
+  __2 =aux toInt(x#components_1)
+  __3 =aux SafeMod(x#components_2#components_2,2)
+
+--
+
 __1 =aux SafeMod(x#components_2#components_2,2)
    ~~> introduce_modeq ([("Minion", 4200)])
 ModEq(x#components_2#components_2, 2, __1)
+
+--
+
+__3 =aux SafeMod(x#components_2#components_2,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x#components_2#components_2, 2, __3)
 
 --
 
@@ -134,11 +254,17 @@ find x#components_2#components_1: bool
 find x#components_2#components_2: int(1..4)
 findAux __0: int(0..1)
 findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
 
 such that
 
 __0 = __1,
 x#components_2#components_1,
+__2 = __3,
+x#components_2#components_1,
 __0 =aux toInt(x#components_1),
-ModEq(x#components_2#components_2, 2, __1)
+ModEq(x#components_2#components_2, 2, __1),
+__2 =aux toInt(x#components_1),
+ModEq(x#components_2#components_2, 2, __3)
 
