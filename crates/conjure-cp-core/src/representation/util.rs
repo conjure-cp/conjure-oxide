@@ -1,13 +1,24 @@
 use super::errors::ReprUpError;
 use super::types::LookupFn;
-use crate::ast::{Literal, Name};
+use crate::ast::{GroundDomain, Literal, Name};
 use conjure_cp_core::ast::DeclarationPtr;
 use std::collections::HashMap;
 
 pub fn try_up_via(decl: DeclarationPtr, lu: &LookupFn<'_>) -> Result<Literal, ReprUpError> {
     // Look up the variable directly
-    if let Some(res) = lu(&decl) {
-        return Ok(res);
+    if let Some(mut result) = lu(&decl) {
+        if decl
+            .domain()
+            .and_then(|domain| domain.resolve().ok())
+            .is_some_and(|domain| domain.as_ref() == &GroundDomain::Bool)
+        {
+            result = match result {
+                Literal::Int(0) => Literal::Bool(false),
+                Literal::Int(1) => Literal::Bool(true),
+                result => result,
+            };
+        }
+        return Ok(result);
     }
 
     // Variable not mapped to a value and has no representations
@@ -45,4 +56,28 @@ pub fn try_up(
     let lu: LookupFn<'_> =
         Box::new(|decl: &DeclarationPtr| raw_assignment.get(&decl.name()).cloned());
     try_up_via(decl, &lu)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{DeclarationPtr, Domain};
+    use crate::{domain_int, range};
+
+    #[test]
+    fn represented_boolean_leaf_coerces_minion_zero_one_values() {
+        let declaration = DeclarationPtr::new_find(Name::user("flag"), Domain::bool());
+        let lookup: LookupFn<'_> = Box::new(|_| Some(Literal::Int(1)));
+        assert_eq!(
+            try_up_via(declaration, &lookup).unwrap(),
+            Literal::Bool(true)
+        );
+    }
+
+    #[test]
+    fn integer_zero_one_leaf_remains_an_integer() {
+        let declaration = DeclarationPtr::new_find(Name::user("value"), domain_int!(0..1));
+        let lookup: LookupFn<'_> = Box::new(|_| Some(Literal::Int(1)));
+        assert_eq!(try_up_via(declaration, &lookup).unwrap(), Literal::Int(1));
+    }
 }
