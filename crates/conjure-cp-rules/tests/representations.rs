@@ -8,6 +8,7 @@ use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
     MSetExplicit, MSetOccurrence, MSetPacked, MatrixComponents, MatrixPacked, RecordComponents,
     RecordPacked, SetExplicit, SetOccurrence, SetPacked, TupleComponents, TuplePacked,
+    VariantComponents, VariantPacked,
 };
 use uniplate::Uniplate;
 
@@ -22,6 +23,38 @@ fn representation_short_names_describe_the_generated_layout() {
     assert_eq!(SetOccurrence::SHORT_NAME, "occurrence");
     assert_eq!(RecordComponents::SHORT_NAME, "components");
     assert_eq!(RecordPacked::SHORT_NAME, "packed");
+    assert_eq!(VariantComponents::SHORT_NAME, "components");
+    assert_eq!(VariantPacked::SHORT_NAME, "packed");
+}
+
+#[test]
+fn variant_components_and_packed_round_trip() {
+    let domain = Domain::variant(vec![
+        Field {
+            name: Name::user("flag"),
+            value: Domain::bool(),
+        },
+        Field {
+            name: Name::user("value"),
+            value: domain_int!(2..4),
+        },
+    ]);
+    let value = Literal::AbstractLiteral(AbstractLiteral::Variant(Moo::new(Field {
+        name: Name::user("value"),
+        value: Literal::Int(3),
+    })));
+
+    let components = <VariantComponents as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let component_assignment = components.down(value.clone()).unwrap();
+    assert_eq!(component_assignment.tag, Literal::Int(2));
+    assert_eq!(component_assignment.fields[0], Literal::Bool(false));
+    assert_eq!(component_assignment.up(), value);
+
+    let packed = <VariantPacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let packed_assignment = packed.down(value.clone()).unwrap();
+    assert_eq!(packed_assignment.packed, Literal::Int(3));
+    assert_eq!(packed_assignment.up(), value);
+    assert_eq!(VariantPacked::compactness_score(domain).unwrap(), 5);
 }
 
 #[test]

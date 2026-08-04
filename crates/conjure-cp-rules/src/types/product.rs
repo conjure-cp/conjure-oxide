@@ -46,6 +46,27 @@ pub(crate) fn symmetry_values(domain: &GroundDomain) -> Option<Vec<Literal>> {
                     .collect(),
             )
         }
+        GroundDomain::Variant(fields) => {
+            let alternatives = fields
+                .iter()
+                .map(|field| {
+                    Some(
+                        symmetry_values(&field.value)?
+                            .into_iter()
+                            .map(|value| {
+                                Literal::AbstractLiteral(AbstractLiteral::Variant(
+                                    conjure_cp::ast::Moo::new(Field {
+                                        name: field.name.clone(),
+                                        value,
+                                    }),
+                                ))
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                })
+                .collect::<Option<Vec<_>>>()?;
+            Some(alternatives.into_iter().flatten().collect())
+        }
         _ => None,
     }
 }
@@ -62,6 +83,11 @@ pub(crate) fn canonical_product_literal(literal: Literal) -> Literal {
                 field.value = canonical_product_literal(field.value.clone());
             }
             Literal::AbstractLiteral(AbstractLiteral::Record(fields))
+        }
+        Literal::AbstractLiteral(AbstractLiteral::Variant(field)) => {
+            let mut field = conjure_cp::ast::Moo::unwrap_or_clone(field);
+            field.value = canonical_product_literal(field.value);
+            Literal::AbstractLiteral(AbstractLiteral::Variant(conjure_cp::ast::Moo::new(field)))
         }
         literal => literal,
     }

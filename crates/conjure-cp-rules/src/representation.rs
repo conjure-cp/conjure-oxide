@@ -6,3 +6,4 @@ pub use crate::types::mset::{MSetExplicit, MSetOccurrence, MSetPacked};
 pub use crate::types::record::{RecordComponents, RecordPacked};
 pub use crate::types::set::{SetExplicit, SetOccurrence, SetPacked};
 pub use crate::types::tuple::{TupleComponents, TuplePacked};
+pub use crate::types::variant::{VariantComponents, VariantPacked};
