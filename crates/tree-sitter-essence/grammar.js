@@ -506,12 +506,12 @@ module.exports = grammar ({
       field("value", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom))
     ),
 
-    index_or_slice: $ => seq(
-      field("collection", choice($.identifier, $.tuple, $.matrix, $.record, $.flatten)),
+    index_or_slice: $ => prec.left(seq(
+      field("collection", choice($.identifier, $.tuple, $.matrix, $.record, $.flatten, $.index_or_slice)),
       "[",
       field("indices", $.indices),
       "]"
-    ),
+    )),
 
     // TODO: add unary set operation support (powerSet)
     set_operation: $ => prec.left(seq(

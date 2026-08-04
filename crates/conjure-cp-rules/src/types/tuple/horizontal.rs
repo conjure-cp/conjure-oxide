@@ -5,6 +5,32 @@ use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, RuleEffect as Reduction, register_rule};
 use conjure_cp::{bug_assert, essence_expr};
 
+/// Canonicalise chained tuple indexing before representation-specific rules see it.
+///
+/// ```plain
+/// x[i][j] ~> x[i,j]
+/// ```
+#[register_rule("Bubble", 8050, [UnsafeIndex])]
+fn merge_chained_tuple_indices(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expr::UnsafeIndex(metadata, subject, outer_indices) = expr       &&
+        let Expr::UnsafeIndex(_, inner_subject, inner_indices) = subject.as_ref() &&
+        let Some(domain) = inner_subject.domain_of()                         &&
+        domain.as_tuple().is_some()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    let mut indices = inner_indices.clone();
+    indices.extend(outer_indices.iter().cloned());
+    Ok(Reduction::pure(Expr::UnsafeIndex(
+        metadata.clone(),
+        inner_subject.clone(),
+        indices,
+    )))
+}
+
 /// Convert an unsafe tuple index into a safe one.
 /// ```plain
 /// x[y]

@@ -242,6 +242,7 @@ mod test {
     #[allow(unused_imports)]
     use conjure_cp_core::ast::{
         Atom, DeclarationKind, Expression, Metadata, Moo, Name, OXIDE_INT_MAX, OXIDE_INT_MIN,
+        ReturnType, Typeable,
     };
     #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
@@ -353,6 +354,26 @@ mod test {
                 domain_int!(-2..0)
             )
         )
+    }
+
+    #[test]
+    pub fn test_parse_chained_and_multi_index() {
+        let src = "
+        find x : (bool, (bool, int(1..4)))
+        such that
+            x[2][1] = true,
+            x[2,1] = true
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let constraints = model.constraints();
+        assert_eq!(constraints.len(), 2);
+        for constraint in constraints {
+            let Expression::Eq(_, lhs, _) = constraint else {
+                panic!("expected an equality constraint");
+            };
+            assert_eq!(lhs.return_type(), ReturnType::Bool);
+        }
     }
 
     #[test]

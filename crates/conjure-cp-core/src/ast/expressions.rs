@@ -2621,29 +2621,37 @@ impl Typeable for Expression {
                 ReturnType::Unknown
             }
             Expression::UnsafeIndex(_, subject, idx) | Expression::SafeIndex(_, subject, idx) => {
-                let subject_ty = subject.return_type();
-                match subject_ty {
-                    // TODO: We can implement indexing for these eventually
-                    ReturnType::Tuple(_) | ReturnType::Record(_) | ReturnType::Variant(_) => {
-                        ReturnType::Unknown
-                    }
-                    ReturnType::Matrix(_) => {
-                        // For n-dimensional matrices, unwrap the element type until
-                        // we either get to the innermost element type or the last index
-                        let mut elem_typ = subject_ty;
-                        let mut idx_len = idx.len();
-                        while idx_len > 0
-                            && let ReturnType::Matrix(new_elem_typ) = &elem_typ
-                        {
-                            elem_typ = *new_elem_typ.clone();
-                            idx_len -= 1;
+                let mut indexed_ty = subject.return_type();
+                for index in idx {
+                    indexed_ty = match indexed_ty {
+                        ReturnType::Tuple(field_types) => {
+                            let Expression::Atomic(_, Atom::Literal(Literal::Int(index))) = index
+                            else {
+                                return ReturnType::Unknown;
+                            };
+                            let Some(zero_based_index) = index
+                                .checked_sub(1)
+                                .and_then(|index| usize::try_from(index).ok())
+                            else {
+                                return ReturnType::Unknown;
+                            };
+                            field_types
+                                .get(zero_based_index)
+                                .cloned()
+                                .unwrap_or(ReturnType::Unknown)
                         }
-                        elem_typ
-                    }
-                    _ => bug!(
-                        "Invalid indexing operation: expected the operand to be a collection, got {self}: {subject_ty}"
-                    ),
+                        ReturnType::Matrix(element_type) => *element_type,
+                        // Record and variant indices need their field-name context to determine a
+                        // result type. Unknown can likewise be resolved by later typechecking.
+                        ReturnType::Record(_) | ReturnType::Variant(_) | ReturnType::Unknown => {
+                            return ReturnType::Unknown;
+                        }
+                        subject_ty => bug!(
+                            "Invalid indexing operation: expected the operand to be a collection, got {self}: {subject_ty}"
+                        ),
+                    };
                 }
+                indexed_ty
             }
             Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
                 ReturnType::Matrix(Box::new(subject.return_type()))

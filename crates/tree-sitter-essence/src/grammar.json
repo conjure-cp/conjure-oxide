@@ -4403,54 +4403,62 @@
       ]
     },
     "index_or_slice": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "collection",
-          "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "identifier"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "tuple"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "matrix"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "record"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "flatten"
-              }
-            ]
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "collection",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "identifier"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "tuple"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "matrix"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "record"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "flatten"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "index_or_slice"
+                }
+              ]
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "["
+          },
+          {
+            "type": "FIELD",
+            "name": "indices",
+            "content": {
+              "type": "SYMBOL",
+              "name": "indices"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "]"
           }
-        },
-        {
-          "type": "STRING",
-          "value": "["
-        },
-        {
-          "type": "FIELD",
-          "name": "indices",
-          "content": {
-            "type": "SYMBOL",
-            "name": "indices"
-          }
-        },
-        {
-          "type": "STRING",
-          "value": "]"
-        }
-      ]
+        ]
+      }
     },
     "set_operation": {
       "type": "PREC_LEFT",
