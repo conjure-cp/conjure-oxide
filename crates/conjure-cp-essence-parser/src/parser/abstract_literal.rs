@@ -18,6 +18,7 @@ pub fn parse_abstract(
 
     match node.kind() {
         "record" => parse_record(ctx, node),
+        "variant" => parse_variant(ctx, node),
         "tuple" => parse_tuple(ctx, node),
         "matrix" => parse_matrix(ctx, node),
         "set_literal" => parse_set_literal(ctx, node),
@@ -53,6 +54,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         "matrix" => "matrix",
         "tuple" => "tuple",
         "record" => "record",
+        "variant" => "variant",
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected abstract literal, got: {}", node.kind()),
@@ -80,6 +82,37 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
     }
 
     false
+}
+
+fn parse_variant(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    let Some(pair) = node.child_by_field_name("name_value_pair") else {
+        return Ok(None);
+    };
+    let Some(name_node) = field!(recover, ctx, pair, "name") else {
+        return Ok(None);
+    };
+    let name = conjure_cp_core::ast::Name::user(
+        &ctx.source_code[name_node.start_byte()..name_node.end_byte()],
+    );
+    let Some(value_node) = field!(recover, ctx, pair, "value") else {
+        return Ok(None);
+    };
+    let saved_context = ctx.typechecking_context;
+    let saved_inner_context = ctx.inner_typechecking_context;
+    ctx.typechecking_context = ctx.inner_typechecking_context;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+    let value = parse_expression(ctx, value_node)?;
+    ctx.typechecking_context = saved_context;
+    ctx.inner_typechecking_context = saved_inner_context;
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    Ok(Some(AbstractLiteral::Variant(
+        conjure_cp_core::ast::Moo::new(conjure_cp_core::ast::records::Field { name, value }),
+    )))
 }
 
 fn parse_record(

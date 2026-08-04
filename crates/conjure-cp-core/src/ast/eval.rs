@@ -506,19 +506,20 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             eval_constant_comprehension(comprehension.as_ref())
         }
         Expr::AbstractComprehension(_, _) => None,
-        Expr::RecordField(_, rec, fld_name) => {
-            let Lit::AbstractLiteral(AbstractLiteral::Record(ents)) = eval_constant(rec.as_ref())?
-            else {
-                return None;
-            };
-
-            for Field { name, value } in ents {
-                if name.eq(fld_name) {
-                    return Some(value);
+        Expr::RecordField(_, rec, fld_name) => match eval_constant(rec.as_ref())? {
+            Lit::AbstractLiteral(AbstractLiteral::Record(ents)) => {
+                for Field { name, value } in ents {
+                    if name.eq(fld_name) {
+                        return Some(value);
+                    }
                 }
+                None
             }
-            None
-        }
+            Lit::AbstractLiteral(AbstractLiteral::Variant(field)) if field.name == *fld_name => {
+                Some(field.value.clone())
+            }
+            _ => None,
+        },
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = eval_constant(subject.as_ref())?;
             let indices: Vec<Lit> = indices
@@ -1023,7 +1024,14 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::PreImage(_, _, _) => todo!(),
         Expr::Inverse(_, _, _) => todo!(),
         Expr::Restrict(_, _, _) => todo!(),
-        Expr::Active(_, _, _) => todo!(),
+        Expr::Active(_, variant, alternative) => {
+            let Lit::AbstractLiteral(AbstractLiteral::Variant(field)) =
+                eval_constant(variant.as_ref())?
+            else {
+                return None;
+            };
+            Some(Lit::Bool(field.name == *alternative))
+        }
         Expr::ToSet(_, _) => todo!(),
         Expr::ToMSet(_, _) => todo!(),
         Expr::ToRelation(_, _) => todo!(),
@@ -1347,8 +1355,40 @@ mod tests {
         Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
     }
 
+    fn variant_lit(alternative: &str, value: Expr) -> Expr {
+        Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Variant(Moo::new(Field {
+                name: crate::ast::Name::user(alternative),
+                value,
+            })),
+        )
+    }
+
     fn root(exprs: Vec<Expr>) -> Expr {
         Expr::Root(Metadata::new(), exprs)
+    }
+
+    #[test]
+    fn evaluates_active_on_variant_literals() {
+        let variant = Moo::new(variant_lit("value", int_lit(2)));
+        let active = Expr::Active(
+            Metadata::new(),
+            variant.clone(),
+            crate::ast::Name::user("value"),
+        );
+        let inactive = Expr::Active(Metadata::new(), variant, crate::ast::Name::user("flag"));
+
+        assert_eq!(eval_constant(&active), Some(Lit::Bool(true)));
+        assert_eq!(eval_constant(&inactive), Some(Lit::Bool(false)));
+        assert!(run_partial_evaluator_local(&active).is_ok());
+
+        let field = Expr::RecordField(
+            Metadata::new(),
+            Moo::new(variant_lit("value", int_lit(2))),
+            crate::ast::Name::user("value"),
+        );
+        assert_eq!(eval_constant(&field), Some(Lit::Int(2)));
     }
 
     #[test]

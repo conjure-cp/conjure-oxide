@@ -283,8 +283,24 @@ impl GroundDomain {
 
                 Ok(Box::new(iter))
             }
-            GroundDomain::Variant(..) => {
-                todo!("Enumerating variant domains is not yet supported")
+            GroundDomain::Variant(entries) => {
+                let values = entries
+                    .iter()
+                    .map(|entry| {
+                        let name = entry.name.clone();
+                        entry.value.values().map(|values| {
+                            values.map(move |value| {
+                                Literal::AbstractLiteral(AbstractLiteral::Variant(Moo::new(
+                                    Field {
+                                        name: name.clone(),
+                                        value,
+                                    },
+                                )))
+                            })
+                        })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok(Box::new(values.into_iter().flatten()))
             }
             GroundDomain::Matrix(elem_dom, idx_doms) => {
                 let shape = matrix::shape_of_dom(self)?;
@@ -374,7 +390,7 @@ impl GroundDomain {
                 Ok(ans)
             }
             GroundDomain::Variant(entries) => {
-                let mut ans = 1u64;
+                let mut ans = 0u64;
                 for entry in entries {
                     let sz = entry.value.length()?;
                     // Only one field can be in the variant at once
@@ -516,14 +532,11 @@ impl GroundDomain {
             },
             GroundDomain::Variant(entries) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Variant(lit_entry)) => {
-                    for entry in entries {
-                        if entry.name == lit_entry.name
-                            && !(entry.value.contains(&lit_entry.value)?)
-                        {
-                            return Ok(true);
-                        }
-                    }
-                    Ok(false)
+                    let Some(entry) = entries.iter().find(|entry| entry.name == lit_entry.name)
+                    else {
+                        return Ok(false);
+                    };
+                    entry.value.contains(&lit_entry.value)
                 }
                 _ => Ok(false),
             },
@@ -1197,7 +1210,32 @@ impl GroundDomain {
                 todo!();
             }
             Literal::AbstractLiteral(AbstractLiteral::Variant(_)) => {
-                todo!();
+                let mut alternatives: Vec<(Name, Vec<Literal>)> = Vec::new();
+                for literal in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Variant(field)) = literal else {
+                        return Err(DomainOpError::WrongType);
+                    };
+                    if let Some((_, values)) = alternatives
+                        .iter_mut()
+                        .find(|(name, _)| name == &field.name)
+                    {
+                        values.push(field.value.clone());
+                    } else {
+                        alternatives.push((field.name.clone(), vec![field.value.clone()]));
+                    }
+                }
+
+                Ok(GroundDomain::Variant(
+                    alternatives
+                        .into_iter()
+                        .map(|(name, values)| {
+                            Ok(FieldGround {
+                                name,
+                                value: Moo::new(GroundDomain::from_literal_vec(&values)?),
+                            })
+                        })
+                        .collect::<Result<Vec<_>, DomainOpError>>()?,
+                ))
             }
             Literal::AbstractLiteral(AbstractLiteral::Relation(_)) => {
                 todo!();
@@ -1641,6 +1679,57 @@ mod tests {
         let count = dom.values().unwrap().count();
         let length = dom.length().unwrap();
         assert_eq!(count as u64, length);
+    }
+
+    #[test]
+    fn variant_values_follow_alternative_order_and_match_length() {
+        let dom = GroundDomain::Variant(vec![
+            Field {
+                name: Name::user("flag"),
+                value: Moo::new(GroundDomain::Bool),
+            },
+            Field {
+                name: Name::user("value"),
+                value: domain_int_ground!(2..3),
+            },
+        ]);
+        let values = dom.values().unwrap().collect::<Vec<_>>();
+        assert_eq!(values.len() as u64, dom.length().unwrap());
+        assert_eq!(values.len(), 4);
+        assert!(matches!(
+            &values[0],
+            Literal::AbstractLiteral(AbstractLiteral::Variant(field))
+                if field.name == Name::user("flag") && field.value == Literal::Bool(false)
+        ));
+        assert!(matches!(
+            &values[3],
+            Literal::AbstractLiteral(AbstractLiteral::Variant(field))
+                if field.name == Name::user("value") && field.value == Literal::Int(3)
+        ));
+        assert!(dom.contains(&values[2]).unwrap());
+    }
+
+    #[test]
+    fn infers_variant_domain_from_all_observed_alternatives() {
+        let variant = |name: &str, value: i32| {
+            Literal::AbstractLiteral(AbstractLiteral::Variant(Moo::new(Field {
+                name: Name::user(name),
+                value: Literal::Int(value),
+            })))
+        };
+        let domain =
+            GroundDomain::from_literal_vec(&[variant("a", 10), variant("a", 13), variant("b", 7)])
+                .unwrap();
+        let GroundDomain::Variant(fields) = domain else {
+            panic!("expected variant domain");
+        };
+
+        assert_eq!(fields.len(), 2);
+        assert_eq!(fields[0].name, Name::user("a"));
+        assert!(fields[0].value.contains(&Literal::Int(10)).unwrap());
+        assert!(fields[0].value.contains(&Literal::Int(13)).unwrap());
+        assert_eq!(fields[1].name, Name::user("b"));
+        assert!(fields[1].value.contains(&Literal::Int(7)).unwrap());
     }
 
     fn set_lit(elems: Vec<i32>) -> Literal {

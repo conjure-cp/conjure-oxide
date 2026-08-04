@@ -393,6 +393,22 @@ pub fn normalize_solutions_for_comparison(
                         });
                         updates.push((k, Literal::AbstractLiteral(record)));
                     }
+                    Literal::AbstractLiteral(AbstractLiteral::Variant(entry)) => {
+                        let mut variant = AbstractLiteral::Variant(entry);
+                        variant = variant.transform(&move |x| match x {
+                            AbstractLiteral::Variant(entry) => {
+                                let Field { name, value } = Moo::unwrap_or_clone(entry);
+                                let value = match value {
+                                    Literal::Bool(false) => Literal::Int(0),
+                                    Literal::Bool(true) => Literal::Int(1),
+                                    value => value,
+                                };
+                                AbstractLiteral::Variant(Moo::new(Field { name, value }))
+                            }
+                            value => value,
+                        });
+                        updates.push((k, Literal::AbstractLiteral(variant)));
+                    }
                     Literal::AbstractLiteral(AbstractLiteral::Set(members)) => {
                         let set = AbstractLiteral::Set(members).transform(&move |x| match x {
                             AbstractLiteral::Set(members) => {

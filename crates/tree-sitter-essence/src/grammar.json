@@ -715,6 +715,14 @@
         },
         {
           "type": "FIELD",
+          "name": "variant_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "variant_domain"
+          }
+        },
+        {
+          "type": "FIELD",
           "name": "set_domain",
           "content": {
             "type": "SYMBOL",
@@ -1147,6 +1155,76 @@
         {
           "type": "STRING",
           "value": "record"
+        },
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "name_domain_pair",
+              "content": {
+                "type": "SYMBOL",
+                "name": "name_domain_pair"
+              }
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "REPEAT",
+                  "content": {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "STRING",
+                        "value": ","
+                      },
+                      {
+                        "type": "FIELD",
+                        "name": "name_domain_pair",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "name_domain_pair"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": ","
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
+    },
+    "variant_domain": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "variant"
         },
         {
           "type": "STRING",
@@ -2098,9 +2176,54 @@
               "type": "SYMBOL",
               "name": "quantifier_expr"
             }
+          },
+          {
+            "type": "FIELD",
+            "name": "active_expression",
+            "content": {
+              "type": "SYMBOL",
+              "name": "active_expr"
+            }
           }
         ]
       }
+    },
+    "active_expr": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "active"
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "FIELD",
+          "name": "variant",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ","
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        }
+      ]
     },
     "not_expr": {
       "type": "PREC",
@@ -3615,6 +3738,14 @@
           },
           {
             "type": "FIELD",
+            "name": "variant",
+            "content": {
+              "type": "SYMBOL",
+              "name": "variant"
+            }
+          },
+          {
+            "type": "FIELD",
             "name": "from_solution",
             "content": {
               "type": "SYMBOL",
@@ -4360,6 +4491,31 @@
         }
       ]
     },
+    "variant": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "variant"
+        },
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "FIELD",
+          "name": "name_value_pair",
+          "content": {
+            "type": "SYMBOL",
+            "name": "name_value_pair"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
+    },
     "name_value_pair": {
       "type": "SEQ",
       "members": [
@@ -4636,6 +4792,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "variant"
+        },
+        {
+          "type": "SYMBOL",
           "name": "set_literal"
         },
         {
@@ -4705,6 +4865,14 @@
           "content": {
             "type": "SYMBOL",
             "name": "annotation_record_domain"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "variant_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_variant_domain"
           }
         },
         {
@@ -5174,6 +5342,76 @@
         {
           "type": "STRING",
           "value": "record"
+        },
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "name_domain_pair",
+              "content": {
+                "type": "SYMBOL",
+                "name": "annotation_name_domain_pair"
+              }
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "REPEAT",
+                  "content": {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "STRING",
+                        "value": ","
+                      },
+                      {
+                        "type": "FIELD",
+                        "name": "name_domain_pair",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "annotation_name_domain_pair"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": ","
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
+    },
+    "annotation_variant_domain": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "variant"
         },
         {
           "type": "STRING",

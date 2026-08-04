@@ -73,6 +73,7 @@ pub fn parse_domain(
         "tuple_domain" | "annotation_tuple_domain" => parse_tuple_domain(ctx, domain),
         "matrix_domain" | "annotation_matrix_domain" => parse_matrix_domain(ctx, domain),
         "record_domain" | "annotation_record_domain" => parse_record_domain(ctx, domain),
+        "variant_domain" | "annotation_variant_domain" => parse_variant_domain(ctx, domain),
         "set_domain" | "annotation_set_domain" => parse_set_domain(ctx, domain),
         "mset_domain" | "annotation_mset_domain" => parse_mset_domain(ctx, domain),
         _ => {
@@ -433,6 +434,30 @@ fn parse_record_domain(
         None,
     );
     Ok(Some(Domain::record(record_entries)))
+}
+
+fn parse_variant_domain(
+    ctx: &mut ParseContext,
+    variant_domain: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let mut entries = Vec::new();
+    for entry in named_children(&variant_domain) {
+        let Some(name_node) = field!(recover, ctx, entry, "name") else {
+            return Ok(None);
+        };
+        let name = Name::user(&ctx.source_code[name_node.start_byte()..name_node.end_byte()]);
+        let Some(domain_node) = field!(recover, ctx, entry, "domain") else {
+            return Ok(None);
+        };
+        let Some(value) = parse_domain(ctx, domain_node)? else {
+            return Ok(None);
+        };
+        entries.push(Field { name, value });
+    }
+
+    let keyword = child!(variant_domain, 0, "variant");
+    ctx.add_span_and_doc_hover(&keyword, "variant", SymbolKind::Domain, None, None);
+    Ok(Some(Domain::variant(entries)))
 }
 
 pub fn parse_set_domain(

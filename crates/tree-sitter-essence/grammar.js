@@ -96,6 +96,7 @@ module.exports = grammar ({
       field("tuple_domain", $.tuple_domain),
       field("matrix_domain", $.matrix_domain),
       field("record_domain", $.record_domain),
+      field("variant_domain", $.variant_domain),
       field("set_domain", $.set_domain),
       field("mset_domain", $.mset_domain),
     ),
@@ -151,6 +152,13 @@ module.exports = grammar ({
 
     record_domain: $ => seq(
       "record",
+      "{",
+      commaSep1(field("name_domain_pair", $.name_domain_pair)),
+      "}"
+    ),
+
+    variant_domain: $ => seq(
+      "variant",
       "{",
       commaSep1(field("name_domain_pair", $.name_domain_pair)),
       "}"
@@ -254,7 +262,17 @@ module.exports = grammar ({
       field("list_combining_expression_bool", $.list_combining_expr_bool),
       field("sub_bool_expression", $.sub_bool_expr),
       field("quantifier_expression", $.quantifier_expr),
+      field("active_expression", $.active_expr),
     )),
+
+    active_expr: $ => seq(
+      "active",
+      "(",
+      field("variant", $.identifier),
+      ",",
+      field("name", $.identifier),
+      ")"
+    ),
 
     not_expr: $ => prec(20, seq("!", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)))),
     
@@ -422,6 +440,7 @@ module.exports = grammar ({
       field("matrix", $.matrix),
       field("comprehension", $.comprehension),
       field("record", $.record),
+      field("variant", $.variant),
       field("from_solution", $.from_solution),
       field("index_or_slice", $.index_or_slice),
       field("set_literal", $.set_literal),
@@ -500,6 +519,13 @@ module.exports = grammar ({
       "}"
     ),
 
+    variant: $ => seq(
+      "variant",
+      "{",
+      field("name_value_pair", $.name_value_pair),
+      "}"
+    ),
+
     name_value_pair: $ => seq(
       field("name", $.identifier),
       "=",
@@ -548,6 +574,7 @@ module.exports = grammar ({
       $.comprehension,
       $.tuple,
       $.record,
+      $.variant,
       $.set_literal,
       $.mset_literal,
       $.index_or_slice,
@@ -562,6 +589,7 @@ module.exports = grammar ({
       field("tuple_domain", $.annotation_tuple_domain),
       field("matrix_domain", $.annotation_matrix_domain),
       field("record_domain", $.annotation_record_domain),
+      field("variant_domain", $.annotation_variant_domain),
       field("set_domain", $.annotation_set_domain),
       field("mset_domain", $.annotation_mset_domain),
     ),
@@ -614,6 +642,13 @@ module.exports = grammar ({
 
     annotation_record_domain: $ => seq(
       "record",
+      "{",
+      commaSep1(field("name_domain_pair", $.annotation_name_domain_pair)),
+      "}"
+    ),
+
+    annotation_variant_domain: $ => seq(
+      "variant",
       "{",
       commaSep1(field("name_domain_pair", $.annotation_name_domain_pair)),
       "}"

@@ -24,8 +24,10 @@ pub fn parse_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" | "primary_atom" | "constant" | "identifier" | "metavar" | "matrix" | "record"
-        | "tuple" | "set_literal" | "mset_literal" | "comprehension" | "index_or_slice"
-        | "flatten" | "element_id" | "table" | "negative_table" => parse_atom(ctx, &node),
+        | "variant" | "tuple" | "set_literal" | "mset_literal" | "comprehension"
+        | "index_or_slice" | "flatten" | "element_id" | "table" | "negative_table" => {
+            parse_atom(ctx, &node)
+        }
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
@@ -210,6 +212,7 @@ fn parse_boolean_expression(
     };
     match inner.kind() {
         "atom" | "table" | "negative_table" => parse_atom(ctx, &inner),
+        "active_expr" => parse_active_expression(ctx, &inner),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_bool" => {
@@ -229,6 +232,47 @@ fn parse_boolean_expression(
             Ok(None)
         }
     }
+}
+
+fn parse_active_expression(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let Some(variant_node) = field!(recover, ctx, node, "variant") else {
+        return Ok(None);
+    };
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let variant = parse_expression(ctx, variant_node)?;
+    ctx.typechecking_context = saved_context;
+    let Some(variant) = variant else {
+        return Ok(None);
+    };
+    let Some(name_node) = field!(recover, ctx, node, "name") else {
+        return Ok(None);
+    };
+    let name = conjure_cp_core::ast::Name::user(
+        &ctx.source_code[name_node.start_byte()..name_node.end_byte()],
+    );
+    let ReturnType::Variant(entries) = variant.return_type() else {
+        ctx.record_error(RecoverableParseError::new(
+            format!("active expects a variant, got {variant}"),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    };
+    if !entries.iter().any(|entry| entry.name == name) {
+        ctx.record_error(RecoverableParseError::new(
+            format!("unknown variant field `{name}`"),
+            Some(name_node.range()),
+        ));
+        return Ok(None);
+    }
+    Ok(Some(Expression::Active(
+        Metadata::new(),
+        Moo::new(variant),
+        name,
+    )))
 }
 
 fn parse_list_combining_expression(

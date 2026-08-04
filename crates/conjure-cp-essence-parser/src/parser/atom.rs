@@ -78,7 +78,7 @@ pub fn parse_atom(
                 Atom::Literal(lit),
             )))
         }
-        "matrix" | "record" | "tuple" | "set_literal" | "mset_literal" => {
+        "matrix" | "record" | "variant" | "tuple" | "set_literal" | "mset_literal" => {
             let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);
             };
@@ -297,7 +297,7 @@ fn parse_index_or_slice(
     let mut idx_nodes = named_children(&indices_field).collect::<VecDeque<_>>();
 
     // If LHS is a record, parse first index as a record field
-    if let ReturnType::Record(ents) = collection.return_type() {
+    if let ReturnType::Record(ents) | ReturnType::Variant(ents) = collection.return_type() {
         let idx = idx_nodes
             .pop_front()
             .ok_or(FatalParseError::internal_error(

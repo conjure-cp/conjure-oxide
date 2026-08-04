@@ -306,7 +306,28 @@ fn literal_from_simplified_json_with_ground(
             }
             Ok(Literal::AbstractLiteral(AbstractLiteral::Record(entries)))
         }
-        GroundDomain::Variant(_) => literal_from_simplified_json_unguided(value),
+        GroundDomain::Variant(fields) => {
+            let JsonValue::Object(object) = value else {
+                bail!("expected a JSON object for a variant");
+            };
+            if object.len() != 1 {
+                bail!(
+                    "variant value must contain exactly one alternative, got {}",
+                    object.len()
+                );
+            }
+            let (key, item) = object.iter().next().expect("object has one entry");
+            let field = fields
+                .iter()
+                .find(|field| field.name.to_string() == *key)
+                .ok_or_else(|| anyhow!("unknown variant alternative `{key}`"))?;
+            Ok(Literal::AbstractLiteral(AbstractLiteral::Variant(
+                Moo::new(Field {
+                    name: field.name.clone(),
+                    value: literal_from_simplified_json_with_ground(item, field.value.as_ref())?,
+                }),
+            )))
+        }
         GroundDomain::Matrix(inner, index_domains) => {
             matrix_from_simplified_json(value, inner.as_ref(), index_domains)
         }
@@ -661,6 +682,38 @@ mod tests {
         let rendered = solutions_to_simplified_json(&solutions).unwrap();
         let again = solutions_from_simplified_json(&rendered, &domains).unwrap();
         assert_eq!(again, solutions);
+    }
+
+    #[test]
+    fn guided_variant_object_parses_as_variant() {
+        let mut domains = BTreeMap::new();
+        domains.insert(
+            Name::user("x"),
+            Domain::variant(vec![
+                Field {
+                    name: Name::user("flag"),
+                    value: Domain::bool(),
+                },
+                Field {
+                    name: Name::user("value"),
+                    value: int_dom(1, 3),
+                },
+            ]),
+        );
+
+        let json = serde_json::json!([{"x": {"value": 2}}]);
+        let solutions = solutions_from_simplified_json(&json, &domains).unwrap();
+        let expected = Literal::AbstractLiteral(AbstractLiteral::Variant(Moo::new(Field {
+            name: Name::user("value"),
+            value: Literal::Int(2),
+        })));
+        assert_eq!(solutions[0].get(&Name::user("x")), Some(&expected));
+
+        let rendered = solutions_to_simplified_json(&solutions).unwrap();
+        assert_eq!(
+            solutions_from_simplified_json(&rendered, &domains).unwrap(),
+            solutions
+        );
     }
 
     #[test]

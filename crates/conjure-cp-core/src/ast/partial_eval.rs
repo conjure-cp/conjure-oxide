@@ -976,7 +976,21 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
-        Expr::Active(_, _, _) => todo!(),
+        Expr::Active(m, variant, alternative) => {
+            let active_alternative = match variant.as_ref() {
+                Expr::AbstractLiteral(_, AbstractLiteral::Variant(field)) => &field.name,
+                Expr::Atomic(
+                    _,
+                    Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Variant(field))),
+                ) => &field.name,
+                _ => return Err(RuleNotApplicable),
+            };
+
+            Ok(RuleEffect::pure(Expr::Atomic(
+                m.clone(),
+                Lit::Bool(active_alternative == alternative).into(),
+            )))
+        }
         Expr::Defined(_, _) => todo!(),
         Expr::Range(_, _) => todo!(),
         Expr::Image(_, _, _) => todo!(),
