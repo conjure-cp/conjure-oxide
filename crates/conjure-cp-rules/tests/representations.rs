@@ -1,14 +1,13 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
-    AbstractLiteral, Domain, Expression, GroundDomain, Literal, MSetAttr, Metadata, Moo, Name,
-    Reference, SetAttr, SymbolTable, run_partial_evaluator,
+    AbstractLiteral, Domain, Expression, GroundDomain, Literal, MSetAttr, Moo, Name, SetAttr,
+    SymbolTable,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
-use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
-    MSetExplicit, MSetOccurrence, MSetPacked, MatrixComponents, MatrixPacked, RecordToTuple,
-    SetExplicit, SetOccurrence, SetPacked, TupleComponents, TuplePacked,
+    MSetExplicit, MSetOccurrence, MSetPacked, MatrixComponents, MatrixPacked, RecordComponents,
+    RecordPacked, SetExplicit, SetOccurrence, SetPacked, TupleComponents, TuplePacked,
 };
 use uniplate::Uniplate;
 
@@ -21,7 +20,8 @@ fn representation_short_names_describe_the_generated_layout() {
     assert_eq!(TuplePacked::SHORT_NAME, "packed");
     assert_eq!(SetExplicit::SHORT_NAME, "explicit");
     assert_eq!(SetOccurrence::SHORT_NAME, "occurrence");
-    assert_eq!(RecordToTuple::SHORT_NAME, "tuple");
+    assert_eq!(RecordComponents::SHORT_NAME, "components");
+    assert_eq!(RecordPacked::SHORT_NAME, "packed");
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn matrix_representation_initialises_and_maps_indices() {
 }
 
 #[test]
-fn record_to_tuple_round_trips_values_in_field_order() {
+fn record_components_round_trip_values_in_canonical_field_order() {
     let domain = Domain::record(vec![
         Field {
             name: Name::user("z"),
@@ -137,7 +137,7 @@ fn record_to_tuple_round_trips_values_in_field_order() {
             value: domain_int!(1..3),
         },
     ]);
-    let state = <RecordToTuple as ReprRule>::DomainLevel::init(domain).unwrap();
+    let state = <RecordComponents as ReprRule>::DomainLevel::init(domain).unwrap();
     let value = Literal::AbstractLiteral(AbstractLiteral::Record(vec![
         Field {
             name: Name::user("z"),
@@ -166,35 +166,72 @@ fn record_to_tuple_round_trips_values_in_field_order() {
 }
 
 #[test]
-fn represented_record_equal_to_tuple_is_not_folded_to_false() {
+fn packed_record_round_trips_boolean_integer_and_nested_record_fields() {
     let domain = Domain::record(vec![
+        Field {
+            name: Name::user("z"),
+            value: Domain::record(vec![
+                Field {
+                    name: Name::user("flag"),
+                    value: Domain::bool(),
+                },
+                Field {
+                    name: Name::user("value"),
+                    value: domain_int!(1, 3),
+                },
+            ]),
+        },
         Field {
             name: Name::user("a"),
             value: Domain::bool(),
         },
-        Field {
-            name: Name::user("b"),
-            value: domain_int!(0..9),
-        },
     ]);
-    let mut symbols = SymbolTable::new();
-    let mut declaration = symbols.gen_find(&domain);
-    RecordToTuple::init_for(&mut declaration).unwrap();
-
-    let tuple = Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
-        Literal::Bool(false),
-        Literal::Int(4),
+    let state = <RecordPacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Record(vec![
+        Field {
+            name: Name::user("z"),
+            value: Literal::AbstractLiteral(AbstractLiteral::Record(vec![
+                Field {
+                    name: Name::user("value"),
+                    value: Literal::Int(3),
+                },
+                Field {
+                    name: Name::user("flag"),
+                    value: Literal::Bool(false),
+                },
+            ])),
+        },
+        Field {
+            name: Name::user("a"),
+            value: Literal::Bool(false),
+        },
     ]));
-    let comparison = Expression::Eq(
-        Metadata::new(),
-        Moo::new(Reference::new(declaration).into()),
-        Moo::new(tuple.into()),
-    );
 
-    assert!(matches!(
-        run_partial_evaluator(&comparison),
-        Err(RuleNotApplicable)
-    ));
+    let assignment = state.down(value).unwrap();
+    assert_eq!(assignment.packed, Literal::Int(7));
+    assert_eq!(
+        assignment.up(),
+        Literal::AbstractLiteral(AbstractLiteral::Record(vec![
+            Field {
+                name: Name::user("a"),
+                value: Literal::Bool(false),
+            },
+            Field {
+                name: Name::user("z"),
+                value: Literal::AbstractLiteral(AbstractLiteral::Record(vec![
+                    Field {
+                        name: Name::user("flag"),
+                        value: Literal::Bool(false),
+                    },
+                    Field {
+                        name: Name::user("value"),
+                        value: Literal::Int(3),
+                    },
+                ])),
+            },
+        ]))
+    );
+    assert_eq!(RecordPacked::compactness_score(domain).unwrap(), 8);
 }
 
 #[test]

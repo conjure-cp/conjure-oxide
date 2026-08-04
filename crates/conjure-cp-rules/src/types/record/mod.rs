@@ -1,3 +1,5 @@
-mod tuple;
+mod components;
+mod packed;
 
-pub use tuple::RecordToTuple;
+pub use components::RecordComponents;
+pub use packed::RecordPacked;

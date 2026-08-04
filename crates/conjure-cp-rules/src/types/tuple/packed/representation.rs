@@ -1,8 +1,8 @@
 use crate::shared::representation_prelude::*;
+use crate::types::product::{canonical_product_literal, symmetry_values};
 use conjure_cp::ast::{GroundDomain, Moo, Reference};
 use conjure_cp::representation::ReprInitError;
 use conjure_cp::{domain_int, range};
-use itertools::Itertools;
 
 register_representation!(
     TuplePacked("packed")
@@ -35,9 +35,10 @@ register_representation!(
             fields.iter().zip(self.values.iter()).zip(&self.places).try_fold(
                 0i32,
                 |packed, ((field, values), place)| {
+                    let field = canonical_product_literal(field.clone());
                     let digit = values
                         .iter()
-                        .position(|candidate| candidate.essence_cmp(field).is_eq())?;
+                        .position(|candidate| candidate.essence_cmp(&field).is_eq())?;
                     packed.checked_add(i32::try_from(digit).ok()?.checked_mul(*place)?)
                 },
             )
@@ -119,25 +120,3 @@ register_representation!(
         state.total_size as usize
     }
 );
-
-/// Enumerate a field in the same order used by Conjure's recursive tuple symmetry ordering.
-fn symmetry_values(domain: &GroundDomain) -> Option<Vec<Literal>> {
-    match domain {
-        GroundDomain::Bool => Some(vec![Literal::Bool(true), Literal::Bool(false)]),
-        GroundDomain::Int(_) => domain.values().ok().map(Iterator::collect),
-        GroundDomain::Tuple(fields) => {
-            let fields = fields
-                .iter()
-                .map(|field| symmetry_values(field))
-                .collect::<Option<Vec<_>>>()?;
-            Some(
-                fields
-                    .into_iter()
-                    .multi_cartesian_product()
-                    .map(|fields| Literal::AbstractLiteral(AbstractLiteral::Tuple(fields)))
-                    .collect(),
-            )
-        }
-        _ => None,
-    }
-}
