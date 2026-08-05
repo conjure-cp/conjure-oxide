@@ -1,13 +1,17 @@
 use crate::shared::representation_prelude::*;
 use conjure_cp::ast::{Domain, GroundDomain, JectivityAttr, Moo, PartialityAttr, Range, Reference};
-use conjure_cp::{essence_expr, into_matrix_expr, matrix_expr};
+use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 register_representation!(
     FunctionExplicit("explicit")
     struct State<T> {
-        /// Codomain values in domain-enumeration order, one per domain element.
+        /// Codomain values in domain-enumeration order, one per domain element, indexed by plain
+        /// `int(1..n)` position (not by the function's own domain, which may be `bool` or
+        /// compound and can't always serve as a concrete Minion matrix index -- position is the
+        /// one indexing scheme that always works, regardless of the domain's shape).
         pub values_matrix: T,
-        /// Definedness flags in the same order, omitted for total functions.
+        /// Definedness flags in the same order and indexing as `values_matrix`, omitted for total
+        /// functions.
         pub flags_matrix: Option<T>,
         /// Every domain value, in the same order used by `values_matrix`/`flags_matrix`.
         pub domain_values: Moo<Vec<Literal>>,
@@ -20,25 +24,23 @@ register_representation!(
         /// Number of defined entries a partial function may have; irrelevant for total functions.
         pub size: Range<i32>,
         /// Whether `values_matrix` itself needs representation selection, because the codomain
-        /// (its elements) or the domain (its index) is compound (e.g. set/record/tuple). Minion's
-        /// native `AllDiff` only supports a matrix of already-scalar elements, so either case must
-        /// fall back to pairwise `Neq` instead.
+        /// (its elements) is compound (e.g. set/record/tuple) -- its index is always plain
+        /// `int(1..n)`, so it never contributes abstractness. Minion's native `AllDiff` only
+        /// supports a matrix of already-scalar elements, so an abstract codomain must fall back to
+        /// pairwise `Neq` instead.
         pub values_matrix_is_abstract: bool
     }
     impl State<DeclarationPtr> {
-        /// The matrices are indexed by the function's own domain (e.g. `bool`, not necessarily
-        /// `int(1..n)`), so a one-based position must be translated to the domain value at that
-        /// position, not passed through as a raw integer.
-        fn domain_index_expr(&self, index: i32) -> Expression {
-            self.domain_values[(index - 1) as usize].clone().into()
-        }
-
         /// Return the codomain value at a one-based position (domain-enumeration order).
+        ///
+        /// `values_matrix`/`flags_matrix` are always indexed by plain `int(1..n)` position, not by
+        /// the function's own domain (which may be `bool`, or compound and unable to serve as a
+        /// concrete Minion index at all) -- see the `values_matrix` field doc.
         pub fn value_expr(&self, index: i32) -> Expression {
             Expression::SafeIndex(
                 Metadata::new(),
                 Moo::new(Reference::new(self.values_matrix.clone()).into()),
-                vec![self.domain_index_expr(index)],
+                vec![index.into()],
             )
         }
 
@@ -48,7 +50,7 @@ register_representation!(
                 Some(flags) => Expression::SafeIndex(
                     Metadata::new(),
                     Moo::new(Reference::new(flags.clone()).into()),
-                    vec![self.domain_index_expr(index)],
+                    vec![index.into()],
                 ),
                 None => true.into(),
             }
@@ -92,19 +94,18 @@ register_representation!(
             .cloned()
             .ok_or_else(|| domain_err("function codomain is empty"))?;
 
-        let index_dom = domain.clone().into();
-        let values_matrix = Domain::matrix(codomain.clone().into(), vec![index_dom]);
+        // Always index by plain position, not by the function's own (possibly non-int, possibly
+        // compound) domain -- see the `values_matrix` field doc.
+        let n = domain_values.len() as i32;
+        let values_matrix = Domain::matrix(codomain.clone().into(), vec![domain_int!(1..n)]);
         // Minion's native AllDiff only supports a matrix of already-scalar elements; a compound
-        // codomain (elements) or compound domain (index) both make `values_matrix` itself need
-        // representation, so either one rules out a plain AllDiff.
+        // codomain makes `values_matrix` itself need representation, which rules out a plain
+        // AllDiff.
         let values_matrix_is_abstract =
             crate::passes::representation::domain_needs_representation(&values_matrix);
         let flags_matrix = match attr.partiality {
             PartialityAttr::Total => None,
-            PartialityAttr::Partial => {
-                let index_dom = domain.clone().into();
-                Some(Domain::matrix(Domain::bool(), vec![index_dom]))
-            }
+            PartialityAttr::Partial => Some(Domain::matrix(Domain::bool(), vec![domain_int!(1..n)])),
         };
 
         Ok(State {
