@@ -991,26 +991,28 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 Lit::Bool(active_alternative == alternative).into(),
             )))
         }
-        Expr::Defined(_, _) => todo!(),
-        Expr::Range(_, _) => todo!(),
-        Expr::Image(_, _, _) => todo!(),
-        Expr::ImageSet(_, _, _) => todo!(),
-        Expr::PreImage(_, _, _) => todo!(),
-        Expr::Inverse(_, _, _) => todo!(),
-        Expr::Restrict(_, _, _) => todo!(),
-        Expr::ToSet(_, _) => todo!(),
-        Expr::ToMSet(_, _) => todo!(),
-        Expr::ToRelation(_, _) => todo!(),
+        // Semantic lowering for these lives in registered rules (function/set/mset/relation
+        // horizontal rules), not here; the partial evaluator only offers extra constant-folding,
+        // which `eval.rs`'s matching arms cover for the fully-constant case. Previously these
+        // were `todo!()`, which panicked unconditionally on every rewrite of the operator (not
+        // just constant ones), since `normalise_evaluator_local` calls this on every expression
+        // node — the same landmine already found and fixed for Subsequence/Substring.
+        Expr::Defined(_, _) => Err(RuleNotApplicable),
+        Expr::Range(_, _) => Err(RuleNotApplicable),
+        Expr::Image(_, _, _) => Err(RuleNotApplicable),
+        Expr::ImageSet(_, _, _) => Err(RuleNotApplicable),
+        Expr::PreImage(_, _, _) => Err(RuleNotApplicable),
+        Expr::Inverse(_, _, _) => Err(RuleNotApplicable),
+        Expr::Restrict(_, _, _) => Err(RuleNotApplicable),
+        Expr::ToSet(_, _) => Err(RuleNotApplicable),
+        Expr::ToMSet(_, _) => Err(RuleNotApplicable),
+        Expr::ToRelation(_, _) => Err(RuleNotApplicable),
         Expr::RelationProj(_, _, _) => todo!(),
         Expr::Apart(_, _, _) => todo!(),
         Expr::Together(_, _, _) => todo!(),
         Expr::Participants(_, _) => todo!(),
         Expr::Party(_, _, _) => todo!(),
         Expr::Parts(_, _) => todo!(),
-        // Semantic lowering lives in the sequence horizontal rules (an ordinary registered rule
-        // set), not here; the partial evaluator only offers extra constant-folding, which
-        // `eval.rs`'s `Expr::Subsequence`/`Expr::Substring` arms already cover for the
-        // fully-constant case.
         Expr::Subsequence(_, _, _) => Err(RuleNotApplicable),
         Expr::Substring(_, _, _) => Err(RuleNotApplicable),
         Expr::LexLt(_, _, _) => Err(RuleNotApplicable),

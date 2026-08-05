@@ -138,6 +138,18 @@ pub struct FuncAttr<A = Int> {
     pub jectivity: JectivityAttr,
 }
 
+impl<A> Default for FuncAttr<A> {
+    fn default() -> Self {
+        FuncAttr {
+            size: Range::Unbounded,
+            // Matches Conjure's own default (`Domain.hs`): a bare `function` with no explicit
+            // `total` attribute is partial.
+            partiality: PartialityAttr::Partial,
+            jectivity: JectivityAttr::None,
+        }
+    }
+}
+
 impl<A: Display> Display for FuncAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = fmt_size("size", &self.size);

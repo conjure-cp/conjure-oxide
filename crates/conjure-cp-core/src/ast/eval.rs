@@ -1017,13 +1017,57 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
-        Expr::Defined(_, _) => todo!(),
-        Expr::Range(_, _) => todo!(),
-        Expr::Image(_, _, _) => todo!(),
-        Expr::ImageSet(_, _, _) => todo!(),
-        Expr::PreImage(_, _, _) => todo!(),
-        Expr::Inverse(_, _, _) => todo!(),
-        Expr::Restrict(_, _, _) => todo!(),
+        Expr::Defined(_, f) => {
+            let Lit::AbstractLiteral(AbstractLiteral::Function(pairs)) = eval_constant(f)? else {
+                return None;
+            };
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(
+                pairs.into_iter().map(|(key, _)| key).collect(),
+            )))
+        }
+        Expr::Range(_, f) => {
+            let Lit::AbstractLiteral(AbstractLiteral::Function(pairs)) = eval_constant(f)? else {
+                return None;
+            };
+            let mut values = Vec::new();
+            for (_, value) in pairs {
+                if !values.contains(&value) {
+                    values.push(value);
+                }
+            }
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(values)))
+        }
+        Expr::Image(_, f, arg) => {
+            let Lit::AbstractLiteral(AbstractLiteral::Function(pairs)) = eval_constant(f)? else {
+                return None;
+            };
+            let arg = eval_constant(arg)?;
+            pairs
+                .into_iter()
+                .find(|(key, _)| *key == arg)
+                .map(|(_, value)| value)
+        }
+        Expr::PreImage(_, f, img) => {
+            let Lit::AbstractLiteral(AbstractLiteral::Function(pairs)) = eval_constant(f)? else {
+                return None;
+            };
+            let img = eval_constant(img)?;
+            let mut keys = Vec::new();
+            for (key, value) in pairs {
+                if value == img && !keys.contains(&key) {
+                    keys.push(key);
+                }
+            }
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(keys)))
+        }
+        // Not yet needed by any in-scope function case; the partial evaluator already refuses
+        // these gracefully (Err(RuleNotApplicable)) rather than panicking.
+        Expr::ImageSet(_, _, _) => None,
+        Expr::Inverse(_, _, _) => None,
+        Expr::Restrict(_, _, _) => None,
+        Expr::ToSet(_, _) => None,
+        Expr::ToMSet(_, _) => None,
+        Expr::ToRelation(_, _) => None,
         Expr::Active(_, variant, alternative) => {
             let Lit::AbstractLiteral(AbstractLiteral::Variant(field)) =
                 eval_constant(variant.as_ref())?
@@ -1032,9 +1076,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             };
             Some(Lit::Bool(field.name == *alternative))
         }
-        Expr::ToSet(_, _) => todo!(),
-        Expr::ToMSet(_, _) => todo!(),
-        Expr::ToRelation(_, _) => todo!(),
         Expr::RelationProj(_, _, _) => todo!(),
         Expr::Apart(_, _, _) => todo!(),
         Expr::Together(_, _, _) => todo!(),

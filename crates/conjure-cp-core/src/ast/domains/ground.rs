@@ -1,9 +1,8 @@
 use crate::ast::domains::attrs::PartitionAttr;
-use crate::ast::domains::{JectivityAttr, MSetAttr, SequenceAttr};
+use crate::ast::domains::{JectivityAttr, MSetAttr, PartialityAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, DomainOpError, FuncAttr, HasDomain, Literal, Moo, Name, RelAttr, SetAttr,
-    Typeable,
+    AbstractLiteral, DomainOpError, FuncAttr, Literal, Moo, Name, RelAttr, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
     matrix,
     records::Field,
@@ -493,15 +492,73 @@ impl GroundDomain {
                 }
                 Ok(ans)
             }
-            GroundDomain::Function(_, _, _) => {
-                todo!("Length bound of functions is not yet supported")
+            GroundDomain::Function(attr, domain, codomain) => {
+                if attr.jectivity != JectivityAttr::None {
+                    // See the matching note on `Sequence` above: not yet needed by any in-scope
+                    // case.
+                    todo!("Length bound of jective functions is not yet supported");
+                }
+
+                let domain_len = domain.length()?;
+                let codomain_len = codomain.length()?;
+
+                match attr.partiality {
+                    PartialityAttr::Total => {
+                        let exp: u32 = domain_len.try_into()?;
+                        codomain_len.checked_pow(exp).ok_or(DomainOpError::TooLarge)
+                    }
+                    PartialityAttr::Partial => {
+                        let (min_sz, max_sz) = match attr.size {
+                            Range::Unbounded => (0, domain_len),
+                            Range::Single(n) => (n as u64, n as u64),
+                            Range::UnboundedR(n) => (n as u64, domain_len),
+                            Range::UnboundedL(n) => (0, n as u64),
+                            Range::Bounded(min, max) => (min as u64, max as u64),
+                        };
+                        let max_sz = max_sz.min(domain_len);
+                        if min_sz > max_sz {
+                            return Ok(0);
+                        }
+
+                        let mut ans = 0u64;
+                        for sz in min_sz..=max_sz {
+                            // Choose which `sz` domain elements are defined, then assign any
+                            // codomain value to each of them.
+                            let choose = count_combinations(domain_len, sz)?;
+                            let assign = codomain_len
+                                .checked_pow(sz.try_into()?)
+                                .ok_or(DomainOpError::TooLarge)?;
+                            let term = choose.checked_mul(assign).ok_or(DomainOpError::TooLarge)?;
+                            ans = ans.checked_add(term).ok_or(DomainOpError::TooLarge)?;
+                        }
+                        Ok(ans)
+                    }
+                }
             }
-            GroundDomain::Relation(_, domains) => {
-                // Cannot currently use attributes to better infer length because of i32 u64 mismatch
+            GroundDomain::Relation(attr, domains) => {
                 let dom_sizes_result: Result<Vec<u64>, DomainOpError> =
                     domains.iter().map(|x| x.length()).collect();
                 let dom_sizes = dom_sizes_result?;
-                Ok(dom_sizes.iter().product())
+                let inner_len: u64 = dom_sizes.iter().product();
+
+                let (min_sz, max_sz) = match attr.size {
+                    Range::Unbounded => (0, inner_len),
+                    Range::Single(n) => (n as u64, n as u64),
+                    Range::UnboundedR(n) => (n as u64, inner_len),
+                    Range::UnboundedL(n) => (0, n as u64),
+                    Range::Bounded(min, max) => (min as u64, max as u64),
+                };
+                let max_sz = max_sz.min(inner_len);
+                if min_sz > max_sz {
+                    return Ok(0);
+                }
+
+                let mut ans = 0u64;
+                for sz in min_sz..=max_sz {
+                    let c = count_combinations(inner_len, sz)?;
+                    ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
             }
             GroundDomain::Partition(_, _) => {
                 todo!("Length bound of Partitions is not yet supported")
@@ -1225,31 +1282,29 @@ impl GroundDomain {
                         .collect(),
                 ))
             }
-            Literal::AbstractLiteral(AbstractLiteral::Function(items)) => {
-                if items.is_empty() {
-                    return Err(DomainOpError::NotGround);
-                }
+            Literal::AbstractLiteral(AbstractLiteral::Function(_)) => {
+                let mut all_keys = vec![];
+                let mut all_values = vec![];
 
-                let (x1, y1) = &items[0];
-                let d1 = x1.domain_of();
-                let d1 = d1.as_ground().ok_or(DomainOpError::NotGround)?;
-                let d2 = y1.domain_of();
-                let d2 = d2.as_ground().ok_or(DomainOpError::NotGround)?;
-
-                // Check that all items have the same domains
-                for (x, y) in items {
-                    let dx = x.domain_of();
-                    let dx = dx.as_ground().ok_or(DomainOpError::NotGround)?;
-
-                    let dy = y.domain_of();
-                    let dy = dy.as_ground().ok_or(DomainOpError::NotGround)?;
-
-                    if (dx != d1) || (dy != d2) {
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Function(pairs)) = lit else {
                         return Err(DomainOpError::WrongType);
+                    };
+
+                    for (key, value) in pairs {
+                        all_keys.push(key.clone());
+                        all_values.push(value.clone());
                     }
                 }
 
-                todo!();
+                let domain = GroundDomain::from_literal_vec(&all_keys)?;
+                let codomain = GroundDomain::from_literal_vec(&all_values)?;
+
+                Ok(GroundDomain::Function(
+                    FuncAttr::default(),
+                    Moo::new(domain),
+                    Moo::new(codomain),
+                ))
             }
             Literal::AbstractLiteral(AbstractLiteral::Variant(_)) => {
                 let mut alternatives: Vec<(Name, Vec<Literal>)> = Vec::new();
