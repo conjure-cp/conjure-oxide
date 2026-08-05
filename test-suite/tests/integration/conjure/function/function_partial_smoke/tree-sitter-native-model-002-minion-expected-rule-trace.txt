@@ -1,0 +1,971 @@
+Model before rewriting:
+
+find f: function (maxSize 2) int(1..10) --> bool 
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find f#as_relation_1: relation (maxSize 2) of (int(1..10) * bool)
+new constraints:
+  and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+new variables:
+  find f#as_relation_1#as_set_1: set (maxSize 2) of tuple (int(1..10), bool)
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+new variables:
+  find f#as_relation_1#as_set_1#occurrence_1: bool
+  find f#as_relation_1#as_set_1#occurrence_10: bool
+  find f#as_relation_1#as_set_1#occurrence_11: bool
+  find f#as_relation_1#as_set_1#occurrence_12: bool
+  find f#as_relation_1#as_set_1#occurrence_13: bool
+  find f#as_relation_1#as_set_1#occurrence_14: bool
+  find f#as_relation_1#as_set_1#occurrence_15: bool
+  find f#as_relation_1#as_set_1#occurrence_16: bool
+  find f#as_relation_1#as_set_1#occurrence_17: bool
+  find f#as_relation_1#as_set_1#occurrence_18: bool
+  find f#as_relation_1#as_set_1#occurrence_19: bool
+  find f#as_relation_1#as_set_1#occurrence_2: bool
+  find f#as_relation_1#as_set_1#occurrence_20: bool
+  find f#as_relation_1#as_set_1#occurrence_3: bool
+  find f#as_relation_1#as_set_1#occurrence_4: bool
+  find f#as_relation_1#as_set_1#occurrence_5: bool
+  find f#as_relation_1#as_set_1#occurrence_6: bool
+  find f#as_relation_1#as_set_1#occurrence_7: bool
+  find f#as_relation_1#as_set_1#occurrence_8: bool
+  find f#as_relation_1#as_set_1#occurrence_9: bool
+new constraints:
+  and([sum([toInt(f#as_relation_1#as_set_1#occurrence_1),toInt(f#as_relation_1#as_set_1#occurrence_2),toInt(f#as_relation_1#as_set_1#occurrence_3),toInt(f#as_relation_1#as_set_1#occurrence_4),toInt(f#as_relation_1#as_set_1#occurrence_5),toInt(f#as_relation_1#as_set_1#occurrence_6),toInt(f#as_relation_1#as_set_1#occurrence_7),toInt(f#as_relation_1#as_set_1#occurrence_8),toInt(f#as_relation_1#as_set_1#occurrence_9),toInt(f#as_relation_1#as_set_1#occurrence_10),toInt(f#as_relation_1#as_set_1#occurrence_11),toInt(f#as_relation_1#as_set_1#occurrence_12),toInt(f#as_relation_1#as_set_1#occurrence_13),toInt(f#as_relation_1#as_set_1#occurrence_14),toInt(f#as_relation_1#as_set_1#occurrence_15),toInt(f#as_relation_1#as_set_1#occurrence_16),toInt(f#as_relation_1#as_set_1#occurrence_17),toInt(f#as_relation_1#as_set_1#occurrence_18),toInt(f#as_relation_1#as_set_1#occurrence_19),toInt(f#as_relation_1#as_set_1#occurrence_20);int(1..)]) >= 0,sum([toInt(f#as_relation_1#as_set_1#occurrence_1),toInt(f#as_relation_1#as_set_1#occurrence_2),toInt(f#as_relation_1#as_set_1#occurrence_3),toInt(f#as_relation_1#as_set_1#occurrence_4),toInt(f#as_relation_1#as_set_1#occurrence_5),toInt(f#as_relation_1#as_set_1#occurrence_6),toInt(f#as_relation_1#as_set_1#occurrence_7),toInt(f#as_relation_1#as_set_1#occurrence_8),toInt(f#as_relation_1#as_set_1#occurrence_9),toInt(f#as_relation_1#as_set_1#occurrence_10),toInt(f#as_relation_1#as_set_1#occurrence_11),toInt(f#as_relation_1#as_set_1#occurrence_12),toInt(f#as_relation_1#as_set_1#occurrence_13),toInt(f#as_relation_1#as_set_1#occurrence_14),toInt(f#as_relation_1#as_set_1#occurrence_15),toInt(f#as_relation_1#as_set_1#occurrence_16),toInt(f#as_relation_1#as_set_1#occurrence_17),toInt(f#as_relation_1#as_set_1#occurrence_18),toInt(f#as_relation_1#as_set_1#occurrence_19),toInt(f#as_relation_1#as_set_1#occurrence_20);int(1..)]) <= 2;int(1..)])
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..10), bool), i in f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..10), bool), i in f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..10), bool), i in f#as_relation_1#as_set_1, j : tuple (int(1..10), bool), j in f#as_relation_1#as_set_1 ]
+
+--
+
+sum([toInt(f#as_relation_1#as_set_1#occurrence_1),toInt(f#as_relation_1#as_set_1#occurrence_2),toInt(f#as_relation_1#as_set_1#occurrence_3),toInt(f#as_relation_1#as_set_1#occurrence_4),toInt(f#as_relation_1#as_set_1#occurrence_5),toInt(f#as_relation_1#as_set_1#occurrence_6),toInt(f#as_relation_1#as_set_1#occurrence_7),toInt(f#as_relation_1#as_set_1#occurrence_8),toInt(f#as_relation_1#as_set_1#occurrence_9),toInt(f#as_relation_1#as_set_1#occurrence_10),toInt(f#as_relation_1#as_set_1#occurrence_11),toInt(f#as_relation_1#as_set_1#occurrence_12),toInt(f#as_relation_1#as_set_1#occurrence_13),toInt(f#as_relation_1#as_set_1#occurrence_14),toInt(f#as_relation_1#as_set_1#occurrence_15),toInt(f#as_relation_1#as_set_1#occurrence_16),toInt(f#as_relation_1#as_set_1#occurrence_17),toInt(f#as_relation_1#as_set_1#occurrence_18),toInt(f#as_relation_1#as_set_1#occurrence_19),toInt(f#as_relation_1#as_set_1#occurrence_20);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([f#as_relation_1#as_set_1#occurrence_1, f#as_relation_1#as_set_1#occurrence_10, f#as_relation_1#as_set_1#occurrence_11, f#as_relation_1#as_set_1#occurrence_12, f#as_relation_1#as_set_1#occurrence_13, f#as_relation_1#as_set_1#occurrence_14, f#as_relation_1#as_set_1#occurrence_15, f#as_relation_1#as_set_1#occurrence_16, f#as_relation_1#as_set_1#occurrence_17, f#as_relation_1#as_set_1#occurrence_18, f#as_relation_1#as_set_1#occurrence_19, f#as_relation_1#as_set_1#occurrence_2, f#as_relation_1#as_set_1#occurrence_20, f#as_relation_1#as_set_1#occurrence_3, f#as_relation_1#as_set_1#occurrence_4, f#as_relation_1#as_set_1#occurrence_5, f#as_relation_1#as_set_1#occurrence_6, f#as_relation_1#as_set_1#occurrence_7, f#as_relation_1#as_set_1#occurrence_8, f#as_relation_1#as_set_1#occurrence_9], 0)
+
+--
+
+sum([toInt(f#as_relation_1#as_set_1#occurrence_1),toInt(f#as_relation_1#as_set_1#occurrence_2),toInt(f#as_relation_1#as_set_1#occurrence_3),toInt(f#as_relation_1#as_set_1#occurrence_4),toInt(f#as_relation_1#as_set_1#occurrence_5),toInt(f#as_relation_1#as_set_1#occurrence_6),toInt(f#as_relation_1#as_set_1#occurrence_7),toInt(f#as_relation_1#as_set_1#occurrence_8),toInt(f#as_relation_1#as_set_1#occurrence_9),toInt(f#as_relation_1#as_set_1#occurrence_10),toInt(f#as_relation_1#as_set_1#occurrence_11),toInt(f#as_relation_1#as_set_1#occurrence_12),toInt(f#as_relation_1#as_set_1#occurrence_13),toInt(f#as_relation_1#as_set_1#occurrence_14),toInt(f#as_relation_1#as_set_1#occurrence_15),toInt(f#as_relation_1#as_set_1#occurrence_16),toInt(f#as_relation_1#as_set_1#occurrence_17),toInt(f#as_relation_1#as_set_1#occurrence_18),toInt(f#as_relation_1#as_set_1#occurrence_19),toInt(f#as_relation_1#as_set_1#occurrence_20);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([f#as_relation_1#as_set_1#occurrence_1, f#as_relation_1#as_set_1#occurrence_10, f#as_relation_1#as_set_1#occurrence_11, f#as_relation_1#as_set_1#occurrence_12, f#as_relation_1#as_set_1#occurrence_13, f#as_relation_1#as_set_1#occurrence_14, f#as_relation_1#as_set_1#occurrence_15, f#as_relation_1#as_set_1#occurrence_16, f#as_relation_1#as_set_1#occurrence_17, f#as_relation_1#as_set_1#occurrence_18, f#as_relation_1#as_set_1#occurrence_19, f#as_relation_1#as_set_1#occurrence_2, f#as_relation_1#as_set_1#occurrence_20, f#as_relation_1#as_set_1#occurrence_3, f#as_relation_1#as_set_1#occurrence_4, f#as_relation_1#as_set_1#occurrence_5, f#as_relation_1#as_set_1#occurrence_6, f#as_relation_1#as_set_1#occurrence_7, f#as_relation_1#as_set_1#occurrence_8, f#as_relation_1#as_set_1#occurrence_9], 2)
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..10), bool), i in f#as_relation_1#as_set_1, j : tuple (int(1..10), bool), j in f#as_relation_1#as_set_1 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[((1,false) in f#as_relation_1#as_set_1) -> (and([!((1,true) in f#as_relation_1#as_set_1);int(1..)])),((1,true) in f#as_relation_1#as_set_1) -> (and([!((1,false) in f#as_relation_1#as_set_1);int(1..)])),((2,false) in f#as_relation_1#as_set_1) -> (and([!((2,true) in f#as_relation_1#as_set_1);int(1..)])),((2,true) in f#as_relation_1#as_set_1) -> (and([!((2,false) in f#as_relation_1#as_set_1);int(1..)])),((3,false) in f#as_relation_1#as_set_1) -> (and([!((3,true) in f#as_relation_1#as_set_1);int(1..)])),((3,true) in f#as_relation_1#as_set_1) -> (and([!((3,false) in f#as_relation_1#as_set_1);int(1..)])),((4,false) in f#as_relation_1#as_set_1) -> (and([!((4,true) in f#as_relation_1#as_set_1);int(1..)])),((4,true) in f#as_relation_1#as_set_1) -> (and([!((4,false) in f#as_relation_1#as_set_1);int(1..)])),((5,false) in f#as_relation_1#as_set_1) -> (and([!((5,true) in f#as_relation_1#as_set_1);int(1..)])),((5,true) in f#as_relation_1#as_set_1) -> (and([!((5,false) in f#as_relation_1#as_set_1);int(1..)])),((6,false) in f#as_relation_1#as_set_1) -> (and([!((6,true) in f#as_relation_1#as_set_1);int(1..)])),((6,true) in f#as_relation_1#as_set_1) -> (and([!((6,false) in f#as_relation_1#as_set_1);int(1..)])),((7,false) in f#as_relation_1#as_set_1) -> (and([!((7,true) in f#as_relation_1#as_set_1);int(1..)])),((7,true) in f#as_relation_1#as_set_1) -> (and([!((7,false) in f#as_relation_1#as_set_1);int(1..)])),((8,false) in f#as_relation_1#as_set_1) -> (and([!((8,true) in f#as_relation_1#as_set_1);int(1..)])),((8,true) in f#as_relation_1#as_set_1) -> (and([!((8,false) in f#as_relation_1#as_set_1);int(1..)])),((9,false) in f#as_relation_1#as_set_1) -> (and([!((9,true) in f#as_relation_1#as_set_1);int(1..)])),((9,true) in f#as_relation_1#as_set_1) -> (and([!((9,false) in f#as_relation_1#as_set_1);int(1..)])),((10,false) in f#as_relation_1#as_set_1) -> (and([!((10,true) in f#as_relation_1#as_set_1);int(1..)])),((10,true) in f#as_relation_1#as_set_1) -> (and([!((10,false) in f#as_relation_1#as_set_1);int(1..)]));int(1..)]
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+(1,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_1
+
+--
+
+(1,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_2
+
+--
+
+(2,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_3
+
+--
+
+(2,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_4
+
+--
+
+(3,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_5
+
+--
+
+(3,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_6
+
+--
+
+(4,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_7
+
+--
+
+(4,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_8
+
+--
+
+(5,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_9
+
+--
+
+(5,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_10
+
+--
+
+(6,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_11
+
+--
+
+(6,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_12
+
+--
+
+(7,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_13
+
+--
+
+(7,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_14
+
+--
+
+(8,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_15
+
+--
+
+(8,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_16
+
+--
+
+(9,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_17
+
+--
+
+(9,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_18
+
+--
+
+(10,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_19
+
+--
+
+(10,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_20
+
+--
+
+(1,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_2
+
+--
+
+(1,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_1
+
+--
+
+(2,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_4
+
+--
+
+(2,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_3
+
+--
+
+(3,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_6
+
+--
+
+(3,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_5
+
+--
+
+(4,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_8
+
+--
+
+(4,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_7
+
+--
+
+(5,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_10
+
+--
+
+(5,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_9
+
+--
+
+(6,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_12
+
+--
+
+(6,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_11
+
+--
+
+(7,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_14
+
+--
+
+(7,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_13
+
+--
+
+(8,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_16
+
+--
+
+(8,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_15
+
+--
+
+(9,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_18
+
+--
+
+(9,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_17
+
+--
+
+(10,true) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_20
+
+--
+
+(10,false) in f#as_relation_1#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#as_relation_1#as_set_1#occurrence_19
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_2);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_2)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_1);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_1)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_4);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_4)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_3);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_3)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_6);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_6)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_5);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_5)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_8);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_8)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_7);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_7)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_10);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_10)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_9);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_9)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_12);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_12)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_11);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_11)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_14);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_14)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_13);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_13)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_16);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_16)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_15);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_15)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_18);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_18)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_17);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_17)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_20);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_20)
+
+--
+
+and([!(f#as_relation_1#as_set_1#occurrence_19);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(f#as_relation_1#as_set_1#occurrence_19)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_1) -> (!(f#as_relation_1#as_set_1#occurrence_2))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_2), f#as_relation_1#as_set_1#occurrence_1)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_2) -> (!(f#as_relation_1#as_set_1#occurrence_1))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_1), f#as_relation_1#as_set_1#occurrence_2)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_3) -> (!(f#as_relation_1#as_set_1#occurrence_4))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_4), f#as_relation_1#as_set_1#occurrence_3)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_4) -> (!(f#as_relation_1#as_set_1#occurrence_3))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_3), f#as_relation_1#as_set_1#occurrence_4)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_5) -> (!(f#as_relation_1#as_set_1#occurrence_6))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_6), f#as_relation_1#as_set_1#occurrence_5)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_6) -> (!(f#as_relation_1#as_set_1#occurrence_5))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_5), f#as_relation_1#as_set_1#occurrence_6)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_7) -> (!(f#as_relation_1#as_set_1#occurrence_8))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_8), f#as_relation_1#as_set_1#occurrence_7)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_8) -> (!(f#as_relation_1#as_set_1#occurrence_7))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_7), f#as_relation_1#as_set_1#occurrence_8)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_9) -> (!(f#as_relation_1#as_set_1#occurrence_10))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_10), f#as_relation_1#as_set_1#occurrence_9)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_10) -> (!(f#as_relation_1#as_set_1#occurrence_9))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_9), f#as_relation_1#as_set_1#occurrence_10)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_11) -> (!(f#as_relation_1#as_set_1#occurrence_12))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_12), f#as_relation_1#as_set_1#occurrence_11)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_12) -> (!(f#as_relation_1#as_set_1#occurrence_11))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_11), f#as_relation_1#as_set_1#occurrence_12)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_13) -> (!(f#as_relation_1#as_set_1#occurrence_14))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_14), f#as_relation_1#as_set_1#occurrence_13)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_14) -> (!(f#as_relation_1#as_set_1#occurrence_13))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_13), f#as_relation_1#as_set_1#occurrence_14)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_15) -> (!(f#as_relation_1#as_set_1#occurrence_16))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_16), f#as_relation_1#as_set_1#occurrence_15)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_16) -> (!(f#as_relation_1#as_set_1#occurrence_15))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_15), f#as_relation_1#as_set_1#occurrence_16)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_17) -> (!(f#as_relation_1#as_set_1#occurrence_18))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_18), f#as_relation_1#as_set_1#occurrence_17)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_18) -> (!(f#as_relation_1#as_set_1#occurrence_17))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_17), f#as_relation_1#as_set_1#occurrence_18)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_19) -> (!(f#as_relation_1#as_set_1#occurrence_20))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_20), f#as_relation_1#as_set_1#occurrence_19)
+
+--
+
+(f#as_relation_1#as_set_1#occurrence_20) -> (!(f#as_relation_1#as_set_1#occurrence_19))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#as_set_1#occurrence_19), f#as_relation_1#as_set_1#occurrence_20)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_2,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_1,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_4,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_3,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_6)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_6,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_5)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_5,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_8)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_8,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_7)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_7,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_10)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_10,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_9)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_9,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_12)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_12,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_11)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_11,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_14)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_14,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_13)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_13,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_16)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_16,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_15)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_15,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_18)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_18,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_17)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_17,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_20)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_20,false)
+
+--
+
+!(f#as_relation_1#as_set_1#occurrence_19)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#as_set_1#occurrence_19,false)
+
+--
+
+Final model:
+
+find f: function (maxSize 2) int(1..10) --> bool 
+find f#as_relation_1: relation (maxSize 2) of (int(1..10) * bool)
+find f#as_relation_1#as_set_1: set{occurrence} (maxSize 2) of tuple (int(1..10), bool)
+find f#as_relation_1#as_set_1#occurrence_1: bool
+find f#as_relation_1#as_set_1#occurrence_2: bool
+find f#as_relation_1#as_set_1#occurrence_3: bool
+find f#as_relation_1#as_set_1#occurrence_4: bool
+find f#as_relation_1#as_set_1#occurrence_5: bool
+find f#as_relation_1#as_set_1#occurrence_6: bool
+find f#as_relation_1#as_set_1#occurrence_7: bool
+find f#as_relation_1#as_set_1#occurrence_8: bool
+find f#as_relation_1#as_set_1#occurrence_9: bool
+find f#as_relation_1#as_set_1#occurrence_10: bool
+find f#as_relation_1#as_set_1#occurrence_11: bool
+find f#as_relation_1#as_set_1#occurrence_12: bool
+find f#as_relation_1#as_set_1#occurrence_13: bool
+find f#as_relation_1#as_set_1#occurrence_14: bool
+find f#as_relation_1#as_set_1#occurrence_15: bool
+find f#as_relation_1#as_set_1#occurrence_16: bool
+find f#as_relation_1#as_set_1#occurrence_17: bool
+find f#as_relation_1#as_set_1#occurrence_18: bool
+find f#as_relation_1#as_set_1#occurrence_19: bool
+find f#as_relation_1#as_set_1#occurrence_20: bool
+
+such that
+
+true,
+and([ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_2,false), f#as_relation_1#as_set_1#occurrence_1),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_1,false), f#as_relation_1#as_set_1#occurrence_2),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_4,false), f#as_relation_1#as_set_1#occurrence_3),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_3,false), f#as_relation_1#as_set_1#occurrence_4),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_6,false), f#as_relation_1#as_set_1#occurrence_5),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_5,false), f#as_relation_1#as_set_1#occurrence_6),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_8,false), f#as_relation_1#as_set_1#occurrence_7),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_7,false), f#as_relation_1#as_set_1#occurrence_8),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_10,false), f#as_relation_1#as_set_1#occurrence_9),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_9,false), f#as_relation_1#as_set_1#occurrence_10),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_12,false), f#as_relation_1#as_set_1#occurrence_11),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_11,false), f#as_relation_1#as_set_1#occurrence_12),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_14,false), f#as_relation_1#as_set_1#occurrence_13),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_13,false), f#as_relation_1#as_set_1#occurrence_14),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_16,false), f#as_relation_1#as_set_1#occurrence_15),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_15,false), f#as_relation_1#as_set_1#occurrence_16),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_18,false), f#as_relation_1#as_set_1#occurrence_17),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_17,false), f#as_relation_1#as_set_1#occurrence_18),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_20,false), f#as_relation_1#as_set_1#occurrence_19),ReifyImply(WatchedLiteral(f#as_relation_1#as_set_1#occurrence_19,false), f#as_relation_1#as_set_1#occurrence_20);int(1..)]),
+and([SumGeq([f#as_relation_1#as_set_1#occurrence_1, f#as_relation_1#as_set_1#occurrence_10, f#as_relation_1#as_set_1#occurrence_11, f#as_relation_1#as_set_1#occurrence_12, f#as_relation_1#as_set_1#occurrence_13, f#as_relation_1#as_set_1#occurrence_14, f#as_relation_1#as_set_1#occurrence_15, f#as_relation_1#as_set_1#occurrence_16, f#as_relation_1#as_set_1#occurrence_17, f#as_relation_1#as_set_1#occurrence_18, f#as_relation_1#as_set_1#occurrence_19, f#as_relation_1#as_set_1#occurrence_2, f#as_relation_1#as_set_1#occurrence_20, f#as_relation_1#as_set_1#occurrence_3, f#as_relation_1#as_set_1#occurrence_4, f#as_relation_1#as_set_1#occurrence_5, f#as_relation_1#as_set_1#occurrence_6, f#as_relation_1#as_set_1#occurrence_7, f#as_relation_1#as_set_1#occurrence_8, f#as_relation_1#as_set_1#occurrence_9], 0),SumLeq([f#as_relation_1#as_set_1#occurrence_1, f#as_relation_1#as_set_1#occurrence_10, f#as_relation_1#as_set_1#occurrence_11, f#as_relation_1#as_set_1#occurrence_12, f#as_relation_1#as_set_1#occurrence_13, f#as_relation_1#as_set_1#occurrence_14, f#as_relation_1#as_set_1#occurrence_15, f#as_relation_1#as_set_1#occurrence_16, f#as_relation_1#as_set_1#occurrence_17, f#as_relation_1#as_set_1#occurrence_18, f#as_relation_1#as_set_1#occurrence_19, f#as_relation_1#as_set_1#occurrence_2, f#as_relation_1#as_set_1#occurrence_20, f#as_relation_1#as_set_1#occurrence_3, f#as_relation_1#as_set_1#occurrence_4, f#as_relation_1#as_set_1#occurrence_5, f#as_relation_1#as_set_1#occurrence_6, f#as_relation_1#as_set_1#occurrence_7, f#as_relation_1#as_set_1#occurrence_8, f#as_relation_1#as_set_1#occurrence_9], 2);int(1..)])
+

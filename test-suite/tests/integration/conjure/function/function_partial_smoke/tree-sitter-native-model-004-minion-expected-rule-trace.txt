@@ -1,0 +1,143 @@
+Model before rewriting:
+
+find f: function (maxSize 2) int(1..10) --> bool 
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find f#explicit_1: matrix indexed by [int(1..10)] of bool
+  find f#explicit_2: matrix indexed by [int(1..10)] of bool
+new constraints:
+  sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2])),toInt(SafeIndex(f#explicit_2,[3])),toInt(SafeIndex(f#explicit_2,[4])),toInt(SafeIndex(f#explicit_2,[5])),toInt(SafeIndex(f#explicit_2,[6])),toInt(SafeIndex(f#explicit_2,[7])),toInt(SafeIndex(f#explicit_2,[8])),toInt(SafeIndex(f#explicit_2,[9])),toInt(SafeIndex(f#explicit_2,[10]));int(1..)]) <= 2
+
+--
+
+true,
+sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2])),toInt(SafeIndex(f#explicit_2,[3])),toInt(SafeIndex(f#explicit_2,[4])),toInt(SafeIndex(f#explicit_2,[5])),toInt(SafeIndex(f#explicit_2,[6])),toInt(SafeIndex(f#explicit_2,[7])),toInt(SafeIndex(f#explicit_2,[8])),toInt(SafeIndex(f#explicit_2,[9])),toInt(SafeIndex(f#explicit_2,[10]));int(1..)]) <= 2
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true,
+sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2])),toInt(SafeIndex(f#explicit_2,[3])),toInt(SafeIndex(f#explicit_2,[4])),toInt(SafeIndex(f#explicit_2,[5])),toInt(SafeIndex(f#explicit_2,[6])),toInt(SafeIndex(f#explicit_2,[7])),toInt(SafeIndex(f#explicit_2,[8])),toInt(SafeIndex(f#explicit_2,[9])),toInt(SafeIndex(f#explicit_2,[10]));int(1..)]) <= 2
+new variables:
+  find f#explicit_1#components_1: bool
+  find f#explicit_1#components_10: bool
+  find f#explicit_1#components_2: bool
+  find f#explicit_1#components_3: bool
+  find f#explicit_1#components_4: bool
+  find f#explicit_1#components_5: bool
+  find f#explicit_1#components_6: bool
+  find f#explicit_1#components_7: bool
+  find f#explicit_1#components_8: bool
+  find f#explicit_1#components_9: bool
+  find f#explicit_2#components_1: bool
+  find f#explicit_2#components_10: bool
+  find f#explicit_2#components_2: bool
+  find f#explicit_2#components_3: bool
+  find f#explicit_2#components_4: bool
+  find f#explicit_2#components_5: bool
+  find f#explicit_2#components_6: bool
+  find f#explicit_2#components_7: bool
+  find f#explicit_2#components_8: bool
+  find f#explicit_2#components_9: bool
+
+--
+
+SafeIndex(f#explicit_2,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_1
+
+--
+
+SafeIndex(f#explicit_2,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_2
+
+--
+
+SafeIndex(f#explicit_2,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_3
+
+--
+
+SafeIndex(f#explicit_2,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_4
+
+--
+
+SafeIndex(f#explicit_2,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_5
+
+--
+
+SafeIndex(f#explicit_2,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_6
+
+--
+
+SafeIndex(f#explicit_2,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_7
+
+--
+
+SafeIndex(f#explicit_2,[8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_8
+
+--
+
+SafeIndex(f#explicit_2,[9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_9
+
+--
+
+SafeIndex(f#explicit_2,[10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#explicit_2#components_10
+
+--
+
+sum([toInt(f#explicit_2#components_1),toInt(f#explicit_2#components_2),toInt(f#explicit_2#components_3),toInt(f#explicit_2#components_4),toInt(f#explicit_2#components_5),toInt(f#explicit_2#components_6),toInt(f#explicit_2#components_7),toInt(f#explicit_2#components_8),toInt(f#explicit_2#components_9),toInt(f#explicit_2#components_10);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([f#explicit_2#components_1, f#explicit_2#components_10, f#explicit_2#components_2, f#explicit_2#components_3, f#explicit_2#components_4, f#explicit_2#components_5, f#explicit_2#components_6, f#explicit_2#components_7, f#explicit_2#components_8, f#explicit_2#components_9], 2)
+
+--
+
+Final model:
+
+find f: function (maxSize 2) int(1..10) --> bool 
+find f#explicit_1: matrix indexed by [int(1..10)] of bool
+find f#explicit_2: matrix indexed by [int(1..10)] of bool
+find f#explicit_1#components_1: bool
+find f#explicit_1#components_2: bool
+find f#explicit_1#components_3: bool
+find f#explicit_1#components_4: bool
+find f#explicit_1#components_5: bool
+find f#explicit_1#components_6: bool
+find f#explicit_1#components_7: bool
+find f#explicit_1#components_8: bool
+find f#explicit_1#components_9: bool
+find f#explicit_1#components_10: bool
+find f#explicit_2#components_1: bool
+find f#explicit_2#components_2: bool
+find f#explicit_2#components_3: bool
+find f#explicit_2#components_4: bool
+find f#explicit_2#components_5: bool
+find f#explicit_2#components_6: bool
+find f#explicit_2#components_7: bool
+find f#explicit_2#components_8: bool
+find f#explicit_2#components_9: bool
+find f#explicit_2#components_10: bool
+
+such that
+
+true,
+SumLeq([f#explicit_2#components_1, f#explicit_2#components_10, f#explicit_2#components_2, f#explicit_2#components_3, f#explicit_2#components_4, f#explicit_2#components_5, f#explicit_2#components_6, f#explicit_2#components_7, f#explicit_2#components_8, f#explicit_2#components_9], 2)
+
