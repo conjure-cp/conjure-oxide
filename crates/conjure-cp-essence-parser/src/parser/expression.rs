@@ -164,13 +164,16 @@ fn parse_comparison_expression(
     };
     match inner.kind() {
         "arithmetic_comparison" => {
-            // Arithmetic comparisons require arithmetic operands
-            ctx.typechecking_context = TypecheckingContext::Arithmetic;
+            // <, <=, >, >= work on any orderable type (everything except unnamed types, which
+            // don't support ordering); typechecking of operands is handled within
+            // parse_binary_expression, same as equality.
+            ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_binary_expression(ctx, &inner)
         }
         "lex_comparison" => {
-            // TODO: check that both operands are comparable collections.
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            // <lex, <=lex, >lex, >=lex are specialised to matrices; other types use the plain
+            // ordering operators above instead.
+            ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_binary_expression(ctx, &inner)
         }
         "equality_comparison" => {
@@ -604,8 +607,10 @@ pub fn parse_binary_expression(
     // reset context, if needed
     ctx.typechecking_context = saved_ctx;
 
-    // Equality/inequality: enforce right operand to match left operand type when inferable
-    if matches!(op_str, "=" | "!=") {
+    // Equality/inequality/ordering: enforce right operand to match left operand type when
+    // inferable. Ordering (<, <=, >, >=) works on any orderable type now, the same as equality,
+    // so it needs the same operand-matching check.
+    if matches!(op_str, "=" | "!=" | "<" | "<=" | ">" | ">=") {
         ctx.typechecking_context = inferred_context_from_expression(&left);
     }
 
