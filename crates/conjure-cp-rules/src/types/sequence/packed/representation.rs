@@ -195,6 +195,12 @@ register_representation!(
         }
 
         if surjective {
+            // Unlike SequenceExplicit, this stays a per-position disjunction rather than an
+            // explicit witness position indexed via SafeIndex: `slot_expr` decodes a digit using
+            // a *static* place/radix per position (see `digit_expr`), so a variable witness
+            // position would first need its own Element-style lookup into a place-value table,
+            // then a variable-divisor Div/Mod to extract the digit -- two chained
+            // variable-parameterised operations instead of one, for unclear propagation benefit.
             for value in state.values.iter() {
                 let value_expr: Expression = value.clone().into();
                 let hits: Vec<Expression> = (1..=max)
