@@ -16,6 +16,17 @@ register_representation!(
         pub relation_decl: T,
         /// Every codomain value, used by the surjective structural constraint.
         pub codomain_values: Moo<Vec<Literal>>,
+        /// A witness matrix of (key, value) tuples indexed by codomain value, present only for
+        /// surjective/bijective functions: `witness_matrix[y]` must be a member of the relation
+        /// whose second field is `y`, proving `y` is covered. Encoding surjectivity this way
+        /// (introducing the function's inverse as an explicit decision variable, matching a
+        /// standard CP idiom) avoids quantifying "exists a matching entry" over the relation's
+        /// own decision-variable content, which needs a fresh, unbounded auxiliary witness per
+        /// codomain value with no natural place in the search order. Each witness is a full
+        /// tuple (not just the key) so it goes through ordinary tuple representation selection,
+        /// the same way the relation's own set-of-tuples elements do, rather than being an
+        /// ad-hoc literal built from mismatched parts.
+        pub witness_matrix: Option<T>,
         /// Jectivity to enforce structurally.
         pub jectivity: JectivityAttr
     }
@@ -49,12 +60,19 @@ register_representation!(
             PartialityAttr::Partial => attr.size.clone(),
         };
 
-        let codomain_values = if matches!(attr.jectivity, JectivityAttr::Surjective | JectivityAttr::Bijective) {
+        let surjective = matches!(attr.jectivity, JectivityAttr::Surjective | JectivityAttr::Bijective);
+        let codomain_values = if surjective {
             codomain.values()
                 .map_err(|e| domain_err(&format!("could not enumerate function codomain: {e}")))?
                 .collect()
         } else {
             vec![]
+        };
+        let witness_tuple_dom = Domain::tuple(vec![domain.clone().into(), codomain.clone().into()]);
+        let witness_matrix = if surjective {
+            Some(Domain::matrix(witness_tuple_dom, vec![codomain.clone().into()]))
+        } else {
+            None
         };
 
         let relation_decl = Domain::relation(
@@ -65,6 +83,7 @@ register_representation!(
         Ok(State {
             relation_decl,
             codomain_values: Moo::new(codomain_values),
+            witness_matrix,
             jectivity: attr.jectivity.clone(),
         })
     }
@@ -110,19 +129,24 @@ register_representation!(
             }));
         }
 
-        if matches!(
-            state.jectivity,
-            JectivityAttr::Surjective | JectivityAttr::Bijective
-        ) {
+        if let Some(witness_matrix) = &state.witness_matrix {
             for value in state.codomain_values.iter() {
-                let value: Expression = value.clone().into();
-                constraints.push(exists_in(&rel, |j| {
-                    Expression::Eq(
-                        Metadata::new(),
-                        Moo::new(tuple_index(j, 2)),
-                        Moo::new(value.clone()),
-                    )
-                }));
+                let value_expr: Expression = value.clone().into();
+                let witness_ref = Expression::SafeIndex(
+                    Metadata::new(),
+                    Moo::new(Reference::new(witness_matrix.clone()).into()),
+                    vec![value_expr.clone()],
+                );
+                constraints.push(Expression::In(
+                    Metadata::new(),
+                    Moo::new(witness_ref.clone()),
+                    Moo::new(rel.clone()),
+                ));
+                constraints.push(Expression::Eq(
+                    Metadata::new(),
+                    Moo::new(tuple_index(&witness_ref, 2)),
+                    Moo::new(value_expr),
+                ));
             }
         }
 
@@ -132,10 +156,42 @@ register_representation!(
         let Literal::AbstractLiteral(AbstractLiteral::Function(pairs)) = value else {
             return Err(ReprDownError::BadValue(value, String::from("expected a function literal")));
         };
+
+        let witness_matrix = if let Some(witness_matrix) = &state.witness_matrix {
+            let mut witnesses = Vec::with_capacity(state.codomain_values.len());
+            for target in state.codomain_values.iter() {
+                let witness_key = pairs
+                    .iter()
+                    .find(|(_, v)| v == target)
+                    .map(|(k, _)| k.clone())
+                    .ok_or_else(|| {
+                        ReprDownError::BadValue(
+                            AbstractLiteral::Function(pairs.clone()).into(),
+                            format!("function is not surjective: no key maps to {target}"),
+                        )
+                    })?;
+                witnesses.push(Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                    witness_key,
+                    target.clone(),
+                ])));
+            }
+            let index_dom = match witness_matrix.as_ref() {
+                conjure_cp::ast::Domain::Ground(gd) => match gd.as_ref() {
+                    GroundDomain::Matrix(_, idx) => idx[0].clone(),
+                    _ => bug!("expected the witness matrix to be a ground matrix domain"),
+                },
+                _ => bug!("expected the witness matrix domain to be ground"),
+            };
+            Some(Literal::from(into_matrix![witnesses; index_dom]))
+        } else {
+            None
+        };
+
         let tuples = pairs.into_iter().map(|(key, value)| vec![key, value]).collect();
         Ok(State {
             relation_decl: Literal::AbstractLiteral(AbstractLiteral::Relation(tuples)),
             codomain_values: state.codomain_values.clone(),
+            witness_matrix,
             jectivity: state.jectivity.clone(),
         })
     }
@@ -191,19 +247,4 @@ fn forall_pairs(
     comprehension.skip_operator = Some(ACOperatorKind::And);
     let wrapped = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
     Expression::And(Metadata::new(), Moo::new(wrapped))
-}
-
-/// `exists j in &collection . body(j)`, built directly for the same reason as [`forall_pairs`].
-fn exists_in(collection: &Expression, body: impl FnOnce(&Expression) -> Expression) -> Expression {
-    let j_name = Name::user("j");
-    let mut builder = ComprehensionBuilder::new(SymbolTablePtr::new())
-        .expression_generator(j_name.clone(), collection.clone());
-    let symbols = builder.return_expr_symboltable();
-    let j_ref = quantified_ref(&symbols, &j_name);
-    let return_expr = body(&j_ref);
-
-    let mut comprehension = builder.with_return_value(return_expr);
-    comprehension.skip_operator = Some(ACOperatorKind::Or);
-    let wrapped = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
-    Expression::Or(Metadata::new(), Moo::new(wrapped))
 }

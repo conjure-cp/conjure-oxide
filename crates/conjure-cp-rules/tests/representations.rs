@@ -737,8 +737,9 @@ fn function_as_relation_bijective_adds_injective_and_surjective_constraints() {
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = FunctionAsRelation::init_for(&mut declaration).unwrap();
-    // well-formedness + injective (pairwise) + one surjective "exists" per codomain value.
-    assert_eq!(constraints.len(), 1 + 1 + 3);
+    // well-formedness + injective (pairwise) + one witness-membership pair (In + Eq) per
+    // codomain value.
+    assert_eq!(constraints.len(), 1 + 1 + 2 * 3);
 }
 
 #[test]
