@@ -19,10 +19,11 @@ register_representation!(
         pub jectivity: JectivityAttr,
         /// Number of defined entries a partial function may have; irrelevant for total functions.
         pub size: Range<i32>,
-        /// Whether the codomain itself needs representation selection (e.g. set/record/tuple).
-        /// Minion's native `AllDiff` only supports scalar elements, so an abstract codomain must
+        /// Whether `values_matrix` itself needs representation selection, because the codomain
+        /// (its elements) or the domain (its index) is compound (e.g. set/record/tuple). Minion's
+        /// native `AllDiff` only supports a matrix of already-scalar elements, so either case must
         /// fall back to pairwise `Neq` instead.
-        pub codomain_is_abstract: bool
+        pub values_matrix_is_abstract: bool
     }
     impl State<DeclarationPtr> {
         /// The matrices are indexed by the function's own domain (e.g. `bool`, not necessarily
@@ -91,11 +92,13 @@ register_representation!(
             .cloned()
             .ok_or_else(|| domain_err("function codomain is empty"))?;
 
-        let codomain_is_abstract =
-            crate::passes::representation::domain_needs_representation(&codomain.clone().into());
-
         let index_dom = domain.clone().into();
         let values_matrix = Domain::matrix(codomain.clone().into(), vec![index_dom]);
+        // Minion's native AllDiff only supports a matrix of already-scalar elements; a compound
+        // codomain (elements) or compound domain (index) both make `values_matrix` itself need
+        // representation, so either one rules out a plain AllDiff.
+        let values_matrix_is_abstract =
+            crate::passes::representation::domain_needs_representation(&values_matrix);
         let flags_matrix = match attr.partiality {
             PartialityAttr::Total => None,
             PartialityAttr::Partial => {
@@ -112,7 +115,7 @@ register_representation!(
             padding,
             jectivity: attr.jectivity.clone(),
             size: attr.size.clone(),
-            codomain_is_abstract,
+            values_matrix_is_abstract,
         })
     }
     fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
@@ -141,9 +144,10 @@ register_representation!(
         );
 
         if injective {
-            if state.flags_matrix.is_none() && !state.codomain_is_abstract {
-                // Total, scalar codomain: every position is always defined and Minion's native
-                // AllDiff only supports scalar elements, so a plain allDiff is exact and efficient.
+            if state.flags_matrix.is_none() && !state.values_matrix_is_abstract {
+                // Total, and values_matrix is a plain scalar-indexed-by-scalar matrix: every
+                // position is always defined and Minion's native AllDiff only supports scalar
+                // elements, so a plain allDiff is exact and efficient.
                 let matrix_ref = Reference::new(state.values_matrix.clone()).into();
                 constraints.push(Expression::AllDiff(Metadata::new(), Moo::new(matrix_ref)));
             } else {
@@ -240,7 +244,7 @@ register_representation!(
             padding: state.padding.clone(),
             jectivity: state.jectivity.clone(),
             size: state.size.clone(),
-            codomain_is_abstract: state.codomain_is_abstract,
+            values_matrix_is_abstract: state.values_matrix_is_abstract,
         })
     }
     fn up(state: State<Literal>) -> Literal {
