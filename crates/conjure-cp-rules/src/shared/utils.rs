@@ -8,7 +8,7 @@ use conjure_cp::ast::{
     comprehension::{Comprehension, ComprehensionQualifier},
 };
 use conjure_cp::rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, RuleEffect};
-use conjure_cp::{bug, bug_assert_eq, essence_expr, into_matrix_expr};
+use conjure_cp::{bug, bug_assert_eq, essence_expr, into_matrix_expr, matrix_expr};
 use itertools::{Itertools, izip};
 
 use tracing::{instrument, trace};
@@ -124,14 +124,28 @@ where
     }
 }
 
-fn expressions_as_atoms(exprs: &[Expr]) -> Option<Vec<Atom>> {
-    exprs
-        .iter()
-        .map(|expr| match expr {
-            Expr::Atomic(_, atom) => Some(atom.clone()),
-            _ => None,
+/// An atom is only genuinely ready for a flat solver-level comparison (`FlatLexLt`/`FlatLexLeq`,
+/// `AllDiff`, ...) when it is a literal, or a reference whose own domain is already scalar. A
+/// reference to a still-abstract domain (e.g. a set or tuple field) is wrapped in `Expr::Atomic`
+/// like any other atom, but treating it as ready would leak the abstract declaration's name
+/// straight into the backend instead of chasing through to whatever concrete representation it
+/// ends up with.
+fn as_resolved_atom(expr: &Expr) -> Option<Atom> {
+    let Expr::Atomic(_, atom) = expr else {
+        return None;
+    };
+    if let Atom::Reference(reference) = atom
+        && reference.ptr().domain().is_some_and(|domain| {
+            crate::passes::representation::domain_needs_representation(&domain)
         })
-        .collect()
+    {
+        return None;
+    }
+    Some(atom.clone())
+}
+
+fn expressions_as_atoms(exprs: &[Expr]) -> Option<Vec<Atom>> {
+    exprs.iter().map(as_resolved_atom).collect()
 }
 
 pub fn collect_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<Expr>) -> Expr {
@@ -155,7 +169,7 @@ pub fn collect_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<E
     let mut cases = vec![Vec::<Expr>::with_capacity(len); len];
     for (i, (lhs, rhs)) in izip!(lhs_fields, rhs_fields).enumerate() {
         let equal = essence_expr!(&lhs = &rhs);
-        let comparison = cmp_op.with_children(VecDeque::from([lhs, rhs]));
+        let comparison = field_cmp_expr(cmp_op, lhs, rhs);
         for case in cases.iter_mut().take(i) {
             case.push(equal.clone());
         }
@@ -167,6 +181,32 @@ pub fn collect_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<E
         .map(|case| Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(case))))
         .collect();
     Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(conjunctions)))
+}
+
+/// `cmp_op` is chosen for the tuple as a whole (e.g. `LexLt` because some *other* field is
+/// abstract and needs list-style comparison), but each field must be compared with whatever
+/// operator actually matches its own type. A scalar field has no list/lex structure of its own,
+/// so a lexicographic operator must be downgraded to its plain counterpart; a still-abstract field
+/// (e.g. a nested set) has no native `<`, so it keeps the lexicographic operator, wrapped as a
+/// singleton list -- the shape a field's own representation-specific ordering rule (e.g.
+/// `lex_explicit_sets`) expects -- and is left for that rule to expand.
+fn field_cmp_expr(cmp_op: &Expr, lhs: Expr, rhs: Expr) -> Expr {
+    let scalar = as_resolved_atom(&lhs).is_some() && as_resolved_atom(&rhs).is_some();
+    match (cmp_op, scalar) {
+        (Expr::LexLt(..), true) => Expr::Lt(Metadata::new(), Moo::new(lhs), Moo::new(rhs)),
+        (Expr::LexLeq(..), true) => Expr::Leq(Metadata::new(), Moo::new(lhs), Moo::new(rhs)),
+        (Expr::LexLt(..), false) => Expr::LexLt(
+            Metadata::new(),
+            Moo::new(matrix_expr![lhs]),
+            Moo::new(matrix_expr![rhs]),
+        ),
+        (Expr::LexLeq(..), false) => Expr::LexLeq(
+            Metadata::new(),
+            Moo::new(matrix_expr![lhs]),
+            Moo::new(matrix_expr![rhs]),
+        ),
+        _ => cmp_op.with_children(VecDeque::from([lhs, rhs])),
+    }
 }
 
 pub fn as_comparison_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
