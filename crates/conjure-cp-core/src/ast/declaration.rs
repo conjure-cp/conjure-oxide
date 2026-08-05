@@ -387,16 +387,22 @@ impl DeclarationPtr {
     ///
     /// ```
     pub fn domain(&self) -> Option<DomainPtr> {
+        // Expressions stored inside a declaration (as opposed to the constraint tree the rewrite
+        // engine walks) can be mutated in place by substitution utilities that never touch
+        // `Metadata::clean_rule_priority`, so `domain_of`'s cache would go stale silently for
+        // them. Use the uncached path here.
         match &self.kind() as &DeclarationKind {
             DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
                 Some(var.domain_of())
             }
-            DeclarationKind::ValueLetting(e, domain) => domain.clone().or_else(|| e.domain_of()),
-            DeclarationKind::TemporaryValueLetting(e) => e.domain_of(),
+            DeclarationKind::ValueLetting(e, domain) => {
+                domain.clone().or_else(|| e.domain_of_uncached())
+            }
+            DeclarationKind::TemporaryValueLetting(e) => e.domain_of_uncached(),
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
-            DeclarationKind::QuantifiedExpr(expr) => expr.domain_of()?.element_domain(),
+            DeclarationKind::QuantifiedExpr(expr) => expr.domain_of_uncached()?.element_domain(),
         }
     }
 

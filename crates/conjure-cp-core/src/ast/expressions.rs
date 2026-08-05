@@ -65,8 +65,10 @@ use super::{
 // lot bigger still when we start using it for memoisation, so it should really be
 // boxed ~niklasdewally
 
-// expect size of Expression to be 120 bytes
-static_assertions::assert_eq_size!([u8; 120], Expression);
+// Grew from 120 to 152 bytes when Metadata gained a domain-memoisation cache (see
+// Metadata::domain_or_init) -- exactly the growth the TODO above anticipated.
+// expect size of Expression to be 152 bytes
+static_assertions::assert_eq_size!([u8; 152], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -902,8 +904,24 @@ fn sum_domain_of_child(child: &Expression) -> Option<DomainPtr> {
 }
 
 impl Expression {
-    /// Returns the possible values of the expression, recursing to leaf expressions
+    /// Returns the possible values of the expression, recursing to leaf expressions.
+    ///
+    /// Cached in this node's own `Metadata`: `domain_of_uncached` recomputes recursively from
+    /// scratch with no memoisation of its own, so repeatedly calling `domain_of` on the same
+    /// subtree (as rules that check "is this operand scalar/abstract" tend to, once per rule
+    /// attempt) is quadratic in the worst case without a cache. The cache is invalidated
+    /// alongside the clean-rule marker (see `Metadata::clear_clean_rule_priority`), since both
+    /// go stale under exactly the same condition: this expression or a descendant changed.
     pub fn domain_of(&self) -> Option<DomainPtr> {
+        self.meta_ref().domain_or_init(|| self.domain_of_uncached())
+    }
+
+    /// Bypasses the cache in `domain_of`. Needed by callers that read an expression stored
+    /// *inside a declaration* (e.g. `Declaration::domain`, for `ValueLetting`/`QuantifiedExpr`):
+    /// such expressions live outside the tree the rewrite engine walks to invalidate
+    /// `Metadata::domain`, the same "reference embedded outside the standard rewrite tree" gap
+    /// documented for `Reference::get_repr_as` and comprehension `ExpressionGenerator` sources.
+    pub(crate) fn domain_of_uncached(&self) -> Option<DomainPtr> {
         match self {
             Expression::Union(_, a, b) => a.domain_of()?.union(&b.domain_of()?).ok(),
             Expression::Intersect(_, a, b) => a.domain_of()?.intersect(&b.domain_of()?).ok(),

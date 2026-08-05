@@ -1,10 +1,11 @@
-use crate::ast::ReturnType;
+use crate::ast::{DomainPtr, ReturnType};
 use polyquine::Quine;
 use proc_macro2::TokenStream;
 use quote::quote;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicU16, AtomicU64, Ordering};
 use uniplate::derive_unplateable;
 
@@ -34,6 +35,16 @@ pub struct Metadata {
     #[serde(default = "default_clean_rule_priority", skip_serializing)]
     #[doc(hidden)]
     pub clean_rule_priority: AtomicU16,
+    /// Cached result of `Expression::domain_of()` for this node. The outer `Option` is `None`
+    /// when not yet computed; `Some(None)` means "computed, and this expression has no domain".
+    ///
+    /// `domain_of()` recomputes recursively from scratch on every call with no memoisation of
+    /// its own, so repeatedly calling it on the same subtree (as rules that check "is this
+    /// operand scalar/abstract" tend to, once per rule attempt) is quadratic in the worst case.
+    /// Cleared by `clear_clean_rule_priority`, since a cached domain is stale under exactly the
+    /// same condition as a stale clean-rule marker: this expression or a descendant changed.
+    #[serde(skip)]
+    pub domain: Mutex<Option<Option<DomainPtr>>>,
 }
 
 impl Metadata {
@@ -44,6 +55,7 @@ impl Metadata {
             span_id: None,
             cached_content_hash: AtomicU64::new(NO_HASH),
             clean_rule_priority: AtomicU16::new(NO_CLEAN_RULE_PRIORITY),
+            domain: Mutex::new(None),
         }
     }
 
@@ -54,6 +66,7 @@ impl Metadata {
             span_id: Some(span_id),
             cached_content_hash: AtomicU64::new(NO_HASH),
             clean_rule_priority: AtomicU16::new(NO_CLEAN_RULE_PRIORITY),
+            domain: Mutex::new(None),
         }
     }
 
@@ -73,10 +86,24 @@ impl Metadata {
         priority >= self.clean_rule_priority.load(Ordering::Relaxed)
     }
 
-    /// Clears any clean-rule marker on this expression.
+    /// Clears any clean-rule marker on this expression, along with the cached domain (see
+    /// `domain_or_init`): both are stale under exactly the same condition.
     pub fn clear_clean_rule_priority(&self) {
         self.clean_rule_priority
             .store(NO_CLEAN_RULE_PRIORITY, Ordering::Relaxed);
+        *self.domain.lock().unwrap_or_else(|e| e.into_inner()) = None;
+    }
+
+    /// Returns the cached domain for this expression, computing and caching it via `compute` on
+    /// first access.
+    pub fn domain_or_init(&self, compute: impl FnOnce() -> Option<DomainPtr>) -> Option<DomainPtr> {
+        let mut cached = self.domain.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(domain) = cached.as_ref() {
+            return domain.clone();
+        }
+        let computed = compute();
+        *cached = Some(computed.clone());
+        computed
     }
 }
 
@@ -110,6 +137,12 @@ impl Clone for Metadata {
             span_id: self.span_id,
             cached_content_hash: AtomicU64::new(self.cached_content_hash.load(Ordering::Relaxed)),
             clean_rule_priority: AtomicU16::new(self.clean_rule_priority.load(Ordering::Relaxed)),
+            // Deliberately *not* carried over, unlike the other runtime caches above: some
+            // callers clone an expression template and then mutate its children directly (e.g.
+            // comprehension-body substitution), bypassing the rewriter's zipper-based
+            // clear_clean_rule_priority invalidation entirely. A clone always starts uncached so
+            // that path can never observe a stale domain.
+            domain: Mutex::new(None),
         }
     }
 }
@@ -132,6 +165,7 @@ impl Quine for Metadata {
                 span_id: #span_id,
                 cached_content_hash: std::sync::atomic::AtomicU64::new(0),
                 clean_rule_priority: std::sync::atomic::AtomicU16::new(u16::MAX),
+                domain: std::sync::Mutex::new(None),
             }
         }
     }
