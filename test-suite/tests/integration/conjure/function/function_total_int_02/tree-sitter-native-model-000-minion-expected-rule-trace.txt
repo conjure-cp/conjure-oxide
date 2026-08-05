@@ -9,38 +9,76 @@ true
 true
 new variables:
   find x#as_relation_1: relation (size 3) of (int(1..3) * int(13..14))
+  find x#as_relation_2: matrix indexed by [int(13..14)] of tuple (int(1..3), int(13..14))
 new constraints:
   and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
-  or([ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1 ])
-  or([ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1 ])
+  SafeIndex(x#as_relation_2,[13]) in x#as_relation_1
+  SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13
+  SafeIndex(x#as_relation_2,[14]) in x#as_relation_1
+  SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14
 
 --
 
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1 ])
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1 ])
+x#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1
 new variables:
   find x#as_relation_1#as_set_1: set (size 3) of tuple (int(1..3), int(13..14))
 
 --
 
+x#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1
+
+--
+
+x#as_relation_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_2
+new variables:
+  find x#as_relation_2#components_1: tuple (int(1..3), int(13..14))
+  find x#as_relation_2#components_2: tuple (int(1..3), int(13..14))
+
+--
+
+x#as_relation_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_2
+
+--
+
+x#as_relation_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_2
+
+--
+
+x#as_relation_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_2
+
+--
+
 true,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1 ])
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1 ])
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14
 new variables:
   find x#as_relation_1#as_set_1#explicit_1: matrix indexed by [int(1..3)] of tuple (int(1..3), int(13..14))
+  find x#as_relation_2#components_1#components_1: int(1..3)
+  find x#as_relation_2#components_1#components_2: int(13..14)
+  find x#as_relation_2#components_2#components_1: int(1..3)
+  find x#as_relation_2#components_2#components_2: int(13..14)
 new constraints:
   or([3 < 2,([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)])
   or([3 < 3,([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]);int(1..)]);int(1..)])
@@ -80,8 +118,10 @@ x#as_relation_1#as_set_1#explicit_1
 
 true,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1 ]),
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
 or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]);int(1..)]);int(1..)]),
 true,
@@ -90,8 +130,10 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1 ]),
-or([ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1 ]),
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
 or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]);int(1..)]);int(1..)]),
 true,
@@ -119,39 +161,123 @@ or([([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)] <lex [SafeInd
 
 --
 
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1
+   ~~> membership_relation_as_set ([("Base", 8650)])
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+SafeIndex(x#as_relation_2,[13]) in x#as_relation_1#as_set_1
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[13]);int(1..)]),and([2 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[13]);int(1..)]),and([3 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = SafeIndex(x#as_relation_2,[13]);int(1..)]);int(1..)])
+
+--
+
+x#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1
+
+--
+
+and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[13]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[13])
+
+--
+
+and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[13]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[13])
+
+--
+
+and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = SafeIndex(x#as_relation_2,[13]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = SafeIndex(x#as_relation_2,[13])
+
+--
+
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1
+   ~~> membership_relation_as_set ([("Base", 8650)])
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+SafeIndex(x#as_relation_2,[14]) in x#as_relation_1#as_set_1
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[14]);int(1..)]),and([2 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[14]);int(1..)]),and([3 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = SafeIndex(x#as_relation_2,[14]);int(1..)]);int(1..)])
+
+--
+
+x#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1
+
+--
+
+and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[14]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[14])
+
+--
+
+and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[14]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[14])
+
+--
+
+and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = SafeIndex(x#as_relation_2,[14]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = SafeIndex(x#as_relation_2,[14])
+
+--
+
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]
    ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1 ]
 
 --
 
-[ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1 ]
-   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
-[ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1#as_set_1 ]
-
---
-
-[ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1 ]
-   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
-[ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1#as_set_1 ]
-
---
-
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1 ]
    ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1#as_set_1, j <- x#as_relation_1#as_set_1 ]
-
---
-
-[ SafeIndex(j,[2]) = 13 | j <- x#as_relation_1#as_set_1 ]
-   ~~> lower_set_expression_generator ([("Base", 8600)])
-[ SafeIndex(j,[2]) = 13 | j : tuple (int(1..3), int(13..14)), j in x#as_relation_1#as_set_1 ]
-
---
-
-[ SafeIndex(j,[2]) = 14 | j <- x#as_relation_1#as_set_1 ]
-   ~~> lower_set_expression_generator ([("Base", 8600)])
-[ SafeIndex(j,[2]) = 14 | j : tuple (int(1..3), int(13..14)), j in x#as_relation_1#as_set_1 ]
 
 --
 
@@ -227,168 +353,39 @@ FlatLexLt([x#as_relation_1#as_set_1#explicit_1#components_2#components_1, x#as_r
 
 --
 
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..3), int(13..14)), i in x#as_relation_1#as_set_1, j : tuple (int(1..3), int(13..14)), j in x#as_relation_1#as_set_1 ]),
-or([ SafeIndex(j,[2]) = 13 | j : tuple (int(1..3), int(13..14)), j in x#as_relation_1#as_set_1 ]),
-or([ SafeIndex(j,[2]) = 14 | j : tuple (int(1..3), int(13..14)), j in x#as_relation_1#as_set_1 ]),
-FlatLexLt([x#as_relation_1#as_set_1#explicit_1#components_1#components_1, x#as_relation_1#as_set_1#explicit_1#components_1#components_2], [x#as_relation_1#as_set_1#explicit_1#components_2#components_1, x#as_relation_1#as_set_1#explicit_1#components_2#components_2]),
-FlatLexLt([x#as_relation_1#as_set_1#explicit_1#components_2#components_1, x#as_relation_1#as_set_1#explicit_1#components_2#components_2], [x#as_relation_1#as_set_1#explicit_1#components_3#components_1, x#as_relation_1#as_set_1#explicit_1#components_3#components_2]),
-true,
-true,
-true
-   ~~> exists_quantified_to_finds ([("Base", 2003)])
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..3), int(13..14)), i in x#as_relation_1#as_set_1, j : tuple (int(1..3), int(13..14)), j in x#as_relation_1#as_set_1 ]),
-__0 in x#as_relation_1#as_set_1,
-SafeIndex(__0,[2]) = 13,
-__1 in x#as_relation_1#as_set_1,
-SafeIndex(__1,[2]) = 14,
-FlatLexLt([x#as_relation_1#as_set_1#explicit_1#components_1#components_1, x#as_relation_1#as_set_1#explicit_1#components_1#components_2], [x#as_relation_1#as_set_1#explicit_1#components_2#components_1, x#as_relation_1#as_set_1#explicit_1#components_2#components_2]),
-FlatLexLt([x#as_relation_1#as_set_1#explicit_1#components_2#components_1, x#as_relation_1#as_set_1#explicit_1#components_2#components_2], [x#as_relation_1#as_set_1#explicit_1#components_3#components_1, x#as_relation_1#as_set_1#explicit_1#components_3#components_2]),
-true,
-true,
-true
-new variables:
-  findAux __0: tuple (int(1..3), int(13..14))
-  findAux __1: tuple (int(1..3), int(13..14))
+SafeIndex(x#as_relation_2,[13])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_1
 
 --
 
-__0
+x#as_relation_2#components_1
    ~~> select_representation ([("ReprGeneral", 10000)])
-__0
-new variables:
-  findAux __0#components_1: int(1..3)
-  findAux __0#components_2: int(13..14)
+x#as_relation_2#components_1
 
 --
 
-x#as_relation_1#as_set_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1
-
---
-
-__1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-__1
-new variables:
-  findAux __1#components_1: int(1..3)
-  findAux __1#components_2: int(13..14)
-
---
-
-x#as_relation_1#as_set_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1
-
---
-
-__0
-   ~~> select_representation ([("ReprGeneral", 10000)])
-__0
-
---
-
-__1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-__1
-
---
-
-__0 in x#as_relation_1#as_set_1
-   ~~> in_explicit ([("ReprGeneral", 9500)])
-or([and([1 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = __0;int(1..)]),and([2 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = __0;int(1..)]),and([3 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = __0;int(1..)]);int(1..)])
-
---
-
-x#as_relation_1#as_set_1#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1
-
---
-
-__1 in x#as_relation_1#as_set_1
-   ~~> in_explicit ([("ReprGeneral", 9500)])
-or([and([1 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = __1;int(1..)]),and([2 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = __1;int(1..)]),and([3 <= 3,SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = __1;int(1..)]);int(1..)])
-
---
-
-x#as_relation_1#as_set_1#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1
-
---
-
-SafeIndex(__0,[2])
+SafeIndex(x#as_relation_2#components_1,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-__0#components_2
+x#as_relation_2#components_1#components_2
 
 --
 
-SafeIndex(__1,[2])
+SafeIndex(x#as_relation_2,[14])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_2
+
+--
+
+x#as_relation_2#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_2#components_2
+
+--
+
+SafeIndex(x#as_relation_2#components_2,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-__1#components_2
-
---
-
-and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = __0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = __0
-
---
-
-and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = __0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = __0
-
---
-
-and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = __0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = __0
-
---
-
-and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = __1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = __1
-
---
-
-and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = __1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = __1
-
---
-
-and([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = __1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[3]) = __1
+x#as_relation_2#components_2#components_2
 
 --
 
@@ -398,15 +395,27 @@ x#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_1 = __0
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-x#as_relation_1#as_set_1#explicit_1#components_1 = __0
+x#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_1 = __0
+SafeIndex(x#as_relation_2,[13])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1 = x#as_relation_2#components_1
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x#as_relation_1#as_set_1#explicit_1#components_1 = x#as_relation_2#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1 = x#as_relation_2#components_1
    ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = __0#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = __0#components_2;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = x#as_relation_2#components_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = x#as_relation_2#components_1#components_2;int(1..)])
 
 --
 
@@ -416,15 +425,27 @@ x#as_relation_1#as_set_1#explicit_1#components_2
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_2 = __0
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-x#as_relation_1#as_set_1#explicit_1#components_2 = __0
+x#as_relation_1#as_set_1#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_2
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_2 = __0
+SafeIndex(x#as_relation_2,[13])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2 = x#as_relation_2#components_1
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x#as_relation_1#as_set_1#explicit_1#components_2 = x#as_relation_2#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2 = x#as_relation_2#components_1
    ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = __0#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = __0#components_2;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = x#as_relation_2#components_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = x#as_relation_2#components_1#components_2;int(1..)])
 
 --
 
@@ -434,15 +455,27 @@ x#as_relation_1#as_set_1#explicit_1#components_3
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_3 = __0
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-x#as_relation_1#as_set_1#explicit_1#components_3 = __0
+x#as_relation_1#as_set_1#explicit_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_3
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_3 = __0
+SafeIndex(x#as_relation_2,[13])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_3 = x#as_relation_2#components_1
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x#as_relation_1#as_set_1#explicit_1#components_3 = x#as_relation_2#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_3 = x#as_relation_2#components_1
    ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-and([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 = __0#components_1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 = __0#components_2;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 = x#as_relation_2#components_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 = x#as_relation_2#components_1#components_2;int(1..)])
 
 --
 
@@ -452,15 +485,27 @@ x#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_1 = __1
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-x#as_relation_1#as_set_1#explicit_1#components_1 = __1
+x#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_1 = __1
+SafeIndex(x#as_relation_2,[14])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1 = x#as_relation_2#components_2
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x#as_relation_1#as_set_1#explicit_1#components_1 = x#as_relation_2#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1 = x#as_relation_2#components_2
    ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = __1#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = __1#components_2;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = x#as_relation_2#components_2#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = x#as_relation_2#components_2#components_2;int(1..)])
 
 --
 
@@ -470,15 +515,27 @@ x#as_relation_1#as_set_1#explicit_1#components_2
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_2 = __1
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-x#as_relation_1#as_set_1#explicit_1#components_2 = __1
+x#as_relation_1#as_set_1#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_2
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_2 = __1
+SafeIndex(x#as_relation_2,[14])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2 = x#as_relation_2#components_2
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x#as_relation_1#as_set_1#explicit_1#components_2 = x#as_relation_2#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2 = x#as_relation_2#components_2
    ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = __1#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = __1#components_2;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = x#as_relation_2#components_2#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = x#as_relation_2#components_2#components_2;int(1..)])
 
 --
 
@@ -488,27 +545,39 @@ x#as_relation_1#as_set_1#explicit_1#components_3
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_3 = __1
+x#as_relation_1#as_set_1#explicit_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_3
+
+--
+
+SafeIndex(x#as_relation_2,[14])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_3 = x#as_relation_2#components_2
    ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-x#as_relation_1#as_set_1#explicit_1#components_3 = __1
+x#as_relation_1#as_set_1#explicit_1#components_3 = x#as_relation_2#components_2
 
 --
 
-x#as_relation_1#as_set_1#explicit_1#components_3 = __1
+x#as_relation_1#as_set_1#explicit_1#components_3 = x#as_relation_2#components_2
    ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
-and([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 = __1#components_1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 = __1#components_2;int(1..)])
+and([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 = x#as_relation_2#components_2#components_1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 = x#as_relation_2#components_2#components_2;int(1..)])
 
 --
 
-__0#components_2 = 13
+x#as_relation_2#components_1#components_2 = 13
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(__0#components_2,13)
+WatchedLiteral(x#as_relation_2#components_1#components_2,13)
 
 --
 
-__1#components_2 = 14
+x#as_relation_2#components_2#components_2 = 14
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(__1#components_2,14)
+WatchedLiteral(x#as_relation_2#components_2#components_2,14)
 
 --
 
@@ -2140,133 +2209,133 @@ WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14)
 
 (or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
-(__2) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
+(__0) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
 new variables:
-  findAux __2: bool
+  findAux __0: bool
 new constraints:
-  __2 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
+  __0 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
 
 --
 
-__2 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
+__0 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __2)
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __0)
 
 --
 
-(__2) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
+(__0) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __2)
+ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __0)
 
 --
 
 (or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
-(__3) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
+(__1) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
 new variables:
-  findAux __3: bool
+  findAux __1: bool
 new constraints:
-  __3 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
+  __1 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
 
 --
 
-__3 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
+__1 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __3)
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __1)
 
 --
 
-(__3) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
+(__1) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __3)
+ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __1)
 
 --
 
 (or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
-(__4) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
+(__2) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
 new variables:
-  findAux __4: bool
+  findAux __2: bool
 new constraints:
-  __4 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
+  __2 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
 
 --
 
-__4 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
+__2 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __4)
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __2)
 
 --
 
-(__4) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
+(__2) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __4)
+ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __2)
 
 --
 
 (or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
-(__5) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
+(__3) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
 new variables:
-  findAux __5: bool
+  findAux __3: bool
 new constraints:
-  __5 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
+  __3 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
 
 --
 
-__5 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
+__3 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __5)
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __3)
 
 --
 
-(__5) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
+(__3) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __5)
+ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __3)
 
 --
 
 (or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
-(__6) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
+(__4) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
 new variables:
-  findAux __6: bool
+  findAux __4: bool
 new constraints:
-  __6 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
+  __4 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
 
 --
 
-__6 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
+__4 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __6)
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __4)
 
 --
 
-(__6) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
+(__4) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __6)
+ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __4)
 
 --
 
 (or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
-(__7) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
+(__5) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
 new variables:
-  findAux __7: bool
+  findAux __5: bool
 new constraints:
-  __7 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
+  __5 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
 
 --
 
-__7 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
+__5 =aux or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __7)
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __5)
 
 --
 
-(__7) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
+(__5) -> (and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __7)
+ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __5)
 
 --
 
@@ -2274,8 +2343,15 @@ Final model:
 
 find x: function (total, surjective) int(1..3) --> int(13..14) 
 find x#as_relation_1: relation (size 3) of (int(1..3) * int(13..14))
+find x#as_relation_2: matrix indexed by [int(13..14)] of tuple (int(1..3), int(13..14))
 find x#as_relation_1#as_set_1: set{explicit} (size 3) of tuple (int(1..3), int(13..14))
+find x#as_relation_2#components_1: tuple (int(1..3), int(13..14))
+find x#as_relation_2#components_2: tuple (int(1..3), int(13..14))
 find x#as_relation_1#as_set_1#explicit_1: matrix indexed by [int(1..3)] of tuple (int(1..3), int(13..14))
+find x#as_relation_2#components_1#components_1: int(1..3)
+find x#as_relation_2#components_1#components_2: int(13..14)
+find x#as_relation_2#components_2#components_1: int(1..3)
+find x#as_relation_2#components_2#components_2: int(13..14)
 find x#as_relation_1#as_set_1#explicit_1#components_1: tuple (int(1..3), int(13..14))
 find x#as_relation_1#as_set_1#explicit_1#components_2: tuple (int(1..3), int(13..14))
 find x#as_relation_1#as_set_1#explicit_1#components_3: tuple (int(1..3), int(13..14))
@@ -2285,36 +2361,30 @@ find x#as_relation_1#as_set_1#explicit_1#components_2#components_1: int(1..3)
 find x#as_relation_1#as_set_1#explicit_1#components_2#components_2: int(13..14)
 find x#as_relation_1#as_set_1#explicit_1#components_3#components_1: int(1..3)
 find x#as_relation_1#as_set_1#explicit_1#components_3#components_2: int(13..14)
-findAux __0: tuple (int(1..3), int(13..14))
-findAux __1: tuple (int(1..3), int(13..14))
-findAux __0#components_1: int(1..3)
-findAux __0#components_2: int(13..14)
-findAux __1#components_1: int(1..3)
-findAux __1#components_2: int(13..14)
+findAux __0: bool
+findAux __1: bool
 findAux __2: bool
 findAux __3: bool
 findAux __4: bool
 findAux __5: bool
-findAux __6: bool
-findAux __7: bool
 
 such that
 
 true,
-and([ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __2),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __3),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __4),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __5),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __6),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __7);int(1..)]),
-or([and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = __0#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = __0#components_2;int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = __0#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = __0#components_2;int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 = __0#components_1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 = __0#components_2;int(1..)]);int(1..)]),
-WatchedLiteral(__0#components_2,13),
-or([and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = __1#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = __1#components_2;int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = __1#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = __1#components_2;int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 = __1#components_1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 = __1#components_2;int(1..)]);int(1..)]),
-WatchedLiteral(__1#components_2,14),
+and([ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __0),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __1),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __2),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 2,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __3),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 14;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 14;int(1..)]);int(1..)]), __4),ReifyImply(and([or([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 != 13;int(1..)]),or([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 != 3,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 != 13;int(1..)]);int(1..)]), __5);int(1..)]),
+or([and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = x#as_relation_2#components_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = x#as_relation_2#components_1#components_2;int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = x#as_relation_2#components_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = x#as_relation_2#components_1#components_2;int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 = x#as_relation_2#components_1#components_1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 = x#as_relation_2#components_1#components_2;int(1..)]);int(1..)]),
+WatchedLiteral(x#as_relation_2#components_1#components_2,13),
+or([and([x#as_relation_1#as_set_1#explicit_1#components_1#components_1 = x#as_relation_2#components_2#components_1,x#as_relation_1#as_set_1#explicit_1#components_1#components_2 = x#as_relation_2#components_2#components_2;int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_2#components_1 = x#as_relation_2#components_2#components_1,x#as_relation_1#as_set_1#explicit_1#components_2#components_2 = x#as_relation_2#components_2#components_2;int(1..)]),and([x#as_relation_1#as_set_1#explicit_1#components_3#components_1 = x#as_relation_2#components_2#components_1,x#as_relation_1#as_set_1#explicit_1#components_3#components_2 = x#as_relation_2#components_2#components_2;int(1..)]);int(1..)]),
+WatchedLiteral(x#as_relation_2#components_2#components_2,14),
 FlatLexLt([x#as_relation_1#as_set_1#explicit_1#components_1#components_1, x#as_relation_1#as_set_1#explicit_1#components_1#components_2], [x#as_relation_1#as_set_1#explicit_1#components_2#components_1, x#as_relation_1#as_set_1#explicit_1#components_2#components_2]),
 FlatLexLt([x#as_relation_1#as_set_1#explicit_1#components_2#components_1, x#as_relation_1#as_set_1#explicit_1#components_2#components_2], [x#as_relation_1#as_set_1#explicit_1#components_3#components_1, x#as_relation_1#as_set_1#explicit_1#components_3#components_2]),
 true,
 true,
 true,
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __2),
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __3),
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __4),
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __5),
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __6),
-Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __7)
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __0),
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,1),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __1),
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __2),
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,2),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __3),
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,13);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,13);int(1..)]);int(1..)]), __4),
+Reify(or([and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_1#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_2#components_2,14);int(1..)]),and([WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_1,3),WatchedLiteral(x#as_relation_1#as_set_1#explicit_1#components_3#components_2,14);int(1..)]);int(1..)]), __5)
 
