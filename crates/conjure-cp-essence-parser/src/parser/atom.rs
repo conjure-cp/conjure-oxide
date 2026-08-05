@@ -7,6 +7,7 @@ use crate::expression::{parse_annotation_expression, parse_binary_expression, pa
 use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
+use crate::parser::domain::parse_domain;
 use crate::parser::dominance::parse_pareto_expression;
 use crate::parser::global_constraints::ELEMENT_ID;
 use crate::util::{TypecheckingContext, named_children};
@@ -79,7 +80,7 @@ pub fn parse_atom(
             )))
         }
         "matrix" | "record" | "variant" | "tuple" | "set_literal" | "mset_literal"
-        | "sequence_literal" => {
+        | "sequence_literal" | "function_literal" => {
             let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);
             };
@@ -94,6 +95,13 @@ pub fn parse_atom(
         // TODO: add powerset support under "set_operation"
         "set_operation" => parse_binary_expression(ctx, node),
         "comprehension" => parse_comprehension(ctx, node),
+        "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr" => {
+            parse_function_unary_operator(ctx, node)
+        }
+        "image_expr" | "image_set_expr" | "pre_image_expr" | "inverse_expr" => {
+            parse_function_binary_operator(ctx, node)
+        }
+        "restrict_expr" => parse_restrict_expr(ctx, node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected atom, got: {}", node.kind()),
@@ -265,6 +273,194 @@ fn parse_element_id(
         Metadata::new(),
         Moo::new(matrix),
         Moo::new(value),
+    )))
+}
+
+/// Parses the single argument of a unary function-call-style operator (`defined`, `range`,
+/// `toSet`, `toMSet`, `toRelation`): keyword immediately followed by a parenthesised argument.
+/// The argument's type varies by operator (function, set, mset, relation), so typechecking
+/// context is relaxed to `Unknown` while parsing it, mirroring `parse_flatten`/`parse_element_id`.
+fn parse_function_unary_operator(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let Some(function_node) = field!(recover, ctx, node, "function") else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(function) = parse_expression(ctx, function_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    match node.kind() {
+        "defined_expr" => Ok(Some(Expression::Defined(
+            Metadata::new(),
+            Moo::new(function),
+        ))),
+        "range_expr" => Ok(Some(Expression::Range(Metadata::new(), Moo::new(function)))),
+        "to_set_expr" => Ok(Some(Expression::ToSet(Metadata::new(), Moo::new(function)))),
+        "to_mset_expr" => Ok(Some(Expression::ToMSet(
+            Metadata::new(),
+            Moo::new(function),
+        ))),
+        "to_relation_expr" => Ok(Some(Expression::ToRelation(
+            Metadata::new(),
+            Moo::new(function),
+        ))),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected a function operator, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
+    }
+}
+
+/// Parses the two arguments of a binary function-call-style operator (`image`, `imageSet`,
+/// `preImage`, `inverse`): keyword immediately followed by a parenthesised, comma-separated
+/// argument pair. `inverse_expr` uses `left`/`right` fields; the rest use `function`/`argument`.
+fn parse_function_binary_operator(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let (first_field, second_field) = if node.kind() == "inverse_expr" {
+        ("left", "right")
+    } else {
+        ("function", "argument")
+    };
+
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let Some(first_node) = field!(recover, ctx, node, first_field) else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(first) = parse_expression(ctx, first_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    let Some(second_node) = field!(recover, ctx, node, second_field) else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(second) = parse_expression(ctx, second_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    match node.kind() {
+        "image_expr" => Ok(Some(Expression::Image(
+            Metadata::new(),
+            Moo::new(first),
+            Moo::new(second),
+        ))),
+        "image_set_expr" => Ok(Some(Expression::ImageSet(
+            Metadata::new(),
+            Moo::new(first),
+            Moo::new(second),
+        ))),
+        "pre_image_expr" => Ok(Some(Expression::PreImage(
+            Metadata::new(),
+            Moo::new(first),
+            Moo::new(second),
+        ))),
+        "inverse_expr" => Ok(Some(Expression::Inverse(
+            Metadata::new(),
+            Moo::new(first),
+            Moo::new(second),
+        ))),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected a function operator, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
+    }
+}
+
+/// Parses `restrict(f, dom)`. Unlike the other function operators, the second argument is
+/// syntactically a domain rather than an expression. `Expression::Restrict` still stores it as
+/// an `Expression` though (its `domain_of()` is called directly on that operand): a bare domain
+/// name (e.g. `letting D be domain int(0,2)` used as `restrict(f, D)`) becomes a plain reference
+/// to that declaration, matching the shape the via-conjure/JSON import path produces. An inline
+/// domain literal (not just a name) is wrapped in a `DomainAnnotation` so `domain_of()` still
+/// resolves correctly, though it will not print back out identically (no exhaustive/roundtrip
+/// case in this codebase currently needs that form).
+fn parse_restrict_expr(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let Some(function_node) = field!(recover, ctx, node, "function") else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(function) = parse_expression(ctx, function_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    let Some(domain_node) = field!(recover, ctx, node, "domain") else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(domain_expr) = parse_restrict_domain_argument(ctx, domain_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    Ok(Some(Expression::Restrict(
+        Metadata::new(),
+        Moo::new(function),
+        Moo::new(domain_expr),
+    )))
+}
+
+fn parse_restrict_domain_argument(
+    ctx: &mut ParseContext,
+    domain_node: Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    // Unwrap the generic "domain"/"annotation_domain" wrapper node(s) to see what's underneath.
+    let mut inner = domain_node;
+    while matches!(inner.kind(), "domain" | "annotation_domain") {
+        let Some(child) = inner.child(0) else {
+            break;
+        };
+        inner = child;
+    }
+
+    if inner.kind() == "identifier" {
+        // A name referring to a domain: keep it as a plain reference expression, so it prints
+        // back out as just the name (e.g. `restrict(f,D)`).
+        return parse_atom(ctx, &inner);
+    }
+
+    let Some(domain) = parse_domain(ctx, domain_node)? else {
+        return Ok(None);
+    };
+    Ok(Some(Expression::DomainAnnotation(
+        Metadata::new(),
+        Moo::new(Expression::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::Bool(true)),
+        )),
+        domain,
     )))
 }
 
@@ -460,6 +656,7 @@ fn typecheck_variable(
         TypecheckingContext::Record => "record",
         TypecheckingContext::Partition => "partition",
         TypecheckingContext::Sequence => "sequence",
+        TypecheckingContext::Function => "function",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
 
@@ -554,6 +751,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             TypecheckingContext::Record => "record",
             TypecheckingContext::Partition => "partition",
             TypecheckingContext::Sequence => "sequence",
+            TypecheckingContext::Function => "function",
             TypecheckingContext::Unknown => "",
         };
 

@@ -8,8 +8,8 @@ use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, JectivityAttr, Literal,
-    MSetAttr, Moo, Name, Range, Reference, SequenceAttr, SetAttr,
+    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, FuncAttr, IntVal, JectivityAttr,
+    Literal, MSetAttr, Moo, Name, PartialityAttr, Range, Reference, SequenceAttr, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -77,6 +77,7 @@ pub fn parse_domain(
         "set_domain" | "annotation_set_domain" => parse_set_domain(ctx, domain),
         "mset_domain" | "annotation_mset_domain" => parse_mset_domain(ctx, domain),
         "sequence_domain" | "annotation_sequence_domain" => parse_sequence_domain(ctx, domain),
+        "function_domain" | "annotation_function_domain" => parse_function_domain(ctx, domain),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("{} is not a supported domain type", domain.kind()),
@@ -539,6 +540,100 @@ fn parse_sequence_domain(
         representation: None,
     };
     Ok(Some(Domain::sequence(attrs, value_domain)))
+}
+
+// e.g. function int(1..3) --> int(1..3), function (total) bool --> int(13,17),
+// function (minSize 1) int(1..2) --> set (size 1) of int(1..2). Mirrors
+// parse_sequence_domain, plus the extra `partiality` field FuncAttr has.
+fn parse_function_domain(
+    ctx: &mut ParseContext,
+    function_domain: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let mut size = Range::Unbounded;
+    let mut min_size = None;
+    let mut max_size = None;
+    let mut partiality = PartialityAttr::Partial;
+    let mut jectivity = JectivityAttr::None;
+
+    for child in named_children(&function_domain) {
+        if child.kind() == "function_attributes" {
+            for attribute in named_children(&child) {
+                let name = attribute
+                    .child_by_field_name("attribute")
+                    .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
+                    .unwrap_or_default();
+                match name {
+                    "size" | "minSize" | "maxSize" => {
+                        let Some(value_node) = attribute.child_by_field_name("value") else {
+                            return Ok(None);
+                        };
+                        let Some(value) = parse_int(ctx, &value_node) else {
+                            return Ok(None);
+                        };
+                        match name {
+                            "size" => size = Range::Single(value),
+                            "minSize" => min_size = Some(value),
+                            "maxSize" => max_size = Some(value),
+                            _ => unreachable!(),
+                        }
+                    }
+                    "total" => partiality = PartialityAttr::Total,
+                    "injective" => jectivity = JectivityAttr::Injective,
+                    "surjective" => jectivity = JectivityAttr::Surjective,
+                    "bijective" => jectivity = JectivityAttr::Bijective,
+                    _ => return Ok(None),
+                }
+            }
+        }
+    }
+
+    if !matches!(size, Range::Single(_)) {
+        size = match (min_size, max_size) {
+            (Some(min), Some(max)) => Range::Bounded(min, max),
+            (Some(min), None) => Range::UnboundedR(min),
+            (None, Some(max)) => Range::UnboundedL(max),
+            (None, None) => Range::Unbounded,
+        };
+    }
+
+    let Some(domain_from_node) = function_domain.child_by_field_name("domain_from") else {
+        ctx.record_error(RecoverableParseError::new(
+            "Function domain must have a domain".to_string(),
+            Some(function_domain.range()),
+        ));
+        return Ok(None);
+    };
+    let Some(domain_from) = parse_domain(ctx, domain_from_node)? else {
+        return Ok(None);
+    };
+
+    let Some(domain_to_node) = function_domain.child_by_field_name("domain_to") else {
+        ctx.record_error(RecoverableParseError::new(
+            "Function domain must have a codomain".to_string(),
+            Some(function_domain.range()),
+        ));
+        return Ok(None);
+    };
+    let Some(domain_to) = parse_domain(ctx, domain_to_node)? else {
+        return Ok(None);
+    };
+
+    // Adding function keyword to the source map with hover info from documentation
+    let function_keyword_node = child!(function_domain, 0, "function");
+    ctx.add_span_and_doc_hover(
+        &function_keyword_node,
+        "function",
+        SymbolKind::Domain,
+        None,
+        None,
+    );
+
+    let attrs = FuncAttr {
+        size,
+        partiality,
+        jectivity,
+    };
+    Ok(Some(Domain::function(attrs, domain_from, domain_to)))
 }
 
 pub fn parse_set_domain(

@@ -25,8 +25,10 @@ pub fn parse_expression(
     match node.kind() {
         "atom" | "primary_atom" | "constant" | "identifier" | "metavar" | "matrix" | "record"
         | "variant" | "tuple" | "set_literal" | "mset_literal" | "sequence_literal"
-        | "comprehension" | "index_or_slice" | "flatten" | "element_id" | "table"
-        | "negative_table" => parse_atom(ctx, &node),
+        | "function_literal" | "comprehension" | "index_or_slice" | "flatten" | "element_id"
+        | "table" | "negative_table" | "image_expr" | "image_set_expr" | "pre_image_expr"
+        | "inverse_expr" | "restrict_expr" | "defined_expr" | "range_expr" | "to_set_expr"
+        | "to_mset_expr" | "to_relation_expr" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
@@ -1004,7 +1006,7 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
         GroundDomain::Sequence(_, _) => TypecheckingContext::Sequence,
         GroundDomain::Set(_, _) => TypecheckingContext::Set,
         GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
-        GroundDomain::Function(_, _, _) => TypecheckingContext::Unknown,
+        GroundDomain::Function(_, _, _) => TypecheckingContext::Function,
         GroundDomain::Relation(_, _) => TypecheckingContext::Unknown,
         GroundDomain::Partition(_, _) => TypecheckingContext::Partition,
     }

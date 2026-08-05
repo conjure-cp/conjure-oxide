@@ -24,6 +24,7 @@ pub fn parse_abstract(
         "set_literal" => parse_set_literal(ctx, node),
         "mset_literal" => parse_mset_literal(ctx, node),
         "sequence_literal" => parse_sequence_literal(ctx, node),
+        "function_literal" => parse_function_literal(ctx, node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected abstract literal, got: {}", node.kind()),
@@ -46,6 +47,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         TypecheckingContext::Record => "record",
         TypecheckingContext::Partition => "partition",
         TypecheckingContext::Sequence => "sequence",
+        TypecheckingContext::Function => "function",
         TypecheckingContext::Unknown => "unknown",
     };
 
@@ -53,6 +55,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         "set_literal" => "set",
         "mset_literal" => "mset",
         "sequence_literal" => "sequence",
+        "function_literal" => "function",
         "matrix" => "matrix",
         "tuple" => "tuple",
         "record" => "record",
@@ -325,5 +328,48 @@ fn parse_sequence_literal(
         Ok(None)
     } else {
         Ok(Some(AbstractLiteral::Sequence(elements)))
+    }
+}
+
+fn parse_function_literal(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    let saved_ctx = ctx.typechecking_context;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
+    let mut pairs = Vec::new();
+    let mut had_error = false;
+    for pair in named_children(node) {
+        // key/value can be of any type (matching the domain/codomain of the function), so
+        // typecheck context is relaxed here, mirroring the other abstract literal parsers.
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
+        let Some(key_node) = field!(recover, ctx, pair, "key") else {
+            had_error = true;
+            continue;
+        };
+        let Some(key) = parse_expression(ctx, key_node)? else {
+            had_error = true;
+            continue;
+        };
+
+        let Some(value_node) = field!(recover, ctx, pair, "value") else {
+            had_error = true;
+            continue;
+        };
+        let Some(value) = parse_expression(ctx, value_node)? else {
+            had_error = true;
+            continue;
+        };
+
+        pairs.push((key, value));
+    }
+    ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Function(pairs)))
     }
 }

@@ -100,6 +100,7 @@ module.exports = grammar ({
       field("set_domain", $.set_domain),
       field("mset_domain", $.mset_domain),
       field("sequence_domain", $.sequence_domain),
+      field("function_domain", $.function_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -235,6 +236,30 @@ module.exports = grammar ({
       field("attribute", "bijective")
     ),
 
+    // e.g. function int(1..3) --> int(1..3), function (total) bool --> int(13,17),
+    // function (minSize 1) int(1..2) --> set (size 1) of int(1..2). Attribute values may
+    // optionally be parenthesised (e.g. `size(2)`, `minSize(1)`), matching Conjure's own
+    // grammar where the attribute value is just an integer expression.
+    function_domain: $ => seq(
+      "function",
+      optional(seq("(", $.function_attributes, ")")),
+      field("domain_from", $.domain),
+      "-->",
+      field("domain_to", $.domain)
+    ),
+
+    function_attributes: $ => commaSep1($.function_attribute),
+
+    function_attribute: $ => choice(
+      seq(field("attribute", "size"), choice(field("value", $.integer), seq("(", field("value", $.integer), ")"))),
+      seq(field("attribute", "minSize"), choice(field("value", $.integer), seq("(", field("value", $.integer), ")"))),
+      seq(field("attribute", "maxSize"), choice(field("value", $.integer), seq("(", field("value", $.integer), ")"))),
+      field("attribute", "total"),
+      field("attribute", "injective"),
+      field("attribute", "surjective"),
+      field("attribute", "bijective")
+    ),
+
     set_literal: $ => seq(
       "{",
       field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
@@ -252,6 +277,103 @@ module.exports = grammar ({
       "sequence",
       "(",
       optional(field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)))),
+      ")"
+    ),
+
+    // e.g. function(), function(0-->1,1-->0), function(false --> 5, true --> x)
+    function_literal: $ => seq(
+      "function",
+      "(",
+      optional(field("pair", commaSep1($.function_literal_pair))),
+      ")"
+    ),
+
+    function_literal_pair: $ => seq(
+      field("key", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+      "-->",
+      field("value", choice($.bool_expr, $.arithmetic_expr, $.atom))
+    ),
+
+    // Function operators, all function-call style: keyword immediately followed by a
+    // parenthesised, comma-separated argument list (not infix operators).
+    image_expr: $ => seq(
+      "image",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("argument", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    image_set_expr: $ => seq(
+      "imageSet",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("argument", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    pre_image_expr: $ => seq(
+      "preImage",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("argument", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    inverse_expr: $ => seq(
+      "inverse",
+      "(",
+      field("left", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("right", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    // restrict's second argument is a domain, not an expression.
+    restrict_expr: $ => seq(
+      "restrict",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("domain", $.domain),
+      ")"
+    ),
+
+    defined_expr: $ => seq(
+      "defined",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    range_expr: $ => seq(
+      "range",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    to_set_expr: $ => seq(
+      "toSet",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    to_mset_expr: $ => seq(
+      "toMSet",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    to_relation_expr: $ => seq(
+      "toRelation",
+      "(",
+      field("function", choice($.arithmetic_expr, $.atom)),
       ")"
     ),
 
@@ -484,12 +606,23 @@ module.exports = grammar ({
       field("set_literal", $.set_literal),
       field("mset_literal", $.mset_literal),
       field("sequence_literal", $.sequence_literal),
+      field("function_literal", $.function_literal),
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
       field("element_id", $.element_id),
       field("table", $.table),
       field("negative_table", $.negative_table),
-      field("pareto_expression", $.pareto_expression)
+      field("pareto_expression", $.pareto_expression),
+      field("image_expr", $.image_expr),
+      field("image_set_expr", $.image_set_expr),
+      field("pre_image_expr", $.pre_image_expr),
+      field("inverse_expr", $.inverse_expr),
+      field("restrict_expr", $.restrict_expr),
+      field("defined_expr", $.defined_expr),
+      field("range_expr", $.range_expr),
+      field("to_set_expr", $.to_set_expr),
+      field("to_mset_expr", $.to_mset_expr),
+      field("to_relation_expr", $.to_relation_expr)
     )),
 
     sub_atom_expr: $ => seq("(", field("expression", choice($.annotation_expr, $.atom)), ")"),
@@ -617,6 +750,7 @@ module.exports = grammar ({
       $.set_literal,
       $.mset_literal,
       $.sequence_literal,
+      $.function_literal,
       $.index_or_slice,
       $.flatten,
       $.element_id
@@ -633,6 +767,7 @@ module.exports = grammar ({
       field("set_domain", $.annotation_set_domain),
       field("mset_domain", $.annotation_mset_domain),
       field("sequence_domain", $.annotation_sequence_domain),
+      field("function_domain", $.annotation_function_domain),
     ),
 
     annotation_int_domain: $ => seq(
@@ -722,6 +857,14 @@ module.exports = grammar ({
       optional(seq("(", $.sequence_attributes, ")")),
       "of",
       field("value_domain", $.annotation_domain)
+    ),
+
+    annotation_function_domain: $ => seq(
+      "function",
+      optional(seq("(", $.function_attributes, ")")),
+      field("domain_from", $.annotation_domain),
+      "-->",
+      field("domain_to", $.annotation_domain)
     ),
 
     // binary_set_operation: $ => prec.left(seq(
