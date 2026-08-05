@@ -303,7 +303,7 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
 
 /// True if the domain is abstract w.r.t Essence'
 #[allow(clippy::match_like_matches_macro)]
-fn domain_needs_representation(domain: &DomainPtr) -> bool {
+pub(crate) fn domain_needs_representation(domain: &DomainPtr) -> bool {
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
             // These domains are concrete for all solvers

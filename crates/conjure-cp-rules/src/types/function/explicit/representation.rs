@@ -18,7 +18,11 @@ register_representation!(
         /// Jectivity to enforce structurally.
         pub jectivity: JectivityAttr,
         /// Number of defined entries a partial function may have; irrelevant for total functions.
-        pub size: Range<i32>
+        pub size: Range<i32>,
+        /// Whether the codomain itself needs representation selection (e.g. set/record/tuple).
+        /// Minion's native `AllDiff` only supports scalar elements, so an abstract codomain must
+        /// fall back to pairwise `Neq` instead.
+        pub codomain_is_abstract: bool
     }
     impl State<DeclarationPtr> {
         /// The matrices are indexed by the function's own domain (e.g. `bool`, not necessarily
@@ -87,6 +91,9 @@ register_representation!(
             .cloned()
             .ok_or_else(|| domain_err("function codomain is empty"))?;
 
+        let codomain_is_abstract =
+            crate::passes::representation::domain_needs_representation(&codomain.clone().into());
+
         let index_dom = domain.clone().into();
         let values_matrix = Domain::matrix(codomain.clone().into(), vec![index_dom]);
         let flags_matrix = match attr.partiality {
@@ -105,6 +112,7 @@ register_representation!(
             padding,
             jectivity: attr.jectivity.clone(),
             size: attr.size.clone(),
+            codomain_is_abstract,
         })
     }
     fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
@@ -133,8 +141,9 @@ register_representation!(
         );
 
         if injective {
-            if state.flags_matrix.is_none() {
-                // Total: every position is always defined, so a plain allDiff is exact.
+            if state.flags_matrix.is_none() && !state.codomain_is_abstract {
+                // Total, scalar codomain: every position is always defined and Minion's native
+                // AllDiff only supports scalar elements, so a plain allDiff is exact and efficient.
                 let matrix_ref = Reference::new(state.values_matrix.clone()).into();
                 constraints.push(Expression::AllDiff(Metadata::new(), Moo::new(matrix_ref)));
             } else {
@@ -231,6 +240,7 @@ register_representation!(
             padding: state.padding.clone(),
             jectivity: state.jectivity.clone(),
             size: state.size.clone(),
+            codomain_is_abstract: state.codomain_is_abstract,
         })
     }
     fn up(state: State<Literal>) -> Literal {
