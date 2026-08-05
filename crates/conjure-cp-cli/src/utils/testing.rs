@@ -462,6 +462,50 @@ pub fn normalize_solutions_for_comparison(
                             });
                         updates.push((k, Literal::AbstractLiteral(sequence)));
                     }
+                    Literal::AbstractLiteral(AbstractLiteral::Function(pairs)) => {
+                        let function =
+                            AbstractLiteral::Function(pairs).transform(&move |x| match x {
+                                AbstractLiteral::Function(pairs) => {
+                                    let pairs = pairs
+                                        .into_iter()
+                                        .map(|(key, value)| {
+                                            let normalize = |x| match x {
+                                                Literal::Bool(false) => Literal::Int(0),
+                                                Literal::Bool(true) => Literal::Int(1),
+                                                x => x,
+                                            };
+                                            (normalize(key), normalize(value))
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Function(pairs)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(function)));
+                    }
+                    Literal::AbstractLiteral(AbstractLiteral::Relation(tuples)) => {
+                        let relation =
+                            AbstractLiteral::Relation(tuples).transform(&move |x| match x {
+                                AbstractLiteral::Relation(tuples) => {
+                                    let tuples = tuples
+                                        .into_iter()
+                                        .map(|fields| {
+                                            fields
+                                                .into_iter()
+                                                .map(|x| match x {
+                                                    Literal::Bool(false) => Literal::Int(0),
+                                                    Literal::Bool(true) => Literal::Int(1),
+                                                    x => x,
+                                                })
+                                                .collect_vec()
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Relation(tuples)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(relation)));
+                    }
                     e => bug!("unexpected literal type: {e:?}"),
                 }
             }
@@ -511,6 +555,20 @@ fn normalize_set_literal_order(value: AbstractLiteral<Literal>) -> AbstractLiter
         AbstractLiteral::MSet(mut members) => {
             members.sort_by(Literal::essence_cmp);
             AbstractLiteral::MSet(members)
+        }
+        AbstractLiteral::Function(mut pairs) => {
+            pairs.sort_by(|(k1, _), (k2, _)| Literal::essence_cmp(k1, k2));
+            AbstractLiteral::Function(pairs)
+        }
+        AbstractLiteral::Relation(mut tuples) => {
+            tuples.sort_by(|a, b| {
+                a.iter()
+                    .zip(b.iter())
+                    .map(|(x, y)| Literal::essence_cmp(x, y))
+                    .find(|ord| *ord != std::cmp::Ordering::Equal)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
+            AbstractLiteral::Relation(tuples)
         }
         value => value,
     })
