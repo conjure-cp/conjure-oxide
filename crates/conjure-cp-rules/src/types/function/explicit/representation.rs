@@ -21,12 +21,19 @@ register_representation!(
         pub size: Range<i32>
     }
     impl State<DeclarationPtr> {
+        /// The matrices are indexed by the function's own domain (e.g. `bool`, not necessarily
+        /// `int(1..n)`), so a one-based position must be translated to the domain value at that
+        /// position, not passed through as a raw integer.
+        fn domain_index_expr(&self, index: i32) -> Expression {
+            self.domain_values[(index - 1) as usize].clone().into()
+        }
+
         /// Return the codomain value at a one-based position (domain-enumeration order).
         pub fn value_expr(&self, index: i32) -> Expression {
             Expression::SafeIndex(
                 Metadata::new(),
                 Moo::new(Reference::new(self.values_matrix.clone()).into()),
-                vec![index.into()],
+                vec![self.domain_index_expr(index)],
             )
         }
 
@@ -36,7 +43,7 @@ register_representation!(
                 Some(flags) => Expression::SafeIndex(
                     Metadata::new(),
                     Moo::new(Reference::new(flags.clone()).into()),
-                    vec![index.into()],
+                    vec![self.domain_index_expr(index)],
                 ),
                 None => true.into(),
             }
