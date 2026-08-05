@@ -1,4 +1,6 @@
-use crate::shared::utils::to_aux_var;
+use crate::shared::utils::{as_resolved_atom, to_aux_var};
+use crate::types::record::RecordComponents;
+use crate::types::tuple::{TupleComponents, TuplePacked};
 use conjure_cp::ast::{
     Atom, Expression as Expr, GroundDomain, IntVal, Metadata, Moo, Name, Range, SymbolTable, matrix,
 };
@@ -40,17 +42,60 @@ fn lex_operand_to_atoms(
 
     let mut atoms = vec![];
     for element in lex_operand_elements(operand.as_ref())? {
-        if let Ok(atom) = element.clone().try_into() {
-            atoms.push(atom);
-        } else if let Some(aux) = to_aux_var(&element, symbols) {
-            *symbols = aux.symbols();
-            tops.push(aux.top_level_expr());
-            atoms.push(aux.as_atom());
-        } else {
-            return Err(RuleNotApplicable);
-        }
+        atoms.extend(flatten_lex_element(&element, symbols, tops)?);
     }
     Ok(atoms)
+}
+
+/// Expand one lex-operand element into the flat scalar atoms Minion's `FlatLexLt`/`FlatLexLeq`
+/// need. A list element is not always already scalar -- e.g. a matrix-of-tuples operand (produced
+/// by a set's own "compare through representation" ordering rule when its elements are tuples)
+/// has tuple-typed elements, and treating one of those as a ready atom would leak its still-
+/// abstract declaration name straight into the backend. Splicing a compound element's own fields
+/// into the flat list in its place instead preserves lex semantics exactly: comparing
+/// `[t1, t2]` against `[u1, u2]` lexicographically is equivalent to comparing
+/// `[t1.f1, t1.f2, t2.f1, t2.f2]` against `[u1.f1, u1.f2, u2.f1, u2.f2]`, since a tuple's own
+/// ordering is itself lexicographic over its fields. Recurses so a field that is itself a
+/// tuple/record keeps unwinding.
+fn flatten_lex_element(
+    element: &Expr,
+    symbols: &mut SymbolTable,
+    tops: &mut Vec<Expr>,
+) -> Result<Vec<Atom>, ApplicationError> {
+    if let Some(atom) = as_resolved_atom(element) {
+        return Ok(vec![atom]);
+    }
+
+    if let Expr::Atomic(_, Atom::Reference(reference)) = element {
+        // Tuple/record fields decompose into several sub-elements; a packed tuple is already a
+        // single scalar integer that preserves lex order by construction (see
+        // `types::tuple::packed::vertical::packed_cmp`), so it decomposes into just itself.
+        let sub_elements = if let Some(repr) = reference.ptr().get_repr::<TupleComponents>() {
+            Some(repr.field_exprs())
+        } else if let Some(repr) = reference.ptr().get_repr::<RecordComponents>() {
+            Some(repr.field_exprs())
+        } else {
+            reference
+                .ptr()
+                .get_repr::<TuplePacked>()
+                .map(|repr| vec![repr.packed_expr()])
+        };
+        if let Some(sub_elements) = sub_elements {
+            let mut flattened = Vec::with_capacity(sub_elements.len());
+            for sub_element in &sub_elements {
+                flattened.extend(flatten_lex_element(sub_element, symbols, tops)?);
+            }
+            return Ok(flattened);
+        }
+    }
+
+    if let Some(aux) = to_aux_var(element, symbols) {
+        *symbols = aux.symbols();
+        tops.push(aux.top_level_expr());
+        return Ok(vec![aux.as_atom()]);
+    }
+
+    Err(RuleNotApplicable)
 }
 
 fn lex_represented_matrix_to_atoms(

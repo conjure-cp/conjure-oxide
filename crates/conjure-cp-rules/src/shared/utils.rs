@@ -130,7 +130,7 @@ where
 /// like any other atom, but treating it as ready would leak the abstract declaration's name
 /// straight into the backend instead of chasing through to whatever concrete representation it
 /// ends up with.
-fn as_resolved_atom(expr: &Expr) -> Option<Atom> {
+pub(crate) fn as_resolved_atom(expr: &Expr) -> Option<Atom> {
     let Expr::Atomic(_, atom) = expr else {
         return None;
     };
