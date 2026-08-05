@@ -166,14 +166,17 @@ pub fn collect_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<E
         }
     }
 
+    // cases[j] means "fields 0..j are equal, and field j satisfies cmp_op" -- so field i's own
+    // equality belongs to every *later* case's prefix (j > i), not to the earlier cases already
+    // built from fields before it.
     let mut cases = vec![Vec::<Expr>::with_capacity(len); len];
     for (i, (lhs, rhs)) in izip!(lhs_fields, rhs_fields).enumerate() {
         let equal = essence_expr!(&lhs = &rhs);
         let comparison = field_cmp_expr(cmp_op, lhs, rhs);
-        for case in cases.iter_mut().take(i) {
+        cases[i].push(comparison);
+        for case in cases.iter_mut().skip(i + 1) {
             case.push(equal.clone());
         }
-        cases[i].push(comparison);
     }
 
     let conjunctions = cases
