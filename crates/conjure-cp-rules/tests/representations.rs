@@ -1,15 +1,15 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
-    AbstractLiteral, Domain, Expression, FuncAttr, GroundDomain, JectivityAttr, Literal, MSetAttr,
-    Moo, Name, PartialityAttr, RelAttr, SequenceAttr, SetAttr, SymbolTable,
+    AbstractLiteral, BinaryAttr, Domain, Expression, FuncAttr, GroundDomain, JectivityAttr,
+    Literal, MSetAttr, Moo, Name, PartialityAttr, RelAttr, SequenceAttr, SetAttr, SymbolTable,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
     FunctionAsRelation, FunctionExplicit, MSetExplicit, MSetOccurrence, MSetPacked,
     MatrixComponents, MatrixPacked, RecordComponents, RecordPacked, RelationAsSet,
-    SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked, TupleComponents,
-    TuplePacked, VariantComponents, VariantPacked,
+    RelationOccurrence, SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked,
+    TupleComponents, TuplePacked, VariantComponents, VariantPacked,
 };
 use uniplate::Uniplate;
 
@@ -670,7 +670,9 @@ fn relation_as_set_round_trips_binary_pairs() {
 }
 
 #[test]
-fn relation_as_set_rejects_non_binary_relations() {
+fn relation_as_set_round_trips_ternary_relations() {
+    // Arity is no longer restricted to binary; only binary *attributes* (reflexive/symmetric/
+    // etc) require exactly two columns, checked separately below.
     let domain = Domain::relation(
         RelAttr {
             size: range!(1),
@@ -678,7 +680,141 @@ fn relation_as_set_rejects_non_binary_relations() {
         },
         vec![domain_int!(1..3), domain_int!(1..3), domain_int!(1..3)],
     );
+    let state = <RelationAsSet as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Relation(vec![vec![
+        Literal::Int(1),
+        Literal::Int(2),
+        Literal::Int(3),
+    ]]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn relation_as_set_rejects_binary_attributes_on_a_ternary_relation() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(1),
+            binary: vec![BinaryAttr::Reflexive],
+        },
+        vec![domain_int!(1..3), domain_int!(1..3), domain_int!(1..3)],
+    );
     assert!(<RelationAsSet as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn relation_as_set_rejects_binary_attributes_when_columns_differ() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(1),
+            binary: vec![BinaryAttr::Reflexive],
+        },
+        vec![domain_int!(1..3), domain_int!(4..6)],
+    );
+    assert!(<RelationAsSet as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn relation_as_set_reflexive_builds_one_structural_constraint() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(3),
+            binary: vec![BinaryAttr::Reflexive],
+        },
+        vec![domain_int!(1..3), domain_int!(1..3)],
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = RelationAsSet::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 1);
+}
+
+#[test]
+fn relation_occurrence_round_trips_binary_pairs() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(2),
+            binary: vec![],
+        },
+        vec![domain_int!(1..3), domain_int!(1..2)],
+    );
+    let state = <RelationOccurrence as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Relation(vec![
+        vec![Literal::Int(1), Literal::Int(1)],
+        vec![Literal::Int(2), Literal::Int(2)],
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn relation_occurrence_round_trips_ternary_relations() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(1),
+            binary: vec![],
+        },
+        vec![domain_int!(1..2), domain_int!(1..2), Domain::bool()],
+    );
+    let state = <RelationOccurrence as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Relation(vec![vec![
+        Literal::Int(2),
+        Literal::Int(1),
+        Literal::Bool(true),
+    ]]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn relation_occurrence_rejects_a_compound_column() {
+    // A set-typed column can't index a matrix; only `RelationAsSet` supports it.
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(1),
+            binary: vec![],
+        },
+        vec![
+            domain_int!(1..2),
+            Domain::set(SetAttr::new(range!(2)), domain_int!(1..3)),
+        ],
+    );
+    assert!(<RelationOccurrence as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn relation_occurrence_reflexive_and_symmetric_build_two_structural_constraints_plus_cardinality() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: conjure_cp::ast::Range::<i32>::Unbounded,
+            binary: vec![BinaryAttr::Reflexive, BinaryAttr::Symmetric],
+        },
+        vec![domain_int!(1..3), domain_int!(1..3)],
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = RelationOccurrence::init_for(&mut declaration).unwrap();
+    // One cardinality range constraint (size is unbounded, so min != max) plus one formula per
+    // binary attribute.
+    assert_eq!(constraints.len(), 3);
+}
+
+#[test]
+fn relation_occurrence_fixed_size_builds_an_equality_cardinality_constraint() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(2),
+            binary: vec![],
+        },
+        vec![domain_int!(1..3), domain_int!(1..2)],
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = RelationOccurrence::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 1);
 }
 
 fn func_attr(
