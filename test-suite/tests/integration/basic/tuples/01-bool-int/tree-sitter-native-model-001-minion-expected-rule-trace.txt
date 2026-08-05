@@ -31,7 +31,7 @@ x[1]
 
 SafeIndex(x,[1])
    ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
-SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 4),1;int(1..)])])
+SafeIndex([false,true;int(1..)],[sum([(x#packed_1 / 4),1;int(1..)])])
 
 --
 
@@ -69,9 +69,9 @@ new constraints:
 
 --
 
-SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])]) = false
+SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])]) = false
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])]), false)
+Reify(SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])]), false)
 
 --
 
@@ -81,9 +81,9 @@ ModEq(x#packed_1, 4, __0)
 
 --
 
-SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])])
+SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])])
    ~~> flatten_generic ([("Minion", 4200)])
-SafeIndex([true,false;int(1..)],[__1])
+SafeIndex([false,true;int(1..)],[__1])
 new variables:
   findAux __1: int(1..2)
 new constraints:
@@ -101,9 +101,9 @@ new constraints:
 
 --
 
-SafeIndex([true,false;int(1..)],[__1])
+SafeIndex([false,true;int(1..)],[__1])
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([true,false],__1,true)
+__minion_element_one([false,true],__1,true)
 
 --
 
@@ -123,7 +123,7 @@ findAux __2: int(0..1)
 
 such that
 
-Reify(__minion_element_one([true,false],__1,true), false),
+Reify(__minion_element_one([false,true],__1,true), false),
 and([SumLeq([1, __0], 2),SumGeq([1, __0], 2);int(1..)]),
 ModEq(x#packed_1, 4, __0),
 and([SumLeq([1, __2], __1),SumGeq([1, __2], __1);int(1..)]),

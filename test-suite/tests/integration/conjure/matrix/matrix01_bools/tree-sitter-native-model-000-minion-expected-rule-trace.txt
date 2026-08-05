@@ -18,25 +18,25 @@ new variables:
 
 x
    ~~> decode_packed_matrix_reference ([("ReprMatrixPacked", 9800)])
-[SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([true,false;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)]
+[SafeIndex([false,true;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([false,true;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)]
 
 --
 
 x
    ~~> decode_packed_matrix_reference ([("ReprMatrixPacked", 9800)])
-[SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([true,false;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)]
+[SafeIndex([false,true;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([false,true;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)]
 
 --
 
-[SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([true,false;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)][1]
+[SafeIndex([false,true;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([false,true;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)][1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex([SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([true,false;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)],[1])
+SafeIndex([SafeIndex([false,true;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([false,true;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)],[1])
 
 --
 
-[SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([true,false;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)][2]
+[SafeIndex([false,true;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([false,true;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)][2]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex([SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([true,false;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)],[2])
+SafeIndex([SafeIndex([false,true;int(1..)],[sum([(x#packed_1 / 2) % 2,1;int(1..)])]),SafeIndex([false,true;int(1..)],[sum([x#packed_1 % 2,1;int(1..)])]);int(1..2)],[2])
 
 --
 
@@ -58,9 +58,9 @@ SafeDiv(x#packed_1, 2) % 2
 
 --
 
-SafeIndex([true,false;int(1..)],[sum([SafeMod(SafeDiv(x#packed_1, 2),2),1;int(1..)])])
+SafeIndex([false,true;int(1..)],[sum([SafeMod(SafeDiv(x#packed_1, 2),2),1;int(1..)])])
    ~~> flatten_generic ([("Minion", 4200)])
-SafeIndex([true,false;int(1..)],[__0])
+SafeIndex([false,true;int(1..)],[__0])
 new variables:
   findAux __0: int(1..2)
 new constraints:
@@ -78,15 +78,15 @@ new constraints:
 
 --
 
-SafeIndex([true,false;int(1..)],[__0])
+SafeIndex([false,true;int(1..)],[__0])
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([true,false],__0,true)
+__minion_element_one([false,true],__0,true)
 
 --
 
-SafeIndex([true,false;int(1..)],[sum([SafeMod(x#packed_1,2),1;int(1..)])])
+SafeIndex([false,true;int(1..)],[sum([SafeMod(x#packed_1,2),1;int(1..)])])
    ~~> flatten_generic ([("Minion", 4200)])
-SafeIndex([true,false;int(1..)],[__2])
+SafeIndex([false,true;int(1..)],[__2])
 new variables:
   findAux __2: int(1..2)
 new constraints:
@@ -104,9 +104,9 @@ new constraints:
 
 --
 
-SafeIndex([true,false;int(1..)],[__2])
+SafeIndex([false,true;int(1..)],[__2])
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([true,false],__2,true)
+__minion_element_one([false,true],__2,true)
 
 --
 
@@ -116,27 +116,27 @@ ModEq(x#packed_1, 2, __3)
 
 --
 
-__minion_element_one([true,false],__0,true) = __minion_element_one([true,false],__2,true)
+__minion_element_one([false,true],__0,true) = __minion_element_one([false,true],__2,true)
    ~~> flatten_eq ([("Minion", 4200)])
 __4 = __5
 new variables:
   findAux __4: bool
   findAux __5: bool
 new constraints:
-  __4 =aux __minion_element_one([true,false],__0,true)
-  __5 =aux __minion_element_one([true,false],__2,true)
+  __4 =aux __minion_element_one([false,true],__0,true)
+  __5 =aux __minion_element_one([false,true],__2,true)
 
 --
 
-__4 =aux __minion_element_one([true,false],__0,true)
+__4 =aux __minion_element_one([false,true],__0,true)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(__minion_element_one([true,false],__0,true), __4)
+Reify(__minion_element_one([false,true],__0,true), __4)
 
 --
 
-__5 =aux __minion_element_one([true,false],__2,true)
+__5 =aux __minion_element_one([false,true],__2,true)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(__minion_element_one([true,false],__2,true), __5)
+Reify(__minion_element_one([false,true],__2,true), __5)
 
 --
 
@@ -181,7 +181,7 @@ and([SumLeq([1, __1], __0),SumGeq([1, __1], __0);int(1..)]),
 ModEq(__6, 2, __1),
 and([SumLeq([1, __3], __2),SumGeq([1, __3], __2);int(1..)]),
 ModEq(x#packed_1, 2, __3),
-Reify(__minion_element_one([true,false],__0,true), __4),
-Reify(__minion_element_one([true,false],__2,true), __5),
+Reify(__minion_element_one([false,true],__0,true), __4),
+Reify(__minion_element_one([false,true],__2,true), __5),
 DivEq(x#packed_1, 2, __6)
 

@@ -82,7 +82,7 @@ t1
 
 x[a] = true
    ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
-or([and([x#packed_1 = 0,true = true;int(1..)]),and([x#packed_1 = 1,true = false;int(1..)]);int(1..)])
+or([and([x#packed_1 = 0,true = false;int(1..)]),and([x#packed_1 = 1,true = true;int(1..)]);int(1..)])
 
 --
 
@@ -94,7 +94,7 @@ x#packed_1 = z#packed_1
 
 y1 = variant{a = false}
    ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
-or([and([y1#packed_1 = 0,false = true;int(1..)]),and([y1#packed_1 = 1,false = false;int(1..)]);int(1..)])
+or([and([y1#packed_1 = 0,false = false;int(1..)]),and([y1#packed_1 = 1,false = true;int(1..)]);int(1..)])
 
 --
 
@@ -128,15 +128,15 @@ or([and([t1#packed_1 = 2,4 = 0;int(1..)]),and([t1#packed_1 = 3,4 = 4;int(1..)]);
 
 --
 
-or([and([x#packed_1 = 0;int(1..)]);int(1..)])
+or([and([x#packed_1 = 1;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-and([x#packed_1 = 0;int(1..)])
+and([x#packed_1 = 1;int(1..)])
 
 --
 
-or([and([y1#packed_1 = 1;int(1..)]);int(1..)])
+or([and([y1#packed_1 = 0;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-and([y1#packed_1 = 1;int(1..)])
+and([y1#packed_1 = 0;int(1..)])
 
 --
 
@@ -146,15 +146,15 @@ and([y2#packed_1 = 3;int(1..)])
 
 --
 
-and([x#packed_1 = 0;int(1..)])
+and([x#packed_1 = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-x#packed_1 = 0
+x#packed_1 = 1
 
 --
 
-and([y1#packed_1 = 1;int(1..)])
+and([y1#packed_1 = 0;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-y1#packed_1 = 1
+y1#packed_1 = 0
 
 --
 
@@ -188,15 +188,15 @@ t1#packed_1 = 3
 
 --
 
-x#packed_1 = 0
+x#packed_1 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#packed_1,0)
+WatchedLiteral(x#packed_1,1)
 
 --
 
-y1#packed_1 = 1
+y1#packed_1 = 0
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(y1#packed_1,1)
+WatchedLiteral(y1#packed_1,0)
 
 --
 
@@ -273,8 +273,8 @@ find t2#packed_1: int(0..3)
 
 such that
 
-WatchedLiteral(x#packed_1,0),
-WatchedLiteral(y1#packed_1,1),
+WatchedLiteral(x#packed_1,1),
+WatchedLiteral(y1#packed_1,0),
 WatchedLiteral(y2#packed_1,3),
 x#packed_1 = z#packed_1,
 or([and([WatchedLiteral(t1#packed_1,2),WatchedLiteral(someInt,0);int(1..)]),and([WatchedLiteral(t1#packed_1,3),WatchedLiteral(someInt,4);int(1..)]);int(1..)]),

@@ -30,7 +30,7 @@ x[1]
 
 SafeIndex(x,[1])
    ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
-SafeIndex([true,false;int(1..)],[sum([(x#packed_1 / 4),1;int(1..)])])
+SafeIndex([false,true;int(1..)],[sum([(x#packed_1 / 4),1;int(1..)])])
 
 --
 
@@ -64,14 +64,14 @@ sum([SafeMod(x#packed_1,4),1;int(1..)]) % 2
 
 --
 
-toInt(SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])])) = SafeMod(sum([SafeMod(x#packed_1,4),1;int(1..)]),2)
+toInt(SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])])) = SafeMod(sum([SafeMod(x#packed_1,4),1;int(1..)]),2)
    ~~> flatten_eq ([("Minion", 4200)])
 __0 = __1
 new variables:
   findAux __0: int(0..1)
   findAux __1: int(0..1)
 new constraints:
-  __0 =aux toInt(SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])]))
+  __0 =aux toInt(SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])]))
   __1 =aux SafeMod(sum([SafeMod(x#packed_1,4),1;int(1..)]),2)
 
 --
@@ -108,9 +108,9 @@ ModEq(x#packed_1, 4, __3)
 
 --
 
-SafeIndex([true,false;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])])
+SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#packed_1, 4),1;int(1..)])])
    ~~> flatten_generic ([("Minion", 4200)])
-SafeIndex([true,false;int(1..)],[__4])
+SafeIndex([false,true;int(1..)],[__4])
 new variables:
   findAux __4: int(1..2)
 new constraints:
@@ -128,9 +128,9 @@ new constraints:
 
 --
 
-SafeIndex([true,false;int(1..)],[__4])
+SafeIndex([false,true;int(1..)],[__4])
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([true,false],__4,true)
+__minion_element_one([false,true],__4,true)
 
 --
 
@@ -140,19 +140,19 @@ DivEq(x#packed_1, 4, __5)
 
 --
 
-toInt(__minion_element_one([true,false],__4,true))
+toInt(__minion_element_one([false,true],__4,true))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__6)
 new variables:
   findAux __6: bool
 new constraints:
-  __6 =aux __minion_element_one([true,false],__4,true)
+  __6 =aux __minion_element_one([false,true],__4,true)
 
 --
 
-__6 =aux __minion_element_one([true,false],__4,true)
+__6 =aux __minion_element_one([false,true],__4,true)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(__minion_element_one([true,false],__4,true), __6)
+Reify(__minion_element_one([false,true],__4,true), __6)
 
 --
 
@@ -177,5 +177,5 @@ and([SumLeq([1, __3], __2),SumGeq([1, __3], __2);int(1..)]),
 ModEq(x#packed_1, 4, __3),
 and([SumLeq([1, __5], __4),SumGeq([1, __5], __4);int(1..)]),
 DivEq(x#packed_1, 4, __5),
-Reify(__minion_element_one([true,false],__4,true), __6)
+Reify(__minion_element_one([false,true],__4,true), __6)
 

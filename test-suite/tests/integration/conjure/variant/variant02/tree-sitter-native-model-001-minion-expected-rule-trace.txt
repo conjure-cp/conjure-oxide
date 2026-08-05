@@ -38,7 +38,7 @@ x
 
 x[a] = true
    ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
-or([and([x#packed_1 = 0,true = true;int(1..)]),and([x#packed_1 = 1,true = false;int(1..)]);int(1..)])
+or([and([x#packed_1 = 0,true = false;int(1..)]),and([x#packed_1 = 1,true = true;int(1..)]);int(1..)])
 
 --
 
@@ -60,9 +60,9 @@ and([x#packed_1 >= 2,x#packed_1 < 4;int(1..)])
 
 --
 
-or([and([x#packed_1 = 0;int(1..)]);int(1..)])
+or([and([x#packed_1 = 1;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-and([x#packed_1 = 0;int(1..)])
+and([x#packed_1 = 1;int(1..)])
 
 --
 
@@ -72,9 +72,9 @@ and([x#packed_1 = 2;int(1..)])
 
 --
 
-and([x#packed_1 = 0;int(1..)])
+and([x#packed_1 = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
-x#packed_1 = 0
+x#packed_1 = 1
 
 --
 
@@ -96,9 +96,9 @@ x#packed_1 <= sum([4,-1;int(1..)])
 
 --
 
-x#packed_1 = 0
+x#packed_1 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#packed_1,0)
+WatchedLiteral(x#packed_1,1)
 
 --
 
@@ -108,9 +108,9 @@ WatchedLiteral(x#packed_1,2)
 
 --
 
-(and([x#packed_1 >= 0,x#packed_1 <= 1;int(1..)])) -> (WatchedLiteral(x#packed_1,0))
+(and([x#packed_1 >= 0,x#packed_1 <= 1;int(1..)])) -> (WatchedLiteral(x#packed_1,1))
    ~~> flatten_imply ([("Minion", 4200)])
-(__0) -> (WatchedLiteral(x#packed_1,0))
+(__0) -> (WatchedLiteral(x#packed_1,1))
 new variables:
   findAux __0: bool
 new constraints:
@@ -118,9 +118,9 @@ new constraints:
 
 --
 
-(__0) -> (WatchedLiteral(x#packed_1,0))
+(__0) -> (WatchedLiteral(x#packed_1,1))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#packed_1,0), __0)
+ReifyImply(WatchedLiteral(x#packed_1,1), __0)
 
 --
 
@@ -186,7 +186,7 @@ findAux __1: bool
 
 such that
 
-ReifyImply(WatchedLiteral(x#packed_1,0), __0),
+ReifyImply(WatchedLiteral(x#packed_1,1), __0),
 ReifyImply(WatchedLiteral(x#packed_1,2), __1),
 Reify(and([Ineq(0, x#packed_1, 0),Ineq(x#packed_1, 1, 0);int(1..)]), __0),
 Reify(and([Ineq(2, x#packed_1, 0),Ineq(x#packed_1, 3, 0);int(1..)]), __1)
