@@ -1,7 +1,7 @@
 use crate::shared::representation_prelude::*;
 use crate::types::product::{canonical_product_literal, symmetry_values};
 use conjure_cp::ast::{GroundDomain, JectivityAttr, Moo, Range, Reference};
-use conjure_cp::{domain_int, essence_expr, into_matrix_expr, range};
+use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 register_representation!(
     SequencePacked("packed")
@@ -19,7 +19,9 @@ register_representation!(
         /// Number of values for each digit.
         pub radices: Vec<i32>,
         /// Number of sequence values represented by `packed`.
-        pub total_size: i32
+        pub total_size: i32,
+        /// Jectivity to enforce structurally.
+        pub jectivity: JectivityAttr
     }
     impl State<DeclarationPtr> {
         pub fn packed_expr(&self) -> Expression {
@@ -97,11 +99,6 @@ register_representation!(
         let Some(GroundDomain::Sequence(attr, inner_dom)) = dom.as_ground() else {
             return Err(domain_err("expected a ground sequence domain"));
         };
-        if attr.jectivity != JectivityAttr::None {
-            return Err(domain_err(
-                "packed representation currently only supports non-jective sequences",
-            ));
-        }
         let size_bounds @ (min, max) = size_bounds(&attr.size)
             .ok_or_else(|| domain_err("packed representation requires a bounded maximum size"))?;
         if max == 0 {
@@ -141,10 +138,88 @@ register_representation!(
             places,
             radices,
             total_size,
+            jectivity: attr.jectivity.clone(),
         })
     }
-    fn structural(_state: &State<DeclarationPtr>) -> Vec<Expression> {
-        vec![]
+    fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
+        let (_min, max) = state.size_bounds;
+        let length = state.length_expr();
+        let mut constraints = Vec::new();
+
+        let injective = matches!(
+            state.jectivity,
+            JectivityAttr::Injective | JectivityAttr::Bijective
+        );
+        let surjective = matches!(
+            state.jectivity,
+            JectivityAttr::Surjective | JectivityAttr::Bijective
+        );
+
+        if injective {
+            if !state.has_length_digit {
+                // Fixed length: every position is always active, so a plain allDiff over the
+                // decoded positions is exact.
+                let slots: Vec<Expression> = (1..=max).map(|i| state.slot_expr(i)).collect();
+                constraints.push(Expression::AllDiff(
+                    Metadata::new(),
+                    Moo::new(into_matrix_expr![slots]),
+                ));
+            } else {
+                // Variable length: guard pairwise by position activity, matching the same
+                // reasoning as the Explicit representation (value-based exemption would wrongly
+                // allow two active positions that happen to decode to the same digit-0 value).
+                for i in 1..=max {
+                    for j in (i + 1)..=max {
+                        let i_inactive = Expression::Gt(
+                            Metadata::new(),
+                            Moo::new(i.into()),
+                            Moo::new(length.clone()),
+                        );
+                        let j_inactive = Expression::Gt(
+                            Metadata::new(),
+                            Moo::new(j.into()),
+                            Moo::new(length.clone()),
+                        );
+                        let neq = Expression::Neq(
+                            Metadata::new(),
+                            Moo::new(state.slot_expr(i)),
+                            Moo::new(state.slot_expr(j)),
+                        );
+                        constraints.push(Expression::Or(
+                            Metadata::new(),
+                            Moo::new(matrix_expr![i_inactive, j_inactive, neq]),
+                        ));
+                    }
+                }
+            }
+        }
+
+        if surjective {
+            for value in state.values.iter() {
+                let value_expr: Expression = value.clone().into();
+                let hits: Vec<Expression> = (1..=max)
+                    .map(|i| {
+                        let active = Expression::Leq(
+                            Metadata::new(),
+                            Moo::new(i.into()),
+                            Moo::new(length.clone()),
+                        );
+                        let matches_value = Expression::Eq(
+                            Metadata::new(),
+                            Moo::new(state.slot_expr(i)),
+                            Moo::new(value_expr.clone()),
+                        );
+                        Expression::And(
+                            Metadata::new(),
+                            Moo::new(matrix_expr![active, matches_value]),
+                        )
+                    })
+                    .collect();
+                constraints.push(Expression::Or(Metadata::new(), Moo::new(into_matrix_expr![hits])));
+            }
+        }
+
+        constraints
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
         let Literal::AbstractLiteral(AbstractLiteral::Sequence(mut elems)) = value else {
@@ -180,6 +255,7 @@ register_representation!(
             places: state.places.clone(),
             radices: state.radices.clone(),
             total_size: state.total_size,
+            jectivity: state.jectivity.clone(),
         })
     }
     fn up(state: State<Literal>) -> Literal {

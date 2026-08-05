@@ -8,8 +8,8 @@ use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, Literal, MSetAttr, Moo,
-    Name, Range, Reference, SequenceAttr, SetAttr,
+    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, IntVal, JectivityAttr, Literal,
+    MSetAttr, Moo, Name, Range, Reference, SequenceAttr, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -468,26 +468,35 @@ fn parse_sequence_domain(
     let mut size = Range::Unbounded;
     let mut min_size = None;
     let mut max_size = None;
+    let mut jectivity = JectivityAttr::None;
     let mut value_domain: Option<DomainPtr> = None;
 
     for child in named_children(&sequence_domain) {
         match child.kind() {
             "sequence_attributes" => {
                 for attribute in named_children(&child) {
-                    let Some(value_node) = attribute.child_by_field_name("value") else {
-                        return Ok(None);
-                    };
-                    let Some(value) = parse_int(ctx, &value_node) else {
-                        return Ok(None);
-                    };
                     let name = attribute
                         .child_by_field_name("attribute")
                         .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
                         .unwrap_or_default();
                     match name {
-                        "size" => size = Range::Single(value),
-                        "minSize" => min_size = Some(value),
-                        "maxSize" => max_size = Some(value),
+                        "size" | "minSize" | "maxSize" => {
+                            let Some(value_node) = attribute.child_by_field_name("value") else {
+                                return Ok(None);
+                            };
+                            let Some(value) = parse_int(ctx, &value_node) else {
+                                return Ok(None);
+                            };
+                            match name {
+                                "size" => size = Range::Single(value),
+                                "minSize" => min_size = Some(value),
+                                "maxSize" => max_size = Some(value),
+                                _ => unreachable!(),
+                            }
+                        }
+                        "injective" => jectivity = JectivityAttr::Injective,
+                        "surjective" => jectivity = JectivityAttr::Surjective,
+                        "bijective" => jectivity = JectivityAttr::Bijective,
                         _ => return Ok(None),
                     }
                 }
@@ -524,11 +533,10 @@ fn parse_sequence_domain(
         None,
     );
 
-    // Jectivity attributes (injective/surjective/bijective) are not yet exposed via
-    // grammar syntax; only the size attribute is parsed here.
     let attrs = SequenceAttr {
         size,
-        ..SequenceAttr::default()
+        jectivity,
+        representation: None,
     };
     Ok(Some(Domain::sequence(attrs, value_domain)))
 }

@@ -29,6 +29,21 @@ letting B be sequence(1, 2, 3)
 }
 
 #[test]
+fn parses_sequence_domains_with_jectivity_attributes() {
+    let source = r#"
+language Essence 1.4
+find x : sequence (size 2, injective) of int(1..3)
+find y : sequence (maxSize 2, surjective) of int(1..3)
+find z : sequence (size 3, bijective) of int(1..3)
+"#;
+    let (model, _) = parse_essence(source).unwrap();
+    let printed = model.to_string();
+    assert!(printed.contains("sequence (size 2, injective) of int(1..3)"));
+    assert!(printed.contains("sequence (maxSize 2, surjective) of int(1..3)"));
+    assert!(printed.contains("sequence (size 3, bijective) of int(1..3)"));
+}
+
+#[test]
 fn parses_substring_and_subsequence_operators() {
     let source = r#"
 language Essence 1.4

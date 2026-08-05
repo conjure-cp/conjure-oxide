@@ -1,6 +1,6 @@
 use crate::shared::representation_prelude::*;
 use conjure_cp::ast::{Domain, GroundDomain, JectivityAttr, Moo, Range, Reference};
-use conjure_cp::{domain_int, essence_expr, matrix_expr, range};
+use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 register_representation!(
     SequenceExplicit("explicit")
@@ -11,8 +11,12 @@ register_representation!(
         pub values_matrix: T,
         /// Number of active values in `values_matrix`, omitted for fixed-length sequences.
         pub length: Option<T>,
-        /// Canonical value stored in every inactive position.
-        pub padding: Literal
+        /// Canonical value stored in every inactive position (the inner domain's first value).
+        pub padding: Literal,
+        /// Every value of the inner domain, used by the surjective structural constraint.
+        pub inner_values: Moo<Vec<Literal>>,
+        /// Jectivity to enforce structurally.
+        pub jectivity: JectivityAttr
     }
     impl State<DeclarationPtr> {
         /// Return the active length, using the marker when the length is variable.
@@ -41,20 +45,18 @@ register_representation!(
         let Some(GroundDomain::Sequence(attr, inner_dom)) = dom.as_ground() else {
             return Err(domain_err("expected a ground sequence domain"));
         };
-        if attr.jectivity != JectivityAttr::None {
-            return Err(domain_err(
-                "explicit representation currently only supports non-jective sequences",
-            ));
-        }
         let size_bounds @ (min, max) = size_bounds(&attr.size)
             .ok_or_else(|| domain_err("explicit representation requires a bounded maximum size"))?;
         if max == 0 {
             return Err(domain_err("explicit representation does not support an always-empty sequence"));
         }
-        let padding = inner_dom
+        let inner_values: Vec<Literal> = inner_dom
             .values()
             .map_err(|e| domain_err(&format!("could not enumerate sequence inner domain: {e}")))?
-            .next()
+            .collect();
+        let padding = inner_values
+            .first()
+            .cloned()
             .ok_or_else(|| domain_err("sequence inner domain is empty"))?;
         let length = (min != max).then(|| domain_int!(min..max));
         let values_matrix = Domain::matrix(inner_dom.clone().into(), vec![domain_int!(1..max)]);
@@ -63,6 +65,8 @@ register_representation!(
             values_matrix,
             length,
             padding,
+            inner_values: Moo::new(inner_values),
+            jectivity: attr.jectivity.clone(),
         })
     }
     fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
@@ -70,7 +74,7 @@ register_representation!(
         let length = state.length_expr();
         // Inactive positions (beyond the active length) hold one canonical value, so that
         // reconstruction and equality do not need to reason about "don't care" padding.
-        (1..=max)
+        let mut constraints: Vec<Expression> = (1..=max)
             .map(|i| {
                 let elem = state.slot_expr(i);
                 Expression::Or(
@@ -85,7 +89,81 @@ register_representation!(
                     ]),
                 )
             })
-            .collect()
+            .collect();
+
+        let injective = matches!(
+            state.jectivity,
+            JectivityAttr::Injective | JectivityAttr::Bijective
+        );
+        let surjective = matches!(
+            state.jectivity,
+            JectivityAttr::Surjective | JectivityAttr::Bijective
+        );
+
+        if injective {
+            if state.length.is_none() {
+                // Fixed length: every position is always active, so a plain allDiff over the
+                // whole matrix is exact (there is no padding to exclude).
+                let matrix_ref = Reference::new(state.values_matrix.clone()).into();
+                constraints.push(Expression::AllDiff(Metadata::new(), Moo::new(matrix_ref)));
+            } else {
+                // Variable length: padding duplicates the inner domain's first value, so a
+                // value-based allDifferentExcept would wrongly exempt two genuinely active
+                // positions that happen to share that value. Guard pairwise by position
+                // activity instead, matching Conjure's own non-integer-domain fallback.
+                for i in 1..=max {
+                    for j in (i + 1)..=max {
+                        let i_inactive = Expression::Gt(
+                            Metadata::new(),
+                            Moo::new(i.into()),
+                            Moo::new(length.clone()),
+                        );
+                        let j_inactive = Expression::Gt(
+                            Metadata::new(),
+                            Moo::new(j.into()),
+                            Moo::new(length.clone()),
+                        );
+                        let neq = Expression::Neq(
+                            Metadata::new(),
+                            Moo::new(state.slot_expr(i)),
+                            Moo::new(state.slot_expr(j)),
+                        );
+                        constraints.push(Expression::Or(
+                            Metadata::new(),
+                            Moo::new(matrix_expr![i_inactive, j_inactive, neq]),
+                        ));
+                    }
+                }
+            }
+        }
+
+        if surjective {
+            // Total inverse lookup: every inner-domain value must be hit by some active position.
+            for value in state.inner_values.iter() {
+                let value_expr: Expression = value.clone().into();
+                let hits: Vec<Expression> = (1..=max)
+                    .map(|i| {
+                        let active = Expression::Leq(
+                            Metadata::new(),
+                            Moo::new(i.into()),
+                            Moo::new(length.clone()),
+                        );
+                        let matches_value = Expression::Eq(
+                            Metadata::new(),
+                            Moo::new(state.slot_expr(i)),
+                            Moo::new(value_expr.clone()),
+                        );
+                        Expression::And(
+                            Metadata::new(),
+                            Moo::new(matrix_expr![active, matches_value]),
+                        )
+                    })
+                    .collect();
+                constraints.push(Expression::Or(Metadata::new(), Moo::new(into_matrix_expr![hits])));
+            }
+        }
+
+        constraints
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
         let Literal::AbstractLiteral(AbstractLiteral::Sequence(mut elems)) = value else {
@@ -107,6 +185,8 @@ register_representation!(
             length: (min != max).then(|| Literal::from(elems_sz)),
             values_matrix: Literal::from(into_matrix!(elems)),
             padding: state.padding.clone(),
+            inner_values: state.inner_values.clone(),
+            jectivity: state.jectivity.clone(),
         })
     }
     fn up(state: State<Literal>) -> Literal {

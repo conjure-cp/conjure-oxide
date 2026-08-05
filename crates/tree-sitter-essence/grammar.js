@@ -229,7 +229,10 @@ module.exports = grammar ({
     sequence_attribute: $ => choice(
       seq(field("attribute", "size"), field("value", $.integer)),
       seq(field("attribute", "minSize"), field("value", $.integer)),
-      seq(field("attribute", "maxSize"), field("value", $.integer))
+      seq(field("attribute", "maxSize"), field("value", $.integer)),
+      field("attribute", "injective"),
+      field("attribute", "surjective"),
+      field("attribute", "bijective")
     ),
 
     set_literal: $ => seq(
