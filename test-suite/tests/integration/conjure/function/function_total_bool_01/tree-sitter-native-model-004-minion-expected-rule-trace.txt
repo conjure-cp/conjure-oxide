@@ -1,0 +1,34 @@
+Model before rewriting:
+
+find x: function (total) bool --> int(13, 17) 
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#explicit_1: matrix indexed by [bool] of int(13, 17)
+
+--
+
+true
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true
+new variables:
+  find x#explicit_1#components_1: int(13, 17)
+  find x#explicit_1#components_2: int(13, 17)
+
+--
+
+Final model:
+
+find x: function (total) bool --> int(13, 17) 
+find x#explicit_1: matrix indexed by [bool] of int(13, 17)
+find x#explicit_1#components_1: int(13, 17)
+find x#explicit_1#components_2: int(13, 17)
+
+such that
+
+true
+
