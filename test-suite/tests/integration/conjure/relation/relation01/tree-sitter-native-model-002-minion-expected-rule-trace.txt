@@ -1,0 +1,53 @@
+Model before rewriting:
+
+find r: relation  of (int(2..3) * bool)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find r#as_set_1: set of tuple (int(2..3), bool)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find r#as_set_1#occurrence_1: bool
+  find r#as_set_1#occurrence_2: bool
+  find r#as_set_1#occurrence_3: bool
+  find r#as_set_1#occurrence_4: bool
+new constraints:
+  and([sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) >= 0,sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) <= 4;int(1..)])
+
+--
+
+sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4], 0)
+
+--
+
+sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4);int(1..)]) <= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4], 4)
+
+--
+
+Final model:
+
+find r: relation  of (int(2..3) * bool)
+find r#as_set_1: set{occurrence} of tuple (int(2..3), bool)
+find r#as_set_1#occurrence_1: bool
+find r#as_set_1#occurrence_2: bool
+find r#as_set_1#occurrence_3: bool
+find r#as_set_1#occurrence_4: bool
+
+such that
+
+true,
+and([SumGeq([r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4], 0),SumLeq([r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4], 4);int(1..)])
+

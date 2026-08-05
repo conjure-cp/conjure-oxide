@@ -1,0 +1,105 @@
+Model before rewriting:
+
+find r: relation  of (int(1..3) * bool)
+letting p be relation((1,true),(3,false))
+
+such that
+
+p = r
+
+--
+
+r
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r
+new variables:
+  find r#as_set_1: set of tuple (int(1..3), bool)
+
+--
+
+relation((1,true),(3,false)) = r
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+relation((1,true),(3,false)) = r
+new variables:
+  find r#as_set_1#occurrence_1: bool
+  find r#as_set_1#occurrence_2: bool
+  find r#as_set_1#occurrence_3: bool
+  find r#as_set_1#occurrence_4: bool
+  find r#as_set_1#occurrence_5: bool
+  find r#as_set_1#occurrence_6: bool
+new constraints:
+  and([sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4),toInt(r#as_set_1#occurrence_5),toInt(r#as_set_1#occurrence_6);int(1..)]) >= 0,sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4),toInt(r#as_set_1#occurrence_5),toInt(r#as_set_1#occurrence_6);int(1..)]) <= 6;int(1..)])
+
+--
+
+relation((1,true),(3,false)) = r
+   ~~> eq_relation_as_set_literal ([("Base", 8650)])
+r#as_set_1 = {(1,true),(3,false)}
+
+--
+
+r#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#as_set_1
+
+--
+
+r#as_set_1 = {(1,true),(3,false)}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([r#as_set_1#occurrence_1 = false,r#as_set_1#occurrence_2 = true,r#as_set_1#occurrence_3 = false,r#as_set_1#occurrence_4 = false,r#as_set_1#occurrence_5 = true,r#as_set_1#occurrence_6 = false;int(1..)])
+
+--
+
+sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4),toInt(r#as_set_1#occurrence_5),toInt(r#as_set_1#occurrence_6);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4, r#as_set_1#occurrence_5, r#as_set_1#occurrence_6], 0)
+
+--
+
+sum([toInt(r#as_set_1#occurrence_1),toInt(r#as_set_1#occurrence_2),toInt(r#as_set_1#occurrence_3),toInt(r#as_set_1#occurrence_4),toInt(r#as_set_1#occurrence_5),toInt(r#as_set_1#occurrence_6);int(1..)]) <= 6
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4, r#as_set_1#occurrence_5, r#as_set_1#occurrence_6], 6)
+
+--
+
+r#as_set_1#occurrence_1 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(r#as_set_1#occurrence_1,false)
+
+--
+
+r#as_set_1#occurrence_3 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(r#as_set_1#occurrence_3,false)
+
+--
+
+r#as_set_1#occurrence_4 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(r#as_set_1#occurrence_4,false)
+
+--
+
+r#as_set_1#occurrence_6 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(r#as_set_1#occurrence_6,false)
+
+--
+
+Final model:
+
+find r: relation  of (int(1..3) * bool)
+letting p be relation((1,true),(3,false))
+find r#as_set_1: set{occurrence} of tuple (int(1..3), bool)
+find r#as_set_1#occurrence_1: bool
+find r#as_set_1#occurrence_2: bool
+find r#as_set_1#occurrence_3: bool
+find r#as_set_1#occurrence_4: bool
+find r#as_set_1#occurrence_5: bool
+find r#as_set_1#occurrence_6: bool
+
+such that
+
+and([WatchedLiteral(r#as_set_1#occurrence_1,false),r#as_set_1#occurrence_2,WatchedLiteral(r#as_set_1#occurrence_3,false),WatchedLiteral(r#as_set_1#occurrence_4,false),r#as_set_1#occurrence_5,WatchedLiteral(r#as_set_1#occurrence_6,false);int(1..)]),
+and([SumGeq([r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4, r#as_set_1#occurrence_5, r#as_set_1#occurrence_6], 0),SumLeq([r#as_set_1#occurrence_1, r#as_set_1#occurrence_2, r#as_set_1#occurrence_3, r#as_set_1#occurrence_4, r#as_set_1#occurrence_5, r#as_set_1#occurrence_6], 6);int(1..)])
+

@@ -1,0 +1,1119 @@
+Model before rewriting:
+
+find r: relation  of (int(1..3) * int(2..3) * int(4..10))
+
+such that
+
+and([ product([i[1],i[2];int(1..)]) = i[3] | i <- r ])
+
+--
+
+and([ product([i[1],i[2];int(1..)]) = i[3] | i <- r ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ product([i[1],i[2];int(1..)]) = i[3] | i <- r ])
+new variables:
+  find r#occurrence_1: matrix indexed by [int(1..3), int(2..3), int(4..10)] of bool
+new constraints:
+  and([sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) >= 0,sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) <= 42;int(1..)])
+
+--
+
+[ product([i[1],i[2];int(1..)]) = i[3] | i <- r ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]
+
+--
+
+and([ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]),
+and([sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) >= 0,sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) <= 42;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]),
+and([sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) >= 0,sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) <= 42;int(1..)])
+new variables:
+  find r#occurrence_1#components_1: bool
+  find r#occurrence_1#components_10: bool
+  find r#occurrence_1#components_11: bool
+  find r#occurrence_1#components_12: bool
+  find r#occurrence_1#components_13: bool
+  find r#occurrence_1#components_14: bool
+  find r#occurrence_1#components_15: bool
+  find r#occurrence_1#components_16: bool
+  find r#occurrence_1#components_17: bool
+  find r#occurrence_1#components_18: bool
+  find r#occurrence_1#components_19: bool
+  find r#occurrence_1#components_2: bool
+  find r#occurrence_1#components_20: bool
+  find r#occurrence_1#components_21: bool
+  find r#occurrence_1#components_22: bool
+  find r#occurrence_1#components_23: bool
+  find r#occurrence_1#components_24: bool
+  find r#occurrence_1#components_25: bool
+  find r#occurrence_1#components_26: bool
+  find r#occurrence_1#components_27: bool
+  find r#occurrence_1#components_28: bool
+  find r#occurrence_1#components_29: bool
+  find r#occurrence_1#components_3: bool
+  find r#occurrence_1#components_30: bool
+  find r#occurrence_1#components_31: bool
+  find r#occurrence_1#components_32: bool
+  find r#occurrence_1#components_33: bool
+  find r#occurrence_1#components_34: bool
+  find r#occurrence_1#components_35: bool
+  find r#occurrence_1#components_36: bool
+  find r#occurrence_1#components_37: bool
+  find r#occurrence_1#components_38: bool
+  find r#occurrence_1#components_39: bool
+  find r#occurrence_1#components_4: bool
+  find r#occurrence_1#components_40: bool
+  find r#occurrence_1#components_41: bool
+  find r#occurrence_1#components_42: bool
+  find r#occurrence_1#components_5: bool
+  find r#occurrence_1#components_6: bool
+  find r#occurrence_1#components_7: bool
+  find r#occurrence_1#components_8: bool
+  find r#occurrence_1#components_9: bool
+
+--
+
+[ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[!(SafeIndex(r#occurrence_1,[1, 2, 4])),!(SafeIndex(r#occurrence_1,[1, 2, 5])),!(SafeIndex(r#occurrence_1,[1, 2, 6])),!(SafeIndex(r#occurrence_1,[1, 2, 7])),!(SafeIndex(r#occurrence_1,[1, 2, 8])),!(SafeIndex(r#occurrence_1,[1, 2, 9])),!(SafeIndex(r#occurrence_1,[1, 2, 10])),!(SafeIndex(r#occurrence_1,[1, 3, 4])),!(SafeIndex(r#occurrence_1,[1, 3, 5])),!(SafeIndex(r#occurrence_1,[1, 3, 6])),!(SafeIndex(r#occurrence_1,[1, 3, 7])),!(SafeIndex(r#occurrence_1,[1, 3, 8])),!(SafeIndex(r#occurrence_1,[1, 3, 9])),!(SafeIndex(r#occurrence_1,[1, 3, 10])),!(SafeIndex(r#occurrence_1,[2, 2, 5])),!(SafeIndex(r#occurrence_1,[2, 2, 6])),!(SafeIndex(r#occurrence_1,[2, 2, 7])),!(SafeIndex(r#occurrence_1,[2, 2, 8])),!(SafeIndex(r#occurrence_1,[2, 2, 9])),!(SafeIndex(r#occurrence_1,[2, 2, 10])),!(SafeIndex(r#occurrence_1,[2, 3, 4])),!(SafeIndex(r#occurrence_1,[2, 3, 5])),!(SafeIndex(r#occurrence_1,[2, 3, 7])),!(SafeIndex(r#occurrence_1,[2, 3, 8])),!(SafeIndex(r#occurrence_1,[2, 3, 9])),!(SafeIndex(r#occurrence_1,[2, 3, 10])),!(SafeIndex(r#occurrence_1,[3, 2, 4])),!(SafeIndex(r#occurrence_1,[3, 2, 5])),!(SafeIndex(r#occurrence_1,[3, 2, 7])),!(SafeIndex(r#occurrence_1,[3, 2, 8])),!(SafeIndex(r#occurrence_1,[3, 2, 9])),!(SafeIndex(r#occurrence_1,[3, 2, 10])),!(SafeIndex(r#occurrence_1,[3, 3, 4])),!(SafeIndex(r#occurrence_1,[3, 3, 5])),!(SafeIndex(r#occurrence_1,[3, 3, 6])),!(SafeIndex(r#occurrence_1,[3, 3, 7])),!(SafeIndex(r#occurrence_1,[3, 3, 8])),!(SafeIndex(r#occurrence_1,[3, 3, 10]));int(1..)]
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_1
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_2
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_3
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_4
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_5
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_6
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_7
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_8
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_9
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_10
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_11
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_12
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_13
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_14
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_16
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_17
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_18
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_19
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_20
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_21
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_22
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_23
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_25
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_26
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_27
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_28
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_29
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_30
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_32
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_33
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_34
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_35
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_36
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_37
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_38
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_39
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_40
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_42
+
+--
+
+!(r#occurrence_1#components_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_1,false)
+
+--
+
+!(r#occurrence_1#components_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_2,false)
+
+--
+
+!(r#occurrence_1#components_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_3,false)
+
+--
+
+!(r#occurrence_1#components_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_4,false)
+
+--
+
+!(r#occurrence_1#components_5)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_5,false)
+
+--
+
+!(r#occurrence_1#components_6)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_6,false)
+
+--
+
+!(r#occurrence_1#components_7)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_7,false)
+
+--
+
+!(r#occurrence_1#components_8)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_8,false)
+
+--
+
+!(r#occurrence_1#components_9)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_9,false)
+
+--
+
+!(r#occurrence_1#components_10)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_10,false)
+
+--
+
+!(r#occurrence_1#components_11)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_11,false)
+
+--
+
+!(r#occurrence_1#components_12)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_12,false)
+
+--
+
+!(r#occurrence_1#components_13)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_13,false)
+
+--
+
+!(r#occurrence_1#components_14)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_14,false)
+
+--
+
+!(r#occurrence_1#components_16)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_16,false)
+
+--
+
+!(r#occurrence_1#components_17)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_17,false)
+
+--
+
+!(r#occurrence_1#components_18)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_18,false)
+
+--
+
+!(r#occurrence_1#components_19)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_19,false)
+
+--
+
+!(r#occurrence_1#components_20)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_20,false)
+
+--
+
+!(r#occurrence_1#components_21)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_21,false)
+
+--
+
+!(r#occurrence_1#components_22)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_22,false)
+
+--
+
+!(r#occurrence_1#components_23)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_23,false)
+
+--
+
+!(r#occurrence_1#components_25)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_25,false)
+
+--
+
+!(r#occurrence_1#components_26)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_26,false)
+
+--
+
+!(r#occurrence_1#components_27)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_27,false)
+
+--
+
+!(r#occurrence_1#components_28)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_28,false)
+
+--
+
+!(r#occurrence_1#components_29)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_29,false)
+
+--
+
+!(r#occurrence_1#components_30)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_30,false)
+
+--
+
+!(r#occurrence_1#components_32)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_32,false)
+
+--
+
+!(r#occurrence_1#components_33)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_33,false)
+
+--
+
+!(r#occurrence_1#components_34)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_34,false)
+
+--
+
+!(r#occurrence_1#components_35)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_35,false)
+
+--
+
+!(r#occurrence_1#components_36)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_36,false)
+
+--
+
+!(r#occurrence_1#components_37)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_37,false)
+
+--
+
+!(r#occurrence_1#components_38)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_38,false)
+
+--
+
+!(r#occurrence_1#components_39)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_39,false)
+
+--
+
+!(r#occurrence_1#components_40)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_40,false)
+
+--
+
+!(r#occurrence_1#components_42)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(r#occurrence_1#components_42,false)
+
+--
+
+[ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(SafeIndex(r#occurrence_1,[1, 2, 4])),toInt(SafeIndex(r#occurrence_1,[1, 2, 5])),toInt(SafeIndex(r#occurrence_1,[1, 2, 6])),toInt(SafeIndex(r#occurrence_1,[1, 2, 7])),toInt(SafeIndex(r#occurrence_1,[1, 2, 8])),toInt(SafeIndex(r#occurrence_1,[1, 2, 9])),toInt(SafeIndex(r#occurrence_1,[1, 2, 10])),toInt(SafeIndex(r#occurrence_1,[1, 3, 4])),toInt(SafeIndex(r#occurrence_1,[1, 3, 5])),toInt(SafeIndex(r#occurrence_1,[1, 3, 6])),toInt(SafeIndex(r#occurrence_1,[1, 3, 7])),toInt(SafeIndex(r#occurrence_1,[1, 3, 8])),toInt(SafeIndex(r#occurrence_1,[1, 3, 9])),toInt(SafeIndex(r#occurrence_1,[1, 3, 10])),toInt(SafeIndex(r#occurrence_1,[2, 2, 4])),toInt(SafeIndex(r#occurrence_1,[2, 2, 5])),toInt(SafeIndex(r#occurrence_1,[2, 2, 6])),toInt(SafeIndex(r#occurrence_1,[2, 2, 7])),toInt(SafeIndex(r#occurrence_1,[2, 2, 8])),toInt(SafeIndex(r#occurrence_1,[2, 2, 9])),toInt(SafeIndex(r#occurrence_1,[2, 2, 10])),toInt(SafeIndex(r#occurrence_1,[2, 3, 4])),toInt(SafeIndex(r#occurrence_1,[2, 3, 5])),toInt(SafeIndex(r#occurrence_1,[2, 3, 6])),toInt(SafeIndex(r#occurrence_1,[2, 3, 7])),toInt(SafeIndex(r#occurrence_1,[2, 3, 8])),toInt(SafeIndex(r#occurrence_1,[2, 3, 9])),toInt(SafeIndex(r#occurrence_1,[2, 3, 10])),toInt(SafeIndex(r#occurrence_1,[3, 2, 4])),toInt(SafeIndex(r#occurrence_1,[3, 2, 5])),toInt(SafeIndex(r#occurrence_1,[3, 2, 6])),toInt(SafeIndex(r#occurrence_1,[3, 2, 7])),toInt(SafeIndex(r#occurrence_1,[3, 2, 8])),toInt(SafeIndex(r#occurrence_1,[3, 2, 9])),toInt(SafeIndex(r#occurrence_1,[3, 2, 10])),toInt(SafeIndex(r#occurrence_1,[3, 3, 4])),toInt(SafeIndex(r#occurrence_1,[3, 3, 5])),toInt(SafeIndex(r#occurrence_1,[3, 3, 6])),toInt(SafeIndex(r#occurrence_1,[3, 3, 7])),toInt(SafeIndex(r#occurrence_1,[3, 3, 8])),toInt(SafeIndex(r#occurrence_1,[3, 3, 9])),toInt(SafeIndex(r#occurrence_1,[3, 3, 10]));int(1..)]
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_1
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_2
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_3
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_4
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_5
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_6
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_7
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_8
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_9
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_10
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_11
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_12
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_13
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_14
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_15
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_16
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_17
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_18
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_19
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_20
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_21
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_22
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_23
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_24
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_25
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_26
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_27
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_28
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_29
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_30
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_31
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_32
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_33
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_34
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_35
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_36
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_37
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_38
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_39
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_40
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_41
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_42
+
+--
+
+sum([toInt(r#occurrence_1#components_1),toInt(r#occurrence_1#components_2),toInt(r#occurrence_1#components_3),toInt(r#occurrence_1#components_4),toInt(r#occurrence_1#components_5),toInt(r#occurrence_1#components_6),toInt(r#occurrence_1#components_7),toInt(r#occurrence_1#components_8),toInt(r#occurrence_1#components_9),toInt(r#occurrence_1#components_10),toInt(r#occurrence_1#components_11),toInt(r#occurrence_1#components_12),toInt(r#occurrence_1#components_13),toInt(r#occurrence_1#components_14),toInt(r#occurrence_1#components_15),toInt(r#occurrence_1#components_16),toInt(r#occurrence_1#components_17),toInt(r#occurrence_1#components_18),toInt(r#occurrence_1#components_19),toInt(r#occurrence_1#components_20),toInt(r#occurrence_1#components_21),toInt(r#occurrence_1#components_22),toInt(r#occurrence_1#components_23),toInt(r#occurrence_1#components_24),toInt(r#occurrence_1#components_25),toInt(r#occurrence_1#components_26),toInt(r#occurrence_1#components_27),toInt(r#occurrence_1#components_28),toInt(r#occurrence_1#components_29),toInt(r#occurrence_1#components_30),toInt(r#occurrence_1#components_31),toInt(r#occurrence_1#components_32),toInt(r#occurrence_1#components_33),toInt(r#occurrence_1#components_34),toInt(r#occurrence_1#components_35),toInt(r#occurrence_1#components_36),toInt(r#occurrence_1#components_37),toInt(r#occurrence_1#components_38),toInt(r#occurrence_1#components_39),toInt(r#occurrence_1#components_40),toInt(r#occurrence_1#components_41),toInt(r#occurrence_1#components_42);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([r#occurrence_1#components_1, r#occurrence_1#components_10, r#occurrence_1#components_11, r#occurrence_1#components_12, r#occurrence_1#components_13, r#occurrence_1#components_14, r#occurrence_1#components_15, r#occurrence_1#components_16, r#occurrence_1#components_17, r#occurrence_1#components_18, r#occurrence_1#components_19, r#occurrence_1#components_2, r#occurrence_1#components_20, r#occurrence_1#components_21, r#occurrence_1#components_22, r#occurrence_1#components_23, r#occurrence_1#components_24, r#occurrence_1#components_25, r#occurrence_1#components_26, r#occurrence_1#components_27, r#occurrence_1#components_28, r#occurrence_1#components_29, r#occurrence_1#components_3, r#occurrence_1#components_30, r#occurrence_1#components_31, r#occurrence_1#components_32, r#occurrence_1#components_33, r#occurrence_1#components_34, r#occurrence_1#components_35, r#occurrence_1#components_36, r#occurrence_1#components_37, r#occurrence_1#components_38, r#occurrence_1#components_39, r#occurrence_1#components_4, r#occurrence_1#components_40, r#occurrence_1#components_41, r#occurrence_1#components_42, r#occurrence_1#components_5, r#occurrence_1#components_6, r#occurrence_1#components_7, r#occurrence_1#components_8, r#occurrence_1#components_9], 0)
+
+--
+
+[ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(SafeIndex(r#occurrence_1,[1, 2, 4])),toInt(SafeIndex(r#occurrence_1,[1, 2, 5])),toInt(SafeIndex(r#occurrence_1,[1, 2, 6])),toInt(SafeIndex(r#occurrence_1,[1, 2, 7])),toInt(SafeIndex(r#occurrence_1,[1, 2, 8])),toInt(SafeIndex(r#occurrence_1,[1, 2, 9])),toInt(SafeIndex(r#occurrence_1,[1, 2, 10])),toInt(SafeIndex(r#occurrence_1,[1, 3, 4])),toInt(SafeIndex(r#occurrence_1,[1, 3, 5])),toInt(SafeIndex(r#occurrence_1,[1, 3, 6])),toInt(SafeIndex(r#occurrence_1,[1, 3, 7])),toInt(SafeIndex(r#occurrence_1,[1, 3, 8])),toInt(SafeIndex(r#occurrence_1,[1, 3, 9])),toInt(SafeIndex(r#occurrence_1,[1, 3, 10])),toInt(SafeIndex(r#occurrence_1,[2, 2, 4])),toInt(SafeIndex(r#occurrence_1,[2, 2, 5])),toInt(SafeIndex(r#occurrence_1,[2, 2, 6])),toInt(SafeIndex(r#occurrence_1,[2, 2, 7])),toInt(SafeIndex(r#occurrence_1,[2, 2, 8])),toInt(SafeIndex(r#occurrence_1,[2, 2, 9])),toInt(SafeIndex(r#occurrence_1,[2, 2, 10])),toInt(SafeIndex(r#occurrence_1,[2, 3, 4])),toInt(SafeIndex(r#occurrence_1,[2, 3, 5])),toInt(SafeIndex(r#occurrence_1,[2, 3, 6])),toInt(SafeIndex(r#occurrence_1,[2, 3, 7])),toInt(SafeIndex(r#occurrence_1,[2, 3, 8])),toInt(SafeIndex(r#occurrence_1,[2, 3, 9])),toInt(SafeIndex(r#occurrence_1,[2, 3, 10])),toInt(SafeIndex(r#occurrence_1,[3, 2, 4])),toInt(SafeIndex(r#occurrence_1,[3, 2, 5])),toInt(SafeIndex(r#occurrence_1,[3, 2, 6])),toInt(SafeIndex(r#occurrence_1,[3, 2, 7])),toInt(SafeIndex(r#occurrence_1,[3, 2, 8])),toInt(SafeIndex(r#occurrence_1,[3, 2, 9])),toInt(SafeIndex(r#occurrence_1,[3, 2, 10])),toInt(SafeIndex(r#occurrence_1,[3, 3, 4])),toInt(SafeIndex(r#occurrence_1,[3, 3, 5])),toInt(SafeIndex(r#occurrence_1,[3, 3, 6])),toInt(SafeIndex(r#occurrence_1,[3, 3, 7])),toInt(SafeIndex(r#occurrence_1,[3, 3, 8])),toInt(SafeIndex(r#occurrence_1,[3, 3, 9])),toInt(SafeIndex(r#occurrence_1,[3, 3, 10]));int(1..)]
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_1
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_2
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_3
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_4
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_5
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_6
+
+--
+
+SafeIndex(r#occurrence_1,[1, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_7
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_8
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_9
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_10
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_11
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_12
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_13
+
+--
+
+SafeIndex(r#occurrence_1,[1, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_14
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_15
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_16
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_17
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_18
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_19
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_20
+
+--
+
+SafeIndex(r#occurrence_1,[2, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_21
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_22
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_23
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_24
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_25
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_26
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_27
+
+--
+
+SafeIndex(r#occurrence_1,[2, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_28
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_29
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_30
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_31
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_32
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_33
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_34
+
+--
+
+SafeIndex(r#occurrence_1,[3, 2, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_35
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_36
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_37
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_38
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_39
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 8])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_40
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 9])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_41
+
+--
+
+SafeIndex(r#occurrence_1,[3, 3, 10])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#occurrence_1#components_42
+
+--
+
+sum([toInt(r#occurrence_1#components_1),toInt(r#occurrence_1#components_2),toInt(r#occurrence_1#components_3),toInt(r#occurrence_1#components_4),toInt(r#occurrence_1#components_5),toInt(r#occurrence_1#components_6),toInt(r#occurrence_1#components_7),toInt(r#occurrence_1#components_8),toInt(r#occurrence_1#components_9),toInt(r#occurrence_1#components_10),toInt(r#occurrence_1#components_11),toInt(r#occurrence_1#components_12),toInt(r#occurrence_1#components_13),toInt(r#occurrence_1#components_14),toInt(r#occurrence_1#components_15),toInt(r#occurrence_1#components_16),toInt(r#occurrence_1#components_17),toInt(r#occurrence_1#components_18),toInt(r#occurrence_1#components_19),toInt(r#occurrence_1#components_20),toInt(r#occurrence_1#components_21),toInt(r#occurrence_1#components_22),toInt(r#occurrence_1#components_23),toInt(r#occurrence_1#components_24),toInt(r#occurrence_1#components_25),toInt(r#occurrence_1#components_26),toInt(r#occurrence_1#components_27),toInt(r#occurrence_1#components_28),toInt(r#occurrence_1#components_29),toInt(r#occurrence_1#components_30),toInt(r#occurrence_1#components_31),toInt(r#occurrence_1#components_32),toInt(r#occurrence_1#components_33),toInt(r#occurrence_1#components_34),toInt(r#occurrence_1#components_35),toInt(r#occurrence_1#components_36),toInt(r#occurrence_1#components_37),toInt(r#occurrence_1#components_38),toInt(r#occurrence_1#components_39),toInt(r#occurrence_1#components_40),toInt(r#occurrence_1#components_41),toInt(r#occurrence_1#components_42);int(1..)]) <= 42
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([r#occurrence_1#components_1, r#occurrence_1#components_10, r#occurrence_1#components_11, r#occurrence_1#components_12, r#occurrence_1#components_13, r#occurrence_1#components_14, r#occurrence_1#components_15, r#occurrence_1#components_16, r#occurrence_1#components_17, r#occurrence_1#components_18, r#occurrence_1#components_19, r#occurrence_1#components_2, r#occurrence_1#components_20, r#occurrence_1#components_21, r#occurrence_1#components_22, r#occurrence_1#components_23, r#occurrence_1#components_24, r#occurrence_1#components_25, r#occurrence_1#components_26, r#occurrence_1#components_27, r#occurrence_1#components_28, r#occurrence_1#components_29, r#occurrence_1#components_3, r#occurrence_1#components_30, r#occurrence_1#components_31, r#occurrence_1#components_32, r#occurrence_1#components_33, r#occurrence_1#components_34, r#occurrence_1#components_35, r#occurrence_1#components_36, r#occurrence_1#components_37, r#occurrence_1#components_38, r#occurrence_1#components_39, r#occurrence_1#components_4, r#occurrence_1#components_40, r#occurrence_1#components_41, r#occurrence_1#components_42, r#occurrence_1#components_5, r#occurrence_1#components_6, r#occurrence_1#components_7, r#occurrence_1#components_8, r#occurrence_1#components_9], 42)
+
+--
+
+Final model:
+
+find r: relation  of (int(1..3) * int(2..3) * int(4..10))
+find r#occurrence_1: matrix indexed by [int(1..3), int(2..3), int(4..10)] of bool
+find r#occurrence_1#components_1: bool
+find r#occurrence_1#components_2: bool
+find r#occurrence_1#components_3: bool
+find r#occurrence_1#components_4: bool
+find r#occurrence_1#components_5: bool
+find r#occurrence_1#components_6: bool
+find r#occurrence_1#components_7: bool
+find r#occurrence_1#components_8: bool
+find r#occurrence_1#components_9: bool
+find r#occurrence_1#components_10: bool
+find r#occurrence_1#components_11: bool
+find r#occurrence_1#components_12: bool
+find r#occurrence_1#components_13: bool
+find r#occurrence_1#components_14: bool
+find r#occurrence_1#components_15: bool
+find r#occurrence_1#components_16: bool
+find r#occurrence_1#components_17: bool
+find r#occurrence_1#components_18: bool
+find r#occurrence_1#components_19: bool
+find r#occurrence_1#components_20: bool
+find r#occurrence_1#components_21: bool
+find r#occurrence_1#components_22: bool
+find r#occurrence_1#components_23: bool
+find r#occurrence_1#components_24: bool
+find r#occurrence_1#components_25: bool
+find r#occurrence_1#components_26: bool
+find r#occurrence_1#components_27: bool
+find r#occurrence_1#components_28: bool
+find r#occurrence_1#components_29: bool
+find r#occurrence_1#components_30: bool
+find r#occurrence_1#components_31: bool
+find r#occurrence_1#components_32: bool
+find r#occurrence_1#components_33: bool
+find r#occurrence_1#components_34: bool
+find r#occurrence_1#components_35: bool
+find r#occurrence_1#components_36: bool
+find r#occurrence_1#components_37: bool
+find r#occurrence_1#components_38: bool
+find r#occurrence_1#components_39: bool
+find r#occurrence_1#components_40: bool
+find r#occurrence_1#components_41: bool
+find r#occurrence_1#components_42: bool
+
+such that
+
+and([WatchedLiteral(r#occurrence_1#components_1,false),WatchedLiteral(r#occurrence_1#components_2,false),WatchedLiteral(r#occurrence_1#components_3,false),WatchedLiteral(r#occurrence_1#components_4,false),WatchedLiteral(r#occurrence_1#components_5,false),WatchedLiteral(r#occurrence_1#components_6,false),WatchedLiteral(r#occurrence_1#components_7,false),WatchedLiteral(r#occurrence_1#components_8,false),WatchedLiteral(r#occurrence_1#components_9,false),WatchedLiteral(r#occurrence_1#components_10,false),WatchedLiteral(r#occurrence_1#components_11,false),WatchedLiteral(r#occurrence_1#components_12,false),WatchedLiteral(r#occurrence_1#components_13,false),WatchedLiteral(r#occurrence_1#components_14,false),WatchedLiteral(r#occurrence_1#components_16,false),WatchedLiteral(r#occurrence_1#components_17,false),WatchedLiteral(r#occurrence_1#components_18,false),WatchedLiteral(r#occurrence_1#components_19,false),WatchedLiteral(r#occurrence_1#components_20,false),WatchedLiteral(r#occurrence_1#components_21,false),WatchedLiteral(r#occurrence_1#components_22,false),WatchedLiteral(r#occurrence_1#components_23,false),WatchedLiteral(r#occurrence_1#components_25,false),WatchedLiteral(r#occurrence_1#components_26,false),WatchedLiteral(r#occurrence_1#components_27,false),WatchedLiteral(r#occurrence_1#components_28,false),WatchedLiteral(r#occurrence_1#components_29,false),WatchedLiteral(r#occurrence_1#components_30,false),WatchedLiteral(r#occurrence_1#components_32,false),WatchedLiteral(r#occurrence_1#components_33,false),WatchedLiteral(r#occurrence_1#components_34,false),WatchedLiteral(r#occurrence_1#components_35,false),WatchedLiteral(r#occurrence_1#components_36,false),WatchedLiteral(r#occurrence_1#components_37,false),WatchedLiteral(r#occurrence_1#components_38,false),WatchedLiteral(r#occurrence_1#components_39,false),WatchedLiteral(r#occurrence_1#components_40,false),WatchedLiteral(r#occurrence_1#components_42,false);int(1..)]),
+and([SumGeq([r#occurrence_1#components_1, r#occurrence_1#components_10, r#occurrence_1#components_11, r#occurrence_1#components_12, r#occurrence_1#components_13, r#occurrence_1#components_14, r#occurrence_1#components_15, r#occurrence_1#components_16, r#occurrence_1#components_17, r#occurrence_1#components_18, r#occurrence_1#components_19, r#occurrence_1#components_2, r#occurrence_1#components_20, r#occurrence_1#components_21, r#occurrence_1#components_22, r#occurrence_1#components_23, r#occurrence_1#components_24, r#occurrence_1#components_25, r#occurrence_1#components_26, r#occurrence_1#components_27, r#occurrence_1#components_28, r#occurrence_1#components_29, r#occurrence_1#components_3, r#occurrence_1#components_30, r#occurrence_1#components_31, r#occurrence_1#components_32, r#occurrence_1#components_33, r#occurrence_1#components_34, r#occurrence_1#components_35, r#occurrence_1#components_36, r#occurrence_1#components_37, r#occurrence_1#components_38, r#occurrence_1#components_39, r#occurrence_1#components_4, r#occurrence_1#components_40, r#occurrence_1#components_41, r#occurrence_1#components_42, r#occurrence_1#components_5, r#occurrence_1#components_6, r#occurrence_1#components_7, r#occurrence_1#components_8, r#occurrence_1#components_9], 0),SumLeq([r#occurrence_1#components_1, r#occurrence_1#components_10, r#occurrence_1#components_11, r#occurrence_1#components_12, r#occurrence_1#components_13, r#occurrence_1#components_14, r#occurrence_1#components_15, r#occurrence_1#components_16, r#occurrence_1#components_17, r#occurrence_1#components_18, r#occurrence_1#components_19, r#occurrence_1#components_2, r#occurrence_1#components_20, r#occurrence_1#components_21, r#occurrence_1#components_22, r#occurrence_1#components_23, r#occurrence_1#components_24, r#occurrence_1#components_25, r#occurrence_1#components_26, r#occurrence_1#components_27, r#occurrence_1#components_28, r#occurrence_1#components_29, r#occurrence_1#components_3, r#occurrence_1#components_30, r#occurrence_1#components_31, r#occurrence_1#components_32, r#occurrence_1#components_33, r#occurrence_1#components_34, r#occurrence_1#components_35, r#occurrence_1#components_36, r#occurrence_1#components_37, r#occurrence_1#components_38, r#occurrence_1#components_39, r#occurrence_1#components_4, r#occurrence_1#components_40, r#occurrence_1#components_41, r#occurrence_1#components_42, r#occurrence_1#components_5, r#occurrence_1#components_6, r#occurrence_1#components_7, r#occurrence_1#components_8, r#occurrence_1#components_9], 42);int(1..)])
+

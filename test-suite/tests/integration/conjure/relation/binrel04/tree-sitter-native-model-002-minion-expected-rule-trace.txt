@@ -1,0 +1,1812 @@
+Model before rewriting:
+
+find x: relation (maxSize 3, Euclidean, serial) of (int(1..3) * int(1..3))
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#as_set_1: set (maxSize 3) of tuple (int(1..3), int(1..3))
+new constraints:
+  and([ (and([(x,y) in x#as_set_1,(x,z) in x#as_set_1;int(1..)])) -> ((y,z) in x#as_set_1) | x : int(1..3), y : int(1..3), z : int(1..3) ])
+  and([ or([ (x,y) in x#as_set_1 | y : int(1..3) ]) | x : int(1..3) ])
+
+--
+
+true,
+and([ (and([(x,y) in x#as_set_1,(x,z) in x#as_set_1;int(1..)])) -> ((y,z) in x#as_set_1) | x : int(1..3), y : int(1..3), z : int(1..3) ]),
+and([ or([ (x,y) in x#as_set_1 | y : int(1..3) ]) | x : int(1..3) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (and([(x,y) in x#as_set_1,(x,z) in x#as_set_1;int(1..)])) -> ((y,z) in x#as_set_1) | x : int(1..3), y : int(1..3), z : int(1..3) ]),
+and([ or([ (x,y) in x#as_set_1 | y : int(1..3) ]) | x : int(1..3) ])
+new variables:
+  find x#as_set_1#occurrence_1: bool
+  find x#as_set_1#occurrence_2: bool
+  find x#as_set_1#occurrence_3: bool
+  find x#as_set_1#occurrence_4: bool
+  find x#as_set_1#occurrence_5: bool
+  find x#as_set_1#occurrence_6: bool
+  find x#as_set_1#occurrence_7: bool
+  find x#as_set_1#occurrence_8: bool
+  find x#as_set_1#occurrence_9: bool
+new constraints:
+  and([sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9);int(1..)]) >= 0,sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9);int(1..)]) <= 3;int(1..)])
+
+--
+
+sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 0)
+
+--
+
+sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9);int(1..)]) <= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 3)
+
+--
+
+[ (and([(x,y) in x#as_set_1,(x,z) in x#as_set_1;int(1..)])) -> ((y,z) in x#as_set_1) | x : int(1..3), y : int(1..3), z : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(and([(1,1) in x#as_set_1,(1,1) in x#as_set_1;int(1..)])) -> ((1,1) in x#as_set_1),(and([(1,1) in x#as_set_1,(1,2) in x#as_set_1;int(1..)])) -> ((1,2) in x#as_set_1),(and([(1,1) in x#as_set_1,(1,3) in x#as_set_1;int(1..)])) -> ((1,3) in x#as_set_1),(and([(1,2) in x#as_set_1,(1,1) in x#as_set_1;int(1..)])) -> ((2,1) in x#as_set_1),(and([(1,2) in x#as_set_1,(1,2) in x#as_set_1;int(1..)])) -> ((2,2) in x#as_set_1),(and([(1,2) in x#as_set_1,(1,3) in x#as_set_1;int(1..)])) -> ((2,3) in x#as_set_1),(and([(1,3) in x#as_set_1,(1,1) in x#as_set_1;int(1..)])) -> ((3,1) in x#as_set_1),(and([(1,3) in x#as_set_1,(1,2) in x#as_set_1;int(1..)])) -> ((3,2) in x#as_set_1),(and([(1,3) in x#as_set_1,(1,3) in x#as_set_1;int(1..)])) -> ((3,3) in x#as_set_1),(and([(2,1) in x#as_set_1,(2,1) in x#as_set_1;int(1..)])) -> ((1,1) in x#as_set_1),(and([(2,1) in x#as_set_1,(2,2) in x#as_set_1;int(1..)])) -> ((1,2) in x#as_set_1),(and([(2,1) in x#as_set_1,(2,3) in x#as_set_1;int(1..)])) -> ((1,3) in x#as_set_1),(and([(2,2) in x#as_set_1,(2,1) in x#as_set_1;int(1..)])) -> ((2,1) in x#as_set_1),(and([(2,2) in x#as_set_1,(2,2) in x#as_set_1;int(1..)])) -> ((2,2) in x#as_set_1),(and([(2,2) in x#as_set_1,(2,3) in x#as_set_1;int(1..)])) -> ((2,3) in x#as_set_1),(and([(2,3) in x#as_set_1,(2,1) in x#as_set_1;int(1..)])) -> ((3,1) in x#as_set_1),(and([(2,3) in x#as_set_1,(2,2) in x#as_set_1;int(1..)])) -> ((3,2) in x#as_set_1),(and([(2,3) in x#as_set_1,(2,3) in x#as_set_1;int(1..)])) -> ((3,3) in x#as_set_1),(and([(3,1) in x#as_set_1,(3,1) in x#as_set_1;int(1..)])) -> ((1,1) in x#as_set_1),(and([(3,1) in x#as_set_1,(3,2) in x#as_set_1;int(1..)])) -> ((1,2) in x#as_set_1),(and([(3,1) in x#as_set_1,(3,3) in x#as_set_1;int(1..)])) -> ((1,3) in x#as_set_1),(and([(3,2) in x#as_set_1,(3,1) in x#as_set_1;int(1..)])) -> ((2,1) in x#as_set_1),(and([(3,2) in x#as_set_1,(3,2) in x#as_set_1;int(1..)])) -> ((2,2) in x#as_set_1),(and([(3,2) in x#as_set_1,(3,3) in x#as_set_1;int(1..)])) -> ((2,3) in x#as_set_1),(and([(3,3) in x#as_set_1,(3,1) in x#as_set_1;int(1..)])) -> ((3,1) in x#as_set_1),(and([(3,3) in x#as_set_1,(3,2) in x#as_set_1;int(1..)])) -> ((3,2) in x#as_set_1),(and([(3,3) in x#as_set_1,(3,3) in x#as_set_1;int(1..)])) -> ((3,3) in x#as_set_1);int(1..)]
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_1;int(1..)])) -> (x#as_set_1#occurrence_1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__0) -> (x#as_set_1#occurrence_1)
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_1;int(1..)])
+
+--
+
+__0 =aux and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_1;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_1;int(1..)]), __0)
+
+--
+
+(__0) -> (x#as_set_1#occurrence_1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__0, x#as_set_1#occurrence_1, 0)
+
+--
+
+(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_2;int(1..)])) -> (x#as_set_1#occurrence_2)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__1) -> (x#as_set_1#occurrence_2)
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_2;int(1..)])
+
+--
+
+__1 =aux and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_2;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_2;int(1..)]), __1)
+
+--
+
+(__1) -> (x#as_set_1#occurrence_2)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__1, x#as_set_1#occurrence_2, 0)
+
+--
+
+(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_3;int(1..)])) -> (x#as_set_1#occurrence_3)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__2) -> (x#as_set_1#occurrence_3)
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_3;int(1..)])
+
+--
+
+__2 =aux and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_3;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_3;int(1..)]), __2)
+
+--
+
+(__2) -> (x#as_set_1#occurrence_3)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__2, x#as_set_1#occurrence_3, 0)
+
+--
+
+(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_1;int(1..)])) -> (x#as_set_1#occurrence_4)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> (x#as_set_1#occurrence_4)
+new variables:
+  findAux __3: bool
+new constraints:
+  __3 =aux and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_1;int(1..)])
+
+--
+
+__3 =aux and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_1;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_1;int(1..)]), __3)
+
+--
+
+(__3) -> (x#as_set_1#occurrence_4)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__3, x#as_set_1#occurrence_4, 0)
+
+--
+
+(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_2;int(1..)])) -> (x#as_set_1#occurrence_5)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__4) -> (x#as_set_1#occurrence_5)
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_2;int(1..)])
+
+--
+
+__4 =aux and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_2;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_2;int(1..)]), __4)
+
+--
+
+(__4) -> (x#as_set_1#occurrence_5)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__4, x#as_set_1#occurrence_5, 0)
+
+--
+
+(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_3;int(1..)])) -> (x#as_set_1#occurrence_6)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__5) -> (x#as_set_1#occurrence_6)
+new variables:
+  findAux __5: bool
+new constraints:
+  __5 =aux and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_3;int(1..)])
+
+--
+
+__5 =aux and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_3;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_3;int(1..)]), __5)
+
+--
+
+(__5) -> (x#as_set_1#occurrence_6)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__5, x#as_set_1#occurrence_6, 0)
+
+--
+
+(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_1;int(1..)])) -> (x#as_set_1#occurrence_7)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__6) -> (x#as_set_1#occurrence_7)
+new variables:
+  findAux __6: bool
+new constraints:
+  __6 =aux and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_1;int(1..)])
+
+--
+
+__6 =aux and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_1;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_1;int(1..)]), __6)
+
+--
+
+(__6) -> (x#as_set_1#occurrence_7)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__6, x#as_set_1#occurrence_7, 0)
+
+--
+
+(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_2;int(1..)])) -> (x#as_set_1#occurrence_8)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__7) -> (x#as_set_1#occurrence_8)
+new variables:
+  findAux __7: bool
+new constraints:
+  __7 =aux and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_2;int(1..)])
+
+--
+
+__7 =aux and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_2;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_2;int(1..)]), __7)
+
+--
+
+(__7) -> (x#as_set_1#occurrence_8)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__7, x#as_set_1#occurrence_8, 0)
+
+--
+
+(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_3;int(1..)])) -> (x#as_set_1#occurrence_9)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__8) -> (x#as_set_1#occurrence_9)
+new variables:
+  findAux __8: bool
+new constraints:
+  __8 =aux and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_3;int(1..)])
+
+--
+
+__8 =aux and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_3;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_3;int(1..)]), __8)
+
+--
+
+(__8) -> (x#as_set_1#occurrence_9)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__8, x#as_set_1#occurrence_9, 0)
+
+--
+
+(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_4;int(1..)])) -> (x#as_set_1#occurrence_1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__9) -> (x#as_set_1#occurrence_1)
+new variables:
+  findAux __9: bool
+new constraints:
+  __9 =aux and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_4;int(1..)])
+
+--
+
+__9 =aux and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_4;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_4;int(1..)]), __9)
+
+--
+
+(__9) -> (x#as_set_1#occurrence_1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__9, x#as_set_1#occurrence_1, 0)
+
+--
+
+(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_5;int(1..)])) -> (x#as_set_1#occurrence_2)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__10) -> (x#as_set_1#occurrence_2)
+new variables:
+  findAux __10: bool
+new constraints:
+  __10 =aux and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_5;int(1..)])
+
+--
+
+__10 =aux and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_5;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_5;int(1..)]), __10)
+
+--
+
+(__10) -> (x#as_set_1#occurrence_2)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__10, x#as_set_1#occurrence_2, 0)
+
+--
+
+(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_6;int(1..)])) -> (x#as_set_1#occurrence_3)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__11) -> (x#as_set_1#occurrence_3)
+new variables:
+  findAux __11: bool
+new constraints:
+  __11 =aux and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_6;int(1..)])
+
+--
+
+__11 =aux and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_6;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_6;int(1..)]), __11)
+
+--
+
+(__11) -> (x#as_set_1#occurrence_3)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__11, x#as_set_1#occurrence_3, 0)
+
+--
+
+(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_4;int(1..)])) -> (x#as_set_1#occurrence_4)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__12) -> (x#as_set_1#occurrence_4)
+new variables:
+  findAux __12: bool
+new constraints:
+  __12 =aux and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_4;int(1..)])
+
+--
+
+__12 =aux and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_4;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_4;int(1..)]), __12)
+
+--
+
+(__12) -> (x#as_set_1#occurrence_4)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__12, x#as_set_1#occurrence_4, 0)
+
+--
+
+(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_5;int(1..)])) -> (x#as_set_1#occurrence_5)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__13) -> (x#as_set_1#occurrence_5)
+new variables:
+  findAux __13: bool
+new constraints:
+  __13 =aux and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_5;int(1..)])
+
+--
+
+__13 =aux and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_5;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_5;int(1..)]), __13)
+
+--
+
+(__13) -> (x#as_set_1#occurrence_5)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__13, x#as_set_1#occurrence_5, 0)
+
+--
+
+(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_6;int(1..)])) -> (x#as_set_1#occurrence_6)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__14) -> (x#as_set_1#occurrence_6)
+new variables:
+  findAux __14: bool
+new constraints:
+  __14 =aux and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_6;int(1..)])
+
+--
+
+__14 =aux and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_6;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_6;int(1..)]), __14)
+
+--
+
+(__14) -> (x#as_set_1#occurrence_6)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__14, x#as_set_1#occurrence_6, 0)
+
+--
+
+(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_4;int(1..)])) -> (x#as_set_1#occurrence_7)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__15) -> (x#as_set_1#occurrence_7)
+new variables:
+  findAux __15: bool
+new constraints:
+  __15 =aux and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_4;int(1..)])
+
+--
+
+__15 =aux and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_4;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_4;int(1..)]), __15)
+
+--
+
+(__15) -> (x#as_set_1#occurrence_7)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__15, x#as_set_1#occurrence_7, 0)
+
+--
+
+(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_5;int(1..)])) -> (x#as_set_1#occurrence_8)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__16) -> (x#as_set_1#occurrence_8)
+new variables:
+  findAux __16: bool
+new constraints:
+  __16 =aux and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_5;int(1..)])
+
+--
+
+__16 =aux and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_5;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_5;int(1..)]), __16)
+
+--
+
+(__16) -> (x#as_set_1#occurrence_8)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__16, x#as_set_1#occurrence_8, 0)
+
+--
+
+(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_6;int(1..)])) -> (x#as_set_1#occurrence_9)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__17) -> (x#as_set_1#occurrence_9)
+new variables:
+  findAux __17: bool
+new constraints:
+  __17 =aux and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_6;int(1..)])
+
+--
+
+__17 =aux and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_6;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_6;int(1..)]), __17)
+
+--
+
+(__17) -> (x#as_set_1#occurrence_9)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__17, x#as_set_1#occurrence_9, 0)
+
+--
+
+(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_7;int(1..)])) -> (x#as_set_1#occurrence_1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__18) -> (x#as_set_1#occurrence_1)
+new variables:
+  findAux __18: bool
+new constraints:
+  __18 =aux and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_7;int(1..)])
+
+--
+
+__18 =aux and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_7;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_7;int(1..)]), __18)
+
+--
+
+(__18) -> (x#as_set_1#occurrence_1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__18, x#as_set_1#occurrence_1, 0)
+
+--
+
+(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_8;int(1..)])) -> (x#as_set_1#occurrence_2)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__19) -> (x#as_set_1#occurrence_2)
+new variables:
+  findAux __19: bool
+new constraints:
+  __19 =aux and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_8;int(1..)])
+
+--
+
+__19 =aux and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_8;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_8;int(1..)]), __19)
+
+--
+
+(__19) -> (x#as_set_1#occurrence_2)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__19, x#as_set_1#occurrence_2, 0)
+
+--
+
+(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_9;int(1..)])) -> (x#as_set_1#occurrence_3)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__20) -> (x#as_set_1#occurrence_3)
+new variables:
+  findAux __20: bool
+new constraints:
+  __20 =aux and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_9;int(1..)])
+
+--
+
+__20 =aux and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_9;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_9;int(1..)]), __20)
+
+--
+
+(__20) -> (x#as_set_1#occurrence_3)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__20, x#as_set_1#occurrence_3, 0)
+
+--
+
+(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_7;int(1..)])) -> (x#as_set_1#occurrence_4)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__21) -> (x#as_set_1#occurrence_4)
+new variables:
+  findAux __21: bool
+new constraints:
+  __21 =aux and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_7;int(1..)])
+
+--
+
+__21 =aux and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_7;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_7;int(1..)]), __21)
+
+--
+
+(__21) -> (x#as_set_1#occurrence_4)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__21, x#as_set_1#occurrence_4, 0)
+
+--
+
+(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_8;int(1..)])) -> (x#as_set_1#occurrence_5)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__22) -> (x#as_set_1#occurrence_5)
+new variables:
+  findAux __22: bool
+new constraints:
+  __22 =aux and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_8;int(1..)])
+
+--
+
+__22 =aux and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_8;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_8;int(1..)]), __22)
+
+--
+
+(__22) -> (x#as_set_1#occurrence_5)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__22, x#as_set_1#occurrence_5, 0)
+
+--
+
+(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_9;int(1..)])) -> (x#as_set_1#occurrence_6)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__23) -> (x#as_set_1#occurrence_6)
+new variables:
+  findAux __23: bool
+new constraints:
+  __23 =aux and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_9;int(1..)])
+
+--
+
+__23 =aux and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_9;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_9;int(1..)]), __23)
+
+--
+
+(__23) -> (x#as_set_1#occurrence_6)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__23, x#as_set_1#occurrence_6, 0)
+
+--
+
+(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_7;int(1..)])) -> (x#as_set_1#occurrence_7)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__24) -> (x#as_set_1#occurrence_7)
+new variables:
+  findAux __24: bool
+new constraints:
+  __24 =aux and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_7;int(1..)])
+
+--
+
+__24 =aux and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_7;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_7;int(1..)]), __24)
+
+--
+
+(__24) -> (x#as_set_1#occurrence_7)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__24, x#as_set_1#occurrence_7, 0)
+
+--
+
+(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_8;int(1..)])) -> (x#as_set_1#occurrence_8)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__25) -> (x#as_set_1#occurrence_8)
+new variables:
+  findAux __25: bool
+new constraints:
+  __25 =aux and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_8;int(1..)])
+
+--
+
+__25 =aux and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_8;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_8;int(1..)]), __25)
+
+--
+
+(__25) -> (x#as_set_1#occurrence_8)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__25, x#as_set_1#occurrence_8, 0)
+
+--
+
+(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_9;int(1..)])) -> (x#as_set_1#occurrence_9)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__26) -> (x#as_set_1#occurrence_9)
+new variables:
+  findAux __26: bool
+new constraints:
+  __26 =aux and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_9;int(1..)])
+
+--
+
+__26 =aux and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_9;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_9;int(1..)]), __26)
+
+--
+
+(__26) -> (x#as_set_1#occurrence_9)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__26, x#as_set_1#occurrence_9, 0)
+
+--
+
+[ or([ (x,y) in x#as_set_1 | y : int(1..3) ]) | x : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[or([(1,1) in x#as_set_1,(1,2) in x#as_set_1,(1,3) in x#as_set_1;int(1..)]),or([(2,1) in x#as_set_1,(2,2) in x#as_set_1,(2,3) in x#as_set_1;int(1..)]),or([(3,1) in x#as_set_1,(3,2) in x#as_set_1,(3,3) in x#as_set_1;int(1..)]);int(1..)]
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+(1,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+(1,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+(1,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+(2,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+(2,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+(2,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+(3,1) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+(3,2) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+(3,3) in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+Final model:
+
+find x: relation (maxSize 3, Euclidean, serial) of (int(1..3) * int(1..3))
+find x#as_set_1: set{occurrence} (maxSize 3) of tuple (int(1..3), int(1..3))
+find x#as_set_1#occurrence_1: bool
+find x#as_set_1#occurrence_2: bool
+find x#as_set_1#occurrence_3: bool
+find x#as_set_1#occurrence_4: bool
+find x#as_set_1#occurrence_5: bool
+find x#as_set_1#occurrence_6: bool
+find x#as_set_1#occurrence_7: bool
+find x#as_set_1#occurrence_8: bool
+find x#as_set_1#occurrence_9: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+
+such that
+
+true,
+and([Ineq(__0, x#as_set_1#occurrence_1, 0),Ineq(__1, x#as_set_1#occurrence_2, 0),Ineq(__2, x#as_set_1#occurrence_3, 0),Ineq(__3, x#as_set_1#occurrence_4, 0),Ineq(__4, x#as_set_1#occurrence_5, 0),Ineq(__5, x#as_set_1#occurrence_6, 0),Ineq(__6, x#as_set_1#occurrence_7, 0),Ineq(__7, x#as_set_1#occurrence_8, 0),Ineq(__8, x#as_set_1#occurrence_9, 0),Ineq(__9, x#as_set_1#occurrence_1, 0),Ineq(__10, x#as_set_1#occurrence_2, 0),Ineq(__11, x#as_set_1#occurrence_3, 0),Ineq(__12, x#as_set_1#occurrence_4, 0),Ineq(__13, x#as_set_1#occurrence_5, 0),Ineq(__14, x#as_set_1#occurrence_6, 0),Ineq(__15, x#as_set_1#occurrence_7, 0),Ineq(__16, x#as_set_1#occurrence_8, 0),Ineq(__17, x#as_set_1#occurrence_9, 0),Ineq(__18, x#as_set_1#occurrence_1, 0),Ineq(__19, x#as_set_1#occurrence_2, 0),Ineq(__20, x#as_set_1#occurrence_3, 0),Ineq(__21, x#as_set_1#occurrence_4, 0),Ineq(__22, x#as_set_1#occurrence_5, 0),Ineq(__23, x#as_set_1#occurrence_6, 0),Ineq(__24, x#as_set_1#occurrence_7, 0),Ineq(__25, x#as_set_1#occurrence_8, 0),Ineq(__26, x#as_set_1#occurrence_9, 0);int(1..)]),
+and([or([x#as_set_1#occurrence_1,x#as_set_1#occurrence_2,x#as_set_1#occurrence_3;int(1..)]),or([x#as_set_1#occurrence_4,x#as_set_1#occurrence_5,x#as_set_1#occurrence_6;int(1..)]),or([x#as_set_1#occurrence_7,x#as_set_1#occurrence_8,x#as_set_1#occurrence_9;int(1..)]);int(1..)]),
+and([SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 0),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 3);int(1..)]),
+Reify(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_1;int(1..)]), __0),
+Reify(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_2;int(1..)]), __1),
+Reify(and([x#as_set_1#occurrence_1,x#as_set_1#occurrence_3;int(1..)]), __2),
+Reify(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_1;int(1..)]), __3),
+Reify(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_2;int(1..)]), __4),
+Reify(and([x#as_set_1#occurrence_2,x#as_set_1#occurrence_3;int(1..)]), __5),
+Reify(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_1;int(1..)]), __6),
+Reify(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_2;int(1..)]), __7),
+Reify(and([x#as_set_1#occurrence_3,x#as_set_1#occurrence_3;int(1..)]), __8),
+Reify(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_4;int(1..)]), __9),
+Reify(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_5;int(1..)]), __10),
+Reify(and([x#as_set_1#occurrence_4,x#as_set_1#occurrence_6;int(1..)]), __11),
+Reify(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_4;int(1..)]), __12),
+Reify(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_5;int(1..)]), __13),
+Reify(and([x#as_set_1#occurrence_5,x#as_set_1#occurrence_6;int(1..)]), __14),
+Reify(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_4;int(1..)]), __15),
+Reify(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_5;int(1..)]), __16),
+Reify(and([x#as_set_1#occurrence_6,x#as_set_1#occurrence_6;int(1..)]), __17),
+Reify(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_7;int(1..)]), __18),
+Reify(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_8;int(1..)]), __19),
+Reify(and([x#as_set_1#occurrence_7,x#as_set_1#occurrence_9;int(1..)]), __20),
+Reify(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_7;int(1..)]), __21),
+Reify(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_8;int(1..)]), __22),
+Reify(and([x#as_set_1#occurrence_8,x#as_set_1#occurrence_9;int(1..)]), __23),
+Reify(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_7;int(1..)]), __24),
+Reify(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_8;int(1..)]), __25),
+Reify(and([x#as_set_1#occurrence_9,x#as_set_1#occurrence_9;int(1..)]), __26)
+

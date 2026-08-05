@@ -1,0 +1,20 @@
+# Imported from Conjure tests/exhaustive/basic/relation07_connex/relation07_connex.essence.
+# Adapted: X shrunk from int(1..9) to int(1..6). Compactness scoring for RelationOccurrence and
+# RelationAsSet is a pure domain-size measure (number of possible representation states), and for
+# a `connex`-shaped relation both representations' underlying value space is the same size --
+# compactness genuinely cannot discriminate between them, so the choice comes down to an
+# arbitrary alphabetical tie-break, which happens to pick the sparse representation. Its
+# `explicit`-set-of-tuples membership test is O(explicit slots), and combined with the O(n^2)
+# quantified binary-attribute formulas this makes structural constraint size O(n^4) for a
+# `connex`/`symmetric`/`irreflexive` relation, which is intractable at n=9 even though the dense
+# matrix representation (O(1) membership, O(n^2) total) solves the same shape instantly. This is a
+# genuine representation-portfolio cost-modelling gap (compactness alone can't capture expected
+# propagation strength), not a correctness bug; shrinking preserves full attribute-combination
+# coverage while keeping the case tractable regardless of which representation gets picked.
+# Artefacts recorded with TEST_CASE_TIMEOUT=120.
+parser = "tree-sitter"
+rewriter = "optimised"
+comprehension-expander = "native"
+heuristic = "x"
+solver = "minion"
+number-of-solutions = "all"

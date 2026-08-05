@@ -8,136 +8,966 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find f#explicit_1: matrix indexed by [int(1..10)] of bool
-  find f#explicit_2: matrix indexed by [int(1..10)] of bool
+  find f#as_relation_1: relation (maxSize 2) of (int(1..10) * bool)
 new constraints:
-  sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2])),toInt(SafeIndex(f#explicit_2,[3])),toInt(SafeIndex(f#explicit_2,[4])),toInt(SafeIndex(f#explicit_2,[5])),toInt(SafeIndex(f#explicit_2,[6])),toInt(SafeIndex(f#explicit_2,[7])),toInt(SafeIndex(f#explicit_2,[8])),toInt(SafeIndex(f#explicit_2,[9])),toInt(SafeIndex(f#explicit_2,[10]));int(1..)]) <= 2
+  and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
 
 --
 
 true,
-sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2])),toInt(SafeIndex(f#explicit_2,[3])),toInt(SafeIndex(f#explicit_2,[4])),toInt(SafeIndex(f#explicit_2,[5])),toInt(SafeIndex(f#explicit_2,[6])),toInt(SafeIndex(f#explicit_2,[7])),toInt(SafeIndex(f#explicit_2,[8])),toInt(SafeIndex(f#explicit_2,[9])),toInt(SafeIndex(f#explicit_2,[10]));int(1..)]) <= 2
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+new variables:
+  find f#as_relation_1#occurrence_1: matrix indexed by [int(1..10), bool] of bool
+new constraints:
+  and([sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]) >= 0,sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]) <= 2;int(1..)])
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ (SafeIndex((i0,i1),[1]) = SafeIndex(j,[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex(j,[2])) | i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j <- f#as_relation_1 ]
+
+--
+
+[ (SafeIndex((i0,i1),[1]) = SafeIndex(j,[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex(j,[2])) | i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j <- f#as_relation_1 ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ (SafeIndex((i0,i1),[1]) = SafeIndex((i0,i1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((i0,i1),[2])) | i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]) ]
+
+--
+
+true,
+and([ (SafeIndex((i0,i1),[1]) = SafeIndex((i0,i1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((i0,i1),[2])) | i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]) ]),
+and([sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]) >= 0,sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]) <= 2;int(1..)])
    ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
 true,
-sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2])),toInt(SafeIndex(f#explicit_2,[3])),toInt(SafeIndex(f#explicit_2,[4])),toInt(SafeIndex(f#explicit_2,[5])),toInt(SafeIndex(f#explicit_2,[6])),toInt(SafeIndex(f#explicit_2,[7])),toInt(SafeIndex(f#explicit_2,[8])),toInt(SafeIndex(f#explicit_2,[9])),toInt(SafeIndex(f#explicit_2,[10]));int(1..)]) <= 2
+and([ (SafeIndex((i0,i1),[1]) = SafeIndex((i0,i1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((i0,i1),[2])) | i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]) ]),
+and([sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]) >= 0,sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]) <= 2;int(1..)])
 new variables:
-  find f#explicit_1#components_1: bool
-  find f#explicit_1#components_10: bool
-  find f#explicit_1#components_2: bool
-  find f#explicit_1#components_3: bool
-  find f#explicit_1#components_4: bool
-  find f#explicit_1#components_5: bool
-  find f#explicit_1#components_6: bool
-  find f#explicit_1#components_7: bool
-  find f#explicit_1#components_8: bool
-  find f#explicit_1#components_9: bool
-  find f#explicit_2#components_1: bool
-  find f#explicit_2#components_10: bool
-  find f#explicit_2#components_2: bool
-  find f#explicit_2#components_3: bool
-  find f#explicit_2#components_4: bool
-  find f#explicit_2#components_5: bool
-  find f#explicit_2#components_6: bool
-  find f#explicit_2#components_7: bool
-  find f#explicit_2#components_8: bool
-  find f#explicit_2#components_9: bool
+  find f#as_relation_1#occurrence_1#components_1: bool
+  find f#as_relation_1#occurrence_1#components_10: bool
+  find f#as_relation_1#occurrence_1#components_11: bool
+  find f#as_relation_1#occurrence_1#components_12: bool
+  find f#as_relation_1#occurrence_1#components_13: bool
+  find f#as_relation_1#occurrence_1#components_14: bool
+  find f#as_relation_1#occurrence_1#components_15: bool
+  find f#as_relation_1#occurrence_1#components_16: bool
+  find f#as_relation_1#occurrence_1#components_17: bool
+  find f#as_relation_1#occurrence_1#components_18: bool
+  find f#as_relation_1#occurrence_1#components_19: bool
+  find f#as_relation_1#occurrence_1#components_2: bool
+  find f#as_relation_1#occurrence_1#components_20: bool
+  find f#as_relation_1#occurrence_1#components_3: bool
+  find f#as_relation_1#occurrence_1#components_4: bool
+  find f#as_relation_1#occurrence_1#components_5: bool
+  find f#as_relation_1#occurrence_1#components_6: bool
+  find f#as_relation_1#occurrence_1#components_7: bool
+  find f#as_relation_1#occurrence_1#components_8: bool
+  find f#as_relation_1#occurrence_1#components_9: bool
 
 --
 
-SafeIndex(f#explicit_2,[1])
+[ (SafeIndex((i0,i1),[1]) = SafeIndex((i0,i1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((i0,i1),[2])) | i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(SafeIndex(f#as_relation_1#occurrence_1,[1, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[1, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[1, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[1, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[2, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[2, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[2, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[2, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[3, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[3, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[3, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[3, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[4, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[4, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[4, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[4, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[5, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[5, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[5, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[5, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[6, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[6, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[6, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[6, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[7, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[7, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[7, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[7, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[8, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[8, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[8, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[8, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[9, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[9, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[9, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[9, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[10, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[10, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[10, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[10, false]));int(1..)]));int(1..)]
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[1, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[1, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[1, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[1, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[2, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[2, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[2, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[2, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[3, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[3, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[3, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[3, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[4, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[4, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[4, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[4, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[5, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[5, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[5, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[5, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[6, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[6, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[6, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[6, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[7, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[7, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[7, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[7, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[8, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[8, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[8, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[8, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[9, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[9, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[9, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[9, false]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[10, true]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[10, true]))
+
+--
+
+and([!(SafeIndex(f#as_relation_1#occurrence_1,[10, false]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+!(SafeIndex(f#as_relation_1#occurrence_1,[10, false]))
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, false])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_1
+f#as_relation_1#occurrence_1#components_1
 
 --
 
-SafeIndex(f#explicit_2,[2])
+SafeIndex(f#as_relation_1#occurrence_1,[1, true])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_2
+f#as_relation_1#occurrence_1#components_2
 
 --
 
-SafeIndex(f#explicit_2,[3])
+SafeIndex(f#as_relation_1#occurrence_1,[2, false])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_3
+f#as_relation_1#occurrence_1#components_3
 
 --
 
-SafeIndex(f#explicit_2,[4])
+SafeIndex(f#as_relation_1#occurrence_1,[2, true])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_4
+f#as_relation_1#occurrence_1#components_4
 
 --
 
-SafeIndex(f#explicit_2,[5])
+SafeIndex(f#as_relation_1#occurrence_1,[3, false])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_5
+f#as_relation_1#occurrence_1#components_5
 
 --
 
-SafeIndex(f#explicit_2,[6])
+SafeIndex(f#as_relation_1#occurrence_1,[3, true])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_6
+f#as_relation_1#occurrence_1#components_6
 
 --
 
-SafeIndex(f#explicit_2,[7])
+SafeIndex(f#as_relation_1#occurrence_1,[4, false])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_7
+f#as_relation_1#occurrence_1#components_7
 
 --
 
-SafeIndex(f#explicit_2,[8])
+SafeIndex(f#as_relation_1#occurrence_1,[4, true])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_8
+f#as_relation_1#occurrence_1#components_8
 
 --
 
-SafeIndex(f#explicit_2,[9])
+SafeIndex(f#as_relation_1#occurrence_1,[5, false])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_9
+f#as_relation_1#occurrence_1#components_9
 
 --
 
-SafeIndex(f#explicit_2,[10])
+SafeIndex(f#as_relation_1#occurrence_1,[5, true])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#explicit_2#components_10
+f#as_relation_1#occurrence_1#components_10
 
 --
 
-sum([toInt(f#explicit_2#components_1),toInt(f#explicit_2#components_2),toInt(f#explicit_2#components_3),toInt(f#explicit_2#components_4),toInt(f#explicit_2#components_5),toInt(f#explicit_2#components_6),toInt(f#explicit_2#components_7),toInt(f#explicit_2#components_8),toInt(f#explicit_2#components_9),toInt(f#explicit_2#components_10);int(1..)]) <= 2
+SafeIndex(f#as_relation_1#occurrence_1,[6, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_11
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[6, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_12
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[7, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_13
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[7, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_14
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[8, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_15
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[8, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_16
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[9, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_17
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[9, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_18
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[10, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_19
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[10, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_20
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_2
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_1
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_4
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_3
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[3, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_6
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[3, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_5
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[4, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_8
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[4, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_7
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[5, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_10
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[5, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_9
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[6, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_12
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[6, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_11
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[7, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_14
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[7, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_13
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[8, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_16
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[8, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_15
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[9, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_18
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[9, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_17
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[10, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_20
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[10, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_19
+
+--
+
+(f#as_relation_1#occurrence_1#components_1) -> (!(f#as_relation_1#occurrence_1#components_2))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_2), f#as_relation_1#occurrence_1#components_1)
+
+--
+
+(f#as_relation_1#occurrence_1#components_2) -> (!(f#as_relation_1#occurrence_1#components_1))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_1), f#as_relation_1#occurrence_1#components_2)
+
+--
+
+(f#as_relation_1#occurrence_1#components_3) -> (!(f#as_relation_1#occurrence_1#components_4))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_4), f#as_relation_1#occurrence_1#components_3)
+
+--
+
+(f#as_relation_1#occurrence_1#components_4) -> (!(f#as_relation_1#occurrence_1#components_3))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_3), f#as_relation_1#occurrence_1#components_4)
+
+--
+
+(f#as_relation_1#occurrence_1#components_5) -> (!(f#as_relation_1#occurrence_1#components_6))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_6), f#as_relation_1#occurrence_1#components_5)
+
+--
+
+(f#as_relation_1#occurrence_1#components_6) -> (!(f#as_relation_1#occurrence_1#components_5))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_5), f#as_relation_1#occurrence_1#components_6)
+
+--
+
+(f#as_relation_1#occurrence_1#components_7) -> (!(f#as_relation_1#occurrence_1#components_8))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_8), f#as_relation_1#occurrence_1#components_7)
+
+--
+
+(f#as_relation_1#occurrence_1#components_8) -> (!(f#as_relation_1#occurrence_1#components_7))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_7), f#as_relation_1#occurrence_1#components_8)
+
+--
+
+(f#as_relation_1#occurrence_1#components_9) -> (!(f#as_relation_1#occurrence_1#components_10))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_10), f#as_relation_1#occurrence_1#components_9)
+
+--
+
+(f#as_relation_1#occurrence_1#components_10) -> (!(f#as_relation_1#occurrence_1#components_9))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_9), f#as_relation_1#occurrence_1#components_10)
+
+--
+
+(f#as_relation_1#occurrence_1#components_11) -> (!(f#as_relation_1#occurrence_1#components_12))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_12), f#as_relation_1#occurrence_1#components_11)
+
+--
+
+(f#as_relation_1#occurrence_1#components_12) -> (!(f#as_relation_1#occurrence_1#components_11))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_11), f#as_relation_1#occurrence_1#components_12)
+
+--
+
+(f#as_relation_1#occurrence_1#components_13) -> (!(f#as_relation_1#occurrence_1#components_14))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_14), f#as_relation_1#occurrence_1#components_13)
+
+--
+
+(f#as_relation_1#occurrence_1#components_14) -> (!(f#as_relation_1#occurrence_1#components_13))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_13), f#as_relation_1#occurrence_1#components_14)
+
+--
+
+(f#as_relation_1#occurrence_1#components_15) -> (!(f#as_relation_1#occurrence_1#components_16))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_16), f#as_relation_1#occurrence_1#components_15)
+
+--
+
+(f#as_relation_1#occurrence_1#components_16) -> (!(f#as_relation_1#occurrence_1#components_15))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_15), f#as_relation_1#occurrence_1#components_16)
+
+--
+
+(f#as_relation_1#occurrence_1#components_17) -> (!(f#as_relation_1#occurrence_1#components_18))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_18), f#as_relation_1#occurrence_1#components_17)
+
+--
+
+(f#as_relation_1#occurrence_1#components_18) -> (!(f#as_relation_1#occurrence_1#components_17))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_17), f#as_relation_1#occurrence_1#components_18)
+
+--
+
+(f#as_relation_1#occurrence_1#components_19) -> (!(f#as_relation_1#occurrence_1#components_20))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_20), f#as_relation_1#occurrence_1#components_19)
+
+--
+
+(f#as_relation_1#occurrence_1#components_20) -> (!(f#as_relation_1#occurrence_1#components_19))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(!(f#as_relation_1#occurrence_1#components_19), f#as_relation_1#occurrence_1#components_20)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_2,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_1,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_4,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_3,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_6)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_6,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_5)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_5,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_8)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_8,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_7)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_7,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_10)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_10,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_9)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_9,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_12)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_12,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_11)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_11,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_14)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_14,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_13)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_13,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_16)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_16,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_15)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_15,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_18)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_18,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_17)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_17,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_20)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_20,false)
+
+--
+
+!(f#as_relation_1#occurrence_1#components_19)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_19,false)
+
+--
+
+[ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(SafeIndex(f#as_relation_1#occurrence_1,[1, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[1, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[2, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[2, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[3, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[3, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[4, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[4, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[5, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[5, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[6, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[6, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[7, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[7, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[8, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[8, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[9, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[9, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[10, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[10, true]));int(1..)]
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_1
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_2
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_3
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_4
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[3, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_5
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[3, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_6
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[4, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_7
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[4, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_8
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[5, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_9
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[5, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_10
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[6, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_11
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[6, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_12
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[7, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_13
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[7, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_14
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[8, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_15
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[8, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_16
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[9, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_17
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[9, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_18
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[10, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_19
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[10, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_20
+
+--
+
+sum([toInt(f#as_relation_1#occurrence_1#components_1),toInt(f#as_relation_1#occurrence_1#components_2),toInt(f#as_relation_1#occurrence_1#components_3),toInt(f#as_relation_1#occurrence_1#components_4),toInt(f#as_relation_1#occurrence_1#components_5),toInt(f#as_relation_1#occurrence_1#components_6),toInt(f#as_relation_1#occurrence_1#components_7),toInt(f#as_relation_1#occurrence_1#components_8),toInt(f#as_relation_1#occurrence_1#components_9),toInt(f#as_relation_1#occurrence_1#components_10),toInt(f#as_relation_1#occurrence_1#components_11),toInt(f#as_relation_1#occurrence_1#components_12),toInt(f#as_relation_1#occurrence_1#components_13),toInt(f#as_relation_1#occurrence_1#components_14),toInt(f#as_relation_1#occurrence_1#components_15),toInt(f#as_relation_1#occurrence_1#components_16),toInt(f#as_relation_1#occurrence_1#components_17),toInt(f#as_relation_1#occurrence_1#components_18),toInt(f#as_relation_1#occurrence_1#components_19),toInt(f#as_relation_1#occurrence_1#components_20);int(1..)]) >= 0
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([f#explicit_2#components_1, f#explicit_2#components_10, f#explicit_2#components_2, f#explicit_2#components_3, f#explicit_2#components_4, f#explicit_2#components_5, f#explicit_2#components_6, f#explicit_2#components_7, f#explicit_2#components_8, f#explicit_2#components_9], 2)
+SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], 0)
+
+--
+
+[ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(SafeIndex(f#as_relation_1#occurrence_1,[1, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[1, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[2, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[2, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[3, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[3, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[4, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[4, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[5, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[5, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[6, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[6, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[7, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[7, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[8, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[8, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[9, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[9, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[10, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[10, true]));int(1..)]
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_1
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_2
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_3
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_4
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[3, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_5
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[3, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_6
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[4, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_7
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[4, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_8
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[5, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_9
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[5, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_10
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[6, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_11
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[6, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_12
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[7, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_13
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[7, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_14
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[8, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_15
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[8, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_16
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[9, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_17
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[9, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_18
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[10, false])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_19
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[10, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_20
+
+--
+
+sum([toInt(f#as_relation_1#occurrence_1#components_1),toInt(f#as_relation_1#occurrence_1#components_2),toInt(f#as_relation_1#occurrence_1#components_3),toInt(f#as_relation_1#occurrence_1#components_4),toInt(f#as_relation_1#occurrence_1#components_5),toInt(f#as_relation_1#occurrence_1#components_6),toInt(f#as_relation_1#occurrence_1#components_7),toInt(f#as_relation_1#occurrence_1#components_8),toInt(f#as_relation_1#occurrence_1#components_9),toInt(f#as_relation_1#occurrence_1#components_10),toInt(f#as_relation_1#occurrence_1#components_11),toInt(f#as_relation_1#occurrence_1#components_12),toInt(f#as_relation_1#occurrence_1#components_13),toInt(f#as_relation_1#occurrence_1#components_14),toInt(f#as_relation_1#occurrence_1#components_15),toInt(f#as_relation_1#occurrence_1#components_16),toInt(f#as_relation_1#occurrence_1#components_17),toInt(f#as_relation_1#occurrence_1#components_18),toInt(f#as_relation_1#occurrence_1#components_19),toInt(f#as_relation_1#occurrence_1#components_20);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], 2)
 
 --
 
 Final model:
 
 find f: function (maxSize 2) int(1..10) --> bool 
-find f#explicit_1: matrix indexed by [int(1..10)] of bool
-find f#explicit_2: matrix indexed by [int(1..10)] of bool
-find f#explicit_1#components_1: bool
-find f#explicit_1#components_2: bool
-find f#explicit_1#components_3: bool
-find f#explicit_1#components_4: bool
-find f#explicit_1#components_5: bool
-find f#explicit_1#components_6: bool
-find f#explicit_1#components_7: bool
-find f#explicit_1#components_8: bool
-find f#explicit_1#components_9: bool
-find f#explicit_1#components_10: bool
-find f#explicit_2#components_1: bool
-find f#explicit_2#components_2: bool
-find f#explicit_2#components_3: bool
-find f#explicit_2#components_4: bool
-find f#explicit_2#components_5: bool
-find f#explicit_2#components_6: bool
-find f#explicit_2#components_7: bool
-find f#explicit_2#components_8: bool
-find f#explicit_2#components_9: bool
-find f#explicit_2#components_10: bool
+find f#as_relation_1: relation (maxSize 2) of (int(1..10) * bool)
+find f#as_relation_1#occurrence_1: matrix indexed by [int(1..10), bool] of bool
+find f#as_relation_1#occurrence_1#components_1: bool
+find f#as_relation_1#occurrence_1#components_2: bool
+find f#as_relation_1#occurrence_1#components_3: bool
+find f#as_relation_1#occurrence_1#components_4: bool
+find f#as_relation_1#occurrence_1#components_5: bool
+find f#as_relation_1#occurrence_1#components_6: bool
+find f#as_relation_1#occurrence_1#components_7: bool
+find f#as_relation_1#occurrence_1#components_8: bool
+find f#as_relation_1#occurrence_1#components_9: bool
+find f#as_relation_1#occurrence_1#components_10: bool
+find f#as_relation_1#occurrence_1#components_11: bool
+find f#as_relation_1#occurrence_1#components_12: bool
+find f#as_relation_1#occurrence_1#components_13: bool
+find f#as_relation_1#occurrence_1#components_14: bool
+find f#as_relation_1#occurrence_1#components_15: bool
+find f#as_relation_1#occurrence_1#components_16: bool
+find f#as_relation_1#occurrence_1#components_17: bool
+find f#as_relation_1#occurrence_1#components_18: bool
+find f#as_relation_1#occurrence_1#components_19: bool
+find f#as_relation_1#occurrence_1#components_20: bool
 
 such that
 
 true,
-SumLeq([f#explicit_2#components_1, f#explicit_2#components_10, f#explicit_2#components_2, f#explicit_2#components_3, f#explicit_2#components_4, f#explicit_2#components_5, f#explicit_2#components_6, f#explicit_2#components_7, f#explicit_2#components_8, f#explicit_2#components_9], 2)
+and([ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_2,false), f#as_relation_1#occurrence_1#components_1),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_1,false), f#as_relation_1#occurrence_1#components_2),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_4,false), f#as_relation_1#occurrence_1#components_3),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_3,false), f#as_relation_1#occurrence_1#components_4),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_6,false), f#as_relation_1#occurrence_1#components_5),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_5,false), f#as_relation_1#occurrence_1#components_6),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_8,false), f#as_relation_1#occurrence_1#components_7),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_7,false), f#as_relation_1#occurrence_1#components_8),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_10,false), f#as_relation_1#occurrence_1#components_9),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_9,false), f#as_relation_1#occurrence_1#components_10),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_12,false), f#as_relation_1#occurrence_1#components_11),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_11,false), f#as_relation_1#occurrence_1#components_12),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_14,false), f#as_relation_1#occurrence_1#components_13),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_13,false), f#as_relation_1#occurrence_1#components_14),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_16,false), f#as_relation_1#occurrence_1#components_15),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_15,false), f#as_relation_1#occurrence_1#components_16),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_18,false), f#as_relation_1#occurrence_1#components_17),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_17,false), f#as_relation_1#occurrence_1#components_18),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_20,false), f#as_relation_1#occurrence_1#components_19),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_19,false), f#as_relation_1#occurrence_1#components_20);int(1..)]),
+and([SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], 0),SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], 2);int(1..)])
 
