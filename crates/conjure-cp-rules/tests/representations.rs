@@ -1,14 +1,15 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
-    AbstractLiteral, Domain, Expression, GroundDomain, Literal, MSetAttr, Moo, Name, SequenceAttr,
-    SetAttr, SymbolTable,
+    AbstractLiteral, Domain, Expression, FuncAttr, GroundDomain, JectivityAttr, Literal, MSetAttr,
+    Moo, Name, PartialityAttr, RelAttr, SequenceAttr, SetAttr, SymbolTable,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
-    MSetExplicit, MSetOccurrence, MSetPacked, MatrixComponents, MatrixPacked, RecordComponents,
-    RecordPacked, SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked,
-    TupleComponents, TuplePacked, VariantComponents, VariantPacked,
+    FunctionAsRelation, FunctionExplicit, MSetExplicit, MSetOccurrence, MSetPacked,
+    MatrixComponents, MatrixPacked, RecordComponents, RecordPacked, RelationAsSet,
+    SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked, TupleComponents,
+    TuplePacked, VariantComponents, VariantPacked,
 };
 use uniplate::Uniplate;
 
@@ -27,6 +28,9 @@ fn representation_short_names_describe_the_generated_layout() {
     assert_eq!(VariantPacked::SHORT_NAME, "packed");
     assert_eq!(SequenceExplicit::SHORT_NAME, "explicit");
     assert_eq!(SequencePacked::SHORT_NAME, "packed");
+    assert_eq!(RelationAsSet::SHORT_NAME, "as_set");
+    assert_eq!(FunctionAsRelation::SHORT_NAME, "as_relation");
+    assert_eq!(FunctionExplicit::SHORT_NAME, "explicit");
 }
 
 #[test]
@@ -644,4 +648,193 @@ fn explicit_sequence_rejects_unbounded_size() {
         domain_int!(1..3),
     );
     assert!(<SequenceExplicit as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn relation_as_set_round_trips_binary_pairs() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(2),
+            binary: vec![],
+        },
+        vec![domain_int!(1..3), domain_int!(4..6)],
+    );
+    let state = <RelationAsSet as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Relation(vec![
+        vec![Literal::Int(1), Literal::Int(4)],
+        vec![Literal::Int(2), Literal::Int(5)],
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn relation_as_set_rejects_non_binary_relations() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(1),
+            binary: vec![],
+        },
+        vec![domain_int!(1..3), domain_int!(1..3), domain_int!(1..3)],
+    );
+    assert!(<RelationAsSet as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+fn func_attr(
+    size: conjure_cp::ast::Range<i32>,
+    partiality: PartialityAttr,
+    jectivity: JectivityAttr,
+) -> FuncAttr {
+    FuncAttr {
+        size,
+        partiality,
+        jectivity,
+    }
+}
+
+#[test]
+fn function_as_relation_round_trips_pairs() {
+    let domain = Domain::function(
+        func_attr(range!(0..2), PartialityAttr::Partial, JectivityAttr::None),
+        domain_int!(1..5),
+        Domain::bool(),
+    );
+    let state = <FunctionAsRelation as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Function(vec![
+        (Literal::Int(2), Literal::Bool(true)),
+        (Literal::Int(4), Literal::Bool(false)),
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn function_as_relation_total_function_builds_one_well_formedness_constraint() {
+    let domain = Domain::function(
+        func_attr(
+            conjure_cp::ast::Range::Unbounded,
+            PartialityAttr::Total,
+            JectivityAttr::None,
+        ),
+        domain_int!(1..3),
+        Domain::bool(),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = FunctionAsRelation::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 1);
+}
+
+#[test]
+fn function_as_relation_bijective_adds_injective_and_surjective_constraints() {
+    let domain = Domain::function(
+        func_attr(range!(3), PartialityAttr::Total, JectivityAttr::Bijective),
+        domain_int!(1..3),
+        domain_int!(1..3),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = FunctionAsRelation::init_for(&mut declaration).unwrap();
+    // well-formedness + injective (pairwise) + one surjective "exists" per codomain value.
+    assert_eq!(constraints.len(), 1 + 1 + 3);
+}
+
+#[test]
+fn explicit_function_round_trips_total_function() {
+    let domain = Domain::function(
+        func_attr(range!(3), PartialityAttr::Total, JectivityAttr::None),
+        domain_int!(1..3),
+        Domain::bool(),
+    );
+    let state = <FunctionExplicit as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Function(vec![
+        (Literal::Int(1), Literal::Bool(true)),
+        (Literal::Int(2), Literal::Bool(false)),
+        (Literal::Int(3), Literal::Bool(true)),
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn explicit_function_round_trips_partial_function_and_pads_undefined_positions() {
+    let domain = Domain::function(
+        func_attr(range!(0..2), PartialityAttr::Partial, JectivityAttr::None),
+        domain_int!(1..3),
+        domain_int!(10..12),
+    );
+    let state = <FunctionExplicit as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Function(vec![(
+        Literal::Int(2),
+        Literal::Int(11),
+    )]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn explicit_function_total_bijective_builds_alldiff_and_surjective_constraints() {
+    let domain = Domain::function(
+        func_attr(range!(3), PartialityAttr::Total, JectivityAttr::Bijective),
+        domain_int!(1..3),
+        domain_int!(1..3),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = FunctionExplicit::init_for(&mut declaration).unwrap();
+    // one allDiff (injective, total) + one surjective "or" per codomain value.
+    assert_eq!(constraints.len(), 1 + 3);
+}
+
+#[test]
+fn explicit_function_partial_injective_builds_guarded_pairwise_constraints() {
+    let domain = Domain::function(
+        func_attr(
+            range!(0..3),
+            PartialityAttr::Partial,
+            JectivityAttr::Injective,
+        ),
+        domain_int!(1..3),
+        domain_int!(1..3),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = FunctionExplicit::init_for(&mut declaration).unwrap();
+    // one cardinality bound (maxSize 3 is not Unbounded) + guarded pairwise over 3 domain
+    // positions: C(3,2) = 3 constraints.
+    assert_eq!(constraints.len(), 1 + 3);
+}
+
+#[test]
+fn compactness_prefers_function_as_relation_for_a_sparse_partial_function() {
+    // A large domain (100 values) with at most 2 entries: the relation only needs to size
+    // itself for those 2 entries, while the explicit matrix needs one atom per domain value.
+    let domain = Domain::function(
+        func_attr(range!(0..2), PartialityAttr::Partial, JectivityAttr::None),
+        domain_int!(1..100),
+        Domain::bool(),
+    );
+    assert!(
+        FunctionAsRelation::compactness_score(domain.clone()).unwrap()
+            < FunctionExplicit::compactness_score(domain).unwrap()
+    );
+}
+
+#[test]
+fn compactness_prefers_function_explicit_for_a_total_function() {
+    // A small total function: both score similarly (entries == domain size), but explicit
+    // avoids the relation's extra tuple-key overhead, so it should not score worse.
+    let domain = Domain::function(
+        func_attr(range!(3), PartialityAttr::Total, JectivityAttr::None),
+        domain_int!(1..3),
+        Domain::bool(),
+    );
+    assert!(
+        FunctionExplicit::compactness_score(domain.clone()).unwrap()
+            <= FunctionAsRelation::compactness_score(domain).unwrap()
+    );
 }
