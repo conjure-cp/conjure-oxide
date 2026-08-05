@@ -111,6 +111,7 @@ pub enum TypecheckingContext {
     Partition,
     Sequence,
     Function,
+    Relation,
     /// Context is unknown or flexible
     Unknown,
 }

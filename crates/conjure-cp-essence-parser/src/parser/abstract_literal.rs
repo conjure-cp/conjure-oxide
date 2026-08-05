@@ -25,6 +25,7 @@ pub fn parse_abstract(
         "mset_literal" => parse_mset_literal(ctx, node),
         "sequence_literal" => parse_sequence_literal(ctx, node),
         "function_literal" => parse_function_literal(ctx, node),
+        "relation_literal" => parse_relation_literal(ctx, node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected abstract literal, got: {}", node.kind()),
@@ -48,6 +49,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         TypecheckingContext::Partition => "partition",
         TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Function => "function",
+        TypecheckingContext::Relation => "relation",
         TypecheckingContext::Unknown => "unknown",
     };
 
@@ -56,6 +58,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         "mset_literal" => "mset",
         "sequence_literal" => "sequence",
         "function_literal" => "function",
+        "relation_literal" => "relation",
         "matrix" => "matrix",
         "tuple" => "tuple",
         "record" => "record",
@@ -371,5 +374,38 @@ fn parse_function_literal(
         Ok(None)
     } else {
         Ok(Some(AbstractLiteral::Function(pairs)))
+    }
+}
+
+fn parse_relation_literal(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    let saved_ctx = ctx.typechecking_context;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
+    let mut tuples = Vec::new();
+    let mut had_error = false;
+    for tuple_node in named_children(node) {
+        let mut fields = Vec::new();
+        for field_node in named_children(&tuple_node) {
+            // Each column can be of any type (matching the relation's own column domains), so
+            // typecheck context is relaxed here, mirroring the other abstract literal parsers.
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
+            let Some(expr) = parse_expression(ctx, field_node)? else {
+                had_error = true;
+                continue;
+            };
+            fields.push(expr);
+        }
+        tuples.push(fields);
+    }
+    ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Relation(tuples)))
     }
 }

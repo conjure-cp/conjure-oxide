@@ -80,7 +80,7 @@ pub fn parse_atom(
             )))
         }
         "matrix" | "record" | "variant" | "tuple" | "set_literal" | "mset_literal"
-        | "sequence_literal" | "function_literal" => {
+        | "sequence_literal" | "function_literal" | "relation_literal" => {
             let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);
             };
@@ -657,6 +657,7 @@ fn typecheck_variable(
         TypecheckingContext::Partition => "partition",
         TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Function => "function",
+        TypecheckingContext::Relation => "relation",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
 
@@ -752,6 +753,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             TypecheckingContext::Partition => "partition",
             TypecheckingContext::Sequence => "sequence",
             TypecheckingContext::Function => "function",
+            TypecheckingContext::Relation => "relation",
             TypecheckingContext::Unknown => "",
         };
 

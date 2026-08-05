@@ -101,6 +101,7 @@ module.exports = grammar ({
       field("mset_domain", $.mset_domain),
       field("sequence_domain", $.sequence_domain),
       field("function_domain", $.function_domain),
+      field("relation_domain", $.relation_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -260,6 +261,41 @@ module.exports = grammar ({
       field("attribute", "bijective")
     ),
 
+    // e.g. relation of (int(1..3) * bool), relation (size 2, irreflexive) of (int(0..5) * int(0..5)),
+    // relation of (int(1..3) * int(1..5) * bool). Columns are separated by "*", matching Conjure's
+    // own relation-domain syntax; unlike matrix's index_domain_list this is not comma-separated.
+    relation_domain: $ => seq(
+      "relation",
+      optional(seq("(", $.relation_attributes, ")")),
+      "of",
+      "(",
+      field("relation_domain_list", $.relation_domain_list),
+      ")"
+    ),
+
+    relation_domain_list: $ => starSep1($.domain),
+
+    relation_attributes: $ => commaSep1($.relation_attribute),
+
+    relation_attribute: $ => choice(
+      seq(field("attribute", "size"), field("value", $.integer)),
+      seq(field("attribute", "minSize"), field("value", $.integer)),
+      seq(field("attribute", "maxSize"), field("value", $.integer)),
+      field("attribute", "reflexive"),
+      field("attribute", "irreflexive"),
+      field("attribute", "coreflexive"),
+      field("attribute", "symmetric"),
+      field("attribute", "antiSymmetric"),
+      field("attribute", "aSymmetric"),
+      field("attribute", "transitive"),
+      field("attribute", "total"),
+      field("attribute", "connex"),
+      field("attribute", "Euclidean"),
+      field("attribute", "serial"),
+      field("attribute", "equivalence"),
+      field("attribute", "partialOrder")
+    ),
+
     set_literal: $ => seq(
       "{",
       field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
@@ -292,6 +328,21 @@ module.exports = grammar ({
       field("key", choice($.bool_expr, $.arithmetic_expr, $.atom)),
       "-->",
       field("value", choice($.bool_expr, $.arithmetic_expr, $.atom))
+    ),
+
+    // e.g. relation(), relation((2,6),(1,4)), relation((1,false,true),(2,false,false)).
+    // Each element is itself a parenthesised tuple of >= 2 values, one per column.
+    relation_literal: $ => seq(
+      "relation",
+      "(",
+      optional(field("tuple", commaSep1($.relation_literal_tuple))),
+      ")"
+    ),
+
+    relation_literal_tuple: $ => seq(
+      "(",
+      field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
+      ")"
     ),
 
     // Function operators, all function-call style: keyword immediately followed by a
@@ -607,6 +658,7 @@ module.exports = grammar ({
       field("mset_literal", $.mset_literal),
       field("sequence_literal", $.sequence_literal),
       field("function_literal", $.function_literal),
+      field("relation_literal", $.relation_literal),
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
       field("element_id", $.element_id),
@@ -985,4 +1037,8 @@ module.exports = grammar ({
 
 function commaSep1(rule) {
   return seq(rule, optional(repeat(seq(",", rule))), optional(","));
+}
+
+function starSep1(rule) {
+  return seq(rule, optional(repeat(seq("*", rule))));
 }

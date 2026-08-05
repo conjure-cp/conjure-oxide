@@ -8,8 +8,9 @@ use crate::parser::ParseContext;
 use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Domain, DomainPtr, Expression, Field, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Moo, Name, PartialityAttr, Range, Reference, SequenceAttr, SetAttr,
+    Atom, BinaryAttr, DeclarationPtr, Domain, DomainPtr, Expression, Field, FuncAttr, IntVal,
+    JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, Range, Reference, RelAttr,
+    SequenceAttr, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -78,6 +79,7 @@ pub fn parse_domain(
         "mset_domain" | "annotation_mset_domain" => parse_mset_domain(ctx, domain),
         "sequence_domain" | "annotation_sequence_domain" => parse_sequence_domain(ctx, domain),
         "function_domain" | "annotation_function_domain" => parse_function_domain(ctx, domain),
+        "relation_domain" => parse_relation_domain(ctx, domain),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("{} is not a supported domain type", domain.kind()),
@@ -634,6 +636,93 @@ fn parse_function_domain(
         jectivity,
     };
     Ok(Some(Domain::function(attrs, domain_from, domain_to)))
+}
+
+// e.g. relation of (int(1..3) * bool), relation (size 2, irreflexive) of (int(0..5) * int(0..5)).
+// Binary relation attributes only make sense for a binary relation whose two columns share a
+// domain; that constraint is enforced by the representations (`init`), not the parser.
+fn parse_relation_domain(
+    ctx: &mut ParseContext,
+    relation_domain: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let mut size = Range::Unbounded;
+    let mut min_size = None;
+    let mut max_size = None;
+    let mut binary = Vec::new();
+
+    for child in named_children(&relation_domain) {
+        if child.kind() == "relation_attributes" {
+            for attribute in named_children(&child) {
+                let name = attribute
+                    .child_by_field_name("attribute")
+                    .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
+                    .unwrap_or_default();
+                match name {
+                    "size" | "minSize" | "maxSize" => {
+                        let Some(value_node) = attribute.child_by_field_name("value") else {
+                            return Ok(None);
+                        };
+                        let Some(value) = parse_int(ctx, &value_node) else {
+                            return Ok(None);
+                        };
+                        match name {
+                            "size" => size = Range::Single(value),
+                            "minSize" => min_size = Some(value),
+                            "maxSize" => max_size = Some(value),
+                            _ => unreachable!(),
+                        }
+                    }
+                    "reflexive" => binary.push(BinaryAttr::Reflexive),
+                    "irreflexive" => binary.push(BinaryAttr::Irreflexive),
+                    "coreflexive" => binary.push(BinaryAttr::Coreflexive),
+                    "symmetric" => binary.push(BinaryAttr::Symmetric),
+                    "antiSymmetric" => binary.push(BinaryAttr::AntiSymmetric),
+                    "aSymmetric" => binary.push(BinaryAttr::ASymmetric),
+                    "transitive" => binary.push(BinaryAttr::Transitive),
+                    "total" => binary.push(BinaryAttr::Total),
+                    "connex" => binary.push(BinaryAttr::Connex),
+                    "Euclidean" => binary.push(BinaryAttr::Euclidean),
+                    "serial" => binary.push(BinaryAttr::Serial),
+                    "equivalence" => binary.push(BinaryAttr::Equivalence),
+                    "partialOrder" => binary.push(BinaryAttr::PartialOrder),
+                    _ => return Ok(None),
+                }
+            }
+        }
+    }
+
+    if !matches!(size, Range::Single(_)) {
+        size = match (min_size, max_size) {
+            (Some(min), Some(max)) => Range::Bounded(min, max),
+            (Some(min), None) => Range::UnboundedR(min),
+            (None, Some(max)) => Range::UnboundedL(max),
+            (None, None) => Range::Unbounded,
+        };
+    }
+
+    let Some(column_list) = field!(recover, ctx, relation_domain, "relation_domain_list") else {
+        return Ok(None);
+    };
+    let mut columns: Vec<DomainPtr> = Vec::new();
+    for column in named_children(&column_list) {
+        let Some(parsed) = parse_domain(ctx, column)? else {
+            return Ok(None);
+        };
+        columns.push(parsed);
+    }
+
+    // Adding relation keyword to the source map with hover info from documentation
+    let relation_keyword_node = child!(relation_domain, 0, "relation");
+    ctx.add_span_and_doc_hover(
+        &relation_keyword_node,
+        "relation",
+        SymbolKind::Domain,
+        None,
+        None,
+    );
+
+    let attrs = RelAttr { size, binary };
+    Ok(Some(Domain::relation(attrs, columns)))
 }
 
 pub fn parse_set_domain(

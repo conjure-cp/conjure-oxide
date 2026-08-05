@@ -25,10 +25,12 @@ pub fn parse_expression(
     match node.kind() {
         "atom" | "primary_atom" | "constant" | "identifier" | "metavar" | "matrix" | "record"
         | "variant" | "tuple" | "set_literal" | "mset_literal" | "sequence_literal"
-        | "function_literal" | "comprehension" | "index_or_slice" | "flatten" | "element_id"
-        | "table" | "negative_table" | "image_expr" | "image_set_expr" | "pre_image_expr"
-        | "inverse_expr" | "restrict_expr" | "defined_expr" | "range_expr" | "to_set_expr"
-        | "to_mset_expr" | "to_relation_expr" => parse_atom(ctx, &node),
+        | "function_literal" | "relation_literal" | "comprehension" | "index_or_slice"
+        | "flatten" | "element_id" | "table" | "negative_table" | "image_expr"
+        | "image_set_expr" | "pre_image_expr" | "inverse_expr" | "restrict_expr"
+        | "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr" => {
+            parse_atom(ctx, &node)
+        }
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
@@ -614,6 +616,13 @@ pub fn parse_binary_expression(
         ctx.typechecking_context = inferred_context_from_expression(&left);
     }
 
+    // 'in's right operand is the container, which need not be a set (mset/sequence-via-toSet/
+    // relation/etc all support membership too); the grammar's "set_comparison" node kind sets
+    // `saved_ctx` to `Set` unconditionally, which only the left operand's override above escapes.
+    if op_str == "in" {
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+    }
+
     // parse right operand
     let Some(right_node) = field!(recover, ctx, node, "right") else {
         return Ok(None);
@@ -1012,7 +1021,7 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
         GroundDomain::Set(_, _) => TypecheckingContext::Set,
         GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
         GroundDomain::Function(_, _, _) => TypecheckingContext::Function,
-        GroundDomain::Relation(_, _) => TypecheckingContext::Unknown,
+        GroundDomain::Relation(_, _) => TypecheckingContext::Relation,
         GroundDomain::Partition(_, _) => TypecheckingContext::Partition,
     }
 }
