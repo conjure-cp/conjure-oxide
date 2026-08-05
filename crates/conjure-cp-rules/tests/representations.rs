@@ -113,12 +113,12 @@ fn packed_matrix_round_trips_primitive_values_and_weird_indices() {
 }
 
 #[test]
-fn packed_matrix_uses_conjure_boolean_symmetry_order() {
+fn packed_matrix_orders_booleans_false_before_true() {
     let domain = Domain::matrix(Domain::bool(), vec![domain_int!(1..2)]);
     let state = <MatrixPacked as ReprRule>::DomainLevel::init(domain).unwrap();
     assert_eq!(
         state.values.as_ref(),
-        &[Literal::Bool(true), Literal::Bool(false)]
+        &[Literal::Bool(false), Literal::Bool(true)]
     );
     let value = Literal::AbstractLiteral(AbstractLiteral::Matrix(
         vec![Literal::Bool(true), Literal::Bool(false)],
@@ -127,7 +127,7 @@ fn packed_matrix_uses_conjure_boolean_symmetry_order() {
         )])),
     ));
     let assignment = state.down(value.clone()).unwrap();
-    assert_eq!(assignment.packed, Literal::Int(1));
+    assert_eq!(assignment.packed, Literal::Int(2));
     assert_eq!(assignment.up(), value);
 }
 
@@ -247,7 +247,7 @@ fn packed_record_round_trips_boolean_integer_and_nested_record_fields() {
     ]));
 
     let assignment = state.down(value).unwrap();
-    assert_eq!(assignment.packed, Literal::Int(7));
+    assert_eq!(assignment.packed, Literal::Int(1));
     assert_eq!(
         assignment.up(),
         Literal::AbstractLiteral(AbstractLiteral::Record(vec![
@@ -303,11 +303,11 @@ fn packed_tuple_round_trips_boolean_and_nested_values() {
     ]));
 
     let assignment = state.down(value.clone()).unwrap();
-    assert_eq!(assignment.packed, Literal::Int(5));
+    assert_eq!(assignment.packed, Literal::Int(3));
     assert_eq!(assignment.up(), value);
     assert_eq!(
         state.values[0],
-        vec![Literal::Bool(true), Literal::Bool(false)]
+        vec![Literal::Bool(false), Literal::Bool(true)]
     );
 }
 

@@ -2,9 +2,14 @@ use conjure_cp::ast::{AbstractLiteral, GroundDomain, Literal, records::Field};
 use itertools::Itertools;
 
 /// Enumerate finite product values in Conjure's recursive symmetry order.
+///
+/// `false < true`: this must match `Literal::essence_cmp`'s ordering, since packed
+/// representations treat a raw digit/rank comparison as equivalent to an essence-level
+/// comparison (e.g. `TuplePacked`'s `packed_cmp`) -- a mismatched order here would make `<`/`<lex`
+/// give a different answer depending on which representation got chosen.
 pub(crate) fn symmetry_values(domain: &GroundDomain) -> Option<Vec<Literal>> {
     match domain {
-        GroundDomain::Bool => Some(vec![Literal::Bool(true), Literal::Bool(false)]),
+        GroundDomain::Bool => Some(vec![Literal::Bool(false), Literal::Bool(true)]),
         GroundDomain::Int(_) => domain.values().ok().map(Iterator::collect),
         GroundDomain::Tuple(fields) => {
             let fields = fields

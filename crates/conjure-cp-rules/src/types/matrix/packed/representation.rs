@@ -80,7 +80,9 @@ register_representation!(
             return Err(domain_err("expected a matrix domain"));
         };
         let mut values = match element_domain.as_ref() {
-            GroundDomain::Bool => vec![Literal::Bool(true), Literal::Bool(false)],
+            // false < true, matching `Literal::essence_cmp` -- see the note on
+            // `types::product::symmetry_values`.
+            GroundDomain::Bool => vec![Literal::Bool(false), Literal::Bool(true)],
             GroundDomain::Int(_) => element_domain.values()
                 .map_err(|error| domain_err(&format!("could not enumerate element domain: {error}")))?
                 .collect::<Vec<_>>(),
