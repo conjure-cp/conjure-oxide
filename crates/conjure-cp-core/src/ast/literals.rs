@@ -1142,7 +1142,23 @@ impl AbstractLiteral<Expression> {
                     value: literal,
                 })))
             }
-            AbstractLiteral::Relation(_) => todo!("Implement into_literals for relations"),
+            AbstractLiteral::Relation(tuples) => {
+                let mut literal_tuples = Vec::with_capacity(tuples.len());
+                for fields in tuples {
+                    let literals = fields
+                        .into_iter()
+                        .map(|expr| match expr {
+                            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                            Expression::AbstractLiteral(_, abslit) => {
+                                Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                            }
+                            _ => None,
+                        })
+                        .collect::<Option<Vec<_>>>()?;
+                    literal_tuples.push(literals);
+                }
+                Some(AbstractLiteral::Relation(literal_tuples))
+            }
         }
     }
 }

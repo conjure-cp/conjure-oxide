@@ -138,7 +138,7 @@ impl GroundDomain {
                 for (in1, in2) in zip(in1s, in2s) {
                     inners.push(Moo::new(in1.union(in2)?));
                 }
-                Ok(GroundDomain::Tuple(inners))
+                Ok(GroundDomain::Relation(RelAttr::default(), inners))
             }
             (GroundDomain::Relation(..), _) | (_, GroundDomain::Relation(..)) => {
                 Err(DomainOpError::WrongType)
@@ -1335,7 +1335,30 @@ impl GroundDomain {
                 ))
             }
             Literal::AbstractLiteral(AbstractLiteral::Relation(_)) => {
-                todo!();
+                let mut columns: Vec<Vec<Literal>> = vec![];
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Relation(tuples)) = lit else {
+                        return Err(DomainOpError::WrongType);
+                    };
+                    for tuple in tuples {
+                        if columns.is_empty() {
+                            columns = vec![Vec::new(); tuple.len()];
+                        }
+                        if tuple.len() != columns.len() {
+                            return Err(DomainOpError::NotGround);
+                        }
+                        for (column, field) in columns.iter_mut().zip(tuple) {
+                            column.push(field.clone());
+                        }
+                    }
+                }
+
+                let inner_domains = columns
+                    .iter()
+                    .map(|column| GroundDomain::from_literal_vec(column).map(Moo::new))
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(GroundDomain::Relation(RelAttr::default(), inner_domains))
             }
         }
     }
@@ -1345,6 +1368,9 @@ impl GroundDomain {
             GroundDomain::Matrix(inner, _) => Some(inner.clone()),
             GroundDomain::Set(_, inner) => Some(inner.clone()),
             GroundDomain::MSet(_, inner) => Some(inner.clone()),
+            GroundDomain::Relation(_, inner_doms) => {
+                Some(Moo::new(GroundDomain::Tuple(inner_doms.clone())))
+            }
             _ => None,
         }
     }

@@ -365,10 +365,37 @@ fn literal_from_simplified_json_with_ground(
         GroundDomain::Function(_, from, to) => {
             function_from_simplified_json(value, from.as_ref(), to.as_ref())
         }
-        GroundDomain::Relation(_, _) | GroundDomain::Partition(_, _) => {
-            literal_from_simplified_json_unguided(value)
-        }
+        GroundDomain::Relation(_, inner_doms) => relation_from_simplified_json(value, inner_doms),
+        GroundDomain::Partition(_, _) => literal_from_simplified_json_unguided(value),
     }
+}
+
+fn relation_from_simplified_json(
+    value: &JsonValue,
+    inner_doms: &[Moo<GroundDomain>],
+) -> anyhow::Result<Literal> {
+    let JsonValue::Array(items) = value else {
+        bail!("expected a JSON array for a relation");
+    };
+    let mut tuples = Vec::with_capacity(items.len());
+    for item in items {
+        let JsonValue::Array(fields) = item else {
+            bail!("expected a JSON array for a relation tuple");
+        };
+        if fields.len() != inner_doms.len() {
+            bail!(
+                "relation tuple arity mismatch: expected {}, got {}",
+                inner_doms.len(),
+                fields.len()
+            );
+        }
+        let mut tuple = Vec::with_capacity(fields.len());
+        for (field, dom) in fields.iter().zip(inner_doms) {
+            tuple.push(literal_from_simplified_json_with_ground(field, dom)?);
+        }
+        tuples.push(tuple);
+    }
+    Ok(Literal::AbstractLiteral(AbstractLiteral::Relation(tuples)))
 }
 
 fn matrix_from_simplified_json(
