@@ -1,6 +1,6 @@
 use conjure_cp::ast::{
     Atom, DeclarationPtr, Expression as Expr, Metadata, Moo, ReturnType, SymbolTable, Typeable,
-    comprehension::ComprehensionQualifier, eval_constant,
+    comprehension::ComprehensionQualifier,
 };
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
@@ -8,6 +8,14 @@ use conjure_cp::rule_engine::{
 use uniplate::Biplate;
 
 /// Lower iteration over a set to finite-domain iteration guarded by membership.
+///
+/// Applies equally when the source is a compile-time constant (e.g. `i <- {1,2}`): the
+/// `in`-membership condition this produces is exactly as correct there as for a decision-variable
+/// source, and no other rule actually constant-folds a comprehension whose `ExpressionGenerator`
+/// source is constant but whose return expression is not (every native/via-solver comprehension
+/// expander explicitly declines to run at all while an `ExpressionGenerator` qualifier remains,
+/// so a constant-sourced one that never reaches this rule is stuck permanently, surfacing much
+/// later as "top-level and must be flattened" once it reaches the solver adaptor unexpanded).
 #[register_rule("Base", 8600, [Comprehension])]
 fn lower_set_expression_generator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Comprehension(metadata, comprehension) = expr else {
@@ -24,9 +32,6 @@ fn lower_set_expression_generator(expr: &Expr, _: &SymbolTable) -> ApplicationRe
                     return None;
                 };
                 let source = (*ptr.as_quantified_expr()?).clone();
-                if eval_constant(&source).is_some() {
-                    return None;
-                }
                 matches!(source.return_type(), ReturnType::Set(_))
                     .then(|| (index, ptr.clone(), source))
             })
@@ -140,5 +145,45 @@ mod tests {
             rewritten.return_expression,
             Expr::from(Reference::new(ptr.clone()))
         );
+    }
+
+    #[test]
+    fn constant_set_generator_becomes_domain_generator_with_membership_guard() {
+        use conjure_cp::ast::{AbstractLiteral, Literal};
+
+        let constant_set = Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+                Literal::Int(1),
+                Literal::Int(2),
+            ]))),
+        );
+
+        let mut builder = ComprehensionBuilder::new(SymbolTablePtr::new());
+        builder = builder.expression_generator("element".into(), constant_set.clone());
+        let old_ptr = builder
+            .generator_symboltable()
+            .read()
+            .lookup_local(&"element".into())
+            .unwrap();
+        let comprehension = builder.with_return_value(Expr::from(Reference::new(old_ptr)));
+        let rewritten = lower_set_expression_generator(
+            &Expr::Comprehension(Metadata::new(), Moo::new(comprehension)),
+            &SymbolTable::new(),
+        )
+        .expect("should lower a constant-sourced expression generator too")
+        .new_expression;
+
+        let Expr::Comprehension(_, rewritten) = rewritten else {
+            panic!("expected a comprehension");
+        };
+        let [
+            ComprehensionQualifier::Generator { .. },
+            ComprehensionQualifier::Condition(Expr::In(_, _, source)),
+        ] = rewritten.qualifiers.as_slice()
+        else {
+            panic!("expected a domain generator followed by membership");
+        };
+        assert_eq!(source.as_ref(), &constant_set);
     }
 }

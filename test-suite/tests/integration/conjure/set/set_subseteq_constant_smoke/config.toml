@@ -1,0 +1,13 @@
+# Hand-authored regression case: a constant set on the LHS of subsetEq against a decision-variable
+# set (`{1,2} subsetEq y`). subseteq_set (types/set/horizontal/subseteq.rs) always desugars this
+# into `and([ i in y | i <- {1,2} ])`; lower_set_expression_generator used to explicitly decline to
+# lower a *constant*-sourced `i <- {1,2}` generator, on the assumption some other rule
+# constant-folded it instead -- no rule actually did, so the comprehension was stuck forever and
+# surfaced only much later as "top-level and must be flattened into the root constraint list
+# before Minion loading" once it reached the solver adaptor unexpanded.
+parser = "tree-sitter"
+rewriter = "optimised"
+comprehension-expander = "native"
+heuristic = "x"
+solver = "minion"
+number-of-solutions = "all"
