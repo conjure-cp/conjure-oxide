@@ -1,5 +1,5 @@
 use crate::ast::domains::{
-    attrs::{MSetAttr, PartitionAttr, SetAttr},
+    attrs::{MSetAttr, PartitionAttr, PermutationAttr, SetAttr},
     ground::{FieldGround, GroundDomain},
     int_val::IntVal,
     range::Range,
@@ -226,6 +226,25 @@ impl Domain {
             ))));
         }
         Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Partition(
+            attr.into(),
+            inner_dom,
+        ))))
+    }
+
+    /// Create a new permutation domain with the given element domain and attributes
+    pub fn permutation<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
+    where
+        T: Into<PermutationAttr<IntVal>> + TryInto<PermutationAttr<Int>> + Clone,
+    {
+        if let Domain::Ground(gd) = inner_dom.as_ref()
+            && let Ok(int_attr) = attr.clone().try_into()
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Permutation(
+                int_attr,
+                gd.clone(),
+            ))));
+        }
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Permutation(
             attr.into(),
             inner_dom,
         ))))
@@ -810,6 +829,50 @@ impl Domain {
         &mut self,
     ) -> Option<(&mut PartitionAttr<Int>, &mut Moo<GroundDomain>)> {
         if let Some(GroundDomain::Partition(attr, inner_dom)) = self.as_ground_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a permutation domain, get its (attributes, domain)
+    pub fn as_permutation(&self) -> Option<(PermutationAttr<IntVal>, Moo<Domain>)> {
+        if let Some(GroundDomain::Permutation(attrs, doms)) = self.as_ground() {
+            return Some((attrs.clone().into(), doms.clone().into()));
+        }
+        if let Some(UnresolvedDomain::Permutation(attrs, doms)) = self.as_unresolved() {
+            return Some((attrs.clone(), doms.clone()));
+        }
+        None
+    }
+
+    /// If this is a permutation domain, get mutable reference to its attributes and element
+    /// domain. The domain always becomes [UnresolvedDomain::Permutation] after this operation.
+    pub fn as_permutation_mut(&mut self) -> Option<(&mut PermutationAttr<IntVal>, &mut DomainPtr)> {
+        if let Some(GroundDomain::Permutation(attr_gd, inner_dom_gd)) = self.as_ground() {
+            let attr: PermutationAttr<IntVal> = attr_gd.clone().into();
+            let inner_dom = inner_dom_gd.clone().into();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Permutation(attr, inner_dom)));
+        }
+
+        if let Some(UnresolvedDomain::Permutation(attr, inner_dom)) = self.as_unresolved_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Permutation], get immutable references to its attributes and inner domain
+    pub fn as_permutation_ground(&self) -> Option<(&PermutationAttr<Int>, &Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Permutation(attr, inner_dom)) = self.as_ground() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Permutation], get mutable references to its attributes and inner domain
+    pub fn as_permutation_ground_mut(
+        &mut self,
+    ) -> Option<(&mut PermutationAttr<Int>, &mut Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Permutation(attr, inner_dom)) = self.as_ground_mut() {
             return Some((attr, inner_dom));
         }
         None

@@ -527,6 +527,29 @@ pub fn normalize_solutions_for_comparison(
                             });
                         updates.push((k, Literal::AbstractLiteral(partition)));
                     }
+                    Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles)) => {
+                        let permutation =
+                            AbstractLiteral::Permutation(cycles).transform(&move |x| match x {
+                                AbstractLiteral::Permutation(cycles) => {
+                                    let cycles = cycles
+                                        .into_iter()
+                                        .map(|cycle| {
+                                            cycle
+                                                .into_iter()
+                                                .map(|x| match x {
+                                                    Literal::Bool(false) => Literal::Int(0),
+                                                    Literal::Bool(true) => Literal::Int(1),
+                                                    x => x,
+                                                })
+                                                .collect_vec()
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Permutation(cycles)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(permutation)));
+                    }
                 }
             }
         }

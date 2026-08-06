@@ -1,4 +1,4 @@
-use crate::ast::domains::attrs::PartitionAttr;
+use crate::ast::domains::attrs::{PartitionAttr, PermutationAttr};
 use crate::ast::domains::{JectivityAttr, MSetAttr, PartialityAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
@@ -53,6 +53,8 @@ pub enum GroundDomain {
     Relation(RelAttr, Vec<Moo<GroundDomain>>),
     /// A partition
     Partition(PartitionAttr, Moo<GroundDomain>),
+    /// A permutation
+    Permutation(PermutationAttr, Moo<GroundDomain>),
 }
 
 impl GroundDomain {
@@ -154,6 +156,10 @@ impl GroundDomain {
             #[allow(unreachable_patterns)]
             (GroundDomain::Partition(..), _) | (_, GroundDomain::Partition(..)) => {
                 todo!("union partition domains")
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Permutation(..), _) | (_, GroundDomain::Permutation(..)) => {
+                todo!("union permutation domains")
             }
         }
     }
@@ -364,6 +370,9 @@ impl GroundDomain {
             GroundDomain::Partition(..) => {
                 todo!("Enumerating partition domains is not yet supported")
             }
+            GroundDomain::Permutation(..) => {
+                todo!("Enumerating permutation domains is not yet supported")
+            }
         }
     }
 
@@ -562,6 +571,9 @@ impl GroundDomain {
             }
             GroundDomain::Partition(_, _) => {
                 todo!("Length bound of Partitions is not yet supported")
+            }
+            GroundDomain::Permutation(_, _) => {
+                todo!("Length bound of Permutations is not yet supported")
             }
         }
     }
@@ -805,6 +817,30 @@ impl GroundDomain {
                     }
 
                     for elem in lit_elems.iter().flatten() {
+                        if !dom.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Permutation(attr, dom) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles)) => {
+                    // The literal's "size" is the number of moved points (elements mentioned in
+                    // some cycle), matching cycle notation's "unmentioned = fixed point"
+                    // semantics -- not the inner domain's own size.
+                    let sz: i32 = cycles
+                        .iter()
+                        .flatten()
+                        .count()
+                        .to_i32()
+                        .ok_or(DomainOpError::TooLarge)?;
+                    if !attr.size.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem in cycles.iter().flatten() {
                         if !dom.contains(elem)? {
                             return Ok(false);
                         }
@@ -1134,6 +1170,9 @@ impl GroundDomain {
             Literal::AbstractLiteral(AbstractLiteral::Partition(_)) => {
                 todo!("Need to figure out how this is going to work")
             }
+            Literal::AbstractLiteral(AbstractLiteral::Permutation(_)) => {
+                todo!("Need to figure out how this is going to work")
+            }
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
@@ -1406,6 +1445,7 @@ impl GroundDomain {
                 inners.iter().any(|d| d.has_representation_preference())
             }
             GroundDomain::Partition(_, inner) => inner.has_representation_preference(),
+            GroundDomain::Permutation(_, inner) => inner.has_representation_preference(),
         }
     }
 
@@ -1468,6 +1508,9 @@ impl GroundDomain {
             GroundDomain::Partition(_, inner) => {
                 format!("partition from {}", inner.as_type_string())
             }
+            GroundDomain::Permutation(_, inner) => {
+                format!("permutation of {}", inner.as_type_string())
+            }
         }
     }
 }
@@ -1517,6 +1560,9 @@ impl Typeable for GroundDomain {
             }
             GroundDomain::Partition(_, inner) => {
                 ReturnType::Partition(Box::new(inner.return_type()))
+            }
+            GroundDomain::Permutation(_, inner) => {
+                ReturnType::Permutation(Box::new(inner.return_type()))
             }
         }
     }
@@ -1583,6 +1629,9 @@ impl Display for GroundDomain {
             }
             GroundDomain::Partition(attrs, inner) => {
                 write!(f, "partition {attrs} from {inner}")
+            }
+            GroundDomain::Permutation(attrs, inner) => {
+                write!(f, "permutation {attrs} of {inner}")
             }
         }
     }

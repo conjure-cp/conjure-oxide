@@ -109,6 +109,7 @@ pub enum TypecheckingContext {
     Tuple,
     Record,
     Partition,
+    Permutation,
     Sequence,
     Function,
     Relation,

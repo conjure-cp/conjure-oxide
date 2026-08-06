@@ -3,6 +3,7 @@ use std::iter::zip;
 
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::PartitionAttr;
+use crate::ast::domains::attrs::PermutationAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::domains::ground::FieldGround;
 use crate::ast::records::Field;
@@ -61,6 +62,7 @@ pub enum UnresolvedDomain {
     /// A relation as a set of tuples
     Relation(RelAttr<IntVal>, Vec<DomainPtr>),
     Partition(PartitionAttr<IntVal>, DomainPtr),
+    Permutation(PermutationAttr<IntVal>, DomainPtr),
     /// A reference to a domain letting
     #[polyquine_skip]
     Reference(Reference),
@@ -140,6 +142,10 @@ impl UnresolvedDomain {
             UnresolvedDomain::Partition(attr, inner) => {
                 Ok(GroundDomain::Partition(attr.resolve()?, inner.resolve()?))
             }
+            UnresolvedDomain::Permutation(attr, inner) => Ok(GroundDomain::Permutation(
+                attr.resolve()?,
+                inner.resolve()?,
+            )),
             UnresolvedDomain::Reference(re) => re
                 .ptr
                 .as_domain_letting()
@@ -228,6 +234,10 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Partition(_, _), _) | (_, UnresolvedDomain::Partition(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            #[allow(unreachable_patterns)]
+            (UnresolvedDomain::Permutation(_, _), _) | (_, UnresolvedDomain::Permutation(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
             // TODO: Could we support unions of reference domains symbolically?
             #[allow(unreachable_patterns)]
             (UnresolvedDomain::Reference(_), _) | (_, UnresolvedDomain::Reference(_)) => {
@@ -276,6 +286,7 @@ impl UnresolvedDomain {
                 inners.iter().any(|d| d.has_representation_preference())
             }
             UnresolvedDomain::Partition(_, inner) => inner.has_representation_preference(),
+            UnresolvedDomain::Permutation(_, inner) => inner.has_representation_preference(),
             UnresolvedDomain::Reference(re) => re
                 .domain()
                 .is_some_and(|d| d.has_representation_preference()),
@@ -341,6 +352,9 @@ impl UnresolvedDomain {
             UnresolvedDomain::Partition(_, inner) => {
                 format!("partition from {}", inner.as_type_string())
             }
+            UnresolvedDomain::Permutation(_, inner) => {
+                format!("permutation of {}", inner.as_type_string())
+            }
             UnresolvedDomain::Reference(re) => re.to_string(),
         }
     }
@@ -391,6 +405,9 @@ impl Typeable for UnresolvedDomain {
             }
             UnresolvedDomain::Partition(_, inner) => {
                 ReturnType::Partition(Box::new(inner.return_type()))
+            }
+            UnresolvedDomain::Permutation(_, inner) => {
+                ReturnType::Permutation(Box::new(inner.return_type()))
             }
             UnresolvedDomain::Reference(re) => re.return_type(),
         }
@@ -456,6 +473,9 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Partition(attrs, inner_dom) => {
                 write!(f, "partition {attrs} from {inner_dom}")
+            }
+            UnresolvedDomain::Permutation(attrs, inner_dom) => {
+                write!(f, "permutation {attrs} of {inner_dom}")
             }
             UnresolvedDomain::Reference(re) => write!(f, "{re}"),
         }

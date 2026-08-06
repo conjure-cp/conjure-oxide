@@ -806,6 +806,7 @@ fn typecheck_variable(
         TypecheckingContext::Tuple => "tuple",
         TypecheckingContext::Record => "record",
         TypecheckingContext::Partition => "partition",
+        TypecheckingContext::Permutation => "permutation",
         TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Function => "function",
         TypecheckingContext::Relation => "relation",
@@ -827,6 +828,7 @@ fn typecheck_variable(
         GroundDomain::Function(_, _, _) => "function",
         GroundDomain::Relation(_, _) => "relation",
         GroundDomain::Partition(_, _) => "partition",
+        GroundDomain::Permutation(_, _) => "permutation",
     };
 
     // If types match, no error
@@ -902,6 +904,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             TypecheckingContext::Tuple => "tuple",
             TypecheckingContext::Record => "record",
             TypecheckingContext::Partition => "partition",
+            TypecheckingContext::Permutation => "permutation",
             TypecheckingContext::Sequence => "sequence",
             TypecheckingContext::Function => "function",
             TypecheckingContext::Relation => "relation",

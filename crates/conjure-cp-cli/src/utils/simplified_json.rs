@@ -166,6 +166,13 @@ fn abstract_literal_to_simplified_json(
             }
             Ok(JsonValue::Array(items))
         }
+        AbstractLiteral::Permutation(cycles) => {
+            let mut items = Vec::with_capacity(cycles.len());
+            for cycle in cycles {
+                items.push(elems_as_json_array(cycle)?);
+            }
+            Ok(JsonValue::Array(items))
+        }
     }
 }
 
@@ -367,6 +374,7 @@ fn literal_from_simplified_json_with_ground(
         }
         GroundDomain::Relation(_, inner_doms) => relation_from_simplified_json(value, inner_doms),
         GroundDomain::Partition(_, inner) => partition_from_simplified_json(value, inner),
+        GroundDomain::Permutation(_, inner) => permutation_from_simplified_json(value, inner),
     }
 }
 
@@ -389,6 +397,29 @@ fn partition_from_simplified_json(
         parts.push(part);
     }
     Ok(Literal::AbstractLiteral(AbstractLiteral::Partition(parts)))
+}
+
+fn permutation_from_simplified_json(
+    value: &JsonValue,
+    inner: &GroundDomain,
+) -> anyhow::Result<Literal> {
+    let JsonValue::Array(items) = value else {
+        bail!("expected a JSON array for a permutation");
+    };
+    let mut cycles = Vec::with_capacity(items.len());
+    for item in items {
+        let JsonValue::Array(elems) = item else {
+            bail!("expected a JSON array for a permutation cycle");
+        };
+        let mut cycle = Vec::with_capacity(elems.len());
+        for elem in elems {
+            cycle.push(literal_from_simplified_json_with_ground(elem, inner)?);
+        }
+        cycles.push(cycle);
+    }
+    Ok(Literal::AbstractLiteral(AbstractLiteral::Permutation(
+        cycles,
+    )))
 }
 
 fn relation_from_simplified_json(

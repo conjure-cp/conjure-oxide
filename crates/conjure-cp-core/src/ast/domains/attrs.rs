@@ -251,6 +251,30 @@ impl<A> Default for PartitionAttr<A> {
     }
 }
 
+/// A permutation is inherently total and bijective by definition, so unlike partition or
+/// function, its only attribute is a size constraint (on the number of moved points, i.e. the
+/// points not fixed by the permutation).
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct PermutationAttr<A = Int> {
+    pub size: Range<A>,
+}
+
+impl<A: Display> Display for PermutationAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let size_str = fmt_size("size", &self.size);
+        write!(f, "{size_str}")
+    }
+}
+
+impl<A> Default for PermutationAttr<A> {
+    fn default() -> Self {
+        PermutationAttr {
+            size: Range::Unbounded,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum PartialityAttr {
     Total,

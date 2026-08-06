@@ -1,6 +1,6 @@
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo, PartitionAttr,
-    Reference, RelAttr, ReturnType, SequenceAttr, Typeable,
+    PermutationAttr, Reference, RelAttr, ReturnType, SequenceAttr, Typeable,
     domains::{Int, MSetAttr, Range, SetAttr},
     eval_constant,
 };
@@ -281,5 +281,6 @@ impl_int_conversions_for!(
     FuncAttr,
     SequenceAttr,
     PartitionAttr,
+    PermutationAttr,
     RelAttr
 );

@@ -7,8 +7,9 @@ use std::hash::Hash;
 use ustr::Ustr;
 
 use super::{
-    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr, Range,
-    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::Field,
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr,
+    PermutationAttr, Range, ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int,
+    records::Field,
 };
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
@@ -114,7 +115,8 @@ fn abstract_literal_essence_cmp(
             .cmp(&rhs.name.to_string())
             .then_with(|| lhs.value.essence_cmp(&rhs.value)),
         (AbstractLiteral::Partition(lhs), AbstractLiteral::Partition(rhs))
-        | (AbstractLiteral::Relation(lhs), AbstractLiteral::Relation(rhs)) => lhs
+        | (AbstractLiteral::Relation(lhs), AbstractLiteral::Relation(rhs))
+        | (AbstractLiteral::Permutation(lhs), AbstractLiteral::Permutation(rhs)) => lhs
             .iter()
             .zip(rhs)
             .find_map(|(lhs, rhs)| {
@@ -138,6 +140,7 @@ fn abstract_literal_kind(literal: &AbstractLiteral<Literal>) -> u8 {
         AbstractLiteral::Variant(_) => 7,
         AbstractLiteral::Partition(_) => 8,
         AbstractLiteral::Relation(_) => 9,
+        AbstractLiteral::Permutation(_) => 10,
     }
 }
 
@@ -238,6 +241,11 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     // A list of partitions, each part has a set of values
     Partition(Vec<Vec<T>>),
     Relation(Vec<Vec<T>>),
+
+    /// Cycle notation for a permutation: each inner vec is one cycle. Unlike `Partition`, this is
+    /// *sparse* -- any element of the permutation's domain not mentioned in any cycle is an
+    /// implicit fixed point (maps to itself), rather than every element needing to be covered.
+    Permutation(Vec<Vec<T>>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
@@ -321,6 +329,28 @@ impl AbstractLiteral<Expression> {
 
                 Some(Domain::partition(
                     PartitionAttr::<Int>::default(),
+                    item_domain,
+                ))
+            }
+
+            AbstractLiteral::Permutation(cycles) => {
+                // Flatten the Vec<Vec< into a single vec; unlike partition, elements not
+                // mentioned in any cycle are implicit fixed points, so an empty literal (or one
+                // with no domain-bearing elements) has no way to infer an inner domain.
+                let item_domains: Vec<DomainPtr> = cycles
+                    .iter()
+                    .flatten()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+
+                let mut item_domain_iter = item_domains.iter().cloned();
+                let first_item = item_domain_iter.next()?;
+                let item_domain = item_domains.iter().try_fold(first_item, |x, y| x.union(y)).expect(
+                    "taking the union of all item domains of a permutation literal should succeed",
+                );
+
+                Some(Domain::permutation(
+                    PermutationAttr::<Int>::default(),
                     item_domain,
                 ))
             }
@@ -441,6 +471,22 @@ impl Typeable for AbstractLiteral<Expression> {
                 );
 
                 ReturnType::Partition(Box::new(item_type))
+            }
+            AbstractLiteral::Permutation(items) if items.is_empty() || items[0].is_empty() => {
+                ReturnType::Permutation(Box::new(ReturnType::Unknown))
+            }
+            AbstractLiteral::Permutation(items) => {
+                let item_type = items[0][0].return_type();
+
+                let item_types: Vec<ReturnType> =
+                    items.iter().flatten().map(|x| x.return_type()).collect();
+
+                assert!(
+                    item_types.iter().all(|x| x == &item_type),
+                    "all items in every cycle of a permutation should have the same type"
+                );
+
+                ReturnType::Permutation(Box::new(item_type))
             }
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
                 ReturnType::Matrix(Box::new(ReturnType::Unknown))
@@ -604,6 +650,17 @@ where
 
                 write!(f, "partition({elems_str})")
             }
+            AbstractLiteral::Permutation(cycles) => {
+                let cycles_str: String = cycles
+                    .iter()
+                    .map(|cycle| {
+                        let elems_str = cycle.iter().map(|x| format!("{x}")).join(",");
+                        format!("({elems_str})")
+                    })
+                    .join("");
+
+                write!(f, "permutation{cycles_str}")
+            }
             AbstractLiteral::Record(entries) => {
                 let entries_str: String = entries
                     .iter()
@@ -726,6 +783,13 @@ where
                     Box::new(move |x| AbstractLiteral::Partition(f1_ctx(x))),
                 )
             }
+            AbstractLiteral::Permutation(elems) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Permutation(f1_ctx(x))),
+                )
+            }
         }
     }
 }
@@ -843,6 +907,13 @@ where
                         Box::new(move |x| AbstractLiteral::Partition(f1_ctx(x))),
                     )
                 }
+                AbstractLiteral::Permutation(elems) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Permutation(f1_ctx(x))),
+                    )
+                }
             }
         }
     }
@@ -865,7 +936,9 @@ where
             AbstractLiteral::Variant(entry) => {
                 <Moo<Field<U>> as Biplate<To>>::children_bi_count(entry)
             }
-            AbstractLiteral::Relation(elems) | AbstractLiteral::Partition(elems) => {
+            AbstractLiteral::Relation(elems)
+            | AbstractLiteral::Partition(elems)
+            | AbstractLiteral::Permutation(elems) => {
                 <Vec<Vec<U>> as Biplate<To>>::children_bi_count(elems)
             }
             AbstractLiteral::Function(_) => <Self as Biplate<To>>::children_bi(self).len(),
@@ -900,7 +973,9 @@ where
             AbstractLiteral::Variant(entry) => {
                 <Moo<Field<U>> as Biplate<To>>::try_replace_child_at_bi(entry, index, child)
             }
-            AbstractLiteral::Relation(elems) | AbstractLiteral::Partition(elems) => {
+            AbstractLiteral::Relation(elems)
+            | AbstractLiteral::Partition(elems)
+            | AbstractLiteral::Permutation(elems) => {
                 <Vec<Vec<U>> as Biplate<To>>::try_replace_child_at_bi(elems, index, child)
             }
             AbstractLiteral::Function(_) => {
@@ -1061,6 +1136,26 @@ impl AbstractLiteral<Expression> {
                 }
 
                 Some(AbstractLiteral::Partition(partition))
+            }
+            AbstractLiteral::Permutation(elems) => {
+                let mut permutation: Vec<Vec<_>> = Vec::new();
+
+                for cycle in elems {
+                    let literals = cycle
+                        .into_iter()
+                        .map(|expr| match expr {
+                            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                            Expression::AbstractLiteral(_, abslit) => {
+                                Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                            }
+                            _ => None,
+                        })
+                        .collect::<Option<Vec<_>>>()?;
+
+                    permutation.push(literals);
+                }
+
+                Some(AbstractLiteral::Permutation(permutation))
             }
             AbstractLiteral::Matrix(items, domain) => {
                 let mut literals = vec![];

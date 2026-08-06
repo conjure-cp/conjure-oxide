@@ -364,6 +364,9 @@ fn abstract_literal_children_are_local_constants(lit: &AbstractLiteral<Expr>) ->
         AbstractLiteral::Partition(parts) => parts
             .iter()
             .all(|part| part.iter().all(is_local_constant_expr)),
+        AbstractLiteral::Permutation(cycles) => cycles
+            .iter()
+            .all(|cycle| cycle.iter().all(is_local_constant_expr)),
         AbstractLiteral::Variant(field) => is_local_constant_expr(&field.value),
     }
 }

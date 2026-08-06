@@ -3002,6 +3002,13 @@ impl Expression {
                         }
                     }
                 }
+                AbstractLiteral::Permutation(cycles) => {
+                    for cycle in cycles {
+                        for expr in cycle {
+                            f(expr);
+                        }
+                    }
+                }
             },
             Expression::Root(_, vs) => {
                 for expr in vs {
@@ -3268,6 +3275,13 @@ impl Expression {
                     }
                 }
                 AbstractLiteral::Partition(v) => {
+                    for exprs in v {
+                        for expr in exprs {
+                            child_hash(child_hashes).hash(&mut hasher);
+                        }
+                    }
+                }
+                AbstractLiteral::Permutation(v) => {
                     for exprs in v {
                         for expr in exprs {
                             child_hash(child_hashes).hash(&mut hasher);

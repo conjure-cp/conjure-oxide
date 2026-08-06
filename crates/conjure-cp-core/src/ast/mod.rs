@@ -33,8 +33,8 @@ pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
     BinaryAttr, Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal,
-    JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr, PartitionAttr, Range,
-    RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
+    JectivityAttr, MSetAttr, OXIDE_INT_MAX, OXIDE_INT_MIN, PartialityAttr, PartitionAttr,
+    PermutationAttr, Range, RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
 };
 pub use eval::generator_values_from_expr;
 pub use eval::{

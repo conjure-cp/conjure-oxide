@@ -23,6 +23,7 @@ pub enum ReturnType {
     Function(Box<ReturnType>, Box<ReturnType>),
     Relation(Vec<ReturnType>),
     Partition(Box<ReturnType>),
+    Permutation(Box<ReturnType>),
 }
 
 impl ReturnType {
@@ -80,6 +81,7 @@ impl Display for ReturnType {
                 write!(f, "relation of ({inners})")
             }
             ReturnType::Partition(inner) => write!(f, "partition of {inner}"),
+            ReturnType::Permutation(inner) => write!(f, "permutation of {inner}"),
         }
     }
 }
