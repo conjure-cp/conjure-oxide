@@ -1,5 +1,5 @@
 mod as_set;
-mod binary_attrs;
+pub(crate) mod binary_attrs;
 mod occurrence;
 mod packed;
 

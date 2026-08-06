@@ -1,3 +1,5 @@
+mod attribute_as_constraint;
+mod attribute_as_constraint_fallback;
 mod base;
 mod bubble;
 mod comprehensions;
