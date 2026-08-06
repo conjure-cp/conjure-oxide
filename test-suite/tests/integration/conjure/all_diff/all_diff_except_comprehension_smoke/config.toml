@@ -1,0 +1,11 @@
+# Hand-authored regression case: a comprehension as allDiffExcept's matrix argument.
+# all_different_except_comparison's tree-sitter grammar production didn't accept the same range of
+# expression forms for its "matrix" field that all_diff_comparison accepts via $.atom (which is
+# what lets a comprehension through), so `allDiffExcept([ x[i] | i : int(1..3) ], 0)` failed to
+# parse ("Missing !") even though the equivalent allDiff(...) form already worked.
+parser = "tree-sitter"
+rewriter = "optimised"
+comprehension-expander = "native"
+heuristic = "x"
+solver = "minion"
+number-of-solutions = "all"
