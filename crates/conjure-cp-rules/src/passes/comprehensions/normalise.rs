@@ -97,6 +97,10 @@ fn merge_nested_ac_comprehensions_impl(expr: &Expr) -> Option<Expr> {
         ACOperatorKind::Or => Expr::Or(Metadata::new(), Moo::new(merged_comprehension)),
         ACOperatorKind::Sum => Expr::Sum(Metadata::new(), Moo::new(merged_comprehension)),
         ACOperatorKind::Product => Expr::Product(Metadata::new(), Moo::new(merged_comprehension)),
+        // `expr.to_ac_operator_kind()` above never returns Min/Max (they aren't in
+        // `TryFrom<&Expression> for ACOperatorKind`, deliberately -- see that type's doc comment),
+        // so `ac_operator_kind` can never actually be one of these here.
+        ACOperatorKind::Min | ACOperatorKind::Max => unreachable!(),
     };
 
     Some(wrapped)

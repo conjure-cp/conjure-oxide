@@ -40,11 +40,11 @@ fn simplify_expanded_ac_results(results: Vec<Expr>, ac_operator: ACOperatorKind)
         (ACOperatorKind::And, Expr::And(_, matrix))
         | (ACOperatorKind::Or, Expr::Or(_, matrix))
         | (ACOperatorKind::Sum, Expr::Sum(_, matrix))
-        | (ACOperatorKind::Product, Expr::Product(_, matrix)) => {
-            Moo::unwrap_or_clone(matrix.clone())
-                .unwrap_list()
-                .unwrap_or_else(|| vec![simplified])
-        }
+        | (ACOperatorKind::Product, Expr::Product(_, matrix))
+        | (ACOperatorKind::Min, Expr::Min(_, matrix))
+        | (ACOperatorKind::Max, Expr::Max(_, matrix)) => Moo::unwrap_or_clone(matrix.clone())
+            .unwrap_list()
+            .unwrap_or_else(|| vec![simplified]),
         _ => vec![simplified],
     }
 }

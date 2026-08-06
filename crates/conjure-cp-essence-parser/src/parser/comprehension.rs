@@ -271,8 +271,10 @@ pub fn parse_quantifier_or_aggregate_expr(
         "forAll" => (ACOperatorKind::And, "And"),
         "exists" => (ACOperatorKind::Or, "Or"),
         "sum" => (ACOperatorKind::Sum, "Sum"),
-        "min" => (ACOperatorKind::Sum, "Min"), // AC operator doesn't matter for non-boolean aggregates
-        "max" => (ACOperatorKind::Sum, "Max"),
+        // min/max are not true AC operators, but still need their own skip-operator tag so a
+        // symbolic guard lowers correctly instead of silently substituting Sum's identity (0).
+        "min" => (ACOperatorKind::Min, "Min"),
+        "max" => (ACOperatorKind::Max, "Max"),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Unknown operator: {}", operator_str),

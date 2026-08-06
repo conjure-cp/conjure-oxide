@@ -1,7 +1,7 @@
 use crate::{
     ast::Metadata,
     ast::{Domain, Moo, Range, ReturnType},
-    matrix_expr,
+    bug, matrix_expr,
 };
 
 use super::{Expression, Literal, Typeable};
@@ -10,12 +10,25 @@ use serde::{Deserialize, Serialize};
 /// The possible kinds of associative-commutative (AC) operator.
 ///
 /// AC operators take a single vector as input and are commonly used alongside comprehensions.
+///
+/// `Min`/`Max` are included here for the sole purpose of tagging a comprehension's
+/// [`skip_operator`](super::comprehension::Comprehension::skip_operator) so that a symbolic guard
+/// inside `min([... | ...])`/`max([... | ...])` can be lowered correctly by the native
+/// comprehension expander -- unlike `And`/`Or`/`Sum`/`Product`, they have no universal identity
+/// element (the "safe value to substitute for a guarded-out element" depends on the element's own
+/// domain), so [`identity`](Self::identity) is intentionally unreachable for them; callers that
+/// might see a `Min`/`Max` operator must check for that first (see
+/// `expand_native.rs`'s guard on the identity-dropping optimisation for the only current example).
+/// They are deliberately not wired into `TryFrom<&Expression>` or the AC-comprehension merge/
+/// via-solver machinery, which only ever handles the four true AC operators.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ACOperatorKind {
     And,
     Or,
     Product,
     Sum,
+    Min,
+    Max,
 }
 
 impl ACOperatorKind {
@@ -33,6 +46,8 @@ impl ACOperatorKind {
             ACOperatorKind::Or => Expression::Or(Metadata::new(), box_expr),
             ACOperatorKind::Product => Expression::Product(Metadata::new(), box_expr),
             ACOperatorKind::Sum => Expression::Sum(Metadata::new(), box_expr),
+            ACOperatorKind::Min => Expression::Min(Metadata::new(), box_expr),
+            ACOperatorKind::Max => Expression::Max(Metadata::new(), box_expr),
         }
     }
 
@@ -46,12 +61,20 @@ impl ACOperatorKind {
     /// let identity = ACOperatorKind::And.identity();
     /// assert_eq!(identity,Literal::Bool(true));
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// `Min`/`Max` have no universal identity element -- see the type-level doc comment. Callers
+    /// must not call this for those two variants.
     pub fn identity(&self) -> Literal {
         match self {
             ACOperatorKind::And => Literal::Bool(true),
             ACOperatorKind::Or => Literal::Bool(false),
             ACOperatorKind::Product => Literal::Int(1),
             ACOperatorKind::Sum => Literal::Int(0),
+            ACOperatorKind::Min | ACOperatorKind::Max => {
+                bug!("ACOperatorKind::{self:?} has no universal identity element")
+            }
         }
     }
 
@@ -135,14 +158,62 @@ impl ACOperatorKind {
                     ]),
                 )
             }
+            ACOperatorKind::Min | ACOperatorKind::Max => {
+                bug!(
+                    "ACOperatorKind::{self:?} has no universal identity element, so make_skip_operation \
+                     cannot build a skip operation for it -- use make_min_max_skip_operation instead, \
+                     which takes an explicit skip value"
+                )
+            }
         }
+    }
+
+    /// The min/max equivalent of [`make_skip_operation`](Self::make_skip_operation): `self` must
+    /// be `Min` or `Max`. Unlike the four true AC operators, min/max have no value that's always
+    /// safe to substitute for a guarded-out element -- callers must supply one themselves (`skip_value`),
+    /// since this method has no way to know it: by the time a per-branch skip operation is being
+    /// built, `tail_expr` is already the branch-specific (and so potentially far too narrow)
+    /// result, not the comprehension's general return-expression domain the skip value should
+    /// come from. Any domain bound safe for every element being aggregated works (e.g. the
+    /// element's declared domain's max, for `min`, or min, for `max`) -- including it can never
+    /// change a min/max computed over at least one *included* real element, since it is never more
+    /// extreme than any value the element could actually take.
+    pub fn make_min_max_skip_operation(
+        &self,
+        guard_expr: Expression,
+        tail_expr: Expression,
+        skip_value: Literal,
+    ) -> Expression {
+        assert!(
+            matches!(self, ACOperatorKind::Min | ACOperatorKind::Max),
+            "make_min_max_skip_operation is only valid for ACOperatorKind::Min/Max."
+        );
+        assert!(
+            matches!(guard_expr.return_type(), ReturnType::Bool),
+            "The guard expression in a skipping operation should be type boolean."
+        );
+        assert!(
+            matches!(tail_expr.return_type(), ReturnType::Int),
+            "The tail expression in a min/max skipping operation should be type int."
+        );
+        let guard_expr_boxed = Moo::new(guard_expr);
+        Expression::UnsafeIndex(
+            Metadata::new(),
+            Moo::new(
+                matrix_expr![Expression::Atomic(Metadata::new(), skip_value.into()), tail_expr; Domain::int(vec![Range::Bounded(0, 1)])],
+            ),
+            vec![Expression::ToInt(Metadata::new(), guard_expr_boxed)],
+        )
     }
 
     /// Gives the return type of the operator, and the return types its elements should be.
     pub fn return_type(&self) -> ReturnType {
         match self {
             ACOperatorKind::And | ACOperatorKind::Or => ReturnType::Bool,
-            ACOperatorKind::Product | ACOperatorKind::Sum => ReturnType::Int,
+            ACOperatorKind::Product
+            | ACOperatorKind::Sum
+            | ACOperatorKind::Min
+            | ACOperatorKind::Max => ReturnType::Int,
         }
     }
 }

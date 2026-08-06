@@ -1060,8 +1060,14 @@ fn list_combining_skip_operator(operator_str: &str) -> Option<ACOperatorKind> {
     match operator_str {
         "and" => Some(ACOperatorKind::And),
         "or" => Some(ACOperatorKind::Or),
-        "sum" | "min" | "max" => Some(ACOperatorKind::Sum),
+        "sum" => Some(ACOperatorKind::Sum),
         "product" => Some(ACOperatorKind::Product),
+        // min/max are not true AC operators (no universal identity element), but still need
+        // their own skip-operator tag so a symbolic guard inside `min([... | ...])` lowers
+        // correctly (previously mapped to Sum, which silently substituted 0 for guarded-out
+        // elements -- wrong for anything but a min/max whose correct answer happens to be <=/>= 0).
+        "min" => Some(ACOperatorKind::Min),
+        "max" => Some(ACOperatorKind::Max),
         _ => None,
     }
 }

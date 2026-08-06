@@ -1324,8 +1324,13 @@ fn unary_skip_operator(op_name: &str) -> Option<ACOperatorKind> {
     match op_name {
         "MkOpAnd" => Some(ACOperatorKind::And),
         "MkOpOr" => Some(ACOperatorKind::Or),
-        "MkOpSum" | "MkOpMin" | "MkOpMax" => Some(ACOperatorKind::Sum),
+        "MkOpSum" => Some(ACOperatorKind::Sum),
         "MkOpProduct" => Some(ACOperatorKind::Product),
+        // Not true AC operators (no universal identity element), but still need their own
+        // skip-operator tag so a symbolic guard lowers correctly instead of silently substituting
+        // Sum's identity (0).
+        "MkOpMin" => Some(ACOperatorKind::Min),
+        "MkOpMax" => Some(ACOperatorKind::Max),
         _ => None,
     }
 }

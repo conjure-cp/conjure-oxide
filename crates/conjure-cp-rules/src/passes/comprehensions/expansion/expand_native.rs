@@ -1,7 +1,7 @@
 use conjure_cp::{
     ast::{
-        Atom, DeclarationKind, DeclarationPtr, DomainPtr, Expression, Literal, Metadata, Name,
-        SymbolTable,
+        Atom, DeclarationKind, DeclarationPtr, DomainPtr, Expression, GroundDomain, Literal,
+        Metadata, Name, Range, SymbolTable,
         ac_operators::ACOperatorKind,
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
@@ -26,12 +26,58 @@ pub fn expand_native(
     comprehension: Comprehension,
     parent_symbols: &mut SymbolTable,
 ) -> Result<Vec<Expression>, SolverError> {
+    // For Min/Max, the safe value to substitute for a guarded-out element must come from the
+    // comprehension's *general* return-expression domain, computed once here before any
+    // generator's `with_temporary_quantified_binding` narrows a quantified variable's domain down
+    // to one concrete value per branch -- computing it later, from an already-narrowed branch's
+    // own (possibly single-valued) result, would make the skip value equal to that one value
+    // instead of a bound safe for every possible element, corrupting the guard.
+    let min_max_skip_value = match comprehension.skip_operator {
+        Some(op @ (ACOperatorKind::Min | ACOperatorKind::Max)) => Some(min_max_skip_value(
+            &comprehension.return_expression,
+            op == ACOperatorKind::Min,
+        )?),
+        _ => None,
+    };
     expand_qualifiers(
         &comprehension,
         0,
         parent_symbols,
         comprehension.skip_operator,
+        min_max_skip_value,
     )
+}
+
+/// The domain bound to substitute for a guarded-out element in a min/max skip operation: the
+/// return expression's own upper bound (for `min`) or lower bound (for `max`). Minion requires
+/// every decision variable to have a finite, bounded domain, so this is always expected to
+/// resolve; if it somehow doesn't, that's a genuine "can't expand this comprehension" failure
+/// (not a bug to hide), surfaced as a model-feature error rather than a panic.
+fn min_max_skip_value(
+    return_expression: &Expression,
+    want_max: bool,
+) -> Result<Literal, SolverError> {
+    let not_supported = || {
+        SolverError::ModelFeatureNotSupported(format!(
+            "min/max comprehension with a symbolic guard: could not determine a bounded domain \
+             for the return expression {return_expression} to build a safe skip value"
+        ))
+    };
+    let ranges = return_expression
+        .domain_of()
+        .and_then(|domain| domain.as_ground().cloned())
+        .and_then(|ground| match ground {
+            GroundDomain::Int(ranges) => Some(ranges),
+            _ => None,
+        })
+        .ok_or_else(not_supported)?;
+    let spanning = Range::spanning(&ranges);
+    let bound = if want_max {
+        spanning.high()
+    } else {
+        spanning.low()
+    };
+    Ok(Literal::Int(*bound.ok_or_else(not_supported)?))
 }
 
 fn expand_qualifiers(
@@ -39,6 +85,7 @@ fn expand_qualifiers(
     qualifier_index: usize,
     parent_symbols: &mut SymbolTable,
     ac_operator: Option<ACOperatorKind>,
+    min_max_skip_value: Option<Literal>,
 ) -> Result<Vec<Expression>, SolverError> {
     if qualifier_index == comprehension.qualifiers.len() {
         let child_symbols = comprehension.symbols().clone();
@@ -53,8 +100,12 @@ fn expand_qualifiers(
         };
         let return_expression = simplify_expression(return_expression);
         // Drop AC identities here so And/Or/Sum/Product expansions do not materialise a huge
-        // vector of tautologies that the rewriter must later strip.
+        // vector of tautologies that the rewriter must later strip. Min/Max have no universal
+        // identity (ACOperatorKind::identity() panics for them), so this optimisation just
+        // doesn't apply to them -- every element stays, which is still correct, just not maximally
+        // compact.
         if let Some(op) = ac_operator
+            && !matches!(op, ACOperatorKind::Min | ACOperatorKind::Max)
             && let Expression::Atomic(_, Atom::Literal(lit)) = &return_expression
             && lit == &op.identity()
         {
@@ -82,6 +133,7 @@ fn expand_qualifiers(
                         qualifier_index + 1,
                         parent_symbols,
                         ac_operator,
+                        min_max_skip_value.clone(),
                     )
                 })?;
                 expanded.append(&mut suffix);
@@ -95,6 +147,7 @@ fn expand_qualifiers(
                 qualifier_index + 1,
                 parent_symbols,
                 ac_operator,
+                min_max_skip_value,
             )?,
             Some(false) => vec![],
             None => {
@@ -103,8 +156,9 @@ fn expand_qualifiers(
                     qualifier_index + 1,
                     parent_symbols,
                     ac_operator,
+                    min_max_skip_value.clone(),
                 )?;
-                apply_guard_to_suffix(condition, suffix, ac_operator)?
+                apply_guard_to_suffix(condition, suffix, ac_operator, min_max_skip_value)?
             }
         },
         ComprehensionQualifier::ExpressionGenerator { .. } => {
@@ -133,12 +187,7 @@ fn expand_nested_comprehensions(
         return Ok(expr);
     };
 
-    let results = expand_qualifiers(
-        comprehension.as_ref(),
-        0,
-        parent_symbols,
-        comprehension.skip_operator,
-    )?;
+    let results = expand_native(comprehension.as_ref().clone(), parent_symbols)?;
     Ok(into_matrix_expr!(results))
 }
 
@@ -146,6 +195,7 @@ fn apply_guard_to_suffix(
     guard: &Expression,
     suffix: Vec<Expression>,
     ac_operator: Option<ACOperatorKind>,
+    min_max_skip_value: Option<Literal>,
 ) -> Result<Vec<Expression>, SolverError> {
     if suffix.is_empty() {
         return Ok(vec![]);
@@ -161,7 +211,16 @@ fn apply_guard_to_suffix(
     let guard = simplify_expression(guard);
     let suffix = ac_operator.as_expression(into_matrix_expr!(suffix));
 
-    Ok(vec![ac_operator.make_skip_operation(guard, suffix)])
+    let skip_expr = match (ac_operator, min_max_skip_value) {
+        (ACOperatorKind::Min | ACOperatorKind::Max, Some(skip_value)) => {
+            ac_operator.make_min_max_skip_operation(guard, suffix, skip_value)
+        }
+        (ACOperatorKind::Min | ACOperatorKind::Max, None) => {
+            bug!("min/max comprehension expansion is missing its precomputed skip value")
+        }
+        _ => ac_operator.make_skip_operation(guard, suffix),
+    };
+    Ok(vec![skip_expr])
 }
 
 fn resolve_generator_values(name: &Name, domain: &DomainPtr) -> Result<Vec<Literal>, SolverError> {
@@ -275,6 +334,69 @@ mod tests {
         let expanded = expand_native(comprehension, &mut parent_symbols.read().clone()).unwrap();
 
         assert_eq!(expanded, vec![int(2), int(4), int(6), int(8)]);
+    }
+
+    #[test]
+    fn min_max_skip_value_uses_the_return_expressions_domain_bound() {
+        let i = DeclarationPtr::new_find(Name::user("i"), Domain::int(vec![Range::Bounded(5, 8)]));
+        let i_expr = atom_ref(i);
+
+        assert_eq!(
+            min_max_skip_value(&i_expr, true).unwrap(),
+            Literal::Int(8),
+            "min's skip value should be the upper bound"
+        );
+        assert_eq!(
+            min_max_skip_value(&i_expr, false).unwrap(),
+            Literal::Int(5),
+            "max's skip value should be the lower bound"
+        );
+    }
+
+    #[test]
+    fn min_comprehension_with_a_symbolic_guard_never_lets_the_skip_value_win() {
+        // Regression test: min/max comprehensions used to be tagged with ACOperatorKind::Sum as
+        // their skip_operator, so a symbolic guard substituted 0 (Sum's identity) for guarded-out
+        // elements -- not a neutral value for min. Domain is entirely positive (6..8) so 0 would
+        // have won the min if the bug were still present.
+        let parent_symbols = SymbolTablePtr::new();
+        let b = DeclarationPtr::new_find(Name::user("b"), Domain::bool());
+        parent_symbols.write().insert(b.clone());
+
+        let mut builder = ComprehensionBuilder::new(parent_symbols.clone()).generator(
+            DeclarationPtr::new_find(Name::user("i"), Domain::int(vec![Range::Bounded(6, 8)])),
+        );
+        let i = builder
+            .generator_symboltable()
+            .read()
+            .lookup_local(&Name::user("i"))
+            .expect("i should be in comprehension scope");
+        let i_expr = atom_ref(i);
+
+        // `i != 6 \/ b`: with b left symbolic, only i=6's guard is undetermined at expansion time.
+        builder = builder.guard(Expression::Or(
+            Metadata::new(),
+            Moo::new(conjure_cp::matrix_expr![
+                Expression::Neq(Metadata::new(), Moo::new(i_expr.clone()), Moo::new(int(6))),
+                atom_ref(b),
+            ]),
+        ));
+
+        let mut comprehension = builder.with_return_value(i_expr);
+        comprehension.skip_operator = Some(ACOperatorKind::Min);
+        let expanded = expand_native(comprehension, &mut parent_symbols.read().clone()).unwrap();
+
+        // Every literal `0` in the expanded tree would indicate the old Sum-identity bug; the
+        // skip value must be the domain's own upper bound (8) instead.
+        let flat = format!("{expanded:?}");
+        assert!(
+            !flat.contains("Int(0)"),
+            "min skip value must not be Sum's identity (0): {flat}"
+        );
+        assert!(
+            flat.contains("Int(8)"),
+            "min skip value should be the domain upper bound (8): {flat}"
+        );
     }
 
     #[test]

@@ -218,6 +218,8 @@ fn wrap_ac(kind: ACOperatorKind, comprehension: Comprehension) -> Expression {
         ACOperatorKind::Or => Expression::Or(Metadata::new(), Moo::new(wrapped)),
         ACOperatorKind::Sum => Expression::Sum(Metadata::new(), Moo::new(wrapped)),
         ACOperatorKind::Product => Expression::Product(Metadata::new(), Moo::new(wrapped)),
+        // Every caller in this file passes And/Or only.
+        ACOperatorKind::Min | ACOperatorKind::Max => unreachable!(),
     }
 }
 
