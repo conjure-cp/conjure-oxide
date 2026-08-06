@@ -66,13 +66,19 @@ or([SafeIndex(f#explicit_1,[1]) != SafeIndex(f#explicit_1,[2]);int(1..)]),
 or([SafeIndex(f#explicit_1,[1]) != SafeIndex(f#explicit_1,[3]);int(1..)]),
 or([SafeIndex(f#explicit_1,[2]) != SafeIndex(f#explicit_1,[3]);int(1..)])
 new variables:
-  find f#explicit_1#components_1#packed_1: int(0..7)
-  find f#explicit_1#components_2#packed_1: int(0..7)
-  find f#explicit_1#components_3#packed_1: int(0..7)
+  find f#explicit_1#components_1#occurrence_1: bool
+  find f#explicit_1#components_1#occurrence_2: bool
+  find f#explicit_1#components_1#occurrence_3: bool
+  find f#explicit_1#components_2#occurrence_1: bool
+  find f#explicit_1#components_2#occurrence_2: bool
+  find f#explicit_1#components_2#occurrence_3: bool
+  find f#explicit_1#components_3#occurrence_1: bool
+  find f#explicit_1#components_3#occurrence_2: bool
+  find f#explicit_1#components_3#occurrence_3: bool
 new constraints:
-  sum([(f#explicit_1#components_1#packed_1 / 1) % 2,(f#explicit_1#components_1#packed_1 / 2) % 2,(f#explicit_1#components_1#packed_1 / 4) % 2;int(1..)]) = 2
-  sum([(f#explicit_1#components_2#packed_1 / 1) % 2,(f#explicit_1#components_2#packed_1 / 2) % 2,(f#explicit_1#components_2#packed_1 / 4) % 2;int(1..)]) = 2
-  sum([(f#explicit_1#components_3#packed_1 / 1) % 2,(f#explicit_1#components_3#packed_1 / 2) % 2,(f#explicit_1#components_3#packed_1 / 4) % 2;int(1..)]) = 2
+  sum([toInt(f#explicit_1#components_1#occurrence_1),toInt(f#explicit_1#components_1#occurrence_2),toInt(f#explicit_1#components_1#occurrence_3);int(1..)]) = 2
+  sum([toInt(f#explicit_1#components_2#occurrence_1),toInt(f#explicit_1#components_2#occurrence_2),toInt(f#explicit_1#components_2#occurrence_3);int(1..)]) = 2
+  sum([toInt(f#explicit_1#components_3#occurrence_1),toInt(f#explicit_1#components_3#occurrence_2),toInt(f#explicit_1#components_3#occurrence_3);int(1..)]) = 2
 
 --
 
@@ -112,114 +118,6 @@ SafeIndex(f#explicit_1,[2]) != SafeIndex(f#explicit_1,[3])
 
 --
 
-(f#explicit_1#components_1#packed_1 / 1)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_1#packed_1, 1) @ 1 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_1#packed_1, 1) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 1),2) @ 2 != 0}
-
---
-
-(f#explicit_1#components_1#packed_1 / 2)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_1#packed_1, 2) @ 2 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_1#packed_1, 2) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 2),2) @ 2 != 0}
-
---
-
-(f#explicit_1#components_1#packed_1 / 4)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_1#packed_1, 4) @ 4 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_1#packed_1, 4) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 4),2) @ 2 != 0}
-
---
-
-(f#explicit_1#components_2#packed_1 / 1)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_2#packed_1, 1) @ 1 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_2#packed_1, 1) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 1),2) @ 2 != 0}
-
---
-
-(f#explicit_1#components_2#packed_1 / 2)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_2#packed_1, 2) @ 2 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_2#packed_1, 2) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 2),2) @ 2 != 0}
-
---
-
-(f#explicit_1#components_2#packed_1 / 4)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_2#packed_1, 4) @ 4 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_2#packed_1, 4) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 4),2) @ 2 != 0}
-
---
-
-(f#explicit_1#components_3#packed_1 / 1)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_3#packed_1, 1) @ 1 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_3#packed_1, 1) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 1),2) @ 2 != 0}
-
---
-
-(f#explicit_1#components_3#packed_1 / 2)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_3#packed_1, 2) @ 2 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_3#packed_1, 2) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 2),2) @ 2 != 0}
-
---
-
-(f#explicit_1#components_3#packed_1 / 4)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(f#explicit_1#components_3#packed_1, 4) @ 4 != 0}
-
---
-
-SafeDiv(f#explicit_1#components_3#packed_1, 4) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 4),2) @ 2 != 0}
-
---
-
 SafeIndex(f#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 f#explicit_1#components_2
@@ -245,14 +143,140 @@ f#explicit_1#components_2 = f#explicit_1#components_1
 --
 
 f#explicit_1#components_2 = f#explicit_1#components_1
-   ~~> eq_packed ([("ReprGeneral", 9500)])
-f#explicit_1#components_2#packed_1 = f#explicit_1#components_1#packed_1
+   ~~> eq_to_subset_eq ([("Base", 8800)])
+and([(f#explicit_1#components_2 subsetEq f#explicit_1#components_1),(f#explicit_1#components_1 subsetEq f#explicit_1#components_2);int(1..)])
 
 --
 
-!(f#explicit_1#components_2#packed_1 = f#explicit_1#components_1#packed_1)
-   ~~> negated_eq_to_neq ([("Base", 8800)])
-f#explicit_1#components_2#packed_1 != f#explicit_1#components_1#packed_1
+(f#explicit_1#components_2 subsetEq f#explicit_1#components_1)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(f#explicit_1#components_2#occurrence_1),1 in f#explicit_1#components_1;int(1..)]),or([!(f#explicit_1#components_2#occurrence_2),2 in f#explicit_1#components_1;int(1..)]),or([!(f#explicit_1#components_2#occurrence_3),3 in f#explicit_1#components_1;int(1..)]);int(1..)])
+
+--
+
+(f#explicit_1#components_1 subsetEq f#explicit_1#components_2)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(f#explicit_1#components_1#occurrence_1),1 in f#explicit_1#components_2;int(1..)]),or([!(f#explicit_1#components_1#occurrence_2),2 in f#explicit_1#components_2;int(1..)]),or([!(f#explicit_1#components_1#occurrence_3),3 in f#explicit_1#components_2;int(1..)]);int(1..)])
+
+--
+
+1 in f#explicit_1#components_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_1#occurrence_1
+
+--
+
+2 in f#explicit_1#components_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_1#occurrence_2
+
+--
+
+3 in f#explicit_1#components_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_1#occurrence_3
+
+--
+
+1 in f#explicit_1#components_2
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_2#occurrence_1
+
+--
+
+2 in f#explicit_1#components_2
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_2#occurrence_2
+
+--
+
+3 in f#explicit_1#components_2
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_2#occurrence_3
+
+--
+
+and([and([or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)]),or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)]),or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)]);int(1..)]),and([or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)]),or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)]),or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)]),or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)]),or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)]),or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)]),or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)]),or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]);int(1..)])
+
+--
+
+!(and([or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)]),or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)]),or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)]),or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)]),or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)]),or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]);int(1..)]))
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)])),!(or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)])),!(or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)])),!(or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)])),!(or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)])),!(or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]));int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_2#occurrence_1)),!(f#explicit_1#components_1#occurrence_1);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_2#occurrence_2)),!(f#explicit_1#components_1#occurrence_2);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_2#occurrence_3)),!(f#explicit_1#components_1#occurrence_3);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_1#occurrence_1)),!(f#explicit_1#components_2#occurrence_1);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_1#occurrence_2)),!(f#explicit_1#components_2#occurrence_2);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_1#occurrence_3)),!(f#explicit_1#components_2#occurrence_3);int(1..)])
+
+--
+
+!(!(f#explicit_1#components_2#occurrence_1))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_2#occurrence_1
+
+--
+
+!(!(f#explicit_1#components_2#occurrence_2))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_2#occurrence_2
+
+--
+
+!(!(f#explicit_1#components_2#occurrence_3))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_2#occurrence_3
+
+--
+
+!(!(f#explicit_1#components_1#occurrence_1))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_1#occurrence_1
+
+--
+
+!(!(f#explicit_1#components_1#occurrence_2))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_1#occurrence_2
+
+--
+
+!(!(f#explicit_1#components_1#occurrence_3))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_1#occurrence_3
 
 --
 
@@ -281,14 +305,140 @@ f#explicit_1#components_3 = f#explicit_1#components_1
 --
 
 f#explicit_1#components_3 = f#explicit_1#components_1
-   ~~> eq_packed ([("ReprGeneral", 9500)])
-f#explicit_1#components_3#packed_1 = f#explicit_1#components_1#packed_1
+   ~~> eq_to_subset_eq ([("Base", 8800)])
+and([(f#explicit_1#components_3 subsetEq f#explicit_1#components_1),(f#explicit_1#components_1 subsetEq f#explicit_1#components_3);int(1..)])
 
 --
 
-!(f#explicit_1#components_3#packed_1 = f#explicit_1#components_1#packed_1)
-   ~~> negated_eq_to_neq ([("Base", 8800)])
-f#explicit_1#components_3#packed_1 != f#explicit_1#components_1#packed_1
+(f#explicit_1#components_3 subsetEq f#explicit_1#components_1)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(f#explicit_1#components_3#occurrence_1),1 in f#explicit_1#components_1;int(1..)]),or([!(f#explicit_1#components_3#occurrence_2),2 in f#explicit_1#components_1;int(1..)]),or([!(f#explicit_1#components_3#occurrence_3),3 in f#explicit_1#components_1;int(1..)]);int(1..)])
+
+--
+
+(f#explicit_1#components_1 subsetEq f#explicit_1#components_3)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(f#explicit_1#components_1#occurrence_1),1 in f#explicit_1#components_3;int(1..)]),or([!(f#explicit_1#components_1#occurrence_2),2 in f#explicit_1#components_3;int(1..)]),or([!(f#explicit_1#components_1#occurrence_3),3 in f#explicit_1#components_3;int(1..)]);int(1..)])
+
+--
+
+1 in f#explicit_1#components_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_1#occurrence_1
+
+--
+
+2 in f#explicit_1#components_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_1#occurrence_2
+
+--
+
+3 in f#explicit_1#components_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_1#occurrence_3
+
+--
+
+1 in f#explicit_1#components_3
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_3#occurrence_1
+
+--
+
+2 in f#explicit_1#components_3
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_3#occurrence_2
+
+--
+
+3 in f#explicit_1#components_3
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_3#occurrence_3
+
+--
+
+and([and([or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)]),or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)]),or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)]);int(1..)]),and([or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)]),or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)]),or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)]),or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)]),or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)]),or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)]),or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)]),or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]);int(1..)])
+
+--
+
+!(and([or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)]),or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)]),or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)]),or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)]),or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)]),or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]);int(1..)]))
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)])),!(or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)])),!(or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)])),!(or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)])),!(or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)])),!(or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]));int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_1#occurrence_1;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_3#occurrence_1)),!(f#explicit_1#components_1#occurrence_1);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_1#occurrence_2;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_3#occurrence_2)),!(f#explicit_1#components_1#occurrence_2);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_1#occurrence_3;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_3#occurrence_3)),!(f#explicit_1#components_1#occurrence_3);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_1#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_1#occurrence_1)),!(f#explicit_1#components_3#occurrence_1);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_1#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_1#occurrence_2)),!(f#explicit_1#components_3#occurrence_2);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_1#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_1#occurrence_3)),!(f#explicit_1#components_3#occurrence_3);int(1..)])
+
+--
+
+!(!(f#explicit_1#components_3#occurrence_1))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_3#occurrence_1
+
+--
+
+!(!(f#explicit_1#components_3#occurrence_2))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_3#occurrence_2
+
+--
+
+!(!(f#explicit_1#components_3#occurrence_3))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_3#occurrence_3
+
+--
+
+!(!(f#explicit_1#components_1#occurrence_1))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_1#occurrence_1
+
+--
+
+!(!(f#explicit_1#components_1#occurrence_2))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_1#occurrence_2
+
+--
+
+!(!(f#explicit_1#components_1#occurrence_3))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_1#occurrence_3
 
 --
 
@@ -317,254 +467,266 @@ f#explicit_1#components_3 = f#explicit_1#components_2
 --
 
 f#explicit_1#components_3 = f#explicit_1#components_2
-   ~~> eq_packed ([("ReprGeneral", 9500)])
-f#explicit_1#components_3#packed_1 = f#explicit_1#components_2#packed_1
+   ~~> eq_to_subset_eq ([("Base", 8800)])
+and([(f#explicit_1#components_3 subsetEq f#explicit_1#components_2),(f#explicit_1#components_2 subsetEq f#explicit_1#components_3);int(1..)])
 
 --
 
-!(f#explicit_1#components_3#packed_1 = f#explicit_1#components_2#packed_1)
-   ~~> negated_eq_to_neq ([("Base", 8800)])
-f#explicit_1#components_3#packed_1 != f#explicit_1#components_2#packed_1
+(f#explicit_1#components_3 subsetEq f#explicit_1#components_2)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(f#explicit_1#components_3#occurrence_1),1 in f#explicit_1#components_2;int(1..)]),or([!(f#explicit_1#components_3#occurrence_2),2 in f#explicit_1#components_2;int(1..)]),or([!(f#explicit_1#components_3#occurrence_3),3 in f#explicit_1#components_2;int(1..)]);int(1..)])
 
 --
 
-sum([SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 1),2),SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 2),2),SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 4),2);int(1..)]) = 2
+(f#explicit_1#components_2 subsetEq f#explicit_1#components_3)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(f#explicit_1#components_2#occurrence_1),1 in f#explicit_1#components_3;int(1..)]),or([!(f#explicit_1#components_2#occurrence_2),2 in f#explicit_1#components_3;int(1..)]),or([!(f#explicit_1#components_2#occurrence_3),3 in f#explicit_1#components_3;int(1..)]);int(1..)])
+
+--
+
+1 in f#explicit_1#components_2
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_2#occurrence_1
+
+--
+
+2 in f#explicit_1#components_2
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_2#occurrence_2
+
+--
+
+3 in f#explicit_1#components_2
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_2#occurrence_3
+
+--
+
+1 in f#explicit_1#components_3
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_3#occurrence_1
+
+--
+
+2 in f#explicit_1#components_3
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_3#occurrence_2
+
+--
+
+3 in f#explicit_1#components_3
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+f#explicit_1#components_3#occurrence_3
+
+--
+
+and([and([or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)]),or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)]),or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]);int(1..)]),and([or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)]),or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)]),or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)]),or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)]),or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]),or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)]),or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)]),or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]);int(1..)])
+
+--
+
+!(and([or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)]),or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)]),or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]),or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)]),or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)]),or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]);int(1..)]))
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)])),!(or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)])),!(or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)])),!(or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)])),!(or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)])),!(or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]));int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_3#occurrence_1),f#explicit_1#components_2#occurrence_1;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_3#occurrence_1)),!(f#explicit_1#components_2#occurrence_1);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_3#occurrence_2),f#explicit_1#components_2#occurrence_2;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_3#occurrence_2)),!(f#explicit_1#components_2#occurrence_2);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_3#occurrence_3),f#explicit_1#components_2#occurrence_3;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_3#occurrence_3)),!(f#explicit_1#components_2#occurrence_3);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_2#occurrence_1),f#explicit_1#components_3#occurrence_1;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_2#occurrence_1)),!(f#explicit_1#components_3#occurrence_1);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_2#occurrence_2),f#explicit_1#components_3#occurrence_2;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_2#occurrence_2)),!(f#explicit_1#components_3#occurrence_2);int(1..)])
+
+--
+
+!(or([!(f#explicit_1#components_2#occurrence_3),f#explicit_1#components_3#occurrence_3;int(1..)]))
+   ~~> distribute_not_over_or ([("Base", 8400)])
+and([!(!(f#explicit_1#components_2#occurrence_3)),!(f#explicit_1#components_3#occurrence_3);int(1..)])
+
+--
+
+!(!(f#explicit_1#components_3#occurrence_1))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_3#occurrence_1
+
+--
+
+!(!(f#explicit_1#components_3#occurrence_2))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_3#occurrence_2
+
+--
+
+!(!(f#explicit_1#components_3#occurrence_3))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_3#occurrence_3
+
+--
+
+!(!(f#explicit_1#components_2#occurrence_1))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_2#occurrence_1
+
+--
+
+!(!(f#explicit_1#components_2#occurrence_2))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_2#occurrence_2
+
+--
+
+!(!(f#explicit_1#components_2#occurrence_3))
+   ~~> remove_double_negation ([("Base", 8400)])
+f#explicit_1#components_2#occurrence_3
+
+--
+
+sum([toInt(f#explicit_1#components_1#occurrence_1),toInt(f#explicit_1#components_1#occurrence_2),toInt(f#explicit_1#components_1#occurrence_3);int(1..)]) = 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([__0, __1, __2], 2),SumGeq([__0, __1, __2], 2);int(1..)])
-new variables:
-  findAux __0: int(0..1)
-  findAux __1: int(0..1)
-  findAux __2: int(0..1)
-new constraints:
-  __0 =aux SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 1),2)
-  __1 =aux SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 2),2)
-  __2 =aux SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 4),2)
+and([SumLeq([f#explicit_1#components_1#occurrence_1, f#explicit_1#components_1#occurrence_2, f#explicit_1#components_1#occurrence_3], 2),SumGeq([f#explicit_1#components_1#occurrence_1, f#explicit_1#components_1#occurrence_2, f#explicit_1#components_1#occurrence_3], 2);int(1..)])
 
 --
 
-sum([SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 1),2),SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 2),2),SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 4),2);int(1..)]) = 2
+sum([toInt(f#explicit_1#components_2#occurrence_1),toInt(f#explicit_1#components_2#occurrence_2),toInt(f#explicit_1#components_2#occurrence_3);int(1..)]) = 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([__3, __4, __5], 2),SumGeq([__3, __4, __5], 2);int(1..)])
-new variables:
-  findAux __3: int(0..1)
-  findAux __4: int(0..1)
-  findAux __5: int(0..1)
-new constraints:
-  __3 =aux SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 1),2)
-  __4 =aux SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 2),2)
-  __5 =aux SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 4),2)
+and([SumLeq([f#explicit_1#components_2#occurrence_1, f#explicit_1#components_2#occurrence_2, f#explicit_1#components_2#occurrence_3], 2),SumGeq([f#explicit_1#components_2#occurrence_1, f#explicit_1#components_2#occurrence_2, f#explicit_1#components_2#occurrence_3], 2);int(1..)])
 
 --
 
-sum([SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 1),2),SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 2),2),SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 4),2);int(1..)]) = 2
+sum([toInt(f#explicit_1#components_3#occurrence_1),toInt(f#explicit_1#components_3#occurrence_2),toInt(f#explicit_1#components_3#occurrence_3);int(1..)]) = 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([__6, __7, __8], 2),SumGeq([__6, __7, __8], 2);int(1..)])
-new variables:
-  findAux __6: int(0..1)
-  findAux __7: int(0..1)
-  findAux __8: int(0..1)
-new constraints:
-  __6 =aux SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 1),2)
-  __7 =aux SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 2),2)
-  __8 =aux SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 4),2)
+and([SumLeq([f#explicit_1#components_3#occurrence_1, f#explicit_1#components_3#occurrence_2, f#explicit_1#components_3#occurrence_3], 2),SumGeq([f#explicit_1#components_3#occurrence_1, f#explicit_1#components_3#occurrence_2, f#explicit_1#components_3#occurrence_3], 2);int(1..)])
 
 --
 
-SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 1),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__9,2)
-new variables:
-  findAux __9: int(0..7)
-new constraints:
-  __9 =aux SafeDiv(f#explicit_1#components_1#packed_1, 1)
+!(f#explicit_1#components_1#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_1#occurrence_1,false)
 
 --
 
-__0 =aux SafeMod(__9,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__9, 2, __0)
+!(f#explicit_1#components_1#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_1#occurrence_2,false)
 
 --
 
-__9 =aux SafeDiv(f#explicit_1#components_1#packed_1, 1)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_1#packed_1, 1, __9)
+!(f#explicit_1#components_1#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_1#occurrence_3,false)
 
 --
 
-SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 2),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__10,2)
-new variables:
-  findAux __10: int(0..3)
-new constraints:
-  __10 =aux SafeDiv(f#explicit_1#components_1#packed_1, 2)
+!(f#explicit_1#components_2#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_2#occurrence_1,false)
 
 --
 
-__1 =aux SafeMod(__10,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__10, 2, __1)
+!(f#explicit_1#components_2#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_2#occurrence_2,false)
 
 --
 
-__10 =aux SafeDiv(f#explicit_1#components_1#packed_1, 2)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_1#packed_1, 2, __10)
+!(f#explicit_1#components_2#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_2#occurrence_3,false)
 
 --
 
-SafeMod(SafeDiv(f#explicit_1#components_1#packed_1, 4),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__11,2)
-new variables:
-  findAux __11: int(0..1)
-new constraints:
-  __11 =aux SafeDiv(f#explicit_1#components_1#packed_1, 4)
+!(f#explicit_1#components_1#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_1#occurrence_1,false)
 
 --
 
-__2 =aux SafeMod(__11,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__11, 2, __2)
+!(f#explicit_1#components_1#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_1#occurrence_2,false)
 
 --
 
-__11 =aux SafeDiv(f#explicit_1#components_1#packed_1, 4)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_1#packed_1, 4, __11)
+!(f#explicit_1#components_1#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_1#occurrence_3,false)
 
 --
 
-SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 1),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__12,2)
-new variables:
-  findAux __12: int(0..7)
-new constraints:
-  __12 =aux SafeDiv(f#explicit_1#components_2#packed_1, 1)
+!(f#explicit_1#components_3#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_3#occurrence_1,false)
 
 --
 
-__3 =aux SafeMod(__12,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__12, 2, __3)
+!(f#explicit_1#components_3#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_3#occurrence_2,false)
 
 --
 
-__12 =aux SafeDiv(f#explicit_1#components_2#packed_1, 1)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_2#packed_1, 1, __12)
+!(f#explicit_1#components_3#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_3#occurrence_3,false)
 
 --
 
-SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 2),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__13,2)
-new variables:
-  findAux __13: int(0..3)
-new constraints:
-  __13 =aux SafeDiv(f#explicit_1#components_2#packed_1, 2)
+!(f#explicit_1#components_2#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_2#occurrence_1,false)
 
 --
 
-__4 =aux SafeMod(__13,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__13, 2, __4)
+!(f#explicit_1#components_2#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_2#occurrence_2,false)
 
 --
 
-__13 =aux SafeDiv(f#explicit_1#components_2#packed_1, 2)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_2#packed_1, 2, __13)
+!(f#explicit_1#components_2#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_2#occurrence_3,false)
 
 --
 
-SafeMod(SafeDiv(f#explicit_1#components_2#packed_1, 4),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__14,2)
-new variables:
-  findAux __14: int(0..1)
-new constraints:
-  __14 =aux SafeDiv(f#explicit_1#components_2#packed_1, 4)
+!(f#explicit_1#components_3#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_3#occurrence_1,false)
 
 --
 
-__5 =aux SafeMod(__14,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__14, 2, __5)
+!(f#explicit_1#components_3#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_3#occurrence_2,false)
 
 --
 
-__14 =aux SafeDiv(f#explicit_1#components_2#packed_1, 4)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_2#packed_1, 4, __14)
-
---
-
-SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 1),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__15,2)
-new variables:
-  findAux __15: int(0..7)
-new constraints:
-  __15 =aux SafeDiv(f#explicit_1#components_3#packed_1, 1)
-
---
-
-__6 =aux SafeMod(__15,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__15, 2, __6)
-
---
-
-__15 =aux SafeDiv(f#explicit_1#components_3#packed_1, 1)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_3#packed_1, 1, __15)
-
---
-
-SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 2),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__16,2)
-new variables:
-  findAux __16: int(0..3)
-new constraints:
-  __16 =aux SafeDiv(f#explicit_1#components_3#packed_1, 2)
-
---
-
-__7 =aux SafeMod(__16,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__16, 2, __7)
-
---
-
-__16 =aux SafeDiv(f#explicit_1#components_3#packed_1, 2)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_3#packed_1, 2, __16)
-
---
-
-SafeMod(SafeDiv(f#explicit_1#components_3#packed_1, 4),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__17,2)
-new variables:
-  findAux __17: int(0..1)
-new constraints:
-  __17 =aux SafeDiv(f#explicit_1#components_3#packed_1, 4)
-
---
-
-__8 =aux SafeMod(__17,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__17, 2, __8)
-
---
-
-__17 =aux SafeDiv(f#explicit_1#components_3#packed_1, 4)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(f#explicit_1#components_3#packed_1, 4, __17)
+!(f#explicit_1#components_3#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#explicit_1#components_3#occurrence_3,false)
 
 --
 
@@ -572,56 +734,26 @@ Final model:
 
 find f: function (total, injective) int(1..3) --> set (size 2) of int(1..3) 
 find f#explicit_1: matrix indexed by [int(1..3)] of set (size 2) of int(1..3)
-find f#explicit_1#components_1: set{packed} (size 2) of int(1..3)
-find f#explicit_1#components_2: set{packed} (size 2) of int(1..3)
-find f#explicit_1#components_3: set{packed} (size 2) of int(1..3)
-find f#explicit_1#components_1#packed_1: int(0..7)
-find f#explicit_1#components_2#packed_1: int(0..7)
-find f#explicit_1#components_3#packed_1: int(0..7)
-findAux __0: int(0..1)
-findAux __1: int(0..1)
-findAux __2: int(0..1)
-findAux __3: int(0..1)
-findAux __4: int(0..1)
-findAux __5: int(0..1)
-findAux __6: int(0..1)
-findAux __7: int(0..1)
-findAux __8: int(0..1)
-findAux __9: int(0..7)
-findAux __10: int(0..3)
-findAux __11: int(0..1)
-findAux __12: int(0..7)
-findAux __13: int(0..3)
-findAux __14: int(0..1)
-findAux __15: int(0..7)
-findAux __16: int(0..3)
-findAux __17: int(0..1)
+find f#explicit_1#components_1: set{occurrence} (size 2) of int(1..3)
+find f#explicit_1#components_2: set{occurrence} (size 2) of int(1..3)
+find f#explicit_1#components_3: set{occurrence} (size 2) of int(1..3)
+find f#explicit_1#components_1#occurrence_1: bool
+find f#explicit_1#components_1#occurrence_2: bool
+find f#explicit_1#components_1#occurrence_3: bool
+find f#explicit_1#components_2#occurrence_1: bool
+find f#explicit_1#components_2#occurrence_2: bool
+find f#explicit_1#components_2#occurrence_3: bool
+find f#explicit_1#components_3#occurrence_1: bool
+find f#explicit_1#components_3#occurrence_2: bool
+find f#explicit_1#components_3#occurrence_3: bool
 
 such that
 
 true,
-f#explicit_1#components_2#packed_1 != f#explicit_1#components_1#packed_1,
-f#explicit_1#components_3#packed_1 != f#explicit_1#components_1#packed_1,
-f#explicit_1#components_3#packed_1 != f#explicit_1#components_2#packed_1,
-and([SumLeq([__0, __1, __2], 2),SumGeq([__0, __1, __2], 2);int(1..)]),
-and([SumLeq([__3, __4, __5], 2),SumGeq([__3, __4, __5], 2);int(1..)]),
-and([SumLeq([__6, __7, __8], 2),SumGeq([__6, __7, __8], 2);int(1..)]),
-ModEq(__9, 2, __0),
-ModEq(__10, 2, __1),
-ModEq(__11, 2, __2),
-ModEq(__12, 2, __3),
-ModEq(__13, 2, __4),
-ModEq(__14, 2, __5),
-ModEq(__15, 2, __6),
-ModEq(__16, 2, __7),
-ModEq(__17, 2, __8),
-DivEq(f#explicit_1#components_1#packed_1, 1, __9),
-DivEq(f#explicit_1#components_1#packed_1, 2, __10),
-DivEq(f#explicit_1#components_1#packed_1, 4, __11),
-DivEq(f#explicit_1#components_2#packed_1, 1, __12),
-DivEq(f#explicit_1#components_2#packed_1, 2, __13),
-DivEq(f#explicit_1#components_2#packed_1, 4, __14),
-DivEq(f#explicit_1#components_3#packed_1, 1, __15),
-DivEq(f#explicit_1#components_3#packed_1, 2, __16),
-DivEq(f#explicit_1#components_3#packed_1, 4, __17)
+or([and([f#explicit_1#components_2#occurrence_1,WatchedLiteral(f#explicit_1#components_1#occurrence_1,false);int(1..)]),and([f#explicit_1#components_2#occurrence_2,WatchedLiteral(f#explicit_1#components_1#occurrence_2,false);int(1..)]),and([f#explicit_1#components_2#occurrence_3,WatchedLiteral(f#explicit_1#components_1#occurrence_3,false);int(1..)]),and([f#explicit_1#components_1#occurrence_1,WatchedLiteral(f#explicit_1#components_2#occurrence_1,false);int(1..)]),and([f#explicit_1#components_1#occurrence_2,WatchedLiteral(f#explicit_1#components_2#occurrence_2,false);int(1..)]),and([f#explicit_1#components_1#occurrence_3,WatchedLiteral(f#explicit_1#components_2#occurrence_3,false);int(1..)]);int(1..)]),
+or([and([f#explicit_1#components_3#occurrence_1,WatchedLiteral(f#explicit_1#components_1#occurrence_1,false);int(1..)]),and([f#explicit_1#components_3#occurrence_2,WatchedLiteral(f#explicit_1#components_1#occurrence_2,false);int(1..)]),and([f#explicit_1#components_3#occurrence_3,WatchedLiteral(f#explicit_1#components_1#occurrence_3,false);int(1..)]),and([f#explicit_1#components_1#occurrence_1,WatchedLiteral(f#explicit_1#components_3#occurrence_1,false);int(1..)]),and([f#explicit_1#components_1#occurrence_2,WatchedLiteral(f#explicit_1#components_3#occurrence_2,false);int(1..)]),and([f#explicit_1#components_1#occurrence_3,WatchedLiteral(f#explicit_1#components_3#occurrence_3,false);int(1..)]);int(1..)]),
+or([and([f#explicit_1#components_3#occurrence_1,WatchedLiteral(f#explicit_1#components_2#occurrence_1,false);int(1..)]),and([f#explicit_1#components_3#occurrence_2,WatchedLiteral(f#explicit_1#components_2#occurrence_2,false);int(1..)]),and([f#explicit_1#components_3#occurrence_3,WatchedLiteral(f#explicit_1#components_2#occurrence_3,false);int(1..)]),and([f#explicit_1#components_2#occurrence_1,WatchedLiteral(f#explicit_1#components_3#occurrence_1,false);int(1..)]),and([f#explicit_1#components_2#occurrence_2,WatchedLiteral(f#explicit_1#components_3#occurrence_2,false);int(1..)]),and([f#explicit_1#components_2#occurrence_3,WatchedLiteral(f#explicit_1#components_3#occurrence_3,false);int(1..)]);int(1..)]),
+and([SumLeq([f#explicit_1#components_1#occurrence_1, f#explicit_1#components_1#occurrence_2, f#explicit_1#components_1#occurrence_3], 2),SumGeq([f#explicit_1#components_1#occurrence_1, f#explicit_1#components_1#occurrence_2, f#explicit_1#components_1#occurrence_3], 2);int(1..)]),
+and([SumLeq([f#explicit_1#components_2#occurrence_1, f#explicit_1#components_2#occurrence_2, f#explicit_1#components_2#occurrence_3], 2),SumGeq([f#explicit_1#components_2#occurrence_1, f#explicit_1#components_2#occurrence_2, f#explicit_1#components_2#occurrence_3], 2);int(1..)]),
+and([SumLeq([f#explicit_1#components_3#occurrence_1, f#explicit_1#components_3#occurrence_2, f#explicit_1#components_3#occurrence_3], 2),SumGeq([f#explicit_1#components_3#occurrence_1, f#explicit_1#components_3#occurrence_2, f#explicit_1#components_3#occurrence_3], 2);int(1..)])
 

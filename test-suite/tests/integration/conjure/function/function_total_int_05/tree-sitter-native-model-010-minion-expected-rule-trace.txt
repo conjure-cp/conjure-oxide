@@ -1,0 +1,227 @@
+Model before rewriting:
+
+find x: function (total, bijective) int(1..3) --> int(13..15) 
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#explicit_1: matrix indexed by [int(1..3)] of int(13..15)
+new constraints:
+  allDifferent(x#explicit_1)
+  or([and([true,SafeIndex(x#explicit_1,[1]) = 13;int(1..)]),and([true,SafeIndex(x#explicit_1,[2]) = 13;int(1..)]),and([true,SafeIndex(x#explicit_1,[3]) = 13;int(1..)]);int(1..)])
+  or([and([true,SafeIndex(x#explicit_1,[1]) = 14;int(1..)]),and([true,SafeIndex(x#explicit_1,[2]) = 14;int(1..)]),and([true,SafeIndex(x#explicit_1,[3]) = 14;int(1..)]);int(1..)])
+  or([and([true,SafeIndex(x#explicit_1,[1]) = 15;int(1..)]),and([true,SafeIndex(x#explicit_1,[2]) = 15;int(1..)]),and([true,SafeIndex(x#explicit_1,[3]) = 15;int(1..)]);int(1..)])
+
+--
+
+and([SafeIndex(x#explicit_1,[1]) = 13;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[1]) = 13
+
+--
+
+and([SafeIndex(x#explicit_1,[2]) = 13;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[2]) = 13
+
+--
+
+and([SafeIndex(x#explicit_1,[3]) = 13;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[3]) = 13
+
+--
+
+and([SafeIndex(x#explicit_1,[1]) = 14;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[1]) = 14
+
+--
+
+and([SafeIndex(x#explicit_1,[2]) = 14;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[2]) = 14
+
+--
+
+and([SafeIndex(x#explicit_1,[3]) = 14;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[3]) = 14
+
+--
+
+and([SafeIndex(x#explicit_1,[1]) = 15;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[1]) = 15
+
+--
+
+and([SafeIndex(x#explicit_1,[2]) = 15;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[2]) = 15
+
+--
+
+and([SafeIndex(x#explicit_1,[3]) = 15;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(x#explicit_1,[3]) = 15
+
+--
+
+true,
+allDifferent(x#explicit_1),
+or([SafeIndex(x#explicit_1,[1]) = 13,SafeIndex(x#explicit_1,[2]) = 13,SafeIndex(x#explicit_1,[3]) = 13;int(1..)]),
+or([SafeIndex(x#explicit_1,[1]) = 14,SafeIndex(x#explicit_1,[2]) = 14,SafeIndex(x#explicit_1,[3]) = 14;int(1..)]),
+or([SafeIndex(x#explicit_1,[1]) = 15,SafeIndex(x#explicit_1,[2]) = 15,SafeIndex(x#explicit_1,[3]) = 15;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true,
+allDifferent(x#explicit_1),
+or([SafeIndex(x#explicit_1,[1]) = 13,SafeIndex(x#explicit_1,[2]) = 13,SafeIndex(x#explicit_1,[3]) = 13;int(1..)]),
+or([SafeIndex(x#explicit_1,[1]) = 14,SafeIndex(x#explicit_1,[2]) = 14,SafeIndex(x#explicit_1,[3]) = 14;int(1..)]),
+or([SafeIndex(x#explicit_1,[1]) = 15,SafeIndex(x#explicit_1,[2]) = 15,SafeIndex(x#explicit_1,[3]) = 15;int(1..)])
+new variables:
+  find x#explicit_1#components_1: int(13..15)
+  find x#explicit_1#components_2: int(13..15)
+  find x#explicit_1#components_3: int(13..15)
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+x#explicit_1#components_1 = 13
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1,13)
+
+--
+
+x#explicit_1#components_2 = 13
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2,13)
+
+--
+
+x#explicit_1#components_3 = 13
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_3,13)
+
+--
+
+x#explicit_1#components_1 = 14
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1,14)
+
+--
+
+x#explicit_1#components_2 = 14
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2,14)
+
+--
+
+x#explicit_1#components_3 = 14
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_3,14)
+
+--
+
+x#explicit_1#components_1 = 15
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1,15)
+
+--
+
+x#explicit_1#components_2 = 15
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2,15)
+
+--
+
+x#explicit_1#components_3 = 15
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_3,15)
+
+--
+
+allDifferent(x#explicit_1)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3;int(1..3)])
+
+--
+
+allDifferent([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3;int(1..3)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([x#explicit_1#components_1, x#explicit_1#components_2, x#explicit_1#components_3])
+
+--
+
+Final model:
+
+find x: function (total, bijective) int(1..3) --> int(13..15) 
+find x#explicit_1: matrix indexed by [int(1..3)] of int(13..15)
+find x#explicit_1#components_1: int(13..15)
+find x#explicit_1#components_2: int(13..15)
+find x#explicit_1#components_3: int(13..15)
+
+such that
+
+true,
+__flat_alldiff([x#explicit_1#components_1, x#explicit_1#components_2, x#explicit_1#components_3]),
+or([WatchedLiteral(x#explicit_1#components_1,13),WatchedLiteral(x#explicit_1#components_2,13),WatchedLiteral(x#explicit_1#components_3,13);int(1..)]),
+or([WatchedLiteral(x#explicit_1#components_1,14),WatchedLiteral(x#explicit_1#components_2,14),WatchedLiteral(x#explicit_1#components_3,14);int(1..)]),
+or([WatchedLiteral(x#explicit_1#components_1,15),WatchedLiteral(x#explicit_1#components_2,15),WatchedLiteral(x#explicit_1#components_3,15);int(1..)])
+

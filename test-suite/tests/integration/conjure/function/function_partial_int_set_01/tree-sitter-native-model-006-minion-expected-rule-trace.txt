@@ -32,28 +32,28 @@ sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2]));int(1
 true,
 sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2]));int(1..)]) >= 1
 new variables:
-  find f#explicit_1#components_1#occurrence_1: bool
-  find f#explicit_1#components_1#occurrence_2: bool
-  find f#explicit_1#components_2#occurrence_1: bool
-  find f#explicit_1#components_2#occurrence_2: bool
+  find f#explicit_1#components_1#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
+  find f#explicit_1#components_2#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
 new constraints:
-  sum([toInt(f#explicit_1#components_1#occurrence_1),toInt(f#explicit_1#components_1#occurrence_2);int(1..)]) = 1
-  sum([toInt(f#explicit_1#components_2#occurrence_1),toInt(f#explicit_1#components_2#occurrence_2);int(1..)]) = 1
+  or([1 <= 1,SafeIndex(f#explicit_1#components_1#explicit_1,[1]) = 1;int(1..)])
+  or([1 <= 1,SafeIndex(f#explicit_1#components_2#explicit_1,[1]) = 1;int(1..)])
 
 --
 
 true,
 sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2]));int(1..)]) >= 1,
-sum([toInt(f#explicit_1#components_1#occurrence_1),toInt(f#explicit_1#components_1#occurrence_2);int(1..)]) = 1,
-sum([toInt(f#explicit_1#components_2#occurrence_1),toInt(f#explicit_1#components_2#occurrence_2);int(1..)]) = 1
+true,
+true
    ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
 true,
 sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2]));int(1..)]) >= 1,
-sum([toInt(f#explicit_1#components_1#occurrence_1),toInt(f#explicit_1#components_1#occurrence_2);int(1..)]) = 1,
-sum([toInt(f#explicit_1#components_2#occurrence_1),toInt(f#explicit_1#components_2#occurrence_2);int(1..)]) = 1
+true,
+true
 new variables:
   find f#explicit_2#components_1: bool
   find f#explicit_2#components_2: bool
+  find f#explicit_1#components_1#explicit_1#components_1: int(1..2)
+  find f#explicit_1#components_2#explicit_1#components_1: int(1..2)
 
 --
 
@@ -75,36 +75,24 @@ SumGeq([f#explicit_2#components_1, f#explicit_2#components_2], 1)
 
 --
 
-sum([toInt(f#explicit_1#components_1#occurrence_1),toInt(f#explicit_1#components_1#occurrence_2);int(1..)]) = 1
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([f#explicit_1#components_1#occurrence_1, f#explicit_1#components_1#occurrence_2], 1),SumGeq([f#explicit_1#components_1#occurrence_1, f#explicit_1#components_1#occurrence_2], 1);int(1..)])
-
---
-
-sum([toInt(f#explicit_1#components_2#occurrence_1),toInt(f#explicit_1#components_2#occurrence_2);int(1..)]) = 1
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([f#explicit_1#components_2#occurrence_1, f#explicit_1#components_2#occurrence_2], 1),SumGeq([f#explicit_1#components_2#occurrence_1, f#explicit_1#components_2#occurrence_2], 1);int(1..)])
-
---
-
 Final model:
 
 find f: function (minSize 1) int(1..2) --> set (size 1) of int(1..2) 
 find f#explicit_1: matrix indexed by [int(1..2)] of set (size 1) of int(1..2)
 find f#explicit_2: matrix indexed by [int(1..2)] of bool
-find f#explicit_1#components_1: set{occurrence} (size 1) of int(1..2)
-find f#explicit_1#components_2: set{occurrence} (size 1) of int(1..2)
-find f#explicit_1#components_1#occurrence_1: bool
-find f#explicit_1#components_1#occurrence_2: bool
-find f#explicit_1#components_2#occurrence_1: bool
-find f#explicit_1#components_2#occurrence_2: bool
+find f#explicit_1#components_1: set{explicit} (size 1) of int(1..2)
+find f#explicit_1#components_2: set{explicit} (size 1) of int(1..2)
+find f#explicit_1#components_1#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
+find f#explicit_1#components_2#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
 find f#explicit_2#components_1: bool
 find f#explicit_2#components_2: bool
+find f#explicit_1#components_1#explicit_1#components_1: int(1..2)
+find f#explicit_1#components_2#explicit_1#components_1: int(1..2)
 
 such that
 
 true,
 SumGeq([f#explicit_2#components_1, f#explicit_2#components_2], 1),
-and([SumLeq([f#explicit_1#components_1#occurrence_1, f#explicit_1#components_1#occurrence_2], 1),SumGeq([f#explicit_1#components_1#occurrence_1, f#explicit_1#components_1#occurrence_2], 1);int(1..)]),
-and([SumLeq([f#explicit_1#components_2#occurrence_1, f#explicit_1#components_2#occurrence_2], 1),SumGeq([f#explicit_1#components_2#occurrence_1, f#explicit_1#components_2#occurrence_2], 1);int(1..)])
+true,
+true
 
