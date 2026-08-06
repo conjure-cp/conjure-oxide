@@ -1,0 +1,1618 @@
+Model before rewriting:
+
+find x: partition (partSize 3, regular) from int(1..6)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#as_set_1: set (size 2) of set (size 3) of int(1..6)
+new constraints:
+  and([ 1 = sum([ 1 | j : set (size 3) of int(1..6), j in x#as_set_1, i in j ]) | i : int(1..6) ])
+  and([ |j| >= 1 | j <- x#as_set_1 ])
+
+--
+
+true,
+and([ 1 = sum([ 1 | j : set (size 3) of int(1..6), j in x#as_set_1, i in j ]) | i : int(1..6) ]),
+and([ |j| >= 1 | j <- x#as_set_1 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ 1 = sum([ 1 | j : set (size 3) of int(1..6), j in x#as_set_1, i in j ]) | i : int(1..6) ]),
+and([ |j| >= 1 | j <- x#as_set_1 ])
+new variables:
+  find x#as_set_1#occurrence_1: bool
+  find x#as_set_1#occurrence_10: bool
+  find x#as_set_1#occurrence_11: bool
+  find x#as_set_1#occurrence_12: bool
+  find x#as_set_1#occurrence_13: bool
+  find x#as_set_1#occurrence_14: bool
+  find x#as_set_1#occurrence_15: bool
+  find x#as_set_1#occurrence_16: bool
+  find x#as_set_1#occurrence_17: bool
+  find x#as_set_1#occurrence_18: bool
+  find x#as_set_1#occurrence_19: bool
+  find x#as_set_1#occurrence_2: bool
+  find x#as_set_1#occurrence_20: bool
+  find x#as_set_1#occurrence_3: bool
+  find x#as_set_1#occurrence_4: bool
+  find x#as_set_1#occurrence_5: bool
+  find x#as_set_1#occurrence_6: bool
+  find x#as_set_1#occurrence_7: bool
+  find x#as_set_1#occurrence_8: bool
+  find x#as_set_1#occurrence_9: bool
+new constraints:
+  sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]) = 2
+
+--
+
+[ |j| >= 1 | j <- x#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ |j| >= 1 | j : set (size 3) of int(1..6), j in x#as_set_1 ]
+
+--
+
+sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 2),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 2);int(1..)])
+
+--
+
+[ |j| >= 1 | j : set (size 3) of int(1..6), j in x#as_set_1 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true;int(1..)]
+
+--
+
+[ 1 = sum([ 1 | j : set (size 3) of int(1..6), j in x#as_set_1, i in j ]) | i : int(1..6) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1 = sum([product([toInt({1,2,3} in x#as_set_1),1;int(1..)]),product([toInt({1,2,4} in x#as_set_1),1;int(1..)]),product([toInt({1,2,5} in x#as_set_1),1;int(1..)]),product([toInt({1,2,6} in x#as_set_1),1;int(1..)]),product([toInt({1,3,4} in x#as_set_1),1;int(1..)]),product([toInt({1,3,5} in x#as_set_1),1;int(1..)]),product([toInt({1,3,6} in x#as_set_1),1;int(1..)]),product([toInt({1,4,5} in x#as_set_1),1;int(1..)]),product([toInt({1,4,6} in x#as_set_1),1;int(1..)]),product([toInt({1,5,6} in x#as_set_1),1;int(1..)]);int(1..)]),1 = sum([product([toInt({1,2,3} in x#as_set_1),1;int(1..)]),product([toInt({1,2,4} in x#as_set_1),1;int(1..)]),product([toInt({1,2,5} in x#as_set_1),1;int(1..)]),product([toInt({1,2,6} in x#as_set_1),1;int(1..)]),product([toInt({2,3,4} in x#as_set_1),1;int(1..)]),product([toInt({2,3,5} in x#as_set_1),1;int(1..)]),product([toInt({2,3,6} in x#as_set_1),1;int(1..)]),product([toInt({2,4,5} in x#as_set_1),1;int(1..)]),product([toInt({2,4,6} in x#as_set_1),1;int(1..)]),product([toInt({2,5,6} in x#as_set_1),1;int(1..)]);int(1..)]),1 = sum([product([toInt({1,2,3} in x#as_set_1),1;int(1..)]),product([toInt({1,3,4} in x#as_set_1),1;int(1..)]),product([toInt({1,3,5} in x#as_set_1),1;int(1..)]),product([toInt({1,3,6} in x#as_set_1),1;int(1..)]),product([toInt({2,3,4} in x#as_set_1),1;int(1..)]),product([toInt({2,3,5} in x#as_set_1),1;int(1..)]),product([toInt({2,3,6} in x#as_set_1),1;int(1..)]),product([toInt({3,4,5} in x#as_set_1),1;int(1..)]),product([toInt({3,4,6} in x#as_set_1),1;int(1..)]),product([toInt({3,5,6} in x#as_set_1),1;int(1..)]);int(1..)]),1 = sum([product([toInt({1,2,4} in x#as_set_1),1;int(1..)]),product([toInt({1,3,4} in x#as_set_1),1;int(1..)]),product([toInt({1,4,5} in x#as_set_1),1;int(1..)]),product([toInt({1,4,6} in x#as_set_1),1;int(1..)]),product([toInt({2,3,4} in x#as_set_1),1;int(1..)]),product([toInt({2,4,5} in x#as_set_1),1;int(1..)]),product([toInt({2,4,6} in x#as_set_1),1;int(1..)]),product([toInt({3,4,5} in x#as_set_1),1;int(1..)]),product([toInt({3,4,6} in x#as_set_1),1;int(1..)]),product([toInt({4,5,6} in x#as_set_1),1;int(1..)]);int(1..)]),1 = sum([product([toInt({1,2,5} in x#as_set_1),1;int(1..)]),product([toInt({1,3,5} in x#as_set_1),1;int(1..)]),product([toInt({1,4,5} in x#as_set_1),1;int(1..)]),product([toInt({1,5,6} in x#as_set_1),1;int(1..)]),product([toInt({2,3,5} in x#as_set_1),1;int(1..)]),product([toInt({2,4,5} in x#as_set_1),1;int(1..)]),product([toInt({2,5,6} in x#as_set_1),1;int(1..)]),product([toInt({3,4,5} in x#as_set_1),1;int(1..)]),product([toInt({3,5,6} in x#as_set_1),1;int(1..)]),product([toInt({4,5,6} in x#as_set_1),1;int(1..)]);int(1..)]),1 = sum([product([toInt({1,2,6} in x#as_set_1),1;int(1..)]),product([toInt({1,3,6} in x#as_set_1),1;int(1..)]),product([toInt({1,4,6} in x#as_set_1),1;int(1..)]),product([toInt({1,5,6} in x#as_set_1),1;int(1..)]),product([toInt({2,3,6} in x#as_set_1),1;int(1..)]),product([toInt({2,4,6} in x#as_set_1),1;int(1..)]),product([toInt({2,5,6} in x#as_set_1),1;int(1..)]),product([toInt({3,4,6} in x#as_set_1),1;int(1..)]),product([toInt({3,5,6} in x#as_set_1),1;int(1..)]),product([toInt({4,5,6} in x#as_set_1),1;int(1..)]);int(1..)]);int(1..)]
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+x#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_set_1
+
+--
+
+{1,2,3} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+{1,2,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+{1,2,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+{1,2,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+{1,3,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+{1,3,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+{1,3,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+{1,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+{1,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+{1,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_10
+
+--
+
+{1,2,3} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+{1,2,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+{1,2,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+{1,2,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+{2,3,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_11
+
+--
+
+{2,3,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_12
+
+--
+
+{2,3,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_13
+
+--
+
+{2,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_14
+
+--
+
+{2,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_15
+
+--
+
+{2,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_16
+
+--
+
+{1,2,3} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_1
+
+--
+
+{1,3,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+{1,3,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+{1,3,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+{2,3,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_11
+
+--
+
+{2,3,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_12
+
+--
+
+{2,3,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_13
+
+--
+
+{3,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_17
+
+--
+
+{3,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_18
+
+--
+
+{3,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_19
+
+--
+
+{1,2,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_2
+
+--
+
+{1,3,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_5
+
+--
+
+{1,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+{1,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+{2,3,4} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_11
+
+--
+
+{2,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_14
+
+--
+
+{2,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_15
+
+--
+
+{3,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_17
+
+--
+
+{3,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_18
+
+--
+
+{4,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_20
+
+--
+
+{1,2,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_3
+
+--
+
+{1,3,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_6
+
+--
+
+{1,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_8
+
+--
+
+{1,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_10
+
+--
+
+{2,3,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_12
+
+--
+
+{2,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_14
+
+--
+
+{2,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_16
+
+--
+
+{3,4,5} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_17
+
+--
+
+{3,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_19
+
+--
+
+{4,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_20
+
+--
+
+{1,2,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_4
+
+--
+
+{1,3,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_7
+
+--
+
+{1,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_9
+
+--
+
+{1,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_10
+
+--
+
+{2,3,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_13
+
+--
+
+{2,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_15
+
+--
+
+{2,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_16
+
+--
+
+{3,4,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_18
+
+--
+
+{3,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_19
+
+--
+
+{4,5,6} in x#as_set_1
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#as_set_1#occurrence_20
+
+--
+
+product([toInt(x#as_set_1#occurrence_1),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_1);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_2),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_2);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_3),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_3);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_4),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_4);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_5),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_5);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_6),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_6);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_7),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_7);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_8),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_8);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_9),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_9);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_10),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_10);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_1),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_1);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_2),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_2);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_3),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_3);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_4),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_4);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_11),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_11);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_12),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_12);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_13),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_13);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_14),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_14);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_15),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_15);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_16),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_16);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_1),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_1);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_5),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_5);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_6),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_6);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_7),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_7);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_11),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_11);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_12),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_12);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_13),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_13);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_17),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_17);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_18),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_18);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_19),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_19);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_2),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_2);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_5),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_5);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_8),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_8);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_9),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_9);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_11),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_11);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_14),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_14);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_15),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_15);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_17),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_17);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_18),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_18);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_20),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_20);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_3),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_3);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_6),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_6);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_8),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_8);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_10),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_10);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_12),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_12);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_14),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_14);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_16),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_16);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_17),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_17);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_19),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_19);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_20),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_20);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_4),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_4);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_7),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_7);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_9),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_9);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_10),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_10);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_13),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_13);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_15),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_15);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_16),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_16);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_18),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_18);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_19),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_19);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_20),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#as_set_1#occurrence_20);int(1..)])
+
+--
+
+product([toInt(x#as_set_1#occurrence_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_1)
+
+--
+
+product([toInt(x#as_set_1#occurrence_2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_2)
+
+--
+
+product([toInt(x#as_set_1#occurrence_3);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_3)
+
+--
+
+product([toInt(x#as_set_1#occurrence_4);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_4)
+
+--
+
+product([toInt(x#as_set_1#occurrence_5);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_5)
+
+--
+
+product([toInt(x#as_set_1#occurrence_6);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_6)
+
+--
+
+product([toInt(x#as_set_1#occurrence_7);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_7)
+
+--
+
+product([toInt(x#as_set_1#occurrence_8);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_8)
+
+--
+
+product([toInt(x#as_set_1#occurrence_9);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_9)
+
+--
+
+product([toInt(x#as_set_1#occurrence_10);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_10)
+
+--
+
+product([toInt(x#as_set_1#occurrence_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_1)
+
+--
+
+product([toInt(x#as_set_1#occurrence_2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_2)
+
+--
+
+product([toInt(x#as_set_1#occurrence_3);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_3)
+
+--
+
+product([toInt(x#as_set_1#occurrence_4);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_4)
+
+--
+
+product([toInt(x#as_set_1#occurrence_11);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_11)
+
+--
+
+product([toInt(x#as_set_1#occurrence_12);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_12)
+
+--
+
+product([toInt(x#as_set_1#occurrence_13);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_13)
+
+--
+
+product([toInt(x#as_set_1#occurrence_14);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_14)
+
+--
+
+product([toInt(x#as_set_1#occurrence_15);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_15)
+
+--
+
+product([toInt(x#as_set_1#occurrence_16);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_16)
+
+--
+
+product([toInt(x#as_set_1#occurrence_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_1)
+
+--
+
+product([toInt(x#as_set_1#occurrence_5);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_5)
+
+--
+
+product([toInt(x#as_set_1#occurrence_6);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_6)
+
+--
+
+product([toInt(x#as_set_1#occurrence_7);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_7)
+
+--
+
+product([toInt(x#as_set_1#occurrence_11);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_11)
+
+--
+
+product([toInt(x#as_set_1#occurrence_12);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_12)
+
+--
+
+product([toInt(x#as_set_1#occurrence_13);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_13)
+
+--
+
+product([toInt(x#as_set_1#occurrence_17);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_17)
+
+--
+
+product([toInt(x#as_set_1#occurrence_18);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_18)
+
+--
+
+product([toInt(x#as_set_1#occurrence_19);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_19)
+
+--
+
+product([toInt(x#as_set_1#occurrence_2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_2)
+
+--
+
+product([toInt(x#as_set_1#occurrence_5);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_5)
+
+--
+
+product([toInt(x#as_set_1#occurrence_8);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_8)
+
+--
+
+product([toInt(x#as_set_1#occurrence_9);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_9)
+
+--
+
+product([toInt(x#as_set_1#occurrence_11);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_11)
+
+--
+
+product([toInt(x#as_set_1#occurrence_14);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_14)
+
+--
+
+product([toInt(x#as_set_1#occurrence_15);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_15)
+
+--
+
+product([toInt(x#as_set_1#occurrence_17);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_17)
+
+--
+
+product([toInt(x#as_set_1#occurrence_18);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_18)
+
+--
+
+product([toInt(x#as_set_1#occurrence_20);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_20)
+
+--
+
+product([toInt(x#as_set_1#occurrence_3);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_3)
+
+--
+
+product([toInt(x#as_set_1#occurrence_6);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_6)
+
+--
+
+product([toInt(x#as_set_1#occurrence_8);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_8)
+
+--
+
+product([toInt(x#as_set_1#occurrence_10);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_10)
+
+--
+
+product([toInt(x#as_set_1#occurrence_12);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_12)
+
+--
+
+product([toInt(x#as_set_1#occurrence_14);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_14)
+
+--
+
+product([toInt(x#as_set_1#occurrence_16);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_16)
+
+--
+
+product([toInt(x#as_set_1#occurrence_17);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_17)
+
+--
+
+product([toInt(x#as_set_1#occurrence_19);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_19)
+
+--
+
+product([toInt(x#as_set_1#occurrence_20);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_20)
+
+--
+
+product([toInt(x#as_set_1#occurrence_4);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_4)
+
+--
+
+product([toInt(x#as_set_1#occurrence_7);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_7)
+
+--
+
+product([toInt(x#as_set_1#occurrence_9);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_9)
+
+--
+
+product([toInt(x#as_set_1#occurrence_10);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_10)
+
+--
+
+product([toInt(x#as_set_1#occurrence_13);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_13)
+
+--
+
+product([toInt(x#as_set_1#occurrence_15);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_15)
+
+--
+
+product([toInt(x#as_set_1#occurrence_16);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_16)
+
+--
+
+product([toInt(x#as_set_1#occurrence_18);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_18)
+
+--
+
+product([toInt(x#as_set_1#occurrence_19);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_19)
+
+--
+
+product([toInt(x#as_set_1#occurrence_20);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#as_set_1#occurrence_20)
+
+--
+
+1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1);int(1..)])
+
+--
+
+and([and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+
+--
+
+1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1);int(1..)])
+
+--
+
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+
+--
+
+1 = sum([toInt(x#as_set_1#occurrence_1),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1);int(1..)])
+
+--
+
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),1 = sum([toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+
+--
+
+1 = sum([toInt(x#as_set_1#occurrence_2),toInt(x#as_set_1#occurrence_5),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_11),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_20);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1);int(1..)])
+
+--
+
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),and([SumLeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumLeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+
+--
+
+1 = sum([toInt(x#as_set_1#occurrence_3),toInt(x#as_set_1#occurrence_6),toInt(x#as_set_1#occurrence_8),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_12),toInt(x#as_set_1#occurrence_14),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_17),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1);int(1..)])
+
+--
+
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumLeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),and([SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1);int(1..)]),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumLeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)]);int(1..)])
+
+--
+
+1 = sum([toInt(x#as_set_1#occurrence_4),toInt(x#as_set_1#occurrence_7),toInt(x#as_set_1#occurrence_9),toInt(x#as_set_1#occurrence_10),toInt(x#as_set_1#occurrence_13),toInt(x#as_set_1#occurrence_15),toInt(x#as_set_1#occurrence_16),toInt(x#as_set_1#occurrence_18),toInt(x#as_set_1#occurrence_19),toInt(x#as_set_1#occurrence_20);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_13, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_4, x#as_set_1#occurrence_7, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_13, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_4, x#as_set_1#occurrence_7, x#as_set_1#occurrence_9], 1);int(1..)])
+
+--
+
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumLeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),and([SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_13, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_4, x#as_set_1#occurrence_7, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_13, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_4, x#as_set_1#occurrence_7, x#as_set_1#occurrence_9], 1);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumLeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_13, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_4, x#as_set_1#occurrence_7, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_13, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_4, x#as_set_1#occurrence_7, x#as_set_1#occurrence_9], 1);int(1..)])
+
+--
+
+Final model:
+
+find x: partition (partSize 3, regular) from int(1..6)
+find x#as_set_1: set{occurrence} (size 2) of set (size 3) of int(1..6)
+find x#as_set_1#occurrence_1: bool
+find x#as_set_1#occurrence_2: bool
+find x#as_set_1#occurrence_3: bool
+find x#as_set_1#occurrence_4: bool
+find x#as_set_1#occurrence_5: bool
+find x#as_set_1#occurrence_6: bool
+find x#as_set_1#occurrence_7: bool
+find x#as_set_1#occurrence_8: bool
+find x#as_set_1#occurrence_9: bool
+find x#as_set_1#occurrence_10: bool
+find x#as_set_1#occurrence_11: bool
+find x#as_set_1#occurrence_12: bool
+find x#as_set_1#occurrence_13: bool
+find x#as_set_1#occurrence_14: bool
+find x#as_set_1#occurrence_15: bool
+find x#as_set_1#occurrence_16: bool
+find x#as_set_1#occurrence_17: bool
+find x#as_set_1#occurrence_18: bool
+find x#as_set_1#occurrence_19: bool
+find x#as_set_1#occurrence_20: bool
+
+such that
+
+true,
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_2, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4], 1),SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7], 1),SumLeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_11, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_5, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 1),SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_12, x#as_set_1#occurrence_14, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_6, x#as_set_1#occurrence_8], 1),SumLeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_13, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_4, x#as_set_1#occurrence_7, x#as_set_1#occurrence_9], 1),SumGeq([x#as_set_1#occurrence_10, x#as_set_1#occurrence_13, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_20, x#as_set_1#occurrence_4, x#as_set_1#occurrence_7, x#as_set_1#occurrence_9], 1);int(1..)]),
+true,
+and([SumLeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 2),SumGeq([x#as_set_1#occurrence_1, x#as_set_1#occurrence_10, x#as_set_1#occurrence_11, x#as_set_1#occurrence_12, x#as_set_1#occurrence_13, x#as_set_1#occurrence_14, x#as_set_1#occurrence_15, x#as_set_1#occurrence_16, x#as_set_1#occurrence_17, x#as_set_1#occurrence_18, x#as_set_1#occurrence_19, x#as_set_1#occurrence_2, x#as_set_1#occurrence_20, x#as_set_1#occurrence_3, x#as_set_1#occurrence_4, x#as_set_1#occurrence_5, x#as_set_1#occurrence_6, x#as_set_1#occurrence_7, x#as_set_1#occurrence_8, x#as_set_1#occurrence_9], 2);int(1..)])
+
