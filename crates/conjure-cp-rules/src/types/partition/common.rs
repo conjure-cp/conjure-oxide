@@ -1,6 +1,12 @@
 //! Shared helpers used by every partition representation.
 
-use conjure_cp::ast::{PartitionAttr, Range};
+use conjure_cp::ast::ac_operators::ACOperatorKind;
+use conjure_cp::ast::comprehension::ComprehensionBuilder;
+use conjure_cp::ast::{
+    Atom, DeclarationPtr, DomainPtr, Expression, Literal, Metadata, Moo, Name, PartitionAttr,
+    Range, Reference, SymbolTablePtr,
+};
+use conjure_cp::bug;
 
 /// Narrows a size-shaped range attribute to be bounded above by `max`, treating an absent lower
 /// bound as `0` and an absent upper bound as `max`.
@@ -77,4 +83,145 @@ pub(crate) fn resolve_partition_size_attrs(
     );
     let fixed_part_size = matches!(part_len, Range::Single(_));
     (num_parts, part_len, fixed_part_size)
+}
+
+pub(crate) fn eq(a: &Expression, b: &Expression) -> Expression {
+    Expression::Eq(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone()))
+}
+
+pub(crate) fn leq(a: &Expression, b: &Expression) -> Expression {
+    Expression::Leq(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone()))
+}
+
+pub(crate) fn lt(a: &Expression, b: &Expression) -> Expression {
+    Expression::Lt(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone()))
+}
+
+pub(crate) fn gt(a: &Expression, b: &Expression) -> Expression {
+    Expression::Gt(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone()))
+}
+
+pub(crate) fn implies(a: Expression, b: Expression) -> Expression {
+    Expression::Imply(Metadata::new(), Moo::new(a), Moo::new(b))
+}
+
+pub(crate) fn minus1(e: &Expression) -> Expression {
+    Expression::Minus(
+        Metadata::new(),
+        Moo::new(e.clone()),
+        Moo::new(int_literal(1)),
+    )
+}
+
+pub(crate) fn int_literal(n: i32) -> Expression {
+    Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(n)))
+}
+
+pub(crate) fn index1(matrix_ref: &Expression, idx: &Expression) -> Expression {
+    Expression::SafeIndex(
+        Metadata::new(),
+        Moo::new(matrix_ref.clone()),
+        vec![idx.clone()],
+    )
+}
+
+/// Builds the constraint checking that `expr` satisfies a size-shaped range attribute.
+pub(crate) fn range_body(range: &Range<i32>, expr: &Expression) -> Expression {
+    match range {
+        Range::Unbounded => Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+        Range::Single(n) => eq(expr, &int_literal(*n)),
+        Range::UnboundedR(min) => Expression::Geq(
+            Metadata::new(),
+            Moo::new(expr.clone()),
+            Moo::new(int_literal(*min)),
+        ),
+        Range::UnboundedL(max) => Expression::Leq(
+            Metadata::new(),
+            Moo::new(expr.clone()),
+            Moo::new(int_literal(*max)),
+        ),
+        Range::Bounded(min, max) => {
+            let lo = Expression::Geq(
+                Metadata::new(),
+                Moo::new(expr.clone()),
+                Moo::new(int_literal(*min)),
+            );
+            let hi = Expression::Leq(
+                Metadata::new(),
+                Moo::new(expr.clone()),
+                Moo::new(int_literal(*max)),
+            );
+            Expression::And(Metadata::new(), Moo::new(conjure_cp::matrix_expr![lo, hi]))
+        }
+    }
+}
+
+/// Looks up a just-inserted quantified variable's declaration by name.
+pub(crate) fn quantified_ref(symbols: &SymbolTablePtr, name: &Name) -> Expression {
+    let decl = symbols
+        .read()
+        .lookup(name)
+        .unwrap_or_else(|| bug!("expected a quantified variable {name} to be in scope"));
+    Reference::new(decl).into()
+}
+
+/// `forAll <name> : &domain [, guard(&ref)] . body(&ref)`.
+pub(crate) fn forall_domain(
+    domain: &DomainPtr,
+    name: &str,
+    guard: impl FnOnce(&Expression) -> Option<Expression>,
+    body: impl FnOnce(&Expression) -> Expression,
+) -> Expression {
+    let var_name = Name::user(name);
+    let mut builder = ComprehensionBuilder::new(SymbolTablePtr::new())
+        .generator(DeclarationPtr::new_find(var_name.clone(), domain.clone()));
+    let symbols = builder.generator_symboltable();
+    let var_ref = quantified_ref(&symbols, &var_name);
+    if let Some(g) = guard(&var_ref) {
+        builder = builder.guard(g);
+    }
+    let return_expr = body(&var_ref);
+    let mut comprehension = builder.with_return_value(return_expr);
+    comprehension.skip_operator = Some(ACOperatorKind::And);
+    let wrapped = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
+    Expression::And(Metadata::new(), Moo::new(wrapped))
+}
+
+/// Every *active* part satisfies the `partSize` attribute: `forAll k : int(1..maxNumParts), k <=
+/// numPartsVar . <part_len's range check on partSizesVar[k]>`. Mirrors Conjure's `partSizeCons`;
+/// inactive parts are left unconstrained here, on the assumption every representation already
+/// pins them to size `0` some other way.
+pub(crate) fn part_size_cons_expr(
+    part_index_domain: &DomainPtr,
+    part_sizes_ref: &Expression,
+    num_parts_ref: &Expression,
+    part_len: &Range<i32>,
+) -> Expression {
+    forall_domain(
+        part_index_domain,
+        "k",
+        |k| Some(leq(k, num_parts_ref)),
+        |k| range_body(part_len, &index1(part_sizes_ref, k)),
+    )
+}
+
+/// Every part has the same cardinality: `forAll k : int(2..maxNumParts), k <= numPartsVar .
+/// partSizesVar[k-1] = partSizesVar[k]`. Mirrors Conjure's `regular` (only emitted when the part
+/// size isn't already fixed by `partSize`).
+pub(crate) fn regular_expr(
+    regular_index_domain: &DomainPtr,
+    part_sizes_ref: &Expression,
+    num_parts_ref: &Expression,
+) -> Expression {
+    forall_domain(
+        regular_index_domain,
+        "k",
+        |k| Some(leq(k, num_parts_ref)),
+        |k| {
+            eq(
+                &index1(part_sizes_ref, &minus1(k)),
+                &index1(part_sizes_ref, k),
+            )
+        },
+    )
 }

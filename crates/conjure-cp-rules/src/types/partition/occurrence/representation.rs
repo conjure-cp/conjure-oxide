@@ -13,7 +13,10 @@
 //! earlier label to already be in use).
 
 use crate::shared::representation_prelude::*;
-use crate::types::partition::common::resolve_partition_size_attrs;
+use crate::types::partition::common::{
+    eq, forall_domain, gt, implies, index1, int_literal, leq, lt, minus1, part_size_cons_expr,
+    quantified_ref, regular_expr, resolve_partition_size_attrs,
+};
 use conjure_cp::ast::ac_operators::ACOperatorKind;
 use conjure_cp::ast::comprehension::ComprehensionBuilder;
 use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference, SymbolTablePtr};
@@ -241,108 +244,6 @@ fn can_index_matrix(dom: &GroundDomain) -> bool {
     matches!(dom, GroundDomain::Int(_))
 }
 
-fn eq(a: &Expression, b: &Expression) -> Expression {
-    Expression::Eq(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone()))
-}
-
-fn leq(a: &Expression, b: &Expression) -> Expression {
-    Expression::Leq(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone()))
-}
-
-fn lt(a: &Expression, b: &Expression) -> Expression {
-    Expression::Lt(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone()))
-}
-
-fn gt(a: &Expression, b: &Expression) -> Expression {
-    Expression::Gt(Metadata::new(), Moo::new(a.clone()), Moo::new(b.clone()))
-}
-
-fn implies(a: Expression, b: Expression) -> Expression {
-    Expression::Imply(Metadata::new(), Moo::new(a), Moo::new(b))
-}
-
-fn minus1(e: &Expression) -> Expression {
-    Expression::Minus(
-        Metadata::new(),
-        Moo::new(e.clone()),
-        Moo::new(int_literal(1)),
-    )
-}
-
-fn int_literal(n: i32) -> Expression {
-    Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(n)))
-}
-
-fn index1(matrix_ref: &Expression, idx: &Expression) -> Expression {
-    Expression::SafeIndex(
-        Metadata::new(),
-        Moo::new(matrix_ref.clone()),
-        vec![idx.clone()],
-    )
-}
-
-/// Builds the constraint checking that `expr` satisfies a size-shaped range attribute.
-fn range_body(range: &Range<i32>, expr: &Expression) -> Expression {
-    match range {
-        Range::Unbounded => Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
-        Range::Single(n) => eq(expr, &int_literal(*n)),
-        Range::UnboundedR(min) => Expression::Geq(
-            Metadata::new(),
-            Moo::new(expr.clone()),
-            Moo::new(int_literal(*min)),
-        ),
-        Range::UnboundedL(max) => Expression::Leq(
-            Metadata::new(),
-            Moo::new(expr.clone()),
-            Moo::new(int_literal(*max)),
-        ),
-        Range::Bounded(min, max) => {
-            let lo = Expression::Geq(
-                Metadata::new(),
-                Moo::new(expr.clone()),
-                Moo::new(int_literal(*min)),
-            );
-            let hi = Expression::Leq(
-                Metadata::new(),
-                Moo::new(expr.clone()),
-                Moo::new(int_literal(*max)),
-            );
-            Expression::And(Metadata::new(), Moo::new(conjure_cp::matrix_expr![lo, hi]))
-        }
-    }
-}
-
-/// Looks up a just-inserted quantified variable's declaration by name.
-fn quantified_ref(symbols: &SymbolTablePtr, name: &Name) -> Expression {
-    let decl = symbols
-        .read()
-        .lookup(name)
-        .unwrap_or_else(|| bug!("expected a quantified variable {name} to be in scope"));
-    Reference::new(decl).into()
-}
-
-/// `forAll <name> : &domain [, guard(&ref)] . body(&ref)`.
-fn forall_domain(
-    domain: &DomainPtr,
-    name: &str,
-    guard: impl FnOnce(&Expression) -> Option<Expression>,
-    body: impl FnOnce(&Expression) -> Expression,
-) -> Expression {
-    let var_name = Name::user(name);
-    let mut builder = ComprehensionBuilder::new(SymbolTablePtr::new())
-        .generator(DeclarationPtr::new_find(var_name.clone(), domain.clone()));
-    let symbols = builder.generator_symboltable();
-    let var_ref = quantified_ref(&symbols, &var_name);
-    if let Some(g) = guard(&var_ref) {
-        builder = builder.guard(g);
-    }
-    let return_expr = body(&var_ref);
-    let mut comprehension = builder.with_return_value(return_expr);
-    comprehension.skip_operator = Some(ACOperatorKind::And);
-    let wrapped = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
-    Expression::And(Metadata::new(), Moo::new(wrapped))
-}
-
 /// `forAll <outer> : &outer_domain [, outer_guard] . outer_body(&outer, <inner-kind> <inner> :
 /// &inner_domain [, inner_guard] . inner_body(&outer, &inner))`.
 ///
@@ -392,6 +293,8 @@ fn forall_nested(
         ACOperatorKind::Or => Expression::Or(Metadata::new(), Moo::new(inner_wrapped)),
         ACOperatorKind::Sum => Expression::Sum(Metadata::new(), Moo::new(inner_wrapped)),
         ACOperatorKind::Product => Expression::Product(Metadata::new(), Moo::new(inner_wrapped)),
+        // Every caller in this file passes And/Or/Sum only.
+        ACOperatorKind::Min | ACOperatorKind::Max => unreachable!(),
     };
 
     let outer_return = outer_body(&outer_ref, inner_expr);
@@ -460,45 +363,6 @@ fn part_sizes_channelling_expr(
         |k, j| Some(eq(&index1(which_part_ref, j), k)),
         |_k, _j| int_literal(1),
         |k, sum_expr| eq(&index1(part_sizes_ref, k), &sum_expr),
-    )
-}
-
-/// Every *active* part satisfies the `partSize` attribute: `forAll k : int(1..maxNumParts), k <=
-/// numPartsVar . <part_len's range check on partSizesVar[k]>`. Mirrors Conjure's `partSizeCons`;
-/// inactive parts are left unconstrained here since they're already pinned to size `0` by
-/// [`part_sizes_channelling_expr`].
-fn part_size_cons_expr(
-    part_index_domain: &DomainPtr,
-    part_sizes_ref: &Expression,
-    num_parts_ref: &Expression,
-    part_len: &Range<i32>,
-) -> Expression {
-    forall_domain(
-        part_index_domain,
-        "k",
-        |k| Some(leq(k, num_parts_ref)),
-        |k| range_body(part_len, &index1(part_sizes_ref, k)),
-    )
-}
-
-/// Every part has the same cardinality: `forAll k : int(2..maxNumParts), k <= numPartsVar .
-/// partSizesVar[k-1] = partSizesVar[k]`. Mirrors Conjure's `regular` (only emitted when the part
-/// size isn't already fixed by `partSize`).
-fn regular_expr(
-    regular_index_domain: &DomainPtr,
-    part_sizes_ref: &Expression,
-    num_parts_ref: &Expression,
-) -> Expression {
-    forall_domain(
-        regular_index_domain,
-        "k",
-        |k| Some(leq(k, num_parts_ref)),
-        |k| {
-            eq(
-                &index1(part_sizes_ref, &minus1(k)),
-                &index1(part_sizes_ref, k),
-            )
-        },
     )
 }
 
