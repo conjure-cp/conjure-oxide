@@ -1,13 +1,14 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
     AbstractLiteral, BinaryAttr, Domain, Expression, FuncAttr, GroundDomain, JectivityAttr,
-    Literal, MSetAttr, Moo, Name, PartialityAttr, RelAttr, SequenceAttr, SetAttr, SymbolTable,
+    Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, RelAttr, SequenceAttr, SetAttr,
+    SymbolTable,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
     FunctionAsRelation, FunctionExplicit, MSetExplicit, MSetOccurrence, MSetPacked,
-    MatrixComponents, MatrixPacked, RecordComponents, RecordPacked, RelationAsSet,
+    MatrixComponents, MatrixPacked, PartitionAsSet, RecordComponents, RecordPacked, RelationAsSet,
     RelationOccurrence, RelationPacked, SequenceExplicit, SequencePacked, SetExplicit,
     SetOccurrence, SetPacked, TupleComponents, TuplePacked, VariantComponents, VariantPacked,
 };
@@ -1113,4 +1114,122 @@ fn compactness_prefers_function_explicit_for_a_total_function() {
         FunctionExplicit::compactness_score(domain.clone()).unwrap()
             <= FunctionAsRelation::compactness_score(domain).unwrap()
     );
+}
+
+fn partition_attr(
+    num_parts: conjure_cp::ast::Range<i32>,
+    part_len: conjure_cp::ast::Range<i32>,
+    is_regular: bool,
+) -> PartitionAttr {
+    PartitionAttr {
+        num_parts,
+        part_len,
+        is_regular,
+    }
+}
+
+#[test]
+fn partition_as_set_round_trips_values() {
+    let domain = Domain::partition(
+        partition_attr(range!(2), range!(3), true),
+        domain_int!(1..6),
+    );
+    let state = <PartitionAsSet as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Partition(vec![
+        vec![Literal::Int(1), Literal::Int(2), Literal::Int(3)],
+        vec![Literal::Int(4), Literal::Int(5), Literal::Int(6)],
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn partition_as_set_round_trips_a_set_typed_inner_domain() {
+    let inner = Domain::set(SetAttr::new(range!(1)), domain_int!(1..3));
+    let domain = Domain::partition(partition_attr(range!(1), range!(2), false), inner);
+    let state = <PartitionAsSet as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Partition(vec![vec![
+        Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(1)])),
+        Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(2)])),
+    ]]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn partition_as_set_rejects_a_non_partition_domain() {
+    let domain = domain_int!(1..3);
+    assert!(<PartitionAsSet as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn partition_as_set_non_regular_builds_exactly_once_and_non_empty_constraints() {
+    let domain = Domain::partition(
+        partition_attr(range!(2), conjure_cp::ast::Range::Unbounded, false),
+        domain_int!(1..6),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PartitionAsSet::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 2);
+}
+
+#[test]
+fn partition_as_set_regular_infers_a_fixed_part_size_from_a_fixed_num_parts() {
+    let domain = Domain::partition(
+        partition_attr(range!(2), conjure_cp::ast::Range::Unbounded, true),
+        domain_int!(1..6),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PartitionAsSet::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 2);
+}
+
+#[test]
+fn partition_as_set_regular_infers_a_fixed_num_parts_from_a_fixed_part_size() {
+    let domain = Domain::partition(
+        partition_attr(conjure_cp::ast::Range::Unbounded, range!(3), true),
+        domain_int!(1..6),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PartitionAsSet::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 2);
+}
+
+#[test]
+fn partition_as_set_regular_adds_a_third_constraint_when_part_size_is_not_fixed() {
+    // Neither `numParts` nor `partSize` is pinned to a single value here, so the regular ->
+    // fixed-size inference (`numParts` or `partSize` singleton + `regular` forces the other)
+    // cannot kick in, and the pairwise "all parts equal size" constraint is genuinely needed.
+    let domain = Domain::partition(
+        partition_attr(
+            conjure_cp::ast::Range::Unbounded,
+            conjure_cp::ast::Range::Unbounded,
+            true,
+        ),
+        domain_int!(1..6),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PartitionAsSet::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 3);
+}
+
+#[test]
+fn partition_as_set_regular_is_redundant_when_part_size_is_already_fixed() {
+    // `regular` is automatically implied once `partSize` fixes an exact size, so stating it
+    // again should not add a third structural constraint (mirrors Conjure's own `fixedPartSize`
+    // guard in `PartitionAsSet.hs`).
+    let domain = Domain::partition(
+        partition_attr(range!(2), range!(3), true),
+        domain_int!(1..6),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PartitionAsSet::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 2);
 }
