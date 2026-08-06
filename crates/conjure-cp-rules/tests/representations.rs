@@ -8,8 +8,8 @@ use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
     FunctionAsRelation, FunctionExplicit, MSetExplicit, MSetOccurrence, MSetPacked,
     MatrixComponents, MatrixPacked, RecordComponents, RecordPacked, RelationAsSet,
-    RelationOccurrence, SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked,
-    TupleComponents, TuplePacked, VariantComponents, VariantPacked,
+    RelationOccurrence, RelationPacked, SequenceExplicit, SequencePacked, SetExplicit,
+    SetOccurrence, SetPacked, TupleComponents, TuplePacked, VariantComponents, VariantPacked,
 };
 use uniplate::Uniplate;
 
@@ -815,6 +815,104 @@ fn relation_occurrence_fixed_size_builds_an_equality_cardinality_constraint() {
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = RelationOccurrence::init_for(&mut declaration).unwrap();
     assert_eq!(constraints.len(), 1);
+}
+
+#[test]
+fn relation_packed_round_trips_binary_pairs() {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(2),
+            binary: vec![],
+        },
+        vec![domain_int!(1..3), domain_int!(1..2)],
+    );
+    let state = <RelationPacked as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Relation(vec![
+        vec![Literal::Int(1), Literal::Int(1)],
+        vec![Literal::Int(2), Literal::Int(2)],
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn relation_packed_round_trips_a_set_typed_column() {
+    // More general than RelationOccurrence: any enumerable column works, not just
+    // matrix-indexable ones, as long as the combined cartesian product stays small.
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(2),
+            binary: vec![],
+        },
+        vec![
+            domain_int!(1..2),
+            Domain::set(SetAttr::new(range!(2)), domain_int!(1..3)),
+        ],
+    );
+    let state = <RelationPacked as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Relation(vec![
+        vec![
+            Literal::Int(1),
+            Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(1), Literal::Int(2)])),
+        ],
+        vec![
+            Literal::Int(1),
+            Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(1), Literal::Int(3)])),
+        ],
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn relation_packed_rejects_a_too_large_cartesian_product() {
+    // 6 columns of int(1..3) is 3^6 = 729 possible tuples, far over the 30-bit cap.
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(2),
+            binary: vec![],
+        },
+        vec![domain_int!(1..3); 6],
+    );
+    assert!(<RelationPacked as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn relation_packed_reflexive_builds_a_cardinality_and_a_structural_constraint() {
+    // Unlike RelationAsSet (which delegates cardinality entirely to set_decl's own eventual
+    // representation), RelationPacked always emits its own cardinality constraint directly, so a
+    // fixed size plus one binary attribute gives two constraints, not one.
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(3),
+            binary: vec![BinaryAttr::Reflexive],
+        },
+        vec![domain_int!(1..3), domain_int!(1..3)],
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = RelationPacked::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 2);
+}
+
+#[test]
+fn relation_packed_is_more_compact_than_occurrence_for_a_bounded_size() {
+    // Both represent every possible relation value, so for an *unbounded* size their compactness
+    // is mathematically identical (sum_k C(n,k) == 2^n); packed only wins once the size is
+    // bounded narrowly enough for the binomial sum to undercut 2^n.
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(2),
+            binary: vec![],
+        },
+        vec![domain_int!(1..3), domain_int!(1..3)],
+    );
+    assert!(
+        RelationPacked::compactness_score(domain.clone()).unwrap()
+            < RelationOccurrence::compactness_score(domain).unwrap()
+    );
 }
 
 fn func_attr(
