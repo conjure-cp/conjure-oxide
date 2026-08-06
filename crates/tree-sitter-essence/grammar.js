@@ -102,6 +102,7 @@ module.exports = grammar ({
       field("sequence_domain", $.sequence_domain),
       field("function_domain", $.function_domain),
       field("relation_domain", $.relation_domain),
+      field("partition_domain", $.partition_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -302,6 +303,27 @@ module.exports = grammar ({
       field("attribute", "strictPartialOrder")
     ),
 
+    // e.g. partition from int(1..3), partition (regular) from int(1..4),
+    // partition (numParts 2, partSize 3) from int(3..8).
+    partition_domain: $ => seq(
+      "partition",
+      optional(seq("(", $.partition_attributes, ")")),
+      "from",
+      field("value_domain", $.domain)
+    ),
+
+    partition_attributes: $ => commaSep1($.partition_attribute),
+
+    partition_attribute: $ => choice(
+      seq(field("attribute", "numParts"), field("value", $.integer)),
+      seq(field("attribute", "minNumParts"), field("value", $.integer)),
+      seq(field("attribute", "maxNumParts"), field("value", $.integer)),
+      seq(field("attribute", "partSize"), field("value", $.integer)),
+      seq(field("attribute", "minPartSize"), field("value", $.integer)),
+      seq(field("attribute", "maxPartSize"), field("value", $.integer)),
+      field("attribute", "regular")
+    ),
+
     set_literal: $ => seq(
       "{",
       field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
@@ -348,6 +370,57 @@ module.exports = grammar ({
     relation_literal_tuple: $ => seq(
       "(",
       field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
+      ")"
+    ),
+
+    // e.g. partition(), partition({1}), partition({1,3},{6}). Each part is itself a set literal.
+    partition_literal: $ => seq(
+      "partition",
+      "(",
+      optional(field("part", commaSep1($.set_literal))),
+      ")"
+    ),
+
+    // Partition operators, all function-call style: keyword immediately followed by a
+    // parenthesised, comma-separated argument list (not infix operators).
+    together_expr: $ => seq(
+      "together",
+      "(",
+      field("elements", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("partition", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    apart_expr: $ => seq(
+      "apart",
+      "(",
+      field("elements", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("partition", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    party_expr: $ => seq(
+      "party",
+      "(",
+      field("element", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("partition", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    parts_expr: $ => seq(
+      "parts",
+      "(",
+      field("partition", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    participants_expr: $ => seq(
+      "participants",
+      "(",
+      field("partition", choice($.arithmetic_expr, $.atom)),
       ")"
     ),
 
@@ -682,6 +755,7 @@ module.exports = grammar ({
       field("sequence_literal", $.sequence_literal),
       field("function_literal", $.function_literal),
       field("relation_literal", $.relation_literal),
+      field("partition_literal", $.partition_literal),
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
       field("element_id", $.element_id),
@@ -698,7 +772,12 @@ module.exports = grammar ({
       field("to_set_expr", $.to_set_expr),
       field("to_mset_expr", $.to_mset_expr),
       field("to_relation_expr", $.to_relation_expr),
-      field("attribute_as_constraint_expr", $.attribute_as_constraint_expr)
+      field("attribute_as_constraint_expr", $.attribute_as_constraint_expr),
+      field("together_expr", $.together_expr),
+      field("apart_expr", $.apart_expr),
+      field("party_expr", $.party_expr),
+      field("parts_expr", $.parts_expr),
+      field("participants_expr", $.participants_expr)
     )),
 
     sub_atom_expr: $ => seq("(", field("expression", choice($.annotation_expr, $.atom)), ")"),

@@ -80,7 +80,7 @@ pub fn parse_atom(
             )))
         }
         "matrix" | "record" | "variant" | "tuple" | "set_literal" | "mset_literal"
-        | "sequence_literal" | "function_literal" | "relation_literal" => {
+        | "sequence_literal" | "function_literal" | "relation_literal" | "partition_literal" => {
             let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);
             };
@@ -103,6 +103,8 @@ pub fn parse_atom(
         }
         "restrict_expr" => parse_restrict_expr(ctx, node),
         "attribute_as_constraint_expr" => parse_attribute_as_constraint(ctx, node),
+        "parts_expr" | "participants_expr" => parse_partition_unary_operator(ctx, node),
+        "together_expr" | "apart_expr" | "party_expr" => parse_partition_binary_operator(ctx, node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected atom, got: {}", node.kind()),
@@ -368,6 +370,108 @@ fn parse_attribute_as_constraint(
         attr,
         value,
     )))
+}
+
+/// Parses a unary partition operator (`parts`, `participants`): keyword immediately followed by
+/// a parenthesised partition expression.
+fn parse_partition_unary_operator(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let Some(partition_node) = field!(recover, ctx, node, "partition") else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(partition) = parse_expression(ctx, partition_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    match node.kind() {
+        "parts_expr" => Ok(Some(Expression::Parts(
+            Metadata::new(),
+            Moo::new(partition),
+        ))),
+        "participants_expr" => Ok(Some(Expression::Participants(
+            Metadata::new(),
+            Moo::new(partition),
+        ))),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected a partition operator, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
+    }
+}
+
+/// Parses the two arguments of a binary partition operator (`together`, `apart`, `party`):
+/// keyword immediately followed by a parenthesised, comma-separated argument pair. `party_expr`
+/// uses an `element`/`partition` field pair; `together_expr`/`apart_expr` use `elements`/
+/// `partition`.
+fn parse_partition_binary_operator(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let first_field = if node.kind() == "party_expr" {
+        "element"
+    } else {
+        "elements"
+    };
+
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let Some(first_node) = field!(recover, ctx, node, first_field) else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(first) = parse_expression(ctx, first_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    let Some(partition_node) = field!(recover, ctx, node, "partition") else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(partition) = parse_expression(ctx, partition_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    match node.kind() {
+        "together_expr" => Ok(Some(Expression::Together(
+            Metadata::new(),
+            Moo::new(first),
+            Moo::new(partition),
+        ))),
+        "apart_expr" => Ok(Some(Expression::Apart(
+            Metadata::new(),
+            Moo::new(first),
+            Moo::new(partition),
+        ))),
+        "party_expr" => Ok(Some(Expression::Party(
+            Metadata::new(),
+            Moo::new(first),
+            Moo::new(partition),
+        ))),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected a partition operator, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
+    }
 }
 
 /// Parses the two arguments of a binary function-call-style operator (`image`, `imageSet`,

@@ -37,6 +37,7 @@ pub fn parse_expression(
         | "sequence_literal"
         | "function_literal"
         | "relation_literal"
+        | "partition_literal"
         | "comprehension"
         | "index_or_slice"
         | "flatten"
@@ -53,7 +54,12 @@ pub fn parse_expression(
         | "to_set_expr"
         | "to_mset_expr"
         | "to_relation_expr"
-        | "attribute_as_constraint_expr" => parse_atom(ctx, &node),
+        | "attribute_as_constraint_expr"
+        | "together_expr"
+        | "apart_expr"
+        | "party_expr"
+        | "parts_expr"
+        | "participants_expr" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(

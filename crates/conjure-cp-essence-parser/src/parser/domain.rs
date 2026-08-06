@@ -9,8 +9,8 @@ use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
     Atom, BinaryAttr, DeclarationPtr, Domain, DomainPtr, Expression, Field, FuncAttr, IntVal,
-    JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, Range, Reference, RelAttr,
-    SequenceAttr, SetAttr,
+    JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, Range, Reference,
+    RelAttr, SequenceAttr, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -80,6 +80,7 @@ pub fn parse_domain(
         "sequence_domain" | "annotation_sequence_domain" => parse_sequence_domain(ctx, domain),
         "function_domain" | "annotation_function_domain" => parse_function_domain(ctx, domain),
         "relation_domain" => parse_relation_domain(ctx, domain),
+        "partition_domain" => parse_partition_domain(ctx, domain),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("{} is not a supported domain type", domain.kind()),
@@ -715,6 +716,92 @@ fn parse_relation_domain(
 
     let attrs = RelAttr { size, binary };
     Ok(Some(Domain::relation(attrs, columns)))
+}
+
+fn parse_partition_domain(
+    ctx: &mut ParseContext,
+    partition_domain: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let mut num_parts = Range::Unbounded;
+    let mut min_num_parts = None;
+    let mut max_num_parts = None;
+    let mut part_len = Range::Unbounded;
+    let mut min_part_len = None;
+    let mut max_part_len = None;
+    let mut is_regular = false;
+
+    for child in named_children(&partition_domain) {
+        if child.kind() == "partition_attributes" {
+            for attribute in named_children(&child) {
+                let name = attribute
+                    .child_by_field_name("attribute")
+                    .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
+                    .unwrap_or_default();
+                match name {
+                    "numParts" | "minNumParts" | "maxNumParts" | "partSize" | "minPartSize"
+                    | "maxPartSize" => {
+                        let Some(value_node) = attribute.child_by_field_name("value") else {
+                            return Ok(None);
+                        };
+                        let Some(value) = parse_int(ctx, &value_node) else {
+                            return Ok(None);
+                        };
+                        match name {
+                            "numParts" => num_parts = Range::Single(value),
+                            "minNumParts" => min_num_parts = Some(value),
+                            "maxNumParts" => max_num_parts = Some(value),
+                            "partSize" => part_len = Range::Single(value),
+                            "minPartSize" => min_part_len = Some(value),
+                            "maxPartSize" => max_part_len = Some(value),
+                            _ => unreachable!(),
+                        }
+                    }
+                    "regular" => is_regular = true,
+                    _ => return Ok(None),
+                }
+            }
+        }
+    }
+
+    if !matches!(num_parts, Range::Single(_)) {
+        num_parts = match (min_num_parts, max_num_parts) {
+            (Some(min), Some(max)) => Range::Bounded(min, max),
+            (Some(min), None) => Range::UnboundedR(min),
+            (None, Some(max)) => Range::UnboundedL(max),
+            (None, None) => Range::Unbounded,
+        };
+    }
+    if !matches!(part_len, Range::Single(_)) {
+        part_len = match (min_part_len, max_part_len) {
+            (Some(min), Some(max)) => Range::Bounded(min, max),
+            (Some(min), None) => Range::UnboundedR(min),
+            (None, Some(max)) => Range::UnboundedL(max),
+            (None, None) => Range::Unbounded,
+        };
+    }
+
+    let Some(value_domain) = field!(recover, ctx, partition_domain, "value_domain") else {
+        return Ok(None);
+    };
+    let Some(inner) = parse_domain(ctx, value_domain)? else {
+        return Ok(None);
+    };
+
+    let partition_keyword_node = child!(partition_domain, 0, "partition");
+    ctx.add_span_and_doc_hover(
+        &partition_keyword_node,
+        "partition",
+        SymbolKind::Domain,
+        None,
+        None,
+    );
+
+    let attrs = PartitionAttr {
+        num_parts,
+        part_len,
+        is_regular,
+    };
+    Ok(Some(Domain::partition(attrs, inner)))
 }
 
 pub fn parse_set_domain(

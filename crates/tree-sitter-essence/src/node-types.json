@@ -864,6 +864,40 @@
     }
   },
   {
+    "type": "apart_expr",
+    "named": true,
+    "fields": {
+      "elements": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "partition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "arithmetic_comparison",
     "named": true,
     "fields": {
@@ -1037,6 +1071,16 @@
     "type": "atom",
     "named": true,
     "fields": {
+      "apart_expr": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "apart_expr",
+            "named": true
+          }
+        ]
+      },
       "attribute_as_constraint_expr": {
         "multiple": false,
         "required": false,
@@ -1207,6 +1251,46 @@
           }
         ]
       },
+      "participants_expr": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "participants_expr",
+            "named": true
+          }
+        ]
+      },
+      "partition_literal": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "partition_literal",
+            "named": true
+          }
+        ]
+      },
+      "parts_expr": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "parts_expr",
+            "named": true
+          }
+        ]
+      },
+      "party_expr": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "party_expr",
+            "named": true
+          }
+        ]
+      },
       "pre_image_expr": {
         "multiple": false,
         "required": false,
@@ -1333,6 +1417,16 @@
         "types": [
           {
             "type": "to_set_expr",
+            "named": true
+          }
+        ]
+      },
+      "together_expr": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "together_expr",
             "named": true
           }
         ]
@@ -1832,6 +1926,16 @@
         "types": [
           {
             "type": "mset_domain",
+            "named": true
+          }
+        ]
+      },
+      "partition_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "partition_domain",
             "named": true
           }
         ]
@@ -3705,6 +3809,191 @@
     }
   },
   {
+    "type": "participants_expr",
+    "named": true,
+    "fields": {
+      "partition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "partition_attribute",
+    "named": true,
+    "fields": {
+      "attribute": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "maxNumParts",
+            "named": false
+          },
+          {
+            "type": "maxPartSize",
+            "named": false
+          },
+          {
+            "type": "minNumParts",
+            "named": false
+          },
+          {
+            "type": "minPartSize",
+            "named": false
+          },
+          {
+            "type": "numParts",
+            "named": false
+          },
+          {
+            "type": "partSize",
+            "named": false
+          },
+          {
+            "type": "regular",
+            "named": false
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "integer",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "partition_attributes",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "partition_attribute",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "partition_domain",
+    "named": true,
+    "fields": {
+      "value_domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "domain",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "partition_attributes",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "partition_literal",
+    "named": true,
+    "fields": {
+      "part": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "set_literal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "parts_expr",
+    "named": true,
+    "fields": {
+      "partition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "party_expr",
+    "named": true,
+    "fields": {
+      "element": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "partition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "pre_image_expr",
     "named": true,
     "fields": {
@@ -4972,6 +5261,40 @@
     }
   },
   {
+    "type": "together_expr",
+    "named": true,
+    "fields": {
+      "elements": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "partition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "tuple",
     "named": true,
     "fields": {
@@ -5382,6 +5705,10 @@
     "named": false
   },
   {
+    "type": "apart",
+    "named": false
+  },
+  {
     "type": "atLeast",
     "named": false
   },
@@ -5467,6 +5794,10 @@
   },
   {
     "type": "forAll",
+    "named": false
+  },
+  {
+    "type": "from",
     "named": false
   },
   {
@@ -5559,7 +5890,15 @@
     "named": false
   },
   {
+    "type": "maxNumParts",
+    "named": false
+  },
+  {
     "type": "maxOccur",
+    "named": false
+  },
+  {
+    "type": "maxPartSize",
     "named": false
   },
   {
@@ -5575,7 +5914,15 @@
     "named": false
   },
   {
+    "type": "minNumParts",
+    "named": false
+  },
+  {
     "type": "minOccur",
+    "named": false
+  },
+  {
+    "type": "minPartSize",
     "named": false
   },
   {
@@ -5599,6 +5946,10 @@
     "named": false
   },
   {
+    "type": "numParts",
+    "named": false
+  },
+  {
     "type": "of",
     "named": false
   },
@@ -5611,7 +5962,27 @@
     "named": false
   },
   {
+    "type": "partSize",
+    "named": false
+  },
+  {
     "type": "partialOrder",
+    "named": false
+  },
+  {
+    "type": "participants",
+    "named": false
+  },
+  {
+    "type": "partition",
+    "named": false
+  },
+  {
+    "type": "parts",
+    "named": false
+  },
+  {
+    "type": "party",
     "named": false
   },
   {
@@ -5636,6 +6007,10 @@
   },
   {
     "type": "reflexive",
+    "named": false
+  },
+  {
+    "type": "regular",
     "named": false
   },
   {
@@ -5733,6 +6108,10 @@
   },
   {
     "type": "toSet",
+    "named": false
+  },
+  {
+    "type": "together",
     "named": false
   },
   {

@@ -26,6 +26,7 @@ pub fn parse_abstract(
         "sequence_literal" => parse_sequence_literal(ctx, node),
         "function_literal" => parse_function_literal(ctx, node),
         "relation_literal" => parse_relation_literal(ctx, node),
+        "partition_literal" => parse_partition_literal(ctx, node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected abstract literal, got: {}", node.kind()),
@@ -59,6 +60,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         "sequence_literal" => "sequence",
         "function_literal" => "function",
         "relation_literal" => "relation",
+        "partition_literal" => "partition",
         "matrix" => "matrix",
         "tuple" => "tuple",
         "record" => "record",
@@ -407,5 +409,35 @@ fn parse_relation_literal(
         Ok(None)
     } else {
         Ok(Some(AbstractLiteral::Relation(tuples)))
+    }
+}
+
+fn parse_partition_literal(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    let saved_ctx = ctx.typechecking_context;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
+    let mut parts = Vec::new();
+    let mut had_error = false;
+    for part_node in named_children(node) {
+        // Each part is itself a set literal; its elements can be of any type (matching the
+        // partition's own inner domain), so typecheck context is relaxed here, mirroring the
+        // other abstract literal parsers.
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
+        let Some(AbstractLiteral::Set(elements)) = parse_set_literal(ctx, &part_node)? else {
+            had_error = true;
+            continue;
+        };
+        parts.push(elements);
+    }
+    ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Partition(parts)))
     }
 }
