@@ -1,6 +1,6 @@
 use conjure_cp::ast::{
     Atom, DeclarationPtr, Expression as Expr, Metadata, Moo, ReturnType, SymbolTable, Typeable,
-    comprehension::ComprehensionQualifier,
+    ac_operators::ACOperatorKind, comprehension::ComprehensionQualifier, eval_constant,
 };
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
@@ -14,8 +14,20 @@ use uniplate::Biplate;
 /// source, and no other rule actually constant-folds a comprehension whose `ExpressionGenerator`
 /// source is constant but whose return expression is not (every native/via-solver comprehension
 /// expander explicitly declines to run at all while an `ExpressionGenerator` qualifier remains,
-/// so a constant-sourced one that never reaches this rule is stuck permanently, surfacing much
-/// later as "top-level and must be flattened" once it reaches the solver adaptor unexpanded).
+/// so a constant-sourced one that never reaches this rule would otherwise be stuck permanently,
+/// surfacing much later as "top-level and must be flattened" once it reaches the solver adaptor
+/// unexpanded -- this is exactly what `A subsetEq B` desugars into, `and([ i in B | i <- A ])`).
+///
+/// **Exception**: an `Or`-skip-operator comprehension (i.e. `exists i <- A . P(i)`) with a
+/// constant source is deliberately left alone here, even now. `exists_quantified_to_finds`
+/// (`passes/comprehensions/expansion/mod.rs`) already handles exactly that top-level shape, and
+/// does it better (a domain inferred here from `A.domain_of()` can come out far looser than the
+/// tight domain that rule derives, e.g. `set (unbounded) of ...` instead of the constant's actual
+/// value) -- lowering it here first would pre-empt that rule and hand it a worse shape to work
+/// with. Confirmed by a regression: `exists innerSet in s . x in innerSet` over a `given` set of
+/// sets `s` used to solve correctly via `exists_quantified_to_finds` alone; lowering the outer
+/// generator here first left a `Set`-in-`Set-of-Set` membership check that nothing else in the
+/// rule set can currently discharge.
 #[register_rule("Base", 8600, [Comprehension])]
 fn lower_set_expression_generator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Comprehension(metadata, comprehension) = expr else {
@@ -32,6 +44,11 @@ fn lower_set_expression_generator(expr: &Expr, _: &SymbolTable) -> ApplicationRe
                     return None;
                 };
                 let source = (*ptr.as_quantified_expr()?).clone();
+                if comprehension.skip_operator == Some(ACOperatorKind::Or)
+                    && eval_constant(&source).is_some()
+                {
+                    return None;
+                }
                 matches!(source.return_type(), ReturnType::Set(_))
                     .then(|| (index, ptr.clone(), source))
             })
@@ -185,5 +202,41 @@ mod tests {
             panic!("expected a domain generator followed by membership");
         };
         assert_eq!(source.as_ref(), &constant_set);
+    }
+
+    #[test]
+    fn or_skip_operator_with_a_constant_source_is_left_for_exists_quantified_to_finds() {
+        // Regression test: this rule used to unconditionally lower a constant-sourced
+        // ExpressionGenerator, which pre-empted `exists_quantified_to_finds`'s own, better-suited
+        // handling of `exists i <- A . P(i)` at the root level (that rule infers a tighter domain
+        // for `i` than `A.domain_of().element_domain()` gives here). Concretely broke
+        // `exists innerSet in s . x in innerSet` over a `given` set of sets `s`.
+        use conjure_cp::ast::{AbstractLiteral, Literal, ac_operators::ACOperatorKind};
+
+        let constant_set = Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+                Literal::Int(1),
+                Literal::Int(2),
+            ]))),
+        );
+
+        let mut builder = ComprehensionBuilder::new(SymbolTablePtr::new());
+        builder = builder.expression_generator("element".into(), constant_set);
+        let old_ptr = builder
+            .generator_symboltable()
+            .read()
+            .lookup_local(&"element".into())
+            .unwrap();
+        let mut comprehension = builder.with_return_value(Expr::from(Reference::new(old_ptr)));
+        comprehension.skip_operator = Some(ACOperatorKind::Or);
+
+        assert!(matches!(
+            lower_set_expression_generator(
+                &Expr::Comprehension(Metadata::new(), Moo::new(comprehension)),
+                &SymbolTable::new(),
+            ),
+            Err(RuleNotApplicable)
+        ));
     }
 }
