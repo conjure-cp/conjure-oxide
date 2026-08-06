@@ -1,7 +1,8 @@
 use crate::shared::representation_prelude::*;
+use crate::types::partition::common::resolve_partition_size_attrs;
 use conjure_cp::ast::ac_operators::ACOperatorKind;
 use conjure_cp::ast::comprehension::ComprehensionBuilder;
-use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference, SetAttr, SymbolTablePtr};
+use conjure_cp::ast::{Domain, GroundDomain, Moo, Reference, SetAttr, SymbolTablePtr};
 
 register_representation!(
     PartitionAsSet("as_set")
@@ -63,49 +64,9 @@ register_representation!(
         let max_size = inner_domain
             .length_signed()
             .map_err(|_| domain_err("inner domain must have a known finite size"))?;
-        // If the partition is `regular` and either `numParts` or `partSize` is already pinned to
-        // a single value, the other is forced (partSize = |innerDomain| / numParts, or vice
-        // versa) -- a regular partition's parts all have the same size, so fixing one of
-        // (count, size) with a known total fixes the other. Inferring this lets us treat
-        // `partSize` as fixed here exactly as if the user had written it explicitly, which skips
-        // `regular_expr`'s pairwise "all parts equal size" comprehension entirely (it would
-        // otherwise be redundant anyway). When the total doesn't divide evenly no regular
-        // partition exists; leave the attributes as given so the model comes out UNSAT via the
-        // normal size constraints rather than us trying to special-case infeasibility here.
-        let inferred_part_len = if attr.is_regular {
-            match (attr.num_parts.low(), attr.num_parts.high(), attr.part_len.low(), attr.part_len.high()) {
-                (Some(n), Some(n2), _, _) if n == n2 && *n != 0 && max_size % n == 0 => {
-                    Some(Range::Single(max_size / n))
-                }
-                (_, _, Some(s), Some(s2)) if s == s2 => None,
-                _ => None,
-            }
-        } else {
-            None
-        };
-        let inferred_num_parts = if attr.is_regular {
-            match (attr.part_len.low(), attr.part_len.high(), attr.num_parts.low(), attr.num_parts.high()) {
-                (Some(s), Some(s2), np_lo, np_hi) if s == s2 && *s != 0 && max_size % s == 0
-                    && !(np_lo.is_some() && np_hi.is_some() && np_lo == np_hi) =>
-                {
-                    Some(Range::Single(max_size / s))
-                }
-                _ => None,
-            }
-        } else {
-            None
-        };
-        let num_parts = bound_size(
-            &inferred_num_parts.unwrap_or_else(|| attr.num_parts.clone()),
-            max_size,
-        );
-        let part_len = bound_size(
-            &inferred_part_len.unwrap_or_else(|| attr.part_len.clone()),
-            max_size,
-        );
-        let part_domain = Domain::set(SetAttr::new(part_len.clone()), inner_domain.clone());
+        let (num_parts, part_len, fixed_part_size) = resolve_partition_size_attrs(attr, max_size);
+        let part_domain = Domain::set(SetAttr::new(part_len), inner_domain.clone());
         let set_decl = Domain::set(SetAttr::new(num_parts), part_domain.clone());
-        let fixed_part_size = matches!(part_len, Range::Single(_));
         Ok(State {
             set_decl,
             inner_domain,
@@ -160,14 +121,6 @@ register_representation!(
         Literal::AbstractLiteral(AbstractLiteral::Partition(parts))
     }
 );
-
-/// Narrows a size-shaped range attribute to be bounded above by `max`, treating an absent lower
-/// bound as `0` and an absent upper bound as `max`.
-fn bound_size(range: &Range<i32>, max: i32) -> Range<i32> {
-    let lo = range.low().copied().unwrap_or(0).max(0);
-    let hi = range.high().copied().map(|h| h.min(max)).unwrap_or(max);
-    Range::new(Some(lo), Some(hi))
-}
 
 /// Looks up a just-inserted quantified variable's declaration by name.
 fn quantified_ref(symbols: &SymbolTablePtr, name: &Name) -> Expression {
