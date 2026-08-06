@@ -334,6 +334,11 @@ pub enum Expression {
     /// where M is a matrix and n is an optional integer argument indicating depth of flattening
     Flatten(Metadata, Option<Moo<Expression>>, Moo<Expression>),
 
+    /// An attribute predicate used as a constraint, e.g. `reflexive(r)` or `size(s, 3)`.
+    /// Lifted into the target's declaration domain attributes when possible (see
+    /// `passes::attribute_as_constraint`); expanded in place to the equivalent formula otherwise.
+    AttributeAsConstraint(Metadata, Moo<Expression>, Ustr, Option<Moo<Expression>>),
+
     /// `allDifferent(<vec_expr>)`
     #[compatible(JsonInput)]
     AllDiff(Metadata, Moo<Expression>),
@@ -1532,6 +1537,7 @@ impl Expression {
             }
             Expression::Subsequence(_, _, _) => Some(Domain::bool()),
             Expression::Substring(_, _, _) => Some(Domain::bool()),
+            Expression::AttributeAsConstraint(_, _, _, _) => Some(Domain::bool()),
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
             Expression::LexLeq(..) => Some(Domain::bool()),
@@ -1879,6 +1885,7 @@ impl Expression {
             UnsafePow,
             SafePow,
             Flatten,
+            AttributeAsConstraint,
             AllDiff,
             AllDifferentExcept,
             ElementId,
@@ -2404,6 +2411,13 @@ impl Display for Expression {
                     write!(f, "flatten({m})")
                 }
             }
+            Expression::AttributeAsConstraint(_, target, attr, val) => {
+                if let Some(val) = val {
+                    write!(f, "{attr}({target}, {val})")
+                } else {
+                    write!(f, "{attr}({target})")
+                }
+            }
             Expression::AllDiff(_, e) => {
                 write!(f, "allDifferent({e})")
             }
@@ -2925,6 +2939,7 @@ impl Typeable for Expression {
             Expression::Card(..) => ReturnType::Int,
             Expression::Subsequence(_, _, _) => ReturnType::Bool,
             Expression::Substring(_, _, _) => ReturnType::Bool,
+            Expression::AttributeAsConstraint(_, _, _, _) => ReturnType::Bool,
         }
     }
 }
@@ -3104,6 +3119,14 @@ impl Expression {
                     f(e);
                 }
                 f(m);
+            }
+
+            // Moo<Expression> + AttrName + Option<Moo<Expression>>
+            Expression::AttributeAsConstraint(_, target, _, val) => {
+                f(target);
+                if let Some(v) = val {
+                    f(v);
+                }
             }
 
             // Moo<Expression> + Atom
@@ -3382,6 +3405,15 @@ impl Expression {
                     child_hash(child_hashes).hash(&mut hasher);
                 }
                 child_hash(child_hashes).hash(&mut hasher);
+            }
+
+            // Moo<Expression> + AttrName + Option<Moo<Expression>>
+            Expression::AttributeAsConstraint(_, target, attr, val) => {
+                child_hash(child_hashes).hash(&mut hasher);
+                attr.hash(&mut hasher);
+                if let Some(v) = val {
+                    child_hash(child_hashes).hash(&mut hasher);
+                }
             }
 
             // Moo<Expression> + Atom

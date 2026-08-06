@@ -102,6 +102,7 @@ pub fn parse_atom(
             parse_function_binary_operator(ctx, node)
         }
         "restrict_expr" => parse_restrict_expr(ctx, node),
+        "attribute_as_constraint_expr" => parse_attribute_as_constraint(ctx, node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected atom, got: {}", node.kind()),
@@ -321,6 +322,52 @@ fn parse_function_unary_operator(
             Ok(None)
         }
     }
+}
+
+/// Parses an attribute-as-constraint predicate, e.g. `reflexive(r)` or `size(s, 3)`: a keyword
+/// naming the attribute, immediately followed by a parenthesised target and an optional value.
+/// Arity is not checked here (the grammar allows any attribute name with or without a value); a
+/// later pass validates it against the target's actual domain kind.
+fn parse_attribute_as_constraint(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let Some(attr_node) = field!(recover, ctx, node, "attribute") else {
+        return Ok(None);
+    };
+    let attr = Ustr::from(&ctx.source_code[attr_node.start_byte()..attr_node.end_byte()]);
+
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let Some(target_node) = field!(recover, ctx, node, "target") else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(target) = parse_expression(ctx, target_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    let value = match node.child_by_field_name("value") {
+        Some(value_node) => match parse_expression(ctx, value_node)? {
+            Some(value_expr) => Some(Moo::new(value_expr)),
+            None => {
+                ctx.typechecking_context = saved_context;
+                return Ok(None);
+            }
+        },
+        None => None,
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    Ok(Some(Expression::AttributeAsConstraint(
+        Metadata::new(),
+        Moo::new(target),
+        attr,
+        value,
+    )))
 }
 
 /// Parses the two arguments of a binary function-call-style operator (`image`, `imageSet`,

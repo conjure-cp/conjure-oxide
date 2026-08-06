@@ -28,9 +28,8 @@ pub fn parse_expression(
         | "function_literal" | "relation_literal" | "comprehension" | "index_or_slice"
         | "flatten" | "element_id" | "table" | "negative_table" | "image_expr"
         | "image_set_expr" | "pre_image_expr" | "inverse_expr" | "restrict_expr"
-        | "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr" => {
-            parse_atom(ctx, &node)
-        }
+        | "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr"
+        | "attribute_as_constraint_expr" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(

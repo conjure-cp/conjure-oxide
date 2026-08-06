@@ -293,7 +293,13 @@ module.exports = grammar ({
       field("attribute", "Euclidean"),
       field("attribute", "serial"),
       field("attribute", "equivalence"),
-      field("attribute", "partialOrder")
+      field("attribute", "partialOrder"),
+      field("attribute", "leftTotal"),
+      field("attribute", "rightTotal"),
+      field("attribute", "linearOrder"),
+      field("attribute", "weakOrder"),
+      field("attribute", "preOrder"),
+      field("attribute", "strictPartialOrder")
     ),
 
     set_literal: $ => seq(
@@ -425,6 +431,23 @@ module.exports = grammar ({
       "toRelation",
       "(",
       field("function", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    // An attribute predicate used as a constraint, e.g. `reflexive(r)` or `size(s, 3)`. Arity
+    // (whether a value argument is required/allowed for a given attribute name) is not enforced
+    // by the grammar, matching Conjure's own parser; it is checked during semantic validation.
+    attribute_as_constraint_expr: $ => seq(
+      field("attribute", choice(
+        "size", "minSize", "maxSize", "minOccur", "maxOccur",
+        "total", "injective", "surjective", "bijective",
+        "reflexive", "irreflexive", "coreflexive", "symmetric", "antiSymmetric", "aSymmetric",
+        "transitive", "connex", "Euclidean", "serial", "equivalence", "partialOrder",
+        "leftTotal", "rightTotal", "linearOrder", "weakOrder", "preOrder", "strictPartialOrder"
+      )),
+      "(",
+      field("target", choice($.arithmetic_expr, $.atom)),
+      optional(seq(",", field("value", choice($.arithmetic_expr, $.atom)))),
       ")"
     ),
 
@@ -674,7 +697,8 @@ module.exports = grammar ({
       field("range_expr", $.range_expr),
       field("to_set_expr", $.to_set_expr),
       field("to_mset_expr", $.to_mset_expr),
-      field("to_relation_expr", $.to_relation_expr)
+      field("to_relation_expr", $.to_relation_expr),
+      field("attribute_as_constraint_expr", $.attribute_as_constraint_expr)
     )),
 
     sub_atom_expr: $ => seq("(", field("expression", choice($.annotation_expr, $.atom)), ")"),

@@ -325,6 +325,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::AtMost(_, _, _, _) => Err(RuleNotApplicable),
         Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => Err(RuleNotApplicable),
         Expr::RecordField(_, _, _) => Err(RuleNotApplicable),
+        Expr::AttributeAsConstraint(_, _, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {
             // partially evaluate matrix literals indexed by a constant.
 
