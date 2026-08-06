@@ -366,8 +366,29 @@ fn literal_from_simplified_json_with_ground(
             function_from_simplified_json(value, from.as_ref(), to.as_ref())
         }
         GroundDomain::Relation(_, inner_doms) => relation_from_simplified_json(value, inner_doms),
-        GroundDomain::Partition(_, _) => literal_from_simplified_json_unguided(value),
+        GroundDomain::Partition(_, inner) => partition_from_simplified_json(value, inner),
     }
+}
+
+fn partition_from_simplified_json(
+    value: &JsonValue,
+    inner: &GroundDomain,
+) -> anyhow::Result<Literal> {
+    let JsonValue::Array(items) = value else {
+        bail!("expected a JSON array for a partition");
+    };
+    let mut parts = Vec::with_capacity(items.len());
+    for item in items {
+        let JsonValue::Array(elems) = item else {
+            bail!("expected a JSON array for a partition part");
+        };
+        let mut part = Vec::with_capacity(elems.len());
+        for elem in elems {
+            part.push(literal_from_simplified_json_with_ground(elem, inner)?);
+        }
+        parts.push(part);
+    }
+    Ok(Literal::AbstractLiteral(AbstractLiteral::Partition(parts)))
 }
 
 fn relation_from_simplified_json(

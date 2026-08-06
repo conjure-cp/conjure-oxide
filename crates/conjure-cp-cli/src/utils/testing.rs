@@ -5,7 +5,6 @@ use std::{io, mem, vec};
 
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::serde::ObjId;
-use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::hash::Hash;
@@ -506,7 +505,28 @@ pub fn normalize_solutions_for_comparison(
                             });
                         updates.push((k, Literal::AbstractLiteral(relation)));
                     }
-                    e => bug!("unexpected literal type: {e:?}"),
+                    Literal::AbstractLiteral(AbstractLiteral::Partition(parts)) => {
+                        let partition =
+                            AbstractLiteral::Partition(parts).transform(&move |x| match x {
+                                AbstractLiteral::Partition(parts) => {
+                                    let parts = parts
+                                        .into_iter()
+                                        .map(|part| {
+                                            part.into_iter()
+                                                .map(|x| match x {
+                                                    Literal::Bool(false) => Literal::Int(0),
+                                                    Literal::Bool(true) => Literal::Int(1),
+                                                    x => x,
+                                                })
+                                                .collect_vec()
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Partition(parts)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(partition)));
+                    }
                 }
             }
         }
@@ -569,6 +589,19 @@ fn normalize_set_literal_order(value: AbstractLiteral<Literal>) -> AbstractLiter
                     .unwrap_or(std::cmp::Ordering::Equal)
             });
             AbstractLiteral::Relation(tuples)
+        }
+        AbstractLiteral::Partition(mut parts) => {
+            for part in parts.iter_mut() {
+                part.sort_by(Literal::essence_cmp);
+            }
+            parts.sort_by(|a, b| {
+                a.iter()
+                    .zip(b.iter())
+                    .map(|(x, y)| Literal::essence_cmp(x, y))
+                    .find(|ord| *ord != std::cmp::Ordering::Equal)
+                    .unwrap_or_else(|| a.len().cmp(&b.len()))
+            });
+            AbstractLiteral::Partition(parts)
         }
         value => value,
     })

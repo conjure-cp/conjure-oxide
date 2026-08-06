@@ -1515,7 +1515,9 @@ impl Typeable for GroundDomain {
                 }
                 ReturnType::Relation(inner_types)
             }
-            GroundDomain::Partition(_, inner) => ReturnType::Set(Box::new(inner.return_type())),
+            GroundDomain::Partition(_, inner) => {
+                ReturnType::Partition(Box::new(inner.return_type()))
+            }
         }
     }
 }

@@ -1077,11 +1077,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Bool(field.name == *alternative))
         }
         Expr::RelationProj(_, _, _) => todo!(),
-        Expr::Apart(_, _, _) => todo!(),
-        Expr::Together(_, _, _) => todo!(),
-        Expr::Participants(_, _) => todo!(),
-        Expr::Party(_, _, _) => todo!(),
-        Expr::Parts(_, _) => todo!(),
+        // Not yet needed by any in-scope partition case; the partial evaluator already refuses
+        // these gracefully (Err(RuleNotApplicable)) rather than panicking. Constant partition
+        // literal equality/membership already works via the generic Literal equality path above,
+        // without going through these operators at all.
+        Expr::Apart(_, _, _) => None,
+        Expr::Together(_, _, _) => None,
+        Expr::Participants(_, _) => None,
+        Expr::Party(_, _, _) => None,
+        Expr::Parts(_, _) => None,
         Expr::Card(_, collection) => {
             let Lit::AbstractLiteral(collection) = eval_constant(collection)? else {
                 return None;

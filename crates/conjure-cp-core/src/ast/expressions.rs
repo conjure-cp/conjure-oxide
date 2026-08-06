@@ -1766,9 +1766,18 @@ impl Expression {
                     // size range is already the tightest bound available here.
                     let attrs_gd = attrs.resolve().ok()?;
                     Some(Domain::int(vec![attrs_gd.size]))
+                } else if let Some((_attrs, inner)) = domain.as_partition() {
+                    // A partition always covers its whole "from" domain exactly (parts are
+                    // disjoint and total), so |p| (== |participants(p)|, per the `partition-card`
+                    // horizontal rule) is always exactly the inner domain's size, regardless of
+                    // numParts/partSize attributes.
+                    match inner.length_signed() {
+                        Ok(length) => Some(Domain::int(vec![Range::Single(length)])),
+                        Err(_) => None,
+                    }
                 } else {
                     bug!(
-                        "Domain of {self} needed to be a matrix, set, mset, sequence, relation, or function for cardinality"
+                        "Domain of {self} needed to be a matrix, set, mset, sequence, relation, function, or partition for cardinality"
                     )
                 }
             }
