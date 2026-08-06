@@ -8,9 +8,10 @@ use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
     FunctionAsRelation, FunctionExplicit, MSetExplicit, MSetOccurrence, MSetPacked,
-    MatrixComponents, MatrixPacked, PartitionAsSet, RecordComponents, RecordPacked, RelationAsSet,
-    RelationOccurrence, RelationPacked, SequenceExplicit, SequencePacked, SetExplicit,
-    SetOccurrence, SetPacked, TupleComponents, TuplePacked, VariantComponents, VariantPacked,
+    MatrixComponents, MatrixPacked, PartitionAsSet, PartitionOccurrence, RecordComponents,
+    RecordPacked, RelationAsSet, RelationOccurrence, RelationPacked, SequenceExplicit,
+    SequencePacked, SetExplicit, SetOccurrence, SetPacked, TupleComponents, TuplePacked,
+    VariantComponents, VariantPacked,
 };
 use uniplate::Uniplate;
 
@@ -1232,4 +1233,117 @@ fn partition_as_set_regular_is_redundant_when_part_size_is_already_fixed() {
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = PartitionAsSet::init_for(&mut declaration).unwrap();
     assert_eq!(constraints.len(), 2);
+}
+
+#[test]
+fn partition_occurrence_round_trips_values() {
+    let domain = Domain::partition(
+        partition_attr(range!(2), range!(3), true),
+        domain_int!(1..6),
+    );
+    let state = <PartitionOccurrence as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Partition(vec![
+        vec![Literal::Int(1), Literal::Int(2), Literal::Int(3)],
+        vec![Literal::Int(4), Literal::Int(5), Literal::Int(6)],
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn partition_occurrence_canonicalises_part_order() {
+    // Parts are relabelled in first-occurrence (domain scan) order, regardless of the order the
+    // literal itself lists them in -- this must agree with `symmetry_breaking_expr`'s own
+    // ordering, or a valid literal could fail the very constraint meant to allow it.
+    let domain = Domain::partition(
+        partition_attr(range!(2), range!(3), false),
+        domain_int!(1..6),
+    );
+    let state = <PartitionOccurrence as ReprRule>::DomainLevel::init(domain).unwrap();
+    let given = Literal::AbstractLiteral(AbstractLiteral::Partition(vec![
+        vec![Literal::Int(4), Literal::Int(5), Literal::Int(6)],
+        vec![Literal::Int(1), Literal::Int(2), Literal::Int(3)],
+    ]));
+    let canonical = Literal::AbstractLiteral(AbstractLiteral::Partition(vec![
+        vec![Literal::Int(1), Literal::Int(2), Literal::Int(3)],
+        vec![Literal::Int(4), Literal::Int(5), Literal::Int(6)],
+    ]));
+
+    let assignment = state.down(given).unwrap();
+    assert_eq!(assignment.up(), canonical);
+}
+
+#[test]
+fn partition_occurrence_round_trips_uneven_part_sizes() {
+    let domain = Domain::partition(
+        partition_attr(
+            conjure_cp::ast::Range::Unbounded,
+            conjure_cp::ast::Range::Unbounded,
+            false,
+        ),
+        domain_int!(1..5),
+    );
+    let state = <PartitionOccurrence as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Partition(vec![
+        vec![Literal::Int(1)],
+        vec![Literal::Int(2), Literal::Int(3), Literal::Int(4)],
+        vec![Literal::Int(5)],
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn partition_occurrence_rejects_a_non_partition_domain() {
+    let domain = domain_int!(1..3);
+    assert!(<PartitionOccurrence as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn partition_occurrence_rejects_a_non_int_inner_domain() {
+    let inner = Domain::set(SetAttr::new(range!(1)), domain_int!(1..3));
+    let domain = Domain::partition(partition_attr(range!(1), range!(2), false), inner);
+    assert!(<PartitionOccurrence as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn partition_occurrence_non_regular_builds_five_structural_constraints() {
+    let domain = Domain::partition(
+        partition_attr(range!(2), conjure_cp::ast::Range::Unbounded, false),
+        domain_int!(1..6),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PartitionOccurrence::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 5);
+}
+
+#[test]
+fn partition_occurrence_regular_adds_a_sixth_constraint_when_part_size_is_not_fixed() {
+    let domain = Domain::partition(
+        partition_attr(
+            conjure_cp::ast::Range::Unbounded,
+            conjure_cp::ast::Range::Unbounded,
+            true,
+        ),
+        domain_int!(1..6),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PartitionOccurrence::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 6);
+}
+
+#[test]
+fn partition_occurrence_regular_infers_a_fixed_part_size_from_a_fixed_num_parts() {
+    let domain = Domain::partition(
+        partition_attr(range!(2), conjure_cp::ast::Range::Unbounded, true),
+        domain_int!(1..6),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PartitionOccurrence::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 5);
 }
