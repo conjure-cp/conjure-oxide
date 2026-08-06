@@ -330,6 +330,12 @@ pub enum BinaryAttr {
     Serial,
     Equivalence,
     PartialOrder,
+    LeftTotal,
+    RightTotal,
+    LinearOrder,
+    WeakOrder,
+    PreOrder,
+    StrictPartialOrder,
 }
 
 impl Display for BinaryAttr {
@@ -348,7 +354,43 @@ impl Display for BinaryAttr {
             BinaryAttr::Serial => write!(f, "serial"),
             BinaryAttr::Equivalence => write!(f, "equivalence"),
             BinaryAttr::PartialOrder => write!(f, "partialOrder"),
+            BinaryAttr::LeftTotal => write!(f, "leftTotal"),
+            BinaryAttr::RightTotal => write!(f, "rightTotal"),
+            BinaryAttr::LinearOrder => write!(f, "linearOrder"),
+            BinaryAttr::WeakOrder => write!(f, "weakOrder"),
+            BinaryAttr::PreOrder => write!(f, "preOrder"),
+            BinaryAttr::StrictPartialOrder => write!(f, "strictPartialOrder"),
         }
+    }
+}
+
+impl BinaryAttr {
+    /// Parses the Essence keyword for a binary relation attribute (the inverse of `Display`).
+    /// Used both by native domain-attribute parsing (`relation (reflexive, ...) of ...`) and by
+    /// attribute-as-constraint lifting (`reflexive(r)`).
+    pub fn from_keyword(s: &str) -> Option<Self> {
+        Some(match s {
+            "reflexive" => BinaryAttr::Reflexive,
+            "irreflexive" => BinaryAttr::Irreflexive,
+            "coreflexive" => BinaryAttr::Coreflexive,
+            "symmetric" => BinaryAttr::Symmetric,
+            "antiSymmetric" => BinaryAttr::AntiSymmetric,
+            "aSymmetric" => BinaryAttr::ASymmetric,
+            "transitive" => BinaryAttr::Transitive,
+            "total" => BinaryAttr::Total,
+            "connex" => BinaryAttr::Connex,
+            "Euclidean" => BinaryAttr::Euclidean,
+            "serial" => BinaryAttr::Serial,
+            "equivalence" => BinaryAttr::Equivalence,
+            "partialOrder" => BinaryAttr::PartialOrder,
+            "leftTotal" => BinaryAttr::LeftTotal,
+            "rightTotal" => BinaryAttr::RightTotal,
+            "linearOrder" => BinaryAttr::LinearOrder,
+            "weakOrder" => BinaryAttr::WeakOrder,
+            "preOrder" => BinaryAttr::PreOrder,
+            "strictPartialOrder" => BinaryAttr::StrictPartialOrder,
+            _ => return None,
+        })
     }
 }
 

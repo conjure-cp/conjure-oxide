@@ -672,20 +672,12 @@ fn parse_relation_domain(
                             _ => unreachable!(),
                         }
                     }
-                    "reflexive" => binary.push(BinaryAttr::Reflexive),
-                    "irreflexive" => binary.push(BinaryAttr::Irreflexive),
-                    "coreflexive" => binary.push(BinaryAttr::Coreflexive),
-                    "symmetric" => binary.push(BinaryAttr::Symmetric),
-                    "antiSymmetric" => binary.push(BinaryAttr::AntiSymmetric),
-                    "aSymmetric" => binary.push(BinaryAttr::ASymmetric),
-                    "transitive" => binary.push(BinaryAttr::Transitive),
-                    "total" => binary.push(BinaryAttr::Total),
-                    "connex" => binary.push(BinaryAttr::Connex),
-                    "Euclidean" => binary.push(BinaryAttr::Euclidean),
-                    "serial" => binary.push(BinaryAttr::Serial),
-                    "equivalence" => binary.push(BinaryAttr::Equivalence),
-                    "partialOrder" => binary.push(BinaryAttr::PartialOrder),
-                    _ => return Ok(None),
+                    _ => {
+                        let Some(bin_attr) = BinaryAttr::from_keyword(name) else {
+                            return Ok(None);
+                        };
+                        binary.push(bin_attr);
+                    }
                 }
             }
         }

@@ -587,6 +587,12 @@ fn parse_domain(
                         "BinRelAttr_Serial" => Ok(BinaryAttr::Serial),
                         "BinRelAttr_Equivalence" => Ok(BinaryAttr::Equivalence),
                         "BinRelAttr_PartialOrder" => Ok(BinaryAttr::PartialOrder),
+                        "BinRelAttr_LeftTotal" => Ok(BinaryAttr::LeftTotal),
+                        "BinRelAttr_RightTotal" => Ok(BinaryAttr::RightTotal),
+                        "BinRelAttr_LinearOrder" => Ok(BinaryAttr::LinearOrder),
+                        "BinRelAttr_WeakOrder" => Ok(BinaryAttr::WeakOrder),
+                        "BinRelAttr_PreOrder" => Ok(BinaryAttr::PreOrder),
+                        "BinRelAttr_StrictPartialOrder" => Ok(BinaryAttr::StrictPartialOrder),
                         _ => Err(Error::Parse(
                             "Relation binary attribute is invalid".to_owned(),
                         )),

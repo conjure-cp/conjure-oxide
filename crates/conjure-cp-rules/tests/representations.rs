@@ -730,6 +730,47 @@ fn relation_as_set_reflexive_builds_one_structural_constraint() {
     assert_eq!(constraints.len(), 1);
 }
 
+fn binary_attr_constraint_count(binary: Vec<BinaryAttr>) -> usize {
+    let domain = Domain::relation(
+        RelAttr {
+            size: range!(3),
+            binary,
+        },
+        vec![domain_int!(1..3), domain_int!(1..3)],
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = RelationAsSet::init_for(&mut declaration).unwrap();
+    constraints.len()
+}
+
+#[test]
+fn relation_left_total_and_right_total_each_build_one_structural_constraint() {
+    assert_eq!(binary_attr_constraint_count(vec![BinaryAttr::LeftTotal]), 1);
+    assert_eq!(
+        binary_attr_constraint_count(vec![BinaryAttr::RightTotal]),
+        1
+    );
+}
+
+#[test]
+fn relation_derived_binary_attrs_expand_to_their_base_formula_count() {
+    // LinearOrder = Total + AntiSymmetric + Transitive
+    assert_eq!(
+        binary_attr_constraint_count(vec![BinaryAttr::LinearOrder]),
+        3
+    );
+    // WeakOrder = Total + Transitive
+    assert_eq!(binary_attr_constraint_count(vec![BinaryAttr::WeakOrder]), 2);
+    // PreOrder = Reflexive + Transitive
+    assert_eq!(binary_attr_constraint_count(vec![BinaryAttr::PreOrder]), 2);
+    // StrictPartialOrder = Irreflexive + ASymmetric + Transitive
+    assert_eq!(
+        binary_attr_constraint_count(vec![BinaryAttr::StrictPartialOrder]),
+        3
+    );
+}
+
 #[test]
 fn relation_occurrence_round_trips_binary_pairs() {
     let domain = Domain::relation(

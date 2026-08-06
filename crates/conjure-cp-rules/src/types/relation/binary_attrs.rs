@@ -119,9 +119,18 @@ fn binary_attr_constraint(
                 )
             },
         )],
-        BinaryAttr::Serial => vec![forall_exists(dom, |x, y| member(x, y))],
+        // Serial is a direct alias for LeftTotal in Conjure (mkBinRelCons: `one BinRelAttr_Serial =
+        // one BinRelAttr_LeftTotal`); Oxide keeps both names as separate `BinaryAttr` variants
+        // (matching the grammar's own two keywords) but they share this one implementation.
+        BinaryAttr::Serial | BinaryAttr::LeftTotal => {
+            vec![forall_exists(dom, |x, y| member(x, y))]
+        }
+        // `forAll y . exists x . member(x, y)`: the same shape as LeftTotal with the two
+        // quantified variables' roles swapped, so `forall_exists`'s outer/inner variables just get
+        // fed to `member` in the opposite order.
+        BinaryAttr::RightTotal => vec![forall_exists(dom, |y, x| member(x, y))],
         // Derived attributes expand to a conjunction of the base formulas above, matching
-        // Conjure's own `Equivalence`/`PartialOrder` definitions.
+        // Conjure's own definitions.
         BinaryAttr::Equivalence => [
             BinaryAttr::Reflexive,
             BinaryAttr::Symmetric,
@@ -133,6 +142,30 @@ fn binary_attr_constraint(
         BinaryAttr::PartialOrder => [
             BinaryAttr::Reflexive,
             BinaryAttr::AntiSymmetric,
+            BinaryAttr::Transitive,
+        ]
+        .iter()
+        .flat_map(|a| binary_attr_constraint(dom, a, member))
+        .collect(),
+        BinaryAttr::LinearOrder => [
+            BinaryAttr::Total,
+            BinaryAttr::AntiSymmetric,
+            BinaryAttr::Transitive,
+        ]
+        .iter()
+        .flat_map(|a| binary_attr_constraint(dom, a, member))
+        .collect(),
+        BinaryAttr::WeakOrder => [BinaryAttr::Total, BinaryAttr::Transitive]
+            .iter()
+            .flat_map(|a| binary_attr_constraint(dom, a, member))
+            .collect(),
+        BinaryAttr::PreOrder => [BinaryAttr::Reflexive, BinaryAttr::Transitive]
+            .iter()
+            .flat_map(|a| binary_attr_constraint(dom, a, member))
+            .collect(),
+        BinaryAttr::StrictPartialOrder => [
+            BinaryAttr::Irreflexive,
+            BinaryAttr::ASymmetric,
             BinaryAttr::Transitive,
         ]
         .iter()
