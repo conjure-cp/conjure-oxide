@@ -699,7 +699,7 @@ module.exports = grammar ({
         "allDiffExcept"
       )),
       "(",
-      field("matrix", choice($.matrix, $.identifier, $.index_or_slice, $.flatten, $.bool_expr, $.arithmetic_expr)),
+      field("matrix", choice($.matrix, $.identifier, $.index_or_slice, $.flatten, $.bool_expr, $.arithmetic_expr, $.atom)),
       ",",
       field("except", choice($.identifier, $.constant, $.index_or_slice, $.sub_arith_expr, $.negative_expr, $.arithmetic_expr)),
       ")"
