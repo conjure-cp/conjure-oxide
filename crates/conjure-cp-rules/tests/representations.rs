@@ -988,7 +988,7 @@ fn function_as_relation_round_trips_pairs() {
 }
 
 #[test]
-fn function_as_relation_total_function_builds_one_well_formedness_constraint() {
+fn function_as_relation_total_function_builds_well_formedness_and_forward_witness_constraints() {
     let domain = Domain::function(
         func_attr(
             conjure_cp::ast::Range::Unbounded,
@@ -1001,7 +1001,9 @@ fn function_as_relation_total_function_builds_one_well_formedness_constraint() {
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = FunctionAsRelation::init_for(&mut declaration).unwrap();
-    assert_eq!(constraints.len(), 1);
+    // well-formedness + one forward-witness triple (In + key Eq + value Eq) per domain value (a
+    // total function always gets a forward_witness_matrix, regardless of jectivity).
+    assert_eq!(constraints.len(), 1 + 3 * 3);
 }
 
 #[test]
@@ -1015,8 +1017,9 @@ fn function_as_relation_bijective_adds_injective_and_surjective_constraints() {
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = FunctionAsRelation::init_for(&mut declaration).unwrap();
     // well-formedness + injective (pairwise) + one witness-membership pair (In + Eq) per
-    // codomain value.
-    assert_eq!(constraints.len(), 1 + 1 + 2 * 3);
+    // codomain value + one forward-witness triple (In + key Eq + value Eq) per domain value
+    // (total).
+    assert_eq!(constraints.len(), 1 + 1 + 2 * 3 + 3 * 3);
 }
 
 #[test]

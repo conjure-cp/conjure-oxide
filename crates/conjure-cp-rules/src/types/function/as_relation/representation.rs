@@ -5,6 +5,7 @@ use conjure_cp::ast::{
     Domain, GroundDomain, JectivityAttr, Moo, PartialityAttr, Range, Reference, RelAttr,
     SymbolTablePtr,
 };
+use conjure_cp::{domain_int, range};
 
 register_representation!(
     FunctionAsRelation("as_relation")
@@ -27,12 +28,83 @@ register_representation!(
         /// the same way the relation's own set-of-tuples elements do, rather than being an
         /// ad-hoc literal built from mismatched parts.
         pub witness_matrix: Option<T>,
+        /// A witness matrix of (key, value) tuples indexed by plain `int(1..n)` position over the
+        /// function's domain (in `domain_values` order, not the domain's own type -- see
+        /// `FunctionExplicit::values_matrix`'s field doc for why position is the one indexing scheme
+        /// that always works), present only for total functions with a scalar domain (see
+        /// `forward_values_matrix`'s field doc for why). `forward_witness_matrix[i]` must be
+        /// a member of the relation, and its first field must equal `domain_values[i]`, which pins
+        /// its second field to `image(f, domain_values[i])` (the relation has exactly one entry per
+        /// domain value, by the totality/well-formedness constraints above). Every use of this field
+        /// indexes it with a compile-time-constant position -- see `forward_values_matrix`'s field doc
+        /// for why `image(f, arg)` itself must not.
+        pub forward_witness_matrix: Option<T>,
+        /// The value half of each `forward_witness_matrix[i]` entry, mirrored into its own plain
+        /// (non-tuple) matrix and pinned equal by `structural()`. `image(f, arg)` lowers to
+        /// `forward_values_matrix[elementId(domain_values_matrix, arg)]` -- an `elementId`-indexed
+        /// lookup, the same way `FunctionExplicit::values_matrix` does, since `arg` need not be a
+        /// compile-time literal.
+        ///
+        /// This mirroring exists because indexing a *compound-element* (tuple) matrix by a
+        /// non-constant position doesn't work: an earlier version of this rule indexed
+        /// `forward_witness_matrix` directly by `elementId(...)` and dropped the second field, which
+        /// the Minion backend cannot turn into a per-field `Element` constraint chain -- it silently
+        /// produced a reference to a tuple declaration's un-decomposed name, which Minion then
+        /// rejected as undefined. A later attempt built the witness tuple inline (as an
+        /// `AbstractLiteral::Tuple` expression, skipping `forward_witness_matrix` as a stored
+        /// declaration entirely) to sidestep needing a scalar mirror at all, but that broke
+        /// `RelationOccurrence`/`RelationPacked`'s own membership rules, which index straight into
+        /// `member` (`SafeIndex(member, [i])`) expecting a reference backed by a real declaration --
+        /// there is no rule that indexes a raw inline tuple literal, so the `SafeIndex` itself never
+        /// reduced. Keeping `forward_witness_matrix` as a real declaration (indexed only by constant
+        /// positions, the one shape every relation representation's membership rule already handles
+        /// correctly) and mirroring only the scalar value half for `image` avoids both problems.
+        ///
+        /// `forward_witness_matrix`/`forward_values_matrix` are only built for a *scalar* (bool/int)
+        /// domain: `forward_witness_matrix[i] in relation` still needs the relation's own membership
+        /// rule to work with `domain_values[i]` as one of the tuple's fields, and `RelationOccurrence`
+        /// represents membership as an occurrence-matrix lookup indexed by each field's own value --
+        /// which only makes sense for a scalar field. A compound (tuple/record/...) domain value has
+        /// no single Minion atom to index by; `RelationOccurrence`'s own membership rule ends up
+        /// building an `elementId`-style search whose target is an un-decomposed tuple literal, which
+        /// Minion rejects the same way. This is a latent gap in `RelationOccurrence`
+        /// (`types/relation/occurrence/vertical/membership.rs`)/`RelationPacked`'s own membership
+        /// rules for compound-typed columns, not specific to this representation -- flagged
+        /// separately rather than fixed here, since every actual user of `forward_witness_matrix`
+        /// (permutations, whose inner domain is always a scalar int range) is unaffected by scoping
+        /// around it.
+        pub forward_values_matrix: Option<T>,
+        /// Every domain value, in the same order used to index `forward_witness_matrix` and
+        /// `forward_values_matrix`.
+        pub domain_values: Moo<Vec<Literal>>,
         /// Jectivity to enforce structurally.
         pub jectivity: JectivityAttr
     }
     impl State<DeclarationPtr> {
         pub fn relation_expr(&self) -> Expression {
             Reference::new(self.relation_decl.clone()).into()
+        }
+
+        /// The `forward_witness_matrix` entry at a one-based `domain_values` position, or `None` if
+        /// this function is partial (no forward witness matrix at all).
+        pub fn forward_witness_expr(&self, index: i32) -> Option<Expression> {
+            let matrix = self.forward_witness_matrix.as_ref()?;
+            Some(Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(Reference::new(matrix.clone()).into()),
+                vec![index.into()],
+            ))
+        }
+
+        /// The `forward_values_matrix` entry at a one-based `domain_values` position, or `None` if
+        /// this function is partial (no forward values matrix at all).
+        pub fn forward_value_expr(&self, index: i32) -> Option<Expression> {
+            let matrix = self.forward_values_matrix.as_ref()?;
+            Some(Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(Reference::new(matrix.clone()).into()),
+                vec![index.into()],
+            ))
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
@@ -70,9 +142,37 @@ register_representation!(
         };
         let witness_tuple_dom = Domain::tuple(vec![domain.clone().into(), codomain.clone().into()]);
         let witness_matrix = if surjective {
-            Some(Domain::matrix(witness_tuple_dom, vec![codomain.clone().into()]))
+            Some(Domain::matrix(witness_tuple_dom.clone(), vec![codomain.clone().into()]))
         } else {
             None
+        };
+
+        // Scoped to a scalar (bool/int) domain: forward_witness_matrix's structural constraint
+        // proves `image(f, domain_values[i])` by asserting `(domain_values[i], value) in relation`,
+        // and when the relation ends up RelationOccurrence-represented, that membership check needs
+        // to index the occurrence matrix's domain dimension by `domain_values[i]` -- which only
+        // works for a scalar value; a compound (tuple/record/...) domain value has no single Minion
+        // atom to index by, and the resulting `elementId`-style search ends up handing Minion an
+        // un-decomposed tuple literal as a search target, which it rejects. Every actual user of
+        // this (permutations, whose inner domain is always a scalar int range) is unaffected;
+        // compound-domain functions simply don't get a forward witness matrix or `image` support
+        // under `FunctionAsRelation` yet.
+        let domain_is_scalar = matches!(domain.as_ref(), GroundDomain::Bool | GroundDomain::Int(_));
+        let domain_values: Vec<Literal> = if matches!(attr.partiality, PartialityAttr::Total) && domain_is_scalar {
+            domain.values()
+                .map_err(|e| domain_err(&format!("could not enumerate function domain: {e}")))?
+                .collect()
+        } else {
+            vec![]
+        };
+        let (forward_witness_matrix, forward_values_matrix) = if matches!(attr.partiality, PartialityAttr::Total) && domain_is_scalar {
+            let n = domain_values.len() as i32;
+            (
+                Some(Domain::matrix(witness_tuple_dom, vec![domain_int!(1..n)])),
+                Some(Domain::matrix(codomain.clone().into(), vec![domain_int!(1..n)])),
+            )
+        } else {
+            (None, None)
         };
 
         let relation_decl = Domain::relation(
@@ -84,6 +184,9 @@ register_representation!(
             relation_decl,
             codomain_values: Moo::new(codomain_values),
             witness_matrix,
+            forward_witness_matrix,
+            forward_values_matrix,
+            domain_values: Moo::new(domain_values),
             jectivity: attr.jectivity.clone(),
         })
     }
@@ -150,6 +253,33 @@ register_representation!(
             }
         }
 
+        if state.forward_witness_matrix.is_some() {
+            for (i, value) in state.domain_values.iter().enumerate() {
+                let index = i as i32 + 1;
+                let witness_ref = state
+                    .forward_witness_expr(index)
+                    .unwrap_or_else(|| bug!("forward_witness_matrix checked Some above"));
+                let value_expr = state
+                    .forward_value_expr(index)
+                    .unwrap_or_else(|| bug!("forward_values_matrix checked Some above"));
+                constraints.push(Expression::In(
+                    Metadata::new(),
+                    Moo::new(witness_ref.clone()),
+                    Moo::new(rel.clone()),
+                ));
+                constraints.push(Expression::Eq(
+                    Metadata::new(),
+                    Moo::new(tuple_index(&witness_ref, 1)),
+                    Moo::new(value.clone().into()),
+                ));
+                constraints.push(Expression::Eq(
+                    Metadata::new(),
+                    Moo::new(tuple_index(&witness_ref, 2)),
+                    Moo::new(value_expr),
+                ));
+            }
+        }
+
         constraints
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
@@ -187,11 +317,47 @@ register_representation!(
             None
         };
 
+        let mut forward_witness_matrix = None;
+        let mut forward_values_matrix = None;
+        if let Some(fwm) = &state.forward_witness_matrix {
+            let mut witnesses = Vec::with_capacity(state.domain_values.len());
+            let mut values = Vec::with_capacity(state.domain_values.len());
+            for key in state.domain_values.iter() {
+                let value = pairs
+                    .iter()
+                    .find(|(k, _)| k == key)
+                    .map(|(_, v)| v.clone())
+                    .ok_or_else(|| {
+                        ReprDownError::BadValue(
+                            AbstractLiteral::Function(pairs.clone()).into(),
+                            format!("function is not total: no value for key {key}"),
+                        )
+                    })?;
+                witnesses.push(Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                    key.clone(),
+                    value.clone(),
+                ])));
+                values.push(value);
+            }
+            let index_dom = match fwm.as_ref() {
+                conjure_cp::ast::Domain::Ground(gd) => match gd.as_ref() {
+                    GroundDomain::Matrix(_, idx) => idx[0].clone(),
+                    _ => bug!("expected the forward witness matrix to be a ground matrix domain"),
+                },
+                _ => bug!("expected the forward witness matrix domain to be ground"),
+            };
+            forward_witness_matrix = Some(Literal::from(into_matrix![witnesses; index_dom.clone()]));
+            forward_values_matrix = Some(Literal::from(into_matrix![values; index_dom]));
+        }
+
         let tuples = pairs.into_iter().map(|(key, value)| vec![key, value]).collect();
         Ok(State {
             relation_decl: Literal::AbstractLiteral(AbstractLiteral::Relation(tuples)),
             codomain_values: state.codomain_values.clone(),
             witness_matrix,
+            forward_witness_matrix,
+            forward_values_matrix,
+            domain_values: state.domain_values.clone(),
             jectivity: state.jectivity.clone(),
         })
     }
