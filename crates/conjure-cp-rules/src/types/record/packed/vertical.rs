@@ -2,6 +2,7 @@ use super::RecordPacked;
 use crate::guard;
 use crate::shared::utils::{
     as_cmp_or_lex_op, as_eq_or_neq, collect_cmp_exprs, collect_eq_or_neq, eq_or_neq,
+    unpack_literal_digit,
 };
 use crate::types::record::RecordComponents;
 use conjure_cp::ast::{
@@ -344,18 +345,7 @@ fn unpack_entry(repr: &PackedState<'_>, index: usize) -> Expr {
 
 fn unpack_values(repr: &PackedState<'_>, index: usize, values: &[Literal]) -> Expr {
     let digit = digit_expr(repr, index);
-    if let Some(minimum) = contiguous_int_min(values) {
-        return match minimum {
-            0 => digit,
-            minimum => essence_expr!(&digit + &minimum),
-        };
-    }
-    let values = values.iter().cloned().map(Expr::from).collect::<Vec<_>>();
-    Expr::SafeIndex(
-        Metadata::new(),
-        Moo::new(into_matrix_expr!(values)),
-        vec![essence_expr!(&digit + 1)],
-    )
+    unpack_literal_digit(&digit, values)
 }
 
 fn digit_expr(repr: &PackedState<'_>, index: usize) -> Expr {
@@ -369,17 +359,6 @@ fn digit_expr(repr: &PackedState<'_>, index: usize) -> Expr {
         (1, radix, _) => essence_expr!(&packed % &radix),
         (_, radix, _) => essence_expr!((&packed / &place) % &radix),
     }
-}
-
-fn contiguous_int_min(values: &[Literal]) -> Option<i32> {
-    let Literal::Int(minimum) = values.first()? else {
-        return None;
-    };
-    values
-        .iter()
-        .enumerate()
-        .all(|(offset, value)| *value == Literal::Int(*minimum + offset as i32))
-        .then_some(*minimum)
 }
 
 type PackedState<'a> = MappedRwLockReadGuard<'a, <RecordPacked as ReprRule>::DeclLevel>;

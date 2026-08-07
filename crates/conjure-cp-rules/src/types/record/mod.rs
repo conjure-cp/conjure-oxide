@@ -1,4 +1,5 @@
 mod components;
+mod horizontal;
 mod packed;
 
 pub use components::RecordComponents;

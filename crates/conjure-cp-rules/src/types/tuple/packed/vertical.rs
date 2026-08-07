@@ -2,20 +2,19 @@ use super::TuplePacked;
 use crate::guard;
 use crate::shared::utils::{
     as_cmp_or_lex_op, as_eq_or_neq, collect_cmp_exprs, collect_eq_or_neq, eq_or_neq,
-    tuple_expr_entries,
+    tuple_expr_entries, unpack_literal_digit,
 };
 use crate::types::tuple::TupleComponents;
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, Expression as Expr, Literal, Metadata, Moo, Reference, SymbolTable,
-    eval_constant,
+    Atom, Expression as Expr, Literal, Metadata, Moo, Reference, SymbolTable, eval_constant,
 };
 use conjure_cp::bug_assert;
+use conjure_cp::essence_expr;
 use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::ApplicationError::{self, RuleNotApplicable};
 use conjure_cp::rule_engine::{
     ApplicationResult, RuleEffect as Reduction, register_rule, register_rule_set,
 };
-use conjure_cp::{essence_expr, into_matrix_expr};
 use parking_lot::MappedRwLockReadGuard;
 
 fn comparison_reference(expr: &Expr) -> Option<Reference> {
@@ -256,75 +255,7 @@ fn unpack_values(repr: &PackedState<'_>, index: usize, values: &[Literal]) -> Ex
         (1, radix, _) => essence_expr!(&packed % &radix),
         (_, radix, _) => essence_expr!((&packed / &place) % &radix),
     };
-    unpack_digit(&digit, values)
-}
-
-/// Given a decoded position `digit` (a decision-variable expression, not necessarily constant --
-/// this is what makes the compound case below non-trivial) and the ordered list of possible
-/// literal values at that position, build an expression for "the value at position `digit`".
-///
-/// Scalar (bool, or non-contiguous int) values fall back to a plain `SafeIndex` into a literal
-/// matrix of those values, dynamically indexed by `digit` -- the Minion backend already supports
-/// that (the same shape `FunctionExplicit::values_matrix` uses). A *compound* value (currently:
-/// tuple; see the module doc for why record/variant aren't handled here yet) can't take that path:
-/// indexing a matrix of compound elements by a non-constant position is not something the backend
-/// can turn into a per-field `Element` constraint chain, and it silently produces an unresolved
-/// literal handed straight to the solver ("expected a literal but got `AbstractLiteral(...)`).
-/// Instead, each candidate tuple's own fields are projected out (all candidates share the same
-/// arity, since `symmetry_values` builds them from one domain), and the value is rebuilt as an
-/// inline tuple literal expression whose *own* fields are each decoded recursively by this same
-/// function -- reusing `digit`, since every candidate is keyed by the same packed position. A
-/// field that's itself a contiguous int range (the common case) hits the cheap arithmetic path one
-/// level down; a doubly-nested tuple recurses again.
-fn unpack_digit(digit: &Expr, values: &[Literal]) -> Expr {
-    if let Some(minimum) = contiguous_int_min(values) {
-        return match minimum {
-            0 => digit.clone(),
-            minimum => essence_expr!(&digit + &minimum),
-        };
-    }
-    if let Some(rebuilt) = unpack_compound_digit(digit, values) {
-        return rebuilt;
-    }
-    let values = values.iter().cloned().map(Expr::from).collect::<Vec<_>>();
-    Expr::SafeIndex(
-        Metadata::new(),
-        Moo::new(into_matrix_expr!(values)),
-        vec![essence_expr!(&digit + 1)],
-    )
-}
-
-/// The compound-value case of [`unpack_digit`]: `None` unless every value is a tuple literal of
-/// the same arity (guaranteed for a genuine packed field's own value list, but checked directly
-/// rather than assumed, since a mismatch here should fall back to the -- still correct, if
-/// unreduced until something else eliminates it -- generic path instead of panicking).
-fn unpack_compound_digit(digit: &Expr, values: &[Literal]) -> Option<Expr> {
-    let Literal::AbstractLiteral(AbstractLiteral::Tuple(first_fields)) = values.first()? else {
-        return None;
-    };
-    let arity = first_fields.len();
-
-    let mut field_values: Vec<Vec<Literal>> = vec![Vec::with_capacity(values.len()); arity];
-    for value in values {
-        let Literal::AbstractLiteral(AbstractLiteral::Tuple(fields)) = value else {
-            return None;
-        };
-        if fields.len() != arity {
-            return None;
-        }
-        for (slot, field) in field_values.iter_mut().zip(fields) {
-            slot.push(field.clone());
-        }
-    }
-
-    let rebuilt_fields = field_values
-        .into_iter()
-        .map(|values| unpack_digit(digit, &values))
-        .collect();
-    Some(Expr::AbstractLiteral(
-        Metadata::new(),
-        AbstractLiteral::Tuple(rebuilt_fields),
-    ))
+    unpack_literal_digit(&digit, values)
 }
 
 fn project_values(values: &[Literal], indices: &[Expr]) -> Option<Vec<Literal>> {
@@ -346,17 +277,6 @@ fn project_values(values: &[Literal], indices: &[Expr]) -> Option<Vec<Literal>> 
             })
         })
         .collect()
-}
-
-fn contiguous_int_min(values: &[Literal]) -> Option<i32> {
-    let Literal::Int(minimum) = values.first()? else {
-        return None;
-    };
-    values
-        .iter()
-        .enumerate()
-        .all(|(offset, value)| *value == Literal::Int(*minimum + offset as i32))
-        .then_some(*minimum)
 }
 
 fn encode_entries(repr: &PackedState<'_>, entries: &[Expr]) -> Result<Expr, ApplicationError> {
@@ -401,7 +321,7 @@ fn as_channeling_pair<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use conjure_cp::ast::Domain;
+    use conjure_cp::ast::{AbstractLiteral, Domain};
     use conjure_cp::representation::ReprRule;
     use conjure_cp::rule_engine::get_rule_by_name;
     use conjure_cp::{domain_int, range};
@@ -433,6 +353,47 @@ mod tests {
         else {
             panic!(
                 "expected the compound field to come back as an inline tuple literal, got {}",
+                result.new_expression
+            );
+        };
+        assert_eq!(fields.len(), 2);
+    }
+
+    /// Regression: the same shape as `indexing_a_compound_field_rebuilds_it_as_a_tuple_literal`,
+    /// but with a *record*-typed field instead of a nested tuple -- `unpack_literal_digit`'s
+    /// compound case (`shared::utils`) used to only recognise `AbstractLiteral::Tuple`, so a
+    /// record-typed field (as `FunctionAsRelation`'s own witness tuple builds when a function's
+    /// domain is a record, e.g. `function (total) record {fst: int(7..8), snd: bool} --> ...`)
+    /// fell through to the buggy `SafeIndex`-into-a-matrix-of-records fallback instead.
+    #[test]
+    fn indexing_a_record_field_rebuilds_it_as_a_record_literal() {
+        let inner_domain = Domain::record(vec![
+            conjure_cp::ast::records::Field {
+                name: conjure_cp::ast::Name::user("fst"),
+                value: domain_int!(7..8),
+            },
+            conjure_cp::ast::records::Field {
+                name: conjure_cp::ast::Name::user("snd"),
+                value: Domain::bool(),
+            },
+        ]);
+        let domain = Domain::tuple(vec![inner_domain, domain_int!(13..17)]);
+        let mut symbols = SymbolTable::new();
+        let mut declaration = symbols.gen_find(&domain);
+        TuplePacked::init_for(&mut declaration).unwrap();
+
+        let mut reference = Reference::new(declaration);
+        let _ = reference.select_repr::<TuplePacked>().unwrap();
+        let subject = Expr::from(reference);
+        let expr = Expr::SafeIndex(Metadata::new(), Moo::new(subject), vec![1.into()]);
+
+        let rule = get_rule_by_name("tuple_packed_index_lit").expect("rule registered");
+        let result = rule.apply(&expr, &symbols).expect("should index field 1");
+
+        let Expr::AbstractLiteral(_, AbstractLiteral::Record(fields)) = &result.new_expression
+        else {
+            panic!(
+                "expected the compound field to come back as an inline record literal, got {}",
                 result.new_expression
             );
         };

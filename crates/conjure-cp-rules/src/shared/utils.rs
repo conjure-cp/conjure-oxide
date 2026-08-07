@@ -6,6 +6,7 @@ use conjure_cp::ast::{
     SymbolTable,
     categories::Category,
     comprehension::{Comprehension, ComprehensionQualifier},
+    records::Field,
 };
 use conjure_cp::rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, RuleEffect};
 use conjure_cp::{bug, bug_assert_eq, essence_expr, into_matrix_expr, matrix_expr};
@@ -521,4 +522,117 @@ pub fn replace_expression_generator_source(
     }
 
     (comprehension, replacement_ptr)
+}
+
+/// `Some(minimum)` iff `values` is a contiguous run of `Literal::Int`s starting at `minimum` --
+/// the cheap case for [`unpack_literal_digit`], decodable as plain arithmetic rather than an
+/// indexed lookup.
+pub fn contiguous_int_min(values: &[Literal]) -> Option<i32> {
+    let Literal::Int(minimum) = values.first()? else {
+        return None;
+    };
+    values
+        .iter()
+        .enumerate()
+        .all(|(offset, value)| *value == Literal::Int(*minimum + offset as i32))
+        .then_some(*minimum)
+}
+
+/// Given a decoded position `digit` (a decision-variable expression, not necessarily constant --
+/// this is what makes the compound case below non-trivial) and the ordered list of possible
+/// literal values at that position, build an expression for "the value at position `digit`".
+/// Shared between `TuplePacked` and `RecordPacked`'s own digit-decoding, since a packed field or
+/// element can be either shape (and can nest one inside the other).
+///
+/// Scalar (bool, or non-contiguous int) values fall back to a plain `SafeIndex` into a literal
+/// matrix of those values, dynamically indexed by `digit` -- the Minion backend already supports
+/// that (the same shape `FunctionExplicit::values_matrix` uses). A *compound* (tuple or record)
+/// value can't take that path: indexing a matrix of compound elements by a non-constant position
+/// is not something the backend can turn into a per-field `Element` constraint chain, and it
+/// silently produces an unresolved literal handed straight to the solver ("expected a literal but
+/// got `AbstractLiteral(...)`"). Instead, each candidate's own fields are projected out (every
+/// candidate shares the same shape, since the caller builds them all from one domain), and the
+/// value is rebuilt as an inline tuple/record literal expression whose *own* fields are each
+/// decoded recursively by this same function -- reusing `digit`, since every candidate is keyed by
+/// the same packed position. A field that's itself a contiguous int range (the common case) hits
+/// the cheap arithmetic path one level down; a doubly-nested compound value recurses again.
+pub fn unpack_literal_digit(digit: &Expr, values: &[Literal]) -> Expr {
+    if let Some(minimum) = contiguous_int_min(values) {
+        return match minimum {
+            0 => digit.clone(),
+            minimum => essence_expr!(&digit + &minimum),
+        };
+    }
+    if let Some(rebuilt) = unpack_compound_literal_digit(digit, values) {
+        return rebuilt;
+    }
+    let values = values.iter().cloned().map(Expr::from).collect::<Vec<_>>();
+    Expr::SafeIndex(
+        Metadata::new(),
+        Moo::new(into_matrix_expr!(values)),
+        vec![essence_expr!(&digit + 1)],
+    )
+}
+
+/// The compound-value case of [`unpack_literal_digit`]: `None` unless every value is a tuple (or
+/// every value is a record with the same field names) -- guaranteed for a genuine packed field's
+/// own value list, but checked directly rather than assumed, since a mismatch here should fall
+/// back to the -- still correct, if unreduced until something else eliminates it -- generic path
+/// instead of panicking.
+fn unpack_compound_literal_digit(digit: &Expr, values: &[Literal]) -> Option<Expr> {
+    match values.first()? {
+        Literal::AbstractLiteral(AbstractLiteral::Tuple(first_fields)) => {
+            let arity = first_fields.len();
+            let mut field_values: Vec<Vec<Literal>> = vec![Vec::with_capacity(values.len()); arity];
+            for value in values {
+                let Literal::AbstractLiteral(AbstractLiteral::Tuple(fields)) = value else {
+                    return None;
+                };
+                if fields.len() != arity {
+                    return None;
+                }
+                for (slot, field) in field_values.iter_mut().zip(fields) {
+                    slot.push(field.clone());
+                }
+            }
+            let rebuilt_fields = field_values
+                .into_iter()
+                .map(|values| unpack_literal_digit(digit, &values))
+                .collect();
+            Some(Expr::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::Tuple(rebuilt_fields),
+            ))
+        }
+        Literal::AbstractLiteral(AbstractLiteral::Record(first_fields)) => {
+            let names: Vec<_> = first_fields.iter().map(|field| field.name.clone()).collect();
+            let mut field_values: Vec<Vec<Literal>> =
+                vec![Vec::with_capacity(values.len()); names.len()];
+            for value in values {
+                let Literal::AbstractLiteral(AbstractLiteral::Record(fields)) = value else {
+                    return None;
+                };
+                if fields.len() != names.len() {
+                    return None;
+                }
+                for (name, slot) in names.iter().zip(field_values.iter_mut()) {
+                    let field_value = fields.iter().find(|field| &field.name == name)?.value.clone();
+                    slot.push(field_value);
+                }
+            }
+            let rebuilt_fields = names
+                .into_iter()
+                .zip(field_values)
+                .map(|(name, values)| Field {
+                    name,
+                    value: unpack_literal_digit(digit, &values),
+                })
+                .collect();
+            Some(Expr::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::Record(rebuilt_fields),
+            ))
+        }
+        _ => None,
+    }
 }
