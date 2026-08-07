@@ -537,7 +537,7 @@ fn rewrite_int_ranges_in_unresolved_domain(
             rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
         }
         UnresolvedDomain::Permutation(attr, inner) => {
-            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
+            rewrite_int_range(&mut attr.num_moved, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
         }
         UnresolvedDomain::Reference(_) => {}

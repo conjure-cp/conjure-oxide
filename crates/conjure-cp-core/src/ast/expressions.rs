@@ -672,6 +672,17 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Inverse(Metadata, Moo<Expression>, Moo<Expression>),
 
+    /// `permInverse(p)`: the inverse of permutation `p`, as a new permutation value. Not to be
+    /// confused with [`Expression::Inverse`], which is a boolean predicate over a pair of
+    /// permutations, not a value-returning operator.
+    #[compatible(JsonInput)]
+    PermInverse(Metadata, Moo<Expression>),
+
+    /// `compose(g, h)`: the permutation obtained by applying `h` then `g`, as a new permutation
+    /// value (`image(compose(g, h), i) = image(g, image(h, i))`).
+    #[compatible(JsonInput)]
+    Compose(Metadata, Moo<Expression>, Moo<Expression>),
+
     #[compatible(JsonInput)]
     Restrict(Metadata, Moo<Expression>, Moo<Expression>),
 
@@ -1408,6 +1419,8 @@ impl Expression {
                 Some(Domain::set(SetAttr::new(size), codomain))
             }
             Expression::Image(_, function, _) => get_function_codomain(function),
+            Expression::PermInverse(_, perm) => perm.domain_of(),
+            Expression::Compose(_, g, _h) => g.domain_of(),
             Expression::ImageSet(_, function, _) => {
                 let codomain = get_function_codomain(function);
                 // An imageSet is the converted to a set, and can be empty
@@ -1927,6 +1940,8 @@ impl Expression {
             ImageSet,
             PreImage,
             Inverse,
+            PermInverse,
+            Compose,
             Restrict,
             LexLt,
             LexLeq,
@@ -2123,20 +2138,25 @@ impl Expression {
     }
 }
 
+/// Also handles permutations: `image(perm, x)` returns a value from the permutation's own inner
+/// domain (a permutation's "codomain" is its domain), so this doubles as the codomain lookup for
+/// `Expression::Image`/`ImageSet` applied to either a function or a permutation.
 pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
     let function_domain = function.domain_of()?;
     match function_domain.resolve().as_ref() {
         Ok(d) => {
             match d.as_ref() {
                 GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
-                // Not defined for anything other than a function
+                GroundDomain::Permutation(_, inner) => Some(inner.clone().into()),
+                // Not defined for anything other than a function or permutation
                 _ => None,
             }
         }
         Err(_) => {
             match function_domain.as_unresolved()? {
                 UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone()),
-                // Not defined for anything other than a function
+                UnresolvedDomain::Permutation(_, inner) => Some(inner.clone()),
+                // Not defined for anything other than a function or permutation
                 _ => None,
             }
         }
@@ -2589,6 +2609,8 @@ impl Display for Expression {
             Expression::ImageSet(_, function, elems) => write!(f, "imageSet({function},{elems})"),
             Expression::PreImage(_, function, elems) => write!(f, "preImage({function},{elems})"),
             Expression::Inverse(_, a, b) => write!(f, "inverse({a},{b})"),
+            Expression::PermInverse(_, p) => write!(f, "permInverse({p})"),
+            Expression::Compose(_, g, h) => write!(f, "compose({g},{h})"),
             Expression::Restrict(_, function, domain) => write!(f, "restrict({function},{domain})"),
 
             Expression::LexLt(_, a, b) => write!(f, "({a} <lex {b})"),
@@ -2838,8 +2860,9 @@ impl Typeable for Expression {
                 let subject = function.return_type();
                 match subject {
                     ReturnType::Function(_, codomain) => *codomain,
+                    ReturnType::Permutation(inner) => *inner,
                     _ => bug!(
-                        "Invalid image operation: expected the operand to be a function, got {self}: {subject}"
+                        "Invalid image operation: expected the operand to be a function or permutation, got {self}: {subject}"
                     ),
                 }
             }
@@ -2847,8 +2870,9 @@ impl Typeable for Expression {
                 let subject = function.return_type();
                 match subject {
                     ReturnType::Function(_, codomain) => ReturnType::Set(Box::new(*codomain)),
+                    ReturnType::Permutation(inner) => ReturnType::Set(inner),
                     _ => bug!(
-                        "Invalid imageSet operation: expected the operand to be a function, got {self}: {subject}"
+                        "Invalid imageSet operation: expected the operand to be a function or permutation, got {self}: {subject}"
                     ),
                 }
             }
@@ -2873,6 +2897,8 @@ impl Typeable for Expression {
                 }
             }
             Expression::Inverse(..) => ReturnType::Bool,
+            Expression::PermInverse(_, p) => p.return_type(),
+            Expression::Compose(_, g, _h) => g.return_type(),
             Expression::LexLt(..) => ReturnType::Bool,
             Expression::LexGt(..) => ReturnType::Bool,
             Expression::LexLeq(..) => ReturnType::Bool,
@@ -3030,6 +3056,7 @@ impl Expression {
             | Expression::Or(_, m1)
             | Expression::And(_, m1)
             | Expression::Neg(_, m1)
+            | Expression::PermInverse(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
             | Expression::Factorial(_, m1)
@@ -3077,6 +3104,7 @@ impl Expression {
             | Expression::ImageSet(_, m1, m2)
             | Expression::PreImage(_, m1, m2)
             | Expression::Inverse(_, m1, m2)
+            | Expression::Compose(_, m1, m2)
             | Expression::Restrict(_, m1, m2)
             | Expression::Apart(_, m1, m2)
             | Expression::Together(_, m1, m2)
@@ -3307,6 +3335,7 @@ impl Expression {
             | Expression::Or(_, m1)
             | Expression::And(_, m1)
             | Expression::Neg(_, m1)
+            | Expression::PermInverse(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
             | Expression::Factorial(_, m1)
@@ -3363,6 +3392,7 @@ impl Expression {
             | Expression::ImageSet(_, m1, m2)
             | Expression::PreImage(_, m1, m2)
             | Expression::Inverse(_, m1, m2)
+            | Expression::Compose(_, m1, m2)
             | Expression::Restrict(_, m1, m2)
             | Expression::LexLt(_, m1, m2)
             | Expression::LexLeq(_, m1, m2)

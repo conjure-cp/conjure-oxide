@@ -1067,6 +1067,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         // these gracefully (Err(RuleNotApplicable)) rather than panicking.
         Expr::ImageSet(_, _, _) => None,
         Expr::Inverse(_, _, _) => None,
+        Expr::PermInverse(_, _) => None,
+        Expr::Compose(_, _, _) => None,
         Expr::Restrict(_, _, _) => None,
         Expr::ToSet(_, _) => None,
         Expr::ToMSet(_, _) => None,

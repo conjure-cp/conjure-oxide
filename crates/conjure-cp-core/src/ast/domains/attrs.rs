@@ -252,17 +252,19 @@ impl<A> Default for PartitionAttr<A> {
 }
 
 /// A permutation is inherently total and bijective by definition, so unlike partition or
-/// function, its only attribute is a size constraint (on the number of moved points, i.e. the
-/// points not fixed by the permutation).
+/// function, its only attribute is a size constraint on `numMoved`, the number of moved points
+/// (i.e. the points not fixed by the permutation) -- confirmed against real Conjure's own
+/// `numMoved`/`minNumMoved`/`maxNumMoved` keywords (real Conjure does not accept
+/// `size`/`minSize`/`maxSize` here, unlike set/relation/etc).
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct PermutationAttr<A = Int> {
-    pub size: Range<A>,
+    pub num_moved: Range<A>,
 }
 
 impl<A: Display> Display for PermutationAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let size_str = fmt_size("size", &self.size);
+        let size_str = fmt_size("numMoved", &self.num_moved);
         write!(f, "{size_str}")
     }
 }
@@ -270,7 +272,7 @@ impl<A: Display> Display for PermutationAttr<A> {
 impl<A> Default for PermutationAttr<A> {
     fn default() -> Self {
         PermutationAttr {
-            size: Range::Unbounded,
+            num_moved: Range::Unbounded,
         }
     }
 }

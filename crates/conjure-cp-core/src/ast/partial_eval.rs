@@ -1004,6 +1004,8 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::ImageSet(_, _, _) => Err(RuleNotApplicable),
         Expr::PreImage(_, _, _) => Err(RuleNotApplicable),
         Expr::Inverse(_, _, _) => Err(RuleNotApplicable),
+        Expr::PermInverse(_, _) => Err(RuleNotApplicable),
+        Expr::Compose(_, _, _) => Err(RuleNotApplicable),
         Expr::Restrict(_, _, _) => Err(RuleNotApplicable),
         Expr::ToSet(_, _) => Err(RuleNotApplicable),
         Expr::ToMSet(_, _) => Err(RuleNotApplicable),

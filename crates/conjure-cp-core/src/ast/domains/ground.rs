@@ -827,16 +827,16 @@ impl GroundDomain {
             },
             GroundDomain::Permutation(attr, dom) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles)) => {
-                    // The literal's "size" is the number of moved points (elements mentioned in
-                    // some cycle), matching cycle notation's "unmentioned = fixed point"
-                    // semantics -- not the inner domain's own size.
+                    // numMoved is the count of moved points (elements mentioned in some cycle),
+                    // matching cycle notation's "unmentioned = fixed point" semantics -- not the
+                    // inner domain's own size.
                     let sz: i32 = cycles
                         .iter()
                         .flatten()
                         .count()
                         .to_i32()
                         .ok_or(DomainOpError::TooLarge)?;
-                    if !attr.size.contains(&sz) {
+                    if !attr.num_moved.contains(&sz) {
                         return Ok(false);
                     }
 
