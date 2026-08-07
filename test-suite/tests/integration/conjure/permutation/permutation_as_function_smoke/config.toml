@@ -1,0 +1,19 @@
+# Hand-authored regression case. `image(f, arg)` had no lowering rule for either Function
+# representation until recently; once FunctionExplicit got one, permutation models still failed
+# under this harness's own settings (`heuristic = "x"` enumerates every representation choice,
+# including FunctionAsRelation for the forwards/backwards Function-typed aux declarations that
+# PermutationAsFunction channels a permutation through), since FunctionAsRelation had no
+# equivalent rule. Fixing that also uncovered a separate, deeper bug: a naive `(key, value)`
+# witness-tuple matrix indexed by a non-constant `elementId` position produced a Minion "Undefined
+# name" error, because the backend cannot turn a dynamic index into a compound (tuple) matrix
+# element into a per-field `Element` constraint chain. `x` is constrained to be a moved point
+# (`x = image(p, 1)`, `x != 1`), so the expected solutions are exactly the permutations of
+# `{1,2,3}` that move `1`: all of them except the identity and the `(2 3)` transposition -- 4 of
+# the 6 permutations of a 3-element set, cross-validated against real Conjure's own `conjure
+# solve` output for the same model (same 4 solutions as a set, modulo enumeration order).
+parser = "tree-sitter"
+rewriter = "optimised"
+comprehension-expander = "native"
+heuristic = "x"
+solver = "minion"
+number-of-solutions = "all"
