@@ -68,7 +68,7 @@ register_representation!(
 
         // numMoved = sum([ toInt(i != image(forwards, i)) | i : innerDomain ])
         let cardinality = quantify(
-            &[state.inner_domain.clone()],
+            std::slice::from_ref(&state.inner_domain),
             &["i"],
             ACOperatorKind::Sum,
             |refs| {
@@ -85,7 +85,7 @@ register_representation!(
 
         // forAll i : innerDomain . image(backwards, image(forwards, i)) = i
         let round_trip_forwards = quantify(
-            &[state.inner_domain.clone()],
+            std::slice::from_ref(&state.inner_domain),
             &["i"],
             ACOperatorKind::And,
             |refs| {
@@ -106,7 +106,7 @@ register_representation!(
 
         // forAll i : innerDomain . image(forwards, image(backwards, i)) = i
         let round_trip_backwards = quantify(
-            &[state.inner_domain.clone()],
+            std::slice::from_ref(&state.inner_domain),
             &["i"],
             ACOperatorKind::And,
             |refs| {
