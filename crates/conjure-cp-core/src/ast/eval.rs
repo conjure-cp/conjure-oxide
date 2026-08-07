@@ -5,6 +5,7 @@ use crate::ast::{
     comprehension::{Comprehension, ComprehensionQualifier},
     matrix,
 };
+use crate::bug_assert;
 use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
@@ -541,7 +542,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     };
 
-                    assert!(indices.len() == 1, "nested tuples not supported yet");
+                    bug_assert!(indices.len() == 1, "nested tuples not supported yet");
 
                     let Lit::Int(index) = indices[0].clone() else {
                         return None;
@@ -561,7 +562,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     };
 
-                    assert!(indices.len() == 1, "nested record not supported yet");
+                    bug_assert!(indices.len() == 1, "nested record not supported yet");
 
                     let Lit::Int(index) = indices[0].clone() else {
                         return None;

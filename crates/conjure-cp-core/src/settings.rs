@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display as StrumDisplay, EnumIter};
 
 use crate::bug;
+use crate::bug_assert;
 
 use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
 
@@ -158,7 +159,7 @@ pub fn clear_heuristic_responses() {
 
 /// Returns a deterministic pseudo-random index and advances the per-thread heuristic RNG.
 pub fn next_heuristic_random_index(upper_bound: usize) -> usize {
-    assert!(
+    bug_assert!(
         upper_bound > 0,
         "random choice requires at least one candidate"
     );
@@ -186,7 +187,7 @@ pub fn begin_heuristic_all_choices(requested: Vec<usize>) {
 
 /// Selects the requested branch at the next `x` decision and records all available options.
 pub fn next_heuristic_all_index(options: &[&str]) -> usize {
-    assert!(
+    bug_assert!(
         !options.is_empty(),
         "all-choice requires at least one candidate"
     );
@@ -216,7 +217,7 @@ pub fn heuristic_all_choices() -> Vec<HeuristicChoice> {
 /// Options are printed 1-based. Prefers the next value from [`set_heuristic_responses`]; otherwise
 /// prompts on stdin (empty input picks option 1), matching Conjure.
 pub fn next_heuristic_interactive_index(options: &[&str]) -> usize {
-    assert!(
+    bug_assert!(
         !options.is_empty(),
         "interactive choice requires at least one candidate"
     );

@@ -7,6 +7,7 @@ use crate::ast::{
     matrix,
     records::Field,
 };
+use crate::bug_assert;
 use crate::range;
 use crate::utils::{count_combinations, count_permutations, stirling_second_kind};
 use conjure_cp_core::ast::ReturnType;
@@ -1215,7 +1216,7 @@ impl GroundDomain {
                 // flatten index domains of n-d matrix into list
                 let mut l = l.clone();
                 while let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = l {
-                    assert!(
+                    bug_assert!(
                         !matches!(idx.as_ref(), GroundDomain::Matrix(_, _)),
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix"
                     );
@@ -1245,7 +1246,7 @@ impl GroundDomain {
                     };
                     let mut l = first_elem.clone();
                     while let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = l {
-                        assert!(
+                        bug_assert!(
                             !matches!(idx.as_ref(), GroundDomain::Matrix(_, _)),
                             "n-dimensional matrix literals should be represented as a matrix inside a matrix"
                         );

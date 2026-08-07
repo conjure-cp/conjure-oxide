@@ -14,6 +14,7 @@ use super::{
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::bug;
+use crate::bug_assert;
 use polyquine::Quine;
 use uniplate::{Biplate, Tree, Uniplate};
 
@@ -379,7 +380,7 @@ impl AbstractLiteral<Expression> {
                 // flatten index domains of n-d matrix into list
                 let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
                 while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
-                    assert!(
+                    bug_assert!(
                         idx.as_matrix().is_none(),
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix, got {idx}"
                     );
@@ -416,7 +417,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a set should have the same type"
                 );
@@ -432,7 +433,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a set should have the same type"
                 );
@@ -448,7 +449,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a sequence should have the same type"
                 );
@@ -465,7 +466,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 let item_types: Vec<ReturnType> =
                     items.iter().flatten().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in every part of a partition should have the same type"
                 );
@@ -481,7 +482,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 let item_types: Vec<ReturnType> =
                     items.iter().flatten().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in every cycle of a permutation should have the same type"
                 );
@@ -497,7 +498,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
-                assert!(
+                bug_assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a matrix should have the same type. items: {items} types: {types:#?}",
                     items = pretty_vec(items),

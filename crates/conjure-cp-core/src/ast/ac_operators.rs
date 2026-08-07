@@ -1,7 +1,7 @@
 use crate::{
     ast::Metadata,
     ast::{Domain, Moo, Range, ReturnType},
-    bug, matrix_expr,
+    bug, bug_assert, matrix_expr,
 };
 
 use super::{Expression, Literal, Typeable};
@@ -36,7 +36,7 @@ impl ACOperatorKind {
     ///
     /// The child expression given should be of type matrix.
     pub fn as_expression(&self, child_expr: Expression) -> Expression {
-        assert!(
+        bug_assert!(
             matches!(child_expr.return_type(), ReturnType::Matrix(_)),
             "The child expression given to ACOperatorKind::to_expression should be of type matrix."
         );
@@ -105,14 +105,14 @@ impl ACOperatorKind {
     /// This method constructs the skipping operator, substituting in the given expressions for b
     /// and x.
     pub fn make_skip_operation(&self, guard_expr: Expression, tail_expr: Expression) -> Expression {
-        assert!(
+        bug_assert!(
             matches!(guard_expr.return_type(), ReturnType::Bool),
             "The guard expression in a skipping operation should be type boolean."
         );
 
         match self {
             ACOperatorKind::And => {
-                assert!(
+                bug_assert!(
                     matches!(tail_expr.return_type(), ReturnType::Bool),
                     "The tail expression in an and skipping operation should be type boolean."
                 );
@@ -121,7 +121,7 @@ impl ACOperatorKind {
                 Expression::Imply(Metadata::new(), guard_expr_boxed, tail_expr_boxed)
             }
             ACOperatorKind::Or => {
-                assert!(
+                bug_assert!(
                     matches!(tail_expr.return_type(), ReturnType::Bool),
                     "The tail expression in an or skipping operation should be type boolean."
                 );
@@ -131,7 +131,7 @@ impl ACOperatorKind {
                 )
             }
             ACOperatorKind::Product => {
-                assert!(
+                bug_assert!(
                     matches!(tail_expr.return_type(), ReturnType::Int),
                     "The tail expression in a product skipping operation should be type int."
                 );
@@ -146,7 +146,7 @@ impl ACOperatorKind {
             }
             ACOperatorKind::Sum => {
                 let guard_expr_boxed = Moo::new(guard_expr);
-                assert!(
+                bug_assert!(
                     matches!(tail_expr.return_type(), ReturnType::Int),
                     "The tail expression in a sum skipping operation should be type int."
                 );
@@ -184,15 +184,15 @@ impl ACOperatorKind {
         tail_expr: Expression,
         skip_value: Literal,
     ) -> Expression {
-        assert!(
+        bug_assert!(
             matches!(self, ACOperatorKind::Min | ACOperatorKind::Max),
             "make_min_max_skip_operation is only valid for ACOperatorKind::Min/Max."
         );
-        assert!(
+        bug_assert!(
             matches!(guard_expr.return_type(), ReturnType::Bool),
             "The guard expression in a skipping operation should be type boolean."
         );
-        assert!(
+        bug_assert!(
             matches!(tail_expr.return_type(), ReturnType::Int),
             "The tail expression in a min/max skipping operation should be type int."
         );

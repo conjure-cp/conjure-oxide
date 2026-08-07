@@ -20,6 +20,7 @@ use rustsat_cadical::CaDiCaL;
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
+use crate::bug_assert;
 use crate::representation::util::try_up;
 use crate::rule_engine::rewrite_model_with_configured_rewriter;
 use crate::settings::current_rewriter;
@@ -563,7 +564,7 @@ impl SolverAdaptor for Sat {
         // all constraints should be encoded as clauses
         // the remaining constraint (if it exists) should just be a true/false expression
         let constraints = m_clone.constraints();
-        assert!(
+        bug_assert!(
             constraints.is_empty()
                 || (constraints.len() == 1
                     && (constraints[0] == true.into() || constraints[0] == false.into())),

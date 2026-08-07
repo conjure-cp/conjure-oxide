@@ -42,6 +42,13 @@ location: {}:{}:{}
 /// Like [assert!], but formats the error message using [bug!]
 #[macro_export]
 macro_rules! bug_assert {
+    ($cond:expr, $msg:expr, $($arg:tt)*) => {
+        if !$cond {
+            let formatted_msg = format!($msg, $($arg)*);
+            $crate::bug!("assertion failed: {}\n{}", stringify!($cond), formatted_msg);
+        }
+    };
+
     ($cond:expr, $msg:expr) => {
         if !$cond {
             $crate::bug!("assertion failed: {}\n{}", stringify!($cond), $msg);

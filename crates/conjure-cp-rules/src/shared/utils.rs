@@ -9,7 +9,7 @@ use conjure_cp::ast::{
     records::Field,
 };
 use conjure_cp::rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, RuleEffect};
-use conjure_cp::{bug, bug_assert_eq, essence_expr, into_matrix_expr, matrix_expr};
+use conjure_cp::{bug, bug_assert, bug_assert_eq, essence_expr, into_matrix_expr, matrix_expr};
 use itertools::{Itertools, izip};
 
 use tracing::{instrument, trace};
@@ -332,7 +332,7 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     // i.e. dont flatten things containing givens, quantified variables, just constants, etc.
     let categories = expr.universe_categories();
 
-    assert!(!categories.is_empty());
+    bug_assert!(!categories.is_empty());
 
     if !(categories.len() == 1 && categories.contains(&Category::Decision)
         || categories.len() == 2
@@ -605,7 +605,10 @@ fn unpack_compound_literal_digit(digit: &Expr, values: &[Literal]) -> Option<Exp
             ))
         }
         Literal::AbstractLiteral(AbstractLiteral::Record(first_fields)) => {
-            let names: Vec<_> = first_fields.iter().map(|field| field.name.clone()).collect();
+            let names: Vec<_> = first_fields
+                .iter()
+                .map(|field| field.name.clone())
+                .collect();
             let mut field_values: Vec<Vec<Literal>> =
                 vec![Vec::with_capacity(values.len()); names.len()];
             for value in values {
@@ -616,7 +619,11 @@ fn unpack_compound_literal_digit(digit: &Expr, values: &[Literal]) -> Option<Exp
                     return None;
                 }
                 for (name, slot) in names.iter().zip(field_values.iter_mut()) {
-                    let field_value = fields.iter().find(|field| &field.name == name)?.value.clone();
+                    let field_value = fields
+                        .iter()
+                        .find(|field| &field.name == name)?
+                        .value
+                        .clone();
                     slot.push(field_value);
                 }
             }

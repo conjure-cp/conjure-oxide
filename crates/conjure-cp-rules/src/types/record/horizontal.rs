@@ -1,6 +1,8 @@
 use crate::guard;
 use crate::shared::utils::{as_eq_or_neq, collect_eq_or_neq};
-use conjure_cp::ast::{AbstractLiteral, Atom, Expression as Expr, Literal, SymbolTable, records::Field};
+use conjure_cp::ast::{
+    AbstractLiteral, Atom, Expression as Expr, Literal, SymbolTable, records::Field,
+};
 use conjure_cp::bug_assert;
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, RuleEffect as Reduction, register_rule};
@@ -13,18 +15,19 @@ use conjure_cp::rule_engine::{ApplicationResult, RuleEffect as Reduction, regist
 fn record_expr_entries(expr: &Expr) -> Option<Vec<Field<Expr>>> {
     match expr {
         Expr::AbstractLiteral(_, AbstractLiteral::Record(fields)) => Some(fields.clone()),
-        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(fields)))) => {
-            Some(
-                fields
-                    .iter()
-                    .cloned()
-                    .map(|Field { name, value }| Field {
-                        name,
-                        value: Expr::from(value),
-                    })
-                    .collect(),
-            )
-        }
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(fields))),
+        ) => Some(
+            fields
+                .iter()
+                .cloned()
+                .map(|Field { name, value }| Field {
+                    name,
+                    value: Expr::from(value),
+                })
+                .collect(),
+        ),
         _ => None,
     }
 }
@@ -52,7 +55,11 @@ fn record_literal_eq_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
 
     let mut rhs_fields = rhs_fields;
     let mut pairs = Vec::with_capacity(lhs_fields.len());
-    for Field { name, value: lhs_value } in lhs_fields {
+    for Field {
+        name,
+        value: lhs_value,
+    } in lhs_fields
+    {
         let position = rhs_fields
             .iter()
             .position(|field| field.name == name)

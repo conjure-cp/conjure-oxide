@@ -91,6 +91,7 @@ export PATH="${TARGET_DIR}/debug:${PATH}"
 GRCOV_EXCLUDE_LINES=(
   'consider covered'
   'bug!'
+  'bug_assert!'
   '#\[derive'
   '#\[register_rule'
   'register_rule_set!'

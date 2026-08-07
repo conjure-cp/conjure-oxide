@@ -12,6 +12,7 @@ use conjure_cp::{
         comprehension::{Comprehension, ComprehensionQualifier},
         serde::HasId as _,
     },
+    bug_assert,
     rule_engine::resolve_rule_sets,
     settings::{SolverFamily, current_rewriter},
     solver::{Solver, SolverError, adaptors::Minion},
@@ -281,7 +282,7 @@ fn add_return_expression_to_generator_model(
     );
 
     // double check that the above transformation didn't miss any stray non-quantified vars
-    assert!(
+    bug_assert!(
         Biplate::<DeclarationPtr>::universe_bi(&new_return_expression)
             .iter()
             .all(|x| symtab.lookup_local(&x.name()).is_some()),

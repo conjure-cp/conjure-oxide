@@ -2,6 +2,7 @@
 
 use std::{collections::BTreeSet, fmt::Display};
 
+use crate::bug_assert;
 use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools as _;
 use parking_lot::RwLockReadGuard;
@@ -215,7 +216,7 @@ impl ComprehensionBuilder {
 
     pub fn generator(mut self, declaration: DeclarationPtr) -> Self {
         let name = declaration.name().clone();
-        assert!(!self.quantified_variables.contains(&name));
+        bug_assert!(!self.quantified_variables.contains(&name));
 
         self.quantified_variables.insert(name.clone());
 
@@ -231,7 +232,7 @@ impl ComprehensionBuilder {
     }
 
     pub fn expression_generator(mut self, name: Name, expr: Expression) -> Self {
-        assert!(!self.quantified_variables.contains(&name));
+        bug_assert!(!self.quantified_variables.contains(&name));
 
         self.quantified_variables.insert(name.clone());
 

@@ -8,6 +8,7 @@ use std::time::Instant;
 
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Name};
+use conjure_cp::bug_assert;
 use conjure_cp::context::Context;
 use conjure_cp::settings::{configured_rule_trace_enabled, set_rule_trace_enabled};
 
@@ -259,7 +260,7 @@ pub fn get_solutions(
             if reprs.is_empty() {
                 return None;
             }
-            assert!(
+            bug_assert!(
                 reprs.len() <= 1,
                 "multiple representations for a variable is not yet implemented"
             );
