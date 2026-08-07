@@ -103,6 +103,7 @@ module.exports = grammar ({
       field("function_domain", $.function_domain),
       field("relation_domain", $.relation_domain),
       field("partition_domain", $.partition_domain),
+      field("permutation_domain", $.permutation_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -324,6 +325,25 @@ module.exports = grammar ({
       field("attribute", "regular")
     ),
 
+    // e.g. permutation of int(1..3), permutation (numMoved 2) of int(1..4),
+    // permutation (minNumMoved 1, maxNumMoved 3) of int(3..8). A permutation is inherently total
+    // and bijective, so its only attribute is a size constraint on the number of moved points
+    // (real Conjure's own keyword is `numMoved`, not `size`).
+    permutation_domain: $ => seq(
+      "permutation",
+      optional(seq("(", $.permutation_attributes, ")")),
+      "of",
+      field("value_domain", $.domain)
+    ),
+
+    permutation_attributes: $ => commaSep1($.permutation_attribute),
+
+    permutation_attribute: $ => choice(
+      seq(field("attribute", "numMoved"), field("value", $.integer)),
+      seq(field("attribute", "minNumMoved"), field("value", $.integer)),
+      seq(field("attribute", "maxNumMoved"), field("value", $.integer)),
+    ),
+
     set_literal: $ => seq(
       "{",
       field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
@@ -378,6 +398,22 @@ module.exports = grammar ({
       "partition",
       "(",
       optional(field("part", commaSep1($.set_literal))),
+      ")"
+    ),
+
+    // e.g. permutation(), permutation((1,2,3)), permutation((1,2),(4,5)). Cycle notation: each
+    // cycle is a parenthesised list of elements; any domain element not mentioned in any cycle is
+    // an implicit fixed point.
+    permutation_literal: $ => seq(
+      "permutation",
+      "(",
+      optional(field("cycle", commaSep1($.permutation_literal_cycle))),
+      ")"
+    ),
+
+    permutation_literal_cycle: $ => seq(
+      "(",
+      field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom))),
       ")"
     ),
 
@@ -455,6 +491,22 @@ module.exports = grammar ({
 
     inverse_expr: $ => seq(
       "inverse",
+      "(",
+      field("left", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("right", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    perm_inverse_expr: $ => seq(
+      "permInverse",
+      "(",
+      field("permutation", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
+    compose_expr: $ => seq(
+      "compose",
       "(",
       field("left", choice($.arithmetic_expr, $.atom)),
       ",",
@@ -756,6 +808,7 @@ module.exports = grammar ({
       field("function_literal", $.function_literal),
       field("relation_literal", $.relation_literal),
       field("partition_literal", $.partition_literal),
+      field("permutation_literal", $.permutation_literal),
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
       field("element_id", $.element_id),
@@ -766,6 +819,8 @@ module.exports = grammar ({
       field("image_set_expr", $.image_set_expr),
       field("pre_image_expr", $.pre_image_expr),
       field("inverse_expr", $.inverse_expr),
+      field("perm_inverse_expr", $.perm_inverse_expr),
+      field("compose_expr", $.compose_expr),
       field("restrict_expr", $.restrict_expr),
       field("defined_expr", $.defined_expr),
       field("range_expr", $.range_expr),
