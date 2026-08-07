@@ -849,7 +849,7 @@ impl GroundDomain {
                     };
 
                     let rng = Range::new(min, max);
-                    if rng.contains(&sz) {
+                    if !rng.contains(&sz) {
                         return Ok(false);
                     }
 
@@ -2071,5 +2071,69 @@ mod tests {
         attr.size = Range::Bounded(0, 2);
         let dom = GroundDomain::Function(attr, domain_int_ground!(1..3), domain_int_ground!(1..2));
         assert_eq!(dom.length().unwrap(), 13);
+    }
+
+    fn partition_attr(num_parts: Range<i32>, part_len: Range<i32>) -> PartitionAttr {
+        PartitionAttr {
+            num_parts,
+            part_len,
+            is_regular: false,
+        }
+    }
+
+    fn partition_lit(parts: Vec<Vec<i32>>) -> Literal {
+        Literal::AbstractLiteral(AbstractLiteral::Partition(
+            parts
+                .into_iter()
+                .map(|part| part.into_iter().map(Literal::Int).collect())
+                .collect(),
+        ))
+    }
+
+    #[test]
+    fn partition_contains_accepts_a_literal_whose_size_exactly_matches_num_parts_times_part_len() {
+        // num_parts=2, part_len=2 => exactly 4 covered elements is valid.
+        let dom = GroundDomain::Partition(
+            partition_attr(Range::Single(2), Range::Single(2)),
+            domain_int_ground!(1..6),
+        );
+        let lit = partition_lit(vec![vec![1, 2], vec![3, 4]]);
+        assert!(
+            dom.contains(&lit).unwrap(),
+            "a 4-element partition literal should be a valid member of a \
+             (numParts 2, partSize 2) domain"
+        );
+    }
+
+    #[test]
+    fn partition_contains_rejects_a_literal_with_the_wrong_covered_size() {
+        // num_parts=2, part_len=2 requires exactly 4 covered elements; 3 should be rejected.
+        let dom = GroundDomain::Partition(
+            partition_attr(Range::Single(2), Range::Single(2)),
+            domain_int_ground!(1..6),
+        );
+        let lit = partition_lit(vec![vec![1, 2, 3]]);
+        assert!(
+            !dom.contains(&lit).unwrap(),
+            "a 3-element partition literal should not be a valid member of a \
+             (numParts 2, partSize 2) domain, which requires exactly 4 covered elements"
+        );
+    }
+
+    #[test]
+    fn partition_contains_accepts_any_size_when_attributes_are_unbounded() {
+        // Regression: an unattributed partition domain (Range::Unbounded for both num_parts and
+        // part_len) must not reject every literal outright -- Range::Unbounded.contains() is
+        // always true, which an inverted condition would misread as "always out of range".
+        let dom = GroundDomain::Partition(
+            partition_attr(Range::Unbounded, Range::Unbounded),
+            domain_int_ground!(1..6),
+        );
+        let lit = partition_lit(vec![vec![1, 2], vec![3, 4, 5, 6]]);
+        assert!(
+            dom.contains(&lit).unwrap(),
+            "an unattributed partition domain should accept a literal covering its whole inner \
+             domain"
+        );
     }
 }
