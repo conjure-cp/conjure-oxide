@@ -1,5 +1,7 @@
 use crate::guard;
-use crate::shared::utils::{as_cmp_or_lex_op, is_tuple_lit, tuple_expr_entries};
+use crate::shared::utils::{
+    as_cmp_or_lex_op, as_eq_or_neq, collect_eq_or_neq, is_tuple_lit, tuple_expr_entries,
+};
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, RuleEffect as Reduction, register_rule};
@@ -44,6 +46,34 @@ fn tuple_literal_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             rest.to_vec(),
         )))
     }
+}
+
+/// Compare two inline tuple literal expressions field by field. Every existing tuple equality
+/// rule (`tuple_var_eq_var`, `tuple_var_eq_lit`, ...) requires at least one side to be an atomic
+/// reference with some tuple representation; two freshly-built literal expressions on both sides
+/// (e.g. a representation rule comparing a rebuilt witness tuple against an input literal, neither
+/// of which is a declaration) matches none of them and would otherwise reach the solver backend as
+/// a raw tuple-vs-tuple equality it cannot interpret.
+/// ```plain
+/// (a, b) = (c, d) ~> a = c /\ b = d
+/// ```
+#[register_rule("Base", 8700, [Eq, Neq])]
+fn tuple_literal_eq_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
+    guard!(
+        let Some(lhs_entries) = tuple_expr_entries(lhs) &&
+        let Some(rhs_entries) = tuple_expr_entries(rhs)
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+    bug_assert!(
+        lhs_entries.len() == rhs_entries.len(),
+        "equality on tuple literals with different shapes!"
+    );
+
+    let new_expr = collect_eq_or_neq(neq, lhs_entries.into_iter().zip(rhs_entries));
+    Ok(Reduction::pure(new_expr))
 }
 
 /// Canonicalise chained tuple indexing before representation-specific rules see it.
@@ -137,6 +167,7 @@ mod tests {
     use conjure_cp::ast::{AbstractLiteral, Atom, Expression as Expr, Metadata, Moo, SymbolTable};
     use conjure_cp::rule_engine::get_rule_by_name;
     use conjure_cp::{domain_int, range};
+    use uniplate::Uniplate;
 
     fn tuple_lit(fields: Vec<Expr>) -> Expr {
         Expr::AbstractLiteral(Metadata::new(), AbstractLiteral::Tuple(fields))
@@ -197,6 +228,60 @@ mod tests {
         let expr = Expr::SafeIndex(Metadata::new(), Moo::new(subject), vec![int_lit(1)]);
 
         let rule = get_rule_by_name("tuple_literal_index").expect("rule registered");
+        assert!(rule.apply(&expr, &SymbolTable::new()).is_err());
+    }
+
+    #[test]
+    fn tuple_literal_eq_literal_decomposes_field_by_field() {
+        let lhs = tuple_lit(vec![int_lit(7), int_lit(8)]);
+        let rhs = tuple_lit(vec![int_lit(7), int_lit(9)]);
+        let expr = Expr::Eq(Metadata::new(), Moo::new(lhs), Moo::new(rhs));
+
+        let rule = get_rule_by_name("tuple_literal_eq_literal").expect("rule registered");
+        let result = rule
+            .apply(&expr, &SymbolTable::new())
+            .expect("should decompose field by field");
+        assert!(matches!(result.new_expression, Expr::And(..)));
+        let nodes = result.new_expression.universe();
+        assert_eq!(
+            nodes
+                .iter()
+                .filter(|node| matches!(node, Expr::Eq(..)))
+                .count(),
+            2
+        );
+    }
+
+    /// Regression: neither `tuple_var_eq_var` nor `tuple_var_eq_lit` (both require a `Reference`
+    /// on at least one side) match two freshly-built literal tuple expressions -- exactly the
+    /// shape `TuplePacked`'s own field-decoding (`types::tuple::packed::vertical::unpack_digit`)
+    /// produces for a compound field, compared against an input literal.
+    #[test]
+    fn tuple_literal_eq_literal_handles_nested_tuple_fields() {
+        let inner = tuple_lit(vec![int_lit(7), Expr::from(false)]);
+        let lhs = tuple_lit(vec![inner, int_lit(13)]);
+        let rhs = tuple_lit(vec![
+            tuple_lit(vec![int_lit(7), Expr::from(false)]),
+            int_lit(13),
+        ]);
+        let expr = Expr::Eq(Metadata::new(), Moo::new(lhs), Moo::new(rhs));
+
+        let rule = get_rule_by_name("tuple_literal_eq_literal").expect("rule registered");
+        assert!(rule.apply(&expr, &SymbolTable::new()).is_ok());
+    }
+
+    #[test]
+    fn tuple_literal_eq_literal_is_not_applicable_when_a_side_is_a_reference() {
+        let lhs = Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(conjure_cp::ast::Reference::new(
+                SymbolTable::new().gen_find(&domain_int!(1..3)),
+            )),
+        );
+        let rhs = tuple_lit(vec![int_lit(1), int_lit(2)]);
+        let expr = Expr::Eq(Metadata::new(), Moo::new(lhs), Moo::new(rhs));
+
+        let rule = get_rule_by_name("tuple_literal_eq_literal").expect("rule registered");
         assert!(rule.apply(&expr, &SymbolTable::new()).is_err());
     }
 }
