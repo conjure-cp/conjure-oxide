@@ -643,7 +643,10 @@ mod test {
         let Expression::Image(_, compose_expr, _) = rhs.as_ref() else {
             unreachable!()
         };
-        assert!(matches!(compose_expr.as_ref(), Expression::Compose(_, _, _)));
+        assert!(matches!(
+            compose_expr.as_ref(),
+            Expression::Compose(_, _, _)
+        ));
     }
 
     #[test]

@@ -55,7 +55,11 @@ mod tests {
         let arg = int_lit(3);
         let expr = Expr::Image(
             Metadata::new(),
-            Moo::new(Expr::Compose(Metadata::new(), Moo::new(g.clone()), Moo::new(h.clone()))),
+            Moo::new(Expr::Compose(
+                Metadata::new(),
+                Moo::new(g.clone()),
+                Moo::new(h.clone()),
+            )),
             Moo::new(arg.clone()),
         );
 

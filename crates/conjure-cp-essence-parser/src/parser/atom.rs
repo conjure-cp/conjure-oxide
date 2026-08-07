@@ -79,8 +79,16 @@ pub fn parse_atom(
                 Atom::Literal(lit),
             )))
         }
-        "matrix" | "record" | "variant" | "tuple" | "set_literal" | "mset_literal"
-        | "sequence_literal" | "function_literal" | "relation_literal" | "partition_literal"
+        "matrix"
+        | "record"
+        | "variant"
+        | "tuple"
+        | "set_literal"
+        | "mset_literal"
+        | "sequence_literal"
+        | "function_literal"
+        | "relation_literal"
+        | "partition_literal"
         | "permutation_literal" => {
             let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);

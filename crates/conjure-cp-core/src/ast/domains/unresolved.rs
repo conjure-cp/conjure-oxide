@@ -142,10 +142,9 @@ impl UnresolvedDomain {
             UnresolvedDomain::Partition(attr, inner) => {
                 Ok(GroundDomain::Partition(attr.resolve()?, inner.resolve()?))
             }
-            UnresolvedDomain::Permutation(attr, inner) => Ok(GroundDomain::Permutation(
-                attr.resolve()?,
-                inner.resolve()?,
-            )),
+            UnresolvedDomain::Permutation(attr, inner) => {
+                Ok(GroundDomain::Permutation(attr.resolve()?, inner.resolve()?))
+            }
             UnresolvedDomain::Reference(re) => re
                 .ptr
                 .as_domain_letting()

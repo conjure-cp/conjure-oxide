@@ -10,7 +10,9 @@ use crate::shared::representation_prelude::*;
 use crate::types::partition::common::{eq, range_body};
 use crate::types::relation::binary_attrs::quantify;
 use conjure_cp::ast::ac_operators::ACOperatorKind;
-use conjure_cp::ast::{Domain, FuncAttr, GroundDomain, JectivityAttr, Moo, PartialityAttr, Range, Reference};
+use conjure_cp::ast::{
+    Domain, FuncAttr, GroundDomain, JectivityAttr, Moo, PartialityAttr, Range, Reference,
+};
 use std::collections::{HashMap, HashSet};
 
 register_representation!(

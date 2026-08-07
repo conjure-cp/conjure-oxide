@@ -2072,5 +2072,4 @@ mod tests {
         let dom = GroundDomain::Function(attr, domain_int_ground!(1..3), domain_int_ground!(1..2));
         assert_eq!(dom.length().unwrap(), 13);
     }
-
 }

@@ -61,8 +61,16 @@ mod tests {
     fn inverse_lowers_to_forwards_equals_backwards() {
         let p1 = permutation_decl();
         let p2 = permutation_decl();
-        let p1_forwards = p1.get_repr::<PermutationAsFunction>().unwrap().forwards.clone();
-        let p2_backwards = p2.get_repr::<PermutationAsFunction>().unwrap().backwards.clone();
+        let p1_forwards = p1
+            .get_repr::<PermutationAsFunction>()
+            .unwrap()
+            .forwards
+            .clone();
+        let p2_backwards = p2
+            .get_repr::<PermutationAsFunction>()
+            .unwrap()
+            .backwards
+            .clone();
 
         let expr = Expr::Inverse(
             Metadata::new(),

@@ -44,11 +44,7 @@ fn image_function_explicit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .collect();
     let domain_values_matrix = into_matrix_expr![domain_value_exprs; domain_int!(1..n)];
 
-    let position = Expr::ElementId(
-        Metadata::new(),
-        Moo::new(domain_values_matrix),
-        arg.clone(),
-    );
+    let position = Expr::ElementId(Metadata::new(), Moo::new(domain_values_matrix), arg.clone());
     let values_ref = Expr::from(Reference::new(representation.values_matrix.clone()));
     Ok(RuleEffect::pure(Expr::SafeIndex(
         Metadata::new(),
@@ -59,7 +55,10 @@ fn image_function_explicit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 #[cfg(test)]
 mod tests {
-    use conjure_cp::ast::{Atom, Domain, Expression as Expr, FuncAttr, JectivityAttr, Metadata, Moo, PartialityAttr, Range, Reference, SymbolTable};
+    use conjure_cp::ast::{
+        Atom, Domain, Expression as Expr, FuncAttr, JectivityAttr, Metadata, Moo, PartialityAttr,
+        Range, Reference, SymbolTable,
+    };
     use conjure_cp::representation::ReprRule;
     use conjure_cp::rule_engine::get_rule_by_name;
     use conjure_cp::{domain_int, range};
@@ -89,7 +88,10 @@ mod tests {
         let Expr::SafeIndex(_, matrix, indices) = &result.new_expression else {
             panic!("expected a SafeIndex, got {}", result.new_expression);
         };
-        assert!(matches!(matrix.as_ref(), Expr::Atomic(_, Atom::Reference(_))));
+        assert!(matches!(
+            matrix.as_ref(),
+            Expr::Atomic(_, Atom::Reference(_))
+        ));
         assert_eq!(indices.len(), 1);
         assert!(matches!(indices[0], Expr::ElementId(_, _, _)));
     }
