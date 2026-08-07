@@ -1363,6 +1363,20 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
             atom_list.push(elem);
         }
 
+        // Neither Minion's native `element` constraint nor its `table` fallback (both used
+        // below) can take a compound (e.g. tuple) value as a list entry -- both need a plain
+        // int/bool atom per position. When the search list holds compound literals (as
+        // `FunctionAsRelation`/`FunctionExplicit`'s own `image()` rules build for a compound
+        // function domain), fall back to an explicit per-candidate lookup instead: `reference`
+        // (the position) is pinned by a disjunction trying each candidate position, guarded by
+        // `value_expr` equalling that candidate's own literal -- the same "compare against each
+        // candidate" shape `RelationPacked::tuple_membership_expr` and the tuple-literal equality
+        // rules (`types::tuple::horizontal::tuple_literal_eq_literal`) already use for compound
+        // values elsewhere, just built directly here since this list is always fully literal.
+        if let Some(lookup) = compound_element_id_lookup(&atom_list, &value_expr, reference) {
+            return Ok(RuleEffect::pure(lookup));
+        }
+
         // Use table only if the search value can be out of bounds; otherwise element_one.
         if let Some(search_values) = literal_matrix_int_values(&atom_list)
             && element_id_value_may_be_outside_matrix(&value_expr, &search_values)
@@ -1409,6 +1423,65 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         Moo::new(value_atom),
         Moo::new(Atom::Reference(reference.clone())),
     )))
+}
+
+/// `elementId([e1,...,en], value) = reference` where at least one `ei` is a *compound* literal
+/// (a matrix of plain int/bool literals is left to the native `element`/`table` lowering, which
+/// already handles it): `reference` is pinned to the one-based position `i` such that `value`
+/// equals `ei`, expressed directly as a disjunction over positions rather than through any
+/// Minion-specific "list of atoms" primitive, since a compound element has no single atom to put
+/// in such a list. `value`'s own equality against a compound literal is resolved by the ordinary
+/// tuple-literal-equality machinery once this reaches the general rule engine again (this rule
+/// only ever fires after the whole model has already been rewritten down to the `Minion`
+/// ruleset's own passes, but the `Eq`/`In` nodes built here are still plain AST nodes, not
+/// Minion-specific ones, so earlier "Base"/"ReprGeneral" rules such as
+/// `types::tuple::horizontal::tuple_literal_eq_literal` still apply to them on the next pass).
+///
+/// Returns `None` (not an error) when every element is already scalar, so the caller falls
+/// through to the existing, more efficient native-constraint paths unchanged.
+fn compound_element_id_lookup(
+    atom_list: &[Atom],
+    value_expr: &Expr,
+    reference: &Reference,
+) -> Option<Expr> {
+    if literal_matrix_int_values(atom_list).is_some() {
+        return None;
+    }
+    let literals: Vec<&Lit> = atom_list
+        .iter()
+        .map(|atom| match atom {
+            Atom::Literal(lit) => Some(lit),
+            Atom::Reference(_) => None,
+        })
+        .collect::<Option<_>>()?;
+
+    let reference_expr = Expr::Atomic(Metadata::new(), Atom::Reference(reference.clone()));
+    let choices: Vec<Expr> = literals
+        .into_iter()
+        .enumerate()
+        .map(|(zero_based_index, lit)| {
+            let position = zero_based_index as i32 + 1;
+            let matches_value = Expr::Eq(
+                Metadata::new(),
+                Moo::new(value_expr.clone()),
+                Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(lit.clone()))),
+            );
+            let pins_position = Expr::Eq(
+                Metadata::new(),
+                Moo::new(reference_expr.clone()),
+                Moo::new(position.into()),
+            );
+            Expr::And(
+                Metadata::new(),
+                Moo::new(matrix_expr![matches_value, pins_position]),
+            )
+        })
+        .collect();
+
+    Some(Expr::Or(
+        Metadata::new(),
+        Moo::new(into_matrix_expr![choices]),
+    ))
 }
 
 fn indexed_element_id_inverse_lookup(
@@ -1632,12 +1705,28 @@ fn element_id_table_rows(
     Ok(into_matrix_expr![rows])
 }
 
+/// General (any-`Literal`) counterpart to [`indexed_element_id_literal_parts`], used when the
+/// search target may itself be compound (e.g. a tuple), not just a plain int.
+fn indexed_element_id_parts(matrix_expr: &Expr) -> Option<(Vec<Lit>, Moo<GroundDomain>)> {
+    match matrix_expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elems, index_domain)) => Some((
+            elems.iter().map(eval_constant).collect::<Option<_>>()?,
+            index_domain.resolve().ok()?,
+        )),
+        Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, index_domain))),
+        ) => Some((elems.clone(), index_domain.clone())),
+        _ => None,
+    }
+}
+
 fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
     let Expr::ElementId(_, matrix, value) = element_id else {
         return None;
     };
-    let search_value = expr_int_literal(value.as_ref())?;
-    let (elems, index_domain) = indexed_element_id_literal_parts(matrix.as_ref())?;
+    let search_value = eval_constant(value.as_ref())?;
+    let (elems, index_domain) = indexed_element_id_parts(matrix.as_ref())?;
     let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
         return None;
     };
@@ -1647,7 +1736,7 @@ fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
     }
 
     for (elem, index) in elems.into_iter().zip(index_values) {
-        if elem == search_value {
+        if elem.essence_cmp(&search_value).is_eq() {
             return Some(Expr::Atomic(
                 Metadata::new(),
                 Atom::Literal(Lit::Int(index)),
@@ -1658,11 +1747,16 @@ fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
     // Match the identity-padding used by [`pad_indexed_element_id_list`] / Minion `element_one`
     // for partial permutations (e.g. `elementId([j,i;int(i,j)], k)`): values absent from the
     // matrix map to themselves as indices. Without this, out-of-matrix lookups become unconstrained
-    // auxiliaries and lex constraints are weakened.
-    Some(Expr::Atomic(
-        Metadata::new(),
-        Atom::Literal(Lit::Int(search_value)),
-    ))
+    // auxiliaries and lex constraints are weakened. Only meaningful for a plain int value -- a
+    // compound value has no "map to itself as an index" reading, so it's left unfolded (the
+    // AuxDeclaration-based path, `compound_element_id_lookup`, still handles it structurally).
+    if let Lit::Int(search_value) = search_value {
+        return Some(Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Lit::Int(search_value)),
+        ));
+    }
+    None
 }
 
 /// Introduces an auxiliary variable for `elementId` used as a matrix index.
@@ -2968,5 +3062,98 @@ mod tests {
             matches!(result.new_expression, Expr::MinionReify(_, _, _)),
             "non-atomic Boolean equality must still become MinionReify"
         );
+    }
+
+    /// Builds a tuple literal expression `(a, b)`.
+    fn tuple_lit(a: i32, b: bool) -> Expr {
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                Lit::Int(a),
+                Lit::Bool(b),
+            ]))),
+        )
+    }
+
+    /// Builds `[e1,...,en; int(1..n)]` as an `Expr`, matching the shape
+    /// `FunctionAsRelation`/`FunctionExplicit`'s own `image()` rules build for
+    /// `domain_values_matrix`.
+    fn one_based_matrix(elems: Vec<Expr>) -> Expr {
+        let n = elems.len() as i32;
+        into_matrix_expr![elems; Domain::int(vec![Range::Bounded(1, n)])]
+    }
+
+    #[test]
+    fn fold_constant_element_id_to_index_finds_a_compound_literal() {
+        // Regression: elementId([(7,false),(7,true),(8,false),(8,true)], (8,true)) used to only
+        // resolve for a plain int search value (`expr_int_literal` failing outright for a
+        // compound one), leaving the ElementId node -- and eventually the raw tuple literal --
+        // unresolved all the way to Minion.
+        let matrix = one_based_matrix(vec![
+            tuple_lit(7, false),
+            tuple_lit(7, true),
+            tuple_lit(8, false),
+            tuple_lit(8, true),
+        ]);
+        let element_id = Expr::ElementId(
+            Metadata::new(),
+            Moo::new(matrix),
+            Moo::new(tuple_lit(8, true)),
+        );
+
+        let folded = fold_constant_element_id_to_index(&element_id).expect("should fold");
+        assert_eq!(folded, Expr::from(4));
+    }
+
+    #[test]
+    fn fold_constant_element_id_to_index_still_finds_a_plain_int() {
+        // The pre-existing scalar case must keep working once the lookup is generalised.
+        let matrix = one_based_matrix(vec![Expr::from(10), Expr::from(20), Expr::from(30)]);
+        let element_id =
+            Expr::ElementId(Metadata::new(), Moo::new(matrix), Moo::new(Expr::from(20)));
+
+        let folded = fold_constant_element_id_to_index(&element_id).expect("should fold");
+        assert_eq!(folded, Expr::from(2));
+    }
+
+    #[test]
+    fn compound_element_id_lookup_builds_a_per_candidate_disjunction() {
+        let atom_list: Vec<Atom> = [(7, false), (7, true), (8, false), (8, true)]
+            .into_iter()
+            .map(|(a, b)| {
+                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                    Lit::Int(a),
+                    Lit::Bool(b),
+                ])))
+            })
+            .collect();
+        let value_expr = int_atom("k");
+        let reference = Reference::new(DeclarationPtr::new_find(
+            Name::user("pos"),
+            Domain::int(vec![Range::Bounded(1, 4)]),
+        ));
+
+        let lookup = compound_element_id_lookup(&atom_list, &value_expr, &reference)
+            .expect("should build a disjunction for compound elements");
+        let Expr::Or(_, choices) = &lookup else {
+            panic!("expected an Or, got {lookup}");
+        };
+        let Some(choices) = choices.unwrap_list() else {
+            panic!("expected the Or's argument to be a plain list");
+        };
+        assert_eq!(choices.len(), 4);
+        assert!(choices.iter().all(|choice| matches!(choice, Expr::And(..))));
+    }
+
+    #[test]
+    fn compound_element_id_lookup_is_not_applicable_to_scalar_elements() {
+        let atom_list: Vec<Atom> = vec![Atom::Literal(Lit::Int(10)), Atom::Literal(Lit::Int(20))];
+        let value_expr = int_atom("k");
+        let reference = Reference::new(DeclarationPtr::new_find(
+            Name::user("pos"),
+            Domain::int(vec![Range::Bounded(1, 2)]),
+        ));
+
+        assert!(compound_element_id_lookup(&atom_list, &value_expr, &reference).is_none());
     }
 }
