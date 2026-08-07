@@ -1041,14 +1041,25 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::AbstractLiteral(AbstractLiteral::Set(values)))
         }
         Expr::Image(_, f, arg) => {
-            let Lit::AbstractLiteral(AbstractLiteral::Function(pairs)) = eval_constant(f)? else {
-                return None;
-            };
             let arg = eval_constant(arg)?;
-            pairs
-                .into_iter()
-                .find(|(key, _)| *key == arg)
-                .map(|(_, value)| value)
+            match eval_constant(f)? {
+                Lit::AbstractLiteral(AbstractLiteral::Function(pairs)) => pairs
+                    .into_iter()
+                    .find(|(key, _)| *key == arg)
+                    .map(|(_, value)| value),
+                // Cycle notation: find which cycle (if any) mentions `arg` and return the next
+                // element in it (wrapping around); an element mentioned in no cycle is an
+                // implicit fixed point, mapping to itself.
+                Lit::AbstractLiteral(AbstractLiteral::Permutation(cycles)) => {
+                    for cycle in &cycles {
+                        if let Some(pos) = cycle.iter().position(|x| *x == arg) {
+                            return Some(cycle[(pos + 1) % cycle.len()].clone());
+                        }
+                    }
+                    Some(arg)
+                }
+                _ => None,
+            }
         }
         Expr::PreImage(_, f, img) => {
             let Lit::AbstractLiteral(AbstractLiteral::Function(pairs)) = eval_constant(f)? else {
@@ -1624,5 +1635,37 @@ mod tests {
         )]);
         let normalised = finish_root_evaluator_normalisation(&expr).unwrap();
         assert_eq!(normalised, root(vec![int_lit(1), int_lit(2)]));
+    }
+
+    fn permutation_lit(cycles: Vec<Vec<Expr>>) -> Expr {
+        Expr::AbstractLiteral(Metadata::new(), AbstractLiteral::Permutation(cycles))
+    }
+
+    #[test]
+    fn evaluates_image_on_a_permutation_literal_moved_point() {
+        let p = Moo::new(permutation_lit(vec![
+            vec![int_lit(1), int_lit(3), int_lit(5)],
+            vec![int_lit(2), int_lit(4)],
+        ]));
+        let image_1 = Expr::Image(Metadata::new(), p.clone(), Moo::new(int_lit(1)));
+        let image_3 = Expr::Image(Metadata::new(), p.clone(), Moo::new(int_lit(3)));
+        let image_5 = Expr::Image(Metadata::new(), p.clone(), Moo::new(int_lit(5)));
+        let image_2 = Expr::Image(Metadata::new(), p.clone(), Moo::new(int_lit(2)));
+        let image_4 = Expr::Image(Metadata::new(), p, Moo::new(int_lit(4)));
+
+        assert_eq!(eval_constant(&image_1), Some(Lit::Int(3)));
+        assert_eq!(eval_constant(&image_3), Some(Lit::Int(5)));
+        assert_eq!(eval_constant(&image_5), Some(Lit::Int(1)));
+        assert_eq!(eval_constant(&image_2), Some(Lit::Int(4)));
+        assert_eq!(eval_constant(&image_4), Some(Lit::Int(2)));
+    }
+
+    #[test]
+    fn evaluates_image_on_a_permutation_literal_fixed_point() {
+        let p = Moo::new(permutation_lit(vec![vec![int_lit(1), int_lit(2)]]));
+        let image_3 = Expr::Image(Metadata::new(), p, Moo::new(int_lit(3)));
+
+        // 3 is not mentioned in any cycle, so it is an implicit fixed point.
+        assert_eq!(eval_constant(&image_3), Some(Lit::Int(3)));
     }
 }
