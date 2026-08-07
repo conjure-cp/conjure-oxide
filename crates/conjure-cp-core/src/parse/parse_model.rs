@@ -986,7 +986,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_variant(&abslit["AbstractLiteral"]["AbsLitVariant"], scope)
             } else if abstract_literal.contains_key("AbsLitRelation") {
                 parse_abs_relation(&abslit["AbstractLiteral"]["AbsLitRelation"], scope)
-            } else if abstract_literal.contains_key("AbstractLiteralPartition") {
+            } else if abstract_literal.contains_key("AbsLitPartition") {
                 parse_abs_partition(&abslit["AbstractLiteral"]["AbsLitPartition"], scope)
             } else if abstract_literal.contains_key("AbsLitPermutation") {
                 parse_abs_permutation(&abslit["AbstractLiteral"]["AbsLitPermutation"], scope)
@@ -1924,6 +1924,7 @@ fn parse_constant(
 mod tests {
     use super::*;
     use crate::ast::HasDomain;
+    use crate::{domain_int, range};
     use serde_json::json;
 
     #[test]
@@ -2006,5 +2007,45 @@ mod tests {
             value,
             Expression::AbstractLiteral(_, AbstractLiteral::Set(_))
         )));
+    }
+
+    #[test]
+    fn parses_abstract_literal_wrapped_partition_with_non_constant_elements() {
+        // Conjure emits a partition literal under the bare `AbstractLiteral` wrapper (rather
+        // than `Constant`/`ConstantAbstract`) whenever one of its elements is not itself a
+        // constant, e.g. `partition({x,2},{y,4})` where x, y are decision variables. Captured
+        // verbatim (modulo whitespace) from `conjure pretty --output-format=astjson` on such a
+        // model.
+        let scope = SymbolTablePtr::new();
+        scope
+            .write()
+            .insert(DeclarationPtr::new_find(Name::user("x"), domain_int!(1..4)));
+        scope
+            .write()
+            .insert(DeclarationPtr::new_find(Name::user("y"), domain_int!(1..4)));
+
+        let value = json!({
+            "AbstractLiteral": {
+                "AbsLitPartition": [
+                    [
+                        { "Reference": [{ "Name": "x" }, null] },
+                        { "Constant": { "ConstantInt": [{ "TagInt": [] }, 2] } }
+                    ],
+                    [
+                        { "Reference": [{ "Name": "y" }, null] },
+                        { "Constant": { "ConstantInt": [{ "TagInt": [] }, 4] } }
+                    ]
+                ]
+            }
+        });
+
+        let expr = parse_expression(&value, &scope)
+            .expect("AbstractLiteral-wrapped partition should parse");
+        let Expression::AbstractLiteral(_, AbstractLiteral::Partition(parts)) = expr else {
+            panic!("expected a partition literal, got {expr:?}");
+        };
+        assert_eq!(parts.len(), 2);
+        assert_eq!(parts[0].len(), 2);
+        assert_eq!(parts[1].len(), 2);
     }
 }
