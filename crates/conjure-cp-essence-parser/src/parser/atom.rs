@@ -80,7 +80,8 @@ pub fn parse_atom(
             )))
         }
         "matrix" | "record" | "variant" | "tuple" | "set_literal" | "mset_literal"
-        | "sequence_literal" | "function_literal" | "relation_literal" | "partition_literal" => {
+        | "sequence_literal" | "function_literal" | "relation_literal" | "partition_literal"
+        | "permutation_literal" => {
             let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);
             };
@@ -95,10 +96,9 @@ pub fn parse_atom(
         // TODO: add powerset support under "set_operation"
         "set_operation" => parse_binary_expression(ctx, node),
         "comprehension" => parse_comprehension(ctx, node),
-        "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr" => {
-            parse_function_unary_operator(ctx, node)
-        }
-        "image_expr" | "image_set_expr" | "pre_image_expr" | "inverse_expr" => {
+        "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr"
+        | "perm_inverse_expr" => parse_function_unary_operator(ctx, node),
+        "image_expr" | "image_set_expr" | "pre_image_expr" | "inverse_expr" | "compose_expr" => {
             parse_function_binary_operator(ctx, node)
         }
         "restrict_expr" => parse_restrict_expr(ctx, node),
@@ -287,10 +287,16 @@ fn parse_function_unary_operator(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    let field_name = if node.kind() == "perm_inverse_expr" {
+        "permutation"
+    } else {
+        "function"
+    };
+
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
 
-    let Some(function_node) = field!(recover, ctx, node, "function") else {
+    let Some(function_node) = field!(recover, ctx, node, field_name) else {
         ctx.typechecking_context = saved_context;
         return Ok(None);
     };
@@ -313,6 +319,10 @@ fn parse_function_unary_operator(
             Moo::new(function),
         ))),
         "to_relation_expr" => Ok(Some(Expression::ToRelation(
+            Metadata::new(),
+            Moo::new(function),
+        ))),
+        "perm_inverse_expr" => Ok(Some(Expression::PermInverse(
             Metadata::new(),
             Moo::new(function),
         ))),
@@ -481,7 +491,7 @@ fn parse_function_binary_operator(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let (first_field, second_field) = if node.kind() == "inverse_expr" {
+    let (first_field, second_field) = if matches!(node.kind(), "inverse_expr" | "compose_expr") {
         ("left", "right")
     } else {
         ("function", "argument")
@@ -527,6 +537,11 @@ fn parse_function_binary_operator(
             Moo::new(second),
         ))),
         "inverse_expr" => Ok(Some(Expression::Inverse(
+            Metadata::new(),
+            Moo::new(first),
+            Moo::new(second),
+        ))),
+        "compose_expr" => Ok(Some(Expression::Compose(
             Metadata::new(),
             Moo::new(first),
             Moo::new(second),

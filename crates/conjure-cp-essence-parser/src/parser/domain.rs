@@ -9,8 +9,8 @@ use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
     Atom, BinaryAttr, DeclarationPtr, Domain, DomainPtr, Expression, Field, FuncAttr, IntVal,
-    JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, Range, Reference,
-    RelAttr, SequenceAttr, SetAttr,
+    JectivityAttr, Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, PermutationAttr,
+    Range, Reference, RelAttr, SequenceAttr, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -81,6 +81,7 @@ pub fn parse_domain(
         "function_domain" | "annotation_function_domain" => parse_function_domain(ctx, domain),
         "relation_domain" => parse_relation_domain(ctx, domain),
         "partition_domain" => parse_partition_domain(ctx, domain),
+        "permutation_domain" => parse_permutation_domain(ctx, domain),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("{} is not a supported domain type", domain.kind()),
@@ -802,6 +803,66 @@ fn parse_partition_domain(
         is_regular,
     };
     Ok(Some(Domain::partition(attrs, inner)))
+}
+
+fn parse_permutation_domain(
+    ctx: &mut ParseContext,
+    permutation_domain: Node,
+) -> Result<Option<DomainPtr>, FatalParseError> {
+    let mut num_moved = Range::Unbounded;
+    let mut min_num_moved = None;
+    let mut max_num_moved = None;
+
+    for child in named_children(&permutation_domain) {
+        if child.kind() == "permutation_attributes" {
+            for attribute in named_children(&child) {
+                let name = attribute
+                    .child_by_field_name("attribute")
+                    .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
+                    .unwrap_or_default();
+                let Some(value_node) = attribute.child_by_field_name("value") else {
+                    return Ok(None);
+                };
+                let Some(value) = parse_int(ctx, &value_node) else {
+                    return Ok(None);
+                };
+                match name {
+                    "numMoved" => num_moved = Range::Single(value),
+                    "minNumMoved" => min_num_moved = Some(value),
+                    "maxNumMoved" => max_num_moved = Some(value),
+                    _ => return Ok(None),
+                }
+            }
+        }
+    }
+
+    if !matches!(num_moved, Range::Single(_)) {
+        num_moved = match (min_num_moved, max_num_moved) {
+            (Some(min), Some(max)) => Range::Bounded(min, max),
+            (Some(min), None) => Range::UnboundedR(min),
+            (None, Some(max)) => Range::UnboundedL(max),
+            (None, None) => Range::Unbounded,
+        };
+    }
+
+    let Some(value_domain) = field!(recover, ctx, permutation_domain, "value_domain") else {
+        return Ok(None);
+    };
+    let Some(inner) = parse_domain(ctx, value_domain)? else {
+        return Ok(None);
+    };
+
+    let permutation_keyword_node = child!(permutation_domain, 0, "permutation");
+    ctx.add_span_and_doc_hover(
+        &permutation_keyword_node,
+        "permutation",
+        SymbolKind::Domain,
+        None,
+        None,
+    );
+
+    let attrs = PermutationAttr { num_moved };
+    Ok(Some(Domain::permutation(attrs, inner)))
 }
 
 pub fn parse_set_domain(

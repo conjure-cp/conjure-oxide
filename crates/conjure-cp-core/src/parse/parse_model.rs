@@ -9,6 +9,7 @@ use serde_json::Value as JsonValue;
 
 use crate::ast::Moo;
 use crate::ast::PartitionAttr;
+use crate::ast::PermutationAttr;
 use crate::ast::Typeable;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
@@ -297,6 +298,30 @@ fn parse_domain(
                 is_regular,
             };
             Ok(Domain::partition(attr, domain))
+        }
+        "DomainPermutation" => {
+            let dom = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
+                .expect("domain object exists");
+            let domain = dom.iter().next().ok_or(Error::Parse(
+                "DomainPermutation is an empty object".to_owned(),
+            ))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
+
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Permutation attributes is not an object"))?;
+
+            let mut num_moved = Range::Unbounded;
+            if let Some(val) = attributes.get("numMoved") {
+                let attr_map = val.as_object().expect("numMoved should be an object");
+                num_moved = parse_size_attr(attr_map, symbols)?;
+            }
+
+            let attr: PermutationAttr<IntVal> = PermutationAttr { num_moved };
+            Ok(Domain::permutation(attr, domain))
         }
         "DomainMatrix" => {
             let domain_value = domain_value
@@ -801,6 +826,7 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
         "MkOpImageSet" => Some(Expression::ImageSet),
         "MkOpPreImage" => Some(Expression::PreImage),
         "MkOpInverse" => Some(Expression::Inverse),
+        "MkOpCompose" => Some(Expression::Compose),
         "MkOpRestrict" => Some(Expression::Restrict),
         "MkOpApart" => Some(Expression::Apart),
         "MkOpTogether" => Some(Expression::Together),
@@ -840,6 +866,7 @@ fn unary_operator(op_name: &str, inner: Option<&Expression>) -> Option<UnaryOp> 
         "MkOpAllDiff" => Some(Expression::AllDiff),
         "MkOpToInt" => Some(Expression::ToInt),
         "MkOpDefined" => Some(Expression::Defined),
+        "MkOpPermInverse" => Some(Expression::PermInverse),
         "MkOpRange" => Some(Expression::Range),
         "MkOpFactorial" => Some(Expression::Factorial),
         "MkOpToMSet" => Some(Expression::ToMSet),
@@ -961,6 +988,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_relation(&abslit["AbstractLiteral"]["AbsLitRelation"], scope)
             } else if abstract_literal.contains_key("AbstractLiteralPartition") {
                 parse_abs_partition(&abslit["AbstractLiteral"]["AbsLitPartition"], scope)
+            } else if abstract_literal.contains_key("AbsLitPermutation") {
+                parse_abs_permutation(&abslit["AbstractLiteral"]["AbsLitPermutation"], scope)
             } else if abstract_literal.contains_key("AbsLitSequence") {
                 parse_abs_sequence(&abslit["AbstractLiteral"]["AbsLitSequence"], scope)
             } else {
@@ -1024,6 +1053,8 @@ fn parse_constant_abstract(
         parse_abs_record(value, scope)
     } else if let Some(value) = literal.get("AbsLitPartition") {
         parse_abs_partition(value, scope)
+    } else if let Some(value) = literal.get("AbsLitPermutation") {
+        parse_abs_permutation(value, scope)
     } else if let Some(value) = literal.get("AbsLitFunction") {
         parse_abs_function(value, scope)
     } else if let Some(value) = literal.get("AbsLitVariant") {
@@ -1075,6 +1106,32 @@ fn parse_abs_partition(abs_partition: &Value, scope: &SymbolTablePtr) -> Result<
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Partition(partition),
+    ))
+}
+
+fn parse_abs_permutation(abs_permutation: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let cycles = abs_permutation
+        .as_array()
+        .ok_or(error!("AbsLitPermutation is not an array"))?;
+
+    let mut permutation: Vec<Vec<_>> = Vec::new();
+
+    for cycle in cycles {
+        let vals = cycle
+            .as_array()
+            .ok_or(error!("Cycle in AbsLitPermutation is not an array"))?;
+
+        let exprs = vals
+            .iter()
+            .map(|values| parse_expression(values, scope))
+            .collect::<Result<Vec<_>>>()?;
+
+        permutation.push(exprs);
+    }
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Permutation(permutation),
     ))
 }
 
@@ -1819,6 +1876,8 @@ fn parse_constant(
                     return parse_abs_record(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitPartition") {
                     return parse_abs_partition(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitPermutation") {
+                    return parse_abs_permutation(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitVariant") {

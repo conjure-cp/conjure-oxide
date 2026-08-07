@@ -603,4 +603,81 @@ mod test {
             ))
         );
     }
+
+    #[test]
+    pub fn test_parse_permutation_domain_literal_and_operators() {
+        let src = "
+        find p : permutation (numMoved 3) of int(1..5)
+        letting q be permutation((1,2,3),(4,5))
+        find x, y : int(1..5)
+        such that y = image(p, x)
+        such that inverse(p, q)
+        such that q = permInverse(p)
+        such that y = image(compose(p, q), x)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+
+        let st = model.symbols();
+        let p = st.lookup(&Name::user("p")).unwrap();
+        let ground = p.domain().unwrap().resolve().unwrap();
+        let conjure_cp_core::ast::GroundDomain::Permutation(attrs, inner) = ground.as_ref() else {
+            panic!("expected a permutation domain, got {ground}");
+        };
+        assert_eq!(attrs.num_moved, range!(3));
+        assert_eq!(**inner, *domain_int!(1..5).resolve().unwrap());
+
+        let constraints = model.constraints();
+        assert_eq!(constraints.len(), 4);
+        assert!(matches!(constraints[0], Expression::Eq(_, _, _)));
+        assert!(matches!(constraints[1], Expression::Inverse(_, _, _)));
+        assert!(matches!(constraints[2], Expression::Eq(_, _, _)));
+        let Expression::Eq(_, _, rhs) = &constraints[2] else {
+            unreachable!()
+        };
+        assert!(matches!(rhs.as_ref(), Expression::PermInverse(_, _)));
+        assert!(matches!(constraints[3], Expression::Eq(_, _, _)));
+        let Expression::Eq(_, _, rhs) = &constraints[3] else {
+            unreachable!()
+        };
+        let Expression::Image(_, compose_expr, _) = rhs.as_ref() else {
+            unreachable!()
+        };
+        assert!(matches!(compose_expr.as_ref(), Expression::Compose(_, _, _)));
+    }
+
+    #[test]
+    pub fn test_parse_permutation_unattributed_domain_and_empty_literal() {
+        // `letting q be permutation()`'s own domain would need type inference from its (empty)
+        // literal, which -- like the equivalent empty-partition-literal case -- is not yet
+        // implemented (`GroundDomain::from_literal_vec`'s `AbstractLiteral::Permutation` arm is a
+        // deliberate `todo!()`, mirroring Partition's own pre-existing gap); so this test only
+        // inspects the parsed literal's AST shape directly, without triggering that inference.
+        let src = "
+        find p : permutation of int(1..3)
+        letting q be permutation()
+        find x : int(1..3)
+        such that x = image(p, 1)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+
+        let st = model.symbols();
+        let p = st.lookup(&Name::user("p")).unwrap();
+        let ground = p.domain().unwrap().resolve().unwrap();
+        let conjure_cp_core::ast::GroundDomain::Permutation(attrs, _) = ground.as_ref() else {
+            panic!("expected a permutation domain, got {ground}");
+        };
+        assert_eq!(attrs.num_moved, conjure_cp_core::ast::Range::Unbounded);
+
+        let q_decl = st.lookup(&Name::user("q")).unwrap();
+        let q = q_decl.as_value_letting().unwrap().deref().clone();
+        assert_eq!(
+            q,
+            Expression::AbstractLiteral(
+                Metadata::new(),
+                conjure_cp_core::ast::AbstractLiteral::Permutation(vec![])
+            )
+        );
+    }
 }

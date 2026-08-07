@@ -27,6 +27,7 @@ pub fn parse_abstract(
         "function_literal" => parse_function_literal(ctx, node),
         "relation_literal" => parse_relation_literal(ctx, node),
         "partition_literal" => parse_partition_literal(ctx, node),
+        "permutation_literal" => parse_permutation_literal(ctx, node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected abstract literal, got: {}", node.kind()),
@@ -62,6 +63,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         "function_literal" => "function",
         "relation_literal" => "relation",
         "partition_literal" => "partition",
+        "permutation_literal" => "permutation",
         "matrix" => "matrix",
         "tuple" => "tuple",
         "record" => "record",
@@ -440,5 +442,38 @@ fn parse_partition_literal(
         Ok(None)
     } else {
         Ok(Some(AbstractLiteral::Partition(parts)))
+    }
+}
+
+fn parse_permutation_literal(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    let saved_ctx = ctx.typechecking_context;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
+    let mut cycles = Vec::new();
+    let mut had_error = false;
+    for cycle_node in named_children(node) {
+        let mut elements = Vec::new();
+        for element_node in named_children(&cycle_node) {
+            // Each element can be of any type (matching the permutation's own inner domain), so
+            // typecheck context is relaxed here, mirroring the other abstract literal parsers.
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
+            let Some(expr) = parse_expression(ctx, element_node)? else {
+                had_error = true;
+                continue;
+            };
+            elements.push(expr);
+        }
+        cycles.push(elements);
+    }
+    ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Permutation(cycles)))
     }
 }
