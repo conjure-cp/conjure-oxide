@@ -257,6 +257,7 @@ find y#occurrence_3: bool
 find y#occurrence_4: bool
 find y#occurrence_5: bool
 find y#occurrence_6: bool
+findAux __0: int(1)
 
 such that
 
@@ -268,7 +269,7 @@ or([WatchedLiteral(x#occurrence_2,false),y#occurrence_2;int(1..)]),
 or([WatchedLiteral(x#occurrence_3,false),y#occurrence_3;int(1..)]),
 or([WatchedLiteral(x#occurrence_4,false),y#occurrence_4;int(1..)]),
 or([WatchedLiteral(x#occurrence_5,false),y#occurrence_5;int(1..)]),
-and([ __0 in x | __0 <- {1} ]),
+x#occurrence_1,
 SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0),
 SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 5),
 SumGeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 0),
@@ -394,6 +395,12 @@ and([ __0 in x | __0 <- {1} ])
 
 --
 
+[ __0 in x | __0 <- {1} ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ __0 in x | __0 : int(1), __0 in {1} ]
+
+--
+
 sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) >= 0
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0)
@@ -466,6 +473,26 @@ WatchedLiteral(x#occurrence_5,false)
 
 --
 
+[ __0 in x | __0 : int(1), __0 in {1} ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1 in x;int(1..)]
+new variables:
+  findAux __0: int(1)
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+and([x#occurrence_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_1
+
+--
+
 Final model:
 
 find x: set{occurrence} of int(1..5)
@@ -481,12 +508,13 @@ find y#occurrence_3: bool
 find y#occurrence_4: bool
 find y#occurrence_5: bool
 find y#occurrence_6: bool
+findAux __0: int(1)
 
 such that
 
 and([WatchedLiteral(x#occurrence_3,false),WatchedLiteral(x#occurrence_4,false),WatchedLiteral(x#occurrence_5,false);int(1..)]),
 and([or([WatchedLiteral(x#occurrence_1,false),y#occurrence_1;int(1..)]),or([WatchedLiteral(x#occurrence_2,false),y#occurrence_2;int(1..)]),or([WatchedLiteral(x#occurrence_3,false),y#occurrence_3;int(1..)]),or([WatchedLiteral(x#occurrence_4,false),y#occurrence_4;int(1..)]),or([WatchedLiteral(x#occurrence_5,false),y#occurrence_5;int(1..)]);int(1..)]),
-and([ __0 in x | __0 <- {1} ]),
+x#occurrence_1,
 and([SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0),SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 5);int(1..)]),
 and([SumGeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 0),SumLeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 6);int(1..)])
 
