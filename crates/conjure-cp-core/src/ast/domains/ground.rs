@@ -8,7 +8,7 @@ use crate::ast::{
     records::Field,
 };
 use crate::range;
-use crate::utils::count_combinations;
+use crate::utils::{count_combinations, count_permutations, stirling_second_kind};
 use conjure_cp_core::ast::ReturnType;
 use funcmap::FuncMap;
 use itertools::{Itertools, izip};
@@ -502,21 +502,34 @@ impl GroundDomain {
                 Ok(ans)
             }
             GroundDomain::Function(attr, domain, codomain) => {
-                if attr.jectivity != JectivityAttr::None {
-                    // See the matching note on `Sequence` above: not yet needed by any in-scope
-                    // case.
-                    todo!("Length bound of jective functions is not yet supported");
-                }
-
                 let domain_len = domain.length()?;
                 let codomain_len = codomain.length()?;
 
-                match attr.partiality {
-                    PartialityAttr::Total => {
+                match (attr.partiality.clone(), attr.jectivity.clone()) {
+                    (PartialityAttr::Total, JectivityAttr::None) => {
                         let exp: u32 = domain_len.try_into()?;
                         codomain_len.checked_pow(exp).ok_or(DomainOpError::TooLarge)
                     }
-                    PartialityAttr::Partial => {
+                    (PartialityAttr::Total, JectivityAttr::Injective) => {
+                        if domain_len > codomain_len {
+                            return Ok(0);
+                        }
+                        Ok(count_permutations(codomain_len, domain_len)?)
+                    }
+                    (PartialityAttr::Total, JectivityAttr::Bijective) => {
+                        if domain_len != codomain_len {
+                            return Ok(0);
+                        }
+                        Ok(count_permutations(domain_len, domain_len)?)
+                    }
+                    (PartialityAttr::Total, JectivityAttr::Surjective) => {
+                        let partitions = stirling_second_kind(domain_len, codomain_len)?;
+                        let arrangements = count_permutations(codomain_len, codomain_len)?;
+                        partitions
+                            .checked_mul(arrangements)
+                            .ok_or(DomainOpError::TooLarge)
+                    }
+                    (PartialityAttr::Partial, jectivity) => {
                         let (min_sz, max_sz) = match attr.size {
                             Range::Unbounded => (0, domain_len),
                             Range::Single(n) => (n as u64, n as u64),
@@ -531,12 +544,36 @@ impl GroundDomain {
 
                         let mut ans = 0u64;
                         for sz in min_sz..=max_sz {
-                            // Choose which `sz` domain elements are defined, then assign any
-                            // codomain value to each of them.
+                            // Choose which `sz` domain elements are defined, then count the ways
+                            // to map exactly those `sz` elements per the jectivity requirement.
                             let choose = count_combinations(domain_len, sz)?;
-                            let assign = codomain_len
-                                .checked_pow(sz.try_into()?)
-                                .ok_or(DomainOpError::TooLarge)?;
+                            let assign = match jectivity {
+                                JectivityAttr::None => codomain_len
+                                    .checked_pow(sz.try_into()?)
+                                    .ok_or(DomainOpError::TooLarge)?,
+                                JectivityAttr::Injective => {
+                                    if sz > codomain_len {
+                                        0
+                                    } else {
+                                        count_permutations(codomain_len, sz)?
+                                    }
+                                }
+                                JectivityAttr::Bijective => {
+                                    if sz != codomain_len {
+                                        0
+                                    } else {
+                                        count_permutations(codomain_len, codomain_len)?
+                                    }
+                                }
+                                JectivityAttr::Surjective => {
+                                    let partitions = stirling_second_kind(sz, codomain_len)?;
+                                    let arrangements =
+                                        count_permutations(codomain_len, codomain_len)?;
+                                    partitions
+                                        .checked_mul(arrangements)
+                                        .ok_or(DomainOpError::TooLarge)?
+                                }
+                            };
                             let term = choose.checked_mul(assign).ok_or(DomainOpError::TooLarge)?;
                             ans = ans.checked_add(term).ok_or(DomainOpError::TooLarge)?;
                         }
@@ -1975,4 +2012,65 @@ mod tests {
         let length = dom.length().unwrap();
         assert_eq!(count as u64, length);
     }
+
+    fn func_attr(partiality: PartialityAttr, jectivity: JectivityAttr) -> FuncAttr {
+        FuncAttr {
+            size: Range::Unbounded,
+            partiality,
+            jectivity,
+        }
+    }
+
+    #[test]
+    fn total_bijective_function_length_is_factorial_of_the_shared_size() {
+        let dom = GroundDomain::Function(
+            func_attr(PartialityAttr::Total, JectivityAttr::Bijective),
+            domain_int_ground!(1..3),
+            domain_int_ground!(1..3),
+        );
+        assert_eq!(dom.length().unwrap(), 6); // 3!
+    }
+
+    #[test]
+    fn total_bijective_function_length_is_zero_for_mismatched_sizes() {
+        let dom = GroundDomain::Function(
+            func_attr(PartialityAttr::Total, JectivityAttr::Bijective),
+            domain_int_ground!(1..3),
+            domain_int_ground!(1..2),
+        );
+        assert_eq!(dom.length().unwrap(), 0);
+    }
+
+    #[test]
+    fn total_injective_function_length_is_a_falling_factorial() {
+        // 2 domain elements injectively into 4 codomain elements: 4*3 = 12.
+        let dom = GroundDomain::Function(
+            func_attr(PartialityAttr::Total, JectivityAttr::Injective),
+            domain_int_ground!(1..2),
+            domain_int_ground!(1..4),
+        );
+        assert_eq!(dom.length().unwrap(), 12);
+    }
+
+    #[test]
+    fn total_surjective_function_length_uses_stirling_numbers() {
+        // 3 domain elements onto 2 codomain elements: S(3,2)=3 partitions, * 2! = 6.
+        let dom = GroundDomain::Function(
+            func_attr(PartialityAttr::Total, JectivityAttr::Surjective),
+            domain_int_ground!(1..3),
+            domain_int_ground!(1..2),
+        );
+        assert_eq!(dom.length().unwrap(), 6);
+    }
+
+    #[test]
+    fn partial_injective_function_length_sums_over_defined_sizes() {
+        // 3 domain elements, 2 codomain elements, up to 2 defined: sum over sz=0..=2 of
+        // C(3,sz) * P(2,sz) = 1*1 + 3*2 + 3*2 = 13.
+        let mut attr = func_attr(PartialityAttr::Partial, JectivityAttr::Injective);
+        attr.size = Range::Bounded(0, 2);
+        let dom = GroundDomain::Function(attr, domain_int_ground!(1..3), domain_int_ground!(1..2));
+        assert_eq!(dom.length().unwrap(), 13);
+    }
+
 }
