@@ -10,6 +10,8 @@ true
 new variables:
   find x#as_relation_1: relation (size 2) of (bool * int(13..14))
   find x#as_relation_2: matrix indexed by [int(13..14)] of tuple (bool, int(13..14))
+  find x#as_relation_3: matrix indexed by [int(1..2)] of tuple (bool, int(13..14))
+  find x#as_relation_4: matrix indexed by [int(1..2)] of int(13..14)
 new constraints:
   and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
   and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
@@ -17,6 +19,12 @@ new constraints:
   SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13
   SafeIndex(x#as_relation_2,[14]) in x#as_relation_1
   SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14
+  SafeIndex(x#as_relation_3,[1]) in x#as_relation_1
+  SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = false
+  SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1])
+  SafeIndex(x#as_relation_3,[2]) in x#as_relation_1
+  SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = true
+  SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2])
 
 --
 
@@ -25,6 +33,18 @@ x#as_relation_1
 x#as_relation_1
 new variables:
   find x#as_relation_1#as_set_1: set (size 2) of tuple (bool, int(13..14))
+
+--
+
+x#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1
+
+--
+
+x#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1
 
 --
 
@@ -49,6 +69,21 @@ x#as_relation_2
 
 --
 
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+new variables:
+  find x#as_relation_3#components_1: tuple (bool, int(13..14))
+  find x#as_relation_3#components_2: tuple (bool, int(13..14))
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
 x#as_relation_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#as_relation_2
@@ -58,6 +93,30 @@ x#as_relation_2
 x#as_relation_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#as_relation_2
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
 
 --
 
@@ -67,7 +126,13 @@ and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j
 SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
 SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
 SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+SafeIndex(x#as_relation_3,[1]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = false,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1]),
+SafeIndex(x#as_relation_3,[2]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = true,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ]),
@@ -75,11 +140,19 @@ and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j
 SafeIndex(x#as_relation_2,[13]) in x#as_relation_1,
 SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
 SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
-SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+SafeIndex(x#as_relation_3,[1]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = false,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1]),
+SafeIndex(x#as_relation_3,[2]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = true,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2])
 new variables:
   find x#as_relation_1#as_set_1#packed_1: int(0..15)
   find x#as_relation_2#components_1#packed_1: int(0..3)
   find x#as_relation_2#components_2#packed_1: int(0..3)
+  find x#as_relation_3#components_1#packed_1: int(0..3)
+  find x#as_relation_3#components_2#packed_1: int(0..3)
 new constraints:
   sum([(x#as_relation_1#as_set_1#packed_1 / 1) % 2,(x#as_relation_1#as_set_1#packed_1 / 2) % 2,(x#as_relation_1#as_set_1#packed_1 / 4) % 2,(x#as_relation_1#as_set_1#packed_1 / 8) % 2;int(1..)]) = 2
 
@@ -118,6 +191,42 @@ x#as_relation_1#as_set_1
 SafeIndex(x#as_relation_2,[14]) in x#as_relation_1#as_set_1
    ~~> membership_packed ([("ReprGeneral", 9500)])
 or([and([SafeIndex(x#as_relation_2,[14]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)])
+
+--
+
+SafeIndex(x#as_relation_3,[1]) in x#as_relation_1
+   ~~> membership_relation_as_set ([("Base", 8650)])
+SafeIndex(x#as_relation_3,[1]) in x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+SafeIndex(x#as_relation_3,[1]) in x#as_relation_1#as_set_1
+   ~~> membership_packed ([("ReprGeneral", 9500)])
+or([and([SafeIndex(x#as_relation_3,[1]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)])
+
+--
+
+SafeIndex(x#as_relation_3,[2]) in x#as_relation_1
+   ~~> membership_relation_as_set ([("Base", 8650)])
+SafeIndex(x#as_relation_3,[2]) in x#as_relation_1#as_set_1
+
+--
+
+x#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1
+
+--
+
+SafeIndex(x#as_relation_3,[2]) in x#as_relation_1#as_set_1
+   ~~> membership_packed ([("ReprGeneral", 9500)])
+or([and([SafeIndex(x#as_relation_3,[2]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)])
 
 --
 
@@ -169,6 +278,137 @@ or([and([SafeIndex(x#as_relation_2,[14]) = (false,13),(x#as_relation_1#as_set_1#
 
 --
 
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13..14)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13..14)), j in x#as_relation_1#as_set_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (bool, int(13..14)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13..14)), j in x#as_relation_1#as_set_1 ]),
+or([and([SafeIndex(x#as_relation_2,[13]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[13]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[13]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[13]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)]),
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+or([and([SafeIndex(x#as_relation_2,[14]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)]),
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+or([and([SafeIndex(x#as_relation_3,[1]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)]),
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = false,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1]),
+or([and([SafeIndex(x#as_relation_3,[2]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)]),
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = true,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2]),
+sum([(x#as_relation_1#as_set_1#packed_1 / 1) % 2,(x#as_relation_1#as_set_1#packed_1 / 2) % 2,(x#as_relation_1#as_set_1#packed_1 / 4) % 2,(x#as_relation_1#as_set_1#packed_1 / 8) % 2;int(1..)]) = 2
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13..14)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13..14)), j in x#as_relation_1#as_set_1 ]),
+and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (bool, int(13..14)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13..14)), j in x#as_relation_1#as_set_1 ]),
+or([and([SafeIndex(x#as_relation_2,[13]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[13]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[13]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[13]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)]),
+SafeIndex(SafeIndex(x#as_relation_2,[13]),[2]) = 13,
+or([and([SafeIndex(x#as_relation_2,[14]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_2,[14]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)]),
+SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
+or([and([SafeIndex(x#as_relation_3,[1]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[1]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)]),
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = false,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1]),
+or([and([SafeIndex(x#as_relation_3,[2]) = (false,13),(x#as_relation_1#as_set_1#packed_1 / 1) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (false,14),(x#as_relation_1#as_set_1#packed_1 / 2) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (true,13),(x#as_relation_1#as_set_1#packed_1 / 4) % 2 = 1;int(1..)]),and([SafeIndex(x#as_relation_3,[2]) = (true,14),(x#as_relation_1#as_set_1#packed_1 / 8) % 2 = 1;int(1..)]);int(1..)]),
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = true,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2]),
+sum([(x#as_relation_1#as_set_1#packed_1 / 1) % 2,(x#as_relation_1#as_set_1#packed_1 / 2) % 2,(x#as_relation_1#as_set_1#packed_1 / 4) % 2,(x#as_relation_1#as_set_1#packed_1 / 8) % 2;int(1..)]) = 2
+new variables:
+  find x#as_relation_4#components_1: int(13..14)
+  find x#as_relation_4#components_2: int(13..14)
+
+--
+
+(x#as_relation_1#as_set_1#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_1#as_set_1#packed_1, 1) @ 1 != 0}
+
+--
+
+SafeDiv(x#as_relation_1#as_set_1#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) @ 2 != 0}
+
+--
+
+(x#as_relation_1#as_set_1#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_1#as_set_1#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeDiv(x#as_relation_1#as_set_1#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) @ 2 != 0}
+
+--
+
+(x#as_relation_1#as_set_1#packed_1 / 4)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_1#as_set_1#packed_1, 4) @ 4 != 0}
+
+--
+
+SafeDiv(x#as_relation_1#as_set_1#packed_1, 4) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) @ 2 != 0}
+
+--
+
+(x#as_relation_1#as_set_1#packed_1 / 8)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_1#as_set_1#packed_1, 8) @ 8 != 0}
+
+--
+
+SafeDiv(x#as_relation_1#as_set_1#packed_1, 8) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) @ 2 != 0}
+
+--
+
+(x#as_relation_1#as_set_1#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_1#as_set_1#packed_1, 1) @ 1 != 0}
+
+--
+
+SafeDiv(x#as_relation_1#as_set_1#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) @ 2 != 0}
+
+--
+
+(x#as_relation_1#as_set_1#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_1#as_set_1#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeDiv(x#as_relation_1#as_set_1#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) @ 2 != 0}
+
+--
+
+(x#as_relation_1#as_set_1#packed_1 / 4)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_1#as_set_1#packed_1, 4) @ 4 != 0}
+
+--
+
+SafeDiv(x#as_relation_1#as_set_1#packed_1, 4) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) @ 2 != 0}
+
+--
+
+(x#as_relation_1#as_set_1#packed_1 / 8)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_1#as_set_1#packed_1, 8) @ 8 != 0}
+
+--
+
+SafeDiv(x#as_relation_1#as_set_1#packed_1, 8) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) @ 2 != 0}
+
+--
+
 (x#as_relation_1#as_set_1#packed_1 / 1)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(x#as_relation_1#as_set_1#packed_1, 1) @ 1 != 0}
@@ -310,6 +550,18 @@ SafeDiv(x#as_relation_1#as_set_1#packed_1, 4) % 2
 SafeDiv(x#as_relation_1#as_set_1#packed_1, 8) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
 {SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) @ 2 != 0}
+
+--
+
+SafeIndex(x#as_relation_4,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_4#components_1
+
+--
+
+SafeIndex(x#as_relation_4,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_4#components_2
 
 --
 
@@ -358,6 +610,102 @@ sum([x#as_relation_2#components_2#packed_1 % 2,13;int(1..)])
 x#as_relation_2#components_2#packed_1 % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
 {SafeMod(x#as_relation_2#components_2#packed_1,2) @ 2 != 0}
+
+--
+
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+SafeIndex(x#as_relation_3#components_1,[1])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+SafeIndex([false,true;int(1..)],[sum([(x#as_relation_3#components_1#packed_1 / 2),1;int(1..)])])
+
+--
+
+(x#as_relation_3#components_1#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_3#components_1#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+SafeIndex(x#as_relation_3#components_1,[2])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+sum([x#as_relation_3#components_1#packed_1 % 2,13;int(1..)])
+
+--
+
+x#as_relation_3#components_1#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#as_relation_3#components_1#packed_1,2) @ 2 != 0}
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+SafeIndex(x#as_relation_3#components_2,[1])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+SafeIndex([false,true;int(1..)],[sum([(x#as_relation_3#components_2#packed_1 / 2),1;int(1..)])])
+
+--
+
+(x#as_relation_3#components_2#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_3#components_2#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+SafeIndex(x#as_relation_3#components_2,[2])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+sum([x#as_relation_3#components_2#packed_1 % 2,13;int(1..)])
+
+--
+
+x#as_relation_3#components_2#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#as_relation_3#components_2#packed_1,2) @ 2 != 0}
 
 --
 
@@ -505,6 +853,150 @@ x#as_relation_2#components_2#packed_1 = 3
 
 --
 
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1 = (false,13)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#as_relation_3#components_1#packed_1 = 0
+
+--
+
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1 = (false,14)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#as_relation_3#components_1#packed_1 = 1
+
+--
+
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1 = (true,13)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#as_relation_3#components_1#packed_1 = 2
+
+--
+
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1 = (true,14)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#as_relation_3#components_1#packed_1 = 3
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2 = (false,13)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#as_relation_3#components_2#packed_1 = 0
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2 = (false,14)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#as_relation_3#components_2#packed_1 = 1
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2 = (true,13)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#as_relation_3#components_2#packed_1 = 2
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2 = (true,14)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#as_relation_3#components_2#packed_1 = 3
+
+--
+
 sum([SafeMod(x#as_relation_2#components_1#packed_1,2),13;int(1..)]) = 13
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([13, __0], 13),SumGeq([13, __0], 13);int(1..)])
@@ -525,19 +1017,51 @@ new constraints:
 
 --
 
-sum([SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2),SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2),SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2),SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2);int(1..)]) = 2
+sum([SafeMod(x#as_relation_3#components_1#packed_1,2),13;int(1..)]) = x#as_relation_4#components_1
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([__2, __3, __4, __5], 2),SumGeq([__2, __3, __4, __5], 2);int(1..)])
+and([SumLeq([13, __2], x#as_relation_4#components_1),SumGeq([13, __2], x#as_relation_4#components_1);int(1..)])
 new variables:
   findAux __2: int(0..1)
+new constraints:
+  __2 =aux SafeMod(x#as_relation_3#components_1#packed_1,2)
+
+--
+
+sum([SafeMod(x#as_relation_3#components_2#packed_1,2),13;int(1..)]) = x#as_relation_4#components_2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([13, __3], x#as_relation_4#components_2),SumGeq([13, __3], x#as_relation_4#components_2);int(1..)])
+new variables:
   findAux __3: int(0..1)
+new constraints:
+  __3 =aux SafeMod(x#as_relation_3#components_2#packed_1,2)
+
+--
+
+sum([SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2),SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2),SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2),SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__4, __5, __6, __7], 2),SumGeq([__4, __5, __6, __7], 2);int(1..)])
+new variables:
   findAux __4: int(0..1)
   findAux __5: int(0..1)
+  findAux __6: int(0..1)
+  findAux __7: int(0..1)
 new constraints:
-  __2 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
-  __3 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
-  __4 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
-  __5 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+  __4 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
+  __5 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
+  __6 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
+  __7 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+
+--
+
+SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#as_relation_3#components_1#packed_1, 2),1;int(1..)])]) = false
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#as_relation_3#components_1#packed_1, 2),1;int(1..)])]), false)
+
+--
+
+SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#as_relation_3#components_2#packed_1, 2),1;int(1..)])]) = true
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#as_relation_3#components_2#packed_1, 2),1;int(1..)])]), true)
 
 --
 
@@ -589,6 +1113,54 @@ WatchedLiteral(x#as_relation_2#components_2#packed_1,3)
 
 --
 
+x#as_relation_3#components_1#packed_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_1#packed_1,0)
+
+--
+
+x#as_relation_3#components_1#packed_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_1#packed_1,1)
+
+--
+
+x#as_relation_3#components_1#packed_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_1#packed_1,2)
+
+--
+
+x#as_relation_3#components_1#packed_1 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_1#packed_1,3)
+
+--
+
+x#as_relation_3#components_2#packed_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_2#packed_1,0)
+
+--
+
+x#as_relation_3#components_2#packed_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_2#packed_1,1)
+
+--
+
+x#as_relation_3#components_2#packed_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_2#packed_1,2)
+
+--
+
+x#as_relation_3#components_2#packed_1 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_2#packed_1,3)
+
+--
+
 __0 =aux SafeMod(x#as_relation_2#components_1#packed_1,2)
    ~~> introduce_modeq ([("Minion", 4200)])
 ModEq(x#as_relation_2#components_1#packed_1, 2, __0)
@@ -601,57 +1173,25 @@ ModEq(x#as_relation_2#components_2#packed_1, 2, __1)
 
 --
 
+__2 =aux SafeMod(x#as_relation_3#components_1#packed_1,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x#as_relation_3#components_1#packed_1, 2, __2)
+
+--
+
+__3 =aux SafeMod(x#as_relation_3#components_2#packed_1,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x#as_relation_3#components_2#packed_1, 2, __3)
+
+--
+
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__6,2)
-new variables:
-  findAux __6: int(0..15)
-new constraints:
-  __6 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
-
---
-
-__2 =aux SafeMod(__6,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__6, 2, __2)
-
---
-
-__6 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __6)
-
---
-
-SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__7,2)
-new variables:
-  findAux __7: int(0..7)
-new constraints:
-  __7 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
-
---
-
-__3 =aux SafeMod(__7,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__7, 2, __3)
-
---
-
-__7 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __7)
-
---
-
-SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__8,2)
 new variables:
-  findAux __8: int(0..3)
+  findAux __8: int(0..15)
 new constraints:
-  __8 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+  __8 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
 
 --
 
@@ -661,19 +1201,19 @@ ModEq(__8, 2, __4)
 
 --
 
-__8 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+__8 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __8)
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __8)
 
 --
 
-SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__9,2)
 new variables:
-  findAux __9: int(0..1)
+  findAux __9: int(0..7)
 new constraints:
-  __9 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+  __9 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
 
 --
 
@@ -683,157 +1223,133 @@ ModEq(__9, 2, __5)
 
 --
 
-__9 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+__9 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __9)
-
---
-
-SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__10,2)
-new variables:
-  findAux __10: int(0..15)
-new constraints:
-  __10 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
-
---
-
-__10 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __10)
-
---
-
-SafeMod(__10,2) = 1
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__10, 2, 1)
-
---
-
-SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__11,2)
-new variables:
-  findAux __11: int(0..7)
-new constraints:
-  __11 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
-
---
-
-__11 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __11)
-
---
-
-SafeMod(__11,2) = 1
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__11, 2, 1)
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __9)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__12,2)
+SafeMod(__10,2)
 new variables:
-  findAux __12: int(0..3)
+  findAux __10: int(0..3)
 new constraints:
-  __12 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+  __10 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
 
 --
 
-__12 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __12)
-
---
-
-SafeMod(__12,2) = 1
+__6 =aux SafeMod(__10,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__12, 2, 1)
+ModEq(__10, 2, __6)
+
+--
+
+__10 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __10)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__13,2)
+SafeMod(__11,2)
+new variables:
+  findAux __11: int(0..1)
+new constraints:
+  __11 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+
+--
+
+__7 =aux SafeMod(__11,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__11, 2, __7)
+
+--
+
+__11 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __11)
+
+--
+
+SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#as_relation_3#components_1#packed_1, 2),1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([false,true;int(1..)],[__12])
+new variables:
+  findAux __12: int(1..2)
+new constraints:
+  __12 =aux sum([SafeDiv(x#as_relation_3#components_1#packed_1, 2),1;int(1..)])
+
+--
+
+__12 =aux sum([SafeDiv(x#as_relation_3#components_1#packed_1, 2),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __13], __12),SumGeq([1, __13], __12);int(1..)])
 new variables:
   findAux __13: int(0..1)
 new constraints:
-  __13 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+  __13 =aux SafeDiv(x#as_relation_3#components_1#packed_1, 2)
 
 --
 
-__13 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+SafeIndex([false,true;int(1..)],[__12])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([false,true],__12,true)
+
+--
+
+__13 =aux SafeDiv(x#as_relation_3#components_1#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __13)
+DivEq(x#as_relation_3#components_1#packed_1, 2, __13)
 
 --
 
-SafeMod(__13,2) = 1
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__13, 2, 1)
+SafeIndex([false,true;int(1..)],[sum([SafeDiv(x#as_relation_3#components_2#packed_1, 2),1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([false,true;int(1..)],[__14])
+new variables:
+  findAux __14: int(1..2)
+new constraints:
+  __14 =aux sum([SafeDiv(x#as_relation_3#components_2#packed_1, 2),1;int(1..)])
+
+--
+
+__14 =aux sum([SafeDiv(x#as_relation_3#components_2#packed_1, 2),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __15], __14),SumGeq([1, __15], __14);int(1..)])
+new variables:
+  findAux __15: int(0..1)
+new constraints:
+  __15 =aux SafeDiv(x#as_relation_3#components_2#packed_1, 2)
+
+--
+
+SafeIndex([false,true;int(1..)],[__14])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([false,true],__14,true)
+
+--
+
+__15 =aux SafeDiv(x#as_relation_3#components_2#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_3#components_2#packed_1, 2, __15)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__14,2)
-new variables:
-  findAux __14: int(0..15)
-new constraints:
-  __14 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
-
---
-
-__14 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __14)
-
---
-
-SafeMod(__14,2) = 1
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__14, 2, 1)
-
---
-
-SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__15,2)
-new variables:
-  findAux __15: int(0..7)
-new constraints:
-  __15 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
-
---
-
-__15 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __15)
-
---
-
-SafeMod(__15,2) = 1
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__15, 2, 1)
-
---
-
-SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
-   ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__16,2)
 new variables:
-  findAux __16: int(0..3)
+  findAux __16: int(0..15)
 new constraints:
-  __16 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+  __16 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
 
 --
 
-__16 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+__16 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __16)
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __16)
 
 --
 
@@ -843,25 +1359,333 @@ ModEq(__16, 2, 1)
 
 --
 
-SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__17,2)
 new variables:
-  findAux __17: int(0..1)
+  findAux __17: int(0..7)
 new constraints:
-  __17 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+  __17 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
 
 --
 
-__17 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+__17 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __17)
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __17)
 
 --
 
 SafeMod(__17,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
 ModEq(__17, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__18,2)
+new variables:
+  findAux __18: int(0..3)
+new constraints:
+  __18 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+
+--
+
+__18 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __18)
+
+--
+
+SafeMod(__18,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__18, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__19,2)
+new variables:
+  findAux __19: int(0..1)
+new constraints:
+  __19 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+
+--
+
+__19 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __19)
+
+--
+
+SafeMod(__19,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__19, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__20,2)
+new variables:
+  findAux __20: int(0..15)
+new constraints:
+  __20 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+
+--
+
+__20 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __20)
+
+--
+
+SafeMod(__20,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__20, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__21,2)
+new variables:
+  findAux __21: int(0..7)
+new constraints:
+  __21 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+
+--
+
+__21 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __21)
+
+--
+
+SafeMod(__21,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__21, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__22,2)
+new variables:
+  findAux __22: int(0..3)
+new constraints:
+  __22 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+
+--
+
+__22 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __22)
+
+--
+
+SafeMod(__22,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__22, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__23,2)
+new variables:
+  findAux __23: int(0..1)
+new constraints:
+  __23 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+
+--
+
+__23 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __23)
+
+--
+
+SafeMod(__23,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__23, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__24,2)
+new variables:
+  findAux __24: int(0..15)
+new constraints:
+  __24 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+
+--
+
+__24 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __24)
+
+--
+
+SafeMod(__24,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__24, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__25,2)
+new variables:
+  findAux __25: int(0..7)
+new constraints:
+  __25 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+
+--
+
+__25 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __25)
+
+--
+
+SafeMod(__25,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__25, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__26,2)
+new variables:
+  findAux __26: int(0..3)
+new constraints:
+  __26 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+
+--
+
+__26 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __26)
+
+--
+
+SafeMod(__26,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__26, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__27,2)
+new variables:
+  findAux __27: int(0..1)
+new constraints:
+  __27 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+
+--
+
+__27 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __27)
+
+--
+
+SafeMod(__27,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__27, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__28,2)
+new variables:
+  findAux __28: int(0..15)
+new constraints:
+  __28 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+
+--
+
+__28 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __28)
+
+--
+
+SafeMod(__28,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__28, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__29,2)
+new variables:
+  findAux __29: int(0..7)
+new constraints:
+  __29 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+
+--
+
+__29 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __29)
+
+--
+
+SafeMod(__29,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__29, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__30,2)
+new variables:
+  findAux __30: int(0..3)
+new constraints:
+  __30 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+
+--
+
+__30 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __30)
+
+--
+
+SafeMod(__30,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__30, 2, 1)
+
+--
+
+SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__31,2)
+new variables:
+  findAux __31: int(0..1)
+new constraints:
+  __31 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+
+--
+
+__31 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __31)
+
+--
+
+SafeMod(__31,2) = 1
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__31, 2, 1)
 
 --
 
@@ -1113,305 +1937,305 @@ SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1
 
 (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
    ~~> flatten_imply ([("Minion", 4200)])
-(__18) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
+(__32) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
 new variables:
-  findAux __18: bool
+  findAux __32: bool
 new constraints:
-  __18 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1
+  __32 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1
 
 --
 
-__18 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1
+__32 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1, __18)
+Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1, __32)
 
 --
 
-(__18) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
+(__32) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1, __18)
+ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1, __32)
 
 --
 
 (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
    ~~> flatten_imply ([("Minion", 4200)])
-(__19) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
+(__33) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
 new variables:
-  findAux __19: bool
+  findAux __33: bool
 new constraints:
-  __19 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1
+  __33 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1
 
 --
 
-__19 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1
+__33 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1, __19)
+Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1, __33)
 
 --
 
-(__19) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
+(__33) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1, __19)
+ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1, __33)
 
 --
 
 (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
    ~~> flatten_imply ([("Minion", 4200)])
-(__20) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
+(__34) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
 new variables:
-  findAux __20: bool
+  findAux __34: bool
 new constraints:
-  __20 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1
+  __34 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1
 
 --
 
-__20 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1
+__34 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1, __20)
+Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1, __34)
 
 --
 
-(__20) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
+(__34) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1, __20)
+ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1, __34)
 
 --
 
 (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
    ~~> flatten_imply ([("Minion", 4200)])
-(__21) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
+(__35) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
 new variables:
-  findAux __21: bool
+  findAux __35: bool
 new constraints:
-  __21 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1
+  __35 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1
 
 --
 
-__21 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1
+__35 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1, __21)
+Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1, __35)
 
 --
 
-(__21) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
+(__35) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1, __21)
+ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1, __35)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__22,2)
+SafeMod(__36,2)
 new variables:
-  findAux __22: int(0..15)
+  findAux __36: int(0..15)
 new constraints:
-  __22 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+  __36 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
 
 --
 
-__22 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+__36 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __22)
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __36)
 
 --
 
-SafeMod(__22,2) = 1
+SafeMod(__36,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__22, 2, 1)
+ModEq(__36, 2, 1)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__23,2)
+SafeMod(__37,2)
 new variables:
-  findAux __23: int(0..7)
+  findAux __37: int(0..7)
 new constraints:
-  __23 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+  __37 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
 
 --
 
-__23 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+__37 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __23)
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __37)
 
 --
 
-SafeMod(__23,2) = 1
+SafeMod(__37,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__23, 2, 1)
+ModEq(__37, 2, 1)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__24,2)
+SafeMod(__38,2)
 new variables:
-  findAux __24: int(0..3)
+  findAux __38: int(0..3)
 new constraints:
-  __24 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+  __38 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
 
 --
 
-__24 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+__38 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __24)
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __38)
 
 --
 
-SafeMod(__24,2) = 1
+SafeMod(__38,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__24, 2, 1)
+ModEq(__38, 2, 1)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__25,2)
+SafeMod(__39,2)
 new variables:
-  findAux __25: int(0..1)
+  findAux __39: int(0..1)
 new constraints:
-  __25 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+  __39 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
 
 --
 
-__25 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+__39 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __25)
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __39)
 
 --
 
-SafeMod(__25,2) = 1
+SafeMod(__39,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__25, 2, 1)
+ModEq(__39, 2, 1)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
-__26 != 1
+__40 != 1
 new variables:
-  findAux __26: int(0..1)
+  findAux __40: int(0..1)
 new constraints:
-  __26 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
+  __40 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__27,2)
+SafeMod(__41,2)
 new variables:
-  findAux __27: int(0..7)
+  findAux __41: int(0..7)
 new constraints:
-  __27 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+  __41 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
 
 --
 
-__26 =aux SafeMod(__27,2)
+__40 =aux SafeMod(__41,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__27, 2, __26)
+ModEq(__41, 2, __40)
 
 --
 
-__27 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+__41 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __27)
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __41)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
-__28 != 1
+__42 != 1
 new variables:
-  findAux __28: int(0..1)
+  findAux __42: int(0..1)
 new constraints:
-  __28 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
+  __42 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__29,2)
+SafeMod(__43,2)
 new variables:
-  findAux __29: int(0..15)
+  findAux __43: int(0..15)
 new constraints:
-  __29 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+  __43 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
 
 --
 
-__28 =aux SafeMod(__29,2)
+__42 =aux SafeMod(__43,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__29, 2, __28)
+ModEq(__43, 2, __42)
 
 --
 
-__29 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+__43 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __29)
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __43)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
-__30 != 1
+__44 != 1
 new variables:
-  findAux __30: int(0..1)
+  findAux __44: int(0..1)
 new constraints:
-  __30 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+  __44 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__31,2)
+SafeMod(__45,2)
 new variables:
-  findAux __31: int(0..1)
+  findAux __45: int(0..1)
 new constraints:
-  __31 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+  __45 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
 
 --
 
-__30 =aux SafeMod(__31,2)
+__44 =aux SafeMod(__45,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__31, 2, __30)
+ModEq(__45, 2, __44)
 
 --
 
-__31 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+__45 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __31)
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __45)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
-__32 != 1
+__46 != 1
 new variables:
-  findAux __32: int(0..1)
+  findAux __46: int(0..1)
 new constraints:
-  __32 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
+  __46 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__33,2)
+SafeMod(__47,2)
 new variables:
-  findAux __33: int(0..3)
+  findAux __47: int(0..3)
 new constraints:
-  __33 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+  __47 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
 
 --
 
-__32 =aux SafeMod(__33,2)
+__46 =aux SafeMod(__47,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__33, 2, __32)
+ModEq(__47, 2, __46)
 
 --
 
-__33 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+__47 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __33)
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __47)
 
 --
 
@@ -1663,305 +2487,305 @@ SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1
 
 (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
    ~~> flatten_imply ([("Minion", 4200)])
-(__34) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
+(__48) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
 new variables:
-  findAux __34: bool
+  findAux __48: bool
 new constraints:
-  __34 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1
+  __48 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1
 
 --
 
-__34 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1
+__48 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1, __34)
+Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) = 1, __48)
 
 --
 
-(__34) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
+(__48) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1, __34)
+ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1, __48)
 
 --
 
 (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
    ~~> flatten_imply ([("Minion", 4200)])
-(__35) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
+(__49) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
 new variables:
-  findAux __35: bool
+  findAux __49: bool
 new constraints:
-  __35 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1
+  __49 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1
 
 --
 
-__35 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1
+__49 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1, __35)
+Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) = 1, __49)
 
 --
 
-(__35) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
+(__49) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1, __35)
+ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1, __49)
 
 --
 
 (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
    ~~> flatten_imply ([("Minion", 4200)])
-(__36) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
+(__50) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
 new variables:
-  findAux __36: bool
+  findAux __50: bool
 new constraints:
-  __36 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1
+  __50 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1
 
 --
 
-__36 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1
+__50 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1, __36)
+Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) = 1, __50)
 
 --
 
-(__36) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
+(__50) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1, __36)
+ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1, __50)
 
 --
 
 (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
    ~~> flatten_imply ([("Minion", 4200)])
-(__37) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
+(__51) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
 new variables:
-  findAux __37: bool
+  findAux __51: bool
 new constraints:
-  __37 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1
+  __51 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1
 
 --
 
-__37 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1
+__51 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1, __37)
+Reify(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) = 1, __51)
 
 --
 
-(__37) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
+(__51) -> (SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1, __37)
+ReifyImply(SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1, __51)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__38,2)
+SafeMod(__52,2)
 new variables:
-  findAux __38: int(0..15)
+  findAux __52: int(0..15)
 new constraints:
-  __38 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+  __52 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
 
 --
 
-__38 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+__52 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __38)
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __52)
 
 --
 
-SafeMod(__38,2) = 1
+SafeMod(__52,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__38, 2, 1)
+ModEq(__52, 2, 1)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__39,2)
+SafeMod(__53,2)
 new variables:
-  findAux __39: int(0..7)
+  findAux __53: int(0..7)
 new constraints:
-  __39 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+  __53 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
 
 --
 
-__39 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+__53 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __39)
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __53)
 
 --
 
-SafeMod(__39,2) = 1
+SafeMod(__53,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__39, 2, 1)
+ModEq(__53, 2, 1)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__40,2)
+SafeMod(__54,2)
 new variables:
-  findAux __40: int(0..3)
+  findAux __54: int(0..3)
 new constraints:
-  __40 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+  __54 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
 
 --
 
-__40 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+__54 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __40)
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __54)
 
 --
 
-SafeMod(__40,2) = 1
+SafeMod(__54,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__40, 2, 1)
+ModEq(__54, 2, 1)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__41,2)
+SafeMod(__55,2)
 new variables:
-  findAux __41: int(0..1)
+  findAux __55: int(0..1)
 new constraints:
-  __41 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+  __55 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
 
 --
 
-__41 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+__55 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __41)
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __55)
 
 --
 
-SafeMod(__41,2) = 1
+SafeMod(__55,2) = 1
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__41, 2, 1)
+ModEq(__55, 2, 1)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
-__42 != 1
+__56 != 1
 new variables:
-  findAux __42: int(0..1)
+  findAux __56: int(0..1)
 new constraints:
-  __42 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
+  __56 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__43,2)
+SafeMod(__57,2)
 new variables:
-  findAux __43: int(0..3)
+  findAux __57: int(0..3)
 new constraints:
-  __43 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+  __57 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
 
 --
 
-__42 =aux SafeMod(__43,2)
+__56 =aux SafeMod(__57,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__43, 2, __42)
+ModEq(__57, 2, __56)
 
 --
 
-__43 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
+__57 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __43)
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __57)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
-__44 != 1
+__58 != 1
 new variables:
-  findAux __44: int(0..1)
+  findAux __58: int(0..1)
 new constraints:
-  __44 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
+  __58 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 8),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__45,2)
+SafeMod(__59,2)
 new variables:
-  findAux __45: int(0..1)
+  findAux __59: int(0..1)
 new constraints:
-  __45 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+  __59 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
 
 --
 
-__44 =aux SafeMod(__45,2)
+__58 =aux SafeMod(__59,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__45, 2, __44)
+ModEq(__59, 2, __58)
 
 --
 
-__45 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
+__59 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 8)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __45)
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __59)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
-__46 != 1
+__60 != 1
 new variables:
-  findAux __46: int(0..1)
+  findAux __60: int(0..1)
 new constraints:
-  __46 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
+  __60 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__47,2)
+SafeMod(__61,2)
 new variables:
-  findAux __47: int(0..15)
+  findAux __61: int(0..15)
 new constraints:
-  __47 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+  __61 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
 
 --
 
-__46 =aux SafeMod(__47,2)
+__60 =aux SafeMod(__61,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__47, 2, __46)
+ModEq(__61, 2, __60)
 
 --
 
-__47 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
+__61 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __47)
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __61)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
-__48 != 1
+__62 != 1
 new variables:
-  findAux __48: int(0..1)
+  findAux __62: int(0..1)
 new constraints:
-  __48 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
+  __62 =aux SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
 
 --
 
 SafeMod(SafeDiv(x#as_relation_1#as_set_1#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__49,2)
+SafeMod(__63,2)
 new variables:
-  findAux __49: int(0..7)
+  findAux __63: int(0..7)
 new constraints:
-  __49 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+  __63 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
 
 --
 
-__48 =aux SafeMod(__49,2)
+__62 =aux SafeMod(__63,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__49, 2, __48)
+ModEq(__63, 2, __62)
 
 --
 
-__49 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
+__63 =aux SafeDiv(x#as_relation_1#as_set_1#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __49)
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __63)
 
 --
 
@@ -1970,121 +2794,163 @@ Final model:
 find x: function (total, bijective) bool --> int(13..14) 
 find x#as_relation_1: relation (size 2) of (bool * int(13..14))
 find x#as_relation_2: matrix indexed by [int(13..14)] of tuple (bool, int(13..14))
+find x#as_relation_3: matrix indexed by [int(1..2)] of tuple (bool, int(13..14))
+find x#as_relation_4: matrix indexed by [int(1..2)] of int(13..14)
 find x#as_relation_1#as_set_1: set{packed} (size 2) of tuple (bool, int(13..14))
 find x#as_relation_2#components_1: tuple (bool, int(13..14))
 find x#as_relation_2#components_2: tuple (bool, int(13..14))
+find x#as_relation_3#components_1: tuple (bool, int(13..14))
+find x#as_relation_3#components_2: tuple (bool, int(13..14))
 find x#as_relation_1#as_set_1#packed_1: int(0..15)
 find x#as_relation_2#components_1#packed_1: int(0..3)
 find x#as_relation_2#components_2#packed_1: int(0..3)
+find x#as_relation_3#components_1#packed_1: int(0..3)
+find x#as_relation_3#components_2#packed_1: int(0..3)
+find x#as_relation_4#components_1: int(13..14)
+find x#as_relation_4#components_2: int(13..14)
 findAux __0: int(0..1)
 findAux __1: int(0..1)
 findAux __2: int(0..1)
 findAux __3: int(0..1)
 findAux __4: int(0..1)
 findAux __5: int(0..1)
-findAux __6: int(0..15)
-findAux __7: int(0..7)
-findAux __8: int(0..3)
-findAux __9: int(0..1)
-findAux __10: int(0..15)
-findAux __11: int(0..7)
-findAux __12: int(0..3)
+findAux __6: int(0..1)
+findAux __7: int(0..1)
+findAux __8: int(0..15)
+findAux __9: int(0..7)
+findAux __10: int(0..3)
+findAux __11: int(0..1)
+findAux __12: int(1..2)
 findAux __13: int(0..1)
-findAux __14: int(0..15)
-findAux __15: int(0..7)
-findAux __16: int(0..3)
-findAux __17: int(0..1)
-findAux __18: bool
-findAux __19: bool
-findAux __20: bool
-findAux __21: bool
-findAux __22: int(0..15)
-findAux __23: int(0..7)
-findAux __24: int(0..3)
-findAux __25: int(0..1)
-findAux __26: int(0..1)
-findAux __27: int(0..7)
-findAux __28: int(0..1)
-findAux __29: int(0..15)
-findAux __30: int(0..1)
+findAux __14: int(1..2)
+findAux __15: int(0..1)
+findAux __16: int(0..15)
+findAux __17: int(0..7)
+findAux __18: int(0..3)
+findAux __19: int(0..1)
+findAux __20: int(0..15)
+findAux __21: int(0..7)
+findAux __22: int(0..3)
+findAux __23: int(0..1)
+findAux __24: int(0..15)
+findAux __25: int(0..7)
+findAux __26: int(0..3)
+findAux __27: int(0..1)
+findAux __28: int(0..15)
+findAux __29: int(0..7)
+findAux __30: int(0..3)
 findAux __31: int(0..1)
-findAux __32: int(0..1)
-findAux __33: int(0..3)
+findAux __32: bool
+findAux __33: bool
 findAux __34: bool
 findAux __35: bool
-findAux __36: bool
-findAux __37: bool
-findAux __38: int(0..15)
-findAux __39: int(0..7)
-findAux __40: int(0..3)
-findAux __41: int(0..1)
+findAux __36: int(0..15)
+findAux __37: int(0..7)
+findAux __38: int(0..3)
+findAux __39: int(0..1)
+findAux __40: int(0..1)
+findAux __41: int(0..7)
 findAux __42: int(0..1)
-findAux __43: int(0..3)
+findAux __43: int(0..15)
 findAux __44: int(0..1)
 findAux __45: int(0..1)
 findAux __46: int(0..1)
-findAux __47: int(0..15)
-findAux __48: int(0..1)
-findAux __49: int(0..7)
+findAux __47: int(0..3)
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: int(0..15)
+findAux __53: int(0..7)
+findAux __54: int(0..3)
+findAux __55: int(0..1)
+findAux __56: int(0..1)
+findAux __57: int(0..3)
+findAux __58: int(0..1)
+findAux __59: int(0..1)
+findAux __60: int(0..1)
+findAux __61: int(0..15)
+findAux __62: int(0..1)
+findAux __63: int(0..7)
 
 such that
 
 true,
-and([ReifyImply(__26 != 1, __18),ReifyImply(__28 != 1, __19),ReifyImply(__30 != 1, __20),ReifyImply(__32 != 1, __21);int(1..)]),
-and([ReifyImply(__42 != 1, __34),ReifyImply(__44 != 1, __35),ReifyImply(__46 != 1, __36),ReifyImply(__48 != 1, __37);int(1..)]),
-or([and([WatchedLiteral(x#as_relation_2#components_1#packed_1,0),ModEq(__10, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_1#packed_1,1),ModEq(__11, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_1#packed_1,2),ModEq(__12, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_1#packed_1,3),ModEq(__13, 2, 1);int(1..)]);int(1..)]),
+and([ReifyImply(__40 != 1, __32),ReifyImply(__42 != 1, __33),ReifyImply(__44 != 1, __34),ReifyImply(__46 != 1, __35);int(1..)]),
+and([ReifyImply(__56 != 1, __48),ReifyImply(__58 != 1, __49),ReifyImply(__60 != 1, __50),ReifyImply(__62 != 1, __51);int(1..)]),
+or([and([WatchedLiteral(x#as_relation_2#components_1#packed_1,0),ModEq(__16, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_1#packed_1,1),ModEq(__17, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_1#packed_1,2),ModEq(__18, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_1#packed_1,3),ModEq(__19, 2, 1);int(1..)]);int(1..)]),
 and([SumLeq([13, __0], 13),SumGeq([13, __0], 13);int(1..)]),
-or([and([WatchedLiteral(x#as_relation_2#components_2#packed_1,0),ModEq(__14, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_2#packed_1,1),ModEq(__15, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_2#packed_1,2),ModEq(__16, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_2#packed_1,3),ModEq(__17, 2, 1);int(1..)]);int(1..)]),
+or([and([WatchedLiteral(x#as_relation_2#components_2#packed_1,0),ModEq(__20, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_2#packed_1,1),ModEq(__21, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_2#packed_1,2),ModEq(__22, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_2#components_2#packed_1,3),ModEq(__23, 2, 1);int(1..)]);int(1..)]),
 and([SumLeq([13, __1], 14),SumGeq([13, __1], 14);int(1..)]),
-and([SumLeq([__2, __3, __4, __5], 2),SumGeq([__2, __3, __4, __5], 2);int(1..)]),
+or([and([WatchedLiteral(x#as_relation_3#components_1#packed_1,0),ModEq(__24, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_3#components_1#packed_1,1),ModEq(__25, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_3#components_1#packed_1,2),ModEq(__26, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_3#components_1#packed_1,3),ModEq(__27, 2, 1);int(1..)]);int(1..)]),
+Reify(__minion_element_one([false,true],__12,true), false),
+and([SumLeq([13, __2], x#as_relation_4#components_1),SumGeq([13, __2], x#as_relation_4#components_1);int(1..)]),
+or([and([WatchedLiteral(x#as_relation_3#components_2#packed_1,0),ModEq(__28, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_3#components_2#packed_1,1),ModEq(__29, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_3#components_2#packed_1,2),ModEq(__30, 2, 1);int(1..)]),and([WatchedLiteral(x#as_relation_3#components_2#packed_1,3),ModEq(__31, 2, 1);int(1..)]);int(1..)]),
+Reify(__minion_element_one([false,true],__14,true), true),
+and([SumLeq([13, __3], x#as_relation_4#components_2),SumGeq([13, __3], x#as_relation_4#components_2);int(1..)]),
+and([SumLeq([__4, __5, __6, __7], 2),SumGeq([__4, __5, __6, __7], 2);int(1..)]),
 ModEq(x#as_relation_2#components_1#packed_1, 2, __0),
 ModEq(x#as_relation_2#components_2#packed_1, 2, __1),
-ModEq(__6, 2, __2),
-ModEq(__7, 2, __3),
+ModEq(x#as_relation_3#components_1#packed_1, 2, __2),
+ModEq(x#as_relation_3#components_2#packed_1, 2, __3),
 ModEq(__8, 2, __4),
 ModEq(__9, 2, __5),
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __6),
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __7),
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __8),
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __9),
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __10),
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __11),
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __12),
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __13),
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __14),
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __15),
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __16),
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __17),
-Reify(ModEq(__22, 2, 1), __18),
-Reify(ModEq(__23, 2, 1), __19),
-Reify(ModEq(__24, 2, 1), __20),
-Reify(ModEq(__25, 2, 1), __21),
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __22),
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __23),
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __24),
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __25),
-ModEq(__27, 2, __26),
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __27),
-ModEq(__29, 2, __28),
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __29),
-ModEq(__31, 2, __30),
+ModEq(__10, 2, __6),
+ModEq(__11, 2, __7),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __8),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __9),
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __10),
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __11),
+and([SumLeq([1, __13], __12),SumGeq([1, __13], __12);int(1..)]),
+DivEq(x#as_relation_3#components_1#packed_1, 2, __13),
+and([SumLeq([1, __15], __14),SumGeq([1, __15], __14);int(1..)]),
+DivEq(x#as_relation_3#components_2#packed_1, 2, __15),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __16),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __17),
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __18),
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __19),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __20),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __21),
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __22),
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __23),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __24),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __25),
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __26),
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __27),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __28),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __29),
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __30),
 DivEq(x#as_relation_1#as_set_1#packed_1, 8, __31),
-ModEq(__33, 2, __32),
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __33),
+Reify(ModEq(__36, 2, 1), __32),
+Reify(ModEq(__37, 2, 1), __33),
 Reify(ModEq(__38, 2, 1), __34),
 Reify(ModEq(__39, 2, 1), __35),
-Reify(ModEq(__40, 2, 1), __36),
-Reify(ModEq(__41, 2, 1), __37),
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __38),
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __39),
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __40),
-DivEq(x#as_relation_1#as_set_1#packed_1, 8, __41),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __36),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __37),
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __38),
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __39),
+ModEq(__41, 2, __40),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __41),
 ModEq(__43, 2, __42),
-DivEq(x#as_relation_1#as_set_1#packed_1, 4, __43),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __43),
 ModEq(__45, 2, __44),
 DivEq(x#as_relation_1#as_set_1#packed_1, 8, __45),
 ModEq(__47, 2, __46),
-DivEq(x#as_relation_1#as_set_1#packed_1, 1, __47),
-ModEq(__49, 2, __48),
-DivEq(x#as_relation_1#as_set_1#packed_1, 2, __49)
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __47),
+Reify(ModEq(__52, 2, 1), __48),
+Reify(ModEq(__53, 2, 1), __49),
+Reify(ModEq(__54, 2, 1), __50),
+Reify(ModEq(__55, 2, 1), __51),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __52),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __53),
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __54),
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __55),
+ModEq(__57, 2, __56),
+DivEq(x#as_relation_1#as_set_1#packed_1, 4, __57),
+ModEq(__59, 2, __58),
+DivEq(x#as_relation_1#as_set_1#packed_1, 8, __59),
+ModEq(__61, 2, __60),
+DivEq(x#as_relation_1#as_set_1#packed_1, 1, __61),
+ModEq(__63, 2, __62),
+DivEq(x#as_relation_1#as_set_1#packed_1, 2, __63)
 

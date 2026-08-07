@@ -10,6 +10,8 @@ true
 new variables:
   find x#as_relation_1: relation (size 3) of (int(1..3) * int(13..15))
   find x#as_relation_2: matrix indexed by [int(13..15)] of tuple (int(1..3), int(13..15))
+  find x#as_relation_3: matrix indexed by [int(1..3)] of tuple (int(1..3), int(13..15))
+  find x#as_relation_4: matrix indexed by [int(1..3)] of int(13..15)
 new constraints:
   and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
   and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- x#as_relation_1, j <- x#as_relation_1 ])
@@ -19,6 +21,15 @@ new constraints:
   SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14
   SafeIndex(x#as_relation_2,[15]) in x#as_relation_1
   SafeIndex(SafeIndex(x#as_relation_2,[15]),[2]) = 15
+  SafeIndex(x#as_relation_3,[1]) in x#as_relation_1
+  SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = 1
+  SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1])
+  SafeIndex(x#as_relation_3,[2]) in x#as_relation_1
+  SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = 2
+  SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2])
+  SafeIndex(x#as_relation_3,[3]) in x#as_relation_1
+  SafeIndex(SafeIndex(x#as_relation_3,[3]),[1]) = 3
+  SafeIndex(SafeIndex(x#as_relation_3,[3]),[2]) = SafeIndex(x#as_relation_4,[3])
 
 --
 
@@ -29,6 +40,24 @@ new variables:
   find x#as_relation_1#occurrence_1: matrix indexed by [int(1..3), int(13..15)] of bool
 new constraints:
   sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(13..15) ]) = 3
+
+--
+
+x#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1
+
+--
+
+x#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1
+
+--
+
+x#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1
 
 --
 
@@ -66,9 +95,25 @@ x#as_relation_2
 
 --
 
-x#as_relation_2
+x#as_relation_3
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_2
+x#as_relation_3
+new variables:
+  find x#as_relation_3#components_1: tuple (int(1..3), int(13..15))
+  find x#as_relation_3#components_2: tuple (int(1..3), int(13..15))
+  find x#as_relation_3#components_3: tuple (int(1..3), int(13..15))
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
 
 --
 
@@ -81,6 +126,48 @@ x#as_relation_2
 x#as_relation_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#as_relation_2
+
+--
+
+x#as_relation_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_2
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
 
 --
 
@@ -93,6 +180,15 @@ SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 SafeIndex(x#as_relation_2,[15]) in x#as_relation_1,
 SafeIndex(SafeIndex(x#as_relation_2,[15]),[2]) = 15,
+SafeIndex(x#as_relation_3,[1]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = 1,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1]),
+SafeIndex(x#as_relation_3,[2]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = 2,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2]),
+SafeIndex(x#as_relation_3,[3]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[3]),[1]) = 3,
+SafeIndex(SafeIndex(x#as_relation_3,[3]),[2]) = SafeIndex(x#as_relation_4,[3]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(13..15) ]) = 3
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
@@ -104,6 +200,15 @@ SafeIndex(x#as_relation_2,[14]) in x#as_relation_1,
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 SafeIndex(x#as_relation_2,[15]) in x#as_relation_1,
 SafeIndex(SafeIndex(x#as_relation_2,[15]),[2]) = 15,
+SafeIndex(x#as_relation_3,[1]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = 1,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1]),
+SafeIndex(x#as_relation_3,[2]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = 2,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2]),
+SafeIndex(x#as_relation_3,[3]) in x#as_relation_1,
+SafeIndex(SafeIndex(x#as_relation_3,[3]),[1]) = 3,
+SafeIndex(SafeIndex(x#as_relation_3,[3]),[2]) = SafeIndex(x#as_relation_4,[3]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(13..15) ]) = 3
 new variables:
   find x#as_relation_2#components_1#components_1: int(1..3)
@@ -112,6 +217,12 @@ new variables:
   find x#as_relation_2#components_2#components_2: int(13..15)
   find x#as_relation_2#components_3#components_1: int(1..3)
   find x#as_relation_2#components_3#components_2: int(13..15)
+  find x#as_relation_3#components_1#components_1: int(1..3)
+  find x#as_relation_3#components_1#components_2: int(13..15)
+  find x#as_relation_3#components_2#components_1: int(1..3)
+  find x#as_relation_3#components_2#components_2: int(13..15)
+  find x#as_relation_3#components_3#components_1: int(1..3)
+  find x#as_relation_3#components_3#components_2: int(13..15)
 
 --
 
@@ -130,6 +241,24 @@ SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]
 SafeIndex(x#as_relation_2,[15]) in x#as_relation_1
    ~~> membership_relation_occurrence ([("Base", 8650)])
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[15]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[15]),[2])])
+
+--
+
+SafeIndex(x#as_relation_3,[1]) in x#as_relation_1
+   ~~> membership_relation_occurrence ([("Base", 8650)])
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[1]),[2])])
+
+--
+
+SafeIndex(x#as_relation_3,[2]) in x#as_relation_1
+   ~~> membership_relation_occurrence ([("Base", 8650)])
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[2]),[2])])
+
+--
+
+SafeIndex(x#as_relation_3,[3]) in x#as_relation_1
+   ~~> membership_relation_occurrence ([("Base", 8650)])
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[3]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[3]),[2])])
 
 --
 
@@ -166,6 +295,15 @@ SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[15]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[15]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[15]),[2]) = 15,
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[1]),[2])]),
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = 1,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1]),
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[2]),[2])]),
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = 2,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2]),
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[3]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[3]),[2])]),
+SafeIndex(SafeIndex(x#as_relation_3,[3]),[1]) = 3,
+SafeIndex(SafeIndex(x#as_relation_3,[3]),[2]) = SafeIndex(x#as_relation_4,[3]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(13..15) ]) = 3
    ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
 true,
@@ -177,8 +315,20 @@ SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[14]
 SafeIndex(SafeIndex(x#as_relation_2,[14]),[2]) = 14,
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[15]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[15]),[2])]),
 SafeIndex(SafeIndex(x#as_relation_2,[15]),[2]) = 15,
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[1]),[2])]),
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[1]) = 1,
+SafeIndex(SafeIndex(x#as_relation_3,[1]),[2]) = SafeIndex(x#as_relation_4,[1]),
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[2]),[2])]),
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[1]) = 2,
+SafeIndex(SafeIndex(x#as_relation_3,[2]),[2]) = SafeIndex(x#as_relation_4,[2]),
+SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_3,[3]),[1]), SafeIndex(SafeIndex(x#as_relation_3,[3]),[2])]),
+SafeIndex(SafeIndex(x#as_relation_3,[3]),[1]) = 3,
+SafeIndex(SafeIndex(x#as_relation_3,[3]),[2]) = SafeIndex(x#as_relation_4,[3]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(13..15) ]) = 3
 new variables:
+  find x#as_relation_4#components_1: int(13..15)
+  find x#as_relation_4#components_2: int(13..15)
+  find x#as_relation_4#components_3: int(13..15)
   find x#as_relation_1#occurrence_1#components_1: bool
   find x#as_relation_1#occurrence_1#components_2: bool
   find x#as_relation_1#occurrence_1#components_3: bool
@@ -188,6 +338,24 @@ new variables:
   find x#as_relation_1#occurrence_1#components_7: bool
   find x#as_relation_1#occurrence_1#components_8: bool
   find x#as_relation_1#occurrence_1#components_9: bool
+
+--
+
+SafeIndex(x#as_relation_4,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_4#components_1
+
+--
+
+SafeIndex(x#as_relation_4,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_4#components_2
+
+--
+
+SafeIndex(x#as_relation_4,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_4#components_3
 
 --
 
@@ -461,6 +629,330 @@ x#as_relation_2#components_3#components_2
 
 --
 
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+SafeIndex(x#as_relation_3#components_1,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_1#components_1
+
+--
+
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+SafeIndex(x#as_relation_3#components_1,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_1#components_2
+
+--
+
+SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_3#components_1#components_1, x#as_relation_3#components_1#components_2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[sum([product([3,(x#as_relation_3#components_1#components_1 - 1);int(1..)]),product([1,(x#as_relation_3#components_1#components_2 - 13);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(x#as_relation_3#components_1#components_2 - 13);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(x#as_relation_3#components_1#components_2 - 13);int(1..)])
+
+--
+
+product([(x#as_relation_3#components_1#components_2 - 13);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(x#as_relation_3#components_1#components_2 - 13)
+
+--
+
+(x#as_relation_3#components_1#components_2 - 13)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x#as_relation_3#components_1#components_2,-(13);int(1..)])
+
+--
+
+sum([product([3,(x#as_relation_3#components_1#components_1 - 1);int(1..)]),sum([x#as_relation_3#components_1#components_2,-13;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,(x#as_relation_3#components_1#components_1 - 1);int(1..)]),x#as_relation_3#components_1#components_2,-13,1;int(1..)])
+
+--
+
+(x#as_relation_3#components_1#components_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x#as_relation_3#components_1#components_1,-(1);int(1..)])
+
+--
+
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+SafeIndex(x#as_relation_3#components_1,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_1#components_1
+
+--
+
+SafeIndex(x#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_1
+
+--
+
+x#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_1
+
+--
+
+SafeIndex(x#as_relation_3#components_1,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_1#components_2
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+SafeIndex(x#as_relation_3#components_2,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_2#components_1
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+SafeIndex(x#as_relation_3#components_2,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_2#components_2
+
+--
+
+SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_3#components_2#components_1, x#as_relation_3#components_2#components_2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[sum([product([3,(x#as_relation_3#components_2#components_1 - 1);int(1..)]),product([1,(x#as_relation_3#components_2#components_2 - 13);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(x#as_relation_3#components_2#components_2 - 13);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(x#as_relation_3#components_2#components_2 - 13);int(1..)])
+
+--
+
+product([(x#as_relation_3#components_2#components_2 - 13);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(x#as_relation_3#components_2#components_2 - 13)
+
+--
+
+(x#as_relation_3#components_2#components_2 - 13)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x#as_relation_3#components_2#components_2,-(13);int(1..)])
+
+--
+
+sum([product([3,(x#as_relation_3#components_2#components_1 - 1);int(1..)]),sum([x#as_relation_3#components_2#components_2,-13;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,(x#as_relation_3#components_2#components_1 - 1);int(1..)]),x#as_relation_3#components_2#components_2,-13,1;int(1..)])
+
+--
+
+(x#as_relation_3#components_2#components_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x#as_relation_3#components_2#components_1,-(1);int(1..)])
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+SafeIndex(x#as_relation_3#components_2,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_2#components_1
+
+--
+
+SafeIndex(x#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_2
+
+--
+
+x#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_2
+
+--
+
+SafeIndex(x#as_relation_3#components_2,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_2#components_2
+
+--
+
+SafeIndex(x#as_relation_3,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_3
+
+--
+
+x#as_relation_3#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_3
+
+--
+
+SafeIndex(x#as_relation_3#components_3,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_3#components_1
+
+--
+
+SafeIndex(x#as_relation_3,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_3
+
+--
+
+x#as_relation_3#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_3
+
+--
+
+SafeIndex(x#as_relation_3#components_3,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_3#components_2
+
+--
+
+SafeIndex(x#as_relation_1#occurrence_1,[x#as_relation_3#components_3#components_1, x#as_relation_3#components_3#components_2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[sum([product([3,(x#as_relation_3#components_3#components_1 - 1);int(1..)]),product([1,(x#as_relation_3#components_3#components_2 - 13);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(x#as_relation_3#components_3#components_2 - 13);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(x#as_relation_3#components_3#components_2 - 13);int(1..)])
+
+--
+
+product([(x#as_relation_3#components_3#components_2 - 13);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(x#as_relation_3#components_3#components_2 - 13)
+
+--
+
+(x#as_relation_3#components_3#components_2 - 13)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x#as_relation_3#components_3#components_2,-(13);int(1..)])
+
+--
+
+sum([product([3,(x#as_relation_3#components_3#components_1 - 1);int(1..)]),sum([x#as_relation_3#components_3#components_2,-13;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,(x#as_relation_3#components_3#components_1 - 1);int(1..)]),x#as_relation_3#components_3#components_2,-13,1;int(1..)])
+
+--
+
+(x#as_relation_3#components_3#components_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([x#as_relation_3#components_3#components_1,-(1);int(1..)])
+
+--
+
+SafeIndex(x#as_relation_3,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_3
+
+--
+
+x#as_relation_3#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_3
+
+--
+
+SafeIndex(x#as_relation_3#components_3,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_3#components_1
+
+--
+
+SafeIndex(x#as_relation_3,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_3#components_3
+
+--
+
+x#as_relation_3#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3#components_3
+
+--
+
+SafeIndex(x#as_relation_3#components_3,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#as_relation_3#components_3#components_2
+
+--
+
 x#as_relation_2#components_1#components_2 = 13
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#as_relation_2#components_1#components_2,13)
@@ -476,6 +968,24 @@ WatchedLiteral(x#as_relation_2#components_2#components_2,14)
 x#as_relation_2#components_3#components_2 = 15
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#as_relation_2#components_3#components_2,15)
+
+--
+
+x#as_relation_3#components_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_1#components_1,1)
+
+--
+
+x#as_relation_3#components_2#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_2#components_1,2)
+
+--
+
+x#as_relation_3#components_3#components_1 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#as_relation_3#components_3#components_1,3)
 
 --
 
@@ -590,6 +1100,120 @@ and([SumLeq([-1, x#as_relation_2#components_3#components_1], __5),SumGeq([-1, x#
 SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[__4])
    ~~> introduce_element_from_index ([("Minion", 4400)])
 __minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9],__4,true)
+
+--
+
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[sum([product([3,sum([x#as_relation_3#components_1#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_1#components_2,-12;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[__6])
+new variables:
+  findAux __6: int(1..9)
+new constraints:
+  __6 =aux sum([product([3,sum([x#as_relation_3#components_1#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_1#components_2,-12;int(1..)])
+
+--
+
+__6 =aux sum([product([3,sum([x#as_relation_3#components_1#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_1#components_2,-12;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 3, 1],[-12, __7, x#as_relation_3#components_1#components_2],__6),FlatWeightedSumGeq([1, 3, 1],[-12, __7, x#as_relation_3#components_1#components_2],__6);int(1..)])
+new variables:
+  findAux __7: int(0..2)
+new constraints:
+  __7 =aux product([sum([x#as_relation_3#components_1#components_1,-1;int(1..)]);int(1..)])
+
+--
+
+product([sum([x#as_relation_3#components_1#components_1,-1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+sum([x#as_relation_3#components_1#components_1,-1;int(1..)])
+
+--
+
+__7 =aux sum([x#as_relation_3#components_1#components_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, x#as_relation_3#components_1#components_1], __7),SumGeq([-1, x#as_relation_3#components_1#components_1], __7);int(1..)])
+
+--
+
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[__6])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9],__6,true)
+
+--
+
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[sum([product([3,sum([x#as_relation_3#components_2#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_2#components_2,-12;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[__8])
+new variables:
+  findAux __8: int(1..9)
+new constraints:
+  __8 =aux sum([product([3,sum([x#as_relation_3#components_2#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_2#components_2,-12;int(1..)])
+
+--
+
+__8 =aux sum([product([3,sum([x#as_relation_3#components_2#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_2#components_2,-12;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 3, 1],[-12, __9, x#as_relation_3#components_2#components_2],__8),FlatWeightedSumGeq([1, 3, 1],[-12, __9, x#as_relation_3#components_2#components_2],__8);int(1..)])
+new variables:
+  findAux __9: int(0..2)
+new constraints:
+  __9 =aux product([sum([x#as_relation_3#components_2#components_1,-1;int(1..)]);int(1..)])
+
+--
+
+product([sum([x#as_relation_3#components_2#components_1,-1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+sum([x#as_relation_3#components_2#components_1,-1;int(1..)])
+
+--
+
+__9 =aux sum([x#as_relation_3#components_2#components_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, x#as_relation_3#components_2#components_1], __9),SumGeq([-1, x#as_relation_3#components_2#components_1], __9);int(1..)])
+
+--
+
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[__8])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9],__8,true)
+
+--
+
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[sum([product([3,sum([x#as_relation_3#components_3#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_3#components_2,-12;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[__10])
+new variables:
+  findAux __10: int(1..9)
+new constraints:
+  __10 =aux sum([product([3,sum([x#as_relation_3#components_3#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_3#components_2,-12;int(1..)])
+
+--
+
+__10 =aux sum([product([3,sum([x#as_relation_3#components_3#components_1,-1;int(1..)]);int(1..)]),x#as_relation_3#components_3#components_2,-12;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 3, 1],[-12, __11, x#as_relation_3#components_3#components_2],__10),FlatWeightedSumGeq([1, 3, 1],[-12, __11, x#as_relation_3#components_3#components_2],__10);int(1..)])
+new variables:
+  findAux __11: int(0..2)
+new constraints:
+  __11 =aux product([sum([x#as_relation_3#components_3#components_1,-1;int(1..)]);int(1..)])
+
+--
+
+product([sum([x#as_relation_3#components_3#components_1,-1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+sum([x#as_relation_3#components_3#components_1,-1;int(1..)])
+
+--
+
+__11 =aux sum([x#as_relation_3#components_3#components_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, x#as_relation_3#components_3#components_1], __11),SumGeq([-1, x#as_relation_3#components_3#components_1], __11);int(1..)])
+
+--
+
+SafeIndex([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9;int(1..)],[__10])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9],__10,true)
 
 --
 
@@ -1324,16 +1948,30 @@ Final model:
 find x: function (total, bijective) int(1..3) --> int(13..15) 
 find x#as_relation_1: relation (size 3) of (int(1..3) * int(13..15))
 find x#as_relation_2: matrix indexed by [int(13..15)] of tuple (int(1..3), int(13..15))
+find x#as_relation_3: matrix indexed by [int(1..3)] of tuple (int(1..3), int(13..15))
+find x#as_relation_4: matrix indexed by [int(1..3)] of int(13..15)
 find x#as_relation_1#occurrence_1: matrix indexed by [int(1..3), int(13..15)] of bool
 find x#as_relation_2#components_1: tuple (int(1..3), int(13..15))
 find x#as_relation_2#components_2: tuple (int(1..3), int(13..15))
 find x#as_relation_2#components_3: tuple (int(1..3), int(13..15))
+find x#as_relation_3#components_1: tuple (int(1..3), int(13..15))
+find x#as_relation_3#components_2: tuple (int(1..3), int(13..15))
+find x#as_relation_3#components_3: tuple (int(1..3), int(13..15))
 find x#as_relation_2#components_1#components_1: int(1..3)
 find x#as_relation_2#components_1#components_2: int(13..15)
 find x#as_relation_2#components_2#components_1: int(1..3)
 find x#as_relation_2#components_2#components_2: int(13..15)
 find x#as_relation_2#components_3#components_1: int(1..3)
 find x#as_relation_2#components_3#components_2: int(13..15)
+find x#as_relation_3#components_1#components_1: int(1..3)
+find x#as_relation_3#components_1#components_2: int(13..15)
+find x#as_relation_3#components_2#components_1: int(1..3)
+find x#as_relation_3#components_2#components_2: int(13..15)
+find x#as_relation_3#components_3#components_1: int(1..3)
+find x#as_relation_3#components_3#components_2: int(13..15)
+find x#as_relation_4#components_1: int(13..15)
+find x#as_relation_4#components_2: int(13..15)
+find x#as_relation_4#components_3: int(13..15)
 find x#as_relation_1#occurrence_1#components_1: bool
 find x#as_relation_1#occurrence_1#components_2: bool
 find x#as_relation_1#occurrence_1#components_3: bool
@@ -1349,6 +1987,12 @@ findAux __2: int(1..9)
 findAux __3: int(0..2)
 findAux __4: int(1..9)
 findAux __5: int(0..2)
+findAux __6: int(1..9)
+findAux __7: int(0..2)
+findAux __8: int(1..9)
+findAux __9: int(0..2)
+findAux __10: int(1..9)
+findAux __11: int(0..2)
 
 such that
 
@@ -1361,11 +2005,26 @@ __minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#
 WatchedLiteral(x#as_relation_2#components_2#components_2,14),
 __minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9],__4,true),
 WatchedLiteral(x#as_relation_2#components_3#components_2,15),
+__minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9],__6,true),
+WatchedLiteral(x#as_relation_3#components_1#components_1,1),
+x#as_relation_3#components_1#components_2 = x#as_relation_4#components_1,
+__minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9],__8,true),
+WatchedLiteral(x#as_relation_3#components_2#components_1,2),
+x#as_relation_3#components_2#components_2 = x#as_relation_4#components_2,
+__minion_element_one([x#as_relation_1#occurrence_1#components_1,x#as_relation_1#occurrence_1#components_2,x#as_relation_1#occurrence_1#components_3,x#as_relation_1#occurrence_1#components_4,x#as_relation_1#occurrence_1#components_5,x#as_relation_1#occurrence_1#components_6,x#as_relation_1#occurrence_1#components_7,x#as_relation_1#occurrence_1#components_8,x#as_relation_1#occurrence_1#components_9],__10,true),
+WatchedLiteral(x#as_relation_3#components_3#components_1,3),
+x#as_relation_3#components_3#components_2 = x#as_relation_4#components_3,
 and([SumLeq([x#as_relation_1#occurrence_1#components_1, x#as_relation_1#occurrence_1#components_2, x#as_relation_1#occurrence_1#components_3, x#as_relation_1#occurrence_1#components_4, x#as_relation_1#occurrence_1#components_5, x#as_relation_1#occurrence_1#components_6, x#as_relation_1#occurrence_1#components_7, x#as_relation_1#occurrence_1#components_8, x#as_relation_1#occurrence_1#components_9], 3),SumGeq([x#as_relation_1#occurrence_1#components_1, x#as_relation_1#occurrence_1#components_2, x#as_relation_1#occurrence_1#components_3, x#as_relation_1#occurrence_1#components_4, x#as_relation_1#occurrence_1#components_5, x#as_relation_1#occurrence_1#components_6, x#as_relation_1#occurrence_1#components_7, x#as_relation_1#occurrence_1#components_8, x#as_relation_1#occurrence_1#components_9], 3);int(1..)]),
 and([FlatWeightedSumLeq([1, 3, 1],[-12, __1, x#as_relation_2#components_1#components_2],__0),FlatWeightedSumGeq([1, 3, 1],[-12, __1, x#as_relation_2#components_1#components_2],__0);int(1..)]),
 and([SumLeq([-1, x#as_relation_2#components_1#components_1], __1),SumGeq([-1, x#as_relation_2#components_1#components_1], __1);int(1..)]),
 and([FlatWeightedSumLeq([1, 3, 1],[-12, __3, x#as_relation_2#components_2#components_2],__2),FlatWeightedSumGeq([1, 3, 1],[-12, __3, x#as_relation_2#components_2#components_2],__2);int(1..)]),
 and([SumLeq([-1, x#as_relation_2#components_2#components_1], __3),SumGeq([-1, x#as_relation_2#components_2#components_1], __3);int(1..)]),
 and([FlatWeightedSumLeq([1, 3, 1],[-12, __5, x#as_relation_2#components_3#components_2],__4),FlatWeightedSumGeq([1, 3, 1],[-12, __5, x#as_relation_2#components_3#components_2],__4);int(1..)]),
-and([SumLeq([-1, x#as_relation_2#components_3#components_1], __5),SumGeq([-1, x#as_relation_2#components_3#components_1], __5);int(1..)])
+and([SumLeq([-1, x#as_relation_2#components_3#components_1], __5),SumGeq([-1, x#as_relation_2#components_3#components_1], __5);int(1..)]),
+and([FlatWeightedSumLeq([1, 3, 1],[-12, __7, x#as_relation_3#components_1#components_2],__6),FlatWeightedSumGeq([1, 3, 1],[-12, __7, x#as_relation_3#components_1#components_2],__6);int(1..)]),
+and([SumLeq([-1, x#as_relation_3#components_1#components_1], __7),SumGeq([-1, x#as_relation_3#components_1#components_1], __7);int(1..)]),
+and([FlatWeightedSumLeq([1, 3, 1],[-12, __9, x#as_relation_3#components_2#components_2],__8),FlatWeightedSumGeq([1, 3, 1],[-12, __9, x#as_relation_3#components_2#components_2],__8);int(1..)]),
+and([SumLeq([-1, x#as_relation_3#components_2#components_1], __9),SumGeq([-1, x#as_relation_3#components_2#components_1], __9);int(1..)]),
+and([FlatWeightedSumLeq([1, 3, 1],[-12, __11, x#as_relation_3#components_3#components_2],__10),FlatWeightedSumGeq([1, 3, 1],[-12, __11, x#as_relation_3#components_3#components_2],__10);int(1..)]),
+and([SumLeq([-1, x#as_relation_3#components_3#components_1], __11),SumGeq([-1, x#as_relation_3#components_3#components_1], __11);int(1..)])
 
