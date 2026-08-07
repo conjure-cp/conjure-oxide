@@ -3,6 +3,7 @@ pub(crate) mod int;
 pub(crate) mod matrix;
 pub(crate) mod mset;
 pub(crate) mod partition;
+pub(crate) mod permutation;
 pub(crate) mod product;
 pub(crate) mod record;
 pub(crate) mod relation;

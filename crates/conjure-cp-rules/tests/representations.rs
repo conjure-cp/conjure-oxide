@@ -1,17 +1,17 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
     AbstractLiteral, BinaryAttr, Domain, Expression, FuncAttr, GroundDomain, JectivityAttr,
-    Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, RelAttr, SequenceAttr, SetAttr,
-    SymbolTable,
+    Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, PermutationAttr, RelAttr,
+    SequenceAttr, SetAttr, SymbolTable,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, range};
 use conjure_cp_rules::representation::{
     FunctionAsRelation, FunctionExplicit, MSetExplicit, MSetOccurrence, MSetPacked,
     MatrixComponents, MatrixPacked, PartitionAsSet, PartitionOccurrence, PartitionPacked,
-    RecordComponents, RecordPacked, RelationAsSet, RelationOccurrence, RelationPacked,
-    SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked, TupleComponents,
-    TuplePacked, VariantComponents, VariantPacked,
+    PermutationAsFunction, RecordComponents, RecordPacked, RelationAsSet, RelationOccurrence,
+    RelationPacked, SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked,
+    TupleComponents, TuplePacked, VariantComponents, VariantPacked,
 };
 use uniplate::Uniplate;
 
@@ -1482,4 +1482,107 @@ fn partition_packed_is_more_compact_than_occurrence_for_a_bounded_size() {
         PartitionPacked::compactness_score(domain.clone()).unwrap()
             <= PartitionOccurrence::compactness_score(domain).unwrap()
     );
+}
+
+fn permutation_attr(num_moved: conjure_cp::ast::Range<i32>) -> PermutationAttr {
+    PermutationAttr { num_moved }
+}
+
+#[test]
+fn permutation_as_function_round_trips_a_single_cycle() {
+    let domain = Domain::permutation(
+        permutation_attr(conjure_cp::ast::Range::Unbounded),
+        domain_int!(1..5),
+    );
+    let state = <PermutationAsFunction as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Permutation(vec![vec![
+        Literal::Int(1),
+        Literal::Int(3),
+        Literal::Int(5),
+    ]]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn permutation_as_function_round_trips_multiple_disjoint_cycles() {
+    let domain = Domain::permutation(
+        permutation_attr(conjure_cp::ast::Range::Unbounded),
+        domain_int!(1..6),
+    );
+    let state = <PermutationAsFunction as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Permutation(vec![
+        vec![Literal::Int(1), Literal::Int(2)],
+        vec![Literal::Int(3), Literal::Int(4), Literal::Int(5)],
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn permutation_as_function_round_trips_the_identity() {
+    // Every element is an (implicit) fixed point: the literal has no cycles at all.
+    let domain = Domain::permutation(
+        permutation_attr(conjure_cp::ast::Range::Unbounded),
+        domain_int!(1..4),
+    );
+    let state = <PermutationAsFunction as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Permutation(vec![]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn permutation_as_function_rejects_a_cycle_element_outside_its_domain() {
+    let domain = Domain::permutation(
+        permutation_attr(conjure_cp::ast::Range::Unbounded),
+        domain_int!(1..3),
+    );
+    let state = <PermutationAsFunction as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Permutation(vec![vec![
+        Literal::Int(1),
+        Literal::Int(99),
+    ]]));
+
+    assert!(state.down(value).is_err());
+}
+
+#[test]
+fn permutation_as_function_rejects_an_element_appearing_in_two_cycles() {
+    let domain = Domain::permutation(
+        permutation_attr(conjure_cp::ast::Range::Unbounded),
+        domain_int!(1..4),
+    );
+    let state = <PermutationAsFunction as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Permutation(vec![
+        vec![Literal::Int(1), Literal::Int(2)],
+        vec![Literal::Int(2), Literal::Int(3)],
+    ]));
+
+    assert!(state.down(value).is_err());
+}
+
+#[test]
+fn permutation_as_function_rejects_a_non_permutation_domain() {
+    let domain = domain_int!(1..3);
+    assert!(<PermutationAsFunction as ReprRule>::DomainLevel::init(domain).is_err());
+}
+
+#[test]
+fn permutation_as_function_builds_three_structural_constraints() {
+    // numMoved's range check, plus the two round-trip constraints (backwards . forwards = id and
+    // forwards . backwards = id). Nested constraints from whatever representation gets chosen for
+    // the forwards/backwards Function-typed aux declarations themselves are added by a later pass
+    // over those new declarations, not eagerly folded into this count.
+    let domain = Domain::permutation(
+        permutation_attr(conjure_cp::ast::Range::Unbounded),
+        domain_int!(1..4),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = PermutationAsFunction::init_for(&mut declaration).unwrap();
+    assert_eq!(constraints.len(), 3);
 }
