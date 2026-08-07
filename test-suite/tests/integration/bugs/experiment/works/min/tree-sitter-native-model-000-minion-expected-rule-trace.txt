@@ -1,0 +1,48 @@
+Model before rewriting:
+
+find a: int(0..3)
+
+such that
+
+min([2,a;int(1..2)]) <= 2
+
+--
+
+min([2,a;int(1..2)]) <= 2
+   ~~> flatten_generic ([("Minion", 4200)])
+__0 <= 2
+new variables:
+  findAux __0: int(0..2)
+new constraints:
+  __0 =aux min([2,a;int(1..2)])
+
+--
+
+__0 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__0, 2, 0)
+
+--
+
+min([2,a;int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+min([2,a;int(1..)])
+
+--
+
+__0 =aux min([2,a;int(1..)])
+   ~~> introduce_mineq ([("Minion", 6100)])
+FlatMinEq([2, a], __0)
+
+--
+
+Final model:
+
+find a: int(0..3)
+findAux __0: int(0..2)
+
+such that
+
+Ineq(__0, 2, 0),
+FlatMinEq([2, a], __0)
+

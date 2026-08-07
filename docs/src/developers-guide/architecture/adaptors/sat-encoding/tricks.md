@@ -31,4 +31,3 @@ For operations involving multiple operands like `sum(...)`, implementing a singl
 To simplify rule logic (especially zips and index lookups), we normalize all operands to a shared range before processing.
 
 *   **Logic:** Calculate a global min/max across all operands. Pad Direct-encoded integers with `false` bits and Order-encoded integers with `true` (prefix) or `false` (postfix) bits to ensure all bit-vectors have the same length and align to the same values.
-

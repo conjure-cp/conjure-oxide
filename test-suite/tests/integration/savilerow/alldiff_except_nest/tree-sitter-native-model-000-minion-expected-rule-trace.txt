@@ -1,0 +1,96 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..10)] of int(0..10)
+
+such that
+
+or([allDifferentExcept(x, 0),x[3] = 5;int(1..)])
+
+--
+
+or([allDifferentExcept(x, 0),x[3] = 5;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+or([allDifferentExcept(x, 0),x[3] = 5;int(1..)])
+new variables:
+  find x#components_1: int(0..10)
+  find x#components_10: int(0..10)
+  find x#components_2: int(0..10)
+  find x#components_3: int(0..10)
+  find x#components_4: int(0..10)
+  find x#components_5: int(0..10)
+  find x#components_6: int(0..10)
+  find x#components_7: int(0..10)
+  find x#components_8: int(0..10)
+  find x#components_9: int(0..10)
+
+--
+
+x[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_3
+
+--
+
+x#components_3 = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_3,5)
+
+--
+
+allDifferentExcept(x, 0)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferentExcept([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5,x#components_6,x#components_7,x#components_8,x#components_9,x#components_10;int(1..10)], 0)
+
+--
+
+allDifferentExcept([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5,x#components_6,x#components_7,x#components_8,x#components_9,x#components_10;int(1..10)], 0)
+   ~~> matrix_to_list ([("Base", 2000)])
+allDifferentExcept([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5,x#components_6,x#components_7,x#components_8,x#components_9,x#components_10;int(1..)], 0)
+
+--
+
+allDifferentExcept([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5,x#components_6,x#components_7,x#components_8,x#components_9,x#components_10;int(1..)], 0)
+   ~~> alldifferent_except_to_gccweak ([("Minion", 4100)])
+gccweak([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5,x#components_6,x#components_7,x#components_8,x#components_9,x#components_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [__0,__1,__2,__3,__4,__5,__6,__7,__8,__9;int(1..)])
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..10)] of int(0..10)
+find x#components_1: int(0..10)
+find x#components_2: int(0..10)
+find x#components_3: int(0..10)
+find x#components_4: int(0..10)
+find x#components_5: int(0..10)
+find x#components_6: int(0..10)
+find x#components_7: int(0..10)
+find x#components_8: int(0..10)
+find x#components_9: int(0..10)
+find x#components_10: int(0..10)
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+
+such that
+
+or([gccweak([x#components_1,x#components_2,x#components_3,x#components_4,x#components_5,x#components_6,x#components_7,x#components_8,x#components_9,x#components_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [__0,__1,__2,__3,__4,__5,__6,__7,__8,__9;int(1..)]),WatchedLiteral(x#components_3,5);int(1..)])
+

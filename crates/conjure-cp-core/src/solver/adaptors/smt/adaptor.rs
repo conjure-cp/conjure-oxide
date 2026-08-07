@@ -13,8 +13,9 @@ use super::store::*;
 use super::theories::*;
 
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
+use crate::representation::util::try_up;
 use crate::rule_engine::rewrite_model_with_configured_rewriter;
-use crate::settings::{Rewriter, current_rewriter, set_current_rewriter};
+use crate::settings::{RewriteConfig, Rewriter, current_rewriter, set_current_rewriter};
 use crate::{Model, solver::*};
 
 const MINIMUM_Z3_VERSION: &str = "4.8.12";
@@ -161,10 +162,6 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         })
         .collect_vec();
 
-    if representations.is_empty() {
-        return;
-    }
-
     let mut solution_btree = solution
         .clone()
         .into_iter()
@@ -175,6 +172,15 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         };
         solution.insert(name.clone(), value.clone());
         solution_btree.insert(name, value);
+    }
+
+    for (_, declaration) in symbols.iter_local() {
+        if declaration.reprs().is_empty() {
+            continue;
+        }
+        if let Ok(value) = try_up(declaration.clone(), solution) {
+            solution.insert(declaration.name().clone(), value);
+        }
     }
 }
 
@@ -554,7 +560,7 @@ mod tests {
     fn adding_dominance_constraint_rules_out_solution_dominated_by_prior_solution() {
         let theory_config = TheoryConfig::default();
         let context = Context::new_ptr_empty(SolverFamily::Smt(theory_config));
-        set_current_rewriter(Rewriter::Naive);
+        set_current_rewriter(Rewriter::Rewrite(RewriteConfig::baseline()));
 
         let x = Name::User("x".into());
         let y = Name::User("y".into());

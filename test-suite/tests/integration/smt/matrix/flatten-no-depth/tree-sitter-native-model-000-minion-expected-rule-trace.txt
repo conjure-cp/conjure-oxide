@@ -1,0 +1,143 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
+
+such that
+
+allDifferent(flatten(a)),
+flatten(a)[1] = b[1],
+flatten(a)[2] = b[2],
+flatten(a)[3] = b[3],
+flatten(a)[4] = b[4]
+
+--
+
+allDifferent(flatten(a)),
+flatten(a)[1] = b[1],
+flatten(a)[2] = b[2],
+flatten(a)[3] = b[3],
+flatten(a)[4] = b[4]
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+allDifferent(flatten(a)),
+flatten(a)[1] = b[1],
+flatten(a)[2] = b[2],
+flatten(a)[3] = b[3],
+flatten(a)[4] = b[4]
+new variables:
+  find a#components_1: int(1..4)
+  find a#components_2: int(1..4)
+  find a#components_3: int(1..4)
+  find a#components_4: int(1..4)
+  find b#components_1: int(1..4)
+  find b#components_2: int(1..4)
+  find b#components_3: int(1..4)
+  find b#components_4: int(1..4)
+
+--
+
+flatten(a)[1]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a[1, 1]
+
+--
+
+flatten(a)[2]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a[1, 2]
+
+--
+
+flatten(a)[3]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a[2, 1]
+
+--
+
+flatten(a)[4]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a[2, 2]
+
+--
+
+a[1, 1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_1
+
+--
+
+a[1, 2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_2
+
+--
+
+a[2, 1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_3
+
+--
+
+a[2, 2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_4
+
+--
+
+b[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+b#components_1
+
+--
+
+b[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+b#components_2
+
+--
+
+b[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+b#components_3
+
+--
+
+b[4]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+b#components_4
+
+--
+
+flatten(a)
+   ~~> flatten_matrix_components ([("ReprMatrixComponents", 5000)])
+[a#components_1,a#components_2,a#components_3,a#components_4;int(1..)]
+
+--
+
+allDifferent([a#components_1,a#components_2,a#components_3,a#components_4;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([a#components_1, a#components_2, a#components_3, a#components_4])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
+find a#components_1: int(1..4)
+find a#components_2: int(1..4)
+find a#components_3: int(1..4)
+find a#components_4: int(1..4)
+find b#components_1: int(1..4)
+find b#components_2: int(1..4)
+find b#components_3: int(1..4)
+find b#components_4: int(1..4)
+
+such that
+
+__flat_alldiff([a#components_1, a#components_2, a#components_3, a#components_4]),
+a#components_1 = b#components_1,
+a#components_2 = b#components_2,
+a#components_3 = b#components_3,
+a#components_4 = b#components_4
+

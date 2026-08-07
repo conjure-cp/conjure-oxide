@@ -1,0 +1,55 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..3)] of int(1..3)
+
+such that
+
+sum([a[1],a[2];int(1..)]) = a[3]
+
+--
+
+sum([a[1],a[2];int(1..)]) = a[3]
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([a[1],a[2];int(1..)]) = a[3]
+new variables:
+  find a#components_1: int(1..3)
+  find a#components_2: int(1..3)
+  find a#components_3: int(1..3)
+
+--
+
+a[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_3
+
+--
+
+a[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_1
+
+--
+
+a[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_2
+
+--
+
+sum([a#components_1,a#components_2;int(1..)]) = a#components_3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a#components_1, a#components_2], a#components_3),SumGeq([a#components_1, a#components_2], a#components_3);int(1..)])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..3)] of int(1..3)
+find a#components_1: int(1..3)
+find a#components_2: int(1..3)
+find a#components_3: int(1..3)
+
+such that
+
+and([SumLeq([a#components_1, a#components_2], a#components_3),SumGeq([a#components_1, a#components_2], a#components_3);int(1..)])
+

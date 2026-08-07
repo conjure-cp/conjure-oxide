@@ -1,0 +1,23 @@
+Model before rewriting:
+
+find x: set (size 2) of set (maxSize 3) of int(1..2)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#packed_1: int(0..5)
+
+--
+
+Final model:
+
+find x: set{packed} (size 2) of set (maxSize 3) of int(1..2)
+find x#packed_1: int(0..5)
+
+such that
+
+true
+

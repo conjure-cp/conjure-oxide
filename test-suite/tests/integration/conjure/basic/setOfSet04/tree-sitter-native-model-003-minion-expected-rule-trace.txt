@@ -1,0 +1,38 @@
+Model before rewriting:
+
+find x: set (size 2) of set (maxSize 3) of int(1..2)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+new constraints:
+  sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) = 2
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4], 2),SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4], 2);int(1..)])
+
+--
+
+Final model:
+
+find x: set{occurrence} (size 2) of set (maxSize 3) of int(1..2)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+
+such that
+
+true,
+and([SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4], 2),SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4], 2);int(1..)])
+

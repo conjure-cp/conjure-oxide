@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Field, Literal as Lit, Metadata,
+    Moo,
     comprehension::{Comprehension, ComprehensionQualifier},
     matrix,
 };
@@ -8,6 +9,346 @@ use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
+use uniplate::Uniplate;
+
+use super::partial_eval::{run_partial_evaluator, run_partial_evaluator_local};
+
+pub(crate) fn factorial_i32(n: i32) -> Option<i32> {
+    if n < 0 {
+        return None;
+    }
+
+    (1..=n).try_fold(1_i32, i32::checked_mul)
+}
+
+fn eval_constant_set(expr: &Expr) -> Option<Vec<Lit>> {
+    let Lit::AbstractLiteral(AbstractLiteral::Set(values)) = eval_constant(expr)? else {
+        return None;
+    };
+
+    Some(values)
+}
+
+/// Simplify an expression to a constant using only constants already present at this node.
+///
+/// This is intended for the rewriter: child expressions should have been simplified by the
+/// scheduler before their parent is considered. Use [`eval_constant`] when a caller explicitly
+/// wants recursive evaluation of an arbitrary expression.
+pub fn eval_constant_local(expr: &Expr) -> Option<Lit> {
+    if !has_only_local_constant_operands(expr) {
+        return None;
+    }
+
+    eval_constant(expr)
+}
+
+/// Applies the evaluator normalisation hook to a focused expression.
+///
+/// Evaluators are privileged simplifications, not ordinary rewrite rules. The rewriter invokes
+/// this hook before normal rule scheduling and immediately after a successful ordinary rule,
+/// walking upward while evaluation keeps simplifying parents. This exploits the semantic property
+/// that local constant and partial evaluation is always preferable to trying lower-priority rules,
+/// while avoiding millions of failed universal `constant_evaluator` rule attempts.
+///
+/// Away from [`Expr::Root`], the hook is pure and local: it does not create auxiliaries, mutate
+/// the symbol table, or recursively inspect arbitrary descendants. Children are expected to have
+/// been normalised by the scheduler before their parent is evaluated.
+///
+/// At [`Expr::Root`], a selective deep pass runs over top-level constraints (skipping solver-flat
+/// forms). Callers that know which root child changed should prefer
+/// [`normalise_root_selective_deep_expr`] with `only_constraint` so sibling constraints are not
+/// re-traversed. Local root-list reshaping (flatten top-level `and`) is intentionally deferred to
+/// [`finish_root_evaluator_normalisation`]: doing it mid-loop materialises huge root lists and
+/// explodes worklist rule attempts.
+pub fn normalise_evaluator_local(expr: &Expr) -> Option<Expr> {
+    match expr {
+        Expr::Root(_, exprs) => normalise_root_constraints_selective_deep(exprs, None),
+        // Focused `AbstractLiteral` literals must not repeatedly refold to themselves; parents
+        // still see the `Atomic(Literal(...))` form when the hook walks upward.
+        Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(_))) => None,
+        _ => fold_constant_expression_local(expr).or_else(|| {
+            run_partial_evaluator_local(expr)
+                .ok()
+                .map(|reduction| reduction.new_expression)
+        }),
+    }
+    .filter(|new_expr| new_expr != expr)
+}
+
+/// Applies local root-list partial evaluation (strip `true`, propagate `false`, flatten `and`s).
+pub fn normalise_root_constraints_local(exprs: &[Expr]) -> Option<Expr> {
+    if exprs.is_empty() {
+        return Some(Expr::Root(Metadata::new(), vec![true.into()]));
+    }
+
+    let root = Expr::Root(Metadata::new(), exprs.to_vec());
+    run_partial_evaluator_local(&root)
+        .ok()
+        .map(|reduction| reduction.new_expression)
+        .filter(|new_root| new_root != &root)
+}
+
+/// Deep-normalises selected non-flat top-level constraints in `root`.
+pub fn normalise_root_selective_deep_expr(
+    root: &Expr,
+    only_constraint: Option<usize>,
+) -> Option<Expr> {
+    let Expr::Root(_, exprs) = root else {
+        return None;
+    };
+
+    normalise_root_constraints_selective_deep(exprs, only_constraint)
+}
+
+pub fn normalise_root_constraints_deep(root: &Expr) -> Option<Expr> {
+    normalise_root_selective_deep_expr(root, None)
+}
+
+/// Finishes evaluator normalisation on the model root after rewriting completes.
+///
+/// Applies local root-list partial evaluation to a fixpoint (strip `true`, propagate `false`,
+/// flatten top-level `and`). Deep evaluation of individual constraints already runs during
+/// rewriting via [`normalise_evaluator_local`] / [`normalise_root_selective_deep_expr`]; this
+/// finish pass must not be inlined into the mid-loop Root hook because flattening `and` early
+/// explodes worklist size on large expansions.
+pub fn finish_root_evaluator_normalisation(root: &Expr) -> Option<Expr> {
+    let Expr::Root(_, exprs) = root else {
+        return None;
+    };
+
+    let mut current = Expr::Root(Metadata::new(), exprs.clone());
+    let mut changed = false;
+    while let Expr::Root(_, current_exprs) = &current {
+        let Some(next) = normalise_root_constraints_local(current_exprs) else {
+            break;
+        };
+        current = next;
+        changed = true;
+    }
+    changed.then_some(current)
+}
+
+fn normalise_root_constraints_selective_deep(
+    exprs: &[Expr],
+    only_constraint: Option<usize>,
+) -> Option<Expr> {
+    if exprs.is_empty() {
+        return Some(Expr::Root(Metadata::new(), vec![true.into()]));
+    }
+
+    let mut changed = false;
+    let constraints = exprs
+        .iter()
+        .enumerate()
+        .map(|(index, constraint)| {
+            if only_constraint.is_some_and(|only| only != index) {
+                return constraint.clone();
+            }
+
+            if constraint_skips_deep_root_normalisation(constraint) {
+                return constraint.clone();
+            }
+
+            if let Some(normalised) = normalise_constraint_deep_to_fixpoint(constraint) {
+                changed = true;
+                normalised
+            } else {
+                constraint.clone()
+            }
+        })
+        .collect();
+
+    changed.then(|| Expr::Root(Metadata::new(), constraints))
+}
+
+/// Whether a top-level constraint has already been lowered to solver-flat form.
+///
+/// Deep root normalisation must not rewrite these: doing so can disturb auxiliaries introduced
+/// for Minion (for example chained `FlatProductEq` constraints) or repeat expensive work.
+fn constraint_skips_deep_root_normalisation(expr: &Expr) -> bool {
+    match expr {
+        Expr::FlatProductEq(_, _, _, _)
+        | Expr::FlatSumLeq(_, _, _)
+        | Expr::FlatSumGeq(_, _, _)
+        | Expr::FlatMinEq(_, _, _)
+        | Expr::FlatIneq(_, _, _, _)
+        | Expr::FlatMinusEq(_, _, _)
+        | Expr::FlatAbsEq(_, _, _)
+        | Expr::FlatAllDiff(_, _)
+        | Expr::FlatWeightedSumLeq(_, _, _, _)
+        | Expr::FlatWeightedSumGeq(_, _, _, _)
+        | Expr::FlatWatchedLiteral(_, _, _)
+        | Expr::MinionDivEqUndefZero(_, _, _, _)
+        | Expr::MinionModuloEqUndefZero(_, _, _, _)
+        | Expr::MinionPow(_, _, _, _)
+        | Expr::MinionReify(_, _, _)
+        | Expr::MinionReifyImply(_, _, _)
+        | Expr::MinionWInIntervalSet(_, _, _)
+        | Expr::MinionWInSet(_, _, _)
+        | Expr::MinionElementOne(_, _, _, _) => true,
+        Expr::AuxDeclaration(_, _, inner) => matches!(
+            inner.as_ref(),
+            Expr::Product(_, _) | Expr::FlatProductEq(_, _, _, _)
+        ),
+        _ => false,
+    }
+}
+
+fn fold_constant_expression_deep(expr: &Expr) -> Option<Expr> {
+    let constant = eval_constant(expr)?;
+    fold_constant_expression(expr, constant).filter(|folded| folded != expr)
+}
+
+fn normalise_constraint_deep_to_fixpoint(constraint: &Expr) -> Option<Expr> {
+    if matches!(constraint, Expr::Atomic(_, Atom::Literal(_))) {
+        return None;
+    }
+
+    let mut current = constraint.clone();
+    let mut changed = false;
+
+    while let Some(step) = fold_constant_expression_deep(&current)
+        .or_else(|| partial_evaluator_deep_step(&current))
+        .filter(|step| step != &current)
+    {
+        current = step;
+        changed = true;
+    }
+
+    changed
+        .then_some(current)
+        .filter(|current| current != constraint)
+}
+
+fn partial_evaluator_deep_step(expr: &Expr) -> Option<Expr> {
+    run_partial_evaluator(expr)
+        .ok()
+        .map(|reduction| reduction.new_expression)
+        .filter(|new_expr| new_expr != expr)
+}
+
+/// Constant-folds `expr` locally unless doing so would inline a referenced matrix literal.
+fn fold_constant_expression_local(expr: &Expr) -> Option<Expr> {
+    let constant = match expr {
+        // Comprehensions are atomic in arena traversal; evaluate them in one step here rather than
+        // via operand checks that would repeat the same work for every parent.
+        Expr::Comprehension(_, _) => eval_constant(expr)?,
+        _ => eval_constant_local(expr)?,
+    };
+    fold_constant_expression(expr, constant).filter(|folded| folded != expr)
+}
+
+fn fold_constant_expression(expr: &Expr, constant: Lit) -> Option<Expr> {
+    if let Expr::Atomic(_, Atom::Literal(existing)) = expr
+        && existing == &constant
+    {
+        return None;
+    }
+
+    if matches!(
+        (expr, constant.clone()),
+        (
+            Expr::Atomic(_, Atom::Reference(_)),
+            Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _))
+        )
+    ) {
+        return None;
+    }
+
+    let folded = Expr::Atomic(Metadata::new(), Atom::Literal(constant));
+    if let Expr::TypeAnnotation(_, _, domain) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::TypeAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain.clone(),
+        ));
+    }
+
+    if let Expr::DomainAnnotation(_, _, domain) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain.clone(),
+        ));
+    }
+
+    if let Expr::Comprehension(_, comprehension) = expr
+        && let Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) = &folded
+        && elems.is_empty()
+        && let Some(domain) = comprehension.domain_of()
+    {
+        return Some(Expr::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(folded),
+            domain,
+        ));
+    }
+
+    Some(folded)
+}
+
+fn has_only_local_constant_operands(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(_)) => true,
+        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant().is_some(),
+        Expr::AbstractLiteral(_, lit) => abstract_literal_children_are_local_constants(lit),
+        Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
+            is_local_constant_expr(inner.as_ref())
+        }
+        Expr::Comprehension(_, _) | Expr::AbstractComprehension(_, _) | Expr::Root(_, _) => false,
+        _ => expr.children().iter().all(is_local_constant_expr),
+    }
+}
+
+fn is_local_constant_expr(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(_)) => true,
+        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant().is_some(),
+        Expr::AbstractLiteral(_, lit) => abstract_literal_children_are_local_constants(lit),
+        Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
+            is_local_constant_expr(inner.as_ref())
+        }
+        _ => false,
+    }
+}
+
+fn abstract_literal_children_are_local_constants(lit: &AbstractLiteral<Expr>) -> bool {
+    match lit {
+        AbstractLiteral::Set(items)
+        | AbstractLiteral::MSet(items)
+        | AbstractLiteral::Tuple(items)
+        | AbstractLiteral::Matrix(items, _) => items.iter().all(is_local_constant_expr),
+        AbstractLiteral::Record(fields) => fields
+            .iter()
+            .all(|field| is_local_constant_expr(&field.value)),
+        AbstractLiteral::Sequence(items) => items.iter().all(is_local_constant_expr),
+        AbstractLiteral::Function(items) => items
+            .iter()
+            .all(|(from, to)| is_local_constant_expr(from) && is_local_constant_expr(to)),
+        AbstractLiteral::Relation(items) => items
+            .iter()
+            .all(|tuple| tuple.iter().all(is_local_constant_expr)),
+        AbstractLiteral::Partition(parts) => parts
+            .iter()
+            .all(|part| part.iter().all(is_local_constant_expr)),
+        AbstractLiteral::Variant(field) => is_local_constant_expr(&field.value),
+    }
+}
 
 /// Simplify an expression to a constant if possible
 /// Returns:
@@ -15,95 +356,114 @@ use std::collections::HashSet;
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
-        Expr::Supset(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let a_set: HashSet<Lit> = a.iter().cloned().collect();
-                let b_set: HashSet<Lit> = b.iter().cloned().collect();
+        Expr::TypeAnnotation(_, expr, _) | Expr::DomainAnnotation(_, expr, _) => {
+            eval_constant(expr)
+        }
+        Expr::Supset(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
 
-                if a_set.difference(&b_set).count() > 0 {
-                    Some(Lit::Bool(a_set.is_superset(&b_set)))
-                } else {
-                    Some(Lit::Bool(false))
-                }
+            let a_set: HashSet<Lit> = a.iter().cloned().collect();
+            let b_set: HashSet<Lit> = b.iter().cloned().collect();
+
+            if a_set.difference(&b_set).count() > 0 {
+                Some(Lit::Bool(a_set.is_superset(&b_set)))
+            } else {
+                Some(Lit::Bool(false))
             }
-            _ => None,
-        },
-        Expr::SupsetEq(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => Some(Lit::Bool(
+        }
+        Expr::SupsetEq(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            Some(Lit::Bool(
                 a.iter()
                     .cloned()
                     .collect::<HashSet<Lit>>()
                     .is_superset(&b.iter().cloned().collect::<HashSet<Lit>>()),
-            )),
-            _ => None,
-        },
-        Expr::Subset(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let a_set: HashSet<Lit> = a.iter().cloned().collect();
-                let b_set: HashSet<Lit> = b.iter().cloned().collect();
+            ))
+        }
+        Expr::Subset(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
 
-                if b_set.difference(&a_set).count() > 0 {
-                    Some(Lit::Bool(a_set.is_subset(&b_set)))
-                } else {
-                    Some(Lit::Bool(false))
-                }
+            let a_set: HashSet<Lit> = a.iter().cloned().collect();
+            let b_set: HashSet<Lit> = b.iter().cloned().collect();
+
+            if b_set.difference(&a_set).count() > 0 {
+                Some(Lit::Bool(a_set.is_subset(&b_set)))
+            } else {
+                Some(Lit::Bool(false))
             }
-            _ => None,
-        },
-        Expr::SubsetEq(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => Some(Lit::Bool(
+        }
+        Expr::SubsetEq(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            Some(Lit::Bool(
                 a.iter()
                     .cloned()
                     .collect::<HashSet<Lit>>()
                     .is_subset(&b.iter().cloned().collect::<HashSet<Lit>>()),
-            )),
-            _ => None,
-        },
-        Expr::Intersect(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let mut res: Vec<Lit> = Vec::new();
-                for lit in a.iter() {
-                    if b.contains(lit) && !res.contains(lit) {
-                        res.push(lit.clone());
-                    }
+            ))
+        }
+        Expr::Intersect(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            let mut res: Vec<Lit> = Vec::new();
+            for lit in a {
+                if b.contains(&lit) && !res.contains(&lit) {
+                    res.push(lit);
                 }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
             }
-            _ => None,
-        },
-        Expr::Union(_, a, b) => match (a.as_ref(), b.as_ref()) {
-            (
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
-                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let mut res: Vec<Lit> = Vec::new();
-                for lit in a.iter() {
-                    res.push(lit.clone());
-                }
-                for lit in b.iter() {
-                    if !res.contains(lit) {
-                        res.push(lit.clone());
-                    }
-                }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+        }
+        Expr::Union(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            let mut res: Vec<Lit> = Vec::new();
+            for lit in a {
+                res.push(lit);
             }
-            _ => None,
-        },
+            for lit in b {
+                if !res.contains(&lit) {
+                    res.push(lit);
+                }
+            }
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+        }
         Expr::In(_, a, b) => {
             if let (
                 Expr::Atomic(_, Atom::Literal(Lit::Int(c))),
@@ -139,15 +499,14 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::AbstractComprehension(_, _) => None,
         Expr::RecordField(_, rec, fld_name) => {
-            if let Expr::Atomic(
-                _,
-                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Record(ents))),
-            ) = rec.as_ref()
-            {
-                for Field { name, value } in ents {
-                    if name.eq(fld_name) {
-                        return Some(value.clone());
-                    }
+            let Lit::AbstractLiteral(AbstractLiteral::Record(ents)) = eval_constant(rec.as_ref())?
+            else {
+                return None;
+            };
+
+            for Field { name, value } in ents {
+                if name.eq(fld_name) {
+                    return Some(value);
                 }
             }
             None
@@ -269,6 +628,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Table(_, _, _) => None,
         Expr::NegativeTable(_, _, _) => None,
+        Expr::AtLeast(_, _, _, _) => None,
+        Expr::AtMost(_, _, _, _) => None,
+        Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => None,
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead
@@ -332,6 +694,16 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             })?;
 
             Some(Lit::Bool(sum >= a.try_into().ok()?))
+        }
+        Expr::FlatMinEq(_, vars, result) => {
+            let min = vars
+                .iter()
+                .try_fold(None, |acc: Option<i32>, atom: &Atom| {
+                    let n: i32 = atom.try_into().ok()?;
+                    Some(Some(acc.map_or(n, |m| m.min(n))))
+                })??;
+            let result: i32 = result.try_into().ok()?;
+            Some(Lit::Bool(min == result))
         }
         Expr::Min(_, e) => {
             opt_vec_lit_op::<i32, i32>(|e| e.iter().min().copied(), e.as_ref()).map(Lit::Int)
@@ -534,7 +906,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Lit::Int(a) => Some(Lit::Int(-a)),
             _ => None,
         },
-        Expr::Factorial(_, _) => None,
+        Expr::Factorial(_, a) => match eval_constant(a.as_ref())? {
+            Lit::Int(a) => factorial_i32(a).map(Lit::Int),
+            _ => None,
+        },
         Expr::Minus(_, a, b) => bin_op::<i32, i32>(|a, b| a - b, a, b).map(Lit::Int),
         Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
@@ -646,7 +1021,20 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Participants(_, _) => todo!(),
         Expr::Party(_, _, _) => todo!(),
         Expr::Parts(_, _) => todo!(),
-        Expr::Card(_, _) => todo!(),
+        Expr::Card(_, collection) => {
+            let Lit::AbstractLiteral(collection) = eval_constant(collection)? else {
+                return None;
+            };
+            let length = match collection {
+                AbstractLiteral::Set(values)
+                | AbstractLiteral::MSet(values)
+                | AbstractLiteral::Matrix(values, _) => values.len(),
+                AbstractLiteral::Function(entries) => entries.len(),
+                AbstractLiteral::Relation(entries) => entries.len(),
+                _ => return None,
+            };
+            i32::try_from(length).ok().map(Lit::Int)
+        }
         Expr::LexLt(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
@@ -703,6 +1091,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             })?;
             Some(lt.into())
         }
+        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => None,
     }
 }
 
@@ -889,11 +1278,20 @@ fn eval_comprehension_qualifiers(
     Some(())
 }
 
-fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
-    match eval_constant(expr)? {
+/// Values for a constant collection expression used during constant folding.
+///
+/// This does not enumerate decision-variable domains; quantification over decisions is not
+/// unrolled here.
+pub fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
+    generator_values_from_constant_collection(&eval_constant(expr)?)
+}
+
+pub(crate) fn generator_values_from_constant_collection(lit: &Lit) -> Option<Vec<Lit>> {
+    match lit {
         Lit::AbstractLiteral(AbstractLiteral::Set(values))
         | Lit::AbstractLiteral(AbstractLiteral::MSet(values))
-        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values),
+        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values.clone()),
+        Lit::AbstractLiteral(AbstractLiteral::Matrix(values, _)) => Some(values.clone()),
         Lit::AbstractLiteral(list) => list.unwrap_list().cloned(),
         _ => None,
     }
@@ -927,4 +1325,138 @@ fn with_temporary_quantified_binding<T>(
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::matrix_expr;
+
+    fn int_lit(value: i32) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(value)))
+    }
+
+    fn bool_lit(value: bool) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
+    }
+
+    fn root(exprs: Vec<Expr>) -> Expr {
+        Expr::Root(Metadata::new(), exprs)
+    }
+
+    #[test]
+    fn local_root_partial_eval_strips_true_constraints() {
+        let expr = root(vec![bool_lit(true), int_lit(1)]);
+        let Expr::Root(_, exprs) = &expr else {
+            panic!("expected root");
+        };
+        let normalised = normalise_root_constraints_local(exprs).unwrap();
+        assert_eq!(normalised, root(vec![int_lit(1)]));
+    }
+
+    #[test]
+    fn local_root_partial_eval_propagates_false() {
+        let expr = root(vec![bool_lit(false), int_lit(1)]);
+        let Expr::Root(_, exprs) = &expr else {
+            panic!("expected root");
+        };
+        let normalised = normalise_root_constraints_local(exprs).unwrap();
+        assert_eq!(normalised, root(vec![bool_lit(false)]));
+    }
+
+    #[test]
+    fn deep_root_normalisation_folds_ground_constraint() {
+        let expr = root(vec![Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_lit(1), int_lit(2), int_lit(3)]),
+        )]);
+        let normalised = normalise_root_constraints_deep(&expr).unwrap();
+        assert_eq!(normalised, root(vec![int_lit(6)]));
+    }
+
+    #[test]
+    fn deep_root_normalisation_applies_partial_eval_steps() {
+        let expr = root(vec![Expr::Or(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(false), int_lit(1)]),
+        )]);
+        let normalised = normalise_root_constraints_deep(&expr).unwrap();
+        assert_eq!(
+            normalised,
+            root(vec![Expr::Or(
+                Metadata::new(),
+                Moo::new(matrix_expr![int_lit(1)]),
+            )])
+        );
+    }
+
+    #[test]
+    fn selective_deep_root_normalisation_skips_solver_flat_constraints() {
+        let flat = Expr::FlatProductEq(
+            Metadata::new(),
+            Moo::new(Atom::Literal(Lit::Int(1))),
+            Moo::new(Atom::Literal(Lit::Int(2))),
+            Moo::new(Atom::Literal(Lit::Int(3))),
+        );
+        let expr = root(vec![bool_lit(true), flat]);
+        assert!(normalise_root_constraints_deep(&expr).is_none());
+    }
+
+    #[test]
+    fn deep_root_normalisation_terminates_on_already_folded_constraint() {
+        let expr = root(vec![int_lit(5)]);
+        assert!(normalise_root_constraints_deep(&expr).is_none());
+    }
+
+    #[test]
+    fn local_evaluator_normalisation_terminates_on_already_folded_literal() {
+        let expr = int_lit(5);
+        assert!(normalise_evaluator_local(&expr).is_none());
+    }
+
+    #[test]
+    fn constant_set_cardinality_is_folded() {
+        let set = Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(vec![
+                Lit::Int(1),
+                Lit::Int(2),
+            ]))),
+        );
+        let cardinality = Expr::Card(Metadata::new(), Moo::new(set));
+
+        assert_eq!(eval_constant(&cardinality), Some(Lit::Int(2)));
+    }
+
+    #[test]
+    fn finish_root_normalisation_applies_local_root_rules() {
+        let expr = root(vec![bool_lit(true), int_lit(1)]);
+        let normalised = finish_root_evaluator_normalisation(&expr).unwrap();
+        assert_eq!(normalised, root(vec![int_lit(1)]));
+    }
+
+    #[test]
+    fn selective_deep_only_constraint_folds_target_index() {
+        let ground = Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_lit(1), int_lit(2), int_lit(3)]),
+        );
+        let untouched = Expr::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![int_lit(4), int_lit(5)]),
+        );
+        let expr = root(vec![ground, untouched.clone()]);
+        let normalised = normalise_root_selective_deep_expr(&expr, Some(0)).unwrap();
+        assert_eq!(normalised, root(vec![int_lit(6), untouched]));
+    }
+
+    #[test]
+    fn finish_root_normalisation_flattens_top_level_and() {
+        let expr = root(vec![Expr::And(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(true), int_lit(1), int_lit(2)]),
+        )]);
+        let normalised = finish_root_evaluator_normalisation(&expr).unwrap();
+        assert_eq!(normalised, root(vec![int_lit(1), int_lit(2)]));
+    }
 }

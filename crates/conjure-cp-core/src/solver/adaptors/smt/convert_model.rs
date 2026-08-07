@@ -38,6 +38,10 @@ pub fn load_model_impl(
             /// Ignore lettings, etc
             continue;
         };
+        if !decl.reprs().is_empty() {
+            /// This variable has a structured representation; ignore the source variable.
+            continue;
+        }
         if !symbols
             .representations_for(&name)
             .is_none_or(|reps| reps.is_empty())

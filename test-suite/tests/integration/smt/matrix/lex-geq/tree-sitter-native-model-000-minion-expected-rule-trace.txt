@@ -1,0 +1,69 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(a >=lex b),
+a[1] = 1
+
+--
+
+(a >=lex b)
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(b <=lex a)
+
+--
+
+(b <=lex a),
+a[1] = 1
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+(b <=lex a),
+a[1] = 1
+new variables:
+  find a#components_1: int(1..2)
+  find a#components_2: int(1..2)
+  find b#components_1: int(1..2)
+  find b#components_2: int(1..2)
+
+--
+
+a[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_1
+
+--
+
+a#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(a#components_1,1)
+
+--
+
+(b <=lex a)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+([b#components_1,b#components_2;int(1..2)] <=lex [a#components_1,a#components_2;int(1..2)])
+
+--
+
+([b#components_1,b#components_2;int(1..2)] <=lex [a#components_1,a#components_2;int(1..2)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([b#components_1, b#components_2], [a#components_1, a#components_2])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+find a#components_1: int(1..2)
+find a#components_2: int(1..2)
+find b#components_1: int(1..2)
+find b#components_2: int(1..2)
+
+such that
+
+FlatLexLeq([b#components_1, b#components_2], [a#components_1, a#components_2]),
+WatchedLiteral(a#components_1,1)
+

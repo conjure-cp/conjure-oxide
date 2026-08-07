@@ -1,0 +1,206 @@
+Model before rewriting:
+
+find a: set (maxSize 2) of int(1..2)
+find b: set (maxSize 2) of int(1..2)
+
+such that
+
+(a subset b)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#packed_1: int(0..3)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#packed_1: int(0..3)
+
+--
+
+(a subset b)
+   ~~> subset_to_subset_eq_neq ([("Base", 8700)])
+and([(a subsetEq b),a != b;int(1..)])
+
+--
+
+(a subsetEq b)
+   ~~> subseteq_packed ([("ReprGeneral", 9500)])
+and([or([!(or([and([1 = 1,__inDomain(a#packed_1,int(1, 3));int(1..)]),and([1 = 2,__inDomain(a#packed_1,int(2..3));int(1..)]);int(1..)])),1 in b;int(1..)]),or([!(or([and([2 = 1,__inDomain(a#packed_1,int(1, 3));int(1..)]),and([2 = 2,__inDomain(a#packed_1,int(2..3));int(1..)]);int(1..)])),2 in b;int(1..)]);int(1..)])
+
+--
+
+1 in b
+   ~~> membership_packed ([("ReprGeneral", 9500)])
+or([and([1 = 1,__inDomain(b#packed_1,int(1, 3));int(1..)]),and([1 = 2,__inDomain(b#packed_1,int(2..3));int(1..)]);int(1..)])
+
+--
+
+2 in b
+   ~~> membership_packed ([("ReprGeneral", 9500)])
+or([and([2 = 1,__inDomain(b#packed_1,int(1, 3));int(1..)]),and([2 = 2,__inDomain(b#packed_1,int(2..3));int(1..)]);int(1..)])
+
+--
+
+and([and([or([!(or([and([__inDomain(a#packed_1,int(1, 3));int(1..)]);int(1..)])),or([and([__inDomain(b#packed_1,int(1, 3));int(1..)]);int(1..)]);int(1..)]),or([!(or([and([__inDomain(a#packed_1,int(2..3));int(1..)]);int(1..)])),or([and([__inDomain(b#packed_1,int(2..3));int(1..)]);int(1..)]);int(1..)]);int(1..)]),a != b;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([!(or([and([__inDomain(a#packed_1,int(1, 3));int(1..)]);int(1..)])),or([and([__inDomain(b#packed_1,int(1, 3));int(1..)]);int(1..)]);int(1..)]),or([!(or([and([__inDomain(a#packed_1,int(2..3));int(1..)]);int(1..)])),or([and([__inDomain(b#packed_1,int(2..3));int(1..)]);int(1..)]);int(1..)]),a != b;int(1..)])
+
+--
+
+or([and([__inDomain(b#packed_1,int(1, 3));int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__inDomain(b#packed_1,int(1, 3));int(1..)])
+
+--
+
+or([and([__inDomain(b#packed_1,int(2..3));int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__inDomain(b#packed_1,int(2..3));int(1..)])
+
+--
+
+and([__inDomain(b#packed_1,int(1, 3));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__inDomain(b#packed_1,int(1, 3))
+
+--
+
+and([__inDomain(b#packed_1,int(2..3));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__inDomain(b#packed_1,int(2..3))
+
+--
+
+or([and([__inDomain(a#packed_1,int(1, 3));int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__inDomain(a#packed_1,int(1, 3));int(1..)])
+
+--
+
+or([and([__inDomain(a#packed_1,int(2..3));int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__inDomain(a#packed_1,int(2..3));int(1..)])
+
+--
+
+and([__inDomain(a#packed_1,int(1, 3));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__inDomain(a#packed_1,int(1, 3))
+
+--
+
+and([__inDomain(a#packed_1,int(2..3));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__inDomain(a#packed_1,int(2..3))
+
+--
+
+a != b
+   ~~> neq_not_eq_sets ([("Base", 8700)])
+!(b = a)
+
+--
+
+b = a
+   ~~> eq_packed ([("ReprGeneral", 9500)])
+b#packed_1 = a#packed_1
+
+--
+
+!(b#packed_1 = a#packed_1)
+   ~~> negated_eq_to_neq ([("Base", 8800)])
+b#packed_1 != a#packed_1
+
+--
+
+__inDomain(b#packed_1,int(1, 3))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(b#packed_1,[1,1,3,3])
+
+--
+
+__inDomain(b#packed_1,int(2..3))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(b#packed_1,[2,3])
+
+--
+
+__inDomain(a#packed_1,int(1, 3))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(a#packed_1,[1,1,3,3])
+
+--
+
+__inDomain(a#packed_1,int(2..3))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(a#packed_1,[2,3])
+
+--
+
+!(__minion_w_inintervalset(a#packed_1,[1,1,3,3]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__0)
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux __minion_w_inintervalset(a#packed_1,[1,1,3,3])
+
+--
+
+__0 =aux __minion_w_inintervalset(a#packed_1,[1,1,3,3])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(a#packed_1,[1,1,3,3]), __0)
+
+--
+
+!(__minion_w_inintervalset(a#packed_1,[2,3]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__1)
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux __minion_w_inintervalset(a#packed_1,[2,3])
+
+--
+
+__1 =aux __minion_w_inintervalset(a#packed_1,[2,3])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__minion_w_inintervalset(a#packed_1,[2,3]), __1)
+
+--
+
+!(__0)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__0,false)
+
+--
+
+!(__1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__1,false)
+
+--
+
+Final model:
+
+find a: set{packed} (maxSize 2) of int(1..2)
+find b: set{packed} (maxSize 2) of int(1..2)
+find a#packed_1: int(0..3)
+find b#packed_1: int(0..3)
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+and([or([WatchedLiteral(__0,false),__minion_w_inintervalset(b#packed_1,[1,1,3,3]);int(1..)]),or([WatchedLiteral(__1,false),__minion_w_inintervalset(b#packed_1,[2,3]);int(1..)]),b#packed_1 != a#packed_1;int(1..)]),
+Reify(__minion_w_inintervalset(a#packed_1,[1,1,3,3]), __0),
+Reify(__minion_w_inintervalset(a#packed_1,[2,3]), __1)
+

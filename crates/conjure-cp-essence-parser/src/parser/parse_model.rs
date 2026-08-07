@@ -13,6 +13,7 @@ use super::ParseContext;
 use super::dominance::parse_dominance_relation;
 use super::find::{parse_find_statement, parse_given_statement};
 use super::letting::parse_letting_statement;
+use super::objective::parse_objective_statement;
 use super::util::{TypecheckingContext, get_tree};
 use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
@@ -129,11 +130,14 @@ pub fn parse_essence_with_context_and_map(
             "single_line_comment" => {}
             "language_declaration" => {}
             "find_statement" => {
-                let var_hashmap = parse_find_statement(&mut ctx, statement)?;
-                for (name, domain) in var_hashmap {
-                    model
-                        .symbols_mut()
-                        .insert(DeclarationPtr::new_find(name, domain));
+                let parsed = parse_find_statement(&mut ctx, statement)?;
+                for (name, domain) in parsed.declarations {
+                    let decl = if parsed.auxiliary {
+                        DeclarationPtr::new_find_auxiliary(name, domain)
+                    } else {
+                        DeclarationPtr::new_find(name, domain)
+                    };
+                    model.symbols_mut().insert(decl);
                 }
             }
             "given_statement" => {
@@ -150,6 +154,16 @@ pub fn parse_essence_with_context_and_map(
                     continue;
                 };
                 model.add_constraint(expr);
+            }
+            "where_statement" => {
+                ctx.typechecking_context = TypecheckingContext::Boolean;
+                let mut cursor = statement.walk();
+                for condition in statement.named_children(&mut cursor) {
+                    let Some(expr) = parse_expression(&mut ctx, condition)? else {
+                        continue;
+                    };
+                    model.add_instantiation_condition(expr);
+                }
             }
             "language_label" => {}
             "letting_statement" => {
@@ -170,6 +184,19 @@ pub fn parse_essence_with_context_and_map(
                     continue;
                 }
                 model.dominance = Some(dominance);
+            }
+            "objective_statement" => {
+                let Some(objective) = parse_objective_statement(&mut ctx, &statement)? else {
+                    continue;
+                };
+                if model.objective.is_some() {
+                    ctx.record_error(RecoverableParseError::new(
+                        "Duplicate objective statement".to_string(),
+                        None,
+                    ));
+                    continue;
+                }
+                model.objective = Some(objective);
             }
             _ => {
                 ctx.record_error(RecoverableParseError::new(
@@ -213,7 +240,9 @@ mod test {
     #[allow(unused_imports)]
     use crate::parse_essence;
     #[allow(unused_imports)]
-    use conjure_cp_core::ast::{Atom, Expression, Metadata, Moo, Name};
+    use conjure_cp_core::ast::{
+        Atom, DeclarationKind, Expression, Metadata, Moo, Name, OXIDE_INT_MAX, OXIDE_INT_MIN,
+    };
     #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
     #[allow(unused_imports)]
@@ -270,6 +299,38 @@ mod test {
     }
 
     #[test]
+    pub fn test_parse_bare_int_domain_is_full() {
+        let src = "given a : int";
+        let (model, _source_map) = parse_essence(src).unwrap();
+
+        let st = model.symbols();
+        let a = st.lookup(&Name::user("a")).unwrap();
+        assert_eq!(a.domain(), Some(domain_int!(OXIDE_INT_MIN..OXIDE_INT_MAX)));
+    }
+
+    #[test]
+    pub fn test_parse_empty_int_domain() {
+        let src = "find x : int()";
+        let (model, _source_map) = parse_essence(src).unwrap();
+
+        let st = model.symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        assert_eq!(x.domain(), Some(domain_int!()));
+    }
+
+    #[test]
+    pub fn test_pretty_int_domain_reference_bound_without_extra_parentheses() {
+        let src = "
+        given n : int
+        find x : int(1..n)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+
+        assert!(model.to_string().contains("find x: int(1..n)\n"));
+    }
+
+    #[test]
     pub fn test_parse_letting_index() {
         let src = "
         letting a be [ [ 1,2,3 ; int(1,2,4) ], [ 1,3,2 ; int(1,2,4) ], [ 3,2,1 ; int(1,2,4) ] ; int(-2..0) ]
@@ -292,6 +353,96 @@ mod test {
                 domain_int!(-2..0)
             )
         )
+    }
+
+    #[test]
+    pub fn value_letting_retains_symbolic_integer_domain() {
+        let src = "
+        given v: int(1..)
+        given b: int(1..)
+        given r: int(1..)
+        letting rv be r * v
+        letting ceilrv be rv / b + toInt(rv % b != 0)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let symbols = model.symbols();
+
+        for name in ["rv", "ceilrv"] {
+            let declaration = symbols.lookup(&Name::user(name)).unwrap();
+            assert!(
+                declaration.domain().is_some(),
+                "{name} should have a domain"
+            );
+            assert!(matches!(
+                declaration.kind().deref(),
+                DeclarationKind::ValueLetting(_, Some(_))
+            ));
+        }
+        drop(symbols);
+
+        let (params, _source_map) = parse_essence(
+            "
+            letting v be 8
+            letting b be 28
+            letting r be 14
+            ",
+        )
+        .unwrap();
+        let model = conjure_cp_core::instantiate::instantiate_model(model, params).unwrap();
+        let symbols = model.symbols();
+        let rv = symbols.lookup(&Name::user("rv")).unwrap();
+        assert_eq!(
+            rv.domain().unwrap().resolve().unwrap().as_ref(),
+            domain_int!(112).resolve().unwrap().as_ref()
+        );
+    }
+
+    #[test]
+    pub fn test_parse_table_in_quantifier() {
+        let src = "
+        find x, y, z : int(1..3)
+        such that forAll i : int(1..1) . table([x,y,z], [[1,2,3]])
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let constraints = model.constraints();
+        assert_eq!(constraints.len(), 1);
+
+        let Expression::And(_, comprehension_expr) = &constraints[0] else {
+            panic!("expected forAll to parse as an And over a comprehension");
+        };
+        let Expression::Comprehension(_, comprehension) = comprehension_expr.as_ref() else {
+            panic!("expected forAll body to be a comprehension");
+        };
+
+        assert!(matches!(
+            comprehension.return_expression,
+            Expression::Table(_, _, _)
+        ));
+    }
+
+    #[test]
+    pub fn test_parse_objective_statement() {
+        let src = "
+        find cost : int(0..10)
+        minimising cost
+        such that cost = 5
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        assert!(matches!(
+            model.objective.as_ref().unwrap().direction,
+            conjure_cp_core::ast::OptimiseDirection::Minimising
+        ));
+
+        let st = model.symbols();
+        let objective = model.objective.as_ref().unwrap();
+        let cost = st.lookup(&Name::user("cost")).unwrap();
+        assert_eq!(
+            objective.expression,
+            Expression::Atomic(Metadata::new(), Atom::new_ref(cost))
+        );
     }
 
     #[test]

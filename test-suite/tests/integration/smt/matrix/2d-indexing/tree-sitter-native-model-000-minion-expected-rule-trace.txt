@@ -1,0 +1,67 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+
+such that
+
+sum([m[0, 0],m[1, 1];int(1..)]) = 2,
+m[0, 1] = m[1, 0]
+
+--
+
+sum([m[0, 0],m[1, 1];int(1..)]) = 2,
+m[0, 1] = m[1, 0]
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([m[0, 0],m[1, 1];int(1..)]) = 2,
+m[0, 1] = m[1, 0]
+new variables:
+  find m#components_1: int(0..1)
+  find m#components_2: int(0..1)
+  find m#components_3: int(0..1)
+  find m#components_4: int(0..1)
+
+--
+
+m[0, 1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+m#components_2
+
+--
+
+m[1, 0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+m#components_3
+
+--
+
+m[0, 0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+m#components_1
+
+--
+
+m[1, 1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+m#components_4
+
+--
+
+sum([m#components_1,m#components_4;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([m#components_1, m#components_4], 2),SumGeq([m#components_1, m#components_4], 2);int(1..)])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(0..1), int(0..1)] of int(0..1)
+find m#components_1: int(0..1)
+find m#components_2: int(0..1)
+find m#components_3: int(0..1)
+find m#components_4: int(0..1)
+
+such that
+
+and([SumLeq([m#components_1, m#components_4], 2),SumGeq([m#components_1, m#components_4], 2);int(1..)]),
+m#components_2 = m#components_3
+

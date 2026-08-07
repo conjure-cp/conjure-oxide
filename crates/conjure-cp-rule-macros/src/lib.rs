@@ -1,19 +1,65 @@
+mod util;
+
+use itertools::Itertools;
 use proc_macro::TokenStream;
 
 use proc_macro2::Span;
-use quote::quote;
+use quote::{ToTokens, quote};
+use std::collections::HashMap;
 use syn::token::Comma;
 use syn::{
-    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, bracketed, parenthesized, parse::Parse,
-    parse::ParseStream, parse_macro_input,
+    ExprClosure, GenericParam, Ident, ItemFn, ItemImpl, ItemStruct, LitInt, LitStr, Result, Token,
+    TypePath, bracketed, parenthesized, parse::Parse, parse::ParseStream, parse_macro_input,
 };
 
+use crate::util::{rename_ident_in_impl, type_is_ident};
+use util::{build_serde_as_type, rename_fn, rename_ident_in_fn, type_contains_ident};
+
+/// Parsed arguments for `#[register_rule(...)]`.
+///
+/// The attribute syntax is:
+///
+/// ```text
+/// #[register_rule("RuleSet", priority)]
+/// #[register_rule(["RuleSetA", "RuleSetB"], priority)]
+/// #[register_rule("RuleSet", priority, [prefilter, ...])]
+/// ```
+///
+/// The optional prefilter list narrows where the scheduler attempts the rule:
+///
+/// ```text
+/// Variant              // focused expression must have this Expression variant
+/// * / Variant          // focused expression must have an immediate child with this variant
+/// Variant / Variant    // focused expression must have the left variant and an immediate child
+///                      // with the right variant
+/// Atomic / Reference   // focused expression must be an atomic reference
+/// Atomic / Literal     // focused expression must be an atomic literal
+/// ```
+///
+/// Items in the list are alternatives. For example, `[And / Comprehension, Or / Comprehension]`
+/// means `(And with direct Comprehension child) OR (Or with direct Comprehension child)`.
+///
+/// Omitting the prefilter list makes the rule universal. A universal rule is considered at every
+/// focused expression for its priority. In Rust source, write slash filters with spaces around the
+/// slash, e.g. `[* / Bubble]` or `[Atomic / Reference]`, to keep the syntax visually distinct.
+enum ParsedPrefilter {
+    /// Focused-expression variant prefilter, e.g. `Add` or `Sub`.
+    Variant(Ident),
+    /// Immediate-child variant prefilter, parsed from `* / Child`.
+    Child { child: Ident },
+    /// Paired focused-expression and immediate-child variant prefilter, parsed from `Root / Child`.
+    VariantChild { variant: Ident, child: Ident },
+    /// Atomic subvariant prefilter, parsed from `Atomic / Reference` or `Atomic / Literal`.
+    Atom(Ident),
+}
+
 struct RegisterRuleArgs {
+    /// Rule set names this rule belongs to.
     rule_sets: Vec<LitStr>,
+    /// Priority used for every listed rule set.
     priority: LitInt,
-    /// Expression variant names this rule applies to (e.g. `Add`, `Sub`).
-    /// Empty means applicable to all variants (universal rule).
-    applicable_variants: Vec<Ident>,
+    /// Complete prefilter alternatives. Empty means the rule is universal.
+    prefilters: Vec<ParsedPrefilter>,
 }
 
 impl Parse for RegisterRuleArgs {
@@ -22,7 +68,7 @@ impl Parse for RegisterRuleArgs {
             return Ok(RegisterRuleArgs {
                 rule_sets: Vec::new(),
                 priority: LitInt::new("0", Span::call_site()),
-                applicable_variants: Vec::new(),
+                prefilters: Vec::new(),
             });
         }
 
@@ -48,14 +94,44 @@ impl Parse for RegisterRuleArgs {
         let priority: LitInt = input.parse()?;
 
         // Parse optional variant names in brackets: "Minion", 4200, [Add, Sub]
-        let mut applicable_variants = Vec::new();
+        let mut prefilters = Vec::new();
         if input.peek(Comma) {
             let _: Comma = input.parse()?;
             let content;
             bracketed!(content in input);
             while !content.is_empty() {
-                let variant: Ident = content.parse()?;
-                applicable_variants.push(variant);
+                if content.peek(Token![*]) {
+                    let _: Token![*] = content.parse()?;
+                    let _: Token![/] = content.parse()?;
+                    let variant: Ident = content.parse()?;
+                    prefilters.push(ParsedPrefilter::Child { child: variant });
+                } else {
+                    let variant: Ident = content.parse()?;
+                    if content.peek(Token![/]) {
+                        let _: Token![/] = content.parse()?;
+                        let subvariant: Ident = content.parse()?;
+                        if variant != "Atomic" {
+                            prefilters.push(ParsedPrefilter::VariantChild {
+                                variant,
+                                child: subvariant,
+                            });
+                        } else {
+                            match subvariant.to_string().as_str() {
+                                "Literal" | "Reference" => {
+                                    prefilters.push(ParsedPrefilter::Atom(subvariant));
+                                }
+                                _ => {
+                                    return Err(syn::Error::new(
+                                        subvariant.span(),
+                                        "expected Literal or Reference after Atomic /",
+                                    ));
+                                }
+                            }
+                        }
+                    } else {
+                        prefilters.push(ParsedPrefilter::Variant(variant));
+                    }
+                }
                 if content.is_empty() {
                     break;
                 }
@@ -66,7 +142,7 @@ impl Parse for RegisterRuleArgs {
         Ok(RegisterRuleArgs {
             rule_sets,
             priority,
-            applicable_variants,
+            prefilters,
         })
     }
 }
@@ -89,12 +165,42 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         quote! { &[#((#rule_sets, #priority as u16)),*] }
     };
 
-    let applicable_to = if args.applicable_variants.is_empty() {
+    let prefilters = if args.prefilters.is_empty() {
         quote! { None }
     } else {
-        let variants = &args.applicable_variants;
+        let prefilter_tokens = args.prefilters.iter().map(|prefilter| match prefilter {
+            ParsedPrefilter::Variant(variant) => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Variant(
+                        ::conjure_cp::discriminant_from_name!(#variant)
+                    )
+                }
+            }
+            ParsedPrefilter::Child { child } => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Child {
+                        child: ::conjure_cp::discriminant_from_name!(#child),
+                    }
+                }
+            }
+            ParsedPrefilter::VariantChild { variant, child } => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::VariantChild {
+                        variant: ::conjure_cp::discriminant_from_name!(#variant),
+                        child: ::conjure_cp::discriminant_from_name!(#child),
+                    }
+                }
+            }
+            ParsedPrefilter::Atom(atom_variant) => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::Atom(
+                        ::conjure_cp::rule_engine::AtomKind::#atom_variant
+                    )
+                }
+            }
+        });
         quote! {
-            Some(&[#(::conjure_cp::discriminant_from_name!(#variants)),*])
+            Some(&[#(#prefilter_tokens),*])
         }
     };
 
@@ -108,11 +214,536 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             name: stringify!(#rule_ident),
             application: #rule_ident,
             rule_sets: #rule_sets_token,
-            applicable_to: #applicable_to,
+            prefilters: #prefilters,
         };
     };
 
     TokenStream::from(expanded)
+}
+// this is only constructed once at comptime so this doesn't matter
+#[allow(clippy::large_enum_variant)]
+enum ReprStateType {
+    Struct(ItemStruct, Vec<ItemImpl>),
+    Path(TypePath),
+}
+
+impl Parse for ReprStateType {
+    fn parse(input: ParseStream) -> Result<Self> {
+        if let Ok(strct) = input.parse::<ItemStruct>() {
+            let mut imps = Vec::new();
+            while let Ok(imp) = input.parse::<ItemImpl>() {
+                imps.push(imp);
+            }
+            return Ok(ReprStateType::Struct(strct, imps));
+        }
+        if let Ok(path) = input.parse::<TypePath>() {
+            return Ok(ReprStateType::Path(path));
+        }
+        Err(input.error(
+            "Expected one of:\
+        - A struct definition, e.g `struct State<T> {...}`\
+        - A path to an existing type, e.g `Vec<T>`\
+        ",
+        ))
+    }
+}
+
+struct ReprDefArgs {
+    /// Name of this representation rule
+    ident: Ident,
+    /// Short name used in generated representation-variable names and traces.
+    short_name: LitStr,
+    /// Representation state type
+    state_ty: ReprStateType,
+    /// Initialisation at domain level: `init: (DomainPtr) -> Result<State<DomainPtr>, ReprInitError>`
+    init_fn: ItemFn,
+    /// Generating structural constraints: `structural: (&State<DeclarationPtr>) -> Vec<Expression>`
+    structural_fn: ItemFn,
+    /// Going down: `down: (&State<DeclarationPtr>, Literal) -> Result<State<Literal>, ReprDownError>`
+    down_fn: ItemFn,
+    /// Going up: `up: State<Literal> -> Literal`
+    up_fn: ItemFn,
+    /// Getting representation variables: `repr_vars: &State<DeclarationPtr> -> VecDeque<DeclarationPtr>`
+    /// If not provided, we attempt to codegen one using uniplate
+    repr_vars_fn: Option<ItemFn>,
+    /// Measuring the representation-domain size. If omitted, this is generated using
+    /// uniplate; representations with non-uniplate containers can provide it explicitly.
+    compactness_fn: Option<ItemFn>,
+}
+
+impl Parse for ReprDefArgs {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let ident = input.parse::<Ident>()?;
+        let short_name_content;
+        parenthesized!(short_name_content in input);
+        let short_name = short_name_content.parse::<LitStr>()?;
+        let state_ty = input.parse::<ReprStateType>()?;
+
+        // TODO: Exact syntax subject to change
+
+        let mut funcs = HashMap::<String, ItemFn>::new();
+        let mut errors: Vec<syn::Error> = Vec::new();
+        for _ in 0..6 {
+            match input.parse::<ItemFn>() {
+                Ok(func) => {
+                    let ident = func.sig.ident.to_string();
+                    funcs.insert(ident, func);
+                }
+                Err(e) => errors.push(e),
+            }
+        }
+
+        let fmt_errors = format!(
+            "\nErrors:\n{}",
+            errors.iter().map(syn::Error::to_string).join("\n")
+        );
+
+        let init_fn = funcs.remove("init").ok_or_else(|| {
+            input.error(format!("Expected `fn init(DomainPtr) -> Result<State<DomainPtr>, ReprInitError>`{fmt_errors}"))
+        })?;
+        let structural_fn = funcs.remove("structural").ok_or_else(|| {
+            input.error(format!(
+                "Expected `fn structural(&State<DeclarationPtr>) -> Vec<Expression>`{fmt_errors}"
+            ))
+        })?;
+        let down_fn = funcs.remove("down").ok_or_else(|| input.error(format!("Expected `fn down(&State<DomainPtr>, Literal) -> Result<State<Literal>, ReprDownError>`{fmt_errors}")))?;
+        let up_fn = funcs.remove("up").ok_or_else(|| {
+            input.error(format!(
+                "Expected `fn up(State<Literal>) -> Literal`{fmt_errors}"
+            ))
+        })?;
+        let repr_vars_fn = funcs.remove("repr_vars");
+        let compactness_fn = funcs.remove("compactness");
+
+        if repr_vars_fn.is_none() && matches!(state_ty, ReprStateType::Path(..)) {
+            return Err(input.error("A repr_vars implementation is required for external types"));
+        }
+
+        Ok(Self {
+            ident,
+            short_name,
+            state_ty,
+            init_fn,
+            structural_fn,
+            down_fn,
+            up_fn,
+            repr_vars_fn,
+            compactness_fn,
+        })
+    }
+}
+
+#[proc_macro]
+pub fn register_representation(input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(input as ReprDefArgs);
+    let repr_ident = &args.ident;
+    let repr_short_name = &args.short_name;
+    let repr_name_str = repr_ident.to_string();
+
+    // prefix for generated names
+    let prefix = format!("CONJURE_GEN_REPR_{}_", repr_name_str);
+
+    let (user_state_ident, struct_def_tokens) = match &args.state_ty {
+        ReprStateType::Struct(item_struct, _) => {
+            // get ident and body of the struct
+            let ident = item_struct.ident.clone();
+            let prefixed_ident = Ident::new(
+                &format!("{}{}", repr_name_str, ident),
+                item_struct.ident.span(),
+            );
+            let tokens = generate_struct_def(item_struct, &prefixed_ident);
+            (ident, tokens)
+        }
+        ReprStateType::Path(type_path) => {
+            // for a path like `foo::MyState`, just use it directly; no struct to emit
+            let ident = type_path
+                .path
+                .segments
+                .last()
+                .expect("state type path must have at least one segment")
+                .ident
+                .clone();
+            (ident, quote! {})
+        }
+    };
+
+    // Actual ident of the "State<T>" type
+    let state_ident = match &args.state_ty {
+        ReprStateType::Struct(..) => {
+            // prefix user-defined struct's ident so it doesn't clash with anything
+            Ident::new(
+                &format!("{}{}", repr_name_str, user_state_ident),
+                user_state_ident.span(),
+            )
+        }
+        // otherwise use the provided name as is
+        ReprStateType::Path(_) => user_state_ident.clone(),
+    };
+
+    // Rename the idents in user-defined functions to their prefixed versions
+    // e.g:
+    // MyState<T> -> CONJURE_GEN_REPR_<Rule>_MyState<T>
+    // fn init(...) -> fn CONJURE_GEN_REPR_<Rule>_init(...)
+    let prefixed_init = Ident::new(&format!("{}init", prefix), args.init_fn.sig.ident.span());
+    let prefixed_structural = Ident::new(
+        &format!("{}structural", prefix),
+        args.structural_fn.sig.ident.span(),
+    );
+    let prefixed_down = Ident::new(&format!("{}down", prefix), args.down_fn.sig.ident.span());
+    let prefixed_up = Ident::new(&format!("{}up", prefix), args.up_fn.sig.ident.span());
+    let prefixed_repr_vars = args
+        .repr_vars_fn
+        .as_ref()
+        .map(|f| Ident::new(&format!("{}repr_vars", prefix), f.sig.ident.span()));
+    let prefixed_compactness = args
+        .compactness_fn
+        .as_ref()
+        .map(|f| Ident::new(&format!("{}compactness", prefix), f.sig.ident.span()));
+
+    let mut init_fn = rename_fn(args.init_fn, &prefixed_init);
+    let mut structural_fn = rename_fn(args.structural_fn, &prefixed_structural);
+    let mut down_fn = rename_fn(args.down_fn, &prefixed_down);
+    let mut up_fn = rename_fn(args.up_fn, &prefixed_up);
+    let mut repr_vars_fn = args
+        .repr_vars_fn
+        .map(|f| rename_fn(f, prefixed_repr_vars.as_ref().unwrap()));
+    let mut compactness_fn = args
+        .compactness_fn
+        .map(|f| rename_fn(f, prefixed_compactness.as_ref().unwrap()));
+
+    if matches!(&args.state_ty, ReprStateType::Struct(..)) {
+        init_fn = rename_ident_in_fn(init_fn, &user_state_ident, &state_ident);
+        structural_fn = rename_ident_in_fn(structural_fn, &user_state_ident, &state_ident);
+        down_fn = rename_ident_in_fn(down_fn, &user_state_ident, &state_ident);
+        up_fn = rename_ident_in_fn(up_fn, &user_state_ident, &state_ident);
+        repr_vars_fn = repr_vars_fn.map(|f| rename_ident_in_fn(f, &user_state_ident, &state_ident));
+        compactness_fn =
+            compactness_fn.map(|f| rename_ident_in_fn(f, &user_state_ident, &state_ident));
+    }
+
+    // Rename idents in the user-provided impl
+    let renamed_impls = if let ReprStateType::Struct(_, impls) = args.state_ty {
+        impls
+            .into_iter()
+            .map(|imp| rename_ident_in_impl(imp, &user_state_ident, &state_ident))
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    let repr_vars_impl = if repr_vars_fn.is_some() {
+        quote! {#prefixed_repr_vars(self)}
+    } else {
+        quote! {self.__collect_t_children()}
+    };
+    let repr_vars_fn_toks = repr_vars_fn.map(|f| {
+        quote! {
+            #[allow(non_snake_case)]
+            #f
+        }
+    });
+    let compactness_impl = if compactness_fn.is_some() {
+        quote! {#prefixed_compactness(self)}
+    } else {
+        quote! {
+            self.__collect_t_children()
+                .iter()
+                .map(default_impls::domain_size)
+                .fold(1usize, usize::saturating_mul)
+        }
+    };
+    let compactness_fn_toks = compactness_fn.map(|f| {
+        quote! {
+            #[allow(non_snake_case)]
+            #f
+        }
+    });
+
+    // Static name for distributed_slice entry
+    let dist_slice_name = format!("CONJURE_GEN_REPR_{}", repr_name_str).to_uppercase();
+    let dist_slice_ident = Ident::new(&dist_slice_name, repr_ident.span());
+
+    let init_cache_name = format!("CONJURE_GEN_REPR_{}_INIT_CACHE", repr_name_str).to_uppercase();
+    let init_cache_ident = Ident::new(&init_cache_name, repr_ident.span());
+
+    let expanded = quote! {
+        // -- Dependencies
+        use ::conjure_cp::representation::_dependencies::*;
+        use ::conjure_cp::ast::{
+            DeclarationPtr, DomainPtr, Expression, Literal, SymbolTable, Name
+        };
+
+        // -- User-provided struct definition
+        #struct_def_tokens
+
+        // -- User-provided struct impl
+        #(#renamed_impls)*
+
+        // -- User-provided functions
+        #[allow(non_snake_case)]
+        #init_fn
+        #[allow(non_snake_case)]
+        #structural_fn
+        #[allow(non_snake_case)]
+        #down_fn
+        #[allow(non_snake_case)]
+        #up_fn
+        #repr_vars_fn_toks
+        #compactness_fn_toks
+
+        static #init_cache_ident: std::sync::LazyLock<FrozenMap<DomainPtr, Box<#state_ident<DomainPtr>>>> = std::sync::LazyLock::new(|| FrozenMap::new());
+
+        // -- Trait implementations
+        impl ReprDomainLevel for #state_ident<DomainPtr> {
+            const RULE: &'static dyn ReprRuleStored = &#repr_ident;
+            type Assignment = #state_ident<Literal>;
+            type DeclLevel = #state_ident<DeclarationPtr>;
+
+            fn init(dom: DomainPtr) -> ::core::result::Result<Self, ReprInitError>
+            where
+                Self: Sized,
+            {
+                if let Some(res) = #init_cache_ident.get(&dom) {
+                    return Ok(res.clone());
+                }
+
+                let res = #prefixed_init(dom.clone())?;
+                let _ = #init_cache_ident.insert(dom, Box::new(res.clone()));
+                Ok(res)
+            }
+
+            fn compactness_score(&self) -> usize {
+                #compactness_impl
+            }
+
+            fn down(
+                &self,
+                value: Literal,
+            ) -> ::core::result::Result<Self::Assignment, ReprDownError> {
+                #prefixed_down(self, value)
+            }
+
+            fn instantiate(self, decl: DeclarationPtr) -> ReprInstantiateResult<Self::DeclLevel> {
+                default_impls::instantiate_default_impl(self, decl, #prefixed_structural)
+            }
+        }
+
+        impl ReprDeclLevel for #state_ident<DeclarationPtr> {
+            const RULE: &'static dyn ReprRuleStored = &#repr_ident;
+            type Assignment = #state_ident<Literal>;
+            type DomainLevel = #state_ident<DomainPtr>;
+
+            fn to_domain_level(self) -> Self::DomainLevel {
+                default_impls::to_domain_level_default_impl(self)
+            }
+
+            fn lookup_via(
+                &self,
+                lookup: &LookupFn<'_>,
+            ) -> ::core::result::Result<Self::Assignment, ReprUpError> {
+                default_impls::lookup_via_default_impl(self, lookup)
+            }
+
+            fn repr_vars(&self) -> ::std::collections::VecDeque<DeclarationPtr> {
+                #repr_vars_impl
+            }
+        }
+
+        impl ReprAssignment for #state_ident<Literal> {
+            fn up(self) -> Literal {
+                #prefixed_up(self)
+            }
+        }
+
+        // -- ReprRule marker struct
+        pub struct #repr_ident;
+
+        impl ReprRule for #repr_ident {
+            const STORED: &'static dyn ReprRuleStored = &#repr_ident;
+            const NAME: &'static str = #repr_name_str;
+            const SHORT_NAME: &'static str = #repr_short_name;
+            type Assignment = #state_ident<Literal>;
+            type DeclLevel = #state_ident<DeclarationPtr>;
+            type DomainLevel = #state_ident<DomainPtr>;
+        }
+
+        // -- Registry entry
+        #[::conjure_cp::representation::_dependencies::distributed_slice(::conjure_cp::representation::_dependencies::REPR_RULES_DISTRIBUTED_SLICE)]
+        pub static #dist_slice_ident: &'static dyn ReprRuleStored = &#repr_ident;
+    };
+
+    TokenStream::from(expanded)
+}
+
+/// Generates the struct definition with the necessary derive macros and serde attributes.
+/// The struct is always emitted as `pub` with the given `prefixed_ident` as its name.
+fn generate_struct_def(
+    item_struct: &ItemStruct,
+    prefixed_ident: &Ident,
+) -> proc_macro2::TokenStream {
+    // Find the generic type parameter name (e.g. `T`)
+    let generic_param_ident = item_struct
+        .generics
+        .params
+        .iter()
+        .find_map(|p| {
+            if let GenericParam::Type(tp) = p {
+                Some(tp.ident.clone())
+            } else {
+                None
+            }
+        })
+        .expect("state struct must have exactly one type parameter");
+
+    let generics = &item_struct.generics;
+
+    let serde_bound = format!(
+        "ReprStateSerde: SerializeAs<{0}> + for<'d> DeserializeAs<'d, {0}>",
+        generic_param_ident
+    );
+
+    let mut collect_children_exprs: Vec<proc_macro2::TokenStream> = Vec::new();
+    let mut biplate_bounds: Vec<proc_macro2::TokenStream> = vec![quote! {
+        #generic_param_ident: ::conjure_cp::representation::_dependencies::uniplate::Uniplate
+    }];
+
+    let fields = match &item_struct.fields {
+        syn::Fields::Named(named) => {
+            let field_tokens: Vec<_> = named
+                .named
+                .iter()
+                .map(|f| {
+                    let field_attrs = &f.attrs;
+                    let field_vis = &f.vis;
+                    let field_ident = f
+                        .ident
+                        .as_ref()
+                        .expect("named field must have an identifier");
+                    let field_ty = &f.ty;
+
+                    if type_contains_ident(&f.ty, &generic_param_ident) {
+                        if type_is_ident(&f.ty, &generic_param_ident) {
+                            collect_children_exprs.push(quote! {
+                                children.push_back(self.#field_ident.clone());
+                            });
+                        } else {
+                            collect_children_exprs.push(quote! {
+                                children.extend(
+                                    ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#field_ident)
+                                );
+                            });
+                            biplate_bounds.push(quote! {
+                                #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
+                            });
+                        }
+
+                        let serde_as_ty =
+                            build_serde_as_type(field_ty, &generic_param_ident, "ReprStateSerde");
+                        let serde_as_str = serde_as_ty.to_token_stream().to_string();
+                        quote! {
+                            #(#field_attrs)*
+                            #[serde_as(as = #serde_as_str)]
+                            #field_vis #field_ident: #field_ty
+                        }
+                    } else {
+                        quote! {
+                            #(#field_attrs)*
+                            #field_vis #field_ident: #field_ty
+                        }
+                    }
+                })
+                .collect();
+
+            quote! { { #(#field_tokens),* } }
+        }
+        syn::Fields::Unnamed(unnamed) => {
+            let field_tokens: Vec<_> = unnamed
+                .unnamed
+                .iter()
+                .enumerate()
+                .map(|(idx, f)| {
+                    let field_attrs = &f.attrs;
+                    let field_vis = &f.vis;
+                    let field_ty = &f.ty;
+
+                    if type_contains_ident(&f.ty, &generic_param_ident) {
+                        let index = syn::Index::from(idx);
+                        if type_is_ident(&f.ty, &generic_param_ident) {
+                            collect_children_exprs.push(quote! {
+                                children.push_back(self.#index.clone());
+                            });
+                        } else {
+                            collect_children_exprs.push(quote! {
+                                children.extend(
+                                    ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#index)
+                                );
+                            });
+                            biplate_bounds.push(quote! {
+                                #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
+                            });
+                        }
+
+                        let serde_as_ty =
+                            build_serde_as_type(field_ty, &generic_param_ident, "ReprStateSerde");
+                        let serde_as_str = serde_as_ty.to_token_stream().to_string();
+                        quote! {
+                            #(#field_attrs)*
+                            #[serde_as(as = #serde_as_str)]
+                            #field_vis #field_ty
+                        }
+                    } else {
+                        quote! {
+                            #(#field_attrs)*
+                            #field_vis #field_ty
+                        }
+                    }
+                })
+                .collect();
+
+            quote! { ( #(#field_tokens),* ); }
+        }
+        syn::Fields::Unit => quote! { ; },
+    };
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let method_where_clause = if biplate_bounds.is_empty() {
+        quote! {}
+    } else {
+        quote! { where #(#biplate_bounds),* }
+    };
+
+    quote! {
+        #[allow(non_camel_case_types)]
+        #[::conjure_cp::representation::_dependencies::serde_with::serde_as(
+            crate = "::conjure_cp::representation::_dependencies::serde_with"
+        )]
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            ::conjure_cp::representation::_dependencies::funcmap::FuncMap,
+            ::conjure_cp::representation::_dependencies::funcmap::TryFuncMap,
+            ::conjure_cp::representation::_dependencies::serde::Serialize,
+            ::conjure_cp::representation::_dependencies::serde::Deserialize
+        )]
+        #[serde(
+            crate = "::conjure_cp::representation::_dependencies::serde",
+            bound = #serde_bound
+        )]
+        #[funcmap(crate = "::conjure_cp::representation::_dependencies::funcmap")]
+        pub struct #prefixed_ident #generics #fields
+
+        impl #impl_generics #prefixed_ident #ty_generics #where_clause {
+            fn __collect_t_children(&self) -> ::std::collections::VecDeque<#generic_param_ident>
+            #method_where_clause
+            {
+                let mut children = ::std::collections::VecDeque::new();
+                #(#collect_children_exprs)*
+                children
+            }
+        }
+    }
 }
 
 fn parse_parenthesized<T: Parse>(input: ParseStream) -> Result<Vec<T>> {

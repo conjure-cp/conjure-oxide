@@ -4,8 +4,8 @@ use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
-    SolverFamily,
+    Channelling, DEFAULT_HEURISTIC_SEED, DEFAULT_MINION_DISCRETE_THRESHOLD, Heuristic,
+    Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp::solver::adaptors::MinionValueOrder;
 
@@ -40,7 +40,9 @@ pub enum Command {
 #[command(
     author,
     about = "Conjure Oxide: Automated Constraints Modelling Toolkit",
-    before_help = "Full documentation can be found online at: https://conjure-cp.github.io/conjure-oxide"
+    before_help = "Full documentation can be found online at: https://conjure-cp.github.io/conjure-oxide",
+    // Free `-h` for `--heuristic`; help remains available as `--help`.
+    disable_help_flag = true
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -56,6 +58,10 @@ pub struct Cli {
 
 #[derive(Debug, Clone, Args)]
 pub struct GlobalArgs {
+    /// Print help
+    #[arg(long, action = clap::ArgAction::Help, global = true)]
+    pub help: (),
+
     /// Extra rule sets to enable
     #[arg(long, value_name = "EXTRA_RULE_SETS", global = true)]
     pub extra_rule_sets: Vec<String>,
@@ -112,7 +118,7 @@ pub struct GlobalArgs {
     /// Possible values: `tree-sitter`, `via-conjure`.
     #[arg(
         long,
-        default_value_t = InputParser::ViaConjure,
+        default_value_t = InputParser::default(),
         value_parser = parse_parser,
         global = true,
         help_heading = CONFIGURATION_HELP_HEADING
@@ -121,8 +127,26 @@ pub struct GlobalArgs {
 
     /// Which rewriter to use.
     ///
-    /// Possible values: `naive`, `morph`
-    #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    /// Possible values: `baseline`, `optimised`, or baseline plus options such as
+    /// `baseline+dirty`, `baseline+cache`, `baseline+prefilter`, `baseline+worklist`,
+    /// `baseline+candidateindex`, or `baseline+dirtyqueues`.
+    ///
+    /// Option meanings:
+    /// - `prefilter`: skip rules whose declared expression kinds cannot match; strong win vs
+    ///   baseline and part of `optimised`.
+    /// - `worklist`: drive rewriting from persistent dirty queues instead of repeated full scans;
+    ///   strong win vs baseline and part of `optimised`.
+    /// - `dirty`: remember unchanged expressions that have failed at a rule priority; helps full
+    ///   scans, roughly neutral with `optimised`.
+    /// - `cache`: reuse rewrite results for structurally identical expression subtrees; currently
+    ///   slower on the translation benchmark, so available explicitly but not part of `optimised`.
+    /// - `rulememo`: skip rule calls already known to fail for the same node and symbol context;
+    ///   usually slower than baseline/`optimised`.
+    /// - `candidateindex`: restrict full scans to expression kinds targeted by each rule group;
+    ///   roughly neutral, not part of `optimised`.
+    /// - `dirtyqueues`: build per-priority dirty node queues from clean metadata during full scans;
+    ///   roughly neutral, not part of `optimised`.
+    #[arg(long, default_value_t = Rewriter::default(), value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 
     /// Which strategy to use for expanding quantified variables in comprehensions.
@@ -136,6 +160,59 @@ pub struct GlobalArgs {
         help_heading = CONFIGURATION_HELP_HEADING
     )]
     pub comprehension_expander: QuantifiedExpander,
+
+    /// Heuristic for selecting an answer when multiple modelling choices are applicable.
+    ///
+    /// Possible values: `f` (first), `r` (random), `c` (compact), `i` (interactive). Compact
+    /// minimises the representation-domain size for representation choices and the resulting AST
+    /// depth for equally-applicable rewrite rules. Interactive prompts on stderr, or uses
+    /// `--responses` when provided. `x` (all) is reserved for model generation and is not
+    /// supported by the CLI yet.
+    #[arg(
+        long,
+        short = 'h',
+        default_value_t = Heuristic::First,
+        value_parser = parse_cli_heuristic,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub heuristic: Heuristic,
+
+    /// Comma-separated 1-based answers for the interactive heuristic (`-h i`).
+    ///
+    /// If provided, these are used as the answers during interactive model generation instead of
+    /// prompting the user.
+    #[arg(
+        long,
+        value_name = "INTS",
+        value_delimiter = ',',
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub responses: Vec<usize>,
+
+    /// Seed used by the random heuristic.
+    #[arg(
+        long,
+        default_value_t = DEFAULT_HEURISTIC_SEED,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub seed: u64,
+
+    /// Whether multiple representations of the same declaration may be channelled together.
+    ///
+    /// Possible values: `no`, `yes`. Channelling is disabled by default. Enable `yes` to allow
+    /// different representations of the same variable at different call sites, e.g.
+    /// `1 in (x :: set{packed} of int) /\ 2 in (x :: set{occurrence} of int)`.
+    #[arg(
+        long,
+        default_value_t = Channelling::No,
+        value_parser = parse_cli_channelling,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub channelling: Channelling,
 
     /// Solver family to use.
     ///
@@ -224,6 +301,19 @@ pub enum ShellTypes {
 
 fn parse_comprehension_expander(input: &str) -> Result<QuantifiedExpander, String> {
     input.parse()
+}
+
+fn parse_cli_heuristic(input: &str) -> Result<Heuristic, String> {
+    match input.parse::<Heuristic>()? {
+        Heuristic::All => {
+            Err("heuristic 'x' (all) is not supported by the command line yet".to_string())
+        }
+        heuristic => Ok(heuristic),
+    }
+}
+
+fn parse_cli_channelling(input: &str) -> Result<Channelling, String> {
+    input.parse::<Channelling>()
 }
 
 fn parse_rewriter(input: &str) -> Result<Rewriter, String> {

@@ -1,0 +1,92 @@
+Model before rewriting:
+
+find x: int(1..10)
+find y: int(1..10)
+find b: bool
+letting tab be [[1,1;int(1..2)],[2,2;int(1..2)],[3,3;int(1..2)],[4,4;int(1..2)],[5,5;int(1..2)],[6,6;int(1..2)],[7,7;int(1..2)],[8,8;int(1..2)],[9,9;int(1..2)],[10,10;int(1..2)];int(1..10)]
+
+such that
+
+(!(table([x,y;int(1..2)], tab))) <-> (b)
+
+--
+
+(!(table([x,y;int(1..2)], tab))) <-> (b)
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+(!(table([x,y;int(1..2)], tab))) <-> (b)
+
+--
+
+(!(table([x,y;int(1..2)], tab))) <-> (b)
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(!(table([x,y;int(1..2)], tab)), b)
+
+--
+
+!(table([x,y;int(1..2)], tab))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__0)
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux table([x,y;int(1..2)], tab)
+
+--
+
+__0 =aux table([x,y;int(1..2)], tab)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(table([x,y;int(1..2)], tab), __0)
+
+--
+
+!(__0)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__0,false)
+
+--
+
+table([x,y;int(1..2)], tab)
+   ~~> inline_table_row_matrix ([("Minion", 4050)])
+table([x,y;int(1..2)], [[1,1;int(1..2)],[2,2;int(1..2)],[3,3;int(1..2)],[4,4;int(1..2)],[5,5;int(1..2)],[6,6;int(1..2)],[7,7;int(1..2)],[8,8;int(1..2)],[9,9;int(1..2)],[10,10;int(1..2)];int(1..10)])
+
+--
+
+table([x,y;int(1..2)], [[1,1;int(1..2)],[2,2;int(1..2)],[3,3;int(1..2)],[4,4;int(1..2)],[5,5;int(1..2)],[6,6;int(1..2)],[7,7;int(1..2)],[8,8;int(1..2)],[9,9;int(1..2)],[10,10;int(1..2)];int(1..10)])
+   ~~> matrix_to_list ([("Base", 2000)])
+table([x,y;int(1..)], [[1,1;int(1..2)],[2,2;int(1..2)],[3,3;int(1..2)],[4,4;int(1..2)],[5,5;int(1..2)],[6,6;int(1..2)],[7,7;int(1..2)],[8,8;int(1..2)],[9,9;int(1..2)],[10,10;int(1..2)];int(1..)])
+
+--
+
+Final model:
+
+find x: int(1..10)
+find y: int(1..10)
+find b: bool
+letting tab be [[1,1;int(1..2)],[2,2;int(1..2)],[3,3;int(1..2)],[4,4;int(1..2)],[5,5;int(1..2)],[6,6;int(1..2)],[7,7;int(1..2)],[8,8;int(1..2)],[9,9;int(1..2)],[10,10;int(1..2)];int(1..10)]
+letting tab#components_1 be 1
+letting tab#components_2 be 1
+letting tab#components_3 be 2
+letting tab#components_4 be 2
+letting tab#components_5 be 3
+letting tab#components_6 be 3
+letting tab#components_7 be 4
+letting tab#components_8 be 4
+letting tab#components_9 be 5
+letting tab#components_10 be 5
+letting tab#components_11 be 6
+letting tab#components_12 be 6
+letting tab#components_13 be 7
+letting tab#components_14 be 7
+letting tab#components_15 be 8
+letting tab#components_16 be 8
+letting tab#components_17 be 9
+letting tab#components_18 be 9
+letting tab#components_19 be 10
+letting tab#components_20 be 10
+findAux __0: bool
+
+such that
+
+Reify(WatchedLiteral(__0,false), b),
+Reify(table([x,y;int(1..)], [[1,1;int(1..2)],[2,2;int(1..2)],[3,3;int(1..2)],[4,4;int(1..2)],[5,5;int(1..2)],[6,6;int(1..2)],[7,7;int(1..2)],[8,8;int(1..2)],[9,9;int(1..2)],[10,10;int(1..2)];int(1..)]), __0)
+

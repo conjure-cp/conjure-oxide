@@ -1,0 +1,415 @@
+Model before rewriting:
+
+letting n be 4
+letting N be domain int(1..n)
+letting theSum be (product([n,sum([product([n,n;int(1..)]),1;int(1..)]);int(1..)]) / 2)
+find magicSquare: matrix indexed by [N, N] of int(1..(product([n,n;int(1..)])))
+
+such that
+
+allDifferent(flatten(magicSquare)),
+theSum < (product([product([n,n;int(1..)]),n;int(1..)]) - sum([ i | i : int(1..((n - 1))) ])),
+theSum > sum([ i | i : int(1..n) ]),
+and([ sum([ magicSquare[row, col] | col : N ]) = theSum | row : N ]),
+and([ sum([ magicSquare[row, col] | row : N ]) = theSum | col : N ]),
+sum([ magicSquare[i, i] | i : N ]) = theSum,
+and([ (magicSquare[row,..] <lex magicSquare[sum([row,1;int(1..)]),..]) | row : int(1..((n - 1))) ]),
+and([ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ])
+
+--
+
+allDifferent(flatten(magicSquare)),
+true,
+true,
+and([ sum([ magicSquare[row, col] | col : N ]) = theSum | row : N ]),
+and([ sum([ magicSquare[row, col] | row : N ]) = theSum | col : N ]),
+sum([ magicSquare[i, i] | i : N ]) = 34,
+and([ (magicSquare[row,..] <lex magicSquare[sum([row,1;int(1..)]),..]) | row : int(1..((n - 1))) ]),
+and([ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+allDifferent(flatten(magicSquare)),
+true,
+true,
+and([ sum([ magicSquare[row, col] | col : N ]) = theSum | row : N ]),
+and([ sum([ magicSquare[row, col] | row : N ]) = theSum | col : N ]),
+sum([ magicSquare[i, i] | i : N ]) = 34,
+and([ (magicSquare[row,..] <lex magicSquare[sum([row,1;int(1..)]),..]) | row : int(1..((n - 1))) ]),
+and([ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ])
+new variables:
+  find magicSquare#components_1: int(1..16)
+  find magicSquare#components_10: int(1..16)
+  find magicSquare#components_11: int(1..16)
+  find magicSquare#components_12: int(1..16)
+  find magicSquare#components_13: int(1..16)
+  find magicSquare#components_14: int(1..16)
+  find magicSquare#components_15: int(1..16)
+  find magicSquare#components_16: int(1..16)
+  find magicSquare#components_2: int(1..16)
+  find magicSquare#components_3: int(1..16)
+  find magicSquare#components_4: int(1..16)
+  find magicSquare#components_5: int(1..16)
+  find magicSquare#components_6: int(1..16)
+  find magicSquare#components_7: int(1..16)
+  find magicSquare#components_8: int(1..16)
+  find magicSquare#components_9: int(1..16)
+
+--
+
+flatten(magicSquare)
+   ~~> flatten_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_1,magicSquare#components_2,magicSquare#components_3,magicSquare#components_4,magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8,magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12,magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]
+
+--
+
+allDifferent([magicSquare#components_1,magicSquare#components_2,magicSquare#components_3,magicSquare#components_4,magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8,magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12,magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4, magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8, magicSquare#components_9, magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16])
+
+--
+
+[ sum([ magicSquare[row, col] | col : N ]) = theSum | row : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[sum([magicSquare#components_1,magicSquare#components_2,magicSquare#components_3,magicSquare#components_4;int(1..)]) = 34,sum([magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8;int(1..)]) = 34,sum([magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)]) = 34,sum([magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]) = 34;int(1..)]
+
+--
+
+sum([magicSquare#components_1,magicSquare#components_2,magicSquare#components_3,magicSquare#components_4;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34);int(1..)])
+
+--
+
+and([and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34);int(1..)]),sum([magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8;int(1..)]) = 34,sum([magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)]) = 34,sum([magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),sum([magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8;int(1..)]) = 34,sum([magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)]) = 34,sum([magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+
+--
+
+sum([magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumGeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),and([SumLeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumGeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34);int(1..)]),sum([magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)]) = 34,sum([magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumLeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumGeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),sum([magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)]) = 34,sum([magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+
+--
+
+sum([magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),SumGeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumLeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumGeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),and([SumLeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),SumGeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34);int(1..)]),sum([magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumLeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumGeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumLeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),SumGeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),sum([magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+
+--
+
+sum([magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16], 34),SumGeq([magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumLeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumGeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumLeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),SumGeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),and([SumLeq([magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16], 34),SumGeq([magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16], 34);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumLeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumGeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumLeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),SumGeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),SumLeq([magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16], 34),SumGeq([magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16], 34);int(1..)])
+
+--
+
+[ sum([ magicSquare[row, col] | row : N ]) = theSum | col : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[sum([magicSquare#components_1,magicSquare#components_5,magicSquare#components_9,magicSquare#components_13;int(1..)]) = 34,sum([magicSquare#components_2,magicSquare#components_6,magicSquare#components_10,magicSquare#components_14;int(1..)]) = 34,sum([magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)]) = 34,sum([magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]) = 34;int(1..)]
+
+--
+
+sum([magicSquare#components_1,magicSquare#components_5,magicSquare#components_9,magicSquare#components_13;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34);int(1..)])
+
+--
+
+and([and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34);int(1..)]),sum([magicSquare#components_2,magicSquare#components_6,magicSquare#components_10,magicSquare#components_14;int(1..)]) = 34,sum([magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)]) = 34,sum([magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),sum([magicSquare#components_2,magicSquare#components_6,magicSquare#components_10,magicSquare#components_14;int(1..)]) = 34,sum([magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)]) = 34,sum([magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+
+--
+
+sum([magicSquare#components_2,magicSquare#components_6,magicSquare#components_10,magicSquare#components_14;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumGeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),and([SumLeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumGeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34);int(1..)]),sum([magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)]) = 34,sum([magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumLeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumGeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),sum([magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)]) = 34,sum([magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+
+--
+
+sum([magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),SumGeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumLeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumGeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),and([SumLeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),SumGeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34);int(1..)]),sum([magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumLeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumGeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumLeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),SumGeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),sum([magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]) = 34;int(1..)])
+
+--
+
+sum([magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_12, magicSquare#components_16, magicSquare#components_4, magicSquare#components_8], 34),SumGeq([magicSquare#components_12, magicSquare#components_16, magicSquare#components_4, magicSquare#components_8], 34);int(1..)])
+
+--
+
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumLeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumGeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumLeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),SumGeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),and([SumLeq([magicSquare#components_12, magicSquare#components_16, magicSquare#components_4, magicSquare#components_8], 34),SumGeq([magicSquare#components_12, magicSquare#components_16, magicSquare#components_4, magicSquare#components_8], 34);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumLeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumGeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumLeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),SumGeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),SumLeq([magicSquare#components_12, magicSquare#components_16, magicSquare#components_4, magicSquare#components_8], 34),SumGeq([magicSquare#components_12, magicSquare#components_16, magicSquare#components_4, magicSquare#components_8], 34);int(1..)])
+
+--
+
+[ (magicSquare[row,..] <lex magicSquare[sum([row,1;int(1..)]),..]) | row : int(1..((n - 1))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(magicSquare[1,..] <lex magicSquare[2,..]),(magicSquare[2,..] <lex magicSquare[3,..]),(magicSquare[3,..] <lex magicSquare[4,..]);int(1..)]
+
+--
+
+magicSquare[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[1,..])
+
+--
+
+magicSquare[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[2,..])
+
+--
+
+magicSquare[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[2,..])
+
+--
+
+magicSquare[3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[3,..])
+
+--
+
+magicSquare[3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[3,..])
+
+--
+
+magicSquare[4,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[4,..])
+
+--
+
+SafeSlice(magicSquare,[1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_1,magicSquare#components_2,magicSquare#components_3,magicSquare#components_4;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[2,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[2,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[3,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[3,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[4,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)]
+
+--
+
+[ (magicSquare[..,col] <lex magicSquare[..,sum([col,1;int(1..)])]) | col : int(1..((n - 1))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(magicSquare[..,1] <lex magicSquare[..,2]),(magicSquare[..,2] <lex magicSquare[..,3]),(magicSquare[..,3] <lex magicSquare[..,4]);int(1..)]
+
+--
+
+magicSquare[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,1])
+
+--
+
+magicSquare[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,2])
+
+--
+
+magicSquare[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,2])
+
+--
+
+magicSquare[..,3]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,3])
+
+--
+
+magicSquare[..,3]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,3])
+
+--
+
+magicSquare[..,4]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(magicSquare,[..,4])
+
+--
+
+SafeSlice(magicSquare,[..,1])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_1,magicSquare#components_5,magicSquare#components_9,magicSquare#components_13;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,2])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_2,magicSquare#components_6,magicSquare#components_10,magicSquare#components_14;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,2])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_2,magicSquare#components_6,magicSquare#components_10,magicSquare#components_14;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,3])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,3])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)]
+
+--
+
+SafeSlice(magicSquare,[..,4])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)]
+
+--
+
+[ magicSquare[i, i] | i : N ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[magicSquare#components_1,magicSquare#components_6,magicSquare#components_11,magicSquare#components_16;int(1..)]
+
+--
+
+sum([magicSquare#components_1,magicSquare#components_6,magicSquare#components_11,magicSquare#components_16;int(1..)]) = 34
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([magicSquare#components_1, magicSquare#components_11, magicSquare#components_16, magicSquare#components_6], 34),SumGeq([magicSquare#components_1, magicSquare#components_11, magicSquare#components_16, magicSquare#components_6], 34);int(1..)])
+
+--
+
+([magicSquare#components_1,magicSquare#components_2,magicSquare#components_3,magicSquare#components_4;int(1..)] <lex [magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], [magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8])
+
+--
+
+([magicSquare#components_5,magicSquare#components_6,magicSquare#components_7,magicSquare#components_8;int(1..)] <lex [magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], [magicSquare#components_9, magicSquare#components_10, magicSquare#components_11, magicSquare#components_12])
+
+--
+
+([magicSquare#components_9,magicSquare#components_10,magicSquare#components_11,magicSquare#components_12;int(1..)] <lex [magicSquare#components_13,magicSquare#components_14,magicSquare#components_15,magicSquare#components_16;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#components_9, magicSquare#components_10, magicSquare#components_11, magicSquare#components_12], [magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16])
+
+--
+
+([magicSquare#components_1,magicSquare#components_5,magicSquare#components_9,magicSquare#components_13;int(1..)] <lex [magicSquare#components_2,magicSquare#components_6,magicSquare#components_10,magicSquare#components_14;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#components_1, magicSquare#components_5, magicSquare#components_9, magicSquare#components_13], [magicSquare#components_2, magicSquare#components_6, magicSquare#components_10, magicSquare#components_14])
+
+--
+
+([magicSquare#components_2,magicSquare#components_6,magicSquare#components_10,magicSquare#components_14;int(1..)] <lex [magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#components_2, magicSquare#components_6, magicSquare#components_10, magicSquare#components_14], [magicSquare#components_3, magicSquare#components_7, magicSquare#components_11, magicSquare#components_15])
+
+--
+
+([magicSquare#components_3,magicSquare#components_7,magicSquare#components_11,magicSquare#components_15;int(1..)] <lex [magicSquare#components_4,magicSquare#components_8,magicSquare#components_12,magicSquare#components_16;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([magicSquare#components_3, magicSquare#components_7, magicSquare#components_11, magicSquare#components_15], [magicSquare#components_4, magicSquare#components_8, magicSquare#components_12, magicSquare#components_16])
+
+--
+
+Final model:
+
+letting n be 4
+letting N be domain int(1..n)
+letting theSum be 34
+find magicSquare: matrix indexed by [N, N] of int(1..(product([n,n;int(1..)])))
+find magicSquare#components_1: int(1..16)
+find magicSquare#components_2: int(1..16)
+find magicSquare#components_3: int(1..16)
+find magicSquare#components_4: int(1..16)
+find magicSquare#components_5: int(1..16)
+find magicSquare#components_6: int(1..16)
+find magicSquare#components_7: int(1..16)
+find magicSquare#components_8: int(1..16)
+find magicSquare#components_9: int(1..16)
+find magicSquare#components_10: int(1..16)
+find magicSquare#components_11: int(1..16)
+find magicSquare#components_12: int(1..16)
+find magicSquare#components_13: int(1..16)
+find magicSquare#components_14: int(1..16)
+find magicSquare#components_15: int(1..16)
+find magicSquare#components_16: int(1..16)
+
+such that
+
+__flat_alldiff([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4, magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8, magicSquare#components_9, magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16]),
+true,
+true,
+and([SumLeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumGeq([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], 34),SumLeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumGeq([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], 34),SumLeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),SumGeq([magicSquare#components_10, magicSquare#components_11, magicSquare#components_12, magicSquare#components_9], 34),SumLeq([magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16], 34),SumGeq([magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16], 34);int(1..)]),
+and([SumLeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumGeq([magicSquare#components_1, magicSquare#components_13, magicSquare#components_5, magicSquare#components_9], 34),SumLeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumGeq([magicSquare#components_10, magicSquare#components_14, magicSquare#components_2, magicSquare#components_6], 34),SumLeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),SumGeq([magicSquare#components_11, magicSquare#components_15, magicSquare#components_3, magicSquare#components_7], 34),SumLeq([magicSquare#components_12, magicSquare#components_16, magicSquare#components_4, magicSquare#components_8], 34),SumGeq([magicSquare#components_12, magicSquare#components_16, magicSquare#components_4, magicSquare#components_8], 34);int(1..)]),
+and([SumLeq([magicSquare#components_1, magicSquare#components_11, magicSquare#components_16, magicSquare#components_6], 34),SumGeq([magicSquare#components_1, magicSquare#components_11, magicSquare#components_16, magicSquare#components_6], 34);int(1..)]),
+and([FlatLexLt([magicSquare#components_1, magicSquare#components_2, magicSquare#components_3, magicSquare#components_4], [magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8]),FlatLexLt([magicSquare#components_5, magicSquare#components_6, magicSquare#components_7, magicSquare#components_8], [magicSquare#components_9, magicSquare#components_10, magicSquare#components_11, magicSquare#components_12]),FlatLexLt([magicSquare#components_9, magicSquare#components_10, magicSquare#components_11, magicSquare#components_12], [magicSquare#components_13, magicSquare#components_14, magicSquare#components_15, magicSquare#components_16]);int(1..)]),
+and([FlatLexLt([magicSquare#components_1, magicSquare#components_5, magicSquare#components_9, magicSquare#components_13], [magicSquare#components_2, magicSquare#components_6, magicSquare#components_10, magicSquare#components_14]),FlatLexLt([magicSquare#components_2, magicSquare#components_6, magicSquare#components_10, magicSquare#components_14], [magicSquare#components_3, magicSquare#components_7, magicSquare#components_11, magicSquare#components_15]),FlatLexLt([magicSquare#components_3, magicSquare#components_7, magicSquare#components_11, magicSquare#components_15], [magicSquare#components_4, magicSquare#components_8, magicSquare#components_12, magicSquare#components_16]);int(1..)])
+

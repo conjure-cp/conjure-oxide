@@ -1,0 +1,56 @@
+Model before rewriting:
+
+find a: set (minSize 1) of int(1..2)
+find b: set (minSize 1) of int(1..2)
+
+such that
+
+a != b
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#packed_1: int(0..2)
+
+--
+
+a != b
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+a != b
+new variables:
+  find b#packed_1: int(0..2)
+
+--
+
+a != b
+   ~~> neq_not_eq_sets ([("Base", 8700)])
+!(b = a)
+
+--
+
+b = a
+   ~~> eq_packed ([("ReprGeneral", 9500)])
+b#packed_1 = a#packed_1
+
+--
+
+!(b#packed_1 = a#packed_1)
+   ~~> negated_eq_to_neq ([("Base", 8800)])
+b#packed_1 != a#packed_1
+
+--
+
+Final model:
+
+find a: set{packed} (minSize 1) of int(1..2)
+find b: set{packed} (minSize 1) of int(1..2)
+find a#packed_1: int(0..2)
+find b#packed_1: int(0..2)
+
+such that
+
+b#packed_1 != a#packed_1
+

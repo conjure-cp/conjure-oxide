@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find x: set{occurrence} of int(1..2)
+
+such that
+
+x = {3}
+
+--
+
+false
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+false
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#occurrence_1, x#occurrence_2], 0)
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#occurrence_1, x#occurrence_2], 2)
+
+--
+
+Final model:
+
+find x: set{occurrence} of int(1..2)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+
+such that
+
+false,
+and([SumGeq([x#occurrence_1, x#occurrence_2], 0),SumLeq([x#occurrence_1, x#occurrence_2], 2);int(1..)])
+

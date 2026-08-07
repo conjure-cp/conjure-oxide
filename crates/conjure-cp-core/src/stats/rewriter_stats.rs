@@ -6,7 +6,7 @@ use serde_with::skip_serializing_none;
 ///
 /// The `RewriterStats` struct is used to track various metrics and statistics related to the rewriting
 /// of a model using a set of rules. These statistics can be used for performance monitoring, debugging,
-/// and optimization purposes. The structure supports optional fields, allowing selective tracking of data
+/// and optimisation purposes. The structure supports optional fields, allowing selective tracking of data
 /// without requiring all fields to be set.
 ///
 /// The struct uses the following features:
@@ -14,12 +14,12 @@ use serde_with::skip_serializing_none;
 /// - `#[serde(rename_all = "camelCase")]`: Uses camelCase for all serialized field names, adhering to common JSON naming conventions.
 ///
 /// # Fields
-/// - `is_optimization_enabled`:
+/// - `is_optimisation_enabled`:
 ///   - Type: `Option<bool>`
-///   - Indicates whether optimizations were enabled during the rewriting process.
-///   - If `Some(true)`, it means optimizations were enabled.
-///   - If `Some(false)`, optimizations were explicitly disabled.
-///   - If `None`, the status of optimizations is unknown or not tracked.
+///   - Indicates whether optimisations were enabled during the rewriting process.
+///   - If `Some(true)`, it means optimisations were enabled.
+///   - If `Some(false)`, optimisations were explicitly disabled.
+///   - If `None`, the status of optimisations is unknown or not tracked.
 ///
 /// - `rewriter_run_time`:
 ///   - Type: `Option<std::time::Duration>`
@@ -39,10 +39,15 @@ use serde_with::skip_serializing_none;
 ///   - A successful application means the rule was successfully applied to transform the expression or constraint.
 ///   - If `None`, this metric is not tracked or not applicable for the current session.
 ///
+/// - `rewriter_value_letting_rewrites`:
+///   - Type: `Option<usize>`
+///   - The number of value-letting bodies rewritten by the rewriter.
+///   - If `None`, this metric is not tracked or not applicable for the current session.
+///
 /// # Example
 ///
 /// let stats = RewriterStats {
-///     is_optimization_enabled: Some(true),
+///     is_optimisation_enabled: Some(true),
 ///     rewriter_run_time: Some(std::time::Duration::new(2, 0)),
 ///     rewriter_rule_application_attempts: Some(15),
 ///     rewriter_rule_applications: Some(10),
@@ -66,19 +71,51 @@ use serde_with::skip_serializing_none;
 #[serde(rename_all = "camelCase")]
 #[allow(dead_code)]
 pub struct RewriterStats {
-    pub is_optimization_enabled: Option<bool>,
+    pub is_optimisation_enabled: Option<bool>,
     pub rewriter_run_time: Option<std::time::Duration>,
     pub rewriter_rule_application_attempts: Option<usize>,
     pub rewriter_rule_applications: Option<usize>,
+    pub rewriter_value_letting_rewrites: Option<usize>,
+    /// Successful rewrite-cache lookups, including terminal and replacement results.
+    pub rewriter_cache_hits: Option<usize>,
+    /// Rewrite-cache lookups with no usable entry.
+    pub rewriter_cache_misses: Option<usize>,
+    /// Cache hits proving that no rule applies through the requested level.
+    pub rewriter_cache_terminal_hits: Option<usize>,
+    /// Cache hits that supply a replacement expression.
+    pub rewriter_cache_rewrite_hits: Option<usize>,
+    /// Results inserted into the rewrite cache.
+    pub rewriter_cache_inserts: Option<usize>,
+    /// Rebuilt ancestor expressions mapped to cached rewrite results.
+    pub rewriter_cache_ancestor_mappings: Option<usize>,
+    /// Whole rewrite-cache resets.
+    pub rewriter_cache_resets: Option<usize>,
+    /// Arena content-hash requests made for rewrite-cache keys.
+    pub rewriter_content_hash_requests: Option<usize>,
+    /// Arena content-hash requests served from cached hashes.
+    pub rewriter_content_hash_hits: Option<usize>,
+    /// Arena content hashes computed on demand.
+    pub rewriter_content_hash_misses: Option<usize>,
 }
 
 impl RewriterStats {
     pub fn new() -> Self {
         Self {
-            is_optimization_enabled: None,
+            is_optimisation_enabled: None,
             rewriter_run_time: None,
             rewriter_rule_application_attempts: None,
             rewriter_rule_applications: None,
+            rewriter_value_letting_rewrites: Some(0),
+            rewriter_cache_hits: None,
+            rewriter_cache_misses: None,
+            rewriter_cache_terminal_hits: None,
+            rewriter_cache_rewrite_hits: None,
+            rewriter_cache_inserts: None,
+            rewriter_cache_ancestor_mappings: None,
+            rewriter_cache_resets: None,
+            rewriter_content_hash_requests: None,
+            rewriter_content_hash_hits: None,
+            rewriter_content_hash_misses: None,
         }
     }
 }

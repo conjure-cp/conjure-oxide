@@ -63,9 +63,16 @@ fn parse_name(minion_name: &str) -> Name {
         LazyLock::new(|| Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap());
     static REPRESENTED_NAME_RE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"__conjure_represented_name__(.*)__(.*)___(.*)").unwrap());
+    const REPRESENTED_JSON_PREFIX: &str = "__conjure_represented_name_json_";
 
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Machine(caps[1].parse::<i32>().unwrap())
+    } else if let Some(encoded) = minion_name.strip_prefix(REPRESENTED_JSON_PREFIX) {
+        let bytes = (0..encoded.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&encoded[i..i + 2], 16).unwrap())
+            .collect::<Vec<_>>();
+        serde_json::from_slice(&bytes).unwrap()
     } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Represented(Box::new((
             parse_name(&caps[1]),
@@ -92,6 +99,23 @@ fn translate_solution(
         conjure_solutions.insert(conjure_name, conjure_const);
     }
     conjure_solutions
+}
+
+fn translate_and_add_represented_values(
+    solutions: HashMap<minion_ast::VarName, minion_ast::Constant>,
+    model_template: Option<&ConjureModel>,
+) -> HashMap<conjure_ast::Name, conjure_ast::Literal> {
+    let mut conjure_solutions = translate_solution(solutions);
+    if let Some(model_template) = model_template {
+        add_represented_decision_values(&mut conjure_solutions, model_template);
+    }
+    conjure_solutions
+}
+
+fn has_explicit_false_constraint(constraints: &[minion_ast::Constraint]) -> bool {
+    constraints
+        .iter()
+        .any(|constraint| matches!(constraint, minion_ast::Constraint::False))
 }
 
 impl private::Sealed for Minion {}
@@ -137,6 +161,9 @@ impl SolverAdaptor for Minion {
         let dominance_model_template = self.dominance_model_template.clone();
         let mut midsearch_error: Option<SolverError> = None;
         let base_model = self.model.as_ref().expect("STATE MACHINE ERR");
+        let has_no_minion_vars = base_model.named_variables.get_variable_order().is_empty();
+        let has_false_constraint = has_explicit_false_constraint(&base_model.constraints);
+        let model_template = dominance_model_template.as_ref();
         let mut known_var_names = base_model
             .named_variables
             .get_variable_order()
@@ -150,10 +177,8 @@ impl SolverAdaptor for Minion {
             Box::new(|solutions| {
                 any_solutions = true;
                 solution_ordinal += 1;
-                let mut conjure_solutions = translate_solution(solutions);
-                if let Some(model_template) = dominance_model_template.as_ref() {
-                    add_represented_decision_values(&mut conjure_solutions, model_template);
-                }
+                let conjure_solutions =
+                    translate_and_add_represented_values(solutions, model_template);
 
                 let continue_search = callback(conjure_solutions.clone());
                 if !continue_search {
@@ -177,12 +202,22 @@ impl SolverAdaptor for Minion {
             }),
             RunOptions {
                 value_order: self.value_order.map(Into::into),
+                ..Default::default()
             },
         )
         .map_err(minion_error_to_solver_error)?;
 
         if let Some(err) = midsearch_error {
             return Err(err);
+        }
+
+        if !any_solutions && has_no_minion_vars && !has_false_constraint {
+            any_solutions = true;
+            let conjure_solutions =
+                translate_and_add_represented_values(HashMap::new(), model_template);
+            if !callback(conjure_solutions) {
+                user_terminated = true;
+            }
         }
 
         let status = if user_terminated {

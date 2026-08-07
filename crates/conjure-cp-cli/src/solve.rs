@@ -3,23 +3,23 @@
 use std::time::Duration;
 use std::{
     fs::File,
-    io::Write as _,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::exit,
     sync::{Arc, RwLock},
 };
 
 use anyhow::anyhow;
 use clap::ValueHint;
-use conjure_cp::instantiate::instantiate_model;
+use conjure_cp::instantiate::{instantiate_model, validate_instantiation_conditions};
 use conjure_cp::{
     Model,
     context::Context,
     defaults::DEFAULT_RULE_SETS,
-    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    rule_engine::{resolve_rule_sets, rewrite_model},
     settings::{
-        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
+        Rewriter, set_channelling, set_comprehension_expander, set_current_parser,
+        set_current_rewriter, set_current_solver_family, set_default_rule_trace_enabled,
+        set_heuristic, set_heuristic_responses, set_heuristic_seed, set_minion_discrete_threshold,
         set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
     },
     solver::Solver,
@@ -29,10 +29,22 @@ use conjure_cp::{
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
-use serde_json::to_string_pretty;
+use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_essence, solutions_to_json};
+use conjure_cp_cli::utils::simplified_json::{
+    domains_from_model, param_model_from_assignments, params_from_simplified_json_str,
+    solution_to_simplified_json, solutions_to_simplified_json_string,
+};
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, clap::ValueEnum)]
+pub enum OutputFormat {
+    /// Conjure-compatible Essence multi-solution / per-solution files
+    #[default]
+    Essence,
+    /// Conjure `--output-format=json` simplified JSON
+    Json,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NumberOfSolutions {
@@ -96,9 +108,31 @@ pub struct Args {
     )]
     pub number_of_solutions: NumberOfSolutions,
 
-    /// Save solutions to the given JSON file
+    /// Format for printed / saved solutions
+    #[arg(long, value_enum, default_value_t = OutputFormat::Essence, help_heading=LOGGING_HELP_HEADING)]
+    pub output_format: OutputFormat,
+
+    /// Write all solutions into a single file (default: true).
+    ///
+    /// Pass `--solutions-in-one-file=false` to emit one file (or stdout record) per solution.
+    #[arg(
+        long,
+        default_value_t = true,
+        action = clap::ArgAction::Set,
+        value_name = "BOOL",
+        help_heading = LOGGING_HELP_HEADING
+    )]
+    pub solutions_in_one_file: bool,
+
+    /// Save solutions to the given path (Essence `.solutions` / JSON `.solutions.json`, or a
+    /// filename stem when `--solutions-in-one-file=false`)
     #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
     pub output: Option<PathBuf>,
+
+    /// When optimising, retain every improving solution Minion reports instead of only the last
+    /// one.
+    #[arg(long, default_value_t = false)]
+    pub keep_intermediate_solutions: bool,
 }
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
@@ -123,10 +157,19 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     // unify models
     let unified_model = match param_file_name {
         Some(param_file_name) => {
-            let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
+            let param_model = parse_param(
+                &global_args,
+                Arc::clone(&context),
+                param_file_name,
+                &problem_model,
+            )?;
             instantiate_model(problem_model, param_model)?
         }
-        None => problem_model,
+        None => {
+            let mut problem_model = problem_model;
+            validate_instantiation_conditions(&mut problem_model)?;
+            problem_model
+        }
     };
     drop(ctx_lock);
 
@@ -152,7 +195,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         let context_obj = context.read().unwrap().clone();
         let generated_json = &serde_json::to_value(context_obj)?;
         let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
+        std::fs::write(path, format!("{pretty_json}\n"))?;
     }
     Ok(())
 }
@@ -260,6 +303,27 @@ pub(crate) fn parse(
     }
 }
 
+/// Parse an Essence or simplified-JSON parameter file.
+pub(crate) fn parse_param(
+    global_args: &GlobalArgs,
+    context: Arc<RwLock<Context<'static>>>,
+    file_path: &str,
+    problem_model: &Model,
+) -> anyhow::Result<Model> {
+    if file_path.ends_with(".json") {
+        tracing::info!(target: "file", "Parameter JSON file: {}", file_path);
+        let text = std::fs::read_to_string(file_path)?;
+        let given_domains = domains_from_model(problem_model);
+        let params = params_from_simplified_json_str(&text, &given_domains)?;
+        return Ok(param_model_from_assignments(
+            params,
+            &given_domains,
+            context,
+        ));
+    }
+    parse(global_args, context, file_path)
+}
+
 pub(crate) fn parse_with_conjure(
     input_file: &str,
     context: Arc<RwLock<Context<'static>>>,
@@ -302,27 +366,28 @@ pub(crate) fn rewrite(
     set_comprehension_expander(comprehension_expander);
     tracing::info!("Comprehension expander: {}", comprehension_expander);
 
+    set_heuristic(global_args.heuristic);
+    set_heuristic_seed(global_args.seed);
+    set_heuristic_responses(global_args.responses.clone());
+    set_channelling(global_args.channelling);
+    tracing::info!(
+        "Heuristic: {}, seed: {}, responses: {:?}, channelling: {}",
+        global_args.heuristic,
+        global_args.seed,
+        global_args.responses,
+        global_args.channelling
+    );
+
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = match rewriter {
-        Rewriter::Morph(config) => {
-            tracing::info!("Rewriting the model using the morph rewriter ({})", config);
-            rewrite_morph(
-                model,
-                &rule_sets,
-                global_args.check_equally_applicable_rules,
-                config,
-            )
-        }
-        Rewriter::Naive => {
-            tracing::info!("Rewriting the model using the default / naive rewriter");
-            rewrite_naive(
-                &model,
-                &rule_sets,
-                global_args.check_equally_applicable_rules,
-            )?
-        }
-    };
+    let Rewriter::Rewrite(config) = rewriter;
+    tracing::info!("Rewriting the model using the rewrite engine ({})", config);
+    let new_model = rewrite_model(
+        &model,
+        &rule_sets,
+        global_args.check_equally_applicable_rules,
+        config,
+    )?;
 
     tracing::info!("Rewritten model: \n{}\n", new_model);
     Ok(new_model)
@@ -334,40 +399,99 @@ fn run_solver(
     cmd_args: &Args,
     model: Model,
 ) -> anyhow::Result<()> {
-    let out_file: Option<File> = match &cmd_args.output {
-        None => None,
-        Some(pth) => Some(
-            File::options()
-                .create(true)
-                .truncate(true)
-                .write(true)
-                .open(pth)?,
-        ),
-    };
-
+    let domains = domains_from_model(&model);
     let solutions = get_solutions(
         solver,
         model,
         cmd_args.number_of_solutions.as_solver_limit(),
+        cmd_args.keep_intermediate_solutions,
         &global_args.save_solver_input_file,
         global_args.rule_trace_cdp,
     )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
-    let solutions_json = solutions_to_json(&solutions);
-    let solutions_str = to_string_pretty(&solutions_json)?;
-    match out_file {
-        None => {
-            println!("Solutions:");
-            println!("{solutions_str}");
+    let solutions = coerce_bools_in_solutions(&solutions, &domains);
+    write_solutions(&solutions, cmd_args)?;
+    Ok(())
+}
+
+/// Turn solver `0`/`1` assignments back into booleans when the find domain is bool, so JSON/Essence
+/// output matches Conjure's simplified JSON (`true`/`false`).
+fn coerce_bools_in_solutions(
+    solutions: &[std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::Literal>],
+    domains: &std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::DomainPtr>,
+) -> Vec<std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::Literal>> {
+    use conjure_cp::ast::{GroundDomain, Literal, Name};
+    solutions
+        .iter()
+        .map(|solution| {
+            solution
+                .iter()
+                .map(|(name, value)| {
+                    let value = match domains.get(name).and_then(|domain| domain.as_ground()) {
+                        Some(GroundDomain::Bool) => match value {
+                            Literal::Int(1) => Literal::Bool(true),
+                            Literal::Int(0) => Literal::Bool(false),
+                            other => other.clone(),
+                        },
+                        _ => value.clone(),
+                    };
+                    (name.clone(), value)
+                })
+                .collect::<std::collections::BTreeMap<Name, Literal>>()
+        })
+        .collect()
+}
+
+fn write_solutions(
+    solutions: &[std::collections::BTreeMap<conjure_cp::ast::Name, conjure_cp::ast::Literal>],
+    cmd_args: &Args,
+) -> anyhow::Result<()> {
+    if cmd_args.solutions_in_one_file {
+        let body = match cmd_args.output_format {
+            OutputFormat::Essence => solutions_to_essence(solutions),
+            OutputFormat::Json => solutions_to_simplified_json_string(solutions)?,
+        };
+        match &cmd_args.output {
+            None => print!("{body}"),
+            Some(path) => {
+                std::fs::write(path, body.as_bytes())?;
+                println!("Solutions saved to {:?}", path.canonicalize()?);
+            }
         }
-        Some(mut outf) => {
-            outf.write_all(solutions_str.as_bytes())?;
-            println!(
-                "Solutions saved to {:?}",
-                cmd_args.output.clone().unwrap().canonicalize()?
-            )
+        return Ok(());
+    }
+
+    // One file / record per solution.
+    for (index, solution) in solutions.iter().enumerate() {
+        let body = match cmd_args.output_format {
+            OutputFormat::Essence => solutions_to_essence(std::slice::from_ref(solution)),
+            OutputFormat::Json => {
+                let value = solution_to_simplified_json(solution)?;
+                format!("{}\n", serde_json::to_string_pretty(&value)?)
+            }
+        };
+        match &cmd_args.output {
+            None => print!("{body}"),
+            Some(path) => {
+                let file_path = per_solution_output_path(path, index + 1, cmd_args.output_format);
+                std::fs::write(&file_path, body.as_bytes())?;
+                println!("Solution saved to {:?}", file_path.canonicalize()?);
+            }
         }
     }
     Ok(())
+}
+
+fn per_solution_output_path(base: &Path, index: usize, format: OutputFormat) -> PathBuf {
+    let stem = base
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("solution");
+    let parent = base.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let extension = match format {
+        OutputFormat::Essence => "solution",
+        OutputFormat::Json => "solution.json",
+    };
+    parent.join(format!("{stem}-{index:06}.{extension}"))
 }

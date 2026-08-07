@@ -1,0 +1,53 @@
+Model before rewriting:
+
+find a: matrix indexed by [bool] of bool
+
+such that
+
+a[true] = !(a[false])
+
+--
+
+a[true] = !(a[false])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+a[true] = !(a[false])
+new variables:
+  find a#components_1: bool
+  find a#components_2: bool
+
+--
+
+a[true]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_2
+
+--
+
+a[false]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_1
+
+--
+
+a#components_2 = !(a#components_1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(a#components_1), a#components_2)
+
+--
+
+!(a#components_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(a#components_1,false)
+
+--
+
+Final model:
+
+find a: matrix indexed by [bool] of bool
+find a#components_1: bool
+find a#components_2: bool
+
+such that
+
+Reify(WatchedLiteral(a#components_1,false), a#components_2)
+

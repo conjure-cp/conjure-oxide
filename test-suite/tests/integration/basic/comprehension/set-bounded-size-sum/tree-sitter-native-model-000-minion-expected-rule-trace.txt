@@ -1,0 +1,24 @@
+Model before rewriting:
+
+find x: int(0..1000)
+
+such that
+
+x = sum([ 1 | i : set (minSize 1, maxSize 2) of int(7..9) ])
+
+--
+
+x = 6
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,6)
+
+--
+
+Final model:
+
+find x: int(0..1000)
+
+such that
+
+WatchedLiteral(x,6)
+

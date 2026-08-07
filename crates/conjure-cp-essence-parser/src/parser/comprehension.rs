@@ -3,13 +3,118 @@ use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
+use crate::parser::atom::parse_atom;
 use crate::parser::domain::parse_domain;
 use crate::util::{TypecheckingContext, named_children};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name};
-use std::vec;
 use tree_sitter::Node;
+
+fn parse_collection_expression(
+    ctx: &mut ParseContext,
+    collection_node: Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    match collection_node.kind() {
+        "arithmetic_expr" | "bool_expr" | "comparison_expr" => {
+            parse_expression(ctx, collection_node)
+        }
+        "atom" | "matrix" | "set_literal" | "tuple" | "record" | "identifier"
+        | "index_or_slice" => parse_atom(ctx, &collection_node),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Unexpected collection type: '{}'", collection_node.kind()),
+                Some(collection_node.range()),
+            ));
+            Ok(None)
+        }
+    }
+}
+
+fn parse_generator(
+    ctx: &mut ParseContext,
+    mut builder: ComprehensionBuilder,
+    generator_node: &Node,
+) -> Result<Option<ComprehensionBuilder>, FatalParseError> {
+    let Some(var_node) = field!(recover, ctx, generator_node, "variable") else {
+        return Ok(None);
+    };
+    let var_name_str = &ctx.source_code[var_node.start_byte()..var_node.end_byte()];
+    let var_name = Name::user(var_name_str);
+
+    if let Some(domain_node) = generator_node.child_by_field_name("domain") {
+        let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
+        let Some(var_domain) = parse_domain(&mut domain_ctx, domain_node)? else {
+            return Ok(None);
+        };
+        let decl = DeclarationPtr::new_find(var_name, var_domain);
+        return Ok(Some(builder.generator(decl)));
+    }
+
+    if let Some(collection_node) = generator_node.child_by_field_name("collection") {
+        let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
+        collection_ctx.typechecking_context = TypecheckingContext::Unknown;
+        collection_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+        let Some(collection_expr) =
+            parse_collection_expression(&mut collection_ctx, collection_node)?
+        else {
+            return Ok(None);
+        };
+        return Ok(Some(
+            builder.expression_generator(var_name, collection_expr),
+        ));
+    }
+
+    ctx.record_error(RecoverableParseError::new(
+        format!(
+            "Generator requires either a domain or collection (e.g. `{var_name} : domain` or `{var_name} <- expr`)"
+        ),
+        Some(generator_node.range()),
+    ));
+    Ok(None)
+}
+
+fn parse_quantifier_variables(ctx: &mut ParseContext, node: &Node) -> Option<Vec<Name>> {
+    let mut variables = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children_by_field_name("variables", &mut cursor) {
+        if child.kind() == "identifier" {
+            let var_name_str = &ctx.source_code[child.start_byte()..child.end_byte()];
+            variables.push(Name::user(var_name_str));
+        }
+    }
+
+    if variables.is_empty() {
+        ctx.record_error(RecoverableParseError::new(
+            "Quantifier and aggregate expressions require variables".to_string(),
+            Some(node.range()),
+        ));
+        return None;
+    }
+
+    Some(variables)
+}
+
+fn add_quantifier_generators_from_collection(
+    ctx: &mut ParseContext,
+    mut builder: ComprehensionBuilder,
+    variables: &[Name],
+    collection_node: Node,
+) -> Result<Option<ComprehensionBuilder>, FatalParseError> {
+    let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
+    collection_ctx.typechecking_context = TypecheckingContext::Unknown;
+    collection_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+    let Some(collection_expr) = parse_collection_expression(&mut collection_ctx, collection_node)?
+    else {
+        return Ok(None);
+    };
+
+    for var_name in variables {
+        builder = builder.expression_generator(var_name.clone(), collection_expr.clone());
+    }
+
+    Ok(Some(builder))
+}
 
 pub fn parse_comprehension(
     ctx: &mut ParseContext,
@@ -52,27 +157,10 @@ pub fn parse_comprehension(
                 return_expr_node = Some(child);
             }
             "generator" => {
-                // Parse the generator variable
-                let Some(var_node) = field!(recover, ctx, child, "variable") else {
+                let Some(updated_builder) = parse_generator(ctx, builder, &child)? else {
                     return Ok(None);
                 };
-                let var_name_str = &ctx.source_code[var_node.start_byte()..var_node.end_byte()];
-                let var_name = Name::user(var_name_str);
-
-                // Parse the domain
-                let Some(domain_node) = field!(recover, ctx, child, "domain") else {
-                    return Ok(None);
-                };
-
-                // Parse with a new context using the generator symbol table
-                let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
-                let Some(var_domain) = parse_domain(&mut domain_ctx, domain_node)? else {
-                    return Ok(None);
-                };
-
-                // Add generator using the builder
-                let decl = DeclarationPtr::new_find(var_name, var_domain);
-                builder = builder.generator(decl);
+                builder = updated_builder;
             }
             "condition" => {
                 // Parse the condition expression
@@ -118,8 +206,8 @@ pub fn parse_comprehension(
         return Ok(None);
     };
 
-    // Build the comprehension with the return expression and default ACOperatorKind::And
-    let comprehension = builder.with_return_value(return_expr, Some(ACOperatorKind::And));
+    // Build the comprehension with the return expression
+    let comprehension = builder.with_return_value(return_expr);
 
     Ok(Some(Expression::Comprehension(
         Metadata::new(),
@@ -149,46 +237,14 @@ pub fn parse_quantifier_or_aggregate_expr(
     // Create the comprehension builder
     let mut builder = ComprehensionBuilder::new(symbols_ptr);
 
-    // First pass: collect domain/collection, variables
-    let mut domain = None;
-    let mut collection_node = None;
-    let mut variables = vec![];
+    let Some(variables) = parse_quantifier_variables(ctx, node) else {
+        return Ok(None);
+    };
 
-    for child in named_children(node) {
-        match child.kind() {
-            "identifier" => {
-                let var_name_str = &ctx.source_code[child.start_byte()..child.end_byte()];
-                let var_name = Name::user(var_name_str);
-                variables.push(var_name);
-            }
-            "domain" => {
-                // Parse domains under Unknown context so arithmetic bounds in domains
-                // (e.g. int(1..m-1)) are not rejected by surrounding boolean/arithmetic contexts.
-                let saved_ctx = ctx.typechecking_context;
-                let saved_inner_ctx = ctx.inner_typechecking_context;
-                ctx.typechecking_context = TypecheckingContext::Unknown;
-                ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+    let domain_node = node.child_by_field_name("domain");
+    let collection_node = node.child_by_field_name("collection");
 
-                let Some(parsed_domain) = parse_domain(ctx, child)? else {
-                    ctx.typechecking_context = saved_ctx;
-                    ctx.inner_typechecking_context = saved_inner_ctx;
-                    return Ok(None);
-                };
-
-                ctx.typechecking_context = saved_ctx;
-                ctx.inner_typechecking_context = saved_inner_ctx;
-                domain = Some(parsed_domain);
-            }
-            "set_literal" | "matrix" | "tuple" | "record" => {
-                // Store the collection node to parse later
-                collection_node = Some(child);
-            }
-            _ => continue,
-        }
-    }
-
-    // We need either a domain or a collection
-    if domain.is_none() && collection_node.is_none() {
+    if domain_node.is_none() && collection_node.is_none() {
         ctx.record_error(RecoverableParseError::new(
             "Quantifier and aggregate expressions require a domain or collection".to_string(),
             Some(node.range()),
@@ -196,9 +252,10 @@ pub fn parse_quantifier_or_aggregate_expr(
         return Ok(None);
     }
 
-    if variables.is_empty() {
+    if domain_node.is_some() && collection_node.is_some() {
         ctx.record_error(RecoverableParseError::new(
-            "Quantifier and aggregate expressions require variables".to_string(),
+            "Quantifier and aggregate expressions cannot have both a domain and a collection"
+                .to_string(),
             Some(node.range()),
         ));
         return Ok(None);
@@ -226,18 +283,32 @@ pub fn parse_quantifier_or_aggregate_expr(
     };
 
     // Add variables as generators
-    if let Some(dom) = domain {
+    if let Some(domain_node) = domain_node {
+        let saved_ctx = ctx.typechecking_context;
+        let saved_inner_ctx = ctx.inner_typechecking_context;
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
+        let Some(domain) = parse_domain(ctx, domain_node)? else {
+            ctx.typechecking_context = saved_ctx;
+            ctx.inner_typechecking_context = saved_inner_ctx;
+            return Ok(None);
+        };
+
+        ctx.typechecking_context = saved_ctx;
+        ctx.inner_typechecking_context = saved_inner_ctx;
+
         for var_name in variables {
-            let decl = DeclarationPtr::new_find(var_name, dom.clone());
+            let decl = DeclarationPtr::new_find(var_name, domain.clone());
             builder = builder.generator(decl);
         }
-    } else if let Some(_coll_node) = collection_node {
-        // TODO: support collection domains
-        ctx.record_error(RecoverableParseError::new(
-            "Collection domains in quantifier and aggregate expressions".to_string(),
-            Some(_coll_node.range()),
-        ));
-        return Ok(None);
+    } else if let Some(collection_node) = collection_node {
+        let Some(updated_builder) =
+            add_quantifier_generators_from_collection(ctx, builder, &variables, collection_node)?
+        else {
+            return Ok(None);
+        };
+        builder = updated_builder;
     }
 
     // Parse the expression (after variables are in the symbol table)
@@ -256,7 +327,8 @@ pub fn parse_quantifier_or_aggregate_expr(
     };
 
     // Build the comprehension
-    let comprehension = builder.with_return_value(expression, Some(ac_operator_kind));
+    let mut comprehension = builder.with_return_value(expression);
+    comprehension.skip_operator = Some(ac_operator_kind);
     let wrapped_comprehension = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
 
     // Wrap in the appropriate expression type

@@ -20,6 +20,7 @@ use rustsat_cadical::CaDiCaL;
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
+use crate::representation::util::try_up;
 use crate::rule_engine::rewrite_model_with_configured_rewriter;
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
@@ -171,10 +172,6 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         })
         .collect_vec();
 
-    if representations.is_empty() {
-        return;
-    }
-
     let mut solution_btree = solution
         .clone()
         .into_iter()
@@ -185,6 +182,15 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         };
         solution.insert(name.clone(), value.clone());
         solution_btree.insert(name, value);
+    }
+
+    for (_, declaration) in symbols.iter_local() {
+        if declaration.reprs().is_empty() {
+            continue;
+        }
+        if let Ok(value) = try_up(declaration.clone(), solution) {
+            solution.insert(declaration.name().clone(), value);
+        }
     }
 }
 
@@ -514,6 +520,10 @@ impl SolverAdaptor for Sat {
 
         for (name, decl) in sym_tab.clone().into_iter_local() {
             if decl.as_find().is_none() {
+                continue;
+            }
+
+            if !decl.reprs().is_empty() {
                 continue;
             }
 

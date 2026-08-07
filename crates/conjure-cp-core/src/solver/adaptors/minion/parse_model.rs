@@ -1,7 +1,9 @@
 //! Parse / `load_model` step of running Minion.
 
 use crate::Model as ConjureModel;
-use crate::ast::{self as conjure_ast, HasDomain, Moo, Range};
+use crate::ast::{
+    self as conjure_ast, Atom, Expression, HasDomain, Moo, Name, OptimiseDirection, Range,
+};
 use crate::settings::{SolverFamily, minion_discrete_threshold};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
@@ -12,7 +14,7 @@ use crate::stats::SolverStats;
 use itertools::Itertools as _;
 use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
-use minion_sys::ast::{Constant, Constraint, Var};
+use minion_sys::ast::{Constant, Constraint, Optimisation, Var};
 use minion_sys::error::MinionError;
 use std::cell::Ref;
 use std::cell::RefCell;
@@ -23,17 +25,42 @@ use uniplate::{Biplate, Uniplate};
 
 /// Converts a conjure-oxide model to a `minion_sys` model.
 pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> {
+    let optimisation = resolve_optimisation(&model)?;
     let mut minion_model = MinionModel::new();
-    let table_vars = collect_table_variables(&model);
-    load_symbol_table(&model, &table_vars, &mut minion_model)?;
+    minion_model.optimisation = optimisation;
+    let discrete_vars = collect_discrete_required_variables(&model);
+    load_symbol_table(&model, &discrete_vars, &mut minion_model)?;
     load_constraints(&model, &mut minion_model)?;
     Ok(minion_model)
+}
+
+fn resolve_optimisation(model: &ConjureModel) -> Result<Option<Optimisation>, SolverError> {
+    let Some(objective) = model.objective.clone() else {
+        return Ok(None);
+    };
+
+    let minimising = matches!(objective.direction, OptimiseDirection::Minimising);
+    let optimise_name = match &objective.expression {
+        Expression::Atomic(_, Atom::Reference(reference)) if reference.ptr.as_find().is_some() => {
+            reference.name().clone()
+        }
+        expr => {
+            return Err(ModelInvalid(format!(
+                "objective expression must be a decision variable reference after normalisation, got {expr}"
+            )));
+        }
+    };
+
+    Ok(Some(Optimisation {
+        minimising,
+        var: name_to_string(optimise_name),
+    }))
 }
 
 /// Loads the symbol table into `minion_model`.
 fn load_symbol_table(
     conjure_model: &ConjureModel,
-    table_vars: &HashSet<conjure_ast::Name>,
+    discrete_vars: &HashSet<conjure_ast::Name>,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     if let Some(ref vars) = conjure_model.search_order {
@@ -51,23 +78,64 @@ fn load_symbol_table(
                 ))
             })?;
 
-            load_var(name, &var, true, table_vars, minion_model)?;
+            load_var(name, &var, true, discrete_vars, minion_model)?;
         }
 
         // then add the rest as non-search vars
-        for_each_unrepresented_var(conjure_model, |name, var| {
+        for_each_unrepresented_var(conjure_model, |name, var, _decl| {
             if search_vars.contains(name) {
                 return Ok(());
             }
-            load_var(name, var, false, table_vars, minion_model)
+            load_var(name, var, false, discrete_vars, minion_model)
         })?;
     } else {
-        for_each_unrepresented_var(conjure_model, |name, var| {
-            let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
-            load_var(name, var, is_search_var, table_vars, minion_model)
+        for_each_unrepresented_var(conjure_model, |name, var, decl| {
+            // Machine-named finds and FindAuxiliary (including represented children of auxiliaries)
+            // must not be branched on: they would otherwise create many duplicate user solutions.
+            let is_search_var =
+                !decl.is_find_auxiliary() && !matches!(name, conjure_ast::Name::Machine(_));
+            load_var(name, var, is_search_var, discrete_vars, minion_model)
         })?;
     }
     Ok(())
+}
+
+fn collect_discrete_required_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast::Name> {
+    let mut vars = collect_table_variables(conjure_model);
+
+    for expr in conjure_model
+        .constraints()
+        .iter()
+        .flat_map(|constraint| constraint.universe())
+    {
+        match expr {
+            Expression::Gcc(_, vars_expr, _, _)
+            | Expression::GccWeak(_, vars_expr, _, _)
+            | Expression::AtMost(_, vars_expr, _, _)
+            | Expression::AtLeast(_, vars_expr, _, _) => {
+                vars.extend(references_in_expression(Moo::unwrap_or_clone(
+                    vars_expr.clone(),
+                )));
+            }
+            Expression::FlatAllDiff(_, atoms) => {
+                for atom in atoms {
+                    if let Atom::Reference(reference) = atom {
+                        vars.insert(reference.name().clone());
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    vars
+}
+
+fn references_in_expression(expr: Expression) -> HashSet<conjure_ast::Name> {
+    Biplate::<conjure_ast::Reference>::universe_bi(&expr)
+        .into_iter()
+        .map(|reference| reference.name().clone())
+        .collect()
 }
 
 fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast::Name> {
@@ -89,12 +157,20 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
 
 fn for_each_unrepresented_var(
     conjure_model: &ConjureModel,
-    mut f: impl FnMut(&conjure_ast::Name, &conjure_ast::DecisionVariable) -> Result<(), SolverError>,
+    mut f: impl FnMut(
+        &conjure_ast::Name,
+        &conjure_ast::DecisionVariable,
+        &conjure_ast::DeclarationPtr,
+    ) -> Result<(), SolverError>,
 ) -> Result<(), SolverError> {
     for (name, decl) in conjure_model.symbols().clone().into_iter_local() {
         let Some(var) = decl.as_find() else {
             continue;
         };
+
+        if !decl.reprs().is_empty() {
+            continue;
+        }
 
         if !conjure_model
             .symbols()
@@ -104,7 +180,7 @@ fn for_each_unrepresented_var(
             continue;
         }
 
-        f(&name, &var)?;
+        f(&name, &var, &decl)?;
     }
 
     Ok(())
@@ -121,11 +197,13 @@ fn load_var(
     let resolved_domain = var.domain_of().resolve();
     let force_discrete = table_vars.contains(name);
     match resolved_domain.as_deref() {
+        Ok(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
         Ok(conjure_ast::GroundDomain::Int(ranges)) => {
             load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
         }
-        Ok(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
-        x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
+        x => Err(ModelFeatureNotSupported(format!(
+            "variable {name} has unsupported domain {x:?}"
+        ))),
     }
 }
 
@@ -208,10 +286,16 @@ fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
         conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{x}"),
-        conjure_ast::Name::Represented(fields) => {
-            let (name, rule, suffix) = *fields;
-            let name = name_to_string(name);
-            format!("__conjure_represented_name__{name}__{rule}___{suffix}")
+        // Representation names can be nested (record -> tuple -> atoms), so
+        // delimiter-based encoding is ambiguous. JSON encoded as hex is fully
+        // reversible and only uses characters accepted by Minion identifiers.
+        name @ conjure_ast::Name::Represented(_) => {
+            let json = serde_json::to_vec(&name).expect("Name serialization cannot fail");
+            let encoded = json
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>();
+            format!("__conjure_represented_name_json_{encoded}")
         }
         x => format!("{x}"),
     }
@@ -253,6 +337,15 @@ fn load_expr(
     expr: conjure_ast::Expression,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
+    // Top-level `and` must already have been flattened into the root constraint list by
+    // `finish_root_evaluator_normalisation` after rewriting. Nested `and` is still lowered
+    // via `WatchedAnd` in `parse_expr`.
+    if matches!(expr, conjure_ast::Expression::And(_, _)) {
+        return Err(SolverError::ModelInvalid(
+            "top-level and must be flattened into the root constraint list before Minion loading"
+                .to_string(),
+        ));
+    }
     minion_model.constraints.push(parse_expr(expr)?);
     Ok(())
 }
@@ -271,7 +364,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         }
 
         conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
-            Ok(minion_ast::Constraint::AllDiff(parse_atoms(atoms)?))
+            Ok(minion_ast::Constraint::GacAllDiff(parse_atoms(atoms)?))
         }
         conjure_ast::Expression::FlatSumLeq(_metadata, lhs, rhs) => Ok(
             minion_ast::Constraint::SumLeq(parse_atoms(lhs)?, parse_atom(rhs)?),
@@ -331,6 +424,38 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 TableConstraintKind::NegativeTable,
                 Moo::unwrap_or_clone(tuple_expr),
                 Moo::unwrap_or_clone(forbidden_rows_expr),
+            )
+        }
+        conjure_ast::Expression::AtLeast(_metadata, vars_expr, counts_expr, values_expr) => {
+            parse_global_cardinality_constraint(
+                GlobalCardinalityConstraintKind::AtLeast,
+                Moo::unwrap_or_clone(vars_expr),
+                Moo::unwrap_or_clone(values_expr),
+                Moo::unwrap_or_clone(counts_expr),
+            )
+        }
+        conjure_ast::Expression::AtMost(_metadata, vars_expr, counts_expr, values_expr) => {
+            parse_global_cardinality_constraint(
+                GlobalCardinalityConstraintKind::AtMost,
+                Moo::unwrap_or_clone(vars_expr),
+                Moo::unwrap_or_clone(values_expr),
+                Moo::unwrap_or_clone(counts_expr),
+            )
+        }
+        conjure_ast::Expression::Gcc(_metadata, vars_expr, values_expr, counts_expr) => {
+            parse_gcc_constraint(
+                Moo::unwrap_or_clone(vars_expr),
+                Moo::unwrap_or_clone(values_expr),
+                Moo::unwrap_or_clone(counts_expr),
+                false,
+            )
+        }
+        conjure_ast::Expression::GccWeak(_metadata, vars_expr, values_expr, counts_expr) => {
+            parse_gcc_constraint(
+                Moo::unwrap_or_clone(vars_expr),
+                Moo::unwrap_or_clone(values_expr),
+                Moo::unwrap_or_clone(counts_expr),
+                true,
             )
         }
         conjure_ast::Expression::MinionDivEqUndefZero(_metadata, a, b, c) => {
@@ -465,6 +590,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atom(Moo::unwrap_or_clone(x))?,
             parse_atom(Moo::unwrap_or_clone(y))?,
         )),
+        conjure_ast::Expression::FlatMinEq(_metadata, vars, result) => Ok(
+            minion_ast::Constraint::Min(parse_atoms(vars)?, parse_atom(result)?),
+        ),
         conjure_ast::Expression::MinionPow(_, x, y, z) => Ok(minion_ast::Constraint::Pow(
             (
                 parse_atom(Moo::unwrap_or_clone(x))?,
@@ -558,6 +686,156 @@ fn parse_table_constraint(
     Ok(kind.into_constraint(vars, tuples))
 }
 
+#[derive(Clone, Copy)]
+enum GlobalCardinalityConstraintKind {
+    AtLeast,
+    AtMost,
+}
+
+impl GlobalCardinalityConstraintKind {
+    fn name(self) -> &'static str {
+        match self {
+            Self::AtLeast => "atleast",
+            Self::AtMost => "atmost",
+        }
+    }
+
+    fn into_constraint(
+        self,
+        vars: Vec<minion_ast::Var>,
+        value: minion_ast::Constant,
+        count: minion_ast::Var,
+    ) -> Result<minion_ast::Constraint, SolverError> {
+        match self {
+            Self::AtLeast => Ok(minion_ast::Constraint::OccurrenceGeq(
+                vars,
+                value,
+                var_as_constant(count, self.name())?,
+            )),
+            Self::AtMost => Ok(minion_ast::Constraint::OccurrenceLeq(
+                vars,
+                value,
+                var_as_constant(count, self.name())?,
+            )),
+        }
+    }
+}
+
+fn parse_global_cardinality_constraint(
+    kind: GlobalCardinalityConstraintKind,
+    vars_expr: conjure_ast::Expression,
+    values_expr: conjure_ast::Expression,
+    counts_expr: conjure_ast::Expression,
+) -> Result<minion_ast::Constraint, SolverError> {
+    let vars = parse_expr_matrix_vars(vars_expr, kind.name(), "vars")?;
+    let values = parse_expr_matrix_constants(values_expr, kind.name(), "values")?;
+    let counts = parse_expr_matrix_vars(counts_expr, kind.name(), "counts")?;
+
+    if values.len() != counts.len() {
+        return Err(ModelInvalid(format!(
+            "{} values length does not match counts length",
+            kind.name()
+        )));
+    }
+
+    let constraints = values
+        .into_iter()
+        .zip(counts)
+        .map(|(value, count)| kind.into_constraint(vars.clone(), value, count))
+        .collect::<Result<Vec<_>, SolverError>>()?;
+
+    match constraints.as_slice() {
+        [] => Ok(minion_ast::Constraint::True),
+        [constraint] => Ok(constraint.clone()),
+        _ => Ok(minion_ast::Constraint::WatchedAnd(constraints)),
+    }
+}
+
+fn parse_gcc_constraint(
+    vars_expr: conjure_ast::Expression,
+    values_expr: conjure_ast::Expression,
+    counts_expr: conjure_ast::Expression,
+    weak: bool,
+) -> Result<minion_ast::Constraint, SolverError> {
+    let vars = parse_expr_matrix_vars(vars_expr, "gcc", "vars")?;
+    let values = parse_expr_matrix_constants(values_expr, "gcc", "values")?;
+    let counts = parse_expr_matrix_vars(counts_expr, "gcc", "counts")?;
+
+    if values.len() != counts.len() {
+        return Err(ModelInvalid(
+            "gcc values length does not match counts length".to_string(),
+        ));
+    }
+
+    Ok(if weak {
+        minion_ast::Constraint::GccWeak(vars, values, counts)
+    } else {
+        minion_ast::Constraint::Gcc(vars, values, counts)
+    })
+}
+
+fn parse_expr_matrix_vars(
+    expr: conjure_ast::Expression,
+    constraint_name: &str,
+    argument_name: &str,
+) -> Result<Vec<minion_ast::Var>, SolverError> {
+    let (elems, _) = materialise_matrix_unchecked(expr, constraint_name, argument_name)?;
+
+    elems.into_iter().map(parse_atomic_expr).collect()
+}
+
+fn parse_expr_matrix_constants(
+    expr: conjure_ast::Expression,
+    constraint_name: &str,
+    argument_name: &str,
+) -> Result<Vec<minion_ast::Constant>, SolverError> {
+    let (elems, _) = materialise_matrix_unchecked(expr, constraint_name, argument_name)?;
+
+    elems
+        .into_iter()
+        .map(|elem| {
+            conjure_ast::eval_constant(&elem)
+                .ok_or_else(|| {
+                    ModelInvalid(format!(
+                        "{constraint_name} {argument_name} argument contains a non-constant expression"
+                    ))
+                })
+                .and_then(parse_literal)
+        })
+        .collect()
+}
+
+fn materialise_matrix_unchecked(
+    expr: conjure_ast::Expression,
+    constraint_name: &str,
+    argument_name: &str,
+) -> Result<(Vec<conjure_ast::Expression>, conjure_ast::DomainPtr), SolverError> {
+    let resolved_expr = match expr {
+        conjure_ast::Expression::Atomic(_, conjure_ast::Atom::Reference(reference)) => reference
+            .resolve_expression()
+            .unwrap_or_else(|| reference.into()),
+        expr => expr,
+    };
+
+    resolved_expr.unwrap_matrix_unchecked().ok_or_else(|| {
+        ModelInvalid(format!(
+            "{constraint_name} {argument_name} argument is not a matrix"
+        ))
+    })
+}
+
+fn var_as_constant(
+    var: minion_ast::Var,
+    constraint_name: &str,
+) -> Result<minion_ast::Constant, SolverError> {
+    match var {
+        minion_ast::Var::ConstantAsVar(value) => Ok(minion_ast::Constant::Integer(value)),
+        _ => Err(ModelInvalid(format!(
+            "{constraint_name} counts argument must contain constants"
+        ))),
+    }
+}
+
 fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> {
     match expr {
         // Minion treats bools as ints anyways, so this is a no-op at this stage
@@ -640,4 +918,38 @@ fn parse_literal(k: conjure_ast::Literal) -> Result<minion_ast::Constant, Solver
 
 fn parse_name(name: conjure_ast::Name) -> Result<minion_ast::Var, SolverError> {
     Ok(minion_ast::Var::NameRef(name_to_string(name)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Literal, Metadata};
+
+    #[test]
+    fn flat_alldiff_uses_gac_propagation() {
+        let constraint = parse_expr(Expression::FlatAllDiff(
+            Metadata::new(),
+            vec![
+                Atom::Literal(Literal::Int(1)),
+                Atom::Literal(Literal::Int(2)),
+            ],
+        ))
+        .unwrap();
+
+        assert!(matches!(constraint, minion_ast::Constraint::GacAllDiff(_)));
+    }
+
+    #[test]
+    fn top_level_and_is_rejected() {
+        let true_expr = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
+        let expr = Expression::And(
+            Metadata::new(),
+            Moo::new(crate::into_matrix_expr!(vec![true_expr.clone(), true_expr])),
+        );
+        let mut model = MinionModel::new();
+
+        let err = load_expr(expr, &mut model).unwrap_err();
+        assert!(matches!(err, SolverError::ModelInvalid(_)));
+        assert!(model.constraints.is_empty());
+    }
 }

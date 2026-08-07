@@ -10,11 +10,19 @@ use std::fmt::{Display, Formatter};
 #[path_prefix(conjure_cp::ast)]
 pub struct SetAttr<A = Int> {
     pub size: Range<A>,
+    /// Optional user-facing representation preference (short name), e.g. `"packed"`.
+    ///
+    /// Written in Essence as `set{packed} of …`. When present, representation selection
+    /// heuristics default to this representation if it is applicable.
+    pub representation: Option<String>,
 }
 
 impl<A> SetAttr<A> {
     pub fn new(size: Range<A>) -> Self {
-        Self { size }
+        Self {
+            size,
+            representation: None,
+        }
     }
 
     pub fn new_min_max_size(min: A, max: A) -> Self {
@@ -32,18 +40,26 @@ impl<A> SetAttr<A> {
     pub fn new_size(sz: A) -> Self {
         Self::new(Range::Single(sz))
     }
+
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
+    }
 }
 
 impl<A> Default for SetAttr<A> {
     fn default() -> Self {
         SetAttr {
             size: Range::Unbounded,
+            representation: None,
         }
     }
 }
 
 impl<A: Display> Display for SetAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        // Representation is printed by the domain (`set{name}`), not inside size attributes.
         match self.size {
             Range::Unbounded => Ok(()),
             _ => write!(f, "({})", fmt_size("size", &self.size)),
@@ -315,10 +331,10 @@ impl Display for BinaryAttr {
 fn fmt_size<A: Display>(suffix: &str, sz: &Range<A>) -> String {
     let cap_suffix = capitalize(suffix);
     match sz {
-        Range::Single(x) => format!("{suffix}({x})"),
-        Range::Bounded(l, r) => format!("min{cap_suffix}({l}), max{cap_suffix}({r})"),
-        Range::UnboundedL(r) => format!("max{cap_suffix}({r})"),
-        Range::UnboundedR(l) => format!("min{cap_suffix}({l})"),
+        Range::Single(x) => format!("{suffix} {x}"),
+        Range::Bounded(l, r) => format!("min{cap_suffix} {l}, max{cap_suffix} {r}"),
+        Range::UnboundedL(r) => format!("max{cap_suffix} {r}"),
+        Range::UnboundedR(l) => format!("min{cap_suffix} {l}"),
         Range::Unbounded => "".to_string(),
     }
 }

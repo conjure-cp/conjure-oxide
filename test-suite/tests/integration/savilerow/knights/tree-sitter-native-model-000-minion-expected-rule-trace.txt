@@ -1,0 +1,6011 @@
+Model before rewriting:
+
+letting n be 5
+letting startCol be 0
+letting startRow be 0
+letting tourLength be 24
+letting FIELDS be domain int(0..((product([n,n;int(1..)]) - 1)))
+letting KNIGHTS be domain int(0..((tourLength - 1)))
+find tour: matrix indexed by [KNIGHTS] of FIELDS
+
+such that
+
+allDifferent(tour),
+tour[0] = sum([startCol,product([startRow,n;int(1..)]);int(1..)]),
+and([ or([and([|(tour[i] % n - tour[sum([i,1;int(1..)])] % n)| = 1,|((tour[i] / n) - (tour[sum([i,1;int(1..)])] / n))| = 2;int(1..)]),and([|(tour[i] % n - tour[sum([i,1;int(1..)])] % n)| = 2,|((tour[i] / n) - (tour[sum([i,1;int(1..)])] / n))| = 1;int(1..)]);int(1..)]) | i : int(0..((tourLength - 2))) ])
+
+--
+
+allDifferent(tour),
+tour[0] = 0,
+and([ or([and([|(tour[i] % n - tour[sum([i,1;int(1..)])] % n)| = 1,|((tour[i] / n) - (tour[sum([i,1;int(1..)])] / n))| = 2;int(1..)]),and([|(tour[i] % n - tour[sum([i,1;int(1..)])] % n)| = 2,|((tour[i] / n) - (tour[sum([i,1;int(1..)])] / n))| = 1;int(1..)]);int(1..)]) | i : int(0..((tourLength - 2))) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+allDifferent(tour),
+tour[0] = 0,
+and([ or([and([|(tour[i] % n - tour[sum([i,1;int(1..)])] % n)| = 1,|((tour[i] / n) - (tour[sum([i,1;int(1..)])] / n))| = 2;int(1..)]),and([|(tour[i] % n - tour[sum([i,1;int(1..)])] % n)| = 2,|((tour[i] / n) - (tour[sum([i,1;int(1..)])] / n))| = 1;int(1..)]);int(1..)]) | i : int(0..((tourLength - 2))) ])
+new variables:
+  find tour#components_1: int(0..24)
+  find tour#components_10: int(0..24)
+  find tour#components_11: int(0..24)
+  find tour#components_12: int(0..24)
+  find tour#components_13: int(0..24)
+  find tour#components_14: int(0..24)
+  find tour#components_15: int(0..24)
+  find tour#components_16: int(0..24)
+  find tour#components_17: int(0..24)
+  find tour#components_18: int(0..24)
+  find tour#components_19: int(0..24)
+  find tour#components_2: int(0..24)
+  find tour#components_20: int(0..24)
+  find tour#components_21: int(0..24)
+  find tour#components_22: int(0..24)
+  find tour#components_23: int(0..24)
+  find tour#components_24: int(0..24)
+  find tour#components_3: int(0..24)
+  find tour#components_4: int(0..24)
+  find tour#components_5: int(0..24)
+  find tour#components_6: int(0..24)
+  find tour#components_7: int(0..24)
+  find tour#components_8: int(0..24)
+  find tour#components_9: int(0..24)
+
+--
+
+tour[0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+tour#components_1
+
+--
+
+tour#components_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(tour#components_1,0)
+
+--
+
+allDifferent(tour)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([tour#components_1,tour#components_2,tour#components_3,tour#components_4,tour#components_5,tour#components_6,tour#components_7,tour#components_8,tour#components_9,tour#components_10,tour#components_11,tour#components_12,tour#components_13,tour#components_14,tour#components_15,tour#components_16,tour#components_17,tour#components_18,tour#components_19,tour#components_20,tour#components_21,tour#components_22,tour#components_23,tour#components_24;int(0..23)])
+
+--
+
+allDifferent([tour#components_1,tour#components_2,tour#components_3,tour#components_4,tour#components_5,tour#components_6,tour#components_7,tour#components_8,tour#components_9,tour#components_10,tour#components_11,tour#components_12,tour#components_13,tour#components_14,tour#components_15,tour#components_16,tour#components_17,tour#components_18,tour#components_19,tour#components_20,tour#components_21,tour#components_22,tour#components_23,tour#components_24;int(0..23)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([tour#components_1, tour#components_2, tour#components_3, tour#components_4, tour#components_5, tour#components_6, tour#components_7, tour#components_8, tour#components_9, tour#components_10, tour#components_11, tour#components_12, tour#components_13, tour#components_14, tour#components_15, tour#components_16, tour#components_17, tour#components_18, tour#components_19, tour#components_20, tour#components_21, tour#components_22, tour#components_23, tour#components_24])
+
+--
+
+[ or([and([|(tour[i] % n - tour[sum([i,1;int(1..)])] % n)| = 1,|((tour[i] / n) - (tour[sum([i,1;int(1..)])] / n))| = 2;int(1..)]),and([|(tour[i] % n - tour[sum([i,1;int(1..)])] % n)| = 2,|((tour[i] / n) - (tour[sum([i,1;int(1..)])] / n))| = 1;int(1..)]);int(1..)]) | i : int(0..((tourLength - 2))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[or([and([|(tour#components_1 % 5 - tour#components_2 % 5)| = 1,|((tour#components_1 / 5) - (tour#components_2 / 5))| = 2;int(1..)]),and([|(tour#components_1 % 5 - tour#components_2 % 5)| = 2,|((tour#components_1 / 5) - (tour#components_2 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_2 % 5 - tour#components_3 % 5)| = 1,|((tour#components_2 / 5) - (tour#components_3 / 5))| = 2;int(1..)]),and([|(tour#components_2 % 5 - tour#components_3 % 5)| = 2,|((tour#components_2 / 5) - (tour#components_3 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_3 % 5 - tour#components_4 % 5)| = 1,|((tour#components_3 / 5) - (tour#components_4 / 5))| = 2;int(1..)]),and([|(tour#components_3 % 5 - tour#components_4 % 5)| = 2,|((tour#components_3 / 5) - (tour#components_4 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_4 % 5 - tour#components_5 % 5)| = 1,|((tour#components_4 / 5) - (tour#components_5 / 5))| = 2;int(1..)]),and([|(tour#components_4 % 5 - tour#components_5 % 5)| = 2,|((tour#components_4 / 5) - (tour#components_5 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_5 % 5 - tour#components_6 % 5)| = 1,|((tour#components_5 / 5) - (tour#components_6 / 5))| = 2;int(1..)]),and([|(tour#components_5 % 5 - tour#components_6 % 5)| = 2,|((tour#components_5 / 5) - (tour#components_6 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_6 % 5 - tour#components_7 % 5)| = 1,|((tour#components_6 / 5) - (tour#components_7 / 5))| = 2;int(1..)]),and([|(tour#components_6 % 5 - tour#components_7 % 5)| = 2,|((tour#components_6 / 5) - (tour#components_7 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_7 % 5 - tour#components_8 % 5)| = 1,|((tour#components_7 / 5) - (tour#components_8 / 5))| = 2;int(1..)]),and([|(tour#components_7 % 5 - tour#components_8 % 5)| = 2,|((tour#components_7 / 5) - (tour#components_8 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_8 % 5 - tour#components_9 % 5)| = 1,|((tour#components_8 / 5) - (tour#components_9 / 5))| = 2;int(1..)]),and([|(tour#components_8 % 5 - tour#components_9 % 5)| = 2,|((tour#components_8 / 5) - (tour#components_9 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_9 % 5 - tour#components_10 % 5)| = 1,|((tour#components_9 / 5) - (tour#components_10 / 5))| = 2;int(1..)]),and([|(tour#components_9 % 5 - tour#components_10 % 5)| = 2,|((tour#components_9 / 5) - (tour#components_10 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_10 % 5 - tour#components_11 % 5)| = 1,|((tour#components_10 / 5) - (tour#components_11 / 5))| = 2;int(1..)]),and([|(tour#components_10 % 5 - tour#components_11 % 5)| = 2,|((tour#components_10 / 5) - (tour#components_11 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_11 % 5 - tour#components_12 % 5)| = 1,|((tour#components_11 / 5) - (tour#components_12 / 5))| = 2;int(1..)]),and([|(tour#components_11 % 5 - tour#components_12 % 5)| = 2,|((tour#components_11 / 5) - (tour#components_12 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_12 % 5 - tour#components_13 % 5)| = 1,|((tour#components_12 / 5) - (tour#components_13 / 5))| = 2;int(1..)]),and([|(tour#components_12 % 5 - tour#components_13 % 5)| = 2,|((tour#components_12 / 5) - (tour#components_13 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_13 % 5 - tour#components_14 % 5)| = 1,|((tour#components_13 / 5) - (tour#components_14 / 5))| = 2;int(1..)]),and([|(tour#components_13 % 5 - tour#components_14 % 5)| = 2,|((tour#components_13 / 5) - (tour#components_14 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_14 % 5 - tour#components_15 % 5)| = 1,|((tour#components_14 / 5) - (tour#components_15 / 5))| = 2;int(1..)]),and([|(tour#components_14 % 5 - tour#components_15 % 5)| = 2,|((tour#components_14 / 5) - (tour#components_15 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_15 % 5 - tour#components_16 % 5)| = 1,|((tour#components_15 / 5) - (tour#components_16 / 5))| = 2;int(1..)]),and([|(tour#components_15 % 5 - tour#components_16 % 5)| = 2,|((tour#components_15 / 5) - (tour#components_16 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_16 % 5 - tour#components_17 % 5)| = 1,|((tour#components_16 / 5) - (tour#components_17 / 5))| = 2;int(1..)]),and([|(tour#components_16 % 5 - tour#components_17 % 5)| = 2,|((tour#components_16 / 5) - (tour#components_17 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_17 % 5 - tour#components_18 % 5)| = 1,|((tour#components_17 / 5) - (tour#components_18 / 5))| = 2;int(1..)]),and([|(tour#components_17 % 5 - tour#components_18 % 5)| = 2,|((tour#components_17 / 5) - (tour#components_18 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_18 % 5 - tour#components_19 % 5)| = 1,|((tour#components_18 / 5) - (tour#components_19 / 5))| = 2;int(1..)]),and([|(tour#components_18 % 5 - tour#components_19 % 5)| = 2,|((tour#components_18 / 5) - (tour#components_19 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_19 % 5 - tour#components_20 % 5)| = 1,|((tour#components_19 / 5) - (tour#components_20 / 5))| = 2;int(1..)]),and([|(tour#components_19 % 5 - tour#components_20 % 5)| = 2,|((tour#components_19 / 5) - (tour#components_20 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_20 % 5 - tour#components_21 % 5)| = 1,|((tour#components_20 / 5) - (tour#components_21 / 5))| = 2;int(1..)]),and([|(tour#components_20 % 5 - tour#components_21 % 5)| = 2,|((tour#components_20 / 5) - (tour#components_21 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_21 % 5 - tour#components_22 % 5)| = 1,|((tour#components_21 / 5) - (tour#components_22 / 5))| = 2;int(1..)]),and([|(tour#components_21 % 5 - tour#components_22 % 5)| = 2,|((tour#components_21 / 5) - (tour#components_22 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_22 % 5 - tour#components_23 % 5)| = 1,|((tour#components_22 / 5) - (tour#components_23 / 5))| = 2;int(1..)]),and([|(tour#components_22 % 5 - tour#components_23 % 5)| = 2,|((tour#components_22 / 5) - (tour#components_23 / 5))| = 1;int(1..)]);int(1..)]),or([and([|(tour#components_23 % 5 - tour#components_24 % 5)| = 1,|((tour#components_23 / 5) - (tour#components_24 / 5))| = 2;int(1..)]),and([|(tour#components_23 % 5 - tour#components_24 % 5)| = 2,|((tour#components_23 / 5) - (tour#components_24 / 5))| = 1;int(1..)]);int(1..)]);int(1..)]
+
+--
+
+(tour#components_1 % 5 - tour#components_2 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_1 % 5,-(tour#components_2 % 5);int(1..)])
+
+--
+
+((tour#components_1 / 5) - (tour#components_2 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_1 / 5),-((tour#components_2 / 5));int(1..)])
+
+--
+
+(tour#components_1 % 5 - tour#components_2 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_1 % 5,-(tour#components_2 % 5);int(1..)])
+
+--
+
+((tour#components_1 / 5) - (tour#components_2 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_1 / 5),-((tour#components_2 / 5));int(1..)])
+
+--
+
+(tour#components_2 % 5 - tour#components_3 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_2 % 5,-(tour#components_3 % 5);int(1..)])
+
+--
+
+((tour#components_2 / 5) - (tour#components_3 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_2 / 5),-((tour#components_3 / 5));int(1..)])
+
+--
+
+(tour#components_2 % 5 - tour#components_3 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_2 % 5,-(tour#components_3 % 5);int(1..)])
+
+--
+
+((tour#components_2 / 5) - (tour#components_3 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_2 / 5),-((tour#components_3 / 5));int(1..)])
+
+--
+
+(tour#components_3 % 5 - tour#components_4 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_3 % 5,-(tour#components_4 % 5);int(1..)])
+
+--
+
+((tour#components_3 / 5) - (tour#components_4 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_3 / 5),-((tour#components_4 / 5));int(1..)])
+
+--
+
+(tour#components_3 % 5 - tour#components_4 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_3 % 5,-(tour#components_4 % 5);int(1..)])
+
+--
+
+((tour#components_3 / 5) - (tour#components_4 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_3 / 5),-((tour#components_4 / 5));int(1..)])
+
+--
+
+(tour#components_4 % 5 - tour#components_5 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_4 % 5,-(tour#components_5 % 5);int(1..)])
+
+--
+
+((tour#components_4 / 5) - (tour#components_5 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_4 / 5),-((tour#components_5 / 5));int(1..)])
+
+--
+
+(tour#components_4 % 5 - tour#components_5 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_4 % 5,-(tour#components_5 % 5);int(1..)])
+
+--
+
+((tour#components_4 / 5) - (tour#components_5 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_4 / 5),-((tour#components_5 / 5));int(1..)])
+
+--
+
+(tour#components_5 % 5 - tour#components_6 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_5 % 5,-(tour#components_6 % 5);int(1..)])
+
+--
+
+((tour#components_5 / 5) - (tour#components_6 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_5 / 5),-((tour#components_6 / 5));int(1..)])
+
+--
+
+(tour#components_5 % 5 - tour#components_6 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_5 % 5,-(tour#components_6 % 5);int(1..)])
+
+--
+
+((tour#components_5 / 5) - (tour#components_6 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_5 / 5),-((tour#components_6 / 5));int(1..)])
+
+--
+
+(tour#components_6 % 5 - tour#components_7 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_6 % 5,-(tour#components_7 % 5);int(1..)])
+
+--
+
+((tour#components_6 / 5) - (tour#components_7 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_6 / 5),-((tour#components_7 / 5));int(1..)])
+
+--
+
+(tour#components_6 % 5 - tour#components_7 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_6 % 5,-(tour#components_7 % 5);int(1..)])
+
+--
+
+((tour#components_6 / 5) - (tour#components_7 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_6 / 5),-((tour#components_7 / 5));int(1..)])
+
+--
+
+(tour#components_7 % 5 - tour#components_8 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_7 % 5,-(tour#components_8 % 5);int(1..)])
+
+--
+
+((tour#components_7 / 5) - (tour#components_8 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_7 / 5),-((tour#components_8 / 5));int(1..)])
+
+--
+
+(tour#components_7 % 5 - tour#components_8 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_7 % 5,-(tour#components_8 % 5);int(1..)])
+
+--
+
+((tour#components_7 / 5) - (tour#components_8 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_7 / 5),-((tour#components_8 / 5));int(1..)])
+
+--
+
+(tour#components_8 % 5 - tour#components_9 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_8 % 5,-(tour#components_9 % 5);int(1..)])
+
+--
+
+((tour#components_8 / 5) - (tour#components_9 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_8 / 5),-((tour#components_9 / 5));int(1..)])
+
+--
+
+(tour#components_8 % 5 - tour#components_9 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_8 % 5,-(tour#components_9 % 5);int(1..)])
+
+--
+
+((tour#components_8 / 5) - (tour#components_9 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_8 / 5),-((tour#components_9 / 5));int(1..)])
+
+--
+
+(tour#components_9 % 5 - tour#components_10 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_9 % 5,-(tour#components_10 % 5);int(1..)])
+
+--
+
+((tour#components_9 / 5) - (tour#components_10 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_9 / 5),-((tour#components_10 / 5));int(1..)])
+
+--
+
+(tour#components_9 % 5 - tour#components_10 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_9 % 5,-(tour#components_10 % 5);int(1..)])
+
+--
+
+((tour#components_9 / 5) - (tour#components_10 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_9 / 5),-((tour#components_10 / 5));int(1..)])
+
+--
+
+(tour#components_10 % 5 - tour#components_11 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_10 % 5,-(tour#components_11 % 5);int(1..)])
+
+--
+
+((tour#components_10 / 5) - (tour#components_11 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_10 / 5),-((tour#components_11 / 5));int(1..)])
+
+--
+
+(tour#components_10 % 5 - tour#components_11 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_10 % 5,-(tour#components_11 % 5);int(1..)])
+
+--
+
+((tour#components_10 / 5) - (tour#components_11 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_10 / 5),-((tour#components_11 / 5));int(1..)])
+
+--
+
+(tour#components_11 % 5 - tour#components_12 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_11 % 5,-(tour#components_12 % 5);int(1..)])
+
+--
+
+((tour#components_11 / 5) - (tour#components_12 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_11 / 5),-((tour#components_12 / 5));int(1..)])
+
+--
+
+(tour#components_11 % 5 - tour#components_12 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_11 % 5,-(tour#components_12 % 5);int(1..)])
+
+--
+
+((tour#components_11 / 5) - (tour#components_12 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_11 / 5),-((tour#components_12 / 5));int(1..)])
+
+--
+
+(tour#components_12 % 5 - tour#components_13 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_12 % 5,-(tour#components_13 % 5);int(1..)])
+
+--
+
+((tour#components_12 / 5) - (tour#components_13 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_12 / 5),-((tour#components_13 / 5));int(1..)])
+
+--
+
+(tour#components_12 % 5 - tour#components_13 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_12 % 5,-(tour#components_13 % 5);int(1..)])
+
+--
+
+((tour#components_12 / 5) - (tour#components_13 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_12 / 5),-((tour#components_13 / 5));int(1..)])
+
+--
+
+(tour#components_13 % 5 - tour#components_14 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_13 % 5,-(tour#components_14 % 5);int(1..)])
+
+--
+
+((tour#components_13 / 5) - (tour#components_14 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_13 / 5),-((tour#components_14 / 5));int(1..)])
+
+--
+
+(tour#components_13 % 5 - tour#components_14 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_13 % 5,-(tour#components_14 % 5);int(1..)])
+
+--
+
+((tour#components_13 / 5) - (tour#components_14 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_13 / 5),-((tour#components_14 / 5));int(1..)])
+
+--
+
+(tour#components_14 % 5 - tour#components_15 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_14 % 5,-(tour#components_15 % 5);int(1..)])
+
+--
+
+((tour#components_14 / 5) - (tour#components_15 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_14 / 5),-((tour#components_15 / 5));int(1..)])
+
+--
+
+(tour#components_14 % 5 - tour#components_15 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_14 % 5,-(tour#components_15 % 5);int(1..)])
+
+--
+
+((tour#components_14 / 5) - (tour#components_15 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_14 / 5),-((tour#components_15 / 5));int(1..)])
+
+--
+
+(tour#components_15 % 5 - tour#components_16 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_15 % 5,-(tour#components_16 % 5);int(1..)])
+
+--
+
+((tour#components_15 / 5) - (tour#components_16 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_15 / 5),-((tour#components_16 / 5));int(1..)])
+
+--
+
+(tour#components_15 % 5 - tour#components_16 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_15 % 5,-(tour#components_16 % 5);int(1..)])
+
+--
+
+((tour#components_15 / 5) - (tour#components_16 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_15 / 5),-((tour#components_16 / 5));int(1..)])
+
+--
+
+(tour#components_16 % 5 - tour#components_17 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_16 % 5,-(tour#components_17 % 5);int(1..)])
+
+--
+
+((tour#components_16 / 5) - (tour#components_17 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_16 / 5),-((tour#components_17 / 5));int(1..)])
+
+--
+
+(tour#components_16 % 5 - tour#components_17 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_16 % 5,-(tour#components_17 % 5);int(1..)])
+
+--
+
+((tour#components_16 / 5) - (tour#components_17 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_16 / 5),-((tour#components_17 / 5));int(1..)])
+
+--
+
+(tour#components_17 % 5 - tour#components_18 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_17 % 5,-(tour#components_18 % 5);int(1..)])
+
+--
+
+((tour#components_17 / 5) - (tour#components_18 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_17 / 5),-((tour#components_18 / 5));int(1..)])
+
+--
+
+(tour#components_17 % 5 - tour#components_18 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_17 % 5,-(tour#components_18 % 5);int(1..)])
+
+--
+
+((tour#components_17 / 5) - (tour#components_18 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_17 / 5),-((tour#components_18 / 5));int(1..)])
+
+--
+
+(tour#components_18 % 5 - tour#components_19 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_18 % 5,-(tour#components_19 % 5);int(1..)])
+
+--
+
+((tour#components_18 / 5) - (tour#components_19 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_18 / 5),-((tour#components_19 / 5));int(1..)])
+
+--
+
+(tour#components_18 % 5 - tour#components_19 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_18 % 5,-(tour#components_19 % 5);int(1..)])
+
+--
+
+((tour#components_18 / 5) - (tour#components_19 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_18 / 5),-((tour#components_19 / 5));int(1..)])
+
+--
+
+(tour#components_19 % 5 - tour#components_20 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_19 % 5,-(tour#components_20 % 5);int(1..)])
+
+--
+
+((tour#components_19 / 5) - (tour#components_20 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_19 / 5),-((tour#components_20 / 5));int(1..)])
+
+--
+
+(tour#components_19 % 5 - tour#components_20 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_19 % 5,-(tour#components_20 % 5);int(1..)])
+
+--
+
+((tour#components_19 / 5) - (tour#components_20 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_19 / 5),-((tour#components_20 / 5));int(1..)])
+
+--
+
+(tour#components_20 % 5 - tour#components_21 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_20 % 5,-(tour#components_21 % 5);int(1..)])
+
+--
+
+((tour#components_20 / 5) - (tour#components_21 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_20 / 5),-((tour#components_21 / 5));int(1..)])
+
+--
+
+(tour#components_20 % 5 - tour#components_21 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_20 % 5,-(tour#components_21 % 5);int(1..)])
+
+--
+
+((tour#components_20 / 5) - (tour#components_21 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_20 / 5),-((tour#components_21 / 5));int(1..)])
+
+--
+
+(tour#components_21 % 5 - tour#components_22 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_21 % 5,-(tour#components_22 % 5);int(1..)])
+
+--
+
+((tour#components_21 / 5) - (tour#components_22 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_21 / 5),-((tour#components_22 / 5));int(1..)])
+
+--
+
+(tour#components_21 % 5 - tour#components_22 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_21 % 5,-(tour#components_22 % 5);int(1..)])
+
+--
+
+((tour#components_21 / 5) - (tour#components_22 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_21 / 5),-((tour#components_22 / 5));int(1..)])
+
+--
+
+(tour#components_22 % 5 - tour#components_23 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_22 % 5,-(tour#components_23 % 5);int(1..)])
+
+--
+
+((tour#components_22 / 5) - (tour#components_23 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_22 / 5),-((tour#components_23 / 5));int(1..)])
+
+--
+
+(tour#components_22 % 5 - tour#components_23 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_22 % 5,-(tour#components_23 % 5);int(1..)])
+
+--
+
+((tour#components_22 / 5) - (tour#components_23 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_22 / 5),-((tour#components_23 / 5));int(1..)])
+
+--
+
+(tour#components_23 % 5 - tour#components_24 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_23 % 5,-(tour#components_24 % 5);int(1..)])
+
+--
+
+((tour#components_23 / 5) - (tour#components_24 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_23 / 5),-((tour#components_24 / 5));int(1..)])
+
+--
+
+(tour#components_23 % 5 - tour#components_24 % 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([tour#components_23 % 5,-(tour#components_24 % 5);int(1..)])
+
+--
+
+((tour#components_23 / 5) - (tour#components_24 / 5))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([(tour#components_23 / 5),-((tour#components_24 / 5));int(1..)])
+
+--
+
+tour#components_1 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_1,5) @ 5 != 0}
+
+--
+
+(tour#components_1 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_1, 5) @ 5 != 0}
+
+--
+
+tour#components_1 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_1,5) @ 5 != 0}
+
+--
+
+(tour#components_1 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_1, 5) @ 5 != 0}
+
+--
+
+tour#components_2 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_2,5) @ 5 != 0}
+
+--
+
+(tour#components_2 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_2, 5) @ 5 != 0}
+
+--
+
+tour#components_2 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_2,5) @ 5 != 0}
+
+--
+
+(tour#components_2 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_2, 5) @ 5 != 0}
+
+--
+
+tour#components_3 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_3,5) @ 5 != 0}
+
+--
+
+(tour#components_3 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_3, 5) @ 5 != 0}
+
+--
+
+tour#components_3 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_3,5) @ 5 != 0}
+
+--
+
+(tour#components_3 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_3, 5) @ 5 != 0}
+
+--
+
+tour#components_4 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_4,5) @ 5 != 0}
+
+--
+
+(tour#components_4 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_4, 5) @ 5 != 0}
+
+--
+
+tour#components_4 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_4,5) @ 5 != 0}
+
+--
+
+(tour#components_4 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_4, 5) @ 5 != 0}
+
+--
+
+tour#components_5 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_5,5) @ 5 != 0}
+
+--
+
+(tour#components_5 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_5, 5) @ 5 != 0}
+
+--
+
+tour#components_5 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_5,5) @ 5 != 0}
+
+--
+
+(tour#components_5 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_5, 5) @ 5 != 0}
+
+--
+
+tour#components_6 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_6,5) @ 5 != 0}
+
+--
+
+(tour#components_6 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_6, 5) @ 5 != 0}
+
+--
+
+tour#components_6 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_6,5) @ 5 != 0}
+
+--
+
+(tour#components_6 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_6, 5) @ 5 != 0}
+
+--
+
+tour#components_7 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_7,5) @ 5 != 0}
+
+--
+
+(tour#components_7 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_7, 5) @ 5 != 0}
+
+--
+
+tour#components_7 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_7,5) @ 5 != 0}
+
+--
+
+(tour#components_7 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_7, 5) @ 5 != 0}
+
+--
+
+tour#components_8 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_8,5) @ 5 != 0}
+
+--
+
+(tour#components_8 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_8, 5) @ 5 != 0}
+
+--
+
+tour#components_8 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_8,5) @ 5 != 0}
+
+--
+
+(tour#components_8 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_8, 5) @ 5 != 0}
+
+--
+
+tour#components_9 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_9,5) @ 5 != 0}
+
+--
+
+(tour#components_9 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_9, 5) @ 5 != 0}
+
+--
+
+tour#components_9 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_9,5) @ 5 != 0}
+
+--
+
+(tour#components_9 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_9, 5) @ 5 != 0}
+
+--
+
+tour#components_10 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_10,5) @ 5 != 0}
+
+--
+
+(tour#components_10 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_10, 5) @ 5 != 0}
+
+--
+
+tour#components_10 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_10,5) @ 5 != 0}
+
+--
+
+(tour#components_10 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_10, 5) @ 5 != 0}
+
+--
+
+tour#components_11 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_11,5) @ 5 != 0}
+
+--
+
+(tour#components_11 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_11, 5) @ 5 != 0}
+
+--
+
+tour#components_11 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_11,5) @ 5 != 0}
+
+--
+
+(tour#components_11 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_11, 5) @ 5 != 0}
+
+--
+
+tour#components_12 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_12,5) @ 5 != 0}
+
+--
+
+(tour#components_12 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_12, 5) @ 5 != 0}
+
+--
+
+tour#components_12 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_12,5) @ 5 != 0}
+
+--
+
+(tour#components_12 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_12, 5) @ 5 != 0}
+
+--
+
+tour#components_13 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_13,5) @ 5 != 0}
+
+--
+
+(tour#components_13 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_13, 5) @ 5 != 0}
+
+--
+
+tour#components_13 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_13,5) @ 5 != 0}
+
+--
+
+(tour#components_13 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_13, 5) @ 5 != 0}
+
+--
+
+tour#components_14 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_14,5) @ 5 != 0}
+
+--
+
+(tour#components_14 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_14, 5) @ 5 != 0}
+
+--
+
+tour#components_14 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_14,5) @ 5 != 0}
+
+--
+
+(tour#components_14 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_14, 5) @ 5 != 0}
+
+--
+
+tour#components_15 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_15,5) @ 5 != 0}
+
+--
+
+(tour#components_15 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_15, 5) @ 5 != 0}
+
+--
+
+tour#components_15 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_15,5) @ 5 != 0}
+
+--
+
+(tour#components_15 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_15, 5) @ 5 != 0}
+
+--
+
+tour#components_16 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_16,5) @ 5 != 0}
+
+--
+
+(tour#components_16 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_16, 5) @ 5 != 0}
+
+--
+
+tour#components_16 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_16,5) @ 5 != 0}
+
+--
+
+(tour#components_16 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_16, 5) @ 5 != 0}
+
+--
+
+tour#components_17 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_17,5) @ 5 != 0}
+
+--
+
+(tour#components_17 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_17, 5) @ 5 != 0}
+
+--
+
+tour#components_17 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_17,5) @ 5 != 0}
+
+--
+
+(tour#components_17 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_17, 5) @ 5 != 0}
+
+--
+
+tour#components_18 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_18,5) @ 5 != 0}
+
+--
+
+(tour#components_18 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_18, 5) @ 5 != 0}
+
+--
+
+tour#components_18 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_18,5) @ 5 != 0}
+
+--
+
+(tour#components_18 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_18, 5) @ 5 != 0}
+
+--
+
+tour#components_19 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_19,5) @ 5 != 0}
+
+--
+
+(tour#components_19 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_19, 5) @ 5 != 0}
+
+--
+
+tour#components_19 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_19,5) @ 5 != 0}
+
+--
+
+(tour#components_19 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_19, 5) @ 5 != 0}
+
+--
+
+tour#components_20 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_20,5) @ 5 != 0}
+
+--
+
+(tour#components_20 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_20, 5) @ 5 != 0}
+
+--
+
+tour#components_20 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_20,5) @ 5 != 0}
+
+--
+
+(tour#components_20 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_20, 5) @ 5 != 0}
+
+--
+
+tour#components_21 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_21,5) @ 5 != 0}
+
+--
+
+(tour#components_21 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_21, 5) @ 5 != 0}
+
+--
+
+tour#components_21 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_21,5) @ 5 != 0}
+
+--
+
+(tour#components_21 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_21, 5) @ 5 != 0}
+
+--
+
+tour#components_22 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_22,5) @ 5 != 0}
+
+--
+
+(tour#components_22 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_22, 5) @ 5 != 0}
+
+--
+
+tour#components_22 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_22,5) @ 5 != 0}
+
+--
+
+(tour#components_22 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_22, 5) @ 5 != 0}
+
+--
+
+tour#components_23 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_23,5) @ 5 != 0}
+
+--
+
+(tour#components_23 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_23, 5) @ 5 != 0}
+
+--
+
+tour#components_23 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_23,5) @ 5 != 0}
+
+--
+
+(tour#components_23 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_23, 5) @ 5 != 0}
+
+--
+
+tour#components_2 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_2,5) @ 5 != 0}
+
+--
+
+(tour#components_2 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_2, 5) @ 5 != 0}
+
+--
+
+tour#components_2 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_2,5) @ 5 != 0}
+
+--
+
+(tour#components_2 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_2, 5) @ 5 != 0}
+
+--
+
+tour#components_3 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_3,5) @ 5 != 0}
+
+--
+
+(tour#components_3 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_3, 5) @ 5 != 0}
+
+--
+
+tour#components_3 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_3,5) @ 5 != 0}
+
+--
+
+(tour#components_3 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_3, 5) @ 5 != 0}
+
+--
+
+tour#components_4 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_4,5) @ 5 != 0}
+
+--
+
+(tour#components_4 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_4, 5) @ 5 != 0}
+
+--
+
+tour#components_4 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_4,5) @ 5 != 0}
+
+--
+
+(tour#components_4 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_4, 5) @ 5 != 0}
+
+--
+
+tour#components_5 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_5,5) @ 5 != 0}
+
+--
+
+(tour#components_5 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_5, 5) @ 5 != 0}
+
+--
+
+tour#components_5 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_5,5) @ 5 != 0}
+
+--
+
+(tour#components_5 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_5, 5) @ 5 != 0}
+
+--
+
+tour#components_6 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_6,5) @ 5 != 0}
+
+--
+
+(tour#components_6 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_6, 5) @ 5 != 0}
+
+--
+
+tour#components_6 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_6,5) @ 5 != 0}
+
+--
+
+(tour#components_6 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_6, 5) @ 5 != 0}
+
+--
+
+tour#components_7 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_7,5) @ 5 != 0}
+
+--
+
+(tour#components_7 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_7, 5) @ 5 != 0}
+
+--
+
+tour#components_7 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_7,5) @ 5 != 0}
+
+--
+
+(tour#components_7 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_7, 5) @ 5 != 0}
+
+--
+
+tour#components_8 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_8,5) @ 5 != 0}
+
+--
+
+(tour#components_8 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_8, 5) @ 5 != 0}
+
+--
+
+tour#components_8 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_8,5) @ 5 != 0}
+
+--
+
+(tour#components_8 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_8, 5) @ 5 != 0}
+
+--
+
+tour#components_9 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_9,5) @ 5 != 0}
+
+--
+
+(tour#components_9 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_9, 5) @ 5 != 0}
+
+--
+
+tour#components_9 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_9,5) @ 5 != 0}
+
+--
+
+(tour#components_9 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_9, 5) @ 5 != 0}
+
+--
+
+tour#components_10 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_10,5) @ 5 != 0}
+
+--
+
+(tour#components_10 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_10, 5) @ 5 != 0}
+
+--
+
+tour#components_10 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_10,5) @ 5 != 0}
+
+--
+
+(tour#components_10 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_10, 5) @ 5 != 0}
+
+--
+
+tour#components_11 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_11,5) @ 5 != 0}
+
+--
+
+(tour#components_11 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_11, 5) @ 5 != 0}
+
+--
+
+tour#components_11 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_11,5) @ 5 != 0}
+
+--
+
+(tour#components_11 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_11, 5) @ 5 != 0}
+
+--
+
+tour#components_12 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_12,5) @ 5 != 0}
+
+--
+
+(tour#components_12 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_12, 5) @ 5 != 0}
+
+--
+
+tour#components_12 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_12,5) @ 5 != 0}
+
+--
+
+(tour#components_12 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_12, 5) @ 5 != 0}
+
+--
+
+tour#components_13 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_13,5) @ 5 != 0}
+
+--
+
+(tour#components_13 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_13, 5) @ 5 != 0}
+
+--
+
+tour#components_13 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_13,5) @ 5 != 0}
+
+--
+
+(tour#components_13 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_13, 5) @ 5 != 0}
+
+--
+
+tour#components_14 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_14,5) @ 5 != 0}
+
+--
+
+(tour#components_14 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_14, 5) @ 5 != 0}
+
+--
+
+tour#components_14 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_14,5) @ 5 != 0}
+
+--
+
+(tour#components_14 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_14, 5) @ 5 != 0}
+
+--
+
+tour#components_15 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_15,5) @ 5 != 0}
+
+--
+
+(tour#components_15 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_15, 5) @ 5 != 0}
+
+--
+
+tour#components_15 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_15,5) @ 5 != 0}
+
+--
+
+(tour#components_15 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_15, 5) @ 5 != 0}
+
+--
+
+tour#components_16 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_16,5) @ 5 != 0}
+
+--
+
+(tour#components_16 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_16, 5) @ 5 != 0}
+
+--
+
+tour#components_16 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_16,5) @ 5 != 0}
+
+--
+
+(tour#components_16 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_16, 5) @ 5 != 0}
+
+--
+
+tour#components_17 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_17,5) @ 5 != 0}
+
+--
+
+(tour#components_17 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_17, 5) @ 5 != 0}
+
+--
+
+tour#components_17 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_17,5) @ 5 != 0}
+
+--
+
+(tour#components_17 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_17, 5) @ 5 != 0}
+
+--
+
+tour#components_18 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_18,5) @ 5 != 0}
+
+--
+
+(tour#components_18 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_18, 5) @ 5 != 0}
+
+--
+
+tour#components_18 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_18,5) @ 5 != 0}
+
+--
+
+(tour#components_18 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_18, 5) @ 5 != 0}
+
+--
+
+tour#components_19 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_19,5) @ 5 != 0}
+
+--
+
+(tour#components_19 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_19, 5) @ 5 != 0}
+
+--
+
+tour#components_19 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_19,5) @ 5 != 0}
+
+--
+
+(tour#components_19 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_19, 5) @ 5 != 0}
+
+--
+
+tour#components_20 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_20,5) @ 5 != 0}
+
+--
+
+(tour#components_20 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_20, 5) @ 5 != 0}
+
+--
+
+tour#components_20 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_20,5) @ 5 != 0}
+
+--
+
+(tour#components_20 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_20, 5) @ 5 != 0}
+
+--
+
+tour#components_21 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_21,5) @ 5 != 0}
+
+--
+
+(tour#components_21 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_21, 5) @ 5 != 0}
+
+--
+
+tour#components_21 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_21,5) @ 5 != 0}
+
+--
+
+(tour#components_21 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_21, 5) @ 5 != 0}
+
+--
+
+tour#components_22 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_22,5) @ 5 != 0}
+
+--
+
+(tour#components_22 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_22, 5) @ 5 != 0}
+
+--
+
+tour#components_22 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_22,5) @ 5 != 0}
+
+--
+
+(tour#components_22 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_22, 5) @ 5 != 0}
+
+--
+
+tour#components_23 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_23,5) @ 5 != 0}
+
+--
+
+(tour#components_23 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_23, 5) @ 5 != 0}
+
+--
+
+tour#components_23 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_23,5) @ 5 != 0}
+
+--
+
+(tour#components_23 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_23, 5) @ 5 != 0}
+
+--
+
+tour#components_24 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_24,5) @ 5 != 0}
+
+--
+
+(tour#components_24 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_24, 5) @ 5 != 0}
+
+--
+
+tour#components_24 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(tour#components_24,5) @ 5 != 0}
+
+--
+
+(tour#components_24 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(tour#components_24, 5) @ 5 != 0}
+
+--
+
+|sum([SafeMod(tour#components_1,5),-(SafeMod(tour#components_2,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__0|
+new variables:
+  findAux __0: int(-4..4)
+new constraints:
+  __0 =aux sum([SafeMod(tour#components_1,5),-(SafeMod(tour#components_2,5));int(1..)])
+
+--
+
+__0 =aux sum([SafeMod(tour#components_1,5),-(SafeMod(tour#components_2,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__1, __2],__0),FlatWeightedSumGeq([1, -1],[__1, __2],__0);int(1..)])
+new variables:
+  findAux __1: int(0..4)
+  findAux __2: int(0..4)
+new constraints:
+  __1 =aux SafeMod(tour#components_1,5)
+  __2 =aux SafeMod(tour#components_2,5)
+
+--
+
+|__0| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__0)
+
+--
+
+__1 =aux SafeMod(tour#components_1,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_1, 5, __1)
+
+--
+
+__2 =aux SafeMod(tour#components_2,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_2, 5, __2)
+
+--
+
+|sum([SafeDiv(tour#components_1, 5),-(SafeDiv(tour#components_2, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__3|
+new variables:
+  findAux __3: int(-4..4)
+new constraints:
+  __3 =aux sum([SafeDiv(tour#components_1, 5),-(SafeDiv(tour#components_2, 5));int(1..)])
+
+--
+
+__3 =aux sum([SafeDiv(tour#components_1, 5),-(SafeDiv(tour#components_2, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__4, __5],__3),FlatWeightedSumGeq([1, -1],[__4, __5],__3);int(1..)])
+new variables:
+  findAux __4: int(0..4)
+  findAux __5: int(0..4)
+new constraints:
+  __4 =aux SafeDiv(tour#components_1, 5)
+  __5 =aux SafeDiv(tour#components_2, 5)
+
+--
+
+|__3| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__3)
+
+--
+
+__4 =aux SafeDiv(tour#components_1, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_1, 5, __4)
+
+--
+
+__5 =aux SafeDiv(tour#components_2, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_2, 5, __5)
+
+--
+
+|sum([SafeMod(tour#components_1,5),-(SafeMod(tour#components_2,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__6|
+new variables:
+  findAux __6: int(-4..4)
+new constraints:
+  __6 =aux sum([SafeMod(tour#components_1,5),-(SafeMod(tour#components_2,5));int(1..)])
+
+--
+
+__6 =aux sum([SafeMod(tour#components_1,5),-(SafeMod(tour#components_2,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__7, __8],__6),FlatWeightedSumGeq([1, -1],[__7, __8],__6);int(1..)])
+new variables:
+  findAux __7: int(0..4)
+  findAux __8: int(0..4)
+new constraints:
+  __7 =aux SafeMod(tour#components_1,5)
+  __8 =aux SafeMod(tour#components_2,5)
+
+--
+
+|__6| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__6)
+
+--
+
+__7 =aux SafeMod(tour#components_1,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_1, 5, __7)
+
+--
+
+__8 =aux SafeMod(tour#components_2,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_2, 5, __8)
+
+--
+
+|sum([SafeDiv(tour#components_1, 5),-(SafeDiv(tour#components_2, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__9|
+new variables:
+  findAux __9: int(-4..4)
+new constraints:
+  __9 =aux sum([SafeDiv(tour#components_1, 5),-(SafeDiv(tour#components_2, 5));int(1..)])
+
+--
+
+__9 =aux sum([SafeDiv(tour#components_1, 5),-(SafeDiv(tour#components_2, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__10, __11],__9),FlatWeightedSumGeq([1, -1],[__10, __11],__9);int(1..)])
+new variables:
+  findAux __10: int(0..4)
+  findAux __11: int(0..4)
+new constraints:
+  __10 =aux SafeDiv(tour#components_1, 5)
+  __11 =aux SafeDiv(tour#components_2, 5)
+
+--
+
+|__9| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__9)
+
+--
+
+__10 =aux SafeDiv(tour#components_1, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_1, 5, __10)
+
+--
+
+__11 =aux SafeDiv(tour#components_2, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_2, 5, __11)
+
+--
+
+|sum([SafeMod(tour#components_2,5),-(SafeMod(tour#components_3,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__12|
+new variables:
+  findAux __12: int(-4..4)
+new constraints:
+  __12 =aux sum([SafeMod(tour#components_2,5),-(SafeMod(tour#components_3,5));int(1..)])
+
+--
+
+__12 =aux sum([SafeMod(tour#components_2,5),-(SafeMod(tour#components_3,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__13, __14],__12),FlatWeightedSumGeq([1, -1],[__13, __14],__12);int(1..)])
+new variables:
+  findAux __13: int(0..4)
+  findAux __14: int(0..4)
+new constraints:
+  __13 =aux SafeMod(tour#components_2,5)
+  __14 =aux SafeMod(tour#components_3,5)
+
+--
+
+|__12| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__12)
+
+--
+
+__13 =aux SafeMod(tour#components_2,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_2, 5, __13)
+
+--
+
+__14 =aux SafeMod(tour#components_3,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_3, 5, __14)
+
+--
+
+|sum([SafeDiv(tour#components_2, 5),-(SafeDiv(tour#components_3, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__15|
+new variables:
+  findAux __15: int(-4..4)
+new constraints:
+  __15 =aux sum([SafeDiv(tour#components_2, 5),-(SafeDiv(tour#components_3, 5));int(1..)])
+
+--
+
+__15 =aux sum([SafeDiv(tour#components_2, 5),-(SafeDiv(tour#components_3, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__16, __17],__15),FlatWeightedSumGeq([1, -1],[__16, __17],__15);int(1..)])
+new variables:
+  findAux __16: int(0..4)
+  findAux __17: int(0..4)
+new constraints:
+  __16 =aux SafeDiv(tour#components_2, 5)
+  __17 =aux SafeDiv(tour#components_3, 5)
+
+--
+
+|__15| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__15)
+
+--
+
+__16 =aux SafeDiv(tour#components_2, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_2, 5, __16)
+
+--
+
+__17 =aux SafeDiv(tour#components_3, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_3, 5, __17)
+
+--
+
+|sum([SafeMod(tour#components_2,5),-(SafeMod(tour#components_3,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__18|
+new variables:
+  findAux __18: int(-4..4)
+new constraints:
+  __18 =aux sum([SafeMod(tour#components_2,5),-(SafeMod(tour#components_3,5));int(1..)])
+
+--
+
+__18 =aux sum([SafeMod(tour#components_2,5),-(SafeMod(tour#components_3,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__19, __20],__18),FlatWeightedSumGeq([1, -1],[__19, __20],__18);int(1..)])
+new variables:
+  findAux __19: int(0..4)
+  findAux __20: int(0..4)
+new constraints:
+  __19 =aux SafeMod(tour#components_2,5)
+  __20 =aux SafeMod(tour#components_3,5)
+
+--
+
+|__18| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__18)
+
+--
+
+__19 =aux SafeMod(tour#components_2,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_2, 5, __19)
+
+--
+
+__20 =aux SafeMod(tour#components_3,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_3, 5, __20)
+
+--
+
+|sum([SafeDiv(tour#components_2, 5),-(SafeDiv(tour#components_3, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__21|
+new variables:
+  findAux __21: int(-4..4)
+new constraints:
+  __21 =aux sum([SafeDiv(tour#components_2, 5),-(SafeDiv(tour#components_3, 5));int(1..)])
+
+--
+
+__21 =aux sum([SafeDiv(tour#components_2, 5),-(SafeDiv(tour#components_3, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__22, __23],__21),FlatWeightedSumGeq([1, -1],[__22, __23],__21);int(1..)])
+new variables:
+  findAux __22: int(0..4)
+  findAux __23: int(0..4)
+new constraints:
+  __22 =aux SafeDiv(tour#components_2, 5)
+  __23 =aux SafeDiv(tour#components_3, 5)
+
+--
+
+|__21| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__21)
+
+--
+
+__22 =aux SafeDiv(tour#components_2, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_2, 5, __22)
+
+--
+
+__23 =aux SafeDiv(tour#components_3, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_3, 5, __23)
+
+--
+
+|sum([SafeMod(tour#components_3,5),-(SafeMod(tour#components_4,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__24|
+new variables:
+  findAux __24: int(-4..4)
+new constraints:
+  __24 =aux sum([SafeMod(tour#components_3,5),-(SafeMod(tour#components_4,5));int(1..)])
+
+--
+
+__24 =aux sum([SafeMod(tour#components_3,5),-(SafeMod(tour#components_4,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__25, __26],__24),FlatWeightedSumGeq([1, -1],[__25, __26],__24);int(1..)])
+new variables:
+  findAux __25: int(0..4)
+  findAux __26: int(0..4)
+new constraints:
+  __25 =aux SafeMod(tour#components_3,5)
+  __26 =aux SafeMod(tour#components_4,5)
+
+--
+
+|__24| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__24)
+
+--
+
+__25 =aux SafeMod(tour#components_3,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_3, 5, __25)
+
+--
+
+__26 =aux SafeMod(tour#components_4,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_4, 5, __26)
+
+--
+
+|sum([SafeDiv(tour#components_3, 5),-(SafeDiv(tour#components_4, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__27|
+new variables:
+  findAux __27: int(-4..4)
+new constraints:
+  __27 =aux sum([SafeDiv(tour#components_3, 5),-(SafeDiv(tour#components_4, 5));int(1..)])
+
+--
+
+__27 =aux sum([SafeDiv(tour#components_3, 5),-(SafeDiv(tour#components_4, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__28, __29],__27),FlatWeightedSumGeq([1, -1],[__28, __29],__27);int(1..)])
+new variables:
+  findAux __28: int(0..4)
+  findAux __29: int(0..4)
+new constraints:
+  __28 =aux SafeDiv(tour#components_3, 5)
+  __29 =aux SafeDiv(tour#components_4, 5)
+
+--
+
+|__27| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__27)
+
+--
+
+__28 =aux SafeDiv(tour#components_3, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_3, 5, __28)
+
+--
+
+__29 =aux SafeDiv(tour#components_4, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_4, 5, __29)
+
+--
+
+|sum([SafeMod(tour#components_3,5),-(SafeMod(tour#components_4,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__30|
+new variables:
+  findAux __30: int(-4..4)
+new constraints:
+  __30 =aux sum([SafeMod(tour#components_3,5),-(SafeMod(tour#components_4,5));int(1..)])
+
+--
+
+__30 =aux sum([SafeMod(tour#components_3,5),-(SafeMod(tour#components_4,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__31, __32],__30),FlatWeightedSumGeq([1, -1],[__31, __32],__30);int(1..)])
+new variables:
+  findAux __31: int(0..4)
+  findAux __32: int(0..4)
+new constraints:
+  __31 =aux SafeMod(tour#components_3,5)
+  __32 =aux SafeMod(tour#components_4,5)
+
+--
+
+|__30| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__30)
+
+--
+
+__31 =aux SafeMod(tour#components_3,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_3, 5, __31)
+
+--
+
+__32 =aux SafeMod(tour#components_4,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_4, 5, __32)
+
+--
+
+|sum([SafeDiv(tour#components_3, 5),-(SafeDiv(tour#components_4, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__33|
+new variables:
+  findAux __33: int(-4..4)
+new constraints:
+  __33 =aux sum([SafeDiv(tour#components_3, 5),-(SafeDiv(tour#components_4, 5));int(1..)])
+
+--
+
+__33 =aux sum([SafeDiv(tour#components_3, 5),-(SafeDiv(tour#components_4, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__34, __35],__33),FlatWeightedSumGeq([1, -1],[__34, __35],__33);int(1..)])
+new variables:
+  findAux __34: int(0..4)
+  findAux __35: int(0..4)
+new constraints:
+  __34 =aux SafeDiv(tour#components_3, 5)
+  __35 =aux SafeDiv(tour#components_4, 5)
+
+--
+
+|__33| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__33)
+
+--
+
+__34 =aux SafeDiv(tour#components_3, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_3, 5, __34)
+
+--
+
+__35 =aux SafeDiv(tour#components_4, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_4, 5, __35)
+
+--
+
+|sum([SafeMod(tour#components_4,5),-(SafeMod(tour#components_5,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__36|
+new variables:
+  findAux __36: int(-4..4)
+new constraints:
+  __36 =aux sum([SafeMod(tour#components_4,5),-(SafeMod(tour#components_5,5));int(1..)])
+
+--
+
+__36 =aux sum([SafeMod(tour#components_4,5),-(SafeMod(tour#components_5,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__37, __38],__36),FlatWeightedSumGeq([1, -1],[__37, __38],__36);int(1..)])
+new variables:
+  findAux __37: int(0..4)
+  findAux __38: int(0..4)
+new constraints:
+  __37 =aux SafeMod(tour#components_4,5)
+  __38 =aux SafeMod(tour#components_5,5)
+
+--
+
+|__36| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__36)
+
+--
+
+__37 =aux SafeMod(tour#components_4,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_4, 5, __37)
+
+--
+
+__38 =aux SafeMod(tour#components_5,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_5, 5, __38)
+
+--
+
+|sum([SafeDiv(tour#components_4, 5),-(SafeDiv(tour#components_5, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__39|
+new variables:
+  findAux __39: int(-4..4)
+new constraints:
+  __39 =aux sum([SafeDiv(tour#components_4, 5),-(SafeDiv(tour#components_5, 5));int(1..)])
+
+--
+
+__39 =aux sum([SafeDiv(tour#components_4, 5),-(SafeDiv(tour#components_5, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__40, __41],__39),FlatWeightedSumGeq([1, -1],[__40, __41],__39);int(1..)])
+new variables:
+  findAux __40: int(0..4)
+  findAux __41: int(0..4)
+new constraints:
+  __40 =aux SafeDiv(tour#components_4, 5)
+  __41 =aux SafeDiv(tour#components_5, 5)
+
+--
+
+|__39| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__39)
+
+--
+
+__40 =aux SafeDiv(tour#components_4, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_4, 5, __40)
+
+--
+
+__41 =aux SafeDiv(tour#components_5, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_5, 5, __41)
+
+--
+
+|sum([SafeMod(tour#components_4,5),-(SafeMod(tour#components_5,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__42|
+new variables:
+  findAux __42: int(-4..4)
+new constraints:
+  __42 =aux sum([SafeMod(tour#components_4,5),-(SafeMod(tour#components_5,5));int(1..)])
+
+--
+
+__42 =aux sum([SafeMod(tour#components_4,5),-(SafeMod(tour#components_5,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__43, __44],__42),FlatWeightedSumGeq([1, -1],[__43, __44],__42);int(1..)])
+new variables:
+  findAux __43: int(0..4)
+  findAux __44: int(0..4)
+new constraints:
+  __43 =aux SafeMod(tour#components_4,5)
+  __44 =aux SafeMod(tour#components_5,5)
+
+--
+
+|__42| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__42)
+
+--
+
+__43 =aux SafeMod(tour#components_4,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_4, 5, __43)
+
+--
+
+__44 =aux SafeMod(tour#components_5,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_5, 5, __44)
+
+--
+
+|sum([SafeDiv(tour#components_4, 5),-(SafeDiv(tour#components_5, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__45|
+new variables:
+  findAux __45: int(-4..4)
+new constraints:
+  __45 =aux sum([SafeDiv(tour#components_4, 5),-(SafeDiv(tour#components_5, 5));int(1..)])
+
+--
+
+__45 =aux sum([SafeDiv(tour#components_4, 5),-(SafeDiv(tour#components_5, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__46, __47],__45),FlatWeightedSumGeq([1, -1],[__46, __47],__45);int(1..)])
+new variables:
+  findAux __46: int(0..4)
+  findAux __47: int(0..4)
+new constraints:
+  __46 =aux SafeDiv(tour#components_4, 5)
+  __47 =aux SafeDiv(tour#components_5, 5)
+
+--
+
+|__45| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__45)
+
+--
+
+__46 =aux SafeDiv(tour#components_4, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_4, 5, __46)
+
+--
+
+__47 =aux SafeDiv(tour#components_5, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_5, 5, __47)
+
+--
+
+|sum([SafeMod(tour#components_5,5),-(SafeMod(tour#components_6,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__48|
+new variables:
+  findAux __48: int(-4..4)
+new constraints:
+  __48 =aux sum([SafeMod(tour#components_5,5),-(SafeMod(tour#components_6,5));int(1..)])
+
+--
+
+__48 =aux sum([SafeMod(tour#components_5,5),-(SafeMod(tour#components_6,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__49, __50],__48),FlatWeightedSumGeq([1, -1],[__49, __50],__48);int(1..)])
+new variables:
+  findAux __49: int(0..4)
+  findAux __50: int(0..4)
+new constraints:
+  __49 =aux SafeMod(tour#components_5,5)
+  __50 =aux SafeMod(tour#components_6,5)
+
+--
+
+|__48| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__48)
+
+--
+
+__49 =aux SafeMod(tour#components_5,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_5, 5, __49)
+
+--
+
+__50 =aux SafeMod(tour#components_6,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_6, 5, __50)
+
+--
+
+|sum([SafeDiv(tour#components_5, 5),-(SafeDiv(tour#components_6, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__51|
+new variables:
+  findAux __51: int(-4..4)
+new constraints:
+  __51 =aux sum([SafeDiv(tour#components_5, 5),-(SafeDiv(tour#components_6, 5));int(1..)])
+
+--
+
+__51 =aux sum([SafeDiv(tour#components_5, 5),-(SafeDiv(tour#components_6, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__52, __53],__51),FlatWeightedSumGeq([1, -1],[__52, __53],__51);int(1..)])
+new variables:
+  findAux __52: int(0..4)
+  findAux __53: int(0..4)
+new constraints:
+  __52 =aux SafeDiv(tour#components_5, 5)
+  __53 =aux SafeDiv(tour#components_6, 5)
+
+--
+
+|__51| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__51)
+
+--
+
+__52 =aux SafeDiv(tour#components_5, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_5, 5, __52)
+
+--
+
+__53 =aux SafeDiv(tour#components_6, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_6, 5, __53)
+
+--
+
+|sum([SafeMod(tour#components_5,5),-(SafeMod(tour#components_6,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__54|
+new variables:
+  findAux __54: int(-4..4)
+new constraints:
+  __54 =aux sum([SafeMod(tour#components_5,5),-(SafeMod(tour#components_6,5));int(1..)])
+
+--
+
+__54 =aux sum([SafeMod(tour#components_5,5),-(SafeMod(tour#components_6,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__55, __56],__54),FlatWeightedSumGeq([1, -1],[__55, __56],__54);int(1..)])
+new variables:
+  findAux __55: int(0..4)
+  findAux __56: int(0..4)
+new constraints:
+  __55 =aux SafeMod(tour#components_5,5)
+  __56 =aux SafeMod(tour#components_6,5)
+
+--
+
+|__54| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__54)
+
+--
+
+__55 =aux SafeMod(tour#components_5,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_5, 5, __55)
+
+--
+
+__56 =aux SafeMod(tour#components_6,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_6, 5, __56)
+
+--
+
+|sum([SafeDiv(tour#components_5, 5),-(SafeDiv(tour#components_6, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__57|
+new variables:
+  findAux __57: int(-4..4)
+new constraints:
+  __57 =aux sum([SafeDiv(tour#components_5, 5),-(SafeDiv(tour#components_6, 5));int(1..)])
+
+--
+
+__57 =aux sum([SafeDiv(tour#components_5, 5),-(SafeDiv(tour#components_6, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__58, __59],__57),FlatWeightedSumGeq([1, -1],[__58, __59],__57);int(1..)])
+new variables:
+  findAux __58: int(0..4)
+  findAux __59: int(0..4)
+new constraints:
+  __58 =aux SafeDiv(tour#components_5, 5)
+  __59 =aux SafeDiv(tour#components_6, 5)
+
+--
+
+|__57| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__57)
+
+--
+
+__58 =aux SafeDiv(tour#components_5, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_5, 5, __58)
+
+--
+
+__59 =aux SafeDiv(tour#components_6, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_6, 5, __59)
+
+--
+
+|sum([SafeMod(tour#components_6,5),-(SafeMod(tour#components_7,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__60|
+new variables:
+  findAux __60: int(-4..4)
+new constraints:
+  __60 =aux sum([SafeMod(tour#components_6,5),-(SafeMod(tour#components_7,5));int(1..)])
+
+--
+
+__60 =aux sum([SafeMod(tour#components_6,5),-(SafeMod(tour#components_7,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__61, __62],__60),FlatWeightedSumGeq([1, -1],[__61, __62],__60);int(1..)])
+new variables:
+  findAux __61: int(0..4)
+  findAux __62: int(0..4)
+new constraints:
+  __61 =aux SafeMod(tour#components_6,5)
+  __62 =aux SafeMod(tour#components_7,5)
+
+--
+
+|__60| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__60)
+
+--
+
+__61 =aux SafeMod(tour#components_6,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_6, 5, __61)
+
+--
+
+__62 =aux SafeMod(tour#components_7,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_7, 5, __62)
+
+--
+
+|sum([SafeDiv(tour#components_6, 5),-(SafeDiv(tour#components_7, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__63|
+new variables:
+  findAux __63: int(-4..4)
+new constraints:
+  __63 =aux sum([SafeDiv(tour#components_6, 5),-(SafeDiv(tour#components_7, 5));int(1..)])
+
+--
+
+__63 =aux sum([SafeDiv(tour#components_6, 5),-(SafeDiv(tour#components_7, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__64, __65],__63),FlatWeightedSumGeq([1, -1],[__64, __65],__63);int(1..)])
+new variables:
+  findAux __64: int(0..4)
+  findAux __65: int(0..4)
+new constraints:
+  __64 =aux SafeDiv(tour#components_6, 5)
+  __65 =aux SafeDiv(tour#components_7, 5)
+
+--
+
+|__63| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__63)
+
+--
+
+__64 =aux SafeDiv(tour#components_6, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_6, 5, __64)
+
+--
+
+__65 =aux SafeDiv(tour#components_7, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_7, 5, __65)
+
+--
+
+|sum([SafeMod(tour#components_6,5),-(SafeMod(tour#components_7,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__66|
+new variables:
+  findAux __66: int(-4..4)
+new constraints:
+  __66 =aux sum([SafeMod(tour#components_6,5),-(SafeMod(tour#components_7,5));int(1..)])
+
+--
+
+__66 =aux sum([SafeMod(tour#components_6,5),-(SafeMod(tour#components_7,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__67, __68],__66),FlatWeightedSumGeq([1, -1],[__67, __68],__66);int(1..)])
+new variables:
+  findAux __67: int(0..4)
+  findAux __68: int(0..4)
+new constraints:
+  __67 =aux SafeMod(tour#components_6,5)
+  __68 =aux SafeMod(tour#components_7,5)
+
+--
+
+|__66| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__66)
+
+--
+
+__67 =aux SafeMod(tour#components_6,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_6, 5, __67)
+
+--
+
+__68 =aux SafeMod(tour#components_7,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_7, 5, __68)
+
+--
+
+|sum([SafeDiv(tour#components_6, 5),-(SafeDiv(tour#components_7, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__69|
+new variables:
+  findAux __69: int(-4..4)
+new constraints:
+  __69 =aux sum([SafeDiv(tour#components_6, 5),-(SafeDiv(tour#components_7, 5));int(1..)])
+
+--
+
+__69 =aux sum([SafeDiv(tour#components_6, 5),-(SafeDiv(tour#components_7, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__70, __71],__69),FlatWeightedSumGeq([1, -1],[__70, __71],__69);int(1..)])
+new variables:
+  findAux __70: int(0..4)
+  findAux __71: int(0..4)
+new constraints:
+  __70 =aux SafeDiv(tour#components_6, 5)
+  __71 =aux SafeDiv(tour#components_7, 5)
+
+--
+
+|__69| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__69)
+
+--
+
+__70 =aux SafeDiv(tour#components_6, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_6, 5, __70)
+
+--
+
+__71 =aux SafeDiv(tour#components_7, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_7, 5, __71)
+
+--
+
+|sum([SafeMod(tour#components_7,5),-(SafeMod(tour#components_8,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__72|
+new variables:
+  findAux __72: int(-4..4)
+new constraints:
+  __72 =aux sum([SafeMod(tour#components_7,5),-(SafeMod(tour#components_8,5));int(1..)])
+
+--
+
+__72 =aux sum([SafeMod(tour#components_7,5),-(SafeMod(tour#components_8,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__73, __74],__72),FlatWeightedSumGeq([1, -1],[__73, __74],__72);int(1..)])
+new variables:
+  findAux __73: int(0..4)
+  findAux __74: int(0..4)
+new constraints:
+  __73 =aux SafeMod(tour#components_7,5)
+  __74 =aux SafeMod(tour#components_8,5)
+
+--
+
+|__72| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__72)
+
+--
+
+__73 =aux SafeMod(tour#components_7,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_7, 5, __73)
+
+--
+
+__74 =aux SafeMod(tour#components_8,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_8, 5, __74)
+
+--
+
+|sum([SafeDiv(tour#components_7, 5),-(SafeDiv(tour#components_8, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__75|
+new variables:
+  findAux __75: int(-4..4)
+new constraints:
+  __75 =aux sum([SafeDiv(tour#components_7, 5),-(SafeDiv(tour#components_8, 5));int(1..)])
+
+--
+
+__75 =aux sum([SafeDiv(tour#components_7, 5),-(SafeDiv(tour#components_8, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__76, __77],__75),FlatWeightedSumGeq([1, -1],[__76, __77],__75);int(1..)])
+new variables:
+  findAux __76: int(0..4)
+  findAux __77: int(0..4)
+new constraints:
+  __76 =aux SafeDiv(tour#components_7, 5)
+  __77 =aux SafeDiv(tour#components_8, 5)
+
+--
+
+|__75| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__75)
+
+--
+
+__76 =aux SafeDiv(tour#components_7, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_7, 5, __76)
+
+--
+
+__77 =aux SafeDiv(tour#components_8, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_8, 5, __77)
+
+--
+
+|sum([SafeMod(tour#components_7,5),-(SafeMod(tour#components_8,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__78|
+new variables:
+  findAux __78: int(-4..4)
+new constraints:
+  __78 =aux sum([SafeMod(tour#components_7,5),-(SafeMod(tour#components_8,5));int(1..)])
+
+--
+
+__78 =aux sum([SafeMod(tour#components_7,5),-(SafeMod(tour#components_8,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__79, __80],__78),FlatWeightedSumGeq([1, -1],[__79, __80],__78);int(1..)])
+new variables:
+  findAux __79: int(0..4)
+  findAux __80: int(0..4)
+new constraints:
+  __79 =aux SafeMod(tour#components_7,5)
+  __80 =aux SafeMod(tour#components_8,5)
+
+--
+
+|__78| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__78)
+
+--
+
+__79 =aux SafeMod(tour#components_7,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_7, 5, __79)
+
+--
+
+__80 =aux SafeMod(tour#components_8,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_8, 5, __80)
+
+--
+
+|sum([SafeDiv(tour#components_7, 5),-(SafeDiv(tour#components_8, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__81|
+new variables:
+  findAux __81: int(-4..4)
+new constraints:
+  __81 =aux sum([SafeDiv(tour#components_7, 5),-(SafeDiv(tour#components_8, 5));int(1..)])
+
+--
+
+__81 =aux sum([SafeDiv(tour#components_7, 5),-(SafeDiv(tour#components_8, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__82, __83],__81),FlatWeightedSumGeq([1, -1],[__82, __83],__81);int(1..)])
+new variables:
+  findAux __82: int(0..4)
+  findAux __83: int(0..4)
+new constraints:
+  __82 =aux SafeDiv(tour#components_7, 5)
+  __83 =aux SafeDiv(tour#components_8, 5)
+
+--
+
+|__81| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__81)
+
+--
+
+__82 =aux SafeDiv(tour#components_7, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_7, 5, __82)
+
+--
+
+__83 =aux SafeDiv(tour#components_8, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_8, 5, __83)
+
+--
+
+|sum([SafeMod(tour#components_8,5),-(SafeMod(tour#components_9,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__84|
+new variables:
+  findAux __84: int(-4..4)
+new constraints:
+  __84 =aux sum([SafeMod(tour#components_8,5),-(SafeMod(tour#components_9,5));int(1..)])
+
+--
+
+__84 =aux sum([SafeMod(tour#components_8,5),-(SafeMod(tour#components_9,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__85, __86],__84),FlatWeightedSumGeq([1, -1],[__85, __86],__84);int(1..)])
+new variables:
+  findAux __85: int(0..4)
+  findAux __86: int(0..4)
+new constraints:
+  __85 =aux SafeMod(tour#components_8,5)
+  __86 =aux SafeMod(tour#components_9,5)
+
+--
+
+|__84| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__84)
+
+--
+
+__85 =aux SafeMod(tour#components_8,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_8, 5, __85)
+
+--
+
+__86 =aux SafeMod(tour#components_9,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_9, 5, __86)
+
+--
+
+|sum([SafeDiv(tour#components_8, 5),-(SafeDiv(tour#components_9, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__87|
+new variables:
+  findAux __87: int(-4..4)
+new constraints:
+  __87 =aux sum([SafeDiv(tour#components_8, 5),-(SafeDiv(tour#components_9, 5));int(1..)])
+
+--
+
+__87 =aux sum([SafeDiv(tour#components_8, 5),-(SafeDiv(tour#components_9, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__88, __89],__87),FlatWeightedSumGeq([1, -1],[__88, __89],__87);int(1..)])
+new variables:
+  findAux __88: int(0..4)
+  findAux __89: int(0..4)
+new constraints:
+  __88 =aux SafeDiv(tour#components_8, 5)
+  __89 =aux SafeDiv(tour#components_9, 5)
+
+--
+
+|__87| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__87)
+
+--
+
+__88 =aux SafeDiv(tour#components_8, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_8, 5, __88)
+
+--
+
+__89 =aux SafeDiv(tour#components_9, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_9, 5, __89)
+
+--
+
+|sum([SafeMod(tour#components_8,5),-(SafeMod(tour#components_9,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__90|
+new variables:
+  findAux __90: int(-4..4)
+new constraints:
+  __90 =aux sum([SafeMod(tour#components_8,5),-(SafeMod(tour#components_9,5));int(1..)])
+
+--
+
+__90 =aux sum([SafeMod(tour#components_8,5),-(SafeMod(tour#components_9,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__91, __92],__90),FlatWeightedSumGeq([1, -1],[__91, __92],__90);int(1..)])
+new variables:
+  findAux __91: int(0..4)
+  findAux __92: int(0..4)
+new constraints:
+  __91 =aux SafeMod(tour#components_8,5)
+  __92 =aux SafeMod(tour#components_9,5)
+
+--
+
+|__90| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__90)
+
+--
+
+__91 =aux SafeMod(tour#components_8,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_8, 5, __91)
+
+--
+
+__92 =aux SafeMod(tour#components_9,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_9, 5, __92)
+
+--
+
+|sum([SafeDiv(tour#components_8, 5),-(SafeDiv(tour#components_9, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__93|
+new variables:
+  findAux __93: int(-4..4)
+new constraints:
+  __93 =aux sum([SafeDiv(tour#components_8, 5),-(SafeDiv(tour#components_9, 5));int(1..)])
+
+--
+
+__93 =aux sum([SafeDiv(tour#components_8, 5),-(SafeDiv(tour#components_9, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__94, __95],__93),FlatWeightedSumGeq([1, -1],[__94, __95],__93);int(1..)])
+new variables:
+  findAux __94: int(0..4)
+  findAux __95: int(0..4)
+new constraints:
+  __94 =aux SafeDiv(tour#components_8, 5)
+  __95 =aux SafeDiv(tour#components_9, 5)
+
+--
+
+|__93| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__93)
+
+--
+
+__94 =aux SafeDiv(tour#components_8, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_8, 5, __94)
+
+--
+
+__95 =aux SafeDiv(tour#components_9, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_9, 5, __95)
+
+--
+
+|sum([SafeMod(tour#components_9,5),-(SafeMod(tour#components_10,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__96|
+new variables:
+  findAux __96: int(-4..4)
+new constraints:
+  __96 =aux sum([SafeMod(tour#components_9,5),-(SafeMod(tour#components_10,5));int(1..)])
+
+--
+
+__96 =aux sum([SafeMod(tour#components_9,5),-(SafeMod(tour#components_10,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__97, __98],__96),FlatWeightedSumGeq([1, -1],[__97, __98],__96);int(1..)])
+new variables:
+  findAux __97: int(0..4)
+  findAux __98: int(0..4)
+new constraints:
+  __97 =aux SafeMod(tour#components_9,5)
+  __98 =aux SafeMod(tour#components_10,5)
+
+--
+
+|__96| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__96)
+
+--
+
+__97 =aux SafeMod(tour#components_9,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_9, 5, __97)
+
+--
+
+__98 =aux SafeMod(tour#components_10,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_10, 5, __98)
+
+--
+
+|sum([SafeDiv(tour#components_9, 5),-(SafeDiv(tour#components_10, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__99|
+new variables:
+  findAux __99: int(-4..4)
+new constraints:
+  __99 =aux sum([SafeDiv(tour#components_9, 5),-(SafeDiv(tour#components_10, 5));int(1..)])
+
+--
+
+__99 =aux sum([SafeDiv(tour#components_9, 5),-(SafeDiv(tour#components_10, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__100, __101],__99),FlatWeightedSumGeq([1, -1],[__100, __101],__99);int(1..)])
+new variables:
+  findAux __100: int(0..4)
+  findAux __101: int(0..4)
+new constraints:
+  __100 =aux SafeDiv(tour#components_9, 5)
+  __101 =aux SafeDiv(tour#components_10, 5)
+
+--
+
+|__99| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__99)
+
+--
+
+__100 =aux SafeDiv(tour#components_9, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_9, 5, __100)
+
+--
+
+__101 =aux SafeDiv(tour#components_10, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_10, 5, __101)
+
+--
+
+|sum([SafeMod(tour#components_9,5),-(SafeMod(tour#components_10,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__102|
+new variables:
+  findAux __102: int(-4..4)
+new constraints:
+  __102 =aux sum([SafeMod(tour#components_9,5),-(SafeMod(tour#components_10,5));int(1..)])
+
+--
+
+__102 =aux sum([SafeMod(tour#components_9,5),-(SafeMod(tour#components_10,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__103, __104],__102),FlatWeightedSumGeq([1, -1],[__103, __104],__102);int(1..)])
+new variables:
+  findAux __103: int(0..4)
+  findAux __104: int(0..4)
+new constraints:
+  __103 =aux SafeMod(tour#components_9,5)
+  __104 =aux SafeMod(tour#components_10,5)
+
+--
+
+|__102| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__102)
+
+--
+
+__103 =aux SafeMod(tour#components_9,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_9, 5, __103)
+
+--
+
+__104 =aux SafeMod(tour#components_10,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_10, 5, __104)
+
+--
+
+|sum([SafeDiv(tour#components_9, 5),-(SafeDiv(tour#components_10, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__105|
+new variables:
+  findAux __105: int(-4..4)
+new constraints:
+  __105 =aux sum([SafeDiv(tour#components_9, 5),-(SafeDiv(tour#components_10, 5));int(1..)])
+
+--
+
+__105 =aux sum([SafeDiv(tour#components_9, 5),-(SafeDiv(tour#components_10, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__106, __107],__105),FlatWeightedSumGeq([1, -1],[__106, __107],__105);int(1..)])
+new variables:
+  findAux __106: int(0..4)
+  findAux __107: int(0..4)
+new constraints:
+  __106 =aux SafeDiv(tour#components_9, 5)
+  __107 =aux SafeDiv(tour#components_10, 5)
+
+--
+
+|__105| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__105)
+
+--
+
+__106 =aux SafeDiv(tour#components_9, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_9, 5, __106)
+
+--
+
+__107 =aux SafeDiv(tour#components_10, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_10, 5, __107)
+
+--
+
+|sum([SafeMod(tour#components_10,5),-(SafeMod(tour#components_11,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__108|
+new variables:
+  findAux __108: int(-4..4)
+new constraints:
+  __108 =aux sum([SafeMod(tour#components_10,5),-(SafeMod(tour#components_11,5));int(1..)])
+
+--
+
+__108 =aux sum([SafeMod(tour#components_10,5),-(SafeMod(tour#components_11,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__109, __110],__108),FlatWeightedSumGeq([1, -1],[__109, __110],__108);int(1..)])
+new variables:
+  findAux __109: int(0..4)
+  findAux __110: int(0..4)
+new constraints:
+  __109 =aux SafeMod(tour#components_10,5)
+  __110 =aux SafeMod(tour#components_11,5)
+
+--
+
+|__108| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__108)
+
+--
+
+__109 =aux SafeMod(tour#components_10,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_10, 5, __109)
+
+--
+
+__110 =aux SafeMod(tour#components_11,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_11, 5, __110)
+
+--
+
+|sum([SafeDiv(tour#components_10, 5),-(SafeDiv(tour#components_11, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__111|
+new variables:
+  findAux __111: int(-4..4)
+new constraints:
+  __111 =aux sum([SafeDiv(tour#components_10, 5),-(SafeDiv(tour#components_11, 5));int(1..)])
+
+--
+
+__111 =aux sum([SafeDiv(tour#components_10, 5),-(SafeDiv(tour#components_11, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__112, __113],__111),FlatWeightedSumGeq([1, -1],[__112, __113],__111);int(1..)])
+new variables:
+  findAux __112: int(0..4)
+  findAux __113: int(0..4)
+new constraints:
+  __112 =aux SafeDiv(tour#components_10, 5)
+  __113 =aux SafeDiv(tour#components_11, 5)
+
+--
+
+|__111| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__111)
+
+--
+
+__112 =aux SafeDiv(tour#components_10, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_10, 5, __112)
+
+--
+
+__113 =aux SafeDiv(tour#components_11, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_11, 5, __113)
+
+--
+
+|sum([SafeMod(tour#components_10,5),-(SafeMod(tour#components_11,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__114|
+new variables:
+  findAux __114: int(-4..4)
+new constraints:
+  __114 =aux sum([SafeMod(tour#components_10,5),-(SafeMod(tour#components_11,5));int(1..)])
+
+--
+
+__114 =aux sum([SafeMod(tour#components_10,5),-(SafeMod(tour#components_11,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__115, __116],__114),FlatWeightedSumGeq([1, -1],[__115, __116],__114);int(1..)])
+new variables:
+  findAux __115: int(0..4)
+  findAux __116: int(0..4)
+new constraints:
+  __115 =aux SafeMod(tour#components_10,5)
+  __116 =aux SafeMod(tour#components_11,5)
+
+--
+
+|__114| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__114)
+
+--
+
+__115 =aux SafeMod(tour#components_10,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_10, 5, __115)
+
+--
+
+__116 =aux SafeMod(tour#components_11,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_11, 5, __116)
+
+--
+
+|sum([SafeDiv(tour#components_10, 5),-(SafeDiv(tour#components_11, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__117|
+new variables:
+  findAux __117: int(-4..4)
+new constraints:
+  __117 =aux sum([SafeDiv(tour#components_10, 5),-(SafeDiv(tour#components_11, 5));int(1..)])
+
+--
+
+__117 =aux sum([SafeDiv(tour#components_10, 5),-(SafeDiv(tour#components_11, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__118, __119],__117),FlatWeightedSumGeq([1, -1],[__118, __119],__117);int(1..)])
+new variables:
+  findAux __118: int(0..4)
+  findAux __119: int(0..4)
+new constraints:
+  __118 =aux SafeDiv(tour#components_10, 5)
+  __119 =aux SafeDiv(tour#components_11, 5)
+
+--
+
+|__117| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__117)
+
+--
+
+__118 =aux SafeDiv(tour#components_10, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_10, 5, __118)
+
+--
+
+__119 =aux SafeDiv(tour#components_11, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_11, 5, __119)
+
+--
+
+|sum([SafeMod(tour#components_11,5),-(SafeMod(tour#components_12,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__120|
+new variables:
+  findAux __120: int(-4..4)
+new constraints:
+  __120 =aux sum([SafeMod(tour#components_11,5),-(SafeMod(tour#components_12,5));int(1..)])
+
+--
+
+__120 =aux sum([SafeMod(tour#components_11,5),-(SafeMod(tour#components_12,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__121, __122],__120),FlatWeightedSumGeq([1, -1],[__121, __122],__120);int(1..)])
+new variables:
+  findAux __121: int(0..4)
+  findAux __122: int(0..4)
+new constraints:
+  __121 =aux SafeMod(tour#components_11,5)
+  __122 =aux SafeMod(tour#components_12,5)
+
+--
+
+|__120| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__120)
+
+--
+
+__121 =aux SafeMod(tour#components_11,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_11, 5, __121)
+
+--
+
+__122 =aux SafeMod(tour#components_12,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_12, 5, __122)
+
+--
+
+|sum([SafeDiv(tour#components_11, 5),-(SafeDiv(tour#components_12, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__123|
+new variables:
+  findAux __123: int(-4..4)
+new constraints:
+  __123 =aux sum([SafeDiv(tour#components_11, 5),-(SafeDiv(tour#components_12, 5));int(1..)])
+
+--
+
+__123 =aux sum([SafeDiv(tour#components_11, 5),-(SafeDiv(tour#components_12, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__124, __125],__123),FlatWeightedSumGeq([1, -1],[__124, __125],__123);int(1..)])
+new variables:
+  findAux __124: int(0..4)
+  findAux __125: int(0..4)
+new constraints:
+  __124 =aux SafeDiv(tour#components_11, 5)
+  __125 =aux SafeDiv(tour#components_12, 5)
+
+--
+
+|__123| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__123)
+
+--
+
+__124 =aux SafeDiv(tour#components_11, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_11, 5, __124)
+
+--
+
+__125 =aux SafeDiv(tour#components_12, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_12, 5, __125)
+
+--
+
+|sum([SafeMod(tour#components_11,5),-(SafeMod(tour#components_12,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__126|
+new variables:
+  findAux __126: int(-4..4)
+new constraints:
+  __126 =aux sum([SafeMod(tour#components_11,5),-(SafeMod(tour#components_12,5));int(1..)])
+
+--
+
+__126 =aux sum([SafeMod(tour#components_11,5),-(SafeMod(tour#components_12,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__127, __128],__126),FlatWeightedSumGeq([1, -1],[__127, __128],__126);int(1..)])
+new variables:
+  findAux __127: int(0..4)
+  findAux __128: int(0..4)
+new constraints:
+  __127 =aux SafeMod(tour#components_11,5)
+  __128 =aux SafeMod(tour#components_12,5)
+
+--
+
+|__126| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__126)
+
+--
+
+__127 =aux SafeMod(tour#components_11,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_11, 5, __127)
+
+--
+
+__128 =aux SafeMod(tour#components_12,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_12, 5, __128)
+
+--
+
+|sum([SafeDiv(tour#components_11, 5),-(SafeDiv(tour#components_12, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__129|
+new variables:
+  findAux __129: int(-4..4)
+new constraints:
+  __129 =aux sum([SafeDiv(tour#components_11, 5),-(SafeDiv(tour#components_12, 5));int(1..)])
+
+--
+
+__129 =aux sum([SafeDiv(tour#components_11, 5),-(SafeDiv(tour#components_12, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__130, __131],__129),FlatWeightedSumGeq([1, -1],[__130, __131],__129);int(1..)])
+new variables:
+  findAux __130: int(0..4)
+  findAux __131: int(0..4)
+new constraints:
+  __130 =aux SafeDiv(tour#components_11, 5)
+  __131 =aux SafeDiv(tour#components_12, 5)
+
+--
+
+|__129| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__129)
+
+--
+
+__130 =aux SafeDiv(tour#components_11, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_11, 5, __130)
+
+--
+
+__131 =aux SafeDiv(tour#components_12, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_12, 5, __131)
+
+--
+
+|sum([SafeMod(tour#components_12,5),-(SafeMod(tour#components_13,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__132|
+new variables:
+  findAux __132: int(-4..4)
+new constraints:
+  __132 =aux sum([SafeMod(tour#components_12,5),-(SafeMod(tour#components_13,5));int(1..)])
+
+--
+
+__132 =aux sum([SafeMod(tour#components_12,5),-(SafeMod(tour#components_13,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__133, __134],__132),FlatWeightedSumGeq([1, -1],[__133, __134],__132);int(1..)])
+new variables:
+  findAux __133: int(0..4)
+  findAux __134: int(0..4)
+new constraints:
+  __133 =aux SafeMod(tour#components_12,5)
+  __134 =aux SafeMod(tour#components_13,5)
+
+--
+
+|__132| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__132)
+
+--
+
+__133 =aux SafeMod(tour#components_12,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_12, 5, __133)
+
+--
+
+__134 =aux SafeMod(tour#components_13,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_13, 5, __134)
+
+--
+
+|sum([SafeDiv(tour#components_12, 5),-(SafeDiv(tour#components_13, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__135|
+new variables:
+  findAux __135: int(-4..4)
+new constraints:
+  __135 =aux sum([SafeDiv(tour#components_12, 5),-(SafeDiv(tour#components_13, 5));int(1..)])
+
+--
+
+__135 =aux sum([SafeDiv(tour#components_12, 5),-(SafeDiv(tour#components_13, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__136, __137],__135),FlatWeightedSumGeq([1, -1],[__136, __137],__135);int(1..)])
+new variables:
+  findAux __136: int(0..4)
+  findAux __137: int(0..4)
+new constraints:
+  __136 =aux SafeDiv(tour#components_12, 5)
+  __137 =aux SafeDiv(tour#components_13, 5)
+
+--
+
+|__135| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__135)
+
+--
+
+__136 =aux SafeDiv(tour#components_12, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_12, 5, __136)
+
+--
+
+__137 =aux SafeDiv(tour#components_13, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_13, 5, __137)
+
+--
+
+|sum([SafeMod(tour#components_12,5),-(SafeMod(tour#components_13,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__138|
+new variables:
+  findAux __138: int(-4..4)
+new constraints:
+  __138 =aux sum([SafeMod(tour#components_12,5),-(SafeMod(tour#components_13,5));int(1..)])
+
+--
+
+__138 =aux sum([SafeMod(tour#components_12,5),-(SafeMod(tour#components_13,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__139, __140],__138),FlatWeightedSumGeq([1, -1],[__139, __140],__138);int(1..)])
+new variables:
+  findAux __139: int(0..4)
+  findAux __140: int(0..4)
+new constraints:
+  __139 =aux SafeMod(tour#components_12,5)
+  __140 =aux SafeMod(tour#components_13,5)
+
+--
+
+|__138| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__138)
+
+--
+
+__139 =aux SafeMod(tour#components_12,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_12, 5, __139)
+
+--
+
+__140 =aux SafeMod(tour#components_13,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_13, 5, __140)
+
+--
+
+|sum([SafeDiv(tour#components_12, 5),-(SafeDiv(tour#components_13, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__141|
+new variables:
+  findAux __141: int(-4..4)
+new constraints:
+  __141 =aux sum([SafeDiv(tour#components_12, 5),-(SafeDiv(tour#components_13, 5));int(1..)])
+
+--
+
+__141 =aux sum([SafeDiv(tour#components_12, 5),-(SafeDiv(tour#components_13, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__142, __143],__141),FlatWeightedSumGeq([1, -1],[__142, __143],__141);int(1..)])
+new variables:
+  findAux __142: int(0..4)
+  findAux __143: int(0..4)
+new constraints:
+  __142 =aux SafeDiv(tour#components_12, 5)
+  __143 =aux SafeDiv(tour#components_13, 5)
+
+--
+
+|__141| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__141)
+
+--
+
+__142 =aux SafeDiv(tour#components_12, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_12, 5, __142)
+
+--
+
+__143 =aux SafeDiv(tour#components_13, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_13, 5, __143)
+
+--
+
+|sum([SafeMod(tour#components_13,5),-(SafeMod(tour#components_14,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__144|
+new variables:
+  findAux __144: int(-4..4)
+new constraints:
+  __144 =aux sum([SafeMod(tour#components_13,5),-(SafeMod(tour#components_14,5));int(1..)])
+
+--
+
+__144 =aux sum([SafeMod(tour#components_13,5),-(SafeMod(tour#components_14,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__145, __146],__144),FlatWeightedSumGeq([1, -1],[__145, __146],__144);int(1..)])
+new variables:
+  findAux __145: int(0..4)
+  findAux __146: int(0..4)
+new constraints:
+  __145 =aux SafeMod(tour#components_13,5)
+  __146 =aux SafeMod(tour#components_14,5)
+
+--
+
+|__144| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__144)
+
+--
+
+__145 =aux SafeMod(tour#components_13,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_13, 5, __145)
+
+--
+
+__146 =aux SafeMod(tour#components_14,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_14, 5, __146)
+
+--
+
+|sum([SafeDiv(tour#components_13, 5),-(SafeDiv(tour#components_14, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__147|
+new variables:
+  findAux __147: int(-4..4)
+new constraints:
+  __147 =aux sum([SafeDiv(tour#components_13, 5),-(SafeDiv(tour#components_14, 5));int(1..)])
+
+--
+
+__147 =aux sum([SafeDiv(tour#components_13, 5),-(SafeDiv(tour#components_14, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__148, __149],__147),FlatWeightedSumGeq([1, -1],[__148, __149],__147);int(1..)])
+new variables:
+  findAux __148: int(0..4)
+  findAux __149: int(0..4)
+new constraints:
+  __148 =aux SafeDiv(tour#components_13, 5)
+  __149 =aux SafeDiv(tour#components_14, 5)
+
+--
+
+|__147| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__147)
+
+--
+
+__148 =aux SafeDiv(tour#components_13, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_13, 5, __148)
+
+--
+
+__149 =aux SafeDiv(tour#components_14, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_14, 5, __149)
+
+--
+
+|sum([SafeMod(tour#components_13,5),-(SafeMod(tour#components_14,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__150|
+new variables:
+  findAux __150: int(-4..4)
+new constraints:
+  __150 =aux sum([SafeMod(tour#components_13,5),-(SafeMod(tour#components_14,5));int(1..)])
+
+--
+
+__150 =aux sum([SafeMod(tour#components_13,5),-(SafeMod(tour#components_14,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__151, __152],__150),FlatWeightedSumGeq([1, -1],[__151, __152],__150);int(1..)])
+new variables:
+  findAux __151: int(0..4)
+  findAux __152: int(0..4)
+new constraints:
+  __151 =aux SafeMod(tour#components_13,5)
+  __152 =aux SafeMod(tour#components_14,5)
+
+--
+
+|__150| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__150)
+
+--
+
+__151 =aux SafeMod(tour#components_13,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_13, 5, __151)
+
+--
+
+__152 =aux SafeMod(tour#components_14,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_14, 5, __152)
+
+--
+
+|sum([SafeDiv(tour#components_13, 5),-(SafeDiv(tour#components_14, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__153|
+new variables:
+  findAux __153: int(-4..4)
+new constraints:
+  __153 =aux sum([SafeDiv(tour#components_13, 5),-(SafeDiv(tour#components_14, 5));int(1..)])
+
+--
+
+__153 =aux sum([SafeDiv(tour#components_13, 5),-(SafeDiv(tour#components_14, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__154, __155],__153),FlatWeightedSumGeq([1, -1],[__154, __155],__153);int(1..)])
+new variables:
+  findAux __154: int(0..4)
+  findAux __155: int(0..4)
+new constraints:
+  __154 =aux SafeDiv(tour#components_13, 5)
+  __155 =aux SafeDiv(tour#components_14, 5)
+
+--
+
+|__153| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__153)
+
+--
+
+__154 =aux SafeDiv(tour#components_13, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_13, 5, __154)
+
+--
+
+__155 =aux SafeDiv(tour#components_14, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_14, 5, __155)
+
+--
+
+|sum([SafeMod(tour#components_14,5),-(SafeMod(tour#components_15,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__156|
+new variables:
+  findAux __156: int(-4..4)
+new constraints:
+  __156 =aux sum([SafeMod(tour#components_14,5),-(SafeMod(tour#components_15,5));int(1..)])
+
+--
+
+__156 =aux sum([SafeMod(tour#components_14,5),-(SafeMod(tour#components_15,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__157, __158],__156),FlatWeightedSumGeq([1, -1],[__157, __158],__156);int(1..)])
+new variables:
+  findAux __157: int(0..4)
+  findAux __158: int(0..4)
+new constraints:
+  __157 =aux SafeMod(tour#components_14,5)
+  __158 =aux SafeMod(tour#components_15,5)
+
+--
+
+|__156| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__156)
+
+--
+
+__157 =aux SafeMod(tour#components_14,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_14, 5, __157)
+
+--
+
+__158 =aux SafeMod(tour#components_15,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_15, 5, __158)
+
+--
+
+|sum([SafeDiv(tour#components_14, 5),-(SafeDiv(tour#components_15, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__159|
+new variables:
+  findAux __159: int(-4..4)
+new constraints:
+  __159 =aux sum([SafeDiv(tour#components_14, 5),-(SafeDiv(tour#components_15, 5));int(1..)])
+
+--
+
+__159 =aux sum([SafeDiv(tour#components_14, 5),-(SafeDiv(tour#components_15, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__160, __161],__159),FlatWeightedSumGeq([1, -1],[__160, __161],__159);int(1..)])
+new variables:
+  findAux __160: int(0..4)
+  findAux __161: int(0..4)
+new constraints:
+  __160 =aux SafeDiv(tour#components_14, 5)
+  __161 =aux SafeDiv(tour#components_15, 5)
+
+--
+
+|__159| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__159)
+
+--
+
+__160 =aux SafeDiv(tour#components_14, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_14, 5, __160)
+
+--
+
+__161 =aux SafeDiv(tour#components_15, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_15, 5, __161)
+
+--
+
+|sum([SafeMod(tour#components_14,5),-(SafeMod(tour#components_15,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__162|
+new variables:
+  findAux __162: int(-4..4)
+new constraints:
+  __162 =aux sum([SafeMod(tour#components_14,5),-(SafeMod(tour#components_15,5));int(1..)])
+
+--
+
+__162 =aux sum([SafeMod(tour#components_14,5),-(SafeMod(tour#components_15,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__163, __164],__162),FlatWeightedSumGeq([1, -1],[__163, __164],__162);int(1..)])
+new variables:
+  findAux __163: int(0..4)
+  findAux __164: int(0..4)
+new constraints:
+  __163 =aux SafeMod(tour#components_14,5)
+  __164 =aux SafeMod(tour#components_15,5)
+
+--
+
+|__162| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__162)
+
+--
+
+__163 =aux SafeMod(tour#components_14,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_14, 5, __163)
+
+--
+
+__164 =aux SafeMod(tour#components_15,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_15, 5, __164)
+
+--
+
+|sum([SafeDiv(tour#components_14, 5),-(SafeDiv(tour#components_15, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__165|
+new variables:
+  findAux __165: int(-4..4)
+new constraints:
+  __165 =aux sum([SafeDiv(tour#components_14, 5),-(SafeDiv(tour#components_15, 5));int(1..)])
+
+--
+
+__165 =aux sum([SafeDiv(tour#components_14, 5),-(SafeDiv(tour#components_15, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__166, __167],__165),FlatWeightedSumGeq([1, -1],[__166, __167],__165);int(1..)])
+new variables:
+  findAux __166: int(0..4)
+  findAux __167: int(0..4)
+new constraints:
+  __166 =aux SafeDiv(tour#components_14, 5)
+  __167 =aux SafeDiv(tour#components_15, 5)
+
+--
+
+|__165| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__165)
+
+--
+
+__166 =aux SafeDiv(tour#components_14, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_14, 5, __166)
+
+--
+
+__167 =aux SafeDiv(tour#components_15, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_15, 5, __167)
+
+--
+
+|sum([SafeMod(tour#components_15,5),-(SafeMod(tour#components_16,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__168|
+new variables:
+  findAux __168: int(-4..4)
+new constraints:
+  __168 =aux sum([SafeMod(tour#components_15,5),-(SafeMod(tour#components_16,5));int(1..)])
+
+--
+
+__168 =aux sum([SafeMod(tour#components_15,5),-(SafeMod(tour#components_16,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__169, __170],__168),FlatWeightedSumGeq([1, -1],[__169, __170],__168);int(1..)])
+new variables:
+  findAux __169: int(0..4)
+  findAux __170: int(0..4)
+new constraints:
+  __169 =aux SafeMod(tour#components_15,5)
+  __170 =aux SafeMod(tour#components_16,5)
+
+--
+
+|__168| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__168)
+
+--
+
+__169 =aux SafeMod(tour#components_15,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_15, 5, __169)
+
+--
+
+__170 =aux SafeMod(tour#components_16,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_16, 5, __170)
+
+--
+
+|sum([SafeDiv(tour#components_15, 5),-(SafeDiv(tour#components_16, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__171|
+new variables:
+  findAux __171: int(-4..4)
+new constraints:
+  __171 =aux sum([SafeDiv(tour#components_15, 5),-(SafeDiv(tour#components_16, 5));int(1..)])
+
+--
+
+__171 =aux sum([SafeDiv(tour#components_15, 5),-(SafeDiv(tour#components_16, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__172, __173],__171),FlatWeightedSumGeq([1, -1],[__172, __173],__171);int(1..)])
+new variables:
+  findAux __172: int(0..4)
+  findAux __173: int(0..4)
+new constraints:
+  __172 =aux SafeDiv(tour#components_15, 5)
+  __173 =aux SafeDiv(tour#components_16, 5)
+
+--
+
+|__171| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__171)
+
+--
+
+__172 =aux SafeDiv(tour#components_15, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_15, 5, __172)
+
+--
+
+__173 =aux SafeDiv(tour#components_16, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_16, 5, __173)
+
+--
+
+|sum([SafeMod(tour#components_15,5),-(SafeMod(tour#components_16,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__174|
+new variables:
+  findAux __174: int(-4..4)
+new constraints:
+  __174 =aux sum([SafeMod(tour#components_15,5),-(SafeMod(tour#components_16,5));int(1..)])
+
+--
+
+__174 =aux sum([SafeMod(tour#components_15,5),-(SafeMod(tour#components_16,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__175, __176],__174),FlatWeightedSumGeq([1, -1],[__175, __176],__174);int(1..)])
+new variables:
+  findAux __175: int(0..4)
+  findAux __176: int(0..4)
+new constraints:
+  __175 =aux SafeMod(tour#components_15,5)
+  __176 =aux SafeMod(tour#components_16,5)
+
+--
+
+|__174| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__174)
+
+--
+
+__175 =aux SafeMod(tour#components_15,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_15, 5, __175)
+
+--
+
+__176 =aux SafeMod(tour#components_16,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_16, 5, __176)
+
+--
+
+|sum([SafeDiv(tour#components_15, 5),-(SafeDiv(tour#components_16, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__177|
+new variables:
+  findAux __177: int(-4..4)
+new constraints:
+  __177 =aux sum([SafeDiv(tour#components_15, 5),-(SafeDiv(tour#components_16, 5));int(1..)])
+
+--
+
+__177 =aux sum([SafeDiv(tour#components_15, 5),-(SafeDiv(tour#components_16, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__178, __179],__177),FlatWeightedSumGeq([1, -1],[__178, __179],__177);int(1..)])
+new variables:
+  findAux __178: int(0..4)
+  findAux __179: int(0..4)
+new constraints:
+  __178 =aux SafeDiv(tour#components_15, 5)
+  __179 =aux SafeDiv(tour#components_16, 5)
+
+--
+
+|__177| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__177)
+
+--
+
+__178 =aux SafeDiv(tour#components_15, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_15, 5, __178)
+
+--
+
+__179 =aux SafeDiv(tour#components_16, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_16, 5, __179)
+
+--
+
+|sum([SafeMod(tour#components_16,5),-(SafeMod(tour#components_17,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__180|
+new variables:
+  findAux __180: int(-4..4)
+new constraints:
+  __180 =aux sum([SafeMod(tour#components_16,5),-(SafeMod(tour#components_17,5));int(1..)])
+
+--
+
+__180 =aux sum([SafeMod(tour#components_16,5),-(SafeMod(tour#components_17,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__181, __182],__180),FlatWeightedSumGeq([1, -1],[__181, __182],__180);int(1..)])
+new variables:
+  findAux __181: int(0..4)
+  findAux __182: int(0..4)
+new constraints:
+  __181 =aux SafeMod(tour#components_16,5)
+  __182 =aux SafeMod(tour#components_17,5)
+
+--
+
+|__180| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__180)
+
+--
+
+__181 =aux SafeMod(tour#components_16,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_16, 5, __181)
+
+--
+
+__182 =aux SafeMod(tour#components_17,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_17, 5, __182)
+
+--
+
+|sum([SafeDiv(tour#components_16, 5),-(SafeDiv(tour#components_17, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__183|
+new variables:
+  findAux __183: int(-4..4)
+new constraints:
+  __183 =aux sum([SafeDiv(tour#components_16, 5),-(SafeDiv(tour#components_17, 5));int(1..)])
+
+--
+
+__183 =aux sum([SafeDiv(tour#components_16, 5),-(SafeDiv(tour#components_17, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__184, __185],__183),FlatWeightedSumGeq([1, -1],[__184, __185],__183);int(1..)])
+new variables:
+  findAux __184: int(0..4)
+  findAux __185: int(0..4)
+new constraints:
+  __184 =aux SafeDiv(tour#components_16, 5)
+  __185 =aux SafeDiv(tour#components_17, 5)
+
+--
+
+|__183| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__183)
+
+--
+
+__184 =aux SafeDiv(tour#components_16, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_16, 5, __184)
+
+--
+
+__185 =aux SafeDiv(tour#components_17, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_17, 5, __185)
+
+--
+
+|sum([SafeMod(tour#components_16,5),-(SafeMod(tour#components_17,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__186|
+new variables:
+  findAux __186: int(-4..4)
+new constraints:
+  __186 =aux sum([SafeMod(tour#components_16,5),-(SafeMod(tour#components_17,5));int(1..)])
+
+--
+
+__186 =aux sum([SafeMod(tour#components_16,5),-(SafeMod(tour#components_17,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__187, __188],__186),FlatWeightedSumGeq([1, -1],[__187, __188],__186);int(1..)])
+new variables:
+  findAux __187: int(0..4)
+  findAux __188: int(0..4)
+new constraints:
+  __187 =aux SafeMod(tour#components_16,5)
+  __188 =aux SafeMod(tour#components_17,5)
+
+--
+
+|__186| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__186)
+
+--
+
+__187 =aux SafeMod(tour#components_16,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_16, 5, __187)
+
+--
+
+__188 =aux SafeMod(tour#components_17,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_17, 5, __188)
+
+--
+
+|sum([SafeDiv(tour#components_16, 5),-(SafeDiv(tour#components_17, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__189|
+new variables:
+  findAux __189: int(-4..4)
+new constraints:
+  __189 =aux sum([SafeDiv(tour#components_16, 5),-(SafeDiv(tour#components_17, 5));int(1..)])
+
+--
+
+__189 =aux sum([SafeDiv(tour#components_16, 5),-(SafeDiv(tour#components_17, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__190, __191],__189),FlatWeightedSumGeq([1, -1],[__190, __191],__189);int(1..)])
+new variables:
+  findAux __190: int(0..4)
+  findAux __191: int(0..4)
+new constraints:
+  __190 =aux SafeDiv(tour#components_16, 5)
+  __191 =aux SafeDiv(tour#components_17, 5)
+
+--
+
+|__189| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__189)
+
+--
+
+__190 =aux SafeDiv(tour#components_16, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_16, 5, __190)
+
+--
+
+__191 =aux SafeDiv(tour#components_17, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_17, 5, __191)
+
+--
+
+|sum([SafeMod(tour#components_17,5),-(SafeMod(tour#components_18,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__192|
+new variables:
+  findAux __192: int(-4..4)
+new constraints:
+  __192 =aux sum([SafeMod(tour#components_17,5),-(SafeMod(tour#components_18,5));int(1..)])
+
+--
+
+__192 =aux sum([SafeMod(tour#components_17,5),-(SafeMod(tour#components_18,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__193, __194],__192),FlatWeightedSumGeq([1, -1],[__193, __194],__192);int(1..)])
+new variables:
+  findAux __193: int(0..4)
+  findAux __194: int(0..4)
+new constraints:
+  __193 =aux SafeMod(tour#components_17,5)
+  __194 =aux SafeMod(tour#components_18,5)
+
+--
+
+|__192| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__192)
+
+--
+
+__193 =aux SafeMod(tour#components_17,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_17, 5, __193)
+
+--
+
+__194 =aux SafeMod(tour#components_18,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_18, 5, __194)
+
+--
+
+|sum([SafeDiv(tour#components_17, 5),-(SafeDiv(tour#components_18, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__195|
+new variables:
+  findAux __195: int(-4..4)
+new constraints:
+  __195 =aux sum([SafeDiv(tour#components_17, 5),-(SafeDiv(tour#components_18, 5));int(1..)])
+
+--
+
+__195 =aux sum([SafeDiv(tour#components_17, 5),-(SafeDiv(tour#components_18, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__196, __197],__195),FlatWeightedSumGeq([1, -1],[__196, __197],__195);int(1..)])
+new variables:
+  findAux __196: int(0..4)
+  findAux __197: int(0..4)
+new constraints:
+  __196 =aux SafeDiv(tour#components_17, 5)
+  __197 =aux SafeDiv(tour#components_18, 5)
+
+--
+
+|__195| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__195)
+
+--
+
+__196 =aux SafeDiv(tour#components_17, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_17, 5, __196)
+
+--
+
+__197 =aux SafeDiv(tour#components_18, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_18, 5, __197)
+
+--
+
+|sum([SafeMod(tour#components_17,5),-(SafeMod(tour#components_18,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__198|
+new variables:
+  findAux __198: int(-4..4)
+new constraints:
+  __198 =aux sum([SafeMod(tour#components_17,5),-(SafeMod(tour#components_18,5));int(1..)])
+
+--
+
+__198 =aux sum([SafeMod(tour#components_17,5),-(SafeMod(tour#components_18,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__199, __200],__198),FlatWeightedSumGeq([1, -1],[__199, __200],__198);int(1..)])
+new variables:
+  findAux __199: int(0..4)
+  findAux __200: int(0..4)
+new constraints:
+  __199 =aux SafeMod(tour#components_17,5)
+  __200 =aux SafeMod(tour#components_18,5)
+
+--
+
+|__198| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__198)
+
+--
+
+__199 =aux SafeMod(tour#components_17,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_17, 5, __199)
+
+--
+
+__200 =aux SafeMod(tour#components_18,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_18, 5, __200)
+
+--
+
+|sum([SafeDiv(tour#components_17, 5),-(SafeDiv(tour#components_18, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__201|
+new variables:
+  findAux __201: int(-4..4)
+new constraints:
+  __201 =aux sum([SafeDiv(tour#components_17, 5),-(SafeDiv(tour#components_18, 5));int(1..)])
+
+--
+
+__201 =aux sum([SafeDiv(tour#components_17, 5),-(SafeDiv(tour#components_18, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__202, __203],__201),FlatWeightedSumGeq([1, -1],[__202, __203],__201);int(1..)])
+new variables:
+  findAux __202: int(0..4)
+  findAux __203: int(0..4)
+new constraints:
+  __202 =aux SafeDiv(tour#components_17, 5)
+  __203 =aux SafeDiv(tour#components_18, 5)
+
+--
+
+|__201| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__201)
+
+--
+
+__202 =aux SafeDiv(tour#components_17, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_17, 5, __202)
+
+--
+
+__203 =aux SafeDiv(tour#components_18, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_18, 5, __203)
+
+--
+
+|sum([SafeMod(tour#components_18,5),-(SafeMod(tour#components_19,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__204|
+new variables:
+  findAux __204: int(-4..4)
+new constraints:
+  __204 =aux sum([SafeMod(tour#components_18,5),-(SafeMod(tour#components_19,5));int(1..)])
+
+--
+
+__204 =aux sum([SafeMod(tour#components_18,5),-(SafeMod(tour#components_19,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__205, __206],__204),FlatWeightedSumGeq([1, -1],[__205, __206],__204);int(1..)])
+new variables:
+  findAux __205: int(0..4)
+  findAux __206: int(0..4)
+new constraints:
+  __205 =aux SafeMod(tour#components_18,5)
+  __206 =aux SafeMod(tour#components_19,5)
+
+--
+
+|__204| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__204)
+
+--
+
+__205 =aux SafeMod(tour#components_18,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_18, 5, __205)
+
+--
+
+__206 =aux SafeMod(tour#components_19,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_19, 5, __206)
+
+--
+
+|sum([SafeDiv(tour#components_18, 5),-(SafeDiv(tour#components_19, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__207|
+new variables:
+  findAux __207: int(-4..4)
+new constraints:
+  __207 =aux sum([SafeDiv(tour#components_18, 5),-(SafeDiv(tour#components_19, 5));int(1..)])
+
+--
+
+__207 =aux sum([SafeDiv(tour#components_18, 5),-(SafeDiv(tour#components_19, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__208, __209],__207),FlatWeightedSumGeq([1, -1],[__208, __209],__207);int(1..)])
+new variables:
+  findAux __208: int(0..4)
+  findAux __209: int(0..4)
+new constraints:
+  __208 =aux SafeDiv(tour#components_18, 5)
+  __209 =aux SafeDiv(tour#components_19, 5)
+
+--
+
+|__207| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__207)
+
+--
+
+__208 =aux SafeDiv(tour#components_18, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_18, 5, __208)
+
+--
+
+__209 =aux SafeDiv(tour#components_19, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_19, 5, __209)
+
+--
+
+|sum([SafeMod(tour#components_18,5),-(SafeMod(tour#components_19,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__210|
+new variables:
+  findAux __210: int(-4..4)
+new constraints:
+  __210 =aux sum([SafeMod(tour#components_18,5),-(SafeMod(tour#components_19,5));int(1..)])
+
+--
+
+__210 =aux sum([SafeMod(tour#components_18,5),-(SafeMod(tour#components_19,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__211, __212],__210),FlatWeightedSumGeq([1, -1],[__211, __212],__210);int(1..)])
+new variables:
+  findAux __211: int(0..4)
+  findAux __212: int(0..4)
+new constraints:
+  __211 =aux SafeMod(tour#components_18,5)
+  __212 =aux SafeMod(tour#components_19,5)
+
+--
+
+|__210| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__210)
+
+--
+
+__211 =aux SafeMod(tour#components_18,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_18, 5, __211)
+
+--
+
+__212 =aux SafeMod(tour#components_19,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_19, 5, __212)
+
+--
+
+|sum([SafeDiv(tour#components_18, 5),-(SafeDiv(tour#components_19, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__213|
+new variables:
+  findAux __213: int(-4..4)
+new constraints:
+  __213 =aux sum([SafeDiv(tour#components_18, 5),-(SafeDiv(tour#components_19, 5));int(1..)])
+
+--
+
+__213 =aux sum([SafeDiv(tour#components_18, 5),-(SafeDiv(tour#components_19, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__214, __215],__213),FlatWeightedSumGeq([1, -1],[__214, __215],__213);int(1..)])
+new variables:
+  findAux __214: int(0..4)
+  findAux __215: int(0..4)
+new constraints:
+  __214 =aux SafeDiv(tour#components_18, 5)
+  __215 =aux SafeDiv(tour#components_19, 5)
+
+--
+
+|__213| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__213)
+
+--
+
+__214 =aux SafeDiv(tour#components_18, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_18, 5, __214)
+
+--
+
+__215 =aux SafeDiv(tour#components_19, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_19, 5, __215)
+
+--
+
+|sum([SafeMod(tour#components_19,5),-(SafeMod(tour#components_20,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__216|
+new variables:
+  findAux __216: int(-4..4)
+new constraints:
+  __216 =aux sum([SafeMod(tour#components_19,5),-(SafeMod(tour#components_20,5));int(1..)])
+
+--
+
+__216 =aux sum([SafeMod(tour#components_19,5),-(SafeMod(tour#components_20,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__217, __218],__216),FlatWeightedSumGeq([1, -1],[__217, __218],__216);int(1..)])
+new variables:
+  findAux __217: int(0..4)
+  findAux __218: int(0..4)
+new constraints:
+  __217 =aux SafeMod(tour#components_19,5)
+  __218 =aux SafeMod(tour#components_20,5)
+
+--
+
+|__216| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__216)
+
+--
+
+__217 =aux SafeMod(tour#components_19,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_19, 5, __217)
+
+--
+
+__218 =aux SafeMod(tour#components_20,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_20, 5, __218)
+
+--
+
+|sum([SafeDiv(tour#components_19, 5),-(SafeDiv(tour#components_20, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__219|
+new variables:
+  findAux __219: int(-4..4)
+new constraints:
+  __219 =aux sum([SafeDiv(tour#components_19, 5),-(SafeDiv(tour#components_20, 5));int(1..)])
+
+--
+
+__219 =aux sum([SafeDiv(tour#components_19, 5),-(SafeDiv(tour#components_20, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__220, __221],__219),FlatWeightedSumGeq([1, -1],[__220, __221],__219);int(1..)])
+new variables:
+  findAux __220: int(0..4)
+  findAux __221: int(0..4)
+new constraints:
+  __220 =aux SafeDiv(tour#components_19, 5)
+  __221 =aux SafeDiv(tour#components_20, 5)
+
+--
+
+|__219| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__219)
+
+--
+
+__220 =aux SafeDiv(tour#components_19, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_19, 5, __220)
+
+--
+
+__221 =aux SafeDiv(tour#components_20, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_20, 5, __221)
+
+--
+
+|sum([SafeMod(tour#components_19,5),-(SafeMod(tour#components_20,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__222|
+new variables:
+  findAux __222: int(-4..4)
+new constraints:
+  __222 =aux sum([SafeMod(tour#components_19,5),-(SafeMod(tour#components_20,5));int(1..)])
+
+--
+
+__222 =aux sum([SafeMod(tour#components_19,5),-(SafeMod(tour#components_20,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__223, __224],__222),FlatWeightedSumGeq([1, -1],[__223, __224],__222);int(1..)])
+new variables:
+  findAux __223: int(0..4)
+  findAux __224: int(0..4)
+new constraints:
+  __223 =aux SafeMod(tour#components_19,5)
+  __224 =aux SafeMod(tour#components_20,5)
+
+--
+
+|__222| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__222)
+
+--
+
+__223 =aux SafeMod(tour#components_19,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_19, 5, __223)
+
+--
+
+__224 =aux SafeMod(tour#components_20,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_20, 5, __224)
+
+--
+
+|sum([SafeDiv(tour#components_19, 5),-(SafeDiv(tour#components_20, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__225|
+new variables:
+  findAux __225: int(-4..4)
+new constraints:
+  __225 =aux sum([SafeDiv(tour#components_19, 5),-(SafeDiv(tour#components_20, 5));int(1..)])
+
+--
+
+__225 =aux sum([SafeDiv(tour#components_19, 5),-(SafeDiv(tour#components_20, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__226, __227],__225),FlatWeightedSumGeq([1, -1],[__226, __227],__225);int(1..)])
+new variables:
+  findAux __226: int(0..4)
+  findAux __227: int(0..4)
+new constraints:
+  __226 =aux SafeDiv(tour#components_19, 5)
+  __227 =aux SafeDiv(tour#components_20, 5)
+
+--
+
+|__225| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__225)
+
+--
+
+__226 =aux SafeDiv(tour#components_19, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_19, 5, __226)
+
+--
+
+__227 =aux SafeDiv(tour#components_20, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_20, 5, __227)
+
+--
+
+|sum([SafeMod(tour#components_20,5),-(SafeMod(tour#components_21,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__228|
+new variables:
+  findAux __228: int(-4..4)
+new constraints:
+  __228 =aux sum([SafeMod(tour#components_20,5),-(SafeMod(tour#components_21,5));int(1..)])
+
+--
+
+__228 =aux sum([SafeMod(tour#components_20,5),-(SafeMod(tour#components_21,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__229, __230],__228),FlatWeightedSumGeq([1, -1],[__229, __230],__228);int(1..)])
+new variables:
+  findAux __229: int(0..4)
+  findAux __230: int(0..4)
+new constraints:
+  __229 =aux SafeMod(tour#components_20,5)
+  __230 =aux SafeMod(tour#components_21,5)
+
+--
+
+|__228| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__228)
+
+--
+
+__229 =aux SafeMod(tour#components_20,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_20, 5, __229)
+
+--
+
+__230 =aux SafeMod(tour#components_21,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_21, 5, __230)
+
+--
+
+|sum([SafeDiv(tour#components_20, 5),-(SafeDiv(tour#components_21, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__231|
+new variables:
+  findAux __231: int(-4..4)
+new constraints:
+  __231 =aux sum([SafeDiv(tour#components_20, 5),-(SafeDiv(tour#components_21, 5));int(1..)])
+
+--
+
+__231 =aux sum([SafeDiv(tour#components_20, 5),-(SafeDiv(tour#components_21, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__232, __233],__231),FlatWeightedSumGeq([1, -1],[__232, __233],__231);int(1..)])
+new variables:
+  findAux __232: int(0..4)
+  findAux __233: int(0..4)
+new constraints:
+  __232 =aux SafeDiv(tour#components_20, 5)
+  __233 =aux SafeDiv(tour#components_21, 5)
+
+--
+
+|__231| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__231)
+
+--
+
+__232 =aux SafeDiv(tour#components_20, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_20, 5, __232)
+
+--
+
+__233 =aux SafeDiv(tour#components_21, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_21, 5, __233)
+
+--
+
+|sum([SafeMod(tour#components_20,5),-(SafeMod(tour#components_21,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__234|
+new variables:
+  findAux __234: int(-4..4)
+new constraints:
+  __234 =aux sum([SafeMod(tour#components_20,5),-(SafeMod(tour#components_21,5));int(1..)])
+
+--
+
+__234 =aux sum([SafeMod(tour#components_20,5),-(SafeMod(tour#components_21,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__235, __236],__234),FlatWeightedSumGeq([1, -1],[__235, __236],__234);int(1..)])
+new variables:
+  findAux __235: int(0..4)
+  findAux __236: int(0..4)
+new constraints:
+  __235 =aux SafeMod(tour#components_20,5)
+  __236 =aux SafeMod(tour#components_21,5)
+
+--
+
+|__234| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__234)
+
+--
+
+__235 =aux SafeMod(tour#components_20,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_20, 5, __235)
+
+--
+
+__236 =aux SafeMod(tour#components_21,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_21, 5, __236)
+
+--
+
+|sum([SafeDiv(tour#components_20, 5),-(SafeDiv(tour#components_21, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__237|
+new variables:
+  findAux __237: int(-4..4)
+new constraints:
+  __237 =aux sum([SafeDiv(tour#components_20, 5),-(SafeDiv(tour#components_21, 5));int(1..)])
+
+--
+
+__237 =aux sum([SafeDiv(tour#components_20, 5),-(SafeDiv(tour#components_21, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__238, __239],__237),FlatWeightedSumGeq([1, -1],[__238, __239],__237);int(1..)])
+new variables:
+  findAux __238: int(0..4)
+  findAux __239: int(0..4)
+new constraints:
+  __238 =aux SafeDiv(tour#components_20, 5)
+  __239 =aux SafeDiv(tour#components_21, 5)
+
+--
+
+|__237| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__237)
+
+--
+
+__238 =aux SafeDiv(tour#components_20, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_20, 5, __238)
+
+--
+
+__239 =aux SafeDiv(tour#components_21, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_21, 5, __239)
+
+--
+
+|sum([SafeMod(tour#components_21,5),-(SafeMod(tour#components_22,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__240|
+new variables:
+  findAux __240: int(-4..4)
+new constraints:
+  __240 =aux sum([SafeMod(tour#components_21,5),-(SafeMod(tour#components_22,5));int(1..)])
+
+--
+
+__240 =aux sum([SafeMod(tour#components_21,5),-(SafeMod(tour#components_22,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__241, __242],__240),FlatWeightedSumGeq([1, -1],[__241, __242],__240);int(1..)])
+new variables:
+  findAux __241: int(0..4)
+  findAux __242: int(0..4)
+new constraints:
+  __241 =aux SafeMod(tour#components_21,5)
+  __242 =aux SafeMod(tour#components_22,5)
+
+--
+
+|__240| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__240)
+
+--
+
+__241 =aux SafeMod(tour#components_21,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_21, 5, __241)
+
+--
+
+__242 =aux SafeMod(tour#components_22,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_22, 5, __242)
+
+--
+
+|sum([SafeDiv(tour#components_21, 5),-(SafeDiv(tour#components_22, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__243|
+new variables:
+  findAux __243: int(-4..4)
+new constraints:
+  __243 =aux sum([SafeDiv(tour#components_21, 5),-(SafeDiv(tour#components_22, 5));int(1..)])
+
+--
+
+__243 =aux sum([SafeDiv(tour#components_21, 5),-(SafeDiv(tour#components_22, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__244, __245],__243),FlatWeightedSumGeq([1, -1],[__244, __245],__243);int(1..)])
+new variables:
+  findAux __244: int(0..4)
+  findAux __245: int(0..4)
+new constraints:
+  __244 =aux SafeDiv(tour#components_21, 5)
+  __245 =aux SafeDiv(tour#components_22, 5)
+
+--
+
+|__243| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__243)
+
+--
+
+__244 =aux SafeDiv(tour#components_21, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_21, 5, __244)
+
+--
+
+__245 =aux SafeDiv(tour#components_22, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_22, 5, __245)
+
+--
+
+|sum([SafeMod(tour#components_21,5),-(SafeMod(tour#components_22,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__246|
+new variables:
+  findAux __246: int(-4..4)
+new constraints:
+  __246 =aux sum([SafeMod(tour#components_21,5),-(SafeMod(tour#components_22,5));int(1..)])
+
+--
+
+__246 =aux sum([SafeMod(tour#components_21,5),-(SafeMod(tour#components_22,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__247, __248],__246),FlatWeightedSumGeq([1, -1],[__247, __248],__246);int(1..)])
+new variables:
+  findAux __247: int(0..4)
+  findAux __248: int(0..4)
+new constraints:
+  __247 =aux SafeMod(tour#components_21,5)
+  __248 =aux SafeMod(tour#components_22,5)
+
+--
+
+|__246| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__246)
+
+--
+
+__247 =aux SafeMod(tour#components_21,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_21, 5, __247)
+
+--
+
+__248 =aux SafeMod(tour#components_22,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_22, 5, __248)
+
+--
+
+|sum([SafeDiv(tour#components_21, 5),-(SafeDiv(tour#components_22, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__249|
+new variables:
+  findAux __249: int(-4..4)
+new constraints:
+  __249 =aux sum([SafeDiv(tour#components_21, 5),-(SafeDiv(tour#components_22, 5));int(1..)])
+
+--
+
+__249 =aux sum([SafeDiv(tour#components_21, 5),-(SafeDiv(tour#components_22, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__250, __251],__249),FlatWeightedSumGeq([1, -1],[__250, __251],__249);int(1..)])
+new variables:
+  findAux __250: int(0..4)
+  findAux __251: int(0..4)
+new constraints:
+  __250 =aux SafeDiv(tour#components_21, 5)
+  __251 =aux SafeDiv(tour#components_22, 5)
+
+--
+
+|__249| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__249)
+
+--
+
+__250 =aux SafeDiv(tour#components_21, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_21, 5, __250)
+
+--
+
+__251 =aux SafeDiv(tour#components_22, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_22, 5, __251)
+
+--
+
+|sum([SafeMod(tour#components_22,5),-(SafeMod(tour#components_23,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__252|
+new variables:
+  findAux __252: int(-4..4)
+new constraints:
+  __252 =aux sum([SafeMod(tour#components_22,5),-(SafeMod(tour#components_23,5));int(1..)])
+
+--
+
+__252 =aux sum([SafeMod(tour#components_22,5),-(SafeMod(tour#components_23,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__253, __254],__252),FlatWeightedSumGeq([1, -1],[__253, __254],__252);int(1..)])
+new variables:
+  findAux __253: int(0..4)
+  findAux __254: int(0..4)
+new constraints:
+  __253 =aux SafeMod(tour#components_22,5)
+  __254 =aux SafeMod(tour#components_23,5)
+
+--
+
+|__252| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__252)
+
+--
+
+__253 =aux SafeMod(tour#components_22,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_22, 5, __253)
+
+--
+
+__254 =aux SafeMod(tour#components_23,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_23, 5, __254)
+
+--
+
+|sum([SafeDiv(tour#components_22, 5),-(SafeDiv(tour#components_23, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__255|
+new variables:
+  findAux __255: int(-4..4)
+new constraints:
+  __255 =aux sum([SafeDiv(tour#components_22, 5),-(SafeDiv(tour#components_23, 5));int(1..)])
+
+--
+
+__255 =aux sum([SafeDiv(tour#components_22, 5),-(SafeDiv(tour#components_23, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__256, __257],__255),FlatWeightedSumGeq([1, -1],[__256, __257],__255);int(1..)])
+new variables:
+  findAux __256: int(0..4)
+  findAux __257: int(0..4)
+new constraints:
+  __256 =aux SafeDiv(tour#components_22, 5)
+  __257 =aux SafeDiv(tour#components_23, 5)
+
+--
+
+|__255| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__255)
+
+--
+
+__256 =aux SafeDiv(tour#components_22, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_22, 5, __256)
+
+--
+
+__257 =aux SafeDiv(tour#components_23, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_23, 5, __257)
+
+--
+
+|sum([SafeMod(tour#components_22,5),-(SafeMod(tour#components_23,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__258|
+new variables:
+  findAux __258: int(-4..4)
+new constraints:
+  __258 =aux sum([SafeMod(tour#components_22,5),-(SafeMod(tour#components_23,5));int(1..)])
+
+--
+
+__258 =aux sum([SafeMod(tour#components_22,5),-(SafeMod(tour#components_23,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__259, __260],__258),FlatWeightedSumGeq([1, -1],[__259, __260],__258);int(1..)])
+new variables:
+  findAux __259: int(0..4)
+  findAux __260: int(0..4)
+new constraints:
+  __259 =aux SafeMod(tour#components_22,5)
+  __260 =aux SafeMod(tour#components_23,5)
+
+--
+
+|__258| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__258)
+
+--
+
+__259 =aux SafeMod(tour#components_22,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_22, 5, __259)
+
+--
+
+__260 =aux SafeMod(tour#components_23,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_23, 5, __260)
+
+--
+
+|sum([SafeDiv(tour#components_22, 5),-(SafeDiv(tour#components_23, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__261|
+new variables:
+  findAux __261: int(-4..4)
+new constraints:
+  __261 =aux sum([SafeDiv(tour#components_22, 5),-(SafeDiv(tour#components_23, 5));int(1..)])
+
+--
+
+__261 =aux sum([SafeDiv(tour#components_22, 5),-(SafeDiv(tour#components_23, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__262, __263],__261),FlatWeightedSumGeq([1, -1],[__262, __263],__261);int(1..)])
+new variables:
+  findAux __262: int(0..4)
+  findAux __263: int(0..4)
+new constraints:
+  __262 =aux SafeDiv(tour#components_22, 5)
+  __263 =aux SafeDiv(tour#components_23, 5)
+
+--
+
+|__261| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__261)
+
+--
+
+__262 =aux SafeDiv(tour#components_22, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_22, 5, __262)
+
+--
+
+__263 =aux SafeDiv(tour#components_23, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_23, 5, __263)
+
+--
+
+|sum([SafeMod(tour#components_23,5),-(SafeMod(tour#components_24,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__264|
+new variables:
+  findAux __264: int(-4..4)
+new constraints:
+  __264 =aux sum([SafeMod(tour#components_23,5),-(SafeMod(tour#components_24,5));int(1..)])
+
+--
+
+__264 =aux sum([SafeMod(tour#components_23,5),-(SafeMod(tour#components_24,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__265, __266],__264),FlatWeightedSumGeq([1, -1],[__265, __266],__264);int(1..)])
+new variables:
+  findAux __265: int(0..4)
+  findAux __266: int(0..4)
+new constraints:
+  __265 =aux SafeMod(tour#components_23,5)
+  __266 =aux SafeMod(tour#components_24,5)
+
+--
+
+|__264| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__264)
+
+--
+
+__265 =aux SafeMod(tour#components_23,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_23, 5, __265)
+
+--
+
+__266 =aux SafeMod(tour#components_24,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_24, 5, __266)
+
+--
+
+|sum([SafeDiv(tour#components_23, 5),-(SafeDiv(tour#components_24, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__267|
+new variables:
+  findAux __267: int(-4..4)
+new constraints:
+  __267 =aux sum([SafeDiv(tour#components_23, 5),-(SafeDiv(tour#components_24, 5));int(1..)])
+
+--
+
+__267 =aux sum([SafeDiv(tour#components_23, 5),-(SafeDiv(tour#components_24, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__268, __269],__267),FlatWeightedSumGeq([1, -1],[__268, __269],__267);int(1..)])
+new variables:
+  findAux __268: int(0..4)
+  findAux __269: int(0..4)
+new constraints:
+  __268 =aux SafeDiv(tour#components_23, 5)
+  __269 =aux SafeDiv(tour#components_24, 5)
+
+--
+
+|__267| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__267)
+
+--
+
+__268 =aux SafeDiv(tour#components_23, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_23, 5, __268)
+
+--
+
+__269 =aux SafeDiv(tour#components_24, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_24, 5, __269)
+
+--
+
+|sum([SafeMod(tour#components_23,5),-(SafeMod(tour#components_24,5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__270|
+new variables:
+  findAux __270: int(-4..4)
+new constraints:
+  __270 =aux sum([SafeMod(tour#components_23,5),-(SafeMod(tour#components_24,5));int(1..)])
+
+--
+
+__270 =aux sum([SafeMod(tour#components_23,5),-(SafeMod(tour#components_24,5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__271, __272],__270),FlatWeightedSumGeq([1, -1],[__271, __272],__270);int(1..)])
+new variables:
+  findAux __271: int(0..4)
+  findAux __272: int(0..4)
+new constraints:
+  __271 =aux SafeMod(tour#components_23,5)
+  __272 =aux SafeMod(tour#components_24,5)
+
+--
+
+|__270| = 2
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(2,__270)
+
+--
+
+__271 =aux SafeMod(tour#components_23,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_23, 5, __271)
+
+--
+
+__272 =aux SafeMod(tour#components_24,5)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(tour#components_24, 5, __272)
+
+--
+
+|sum([SafeDiv(tour#components_23, 5),-(SafeDiv(tour#components_24, 5));int(1..)])|
+   ~~> flatten_generic ([("Minion", 4200)])
+|__273|
+new variables:
+  findAux __273: int(-4..4)
+new constraints:
+  __273 =aux sum([SafeDiv(tour#components_23, 5),-(SafeDiv(tour#components_24, 5));int(1..)])
+
+--
+
+__273 =aux sum([SafeDiv(tour#components_23, 5),-(SafeDiv(tour#components_24, 5));int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, -1],[__274, __275],__273),FlatWeightedSumGeq([1, -1],[__274, __275],__273);int(1..)])
+new variables:
+  findAux __274: int(0..4)
+  findAux __275: int(0..4)
+new constraints:
+  __274 =aux SafeDiv(tour#components_23, 5)
+  __275 =aux SafeDiv(tour#components_24, 5)
+
+--
+
+|__273| = 1
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(1,__273)
+
+--
+
+__274 =aux SafeDiv(tour#components_23, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_23, 5, __274)
+
+--
+
+__275 =aux SafeDiv(tour#components_24, 5)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(tour#components_24, 5, __275)
+
+--
+
+Final model:
+
+letting n be 5
+letting startCol be 0
+letting startRow be 0
+letting tourLength be 24
+letting FIELDS be domain int(0..((product([n,n;int(1..)]) - 1)))
+letting KNIGHTS be domain int(0..((tourLength - 1)))
+find tour: matrix indexed by [KNIGHTS] of FIELDS
+find tour#components_1: int(0..24)
+find tour#components_2: int(0..24)
+find tour#components_3: int(0..24)
+find tour#components_4: int(0..24)
+find tour#components_5: int(0..24)
+find tour#components_6: int(0..24)
+find tour#components_7: int(0..24)
+find tour#components_8: int(0..24)
+find tour#components_9: int(0..24)
+find tour#components_10: int(0..24)
+find tour#components_11: int(0..24)
+find tour#components_12: int(0..24)
+find tour#components_13: int(0..24)
+find tour#components_14: int(0..24)
+find tour#components_15: int(0..24)
+find tour#components_16: int(0..24)
+find tour#components_17: int(0..24)
+find tour#components_18: int(0..24)
+find tour#components_19: int(0..24)
+find tour#components_20: int(0..24)
+find tour#components_21: int(0..24)
+find tour#components_22: int(0..24)
+find tour#components_23: int(0..24)
+find tour#components_24: int(0..24)
+findAux __0: int(-4..4)
+findAux __1: int(0..4)
+findAux __2: int(0..4)
+findAux __3: int(-4..4)
+findAux __4: int(0..4)
+findAux __5: int(0..4)
+findAux __6: int(-4..4)
+findAux __7: int(0..4)
+findAux __8: int(0..4)
+findAux __9: int(-4..4)
+findAux __10: int(0..4)
+findAux __11: int(0..4)
+findAux __12: int(-4..4)
+findAux __13: int(0..4)
+findAux __14: int(0..4)
+findAux __15: int(-4..4)
+findAux __16: int(0..4)
+findAux __17: int(0..4)
+findAux __18: int(-4..4)
+findAux __19: int(0..4)
+findAux __20: int(0..4)
+findAux __21: int(-4..4)
+findAux __22: int(0..4)
+findAux __23: int(0..4)
+findAux __24: int(-4..4)
+findAux __25: int(0..4)
+findAux __26: int(0..4)
+findAux __27: int(-4..4)
+findAux __28: int(0..4)
+findAux __29: int(0..4)
+findAux __30: int(-4..4)
+findAux __31: int(0..4)
+findAux __32: int(0..4)
+findAux __33: int(-4..4)
+findAux __34: int(0..4)
+findAux __35: int(0..4)
+findAux __36: int(-4..4)
+findAux __37: int(0..4)
+findAux __38: int(0..4)
+findAux __39: int(-4..4)
+findAux __40: int(0..4)
+findAux __41: int(0..4)
+findAux __42: int(-4..4)
+findAux __43: int(0..4)
+findAux __44: int(0..4)
+findAux __45: int(-4..4)
+findAux __46: int(0..4)
+findAux __47: int(0..4)
+findAux __48: int(-4..4)
+findAux __49: int(0..4)
+findAux __50: int(0..4)
+findAux __51: int(-4..4)
+findAux __52: int(0..4)
+findAux __53: int(0..4)
+findAux __54: int(-4..4)
+findAux __55: int(0..4)
+findAux __56: int(0..4)
+findAux __57: int(-4..4)
+findAux __58: int(0..4)
+findAux __59: int(0..4)
+findAux __60: int(-4..4)
+findAux __61: int(0..4)
+findAux __62: int(0..4)
+findAux __63: int(-4..4)
+findAux __64: int(0..4)
+findAux __65: int(0..4)
+findAux __66: int(-4..4)
+findAux __67: int(0..4)
+findAux __68: int(0..4)
+findAux __69: int(-4..4)
+findAux __70: int(0..4)
+findAux __71: int(0..4)
+findAux __72: int(-4..4)
+findAux __73: int(0..4)
+findAux __74: int(0..4)
+findAux __75: int(-4..4)
+findAux __76: int(0..4)
+findAux __77: int(0..4)
+findAux __78: int(-4..4)
+findAux __79: int(0..4)
+findAux __80: int(0..4)
+findAux __81: int(-4..4)
+findAux __82: int(0..4)
+findAux __83: int(0..4)
+findAux __84: int(-4..4)
+findAux __85: int(0..4)
+findAux __86: int(0..4)
+findAux __87: int(-4..4)
+findAux __88: int(0..4)
+findAux __89: int(0..4)
+findAux __90: int(-4..4)
+findAux __91: int(0..4)
+findAux __92: int(0..4)
+findAux __93: int(-4..4)
+findAux __94: int(0..4)
+findAux __95: int(0..4)
+findAux __96: int(-4..4)
+findAux __97: int(0..4)
+findAux __98: int(0..4)
+findAux __99: int(-4..4)
+findAux __100: int(0..4)
+findAux __101: int(0..4)
+findAux __102: int(-4..4)
+findAux __103: int(0..4)
+findAux __104: int(0..4)
+findAux __105: int(-4..4)
+findAux __106: int(0..4)
+findAux __107: int(0..4)
+findAux __108: int(-4..4)
+findAux __109: int(0..4)
+findAux __110: int(0..4)
+findAux __111: int(-4..4)
+findAux __112: int(0..4)
+findAux __113: int(0..4)
+findAux __114: int(-4..4)
+findAux __115: int(0..4)
+findAux __116: int(0..4)
+findAux __117: int(-4..4)
+findAux __118: int(0..4)
+findAux __119: int(0..4)
+findAux __120: int(-4..4)
+findAux __121: int(0..4)
+findAux __122: int(0..4)
+findAux __123: int(-4..4)
+findAux __124: int(0..4)
+findAux __125: int(0..4)
+findAux __126: int(-4..4)
+findAux __127: int(0..4)
+findAux __128: int(0..4)
+findAux __129: int(-4..4)
+findAux __130: int(0..4)
+findAux __131: int(0..4)
+findAux __132: int(-4..4)
+findAux __133: int(0..4)
+findAux __134: int(0..4)
+findAux __135: int(-4..4)
+findAux __136: int(0..4)
+findAux __137: int(0..4)
+findAux __138: int(-4..4)
+findAux __139: int(0..4)
+findAux __140: int(0..4)
+findAux __141: int(-4..4)
+findAux __142: int(0..4)
+findAux __143: int(0..4)
+findAux __144: int(-4..4)
+findAux __145: int(0..4)
+findAux __146: int(0..4)
+findAux __147: int(-4..4)
+findAux __148: int(0..4)
+findAux __149: int(0..4)
+findAux __150: int(-4..4)
+findAux __151: int(0..4)
+findAux __152: int(0..4)
+findAux __153: int(-4..4)
+findAux __154: int(0..4)
+findAux __155: int(0..4)
+findAux __156: int(-4..4)
+findAux __157: int(0..4)
+findAux __158: int(0..4)
+findAux __159: int(-4..4)
+findAux __160: int(0..4)
+findAux __161: int(0..4)
+findAux __162: int(-4..4)
+findAux __163: int(0..4)
+findAux __164: int(0..4)
+findAux __165: int(-4..4)
+findAux __166: int(0..4)
+findAux __167: int(0..4)
+findAux __168: int(-4..4)
+findAux __169: int(0..4)
+findAux __170: int(0..4)
+findAux __171: int(-4..4)
+findAux __172: int(0..4)
+findAux __173: int(0..4)
+findAux __174: int(-4..4)
+findAux __175: int(0..4)
+findAux __176: int(0..4)
+findAux __177: int(-4..4)
+findAux __178: int(0..4)
+findAux __179: int(0..4)
+findAux __180: int(-4..4)
+findAux __181: int(0..4)
+findAux __182: int(0..4)
+findAux __183: int(-4..4)
+findAux __184: int(0..4)
+findAux __185: int(0..4)
+findAux __186: int(-4..4)
+findAux __187: int(0..4)
+findAux __188: int(0..4)
+findAux __189: int(-4..4)
+findAux __190: int(0..4)
+findAux __191: int(0..4)
+findAux __192: int(-4..4)
+findAux __193: int(0..4)
+findAux __194: int(0..4)
+findAux __195: int(-4..4)
+findAux __196: int(0..4)
+findAux __197: int(0..4)
+findAux __198: int(-4..4)
+findAux __199: int(0..4)
+findAux __200: int(0..4)
+findAux __201: int(-4..4)
+findAux __202: int(0..4)
+findAux __203: int(0..4)
+findAux __204: int(-4..4)
+findAux __205: int(0..4)
+findAux __206: int(0..4)
+findAux __207: int(-4..4)
+findAux __208: int(0..4)
+findAux __209: int(0..4)
+findAux __210: int(-4..4)
+findAux __211: int(0..4)
+findAux __212: int(0..4)
+findAux __213: int(-4..4)
+findAux __214: int(0..4)
+findAux __215: int(0..4)
+findAux __216: int(-4..4)
+findAux __217: int(0..4)
+findAux __218: int(0..4)
+findAux __219: int(-4..4)
+findAux __220: int(0..4)
+findAux __221: int(0..4)
+findAux __222: int(-4..4)
+findAux __223: int(0..4)
+findAux __224: int(0..4)
+findAux __225: int(-4..4)
+findAux __226: int(0..4)
+findAux __227: int(0..4)
+findAux __228: int(-4..4)
+findAux __229: int(0..4)
+findAux __230: int(0..4)
+findAux __231: int(-4..4)
+findAux __232: int(0..4)
+findAux __233: int(0..4)
+findAux __234: int(-4..4)
+findAux __235: int(0..4)
+findAux __236: int(0..4)
+findAux __237: int(-4..4)
+findAux __238: int(0..4)
+findAux __239: int(0..4)
+findAux __240: int(-4..4)
+findAux __241: int(0..4)
+findAux __242: int(0..4)
+findAux __243: int(-4..4)
+findAux __244: int(0..4)
+findAux __245: int(0..4)
+findAux __246: int(-4..4)
+findAux __247: int(0..4)
+findAux __248: int(0..4)
+findAux __249: int(-4..4)
+findAux __250: int(0..4)
+findAux __251: int(0..4)
+findAux __252: int(-4..4)
+findAux __253: int(0..4)
+findAux __254: int(0..4)
+findAux __255: int(-4..4)
+findAux __256: int(0..4)
+findAux __257: int(0..4)
+findAux __258: int(-4..4)
+findAux __259: int(0..4)
+findAux __260: int(0..4)
+findAux __261: int(-4..4)
+findAux __262: int(0..4)
+findAux __263: int(0..4)
+findAux __264: int(-4..4)
+findAux __265: int(0..4)
+findAux __266: int(0..4)
+findAux __267: int(-4..4)
+findAux __268: int(0..4)
+findAux __269: int(0..4)
+findAux __270: int(-4..4)
+findAux __271: int(0..4)
+findAux __272: int(0..4)
+findAux __273: int(-4..4)
+findAux __274: int(0..4)
+findAux __275: int(0..4)
+
+such that
+
+__flat_alldiff([tour#components_1, tour#components_2, tour#components_3, tour#components_4, tour#components_5, tour#components_6, tour#components_7, tour#components_8, tour#components_9, tour#components_10, tour#components_11, tour#components_12, tour#components_13, tour#components_14, tour#components_15, tour#components_16, tour#components_17, tour#components_18, tour#components_19, tour#components_20, tour#components_21, tour#components_22, tour#components_23, tour#components_24]),
+WatchedLiteral(tour#components_1,0),
+and([or([and([AbsEq(1,__0),AbsEq(2,__3);int(1..)]),and([AbsEq(2,__6),AbsEq(1,__9);int(1..)]);int(1..)]),or([and([AbsEq(1,__12),AbsEq(2,__15);int(1..)]),and([AbsEq(2,__18),AbsEq(1,__21);int(1..)]);int(1..)]),or([and([AbsEq(1,__24),AbsEq(2,__27);int(1..)]),and([AbsEq(2,__30),AbsEq(1,__33);int(1..)]);int(1..)]),or([and([AbsEq(1,__36),AbsEq(2,__39);int(1..)]),and([AbsEq(2,__42),AbsEq(1,__45);int(1..)]);int(1..)]),or([and([AbsEq(1,__48),AbsEq(2,__51);int(1..)]),and([AbsEq(2,__54),AbsEq(1,__57);int(1..)]);int(1..)]),or([and([AbsEq(1,__60),AbsEq(2,__63);int(1..)]),and([AbsEq(2,__66),AbsEq(1,__69);int(1..)]);int(1..)]),or([and([AbsEq(1,__72),AbsEq(2,__75);int(1..)]),and([AbsEq(2,__78),AbsEq(1,__81);int(1..)]);int(1..)]),or([and([AbsEq(1,__84),AbsEq(2,__87);int(1..)]),and([AbsEq(2,__90),AbsEq(1,__93);int(1..)]);int(1..)]),or([and([AbsEq(1,__96),AbsEq(2,__99);int(1..)]),and([AbsEq(2,__102),AbsEq(1,__105);int(1..)]);int(1..)]),or([and([AbsEq(1,__108),AbsEq(2,__111);int(1..)]),and([AbsEq(2,__114),AbsEq(1,__117);int(1..)]);int(1..)]),or([and([AbsEq(1,__120),AbsEq(2,__123);int(1..)]),and([AbsEq(2,__126),AbsEq(1,__129);int(1..)]);int(1..)]),or([and([AbsEq(1,__132),AbsEq(2,__135);int(1..)]),and([AbsEq(2,__138),AbsEq(1,__141);int(1..)]);int(1..)]),or([and([AbsEq(1,__144),AbsEq(2,__147);int(1..)]),and([AbsEq(2,__150),AbsEq(1,__153);int(1..)]);int(1..)]),or([and([AbsEq(1,__156),AbsEq(2,__159);int(1..)]),and([AbsEq(2,__162),AbsEq(1,__165);int(1..)]);int(1..)]),or([and([AbsEq(1,__168),AbsEq(2,__171);int(1..)]),and([AbsEq(2,__174),AbsEq(1,__177);int(1..)]);int(1..)]),or([and([AbsEq(1,__180),AbsEq(2,__183);int(1..)]),and([AbsEq(2,__186),AbsEq(1,__189);int(1..)]);int(1..)]),or([and([AbsEq(1,__192),AbsEq(2,__195);int(1..)]),and([AbsEq(2,__198),AbsEq(1,__201);int(1..)]);int(1..)]),or([and([AbsEq(1,__204),AbsEq(2,__207);int(1..)]),and([AbsEq(2,__210),AbsEq(1,__213);int(1..)]);int(1..)]),or([and([AbsEq(1,__216),AbsEq(2,__219);int(1..)]),and([AbsEq(2,__222),AbsEq(1,__225);int(1..)]);int(1..)]),or([and([AbsEq(1,__228),AbsEq(2,__231);int(1..)]),and([AbsEq(2,__234),AbsEq(1,__237);int(1..)]);int(1..)]),or([and([AbsEq(1,__240),AbsEq(2,__243);int(1..)]),and([AbsEq(2,__246),AbsEq(1,__249);int(1..)]);int(1..)]),or([and([AbsEq(1,__252),AbsEq(2,__255);int(1..)]),and([AbsEq(2,__258),AbsEq(1,__261);int(1..)]);int(1..)]),or([and([AbsEq(1,__264),AbsEq(2,__267);int(1..)]),and([AbsEq(2,__270),AbsEq(1,__273);int(1..)]);int(1..)]);int(1..)]),
+and([FlatWeightedSumLeq([1, -1],[__1, __2],__0),FlatWeightedSumGeq([1, -1],[__1, __2],__0);int(1..)]),
+ModEq(tour#components_1, 5, __1),
+ModEq(tour#components_2, 5, __2),
+and([FlatWeightedSumLeq([1, -1],[__4, __5],__3),FlatWeightedSumGeq([1, -1],[__4, __5],__3);int(1..)]),
+DivEq(tour#components_1, 5, __4),
+DivEq(tour#components_2, 5, __5),
+and([FlatWeightedSumLeq([1, -1],[__7, __8],__6),FlatWeightedSumGeq([1, -1],[__7, __8],__6);int(1..)]),
+ModEq(tour#components_1, 5, __7),
+ModEq(tour#components_2, 5, __8),
+and([FlatWeightedSumLeq([1, -1],[__10, __11],__9),FlatWeightedSumGeq([1, -1],[__10, __11],__9);int(1..)]),
+DivEq(tour#components_1, 5, __10),
+DivEq(tour#components_2, 5, __11),
+and([FlatWeightedSumLeq([1, -1],[__13, __14],__12),FlatWeightedSumGeq([1, -1],[__13, __14],__12);int(1..)]),
+ModEq(tour#components_2, 5, __13),
+ModEq(tour#components_3, 5, __14),
+and([FlatWeightedSumLeq([1, -1],[__16, __17],__15),FlatWeightedSumGeq([1, -1],[__16, __17],__15);int(1..)]),
+DivEq(tour#components_2, 5, __16),
+DivEq(tour#components_3, 5, __17),
+and([FlatWeightedSumLeq([1, -1],[__19, __20],__18),FlatWeightedSumGeq([1, -1],[__19, __20],__18);int(1..)]),
+ModEq(tour#components_2, 5, __19),
+ModEq(tour#components_3, 5, __20),
+and([FlatWeightedSumLeq([1, -1],[__22, __23],__21),FlatWeightedSumGeq([1, -1],[__22, __23],__21);int(1..)]),
+DivEq(tour#components_2, 5, __22),
+DivEq(tour#components_3, 5, __23),
+and([FlatWeightedSumLeq([1, -1],[__25, __26],__24),FlatWeightedSumGeq([1, -1],[__25, __26],__24);int(1..)]),
+ModEq(tour#components_3, 5, __25),
+ModEq(tour#components_4, 5, __26),
+and([FlatWeightedSumLeq([1, -1],[__28, __29],__27),FlatWeightedSumGeq([1, -1],[__28, __29],__27);int(1..)]),
+DivEq(tour#components_3, 5, __28),
+DivEq(tour#components_4, 5, __29),
+and([FlatWeightedSumLeq([1, -1],[__31, __32],__30),FlatWeightedSumGeq([1, -1],[__31, __32],__30);int(1..)]),
+ModEq(tour#components_3, 5, __31),
+ModEq(tour#components_4, 5, __32),
+and([FlatWeightedSumLeq([1, -1],[__34, __35],__33),FlatWeightedSumGeq([1, -1],[__34, __35],__33);int(1..)]),
+DivEq(tour#components_3, 5, __34),
+DivEq(tour#components_4, 5, __35),
+and([FlatWeightedSumLeq([1, -1],[__37, __38],__36),FlatWeightedSumGeq([1, -1],[__37, __38],__36);int(1..)]),
+ModEq(tour#components_4, 5, __37),
+ModEq(tour#components_5, 5, __38),
+and([FlatWeightedSumLeq([1, -1],[__40, __41],__39),FlatWeightedSumGeq([1, -1],[__40, __41],__39);int(1..)]),
+DivEq(tour#components_4, 5, __40),
+DivEq(tour#components_5, 5, __41),
+and([FlatWeightedSumLeq([1, -1],[__43, __44],__42),FlatWeightedSumGeq([1, -1],[__43, __44],__42);int(1..)]),
+ModEq(tour#components_4, 5, __43),
+ModEq(tour#components_5, 5, __44),
+and([FlatWeightedSumLeq([1, -1],[__46, __47],__45),FlatWeightedSumGeq([1, -1],[__46, __47],__45);int(1..)]),
+DivEq(tour#components_4, 5, __46),
+DivEq(tour#components_5, 5, __47),
+and([FlatWeightedSumLeq([1, -1],[__49, __50],__48),FlatWeightedSumGeq([1, -1],[__49, __50],__48);int(1..)]),
+ModEq(tour#components_5, 5, __49),
+ModEq(tour#components_6, 5, __50),
+and([FlatWeightedSumLeq([1, -1],[__52, __53],__51),FlatWeightedSumGeq([1, -1],[__52, __53],__51);int(1..)]),
+DivEq(tour#components_5, 5, __52),
+DivEq(tour#components_6, 5, __53),
+and([FlatWeightedSumLeq([1, -1],[__55, __56],__54),FlatWeightedSumGeq([1, -1],[__55, __56],__54);int(1..)]),
+ModEq(tour#components_5, 5, __55),
+ModEq(tour#components_6, 5, __56),
+and([FlatWeightedSumLeq([1, -1],[__58, __59],__57),FlatWeightedSumGeq([1, -1],[__58, __59],__57);int(1..)]),
+DivEq(tour#components_5, 5, __58),
+DivEq(tour#components_6, 5, __59),
+and([FlatWeightedSumLeq([1, -1],[__61, __62],__60),FlatWeightedSumGeq([1, -1],[__61, __62],__60);int(1..)]),
+ModEq(tour#components_6, 5, __61),
+ModEq(tour#components_7, 5, __62),
+and([FlatWeightedSumLeq([1, -1],[__64, __65],__63),FlatWeightedSumGeq([1, -1],[__64, __65],__63);int(1..)]),
+DivEq(tour#components_6, 5, __64),
+DivEq(tour#components_7, 5, __65),
+and([FlatWeightedSumLeq([1, -1],[__67, __68],__66),FlatWeightedSumGeq([1, -1],[__67, __68],__66);int(1..)]),
+ModEq(tour#components_6, 5, __67),
+ModEq(tour#components_7, 5, __68),
+and([FlatWeightedSumLeq([1, -1],[__70, __71],__69),FlatWeightedSumGeq([1, -1],[__70, __71],__69);int(1..)]),
+DivEq(tour#components_6, 5, __70),
+DivEq(tour#components_7, 5, __71),
+and([FlatWeightedSumLeq([1, -1],[__73, __74],__72),FlatWeightedSumGeq([1, -1],[__73, __74],__72);int(1..)]),
+ModEq(tour#components_7, 5, __73),
+ModEq(tour#components_8, 5, __74),
+and([FlatWeightedSumLeq([1, -1],[__76, __77],__75),FlatWeightedSumGeq([1, -1],[__76, __77],__75);int(1..)]),
+DivEq(tour#components_7, 5, __76),
+DivEq(tour#components_8, 5, __77),
+and([FlatWeightedSumLeq([1, -1],[__79, __80],__78),FlatWeightedSumGeq([1, -1],[__79, __80],__78);int(1..)]),
+ModEq(tour#components_7, 5, __79),
+ModEq(tour#components_8, 5, __80),
+and([FlatWeightedSumLeq([1, -1],[__82, __83],__81),FlatWeightedSumGeq([1, -1],[__82, __83],__81);int(1..)]),
+DivEq(tour#components_7, 5, __82),
+DivEq(tour#components_8, 5, __83),
+and([FlatWeightedSumLeq([1, -1],[__85, __86],__84),FlatWeightedSumGeq([1, -1],[__85, __86],__84);int(1..)]),
+ModEq(tour#components_8, 5, __85),
+ModEq(tour#components_9, 5, __86),
+and([FlatWeightedSumLeq([1, -1],[__88, __89],__87),FlatWeightedSumGeq([1, -1],[__88, __89],__87);int(1..)]),
+DivEq(tour#components_8, 5, __88),
+DivEq(tour#components_9, 5, __89),
+and([FlatWeightedSumLeq([1, -1],[__91, __92],__90),FlatWeightedSumGeq([1, -1],[__91, __92],__90);int(1..)]),
+ModEq(tour#components_8, 5, __91),
+ModEq(tour#components_9, 5, __92),
+and([FlatWeightedSumLeq([1, -1],[__94, __95],__93),FlatWeightedSumGeq([1, -1],[__94, __95],__93);int(1..)]),
+DivEq(tour#components_8, 5, __94),
+DivEq(tour#components_9, 5, __95),
+and([FlatWeightedSumLeq([1, -1],[__97, __98],__96),FlatWeightedSumGeq([1, -1],[__97, __98],__96);int(1..)]),
+ModEq(tour#components_9, 5, __97),
+ModEq(tour#components_10, 5, __98),
+and([FlatWeightedSumLeq([1, -1],[__100, __101],__99),FlatWeightedSumGeq([1, -1],[__100, __101],__99);int(1..)]),
+DivEq(tour#components_9, 5, __100),
+DivEq(tour#components_10, 5, __101),
+and([FlatWeightedSumLeq([1, -1],[__103, __104],__102),FlatWeightedSumGeq([1, -1],[__103, __104],__102);int(1..)]),
+ModEq(tour#components_9, 5, __103),
+ModEq(tour#components_10, 5, __104),
+and([FlatWeightedSumLeq([1, -1],[__106, __107],__105),FlatWeightedSumGeq([1, -1],[__106, __107],__105);int(1..)]),
+DivEq(tour#components_9, 5, __106),
+DivEq(tour#components_10, 5, __107),
+and([FlatWeightedSumLeq([1, -1],[__109, __110],__108),FlatWeightedSumGeq([1, -1],[__109, __110],__108);int(1..)]),
+ModEq(tour#components_10, 5, __109),
+ModEq(tour#components_11, 5, __110),
+and([FlatWeightedSumLeq([1, -1],[__112, __113],__111),FlatWeightedSumGeq([1, -1],[__112, __113],__111);int(1..)]),
+DivEq(tour#components_10, 5, __112),
+DivEq(tour#components_11, 5, __113),
+and([FlatWeightedSumLeq([1, -1],[__115, __116],__114),FlatWeightedSumGeq([1, -1],[__115, __116],__114);int(1..)]),
+ModEq(tour#components_10, 5, __115),
+ModEq(tour#components_11, 5, __116),
+and([FlatWeightedSumLeq([1, -1],[__118, __119],__117),FlatWeightedSumGeq([1, -1],[__118, __119],__117);int(1..)]),
+DivEq(tour#components_10, 5, __118),
+DivEq(tour#components_11, 5, __119),
+and([FlatWeightedSumLeq([1, -1],[__121, __122],__120),FlatWeightedSumGeq([1, -1],[__121, __122],__120);int(1..)]),
+ModEq(tour#components_11, 5, __121),
+ModEq(tour#components_12, 5, __122),
+and([FlatWeightedSumLeq([1, -1],[__124, __125],__123),FlatWeightedSumGeq([1, -1],[__124, __125],__123);int(1..)]),
+DivEq(tour#components_11, 5, __124),
+DivEq(tour#components_12, 5, __125),
+and([FlatWeightedSumLeq([1, -1],[__127, __128],__126),FlatWeightedSumGeq([1, -1],[__127, __128],__126);int(1..)]),
+ModEq(tour#components_11, 5, __127),
+ModEq(tour#components_12, 5, __128),
+and([FlatWeightedSumLeq([1, -1],[__130, __131],__129),FlatWeightedSumGeq([1, -1],[__130, __131],__129);int(1..)]),
+DivEq(tour#components_11, 5, __130),
+DivEq(tour#components_12, 5, __131),
+and([FlatWeightedSumLeq([1, -1],[__133, __134],__132),FlatWeightedSumGeq([1, -1],[__133, __134],__132);int(1..)]),
+ModEq(tour#components_12, 5, __133),
+ModEq(tour#components_13, 5, __134),
+and([FlatWeightedSumLeq([1, -1],[__136, __137],__135),FlatWeightedSumGeq([1, -1],[__136, __137],__135);int(1..)]),
+DivEq(tour#components_12, 5, __136),
+DivEq(tour#components_13, 5, __137),
+and([FlatWeightedSumLeq([1, -1],[__139, __140],__138),FlatWeightedSumGeq([1, -1],[__139, __140],__138);int(1..)]),
+ModEq(tour#components_12, 5, __139),
+ModEq(tour#components_13, 5, __140),
+and([FlatWeightedSumLeq([1, -1],[__142, __143],__141),FlatWeightedSumGeq([1, -1],[__142, __143],__141);int(1..)]),
+DivEq(tour#components_12, 5, __142),
+DivEq(tour#components_13, 5, __143),
+and([FlatWeightedSumLeq([1, -1],[__145, __146],__144),FlatWeightedSumGeq([1, -1],[__145, __146],__144);int(1..)]),
+ModEq(tour#components_13, 5, __145),
+ModEq(tour#components_14, 5, __146),
+and([FlatWeightedSumLeq([1, -1],[__148, __149],__147),FlatWeightedSumGeq([1, -1],[__148, __149],__147);int(1..)]),
+DivEq(tour#components_13, 5, __148),
+DivEq(tour#components_14, 5, __149),
+and([FlatWeightedSumLeq([1, -1],[__151, __152],__150),FlatWeightedSumGeq([1, -1],[__151, __152],__150);int(1..)]),
+ModEq(tour#components_13, 5, __151),
+ModEq(tour#components_14, 5, __152),
+and([FlatWeightedSumLeq([1, -1],[__154, __155],__153),FlatWeightedSumGeq([1, -1],[__154, __155],__153);int(1..)]),
+DivEq(tour#components_13, 5, __154),
+DivEq(tour#components_14, 5, __155),
+and([FlatWeightedSumLeq([1, -1],[__157, __158],__156),FlatWeightedSumGeq([1, -1],[__157, __158],__156);int(1..)]),
+ModEq(tour#components_14, 5, __157),
+ModEq(tour#components_15, 5, __158),
+and([FlatWeightedSumLeq([1, -1],[__160, __161],__159),FlatWeightedSumGeq([1, -1],[__160, __161],__159);int(1..)]),
+DivEq(tour#components_14, 5, __160),
+DivEq(tour#components_15, 5, __161),
+and([FlatWeightedSumLeq([1, -1],[__163, __164],__162),FlatWeightedSumGeq([1, -1],[__163, __164],__162);int(1..)]),
+ModEq(tour#components_14, 5, __163),
+ModEq(tour#components_15, 5, __164),
+and([FlatWeightedSumLeq([1, -1],[__166, __167],__165),FlatWeightedSumGeq([1, -1],[__166, __167],__165);int(1..)]),
+DivEq(tour#components_14, 5, __166),
+DivEq(tour#components_15, 5, __167),
+and([FlatWeightedSumLeq([1, -1],[__169, __170],__168),FlatWeightedSumGeq([1, -1],[__169, __170],__168);int(1..)]),
+ModEq(tour#components_15, 5, __169),
+ModEq(tour#components_16, 5, __170),
+and([FlatWeightedSumLeq([1, -1],[__172, __173],__171),FlatWeightedSumGeq([1, -1],[__172, __173],__171);int(1..)]),
+DivEq(tour#components_15, 5, __172),
+DivEq(tour#components_16, 5, __173),
+and([FlatWeightedSumLeq([1, -1],[__175, __176],__174),FlatWeightedSumGeq([1, -1],[__175, __176],__174);int(1..)]),
+ModEq(tour#components_15, 5, __175),
+ModEq(tour#components_16, 5, __176),
+and([FlatWeightedSumLeq([1, -1],[__178, __179],__177),FlatWeightedSumGeq([1, -1],[__178, __179],__177);int(1..)]),
+DivEq(tour#components_15, 5, __178),
+DivEq(tour#components_16, 5, __179),
+and([FlatWeightedSumLeq([1, -1],[__181, __182],__180),FlatWeightedSumGeq([1, -1],[__181, __182],__180);int(1..)]),
+ModEq(tour#components_16, 5, __181),
+ModEq(tour#components_17, 5, __182),
+and([FlatWeightedSumLeq([1, -1],[__184, __185],__183),FlatWeightedSumGeq([1, -1],[__184, __185],__183);int(1..)]),
+DivEq(tour#components_16, 5, __184),
+DivEq(tour#components_17, 5, __185),
+and([FlatWeightedSumLeq([1, -1],[__187, __188],__186),FlatWeightedSumGeq([1, -1],[__187, __188],__186);int(1..)]),
+ModEq(tour#components_16, 5, __187),
+ModEq(tour#components_17, 5, __188),
+and([FlatWeightedSumLeq([1, -1],[__190, __191],__189),FlatWeightedSumGeq([1, -1],[__190, __191],__189);int(1..)]),
+DivEq(tour#components_16, 5, __190),
+DivEq(tour#components_17, 5, __191),
+and([FlatWeightedSumLeq([1, -1],[__193, __194],__192),FlatWeightedSumGeq([1, -1],[__193, __194],__192);int(1..)]),
+ModEq(tour#components_17, 5, __193),
+ModEq(tour#components_18, 5, __194),
+and([FlatWeightedSumLeq([1, -1],[__196, __197],__195),FlatWeightedSumGeq([1, -1],[__196, __197],__195);int(1..)]),
+DivEq(tour#components_17, 5, __196),
+DivEq(tour#components_18, 5, __197),
+and([FlatWeightedSumLeq([1, -1],[__199, __200],__198),FlatWeightedSumGeq([1, -1],[__199, __200],__198);int(1..)]),
+ModEq(tour#components_17, 5, __199),
+ModEq(tour#components_18, 5, __200),
+and([FlatWeightedSumLeq([1, -1],[__202, __203],__201),FlatWeightedSumGeq([1, -1],[__202, __203],__201);int(1..)]),
+DivEq(tour#components_17, 5, __202),
+DivEq(tour#components_18, 5, __203),
+and([FlatWeightedSumLeq([1, -1],[__205, __206],__204),FlatWeightedSumGeq([1, -1],[__205, __206],__204);int(1..)]),
+ModEq(tour#components_18, 5, __205),
+ModEq(tour#components_19, 5, __206),
+and([FlatWeightedSumLeq([1, -1],[__208, __209],__207),FlatWeightedSumGeq([1, -1],[__208, __209],__207);int(1..)]),
+DivEq(tour#components_18, 5, __208),
+DivEq(tour#components_19, 5, __209),
+and([FlatWeightedSumLeq([1, -1],[__211, __212],__210),FlatWeightedSumGeq([1, -1],[__211, __212],__210);int(1..)]),
+ModEq(tour#components_18, 5, __211),
+ModEq(tour#components_19, 5, __212),
+and([FlatWeightedSumLeq([1, -1],[__214, __215],__213),FlatWeightedSumGeq([1, -1],[__214, __215],__213);int(1..)]),
+DivEq(tour#components_18, 5, __214),
+DivEq(tour#components_19, 5, __215),
+and([FlatWeightedSumLeq([1, -1],[__217, __218],__216),FlatWeightedSumGeq([1, -1],[__217, __218],__216);int(1..)]),
+ModEq(tour#components_19, 5, __217),
+ModEq(tour#components_20, 5, __218),
+and([FlatWeightedSumLeq([1, -1],[__220, __221],__219),FlatWeightedSumGeq([1, -1],[__220, __221],__219);int(1..)]),
+DivEq(tour#components_19, 5, __220),
+DivEq(tour#components_20, 5, __221),
+and([FlatWeightedSumLeq([1, -1],[__223, __224],__222),FlatWeightedSumGeq([1, -1],[__223, __224],__222);int(1..)]),
+ModEq(tour#components_19, 5, __223),
+ModEq(tour#components_20, 5, __224),
+and([FlatWeightedSumLeq([1, -1],[__226, __227],__225),FlatWeightedSumGeq([1, -1],[__226, __227],__225);int(1..)]),
+DivEq(tour#components_19, 5, __226),
+DivEq(tour#components_20, 5, __227),
+and([FlatWeightedSumLeq([1, -1],[__229, __230],__228),FlatWeightedSumGeq([1, -1],[__229, __230],__228);int(1..)]),
+ModEq(tour#components_20, 5, __229),
+ModEq(tour#components_21, 5, __230),
+and([FlatWeightedSumLeq([1, -1],[__232, __233],__231),FlatWeightedSumGeq([1, -1],[__232, __233],__231);int(1..)]),
+DivEq(tour#components_20, 5, __232),
+DivEq(tour#components_21, 5, __233),
+and([FlatWeightedSumLeq([1, -1],[__235, __236],__234),FlatWeightedSumGeq([1, -1],[__235, __236],__234);int(1..)]),
+ModEq(tour#components_20, 5, __235),
+ModEq(tour#components_21, 5, __236),
+and([FlatWeightedSumLeq([1, -1],[__238, __239],__237),FlatWeightedSumGeq([1, -1],[__238, __239],__237);int(1..)]),
+DivEq(tour#components_20, 5, __238),
+DivEq(tour#components_21, 5, __239),
+and([FlatWeightedSumLeq([1, -1],[__241, __242],__240),FlatWeightedSumGeq([1, -1],[__241, __242],__240);int(1..)]),
+ModEq(tour#components_21, 5, __241),
+ModEq(tour#components_22, 5, __242),
+and([FlatWeightedSumLeq([1, -1],[__244, __245],__243),FlatWeightedSumGeq([1, -1],[__244, __245],__243);int(1..)]),
+DivEq(tour#components_21, 5, __244),
+DivEq(tour#components_22, 5, __245),
+and([FlatWeightedSumLeq([1, -1],[__247, __248],__246),FlatWeightedSumGeq([1, -1],[__247, __248],__246);int(1..)]),
+ModEq(tour#components_21, 5, __247),
+ModEq(tour#components_22, 5, __248),
+and([FlatWeightedSumLeq([1, -1],[__250, __251],__249),FlatWeightedSumGeq([1, -1],[__250, __251],__249);int(1..)]),
+DivEq(tour#components_21, 5, __250),
+DivEq(tour#components_22, 5, __251),
+and([FlatWeightedSumLeq([1, -1],[__253, __254],__252),FlatWeightedSumGeq([1, -1],[__253, __254],__252);int(1..)]),
+ModEq(tour#components_22, 5, __253),
+ModEq(tour#components_23, 5, __254),
+and([FlatWeightedSumLeq([1, -1],[__256, __257],__255),FlatWeightedSumGeq([1, -1],[__256, __257],__255);int(1..)]),
+DivEq(tour#components_22, 5, __256),
+DivEq(tour#components_23, 5, __257),
+and([FlatWeightedSumLeq([1, -1],[__259, __260],__258),FlatWeightedSumGeq([1, -1],[__259, __260],__258);int(1..)]),
+ModEq(tour#components_22, 5, __259),
+ModEq(tour#components_23, 5, __260),
+and([FlatWeightedSumLeq([1, -1],[__262, __263],__261),FlatWeightedSumGeq([1, -1],[__262, __263],__261);int(1..)]),
+DivEq(tour#components_22, 5, __262),
+DivEq(tour#components_23, 5, __263),
+and([FlatWeightedSumLeq([1, -1],[__265, __266],__264),FlatWeightedSumGeq([1, -1],[__265, __266],__264);int(1..)]),
+ModEq(tour#components_23, 5, __265),
+ModEq(tour#components_24, 5, __266),
+and([FlatWeightedSumLeq([1, -1],[__268, __269],__267),FlatWeightedSumGeq([1, -1],[__268, __269],__267);int(1..)]),
+DivEq(tour#components_23, 5, __268),
+DivEq(tour#components_24, 5, __269),
+and([FlatWeightedSumLeq([1, -1],[__271, __272],__270),FlatWeightedSumGeq([1, -1],[__271, __272],__270);int(1..)]),
+ModEq(tour#components_23, 5, __271),
+ModEq(tour#components_24, 5, __272),
+and([FlatWeightedSumLeq([1, -1],[__274, __275],__273),FlatWeightedSumGeq([1, -1],[__274, __275],__273);int(1..)]),
+DivEq(tour#components_23, 5, __274),
+DivEq(tour#components_24, 5, __275)
+

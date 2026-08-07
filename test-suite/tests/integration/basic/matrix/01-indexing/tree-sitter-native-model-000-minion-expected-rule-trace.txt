@@ -1,0 +1,99 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..5)] of bool
+
+such that
+
+a[1] = true,
+a[2] = true,
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+
+--
+
+a[1] = true,
+a[2] = true,
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+a[1] = true,
+a[2] = true,
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+new variables:
+  find a#components_1: bool
+  find a#components_2: bool
+  find a#components_3: bool
+  find a#components_4: bool
+  find a#components_5: bool
+
+--
+
+a[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_1
+
+--
+
+a[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_2
+
+--
+
+a[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_3
+
+--
+
+a[4]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_4
+
+--
+
+a[5]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_5
+
+--
+
+a[4]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_4
+
+--
+
+a#components_5 = !(a#components_4)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(a#components_4), a#components_5)
+
+--
+
+!(a#components_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(a#components_4,false)
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..5)] of bool
+find a#components_1: bool
+find a#components_2: bool
+find a#components_3: bool
+find a#components_4: bool
+find a#components_5: bool
+
+such that
+
+a#components_1,
+a#components_2,
+a#components_3,
+a#components_4,
+Reify(WatchedLiteral(a#components_4,false), a#components_5)
+

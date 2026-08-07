@@ -1,0 +1,139 @@
+Model before rewriting:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find z: bool
+
+such that
+
+(z) <-> (m[sum([a,b;int(1..)])] = c)
+
+--
+
+(z) <-> (m[sum([a,b;int(1..)])] = c)
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+(z) <-> (m[sum([a,b;int(1..)])] = c)
+new variables:
+  find m#components_1: int(1..2)
+  find m#components_2: int(1..2)
+
+--
+
+m[sum([a,b;int(1..)])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[sum([a,b;int(1..)])]) @ __inDomain(sum([a,b;int(1..)]),int(1..2))}
+
+--
+
+{SafeIndex(m,[sum([a,b;int(1..)])]) @ __inDomain(sum([a,b;int(1..)]),int(1..2))} = c
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(m,[sum([a,b;int(1..)])]) = c @ __inDomain(sum([a,b;int(1..)]),int(1..2))}
+
+--
+
+{SafeIndex(m,[sum([a,b;int(1..)])]) = c @ __inDomain(sum([a,b;int(1..)]),int(1..2))}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m,[sum([a,b;int(1..)])]) = c,__inDomain(sum([a,b;int(1..)]),int(1..2));int(1..)])
+
+--
+
+SafeIndex(m,[sum([a,b;int(1..)])])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,(__0 - 1);int(1..)]),1;int(1..)])])
+new variables:
+  findAux __0: int(-2..4)
+new constraints:
+  __0 =aux sum([a,b;int(1..)])
+
+--
+
+product([1,(__0 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(__0 - 1);int(1..)])
+
+--
+
+product([(__0 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__0 - 1)
+
+--
+
+(__0 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__0,-(1);int(1..)])
+
+--
+
+sum([sum([__0,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__0,-1,1;int(1..)])
+
+--
+
+sum([__0;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__0
+
+--
+
+__0 =aux sum([a,b;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b], __0),SumGeq([a, b], __0);int(1..)])
+
+--
+
+(z) <-> (and([SafeIndex([m#components_1,m#components_2;int(1..)],[__0]) = c,__inDomain(sum([a,b;int(1..)]),int(1..2));int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(and([SafeIndex([m#components_1,m#components_2;int(1..)],[__0]) = c,__inDomain(sum([a,b;int(1..)]),int(1..2));int(1..)]), z)
+
+--
+
+SafeIndex([m#components_1,m#components_2;int(1..)],[__0]) = c
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([m#components_1,m#components_2],__0,c)
+
+--
+
+__inDomain(sum([a,b;int(1..)]),int(1..2))
+   ~~> flatten_generic ([("Minion", 4200)])
+__inDomain(__1,int(1..2))
+new variables:
+  findAux __1: int(-2..4)
+new constraints:
+  __1 =aux sum([a,b;int(1..)])
+
+--
+
+__1 =aux sum([a,b;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b], __1),SumGeq([a, b], __1);int(1..)])
+
+--
+
+__inDomain(__1,int(1..2))
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(__1,[1,2])
+
+--
+
+Final model:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find z: bool
+find m#components_1: int(1..2)
+find m#components_2: int(1..2)
+findAux __0: int(-2..4)
+findAux __1: int(-2..4)
+
+such that
+
+Reify(and([__minion_element_one([m#components_1,m#components_2],__0,c),__minion_w_inintervalset(__1,[1,2]);int(1..)]), z),
+and([SumLeq([a, b], __0),SumGeq([a, b], __0);int(1..)]),
+and([SumLeq([a, b], __1),SumGeq([a, b], __1);int(1..)])
+

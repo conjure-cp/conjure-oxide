@@ -66,8 +66,6 @@ The following crates are related to, or used by, `conjure-oxide`, but can be
 used in isolation from it:
 
 - [`minion-sys`](./crates/minion-sys) defines FFI bindings for the [Minion CP solver](https://github.com/minion/minion).
-- [`tree-morph`](./crates/tree-morph) provides a framework for implementing
-  term-rewriting systems. 
 - [`tree-sitter-essence`](./crates/tree-sitter-essence) defines a tree-sitter
   grammar for Essence.
 - [`randicheck`](./crates/randicheck)

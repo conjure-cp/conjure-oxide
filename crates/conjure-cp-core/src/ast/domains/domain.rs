@@ -19,6 +19,15 @@ use uniplate::Uniplate;
 /// The integer type used in all domain code (int ranges, set sizes, etc)
 pub type Int = i32;
 
+/// Lower bound of the default fully-bounded integer domain used by Conjure Oxide.
+///
+/// One greater than [`i32::MIN`] so the magnitude of `OXIDE_INT_MIN` is representable as a
+/// positive [`i32`].
+pub const OXIDE_INT_MIN: Int = Int::MIN + 1;
+
+/// Upper bound of the default fully-bounded integer domain used by Conjure Oxide.
+pub const OXIDE_INT_MAX: Int = Int::MAX;
+
 pub type DomainPtr = Moo<Domain>;
 
 impl DomainPtr {
@@ -47,6 +56,7 @@ impl DomainPtr {
 #[biplate(to=Reference)]
 #[biplate(to=IntVal)]
 #[path_prefix(conjure_cp::ast)]
+/// Variants are ordered from fully resolved to unresolved; keep broad matches in this order.
 pub enum Domain {
     /// A fully resolved domain
     Ground(Moo<GroundDomain>),
@@ -507,6 +517,40 @@ impl Domain {
         None
     }
 
+    /// User-specified representation preference on this domain, if any (Essence short name).
+    ///
+    /// For set domains this is the optional name in `set{packed} of …`. Nested preferences on
+    /// element domains are not returned here; only the preference attached to this domain node.
+    pub fn representation_preference(&self) -> Option<&str> {
+        if let Some(GroundDomain::Set(attr, _)) = self.as_ground() {
+            return attr.representation.as_deref();
+        }
+        if let Some(UnresolvedDomain::Set(attr, _)) = self.as_unresolved() {
+            return attr.representation.as_deref();
+        }
+        None
+    }
+
+    /// Whether any representation preference appears anywhere in this domain tree.
+    pub fn has_representation_preference(&self) -> bool {
+        if self.representation_preference().is_some() {
+            return true;
+        }
+        match self {
+            Domain::Ground(gd) => gd.has_representation_preference(),
+            Domain::Unresolved(ud) => ud.has_representation_preference(),
+        }
+    }
+
+    /// Format this domain in Essence type style (`int`, `set{packed} of int`, …),
+    /// omitting size attributes and integer ranges.
+    pub fn as_type_string(&self) -> String {
+        match self {
+            Domain::Ground(gd) => gd.as_type_string(),
+            Domain::Unresolved(ud) => ud.as_type_string(),
+        }
+    }
+
     /// If this is a mset domain, get its attributes and a pointer to its element domain.
     pub fn as_mset(&self) -> Option<(MSetAttr<IntVal>, DomainPtr)> {
         if let Some(GroundDomain::MSet(attr, inner_dom)) = self.as_ground() {
@@ -960,6 +1004,21 @@ mod tests {
     use crate::{domain_int, range};
 
     #[test]
+    fn unresolved_int_domain_resolve_squeezes_ranges() {
+        let domain = UnresolvedDomain::Int(vec![
+            Range::Single(IntVal::Const(5)),
+            Range::Bounded(IntVal::Const(3), IntVal::Const(7)),
+            Range::Bounded(IntVal::Const(5), IntVal::Const(3)),
+            Range::Single(IntVal::Const(7)),
+        ]);
+
+        assert_eq!(
+            domain.resolve(),
+            Ok(GroundDomain::Int(vec![Range::Bounded(3, 7)]))
+        );
+    }
+
+    #[test]
     fn test_negative_product() {
         let d1 = Domain::int(vec![Range::Bounded(-2, 1)]);
         let d2 = Domain::int(vec![Range::Bounded(-2, 1)]);
@@ -1020,6 +1079,33 @@ mod tests {
         // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
         let s = Domain::set(SetAttr::new_max_size(2), domain_int!(1..3));
         assert_eq!(s.length(), Ok(7));
+    }
+
+    #[test]
+    fn test_set_representation_preference_display() {
+        let s = Domain::set(
+            SetAttr::new_max_size(3).with_representation("packed"),
+            domain_int!(1..4),
+        );
+        assert_eq!(s.to_string(), "set{packed} (maxSize 3) of int(1..4)");
+        assert_eq!(s.as_type_string(), "set{packed} of int");
+        assert_eq!(s.representation_preference(), Some("packed"));
+
+        let nested = Domain::set(
+            SetAttr::<IntVal>::default().with_representation("explicit"),
+            Domain::set(
+                SetAttr::<IntVal>::default().with_representation("occurrence"),
+                domain_int!(1..2),
+            ),
+        );
+        assert_eq!(
+            nested.to_string(),
+            "set{explicit} of set{occurrence} of int(1..2)"
+        );
+        assert_eq!(
+            nested.as_type_string(),
+            "set{explicit} of set{occurrence} of int"
+        );
     }
 
     #[test]

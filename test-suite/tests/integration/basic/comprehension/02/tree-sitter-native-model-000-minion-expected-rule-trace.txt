@@ -1,0 +1,237 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find n: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+and([ n[i] = (6 - i) | i : int(1..5) ]),
+and([ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ])
+
+--
+
+and([ n[i] = (6 - i) | i : int(1..5) ]),
+and([ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ n[i] = (6 - i) | i : int(1..5) ]),
+and([ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ])
+new variables:
+  find m#components_1: int(1..5)
+  find m#components_2: int(1..5)
+  find m#components_3: int(1..5)
+  find m#components_4: int(1..5)
+  find m#components_5: int(1..5)
+  find n#components_1: int(1..5)
+  find n#components_2: int(1..5)
+  find n#components_3: int(1..5)
+  find n#components_4: int(1..5)
+  find n#components_5: int(1..5)
+
+--
+
+[ n[i] = (6 - i) | i : int(1..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[n#components_1 = 5,n#components_2 = 4,n#components_3 = 3,n#components_4 = 2,n#components_5 = 1;int(1..)]
+
+--
+
+n#components_1 = 5
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#components_1,5)
+
+--
+
+n#components_2 = 4
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#components_2,4)
+
+--
+
+n#components_3 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#components_3,3)
+
+--
+
+n#components_4 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#components_4,2)
+
+--
+
+n#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(n#components_5,1)
+
+--
+
+[ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(n#components_1 < 5) -> (and([m#components_1 = 1;int(1..)])),(n#components_2 < 5) -> (and([m#components_2 = 2;int(1..)])),(n#components_3 < 5) -> (and([m#components_3 = 3;int(1..)]));int(1..)]
+
+--
+
+and([m#components_1 = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#components_1 = 1
+
+--
+
+and([m#components_2 = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#components_2 = 2
+
+--
+
+and([m#components_3 = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#components_3 = 3
+
+--
+
+n#components_1 < 5
+   ~~> lt_to_leq ([("Minion", 8400)])
+n#components_1 <= sum([5,-1;int(1..)])
+
+--
+
+n#components_2 < 5
+   ~~> lt_to_leq ([("Minion", 8400)])
+n#components_2 <= sum([5,-1;int(1..)])
+
+--
+
+n#components_3 < 5
+   ~~> lt_to_leq ([("Minion", 8400)])
+n#components_3 <= sum([5,-1;int(1..)])
+
+--
+
+m#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_1,1)
+
+--
+
+m#components_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_2,2)
+
+--
+
+m#components_3 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m#components_3,3)
+
+--
+
+(n#components_1 <= 4) -> (WatchedLiteral(m#components_1,1))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__0) -> (WatchedLiteral(m#components_1,1))
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux n#components_1 <= 4
+
+--
+
+__0 =aux n#components_1 <= 4
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(n#components_1 <= 4, __0)
+
+--
+
+(__0) -> (WatchedLiteral(m#components_1,1))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(m#components_1,1), __0)
+
+--
+
+(n#components_2 <= 4) -> (WatchedLiteral(m#components_2,2))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__1) -> (WatchedLiteral(m#components_2,2))
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux n#components_2 <= 4
+
+--
+
+__1 =aux n#components_2 <= 4
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(n#components_2 <= 4, __1)
+
+--
+
+(__1) -> (WatchedLiteral(m#components_2,2))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(m#components_2,2), __1)
+
+--
+
+(n#components_3 <= 4) -> (WatchedLiteral(m#components_3,3))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__2) -> (WatchedLiteral(m#components_3,3))
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux n#components_3 <= 4
+
+--
+
+__2 =aux n#components_3 <= 4
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(n#components_3 <= 4, __2)
+
+--
+
+(__2) -> (WatchedLiteral(m#components_3,3))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(m#components_3,3), __2)
+
+--
+
+n#components_1 <= 4
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(n#components_1, 4, 0)
+
+--
+
+n#components_2 <= 4
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(n#components_2, 4, 0)
+
+--
+
+n#components_3 <= 4
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(n#components_3, 4, 0)
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find n: matrix indexed by [int(1..5)] of int(1..5)
+find m#components_1: int(1..5)
+find m#components_2: int(1..5)
+find m#components_3: int(1..5)
+find m#components_4: int(1..5)
+find m#components_5: int(1..5)
+find n#components_1: int(1..5)
+find n#components_2: int(1..5)
+find n#components_3: int(1..5)
+find n#components_4: int(1..5)
+find n#components_5: int(1..5)
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+and([WatchedLiteral(n#components_1,5),WatchedLiteral(n#components_2,4),WatchedLiteral(n#components_3,3),WatchedLiteral(n#components_4,2),WatchedLiteral(n#components_5,1);int(1..)]),
+and([ReifyImply(WatchedLiteral(m#components_1,1), __0),ReifyImply(WatchedLiteral(m#components_2,2), __1),ReifyImply(WatchedLiteral(m#components_3,3), __2);int(1..)]),
+Reify(Ineq(n#components_1, 4, 0), __0),
+Reify(Ineq(n#components_2, 4, 0), __1),
+Reify(Ineq(n#components_3, 4, 0), __2)
+

@@ -14,11 +14,21 @@ cargo nextest run -p test-suite
 
 Each test runs `conjure-oxide` on an `input.essence` file and checks that the rewritten AST and solver solutions match the expected output files stored in the test directory.
 
+`config.toml` may select one or several modelling heuristics with `heuristic = "f"` or
+`heuristic = ["f", "c", "r", "x"]`. The strategies mean first, compact, seeded random, and all
+respectively. Compact minimises representation-domain size for representation choices and resulting
+AST depth for equally-applicable rules. The default is `x`. Set `seed = 123` for random runs. The `x` strategy
+replays every representation and equally-applicable-rule choice from a fresh parsed model and keeps
+separate `model-000`, `model-001`, … golden artifacts for every parser/rewriter/expander/solver
+configuration. Channelling is configured with `channelling = "no"`; `yes` is reserved but currently
+unsupported.
+
 ### Creating a new test
 
 1. Create a new directory under `test-suite/tests/integration/<folder>`.
 2. Add your `input.essence` file and (optionally) a `config.toml` to configure the solver.
-3. Run the following to generate the expected solution and JSON files:
+   Integration run metadata is tracked separately in `stats.toml`.
+3. Run the following to generate the expected `.solutions` and rule-trace files:
 
 ```sh
 ACCEPT=true cargo nextest run -p test-suite
@@ -32,20 +42,35 @@ If you expect the rewritten AST to change (e.g. after a refactor), you can overw
 ACCEPT=true cargo nextest run -p test-suite
 ```
 
-Instead of comparing against the existing JSON files, the test harness will:
+Instead of comparing against the existing `.solutions` files, the test harness will:
 
 1. Run old Conjure on the same input.
 2. Run the new `conjure-oxide` implementation.
 3. Compare the solutions. If they match, it'll overwrite the stored AST and solution files with the new output.
 
-`ACCEPT=true` lets you update expected outputs, while still guarding correctness by checking against old Conjure.
+`ACCEPT=true` (or `make test-accept`) updates expected outputs and overwrites
+`expected-time` with the current observed runtime, while still guarding correctness by
+checking against old Conjure.
 
-To update `expected-time` entries, use `make test-accept-with-slower-times`. This only
-writes a new time when the rounded runtime is slower than the current value, so speedups
-remain visible as diffs. Use `make test-accept-with-exact-times` to overwrite times with
-the current observed runtime.
+When a test fails, the harness writes debugging artifacts under `diagnostics/` in that
+test's directory (gitignored): `failure.json`, Conjure/Savile Row `conjure/*.eprime-minion`,
+and oxide generated traces / Minion snapshots when available. Diagnostics are captured as
+each stage runs; on timeout the partial snapshot is kept and `stats.toml` is set to
+`timeout(N)`.
 
-### Licence
+To only raise `expected-time` (max of the current budget and the observed time), use
+`make test-accept-with-max-times` (`ACCEPT=with-max-times`). Running this a few times keeps
+the slowest observed budget and avoids recording a fast fluke. To discard `config.toml` / `stats.toml` files whose only local edits are noisy `*-time`
+field updates, run `./tools/discard-config-time-changes.sh`. Files with any other edits
+are left alone.
 
-This project is licenced under the [Mozilla Public Licence
-2.0](https://www.mozilla.org/en-US/MPL/2.0/).
+After an accept run, you can write a Git-diff-based timing comparison CSV with
+`python3 ./tools/accept-times-diff-report.py` (default output:
+`target/accept-times-diff.csv`).
+
+`stats.toml` also records the last accepted status, Conjure and oxide timing stats, and
+aggregate rule trace application counts derived from the expected rule trace snapshots.
+
+For timing-only runs where rule trace generation overhead is unwanted, set
+`CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file
+generation and rule trace snapshot validation; solution checks and timing recording still run.

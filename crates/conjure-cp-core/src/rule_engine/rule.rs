@@ -1,23 +1,14 @@
-use std::cell::RefCell;
 use std::collections::BTreeSet;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::Hash;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use thiserror::Error;
 
 use crate::Model;
-use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SymbolTable};
-use crate::rule_engine::RuleData;
-use crate::rule_engine::rewriter_common::{RuleResult, log_rule_application};
-use tree_morph::prelude::Commands;
-use tree_morph::prelude::Rule as MorphRule;
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct MorphState {
-    pub symbols: SymbolTable,
-    pub clauses: Vec<CnfClause>,
-}
+use crate::ast::{
+    CnfClause, DeclarationKind, DeclarationPtr, Expression, Metadata, Name, SymbolTable,
+};
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -30,7 +21,7 @@ pub enum ApplicationError {
 
 /// Represents the result of applying a rule to an expression within a model.
 ///
-/// A `Reduction` encapsulates the changes made to a model during a rule application.
+/// A `RuleEffect` encapsulates the changes made to a model during a rule application.
 /// It includes a new expression to replace the original one, an optional top-level constraint
 /// to be added to the model, and any updates to the model's symbol table.
 ///
@@ -46,14 +37,14 @@ pub enum ApplicationError {
 ///   symbol table. If no symbols are modified, this field can be set to an empty symbol table.
 ///
 /// # Usage
-/// A `Reduction` can be created using one of the provided constructors:
-/// - [`Reduction::new`]: Creates a reduction with a new expression, top-level constraint, and symbol modifications.
-/// - [`Reduction::pure`]: Creates a reduction with only a new expression and no side-effects on the symbol table or constraints.
-/// - [`Reduction::with_symbols`]: Creates a reduction with a new expression and symbol table modifications, but no top-level constraint.
-/// - [`Reduction::with_top`]: Creates a reduction with a new expression and a top-level constraint, but no symbol table modifications.
-/// - [`Reduction::cnf`]: Creates a reduction with a new expression, cnf clauses and symbol modifications, but no no top-level constraints.
+/// A `RuleEffect` can be created using one of the provided constructors:
+/// - [`RuleEffect::new`]: Creates an effect with a new expression, top-level constraint, and symbol modifications.
+/// - [`RuleEffect::pure`]: Creates an effect with only a new expression and no side-effects on the symbol table or constraints.
+/// - [`RuleEffect::with_symbols`]: Creates an effect with a new expression and symbol table modifications, but no top-level constraint.
+/// - [`RuleEffect::with_top`]: Creates an effect with a new expression and a top-level constraint, but no symbol table modifications.
+/// - [`RuleEffect::cnf`]: Creates an effect with a new expression, cnf clauses and symbol modifications, but no top-level constraints.
 ///
-/// The `apply` method allows for applying the changes represented by the `Reduction` to a [`Model`].
+/// The `apply` method allows for applying the changes represented by the `RuleEffect` to a [`Model`].
 ///
 /// # Example
 /// ```
@@ -61,62 +52,121 @@ pub enum ApplicationError {
 /// ```
 ///
 /// # See Also
-/// - [`ApplicationResult`]: Represents the result of applying a rule, which may either be a `Reduction` or an `ApplicationError`.
-/// - [`Model`]: The structure to which the `Reduction` changes are applied.
+/// - [`ApplicationResult`]: Represents the result of applying a rule, which may either be a `RuleEffect` or an `ApplicationError`.
+/// - [`Model`]: The structure to which the `RuleEffect` changes are applied.
 #[non_exhaustive]
-#[derive(Clone, Debug)]
-pub struct Reduction {
+#[derive(Clone)]
+pub struct RuleEffect {
     pub new_expression: Expression,
     pub new_top: Vec<Expression>,
     pub symbols: SymbolTable,
     pub new_clauses: Vec<CnfClause>,
+    /// Shared declarations to update if this effect is selected.
+    pub(crate) declaration_updates: Vec<DeclarationUpdate>,
+    materialise: Option<DeferredRuleEffect>,
 }
 
-/// The result of applying a rule to an expression.
-/// Contains either a set of reduction instructions or an error.
-pub type ApplicationResult = Result<Reduction, ApplicationError>;
+/// An in-place update to a shared declaration, applied only after its rule is selected.
+#[derive(Clone, Debug)]
+pub(crate) struct DeclarationUpdate {
+    target: DeclarationPtr,
+    replacement_kind: DeclarationKind,
+}
 
-impl Reduction {
+impl DeclarationUpdate {
+    /// Creates a deferred replacement for a shared declaration's kind.
+    fn new(target: DeclarationPtr, replacement_kind: DeclarationKind) -> Self {
+        Self {
+            target,
+            replacement_kind,
+        }
+    }
+
+    /// Returns the name of the declaration that will be updated.
+    pub(crate) fn name(&self) -> Name {
+        self.target.name().clone()
+    }
+
+    /// Commits the replacement while retaining the declaration's identity.
+    pub(crate) fn apply(mut self) {
+        let _ = self.target.replace_kind(self.replacement_kind);
+    }
+
+    /// Creates an unshared declaration containing the pending replacement.
+    fn preview(&self) -> DeclarationPtr {
+        DeclarationPtr::new(self.name(), self.replacement_kind.clone())
+    }
+}
+
+/// Deferred constructor for a concrete rule effect.
+type DeferredRuleEffect = Arc<dyn Fn(&SymbolTable) -> RuleEffect + Send + Sync>;
+
+/// The result of applying a rule to an expression.
+/// Contains either a set of rule effects or an error.
+pub type ApplicationResult = Result<RuleEffect, ApplicationError>;
+
+impl Debug for RuleEffect {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RuleEffect")
+            .field("new_expression", &self.new_expression)
+            .field("new_top", &self.new_top)
+            .field("symbols", &self.symbols)
+            .field("new_clauses", &self.new_clauses)
+            .field("declaration_updates", &self.declaration_updates)
+            .field("is_deferred", &self.materialise.is_some())
+            .finish()
+    }
+}
+
+impl RuleEffect {
     pub fn new(new_expression: Expression, new_top: Vec<Expression>, symbols: SymbolTable) -> Self {
         Self {
             new_expression,
             new_top,
             symbols,
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
+            materialise: None,
         }
     }
 
-    /// Represents a reduction with no side effects on the model.
+    /// Represents an effect with no side effects on the model.
     pub fn pure(new_expression: Expression) -> Self {
         Self {
             new_expression,
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
+            materialise: None,
         }
     }
 
-    /// Represents a reduction that also modifies the symbol table.
+    /// Represents an effect that also modifies the symbol table.
     pub fn with_symbols(new_expression: Expression, symbols: SymbolTable) -> Self {
         Self {
             new_expression,
             new_top: Vec::new(),
             symbols,
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
+            materialise: None,
         }
     }
 
-    /// Represents a reduction that also adds a top-level constraint to the model.
+    /// Represents an effect that also adds a top-level constraint to the model.
     pub fn with_top(new_expression: Expression, new_top: Vec<Expression>) -> Self {
         Self {
             new_expression,
             new_top,
             symbols: SymbolTable::new(),
             new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
+            materialise: None,
         }
     }
 
-    /// Represents a reduction that also adds clauses to the model.
+    /// Represents an effect that also adds clauses to the model.
     pub fn cnf(
         new_expression: Expression,
         new_clauses: Vec<CnfClause>,
@@ -127,17 +177,82 @@ impl Reduction {
             new_top: Vec::new(),
             symbols,
             new_clauses,
+            declaration_updates: Vec::new(),
+            materialise: None,
+        }
+    }
+
+    /// Defers constructing a concrete effect until the rewriter chooses to apply this rule.
+    ///
+    /// This is intended for rule effects that allocate fresh names or otherwise depend on global
+    /// model state. Applicability checks can return a deferred effect without consuming those
+    /// effects; the rewriter calls [`RuleEffect::materialise`] only for the selected rule.
+    pub fn deferred(
+        materialise: impl Fn(&SymbolTable) -> RuleEffect + Send + Sync + 'static,
+    ) -> Self {
+        Self {
+            new_expression: Expression::Root(Metadata::new(), Vec::new()),
+            new_top: Vec::new(),
+            symbols: SymbolTable::new(),
+            new_clauses: Vec::new(),
+            declaration_updates: Vec::new(),
+            materialise: Some(Arc::new(materialise)),
+        }
+    }
+
+    /// Returns the concrete effect for the current symbol table.
+    pub fn materialise(&self, symbols: &SymbolTable) -> Self {
+        let Some(materialise) = &self.materialise else {
+            return self.clone();
+        };
+
+        materialise(symbols).materialise(symbols)
+    }
+
+    pub(crate) fn is_deferred(&self) -> bool {
+        self.materialise.is_some()
+    }
+
+    /// Adds declaration replacements that are committed only if this effect is selected.
+    pub fn with_declaration_updates(
+        mut self,
+        updates: impl IntoIterator<Item = (DeclarationPtr, DeclarationKind)>,
+    ) -> Self {
+        self.declaration_updates.extend(
+            updates
+                .into_iter()
+                .map(|(target, kind)| DeclarationUpdate::new(target, kind)),
+        );
+        self
+    }
+
+    /// Iterates over the names changed by deferred declaration updates.
+    pub fn updated_declaration_names(&self) -> impl Iterator<Item = Name> + '_ {
+        self.declaration_updates.iter().map(DeclarationUpdate::name)
+    }
+
+    /// Applies pending declaration replacements to a detached symbol-table preview.
+    pub(crate) fn preview_declaration_updates(&self, symbols: &mut SymbolTable) {
+        for update in &self.declaration_updates {
+            symbols.update_insert(update.preview());
         }
     }
 
     /// Applies side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut Model) {
+        debug_assert!(
+            self.materialise.is_none(),
+            "deferred rule effects must be materialised before being applied"
+        );
+        for update in self.declaration_updates {
+            update.apply();
+        }
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top.clone());
         model.add_clauses(self.new_clauses);
     }
 
-    /// Gets symbols added by this reduction
+    /// Gets symbols added by this effect.
     pub fn added_symbols(&self, initial_symbols: &SymbolTable) -> BTreeSet<Name> {
         let initial_symbols_set: BTreeSet<Name> = initial_symbols
             .clone()
@@ -157,9 +272,9 @@ impl Reduction {
             .collect()
     }
 
-    /// Gets symbols changed by this reduction
+    /// Gets symbols changed by this effect.
     ///
-    /// Returns a list of tuples of (name, domain before reduction, domain after reduction)
+    /// Returns a list of tuples of (name, domain before effect, domain after effect).
     pub fn changed_symbols(
         &self,
         initial_symbols: &SymbolTable,
@@ -171,7 +286,7 @@ impl Reduction {
                 continue;
             };
 
-            if new_value != initial_value {
+            if !new_value.content_eq(&initial_value) {
                 changes.push((var_name.clone(), initial_value.clone(), new_value.clone()));
             }
         }
@@ -181,6 +296,32 @@ impl Reduction {
 
 /// The function type used in a [`Rule`].
 pub type RuleFn = fn(&Expression, &SymbolTable) -> ApplicationResult;
+
+/// Atomic expression subvariants that can be used as rule prefilters.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum AtomKind {
+    /// An `Atomic` expression containing a literal.
+    Literal,
+    /// An `Atomic` expression containing a reference.
+    Reference,
+}
+
+/// A complete rule prefilter alternative.
+///
+/// A rule matches when any of its prefilter alternatives matches the focused expression. This keeps
+/// compound filters such as `And / Comprehension` paired instead of forming a cross product with
+/// other alternatives in the same rule declaration.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum RulePrefilter {
+    /// Focused expression must have this `Expression` variant.
+    Variant(usize),
+    /// Focused expression must have an immediate child with this `Expression` variant.
+    Child { child: usize },
+    /// Focused expression must have this variant and an immediate child with `child`'s variant.
+    VariantChild { variant: usize, child: usize },
+    /// Focused expression must be an `Atomic` expression with this atomic subvariant.
+    Atom(AtomKind),
+}
 
 /**
  * A rule with a name, application function, and rule sets.
@@ -195,8 +336,8 @@ pub struct Rule<'a> {
     pub name: &'a str,
     pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
-    /// Discriminant ids of Expression variants this rule applies to, or None for universal rules.
-    pub applicable_to: Option<&'static [usize]>,
+    /// Complete prefilter alternatives this rule applies to, or `None` for universal rules.
+    pub prefilters: Option<&'static [RulePrefilter]>,
 }
 
 impl<'a> Rule<'a> {
@@ -209,7 +350,7 @@ impl<'a> Rule<'a> {
             name,
             application,
             rule_sets,
-            applicable_to: None,
+            prefilters: None,
         }
     }
 
@@ -238,130 +379,34 @@ impl Hash for Rule<'_> {
     }
 }
 
-impl MorphRule<Expression, MorphState> for Rule<'_> {
-    fn apply(
-        &self,
-        commands: &mut Commands<Expression, MorphState>,
-        subtree: &Expression,
-        meta: &MorphState,
-    ) -> Option<Expression> {
-        let reduction = self.apply(subtree, &meta.symbols).ok()?;
-        let new_expression = reduction.new_expression;
-        let new_top = reduction.new_top;
-        let added_symbols = reduction.symbols;
-        let added_clauses = reduction.new_clauses;
-        commands.mut_meta(Box::new(move |m: &mut MorphState| {
-            m.symbols.extend(added_symbols);
-            m.clauses.extend(added_clauses);
-        }));
-        if !new_top.is_empty() {
-            commands.transform(Box::new(move |m| m.extend_root(new_top)));
-        }
-        Some(new_expression)
-    }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{DecisionVariable, Domain, Range, Reference};
+    use crate::rule_engine::rewriter_common::{
+        snapshot_symbols_after_effect, snapshot_variable_declarations,
+    };
 
-    fn name(&self) -> &str {
-        self.name
-    }
+    #[test]
+    fn declaration_updates_are_applied_only_when_effect_is_committed() {
+        let old_domain = Domain::int(vec![Range::Bounded(1, 3)]);
+        let new_domain = Domain::int(vec![Range::Bounded(1, 2)]);
+        let mut model = Model::new(Default::default());
+        let declaration = DeclarationPtr::new_find(Name::user("x"), old_domain.clone());
+        let reference = Reference::new(declaration.clone());
+        model.symbols_mut().insert(declaration.clone()).unwrap();
 
-    fn applicable_to(&self) -> Option<Vec<usize>> {
-        self.applicable_to.map(|s| s.to_vec())
-    }
-}
+        let effect = RuleEffect::pure(Expression::from(1)).with_declaration_updates([(
+            declaration,
+            DeclarationKind::Find(DecisionVariable::new(new_domain.clone())),
+        )]);
 
-impl MorphRule<Expression, MorphState> for &Rule<'_> {
-    fn apply(
-        &self,
-        commands: &mut Commands<Expression, MorphState>,
-        subtree: &Expression,
-        meta: &MorphState,
-    ) -> Option<Expression> {
-        let reduction = Rule::apply(self, subtree, &meta.symbols).ok()?;
-        let new_expression = reduction.new_expression;
-        let new_top = reduction.new_top;
-        let added_symbols = reduction.symbols;
-        let added_clauses = reduction.new_clauses;
-        commands.mut_meta(Box::new(move |m: &mut MorphState| {
-            m.symbols.extend(added_symbols);
-            m.clauses.extend(added_clauses);
-        }));
-        if !new_top.is_empty() {
-            commands.transform(Box::new(move |m| m.extend_root(new_top)));
-        }
-        Some(new_expression)
-    }
-
-    fn name(&self) -> &str {
-        self.name
-    }
-}
-
-impl MorphRule<Expression, Rc<RefCell<MorphState>>> for Rule<'_> {
-    fn apply(
-        &self,
-        commands: &mut Commands<Expression, Rc<RefCell<MorphState>>>,
-        subtree: &Expression,
-        meta: &Rc<RefCell<MorphState>>,
-    ) -> Option<Expression> {
-        let state = meta.borrow();
-        let reduction = self.apply(subtree, &state.symbols).ok()?;
-        let new_expression = reduction.new_expression;
-        let new_top = reduction.new_top;
-        let added_symbols = reduction.symbols;
-        let added_clauses = reduction.new_clauses;
-        commands.mut_meta(Box::new(move |m| {
-            let mut state = m.borrow_mut();
-            state.symbols.extend(added_symbols);
-            state.clauses.extend(added_clauses);
-        }));
-
-        if !new_top.is_empty() {
-            commands.transform(Box::new(move |m| m.extend_root(new_top)));
-        }
-
-        Some(new_expression)
-    }
-
-    fn name(&self) -> &str {
-        self.name
-    }
-}
-
-impl MorphRule<Expression, MorphState> for RuleData<'_> {
-    fn apply(
-        &self,
-        commands: &mut Commands<Expression, MorphState>,
-        subtree: &Expression,
-        meta: &MorphState,
-    ) -> Option<Expression> {
-        let reduction = self.rule.apply(subtree, &meta.symbols).ok()?;
-        let result = RuleResult {
-            rule_data: self.clone(),
-            reduction: reduction.clone(),
-        };
-
-        log_rule_application(&result, subtree, &meta.symbols, None);
-
-        let new_expression = reduction.new_expression;
-        let new_top = reduction.new_top;
-        let added_symbols = reduction.symbols;
-        let added_clauses = reduction.new_clauses;
-        commands.mut_meta(Box::new(move |m: &mut MorphState| {
-            m.symbols.extend(added_symbols);
-            m.clauses.extend(added_clauses);
-        }));
-
-        if !new_top.is_empty() {
-            commands.transform(Box::new(move |m| m.extend_root(new_top)));
-        }
-        Some(new_expression)
-    }
-
-    fn name(&self) -> &str {
-        self.rule.name
-    }
-
-    fn applicable_to(&self) -> Option<Vec<usize>> {
-        self.rule.applicable_to.map(|s| s.to_vec())
+        let before = snapshot_variable_declarations(&model.symbols());
+        let after = snapshot_symbols_after_effect(&model.symbols(), &effect);
+        assert_eq!(before.get(&Name::user("x")).unwrap(), "find x: int(1..3)");
+        assert_eq!(after.get(&Name::user("x")).unwrap(), "find x: int(1..2)");
+        assert_eq!(reference.domain(), Some(old_domain));
+        effect.apply(&mut model);
+        assert_eq!(reference.domain(), Some(new_domain));
     }
 }

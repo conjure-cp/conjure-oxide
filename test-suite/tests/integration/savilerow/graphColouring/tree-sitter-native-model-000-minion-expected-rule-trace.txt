@@ -1,0 +1,568 @@
+Model before rewriting:
+
+letting vertices be 5
+letting colours be 3
+letting VERTICES be domain int(1..vertices)
+letting COLOURS be domain int(1..colours)
+letting edges be [[false,true,false,true,false;int(1..5)],[true,false,true,false,true;int(1..5)],[false,true,false,true,true;int(1..5)],[true,false,true,false,false;int(1..5)],[false,true,true,false,false;int(1..5)];int(1..5)]
+find colouring: matrix indexed by [VERTICES] of COLOURS
+find usedColours: matrix indexed by [COLOURS] of bool
+findAux __0: int(0..3)
+
+such that
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+
+--
+
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ])
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+new variables:
+  find colouring#components_1: int(1..3)
+  find colouring#components_2: int(1..3)
+  find colouring#components_3: int(1..3)
+  find colouring#components_4: int(1..3)
+  find colouring#components_5: int(1..3)
+  find usedColours#components_1: bool
+  find usedColours#components_2: bool
+  find usedColours#components_3: bool
+
+--
+
+[ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[colouring#components_1 != colouring#components_2,colouring#components_1 != colouring#components_4,colouring#components_2 != colouring#components_1,colouring#components_2 != colouring#components_3,colouring#components_2 != colouring#components_5,colouring#components_3 != colouring#components_2,colouring#components_3 != colouring#components_4,colouring#components_3 != colouring#components_5,colouring#components_4 != colouring#components_1,colouring#components_4 != colouring#components_3,colouring#components_5 != colouring#components_2,colouring#components_5 != colouring#components_3;int(1..)]
+
+--
+
+[ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(colouring#components_1 = 1) -> (usedColours#components_1),(colouring#components_1 = 2) -> (usedColours#components_2),(colouring#components_1 = 3) -> (usedColours#components_3),(colouring#components_2 = 1) -> (usedColours#components_1),(colouring#components_2 = 2) -> (usedColours#components_2),(colouring#components_2 = 3) -> (usedColours#components_3),(colouring#components_3 = 1) -> (usedColours#components_1),(colouring#components_3 = 2) -> (usedColours#components_2),(colouring#components_3 = 3) -> (usedColours#components_3),(colouring#components_4 = 1) -> (usedColours#components_1),(colouring#components_4 = 2) -> (usedColours#components_2),(colouring#components_4 = 3) -> (usedColours#components_3),(colouring#components_5 = 1) -> (usedColours#components_1),(colouring#components_5 = 2) -> (usedColours#components_2),(colouring#components_5 = 3) -> (usedColours#components_3);int(1..)]
+
+--
+
+colouring#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_1,1)
+
+--
+
+colouring#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_1,2)
+
+--
+
+colouring#components_1 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_1,3)
+
+--
+
+colouring#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_2,1)
+
+--
+
+colouring#components_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_2,2)
+
+--
+
+colouring#components_2 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_2,3)
+
+--
+
+colouring#components_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_3,1)
+
+--
+
+colouring#components_3 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_3,2)
+
+--
+
+colouring#components_3 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_3,3)
+
+--
+
+colouring#components_4 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_4,1)
+
+--
+
+colouring#components_4 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_4,2)
+
+--
+
+colouring#components_4 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_4,3)
+
+--
+
+colouring#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_5,1)
+
+--
+
+colouring#components_5 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_5,2)
+
+--
+
+colouring#components_5 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(colouring#components_5,3)
+
+--
+
+(WatchedLiteral(colouring#components_1,1)) -> (usedColours#components_1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__1) -> (usedColours#components_1)
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux WatchedLiteral(colouring#components_1,1)
+
+--
+
+__1 =aux WatchedLiteral(colouring#components_1,1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_1,1), __1)
+
+--
+
+(__1) -> (usedColours#components_1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__1, usedColours#components_1, 0)
+
+--
+
+(WatchedLiteral(colouring#components_1,2)) -> (usedColours#components_2)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__2) -> (usedColours#components_2)
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux WatchedLiteral(colouring#components_1,2)
+
+--
+
+__2 =aux WatchedLiteral(colouring#components_1,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_1,2), __2)
+
+--
+
+(__2) -> (usedColours#components_2)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__2, usedColours#components_2, 0)
+
+--
+
+(WatchedLiteral(colouring#components_1,3)) -> (usedColours#components_3)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> (usedColours#components_3)
+new variables:
+  findAux __3: bool
+new constraints:
+  __3 =aux WatchedLiteral(colouring#components_1,3)
+
+--
+
+__3 =aux WatchedLiteral(colouring#components_1,3)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_1,3), __3)
+
+--
+
+(__3) -> (usedColours#components_3)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__3, usedColours#components_3, 0)
+
+--
+
+(WatchedLiteral(colouring#components_2,1)) -> (usedColours#components_1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__4) -> (usedColours#components_1)
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux WatchedLiteral(colouring#components_2,1)
+
+--
+
+__4 =aux WatchedLiteral(colouring#components_2,1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_2,1), __4)
+
+--
+
+(__4) -> (usedColours#components_1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__4, usedColours#components_1, 0)
+
+--
+
+(WatchedLiteral(colouring#components_2,2)) -> (usedColours#components_2)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__5) -> (usedColours#components_2)
+new variables:
+  findAux __5: bool
+new constraints:
+  __5 =aux WatchedLiteral(colouring#components_2,2)
+
+--
+
+__5 =aux WatchedLiteral(colouring#components_2,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_2,2), __5)
+
+--
+
+(__5) -> (usedColours#components_2)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__5, usedColours#components_2, 0)
+
+--
+
+(WatchedLiteral(colouring#components_2,3)) -> (usedColours#components_3)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__6) -> (usedColours#components_3)
+new variables:
+  findAux __6: bool
+new constraints:
+  __6 =aux WatchedLiteral(colouring#components_2,3)
+
+--
+
+__6 =aux WatchedLiteral(colouring#components_2,3)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_2,3), __6)
+
+--
+
+(__6) -> (usedColours#components_3)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__6, usedColours#components_3, 0)
+
+--
+
+(WatchedLiteral(colouring#components_3,1)) -> (usedColours#components_1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__7) -> (usedColours#components_1)
+new variables:
+  findAux __7: bool
+new constraints:
+  __7 =aux WatchedLiteral(colouring#components_3,1)
+
+--
+
+__7 =aux WatchedLiteral(colouring#components_3,1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_3,1), __7)
+
+--
+
+(__7) -> (usedColours#components_1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__7, usedColours#components_1, 0)
+
+--
+
+(WatchedLiteral(colouring#components_3,2)) -> (usedColours#components_2)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__8) -> (usedColours#components_2)
+new variables:
+  findAux __8: bool
+new constraints:
+  __8 =aux WatchedLiteral(colouring#components_3,2)
+
+--
+
+__8 =aux WatchedLiteral(colouring#components_3,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_3,2), __8)
+
+--
+
+(__8) -> (usedColours#components_2)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__8, usedColours#components_2, 0)
+
+--
+
+(WatchedLiteral(colouring#components_3,3)) -> (usedColours#components_3)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__9) -> (usedColours#components_3)
+new variables:
+  findAux __9: bool
+new constraints:
+  __9 =aux WatchedLiteral(colouring#components_3,3)
+
+--
+
+__9 =aux WatchedLiteral(colouring#components_3,3)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_3,3), __9)
+
+--
+
+(__9) -> (usedColours#components_3)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__9, usedColours#components_3, 0)
+
+--
+
+(WatchedLiteral(colouring#components_4,1)) -> (usedColours#components_1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__10) -> (usedColours#components_1)
+new variables:
+  findAux __10: bool
+new constraints:
+  __10 =aux WatchedLiteral(colouring#components_4,1)
+
+--
+
+__10 =aux WatchedLiteral(colouring#components_4,1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_4,1), __10)
+
+--
+
+(__10) -> (usedColours#components_1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__10, usedColours#components_1, 0)
+
+--
+
+(WatchedLiteral(colouring#components_4,2)) -> (usedColours#components_2)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__11) -> (usedColours#components_2)
+new variables:
+  findAux __11: bool
+new constraints:
+  __11 =aux WatchedLiteral(colouring#components_4,2)
+
+--
+
+__11 =aux WatchedLiteral(colouring#components_4,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_4,2), __11)
+
+--
+
+(__11) -> (usedColours#components_2)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__11, usedColours#components_2, 0)
+
+--
+
+(WatchedLiteral(colouring#components_4,3)) -> (usedColours#components_3)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__12) -> (usedColours#components_3)
+new variables:
+  findAux __12: bool
+new constraints:
+  __12 =aux WatchedLiteral(colouring#components_4,3)
+
+--
+
+__12 =aux WatchedLiteral(colouring#components_4,3)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_4,3), __12)
+
+--
+
+(__12) -> (usedColours#components_3)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__12, usedColours#components_3, 0)
+
+--
+
+(WatchedLiteral(colouring#components_5,1)) -> (usedColours#components_1)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__13) -> (usedColours#components_1)
+new variables:
+  findAux __13: bool
+new constraints:
+  __13 =aux WatchedLiteral(colouring#components_5,1)
+
+--
+
+__13 =aux WatchedLiteral(colouring#components_5,1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_5,1), __13)
+
+--
+
+(__13) -> (usedColours#components_1)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__13, usedColours#components_1, 0)
+
+--
+
+(WatchedLiteral(colouring#components_5,2)) -> (usedColours#components_2)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__14) -> (usedColours#components_2)
+new variables:
+  findAux __14: bool
+new constraints:
+  __14 =aux WatchedLiteral(colouring#components_5,2)
+
+--
+
+__14 =aux WatchedLiteral(colouring#components_5,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_5,2), __14)
+
+--
+
+(__14) -> (usedColours#components_2)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__14, usedColours#components_2, 0)
+
+--
+
+(WatchedLiteral(colouring#components_5,3)) -> (usedColours#components_3)
+   ~~> flatten_imply ([("Minion", 4200)])
+(__15) -> (usedColours#components_3)
+new variables:
+  findAux __15: bool
+new constraints:
+  __15 =aux WatchedLiteral(colouring#components_5,3)
+
+--
+
+__15 =aux WatchedLiteral(colouring#components_5,3)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(colouring#components_5,3), __15)
+
+--
+
+(__15) -> (usedColours#components_3)
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__15, usedColours#components_3, 0)
+
+--
+
+[ toInt(usedColours[c]) | c : COLOURS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(usedColours#components_1),toInt(usedColours#components_2),toInt(usedColours#components_3);int(1..)]
+
+--
+
+__0 =aux sum([toInt(usedColours#components_1),toInt(usedColours#components_2),toInt(usedColours#components_3);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([usedColours#components_1, usedColours#components_2, usedColours#components_3], __0),SumGeq([usedColours#components_1, usedColours#components_2, usedColours#components_3], __0);int(1..)])
+
+--
+
+Final model:
+
+letting vertices be 5
+letting colours be 3
+letting VERTICES be domain int(1..vertices)
+letting COLOURS be domain int(1..colours)
+letting edges be [[false,true,false,true,false;int(1..5)],[true,false,true,false,true;int(1..5)],[false,true,false,true,true;int(1..5)],[true,false,true,false,false;int(1..5)],[false,true,true,false,false;int(1..5)];int(1..5)]
+find colouring: matrix indexed by [VERTICES] of COLOURS
+find usedColours: matrix indexed by [COLOURS] of bool
+findAux __0: int(0..3)
+letting edges#components_1 be false
+letting edges#components_2 be true
+letting edges#components_3 be false
+letting edges#components_4 be true
+letting edges#components_5 be false
+letting edges#components_6 be true
+letting edges#components_7 be false
+letting edges#components_8 be true
+letting edges#components_9 be false
+letting edges#components_10 be true
+letting edges#components_11 be false
+letting edges#components_12 be true
+letting edges#components_13 be false
+letting edges#components_14 be true
+letting edges#components_15 be true
+letting edges#components_16 be true
+letting edges#components_17 be false
+letting edges#components_18 be true
+letting edges#components_19 be false
+letting edges#components_20 be false
+letting edges#components_21 be false
+letting edges#components_22 be true
+letting edges#components_23 be true
+letting edges#components_24 be false
+letting edges#components_25 be false
+find colouring#components_1: int(1..3)
+find colouring#components_2: int(1..3)
+find colouring#components_3: int(1..3)
+find colouring#components_4: int(1..3)
+find colouring#components_5: int(1..3)
+find usedColours#components_1: bool
+find usedColours#components_2: bool
+find usedColours#components_3: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+
+such that
+
+and([colouring#components_1 != colouring#components_2,colouring#components_1 != colouring#components_4,colouring#components_2 != colouring#components_1,colouring#components_2 != colouring#components_3,colouring#components_2 != colouring#components_5,colouring#components_3 != colouring#components_2,colouring#components_3 != colouring#components_4,colouring#components_3 != colouring#components_5,colouring#components_4 != colouring#components_1,colouring#components_4 != colouring#components_3,colouring#components_5 != colouring#components_2,colouring#components_5 != colouring#components_3;int(1..)]),
+and([Ineq(__1, usedColours#components_1, 0),Ineq(__2, usedColours#components_2, 0),Ineq(__3, usedColours#components_3, 0),Ineq(__4, usedColours#components_1, 0),Ineq(__5, usedColours#components_2, 0),Ineq(__6, usedColours#components_3, 0),Ineq(__7, usedColours#components_1, 0),Ineq(__8, usedColours#components_2, 0),Ineq(__9, usedColours#components_3, 0),Ineq(__10, usedColours#components_1, 0),Ineq(__11, usedColours#components_2, 0),Ineq(__12, usedColours#components_3, 0),Ineq(__13, usedColours#components_1, 0),Ineq(__14, usedColours#components_2, 0),Ineq(__15, usedColours#components_3, 0);int(1..)]),
+and([SumLeq([usedColours#components_1, usedColours#components_2, usedColours#components_3], __0),SumGeq([usedColours#components_1, usedColours#components_2, usedColours#components_3], __0);int(1..)]),
+Reify(WatchedLiteral(colouring#components_1,1), __1),
+Reify(WatchedLiteral(colouring#components_1,2), __2),
+Reify(WatchedLiteral(colouring#components_1,3), __3),
+Reify(WatchedLiteral(colouring#components_2,1), __4),
+Reify(WatchedLiteral(colouring#components_2,2), __5),
+Reify(WatchedLiteral(colouring#components_2,3), __6),
+Reify(WatchedLiteral(colouring#components_3,1), __7),
+Reify(WatchedLiteral(colouring#components_3,2), __8),
+Reify(WatchedLiteral(colouring#components_3,3), __9),
+Reify(WatchedLiteral(colouring#components_4,1), __10),
+Reify(WatchedLiteral(colouring#components_4,2), __11),
+Reify(WatchedLiteral(colouring#components_4,3), __12),
+Reify(WatchedLiteral(colouring#components_5,1), __13),
+Reify(WatchedLiteral(colouring#components_5,2), __14),
+Reify(WatchedLiteral(colouring#components_5,3), __15)
+
