@@ -1,0 +1,59 @@
+Model before rewriting:
+
+letting n be 2
+letting D be domain int(1..n)
+find square: function (total, injective) record {fst: D, snd: D} --> D 
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find square#explicit_1: matrix indexed by [int(1..4)] of int(1..2)
+new constraints:
+  allDifferent(square#explicit_1)
+
+--
+
+true,
+allDifferent(square#explicit_1)
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true,
+allDifferent(square#explicit_1)
+new variables:
+  find square#explicit_1#components_1: int(1..2)
+  find square#explicit_1#components_2: int(1..2)
+  find square#explicit_1#components_3: int(1..2)
+  find square#explicit_1#components_4: int(1..2)
+
+--
+
+allDifferent(square#explicit_1)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([square#explicit_1#components_1,square#explicit_1#components_2,square#explicit_1#components_3,square#explicit_1#components_4;int(1..4)])
+
+--
+
+allDifferent([square#explicit_1#components_1,square#explicit_1#components_2,square#explicit_1#components_3,square#explicit_1#components_4;int(1..4)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([square#explicit_1#components_1, square#explicit_1#components_2, square#explicit_1#components_3, square#explicit_1#components_4])
+
+--
+
+Final model:
+
+letting n be 2
+letting D be domain int(1..n)
+find square: function (total, injective) record {fst: D, snd: D} --> D 
+find square#explicit_1: matrix indexed by [int(1..4)] of int(1..2)
+find square#explicit_1#components_1: int(1..2)
+find square#explicit_1#components_2: int(1..2)
+find square#explicit_1#components_3: int(1..2)
+find square#explicit_1#components_4: int(1..2)
+
+such that
+
+true,
+__flat_alldiff([square#explicit_1#components_1, square#explicit_1#components_2, square#explicit_1#components_3, square#explicit_1#components_4])
+
