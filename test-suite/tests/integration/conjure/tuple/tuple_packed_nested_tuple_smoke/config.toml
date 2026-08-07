@@ -1,0 +1,18 @@
+# Hand-authored regression case. `heuristic = "x"` enumerates every representation choice,
+# including TuplePacked for a tuple whose own field is itself compound (here, `t`'s first field is
+# a nested tuple). TuplePacked's field-decoding helper (`unpack_values`, in
+# types/tuple/packed/vertical.rs) used to build a dynamic (non-constant, decision-variable-derived)
+# index into a matrix literal of that field's own possible values -- fine for scalar fields, but
+# when the field is itself compound those matrix elements are compound literals too, and the
+# Minion backend cannot turn a dynamic index into a compound-element matrix into a per-field
+# Element constraint chain. Fixed by rebuilding the compound field as an inline tuple literal,
+# decoded recursively field-by-field instead. `t[1] = (7, false)` pins the compound first field to
+# an exact literal, leaving `t`'s second field free over its whole domain, so the expected
+# solutions are `t = ((7,false),13)` and `t = ((7,false),17)` -- cross-validated against real
+# Conjure's own `conjure solve` output for the same model (same 2 solutions).
+parser = "tree-sitter"
+rewriter = "optimised"
+comprehension-expander = "native"
+heuristic = "x"
+solver = "minion"
+number-of-solutions = "all"
