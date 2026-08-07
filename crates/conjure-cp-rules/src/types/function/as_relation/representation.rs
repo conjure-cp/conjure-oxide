@@ -31,8 +31,7 @@ register_representation!(
         /// A witness matrix of (key, value) tuples indexed by plain `int(1..n)` position over the
         /// function's domain (in `domain_values` order, not the domain's own type -- see
         /// `FunctionExplicit::values_matrix`'s field doc for why position is the one indexing scheme
-        /// that always works), present only for total functions with a scalar domain (see
-        /// `forward_values_matrix`'s field doc for why). `forward_witness_matrix[i]` must be
+        /// that always works), present only for total functions. `forward_witness_matrix[i]` must be
         /// a member of the relation, and its first field must equal `domain_values[i]`, which pins
         /// its second field to `image(f, domain_values[i])` (the relation has exactly one entry per
         /// domain value, by the totality/well-formedness constraints above). Every use of this field
@@ -60,19 +59,18 @@ register_representation!(
         /// positions, the one shape every relation representation's membership rule already handles
         /// correctly) and mirroring only the scalar value half for `image` avoids both problems.
         ///
-        /// `forward_witness_matrix`/`forward_values_matrix` are only built for a *scalar* (bool/int)
-        /// domain: `forward_witness_matrix[i] in relation` still needs the relation's own membership
-        /// rule to work with `domain_values[i]` as one of the tuple's fields, and `RelationOccurrence`
-        /// represents membership as an occurrence-matrix lookup indexed by each field's own value --
-        /// which only makes sense for a scalar field. A compound (tuple/record/...) domain value has
-        /// no single Minion atom to index by; `RelationOccurrence`'s own membership rule ends up
-        /// building an `elementId`-style search whose target is an un-decomposed tuple literal, which
-        /// Minion rejects the same way. This is a latent gap in `RelationOccurrence`
-        /// (`types/relation/occurrence/vertical/membership.rs`)/`RelationPacked`'s own membership
-        /// rules for compound-typed columns, not specific to this representation -- flagged
-        /// separately rather than fixed here, since every actual user of `forward_witness_matrix`
-        /// (permutations, whose inner domain is always a scalar int range) is unaffected by scoping
-        /// around it.
+        /// `forward_witness_matrix`/`forward_values_matrix` support compound (tuple/record/...)
+        /// domains and codomains too, not just scalar (bool/int) ones. That needed two prerequisite
+        /// fixes elsewhere, since a compound value has no single Minion atom to stand in for it:
+        /// `RelationOccurrence`/`RelationPacked`'s own membership rules had to be taught to decompose
+        /// a compound column field-by-field rather than index an occurrence matrix by it directly
+        /// (`types/relation/occurrence/vertical/membership.rs`, `types/relation/packed/vertical.rs`),
+        /// and the Minion backend's `elementId` lowering
+        /// (`backends/minion/mod.rs::compound_element_id_lookup`/`fold_constant_element_id_to_index`)
+        /// had to grow a path for a compound search target, building a per-candidate disjunction
+        /// directly rather than handing Minion a non-atomic element to search for. With both in
+        /// place, `image(f, arg)` works the same way regardless of whether `arg`'s domain is scalar
+        /// or compound.
         pub forward_values_matrix: Option<T>,
         /// Every domain value, in the same order used to index `forward_witness_matrix` and
         /// `forward_values_matrix`.
@@ -147,25 +145,14 @@ register_representation!(
             None
         };
 
-        // Scoped to a scalar (bool/int) domain: forward_witness_matrix's structural constraint
-        // proves `image(f, domain_values[i])` by asserting `(domain_values[i], value) in relation`,
-        // and when the relation ends up RelationOccurrence-represented, that membership check needs
-        // to index the occurrence matrix's domain dimension by `domain_values[i]` -- which only
-        // works for a scalar value; a compound (tuple/record/...) domain value has no single Minion
-        // atom to index by, and the resulting `elementId`-style search ends up handing Minion an
-        // un-decomposed tuple literal as a search target, which it rejects. Every actual user of
-        // this (permutations, whose inner domain is always a scalar int range) is unaffected;
-        // compound-domain functions simply don't get a forward witness matrix or `image` support
-        // under `FunctionAsRelation` yet.
-        let domain_is_scalar = matches!(domain.as_ref(), GroundDomain::Bool | GroundDomain::Int(_));
-        let domain_values: Vec<Literal> = if matches!(attr.partiality, PartialityAttr::Total) && domain_is_scalar {
+        let domain_values: Vec<Literal> = if matches!(attr.partiality, PartialityAttr::Total) {
             domain.values()
                 .map_err(|e| domain_err(&format!("could not enumerate function domain: {e}")))?
                 .collect()
         } else {
             vec![]
         };
-        let (forward_witness_matrix, forward_values_matrix) = if matches!(attr.partiality, PartialityAttr::Total) && domain_is_scalar {
+        let (forward_witness_matrix, forward_values_matrix) = if matches!(attr.partiality, PartialityAttr::Total) {
             let n = domain_values.len() as i32;
             (
                 Some(Domain::matrix(witness_tuple_dom, vec![domain_int!(1..n)])),
