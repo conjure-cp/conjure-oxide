@@ -117,9 +117,11 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
         return Err(RuleNotApplicable);
     };
 
-    let mut symbols = symtab.clone();
+    // Copy the symbol table only once something is actually going to change: this rule is
+    // attempted every time the root is visited, and almost always declines, so cloning up front
+    // charged every visit the size of the whole table.
+    let mut symbols: Option<SymbolTable> = None;
     let mut constraints = Vec::<Expr>::new();
-    let mut changed = false;
     for (_, decl) in symtab.iter_local() {
         // We want unrepresented decision vars!
         guard!(
@@ -132,28 +134,28 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
             }
         );
 
-        let Some(rule) = choose_representation_rule(decl, &symbols) else {
+        let Some(rule) = choose_representation_rule(decl, symbols.as_ref().unwrap_or(symtab))
+        else {
             continue;
         };
         let mut decl = decl.clone();
         let Ok((new_symbols, new_constraints)) = rule.init_for(&mut decl) else {
             continue;
         };
+        let symbols = symbols.get_or_insert_with(|| symtab.clone());
         symbols.update_insert(decl);
         symbols.extend(new_symbols);
         constraints.extend(new_constraints);
-        changed = true;
     }
 
     // Representation initialisation may introduce no constraints and DeclarationPtr clone-on-write
-    // updates are not reliably observable through SymbolTable equality. Record successful
-    // initialisation explicitly so zero-constraint layouts (matrix components/packed) still dirty
-    // the root and expose their auxiliary declarations.
-    if !changed {
-        Err(RuleNotApplicable)
-    } else {
-        Ok(Reduction::new(expr.clone(), constraints, symbols))
-    }
+    // updates are not reliably observable through SymbolTable equality. A copied symbol table
+    // records successful initialisation explicitly, so zero-constraint layouts (matrix
+    // components/packed) still dirty the root and expose their auxiliary declarations.
+    let Some(symbols) = symbols else {
+        return Err(RuleNotApplicable);
+    };
+    Ok(Reduction::new(expr.clone(), constraints, symbols))
 }
 
 /// Chooses one applicable representation without mutating the declaration.
