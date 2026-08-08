@@ -215,7 +215,9 @@ register_representation!(
             ));
         }
 
-        elems.sort_by_key(ToString::to_string);
+        // Essence order, not string order: the slots carry an ascending-order structural
+        // constraint, which a text sort violates for negative values.
+        elems.sort_by(Literal::essence_cmp);
         elems.resize(max as usize, state.padding.clone());
         Ok(State {
             cardinality,

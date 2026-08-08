@@ -238,7 +238,8 @@ register_representation!(
             .filter(|(index, _)| mask & (1i32 << index) != 0)
             .map(|(_, elem)| elem.clone())
             .collect::<Vec<_>>();
-        elems.sort_by_key(ToString::to_string);
+        // Essence order, not string order: sorting `-2, -1` as text puts `-1` first.
+        elems.sort_by(Literal::essence_cmp);
         Literal::AbstractLiteral(AbstractLiteral::Set(elems))
     }
     fn compactness(state: &State<DomainPtr>) -> usize {

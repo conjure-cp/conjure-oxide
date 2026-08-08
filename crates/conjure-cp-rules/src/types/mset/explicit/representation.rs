@@ -181,7 +181,9 @@ register_representation!(
                 return Err(ReprDownError::BadValue(original, format!("occurrence count for {candidate} is outside its bounds")));
             }
         }
-        elems.sort_by_key(ToString::to_string);
+        // Essence order, not string order: the slots carry an ascending-order structural
+        // constraint, which a text sort violates for negative values.
+        elems.sort_by(Literal::essence_cmp);
         elems.resize(max as usize, state.padding.clone());
         Ok(State {
             cardinality: state.cardinality,
