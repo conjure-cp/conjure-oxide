@@ -253,43 +253,39 @@ impl RuleEffect {
     }
 
     /// Gets symbols added by this effect.
+    ///
+    /// Walks this effect's own symbols rather than diffing two whole tables. The rewriter asks
+    /// this once per applied rule, and most effects are pure, so diffing made every rewrite cost
+    /// a clone and a sort of the entire model symbol table.
     pub fn added_symbols(&self, initial_symbols: &SymbolTable) -> BTreeSet<Name> {
-        let initial_symbols_set: BTreeSet<Name> = initial_symbols
-            .clone()
-            .into_iter_local()
-            .map(|x| x.0)
-            .collect();
-        let new_symbols_set: BTreeSet<Name> = self
-            .symbols
-            .clone()
-            .into_iter_local()
-            .map(|x| x.0)
-            .collect();
-
-        new_symbols_set
-            .difference(&initial_symbols_set)
-            .cloned()
+        self.symbols
+            .iter_local()
+            .filter(|(name, _)| initial_symbols.lookup_local(name).is_none())
+            .map(|(name, _)| name.clone())
             .collect()
     }
 
     /// Gets symbols changed by this effect.
     ///
-    /// Returns a list of tuples of (name, domain before effect, domain after effect).
+    /// Returns a list of tuples of (name, domain before effect, domain after effect), ordered by
+    /// name.
+    ///
+    /// Walks this effect's symbols for the same reason as [`RuleEffect::added_symbols`]: a symbol
+    /// can only have changed if this effect carries its new value.
     pub fn changed_symbols(
         &self,
         initial_symbols: &SymbolTable,
     ) -> Vec<(Name, DeclarationPtr, DeclarationPtr)> {
-        let mut changes: Vec<(Name, DeclarationPtr, DeclarationPtr)> = vec![];
-
-        for (var_name, initial_value) in initial_symbols.clone().into_iter_local() {
-            let Some(new_value) = self.symbols.lookup(&var_name) else {
-                continue;
-            };
-
-            if !new_value.content_eq(&initial_value) {
-                changes.push((var_name.clone(), initial_value.clone(), new_value.clone()));
-            }
-        }
+        let mut changes: Vec<(Name, DeclarationPtr, DeclarationPtr)> = self
+            .symbols
+            .iter_local()
+            .filter_map(|(name, new_value)| {
+                let initial_value = initial_symbols.lookup_local(name)?;
+                (!new_value.content_eq(&initial_value))
+                    .then(|| (name.clone(), initial_value.clone(), new_value.clone()))
+            })
+            .collect();
+        changes.sort_by(|(lhs, ..), (rhs, ..)| lhs.cmp(rhs));
         changes
     }
 }
