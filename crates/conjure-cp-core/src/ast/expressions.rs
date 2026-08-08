@@ -2035,6 +2035,25 @@ impl Expression {
         }
     }
 
+    /// If the expression is a list, borrows the inner expressions.
+    ///
+    /// Prefer this over [`Expression::unwrap_list`] when the elements are only inspected: copying
+    /// them costs the whole list, which matters on wide matrices that rules test on every visit.
+    ///
+    /// Unlike [`Expression::unwrap_list`], a matrix held as an [`Atom::Literal`] is not unwrapped,
+    /// since its elements are literals with no `Expression` to borrow.
+    pub fn unwrap_list_ref(&self) -> Option<&Vec<Expression>> {
+        match self {
+            Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
+                expr.unwrap_list_ref()
+            }
+            Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
+                matrix.unwrap_list()
+            }
+            _ => None,
+        }
+    }
+
     /// If the expression is a list, returns a *copied* vector of the inner expressions.
     ///
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without

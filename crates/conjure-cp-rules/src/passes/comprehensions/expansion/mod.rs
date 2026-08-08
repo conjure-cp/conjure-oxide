@@ -273,8 +273,9 @@ fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
         return Some(comprehension.as_ref().clone());
     }
 
-    let exprs = expr.clone().unwrap_list()?;
-    let [Expr::Comprehension(_, comprehension)] = exprs.as_slice() else {
+    // Borrow the elements: this runs on every `Or` the rewriter visits, and copying the list
+    // first made the test cost the whole matrix on a wide disjunction.
+    let [Expr::Comprehension(_, comprehension)] = expr.unwrap_list_ref()?.as_slice() else {
         return None;
     };
 
