@@ -101,3 +101,80 @@ pub fn stirling_second_kind(n: u64, k: u64) -> Result<u64, CombinatoricsError> {
     }
     Ok(table[n as usize][k as usize])
 }
+
+/// Count *derangements* of `n` elements: permutations with no fixed points at all.
+///
+/// # Formula
+/// `D(n) = (n-1) * (D(n-1) + D(n-2))`, with `D(0) = 1`, `D(1) = 0`.
+pub fn derangements(n: u64) -> Result<u64, CombinatoricsError> {
+    if n == 0 {
+        return Ok(1);
+    }
+    let mut prev2 = 1u64; // D(0)
+    let mut prev1 = 0u64; // D(1)
+    if n == 1 {
+        return Ok(prev1);
+    }
+    for i in 2..=n {
+        let sum = prev1
+            .checked_add(prev2)
+            .ok_or(CombinatoricsError::Overflow)?;
+        let current = (i - 1)
+            .checked_mul(sum)
+            .ok_or(CombinatoricsError::Overflow)?;
+        prev2 = prev1;
+        prev1 = current;
+    }
+    Ok(prev1)
+}
+
+/// Count ways to partition `n` labelled elements into exactly `k` unlabelled, non-empty blocks,
+/// each block's size restricted to `[block_min, block_max]`.
+///
+/// Generalises [`stirling_second_kind`] (which is the `block_min = 1, block_max = n` case) to a
+/// bounded block size, needed for a partition domain's own `numParts`/`partSize` attributes.
+///
+/// # Method
+/// Builds each partition by always placing the smallest not-yet-placed element into a fresh
+/// block, then choosing the rest of that block's members from the remaining elements -- this
+/// canonical "root by smallest element" construction counts each unordered partition exactly
+/// once, unlike naively assigning elements to numbered blocks (which overcounts by the blocks'
+/// own arbitrary ordering). Recurrence, with `g(n, k)` counting `n` elements into `k` blocks:
+/// `g(0, 0) = 1`, `g(n, 0) = 0` for `n > 0`, `g(0, k) = 0` for `k > 0`, and for `n, k > 0`:
+/// `g(n, k) = sum_{s=block_min}^{min(block_max, n)} C(n-1, s-1) * g(n-s, k-1)`
+/// (choose `s`, the size of the block containing the smallest remaining element, then its other
+/// `s-1` members from the other `n-1` elements).
+pub fn restricted_partition_count(
+    n: u64,
+    k: u64,
+    block_min: u64,
+    block_max: u64,
+) -> Result<u64, CombinatoricsError> {
+    let block_min = block_min.max(1);
+    if block_max < block_min || k == 0 && n > 0 || k > 0 && n == 0 {
+        return Ok(0);
+    }
+    if n == 0 && k == 0 {
+        return Ok(1);
+    }
+
+    // table[i][j] = g(i, j), for i in 0..=n, j in 0..=k.
+    let mut table = vec![vec![0u64; (k + 1) as usize]; (n + 1) as usize];
+    table[0][0] = 1;
+    for i in 1..=n {
+        for j in 1..=k.min(i) {
+            let mut total = 0u64;
+            let s_max = block_max.min(i);
+            for s in block_min..=s_max {
+                let choose = count_combinations(i - 1, s - 1)?;
+                let rest = table[(i - s) as usize][(j - 1) as usize];
+                let term = choose.checked_mul(rest).ok_or(CombinatoricsError::Overflow)?;
+                total = total
+                    .checked_add(term)
+                    .ok_or(CombinatoricsError::Overflow)?;
+            }
+            table[i as usize][j as usize] = total;
+        }
+    }
+    Ok(table[n as usize][k as usize])
+}

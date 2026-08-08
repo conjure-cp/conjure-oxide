@@ -9,7 +9,10 @@ use crate::ast::{
 };
 use crate::bug_assert;
 use crate::range;
-use crate::utils::{count_combinations, count_permutations, stirling_second_kind};
+use crate::utils::{
+    count_combinations, count_permutations, derangements, restricted_partition_count,
+    stirling_second_kind,
+};
 use conjure_cp_core::ast::ReturnType;
 use funcmap::FuncMap;
 use itertools::{Itertools, izip};
@@ -56,6 +59,130 @@ pub enum GroundDomain {
     Partition(PartitionAttr, Moo<GroundDomain>),
     /// A permutation
     Permutation(PermutationAttr, Moo<GroundDomain>),
+}
+
+/// Counts partitions of `n` labelled elements into unlabelled blocks that are *all* exactly
+/// `block_size` (a `regular` partition), i.e. `n / (block_size! ^ k) / k!` for `k = n /
+/// block_size` -- computed by choosing the `k` same-size groups one at a time (dividing out the
+/// groups' own arbitrary ordering with one final `/ k!`) rather than via raw factorials, so
+/// intermediate values stay as small as the final answer allows.
+fn regular_partition_count(n: u64, block_size: u64) -> Result<u64, DomainOpError> {
+    if n == 0 {
+        return Ok(1);
+    }
+    if block_size == 0 || !n.is_multiple_of(block_size) {
+        return Ok(0);
+    }
+    let num_parts = n / block_size;
+    let mut numerator = 1u64;
+    let mut remaining = n;
+    for _ in 0..num_parts {
+        let choose = count_combinations(remaining, block_size)?;
+        numerator = numerator.checked_mul(choose).ok_or(DomainOpError::TooLarge)?;
+        remaining -= block_size;
+    }
+    let num_parts_factorial = (1..=num_parts)
+        .try_fold(1u64, |acc, x| acc.checked_mul(x))
+        .ok_or(DomainOpError::TooLarge)?;
+    numerator
+        .checked_div(num_parts_factorial)
+        .ok_or(DomainOpError::TooLarge)
+}
+
+/// Every unordered partition of `elements` into blocks whose size falls in `[block_min,
+/// block_max]` (both inclusive; `block_min` is floored to `1`, since a block can't be empty).
+///
+/// Built by always rooting the block containing the *first* remaining element (`elements` is
+/// consumed in its given order), then recursing on whatever's left -- the same canonical
+/// construction [`restricted_partition_count`] counts without generating, so the two stay
+/// consistent by construction. Each returned partition is a `Vec` of blocks in the order they
+/// were rooted; each block is a `Vec` of elements in `[root, ..combination order]`.
+fn restricted_partitions(
+    elements: &[Literal],
+    block_min: usize,
+    block_max: usize,
+) -> Vec<Vec<Vec<Literal>>> {
+    let block_min = block_min.max(1);
+    if elements.is_empty() {
+        return vec![vec![]];
+    }
+    let (first, rest) = elements.split_first().expect("checked non-empty above");
+
+    let max_extra = block_max.saturating_sub(1).min(rest.len());
+    if block_min.saturating_sub(1) > max_extra {
+        return vec![];
+    }
+
+    let mut results = vec![];
+    for extra in block_min.saturating_sub(1)..=max_extra {
+        for combo in rest.iter().cloned().combinations(extra) {
+            let mut block = vec![first.clone()];
+            block.extend(combo.iter().cloned());
+
+            let remaining: Vec<Literal> = rest
+                .iter()
+                .filter(|elem| !combo.contains(elem))
+                .cloned()
+                .collect();
+
+            for sub_partition in restricted_partitions(&remaining, block_min, block_max) {
+                let mut whole = vec![block.clone()];
+                whole.extend(sub_partition);
+                results.push(whole);
+            }
+        }
+    }
+    results
+}
+
+/// Every permutation of `n` in `0..len` (representing positions in `elements`) whose number of
+/// non-fixed positions falls in `[moved_min, moved_max]`, returned as the concrete value each
+/// position maps to (i.e. `result[i]` is what `elements[i]` is sent to).
+fn restricted_permutations(
+    elements: &[Literal],
+    moved_min: usize,
+    moved_max: usize,
+) -> impl Iterator<Item = Vec<Literal>> + '_ {
+    let n = elements.len();
+    (0..n)
+        .permutations(n)
+        .filter(move |perm| {
+            let moved = perm.iter().enumerate().filter(|&(i, p)| i != *p).count();
+            moved >= moved_min && moved <= moved_max
+        })
+        .map(move |perm| perm.into_iter().map(|i| elements[i].clone()).collect())
+}
+
+/// Converts a full position-to-position permutation mapping (`elements[i]` maps to `mapped[i]`)
+/// into cycle notation, omitting fixed points -- mirrors
+/// `PermutationAsFunction`'s own `up()` (`crates/conjure-cp-rules/src/types/permutation/
+/// as_function/representation.rs`), duplicated here since domain-level enumeration lives in a
+/// lower crate that representation can't depend on.
+fn permutation_mapping_to_cycles(elements: &[Literal], mapped: &[Literal]) -> Vec<Vec<Literal>> {
+    let forward: std::collections::HashMap<&Literal, &Literal> =
+        elements.iter().zip(mapped.iter()).collect();
+    let mut visited: std::collections::HashSet<&Literal> = std::collections::HashSet::new();
+    let mut cycles = vec![];
+    for start in elements {
+        if visited.contains(start) {
+            continue;
+        }
+        let image = forward[start];
+        if image == start {
+            visited.insert(start);
+            continue;
+        }
+        let mut cycle = vec![start.clone()];
+        visited.insert(start);
+        let mut current = image;
+        while current != start {
+            visited.insert(current);
+            cycle.push(current.clone());
+            current = forward[current];
+        }
+        cycles.push(cycle);
+    }
+    cycles
 }
 
 impl GroundDomain {
@@ -368,11 +495,67 @@ impl GroundDomain {
             GroundDomain::Relation(..) => {
                 todo!("Enumerating relation domains is not yet supported")
             }
-            GroundDomain::Partition(..) => {
-                todo!("Enumerating partition domains is not yet supported")
+            GroundDomain::Partition(attr, inner_dom) => {
+                let elements: Vec<Literal> = inner_dom.values()?.collect();
+                let n = elements.len();
+
+                let block_lo = attr.part_len.low().copied().unwrap_or(1).max(1) as usize;
+                let block_hi = attr
+                    .part_len
+                    .high()
+                    .copied()
+                    .map(|h| (h.max(0) as usize).min(n))
+                    .unwrap_or(n);
+                let parts_lo = attr.num_parts.low().copied().unwrap_or(0).max(0) as usize;
+                let parts_hi = attr
+                    .num_parts
+                    .high()
+                    .copied()
+                    .map(|h| (h.max(0) as usize).min(n))
+                    .unwrap_or(n);
+                let is_regular = attr.is_regular;
+
+                let partitions = if block_lo > block_hi {
+                    vec![]
+                } else {
+                    restricted_partitions(&elements, block_lo, block_hi)
+                };
+                let iter = partitions.into_iter().filter(move |parts| {
+                    let k = parts.len();
+                    if k < parts_lo || k > parts_hi {
+                        return false;
+                    }
+                    !is_regular
+                        || parts
+                            .first()
+                            .is_none_or(|first| parts.iter().all(|p| p.len() == first.len()))
+                });
+                Ok(Box::new(
+                    iter.map(|parts| Literal::AbstractLiteral(AbstractLiteral::Partition(parts))),
+                ))
             }
-            GroundDomain::Permutation(..) => {
-                todo!("Enumerating permutation domains is not yet supported")
+            GroundDomain::Permutation(attr, inner_dom) => {
+                let elements: Vec<Literal> = inner_dom.values()?.collect();
+                let n = elements.len();
+
+                let moved_lo = attr.num_moved.low().copied().unwrap_or(0).max(0) as usize;
+                let moved_hi = attr
+                    .num_moved
+                    .high()
+                    .copied()
+                    .map(|h| (h.max(0) as usize).min(n))
+                    .unwrap_or(n);
+
+                if moved_lo > moved_hi {
+                    return Ok(Box::new(std::iter::empty()));
+                }
+                let mappings: Vec<Vec<Literal>> =
+                    restricted_permutations(&elements, moved_lo, moved_hi).collect();
+                let values = mappings.into_iter().map(move |mapped| {
+                    let cycles = permutation_mapping_to_cycles(&elements, &mapped);
+                    Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles))
+                });
+                Ok(Box::new(values.collect_vec().into_iter()))
             }
         }
     }
@@ -607,11 +790,70 @@ impl GroundDomain {
                 }
                 Ok(ans)
             }
-            GroundDomain::Partition(_, _) => {
-                todo!("Length bound of Partitions is not yet supported")
+            GroundDomain::Partition(attr, inner_domain) => {
+                let n = inner_domain.length()?;
+                let block_lo = attr.part_len.low().copied().unwrap_or(1).max(1) as u64;
+                let block_hi = attr
+                    .part_len
+                    .high()
+                    .copied()
+                    .map(|h| (h.max(0) as u64).min(n))
+                    .unwrap_or(n);
+                let parts_lo = attr.num_parts.low().copied().unwrap_or(0).max(0) as u64;
+                let parts_hi = attr
+                    .num_parts
+                    .high()
+                    .copied()
+                    .map(|h| (h.max(0) as u64).min(n))
+                    .unwrap_or(n);
+                if block_lo > block_hi || parts_lo > parts_hi {
+                    return Ok(0);
+                }
+
+                if attr.is_regular {
+                    let mut ans = 0u64;
+                    for block_size in block_lo..=block_hi {
+                        if n % block_size != 0 {
+                            continue;
+                        }
+                        let num_parts = n / block_size;
+                        if num_parts < parts_lo || num_parts > parts_hi {
+                            continue;
+                        }
+                        let c = regular_partition_count(n, block_size)?;
+                        ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                    }
+                    Ok(ans)
+                } else {
+                    let mut ans = 0u64;
+                    for num_parts in parts_lo..=parts_hi {
+                        let c = restricted_partition_count(n, num_parts, block_lo, block_hi)?;
+                        ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                    }
+                    Ok(ans)
+                }
             }
-            GroundDomain::Permutation(_, _) => {
-                todo!("Length bound of Permutations is not yet supported")
+            GroundDomain::Permutation(attr, inner_domain) => {
+                let n = inner_domain.length()?;
+                let moved_lo = attr.num_moved.low().copied().unwrap_or(0).max(0) as u64;
+                let moved_hi = attr
+                    .num_moved
+                    .high()
+                    .copied()
+                    .map(|h| (h.max(0) as u64).min(n))
+                    .unwrap_or(n);
+                if moved_lo > moved_hi {
+                    return Ok(0);
+                }
+
+                let mut ans = 0u64;
+                for moved in moved_lo..=moved_hi {
+                    let choose = count_combinations(n, moved)?;
+                    let derange = derangements(moved)?;
+                    let term = choose.checked_mul(derange).ok_or(DomainOpError::TooLarge)?;
+                    ans = ans.checked_add(term).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
             }
         }
     }
@@ -2136,5 +2378,84 @@ mod tests {
             "an unattributed partition domain should accept a literal covering its whole inner \
              domain"
         );
+    }
+
+    #[test]
+    fn partition_length_unattributed_matches_the_bell_number() {
+        // Bell(4) = 15: every way to partition a 4-element set, no size/count restriction.
+        let dom = GroundDomain::Partition(
+            partition_attr(Range::Unbounded, Range::Unbounded),
+            domain_int_ground!(1..4),
+        );
+        assert_eq!(dom.length().unwrap(), 15);
+    }
+
+    #[test]
+    fn partition_length_fixed_num_parts_matches_stirling_second_kind() {
+        // S(4, 2) = 7: partitioning 4 elements into exactly 2 unlabelled non-empty blocks, no
+        // block-size restriction -- this is restricted_partition_count's block_min=1 case, which
+        // should agree with stirling_second_kind exactly.
+        let dom = GroundDomain::Partition(
+            partition_attr(Range::Single(2), Range::Unbounded),
+            domain_int_ground!(1..4),
+        );
+        assert_eq!(dom.length().unwrap(), stirling_second_kind(4, 2).unwrap());
+        assert_eq!(dom.length().unwrap(), 7);
+    }
+
+    #[test]
+    fn partition_length_regular_fixed_block_size_matches_a_hand_computed_multinomial() {
+        // 6 elements into regular blocks of size 3: 6! / (3!^2 * 2!) = 720 / 72 = 10.
+        let mut attr = partition_attr(Range::Unbounded, Range::Single(3));
+        attr.is_regular = true;
+        let dom = GroundDomain::Partition(attr, domain_int_ground!(1..6));
+        assert_eq!(dom.length().unwrap(), 10);
+    }
+
+    #[test]
+    fn partition_values_count_matches_length_and_every_value_is_a_valid_member() {
+        let dom = GroundDomain::Partition(
+            partition_attr(Range::Bounded(2, 3), Range::Unbounded),
+            domain_int_ground!(1..4),
+        );
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+        assert_eq!(values.len() as u64, dom.length().unwrap());
+        for value in &values {
+            assert!(dom.contains(value).unwrap());
+        }
+    }
+
+    fn permutation_attr(num_moved: Range<i32>) -> PermutationAttr {
+        PermutationAttr { num_moved }
+    }
+
+    #[test]
+    fn permutation_length_unattributed_matches_factorial() {
+        // 4! = 24: every bijection of a 4-element set onto itself, no numMoved restriction.
+        let dom = GroundDomain::Permutation(permutation_attr(Range::Unbounded), domain_int_ground!(1..4));
+        assert_eq!(dom.length().unwrap(), 24);
+    }
+
+    #[test]
+    fn permutation_length_fully_moved_matches_the_derangement_number() {
+        // D(4) = 9: permutations of 4 elements with no fixed points at all.
+        let dom = GroundDomain::Permutation(
+            permutation_attr(Range::Single(4)),
+            domain_int_ground!(1..4),
+        );
+        assert_eq!(dom.length().unwrap(), 9);
+    }
+
+    #[test]
+    fn permutation_values_count_matches_length_and_every_value_is_a_valid_member() {
+        let dom = GroundDomain::Permutation(
+            permutation_attr(Range::Bounded(1, 2)),
+            domain_int_ground!(1..3),
+        );
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+        assert_eq!(values.len() as u64, dom.length().unwrap());
+        for value in &values {
+            assert!(dom.contains(value).unwrap());
+        }
     }
 }
