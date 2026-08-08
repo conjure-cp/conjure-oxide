@@ -78,7 +78,9 @@ fn regular_partition_count(n: u64, block_size: u64) -> Result<u64, DomainOpError
     let mut remaining = n;
     for _ in 0..num_parts {
         let choose = count_combinations(remaining, block_size)?;
-        numerator = numerator.checked_mul(choose).ok_or(DomainOpError::TooLarge)?;
+        numerator = numerator
+            .checked_mul(choose)
+            .ok_or(DomainOpError::TooLarge)?;
         remaining -= block_size;
     }
     let num_parts_factorial = (1..=num_parts)
@@ -530,9 +532,9 @@ impl GroundDomain {
                             .first()
                             .is_none_or(|first| parts.iter().all(|p| p.len() == first.len()))
                 });
-                Ok(Box::new(
-                    iter.map(|parts| Literal::AbstractLiteral(AbstractLiteral::Partition(parts))),
-                ))
+                Ok(Box::new(iter.map(|parts| {
+                    Literal::AbstractLiteral(AbstractLiteral::Partition(parts))
+                })))
             }
             GroundDomain::Permutation(attr, inner_dom) => {
                 let elements: Vec<Literal> = inner_dom.values()?.collect();
@@ -2432,17 +2434,16 @@ mod tests {
     #[test]
     fn permutation_length_unattributed_matches_factorial() {
         // 4! = 24: every bijection of a 4-element set onto itself, no numMoved restriction.
-        let dom = GroundDomain::Permutation(permutation_attr(Range::Unbounded), domain_int_ground!(1..4));
+        let dom =
+            GroundDomain::Permutation(permutation_attr(Range::Unbounded), domain_int_ground!(1..4));
         assert_eq!(dom.length().unwrap(), 24);
     }
 
     #[test]
     fn permutation_length_fully_moved_matches_the_derangement_number() {
         // D(4) = 9: permutations of 4 elements with no fixed points at all.
-        let dom = GroundDomain::Permutation(
-            permutation_attr(Range::Single(4)),
-            domain_int_ground!(1..4),
-        );
+        let dom =
+            GroundDomain::Permutation(permutation_attr(Range::Single(4)), domain_int_ground!(1..4));
         assert_eq!(dom.length().unwrap(), 9);
     }
 

@@ -168,7 +168,9 @@ pub fn restricted_partition_count(
             for s in block_min..=s_max {
                 let choose = count_combinations(i - 1, s - 1)?;
                 let rest = table[(i - s) as usize][(j - 1) as usize];
-                let term = choose.checked_mul(rest).ok_or(CombinatoricsError::Overflow)?;
+                let term = choose
+                    .checked_mul(rest)
+                    .ok_or(CombinatoricsError::Overflow)?;
                 total = total
                     .checked_add(term)
                     .ok_or(CombinatoricsError::Overflow)?;
