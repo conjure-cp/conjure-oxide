@@ -4,8 +4,6 @@ use conjure_cp::ast::{GroundDomain, Moo, Reference};
 use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 use std::collections::VecDeque;
 
-const MAX_INNER_DOMAIN_SIZE: usize = 100;
-
 register_representation!(
     MSetOccurrence("occurrence")
     struct State<T> {
@@ -85,9 +83,6 @@ register_representation!(
         let values = inner.values()
             .map_err(|error| domain_err(&format!("could not enumerate multiset domain: {error}")))?
             .collect::<Vec<_>>();
-        if values.len() > MAX_INNER_DOMAIN_SIZE {
-            return Err(domain_err("multiset inner domain is too large"));
-        }
         let bounds = mset_bounds(attrs, values.len())
             .ok_or_else(|| domain_err("multiset attributes do not define a finite domain"))?;
         let (min_occurrence, max_occurrence) = bounds.occurrence;

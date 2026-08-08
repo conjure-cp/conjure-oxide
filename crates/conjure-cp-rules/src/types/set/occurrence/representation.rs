@@ -3,8 +3,6 @@ use conjure_cp::ast::{Domain, GroundDomain, Moo, Range, Reference};
 use conjure_cp::{essence_expr, into_matrix_expr, matrix_expr};
 use std::collections::VecDeque;
 
-const MAX_INNER_DOMAIN_SIZE: u64 = 100;
-
 register_representation!(
     SetOccurrence("occurrence")
     struct State<T> {
@@ -116,9 +114,6 @@ register_representation!(
         let inner_len = inner_dom
             .length()
             .map_err(|e| domain_err(&format!("could not enumerate set domain: {e}")))?;
-        if inner_len > MAX_INNER_DOMAIN_SIZE {
-            return Err(domain_err("set inner domain is too large"));
-        }
         let cardinality = cardinality_bounds(&attr.size, inner_len)
             .ok_or_else(|| domain_err("invalid or unsupported set cardinality"))?;
         let inner_dom_elems = inner_dom
