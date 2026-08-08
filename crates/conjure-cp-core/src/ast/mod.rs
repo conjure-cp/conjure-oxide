@@ -39,8 +39,8 @@ pub use domains::{
 pub use eval::generator_values_from_expr;
 pub use eval::{
     eval_constant, eval_constant_local, finish_root_evaluator_normalisation,
-    normalise_evaluator_local, normalise_root_constraints_deep, normalise_root_constraints_local,
-    normalise_root_selective_deep_expr,
+    normalise_evaluator_local, normalise_root_constraint_deep, normalise_root_constraints_deep,
+    normalise_root_constraints_local, normalise_root_selective_deep_expr,
 };
 pub use expression_arena::{ExpressionArena, ExpressionNodeId};
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};

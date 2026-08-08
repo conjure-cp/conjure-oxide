@@ -10,7 +10,6 @@ use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
-use uniplate::Uniplate;
 
 use super::partial_eval::{run_partial_evaluator, run_partial_evaluator_local};
 
@@ -147,6 +146,19 @@ pub fn finish_root_evaluator_normalisation(root: &Expr) -> Option<Expr> {
     changed.then_some(current)
 }
 
+/// Deep-normalises a single top-level constraint, or returns `None` if it is already normal.
+///
+/// Callers that know which root child changed should prefer this over rebuilding the whole root:
+/// the root hook runs after every rewrite, so touching siblings there costs O(model size) per
+/// rewrite.
+pub fn normalise_root_constraint_deep(constraint: &Expr) -> Option<Expr> {
+    if constraint_skips_deep_root_normalisation(constraint) {
+        return None;
+    }
+
+    normalise_constraint_deep_to_fixpoint(constraint)
+}
+
 fn normalise_root_constraints_selective_deep(
     exprs: &[Expr],
     only_constraint: Option<usize>,
@@ -155,29 +167,30 @@ fn normalise_root_constraints_selective_deep(
         return Some(Expr::Root(Metadata::new(), vec![true.into()]));
     }
 
-    let mut changed = false;
-    let constraints = exprs
-        .iter()
-        .enumerate()
-        .map(|(index, constraint)| {
-            if only_constraint.is_some_and(|only| only != index) {
-                return constraint.clone();
-            }
+    // Normalise first and only rebuild the root list once something has actually changed. Building
+    // the replacement eagerly clones every sibling constraint on each call, which dominates the
+    // post-rewrite root hook on models with many top-level constraints.
+    let mut normalised: Vec<(usize, Expr)> = Vec::new();
+    for (index, constraint) in exprs.iter().enumerate() {
+        if only_constraint.is_some_and(|only| only != index) {
+            continue;
+        }
 
-            if constraint_skips_deep_root_normalisation(constraint) {
-                return constraint.clone();
-            }
+        if let Some(replacement) = normalise_root_constraint_deep(constraint) {
+            normalised.push((index, replacement));
+        }
+    }
 
-            if let Some(normalised) = normalise_constraint_deep_to_fixpoint(constraint) {
-                changed = true;
-                normalised
-            } else {
-                constraint.clone()
-            }
-        })
-        .collect();
+    if normalised.is_empty() {
+        return None;
+    }
 
-    changed.then(|| Expr::Root(Metadata::new(), constraints))
+    let mut constraints = exprs.to_vec();
+    for (index, replacement) in normalised {
+        constraints[index] = replacement;
+    }
+
+    Some(Expr::Root(Metadata::new(), constraints))
 }
 
 /// Whether a top-level constraint has already been lowered to solver-flat form.
@@ -330,7 +343,16 @@ fn has_only_local_constant_operands(expr: &Expr) -> bool {
             is_local_constant_expr(inner.as_ref())
         }
         Expr::Comprehension(_, _) | Expr::AbstractComprehension(_, _) | Expr::Root(_, _) => false,
-        _ => expr.children().iter().all(is_local_constant_expr),
+        // Visit children by reference. `Uniplate::children()` clones the whole child list, so on a
+        // wide node (e.g. `or` over a large matrix) this test alone costs O(subtree); the evaluator
+        // hook runs it on every ancestor after every rewrite, which makes rewriting quadratic.
+        _ => {
+            let mut all_constant = true;
+            expr.for_each_expr_child(&mut |child| {
+                all_constant = all_constant && is_local_constant_expr(child);
+            });
+            all_constant
+        }
     }
 }
 

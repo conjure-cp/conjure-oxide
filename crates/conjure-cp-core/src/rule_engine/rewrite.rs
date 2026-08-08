@@ -4,7 +4,7 @@ use crate::{
     ast::{
         Atom, Expression as Expr, ExpressionArena, ExpressionNodeId, Metadata, Moo, Name,
         discriminant_from_value, finish_root_evaluator_normalisation, normalise_evaluator_local,
-        normalise_root_selective_deep_expr,
+        normalise_root_constraint_deep,
     },
     bug,
     objective::introduce_objective_auxiliary,
@@ -3145,30 +3145,28 @@ fn normalise_evaluators_from_node_to_root(
 /// Deep-normalises only the root constraint that `child_id` belongs to.
 ///
 /// `child_id` must be a direct child of the arena root. Sibling constraints are left untouched.
+///
+/// The replacement is written to `child_id` rather than to the root. Rebuilding the root here
+/// would clone every sibling constraint and re-import the whole model into the arena, which this
+/// hook cannot afford: it runs after every rewrite.
 fn normalise_root_evaluator_for_child(
     arena: &mut ExpressionArena,
     child_id: ExpressionNodeId,
     dirty_trace: &mut DirtyTrace,
 ) -> bool {
     let root_id = arena.root();
-    let Some(constraint_index) = arena
-        .children(root_id)
-        .iter()
-        .position(|id| *id == child_id)
-    else {
+    if !arena.children(root_id).contains(&child_id) {
         return normalise_evaluator_node_to_fixpoint(arena, root_id, dirty_trace);
-    };
+    }
 
-    let root_expr = arena.expression(root_id);
-    let Some(replacement) = normalise_root_selective_deep_expr(root_expr, Some(constraint_index))
-    else {
+    let Some(replacement) = normalise_root_constraint_deep(arena.expression(child_id)) else {
         return false;
     };
 
     dirty_trace.replacement_subtree_clears += 1;
-    arena.replace_subtree(root_id, clear_expr_clean_rule_metadata(replacement));
+    arena.replace_subtree(child_id, clear_expr_clean_rule_metadata(replacement));
     dirty_trace.record_rewrite("evaluator_normalisation_hook", false);
-    dirty_ancestors_after_focus_change(arena, root_id, dirty_trace, None);
+    dirty_ancestors_after_focus_change(arena, child_id, dirty_trace, None);
     true
 }
 
