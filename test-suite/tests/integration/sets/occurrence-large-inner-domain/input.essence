@@ -1,0 +1,13 @@
+language Essence 1.3
+
+$ Scaling guard for set{occurrence} over a large inner domain.
+$
+$ `i in s` under occurrence lowers to one disjunct per inner-domain value, so the rewriter does
+$ O(n) rule applications inside a single very wide `or`. That makes this model a sensitive probe
+$ for per-rewrite costs that scale with model size: the recorded rule-attempt counts in stats.toml
+$ must stay linear in the inner-domain size, and expected-time must not creep up.
+
+find i : int(1..100)
+find s : set{occurrence} (size 2) of int(1..200)
+
+such that i in s, |s| = 2
