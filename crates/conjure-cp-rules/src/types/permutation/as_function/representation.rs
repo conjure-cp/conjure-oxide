@@ -195,6 +195,9 @@ register_representation!(
     }
 );
 
+/// A function's worth of `(from, to)` pairs, one per domain position.
+type ForwardBackwardPairs = Vec<(Literal, Literal)>;
+
 /// Decodes a permutation literal's cycle notation into forward/backward `(from, to)` pair lists
 /// over `domain_values`' full domain (unmentioned elements map to themselves), matching every
 /// domain position exactly once each. Shared by `down()` and the `Eq`/`Neq` vertical rule (which
@@ -203,7 +206,7 @@ register_representation!(
 pub(super) fn cycles_to_forward_backward_pairs(
     domain_values: &[Literal],
     cycles: Vec<Vec<Literal>>,
-) -> Result<(Vec<(Literal, Literal)>, Vec<(Literal, Literal)>), ReprDownError> {
+) -> Result<(ForwardBackwardPairs, ForwardBackwardPairs), ReprDownError> {
     let mut forward_map: HashMap<Literal, Literal> = HashMap::new();
     for cycle in &cycles {
         if cycle.is_empty() {
