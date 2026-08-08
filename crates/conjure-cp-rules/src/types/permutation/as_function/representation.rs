@@ -32,6 +32,30 @@ register_representation!(
         /// disagrees with the identity.
         pub num_moved: Range<i32>
     }
+    impl State<DeclarationPtr> {
+        /// `sum([ toInt(i != image(forwards, i)) | i : innerDomain ])`: the permutation's own
+        /// cardinality (`|p|`, i.e. `numMoved`), reused both by the `numMoved` structural
+        /// constraint and by the `Card` vertical rule.
+        pub fn cardinality_expr(&self) -> Expression {
+            let forwards_ref: Expression = Reference::new(self.forwards.clone()).into();
+            quantify(
+                std::slice::from_ref(&self.inner_domain),
+                &["i"],
+                ACOperatorKind::Sum,
+                |refs| {
+                    let i = &refs[0];
+                    let image_i = Expression::Image(
+                        Metadata::new(),
+                        Moo::new(forwards_ref.clone()),
+                        Moo::new(i.clone()),
+                    );
+                    let moved =
+                        Expression::Neq(Metadata::new(), Moo::new(i.clone()), Moo::new(image_i));
+                    Expression::ToInt(Metadata::new(), Moo::new(moved))
+                },
+            )
+        }
+    }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
             dom.clone(),
@@ -67,21 +91,7 @@ register_representation!(
         let backwards_ref: Expression = Reference::new(state.backwards.clone()).into();
 
         // numMoved = sum([ toInt(i != image(forwards, i)) | i : innerDomain ])
-        let cardinality = quantify(
-            std::slice::from_ref(&state.inner_domain),
-            &["i"],
-            ACOperatorKind::Sum,
-            |refs| {
-                let i = &refs[0];
-                let image_i = Expression::Image(
-                    Metadata::new(),
-                    Moo::new(forwards_ref.clone()),
-                    Moo::new(i.clone()),
-                );
-                let moved = Expression::Neq(Metadata::new(), Moo::new(i.clone()), Moo::new(image_i));
-                Expression::ToInt(Metadata::new(), Moo::new(moved))
-            },
-        );
+        let cardinality = state.cardinality_expr();
 
         // forAll i : innerDomain . image(backwards, image(forwards, i)) = i
         let round_trip_forwards = quantify(
@@ -135,41 +145,8 @@ register_representation!(
         let Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles)) = value else {
             return Err(ReprDownError::BadValue(value, String::from("expected a permutation literal")));
         };
-
-        let mut forward_map: HashMap<Literal, Literal> = HashMap::new();
-        for cycle in &cycles {
-            if cycle.is_empty() {
-                continue;
-            }
-            for w in 0..cycle.len() {
-                let from = cycle[w].clone();
-                let to = cycle[(w + 1) % cycle.len()].clone();
-                if forward_map.insert(from, to).is_some() {
-                    return Err(ReprDownError::BadValue(
-                        AbstractLiteral::Permutation(cycles).into(),
-                        String::from("an element appears in more than one cycle"),
-                    ));
-                }
-            }
-        }
-
-        let domain_set: HashSet<&Literal> = state.domain_values.iter().collect();
-        for moved in forward_map.keys() {
-            if !domain_set.contains(moved) {
-                return Err(ReprDownError::BadValue(
-                    AbstractLiteral::Permutation(cycles).into(),
-                    String::from("permutation literal has a cycle element outside its domain"),
-                ));
-            }
-        }
-
-        let mut forward_pairs = Vec::with_capacity(state.domain_values.len());
-        let mut backward_pairs = Vec::with_capacity(state.domain_values.len());
-        for v in state.domain_values.iter() {
-            let mapped = forward_map.get(v).cloned().unwrap_or_else(|| v.clone());
-            forward_pairs.push((v.clone(), mapped.clone()));
-            backward_pairs.push((mapped, v.clone()));
-        }
+        let (forward_pairs, backward_pairs) =
+            cycles_to_forward_backward_pairs(&state.domain_values, cycles)?;
 
         Ok(State {
             forwards: Literal::AbstractLiteral(AbstractLiteral::Function(forward_pairs)),
@@ -217,3 +194,49 @@ register_representation!(
         Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles))
     }
 );
+
+/// Decodes a permutation literal's cycle notation into forward/backward `(from, to)` pair lists
+/// over `domain_values`' full domain (unmentioned elements map to themselves), matching every
+/// domain position exactly once each. Shared by `down()` and the `Eq`/`Neq` vertical rule (which
+/// needs the same conversion to compare a `PermutationAsFunction`-represented permutation against
+/// a literal, going through the `forwards` Function's own literal-equality machinery).
+pub(super) fn cycles_to_forward_backward_pairs(
+    domain_values: &[Literal],
+    cycles: Vec<Vec<Literal>>,
+) -> Result<(Vec<(Literal, Literal)>, Vec<(Literal, Literal)>), ReprDownError> {
+    let mut forward_map: HashMap<Literal, Literal> = HashMap::new();
+    for cycle in &cycles {
+        if cycle.is_empty() {
+            continue;
+        }
+        for w in 0..cycle.len() {
+            let from = cycle[w].clone();
+            let to = cycle[(w + 1) % cycle.len()].clone();
+            if forward_map.insert(from, to).is_some() {
+                return Err(ReprDownError::BadValue(
+                    AbstractLiteral::Permutation(cycles).into(),
+                    String::from("an element appears in more than one cycle"),
+                ));
+            }
+        }
+    }
+
+    let domain_set: HashSet<&Literal> = domain_values.iter().collect();
+    for moved in forward_map.keys() {
+        if !domain_set.contains(moved) {
+            return Err(ReprDownError::BadValue(
+                AbstractLiteral::Permutation(cycles).into(),
+                String::from("permutation literal has a cycle element outside its domain"),
+            ));
+        }
+    }
+
+    let mut forward_pairs = Vec::with_capacity(domain_values.len());
+    let mut backward_pairs = Vec::with_capacity(domain_values.len());
+    for v in domain_values {
+        let mapped = forward_map.get(v).cloned().unwrap_or_else(|| v.clone());
+        forward_pairs.push((v.clone(), mapped.clone()));
+        backward_pairs.push((mapped, v.clone()));
+    }
+    Ok((forward_pairs, backward_pairs))
+}
