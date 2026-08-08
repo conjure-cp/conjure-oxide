@@ -564,7 +564,8 @@ fn parse_unary_expression(
                 | ReturnType::Sequence(_)
                 | ReturnType::Function(_, _)
                 | ReturnType::Relation(_)
-                | ReturnType::Partition(_) => Expression::Card,
+                | ReturnType::Partition(_)
+                | ReturnType::Permutation(_) => Expression::Card,
                 _ => Expression::Abs,
             };
             Ok(Some(constructor(Metadata::new(), Moo::new(inner))))

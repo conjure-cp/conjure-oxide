@@ -1136,6 +1136,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 | AbstractLiteral::Matrix(values, _) => values.len(),
                 AbstractLiteral::Function(entries) => entries.len(),
                 AbstractLiteral::Relation(entries) => entries.len(),
+                // A permutation's cardinality is its numMoved count -- how many elements are
+                // mentioned in some cycle -- not the number of cycles, matching the same
+                // "unmentioned = fixed point" convention used everywhere else for permutations
+                // (contains()'s size check, PermutationAsFunction's own numMoved structural
+                // constraint).
+                AbstractLiteral::Permutation(cycles) => cycles.iter().flatten().count(),
                 _ => return None,
             };
             i32::try_from(length).ok().map(Lit::Int)
