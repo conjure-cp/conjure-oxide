@@ -22,7 +22,13 @@ register_representation!(
             Expression::Sum(Metadata::new(), Moo::new(into_matrix_expr!(elems)))
         }
 
+        /// Lower membership to a lookup in the occurrence bits where the inner domain allows it,
+        /// falling back to a per-value disjunction otherwise.
         pub fn membership_expr(&self, member: Expression) -> Expression {
+            if let Some(lookup) = self.membership_lookup_expr(&member) {
+                return lookup;
+            }
+
             let choices = self
                 .occurs
                 .iter()
@@ -40,6 +46,66 @@ register_representation!(
                 })
                 .collect();
             Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(choices)))
+        }
+
+        /// Membership as a single variable-indexed lookup, `occurs[member]`.
+        ///
+        /// Indexing rather than unrolling "member equals this value and this value occurs" keeps
+        /// membership one constraint instead of one disjunct per inner-domain value, and lets the
+        /// Minion backend reach a native `Element` constraint, which propagates more strongly than
+        /// the disjunction. This is the same trade-off `SequenceExplicit`'s surjectivity witness
+        /// makes.
+        ///
+        /// Only available over a contiguous integer inner domain, which is what lets the member's
+        /// value be turned into a position by shifting. A gappy domain would need a lookup of its
+        /// own to find the position, so those sets fall back to the disjunction below.
+        fn membership_lookup_expr(&self, member: &Expression) -> Option<Expression> {
+            let low = self.contiguous_low_value()?;
+            let bits = self
+                .occurs
+                .iter()
+                .map(|(_, declaration)| Expression::from(Reference::new(declaration.clone())))
+                .collect::<Vec<_>>();
+
+            // Index a plain one-based list rather than giving the matrix the inner domain as its
+            // index domain: the Minion backend only reaches `element` through a list. An
+            // out-of-range index stays out of range after the shift, so membership outside the
+            // inner domain is still false.
+            let member = member.clone();
+            let offset = 1 - low;
+            let index = if offset == 0 {
+                member
+            } else {
+                essence_expr!(&member + &offset)
+            };
+            Some(Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(into_matrix_expr![bits]),
+                vec![index],
+            ))
+        }
+
+        /// The lowest inner-domain value, when the values are consecutive integers.
+        ///
+        /// Derived from the occurrence values rather than the domain's ranges so that a domain
+        /// spelled as several adjacent ranges still counts as contiguous.
+        fn contiguous_low_value(&self) -> Option<i32> {
+            let int_value = |literal: &Literal| match literal {
+                Literal::Int(value) => Some(*value),
+                _ => None,
+            };
+
+            let mut values = self.occurs.iter().map(|(value, _)| value);
+            let first = int_value(values.next()?)?;
+            let mut previous = first;
+            for value in values {
+                let value = int_value(value)?;
+                if value != previous + 1 {
+                    return None;
+                }
+                previous = value;
+            }
+            Some(first)
         }
 
         /// Lower `self ⊆ superset` to implications over occurrence bits.
@@ -171,7 +237,8 @@ register_representation!(
                 other => bug!("expected a Boolean occurrence value, got {other}"),
             })
             .collect();
-        elems.sort_by_key(ToString::to_string);
+        // Essence order, not string order: sorting `-2, -1` as text puts `-1` first.
+        elems.sort_by(Literal::essence_cmp);
         Literal::AbstractLiteral(AbstractLiteral::Set(elems))
     }
     fn repr_vars(state: &State<DeclarationPtr>) -> VecDeque<DeclarationPtr> {

@@ -35,7 +35,13 @@ mod tests {
     use conjure_cp::{domain_int, range};
 
     fn occurrence_set() -> (SymbolTable, Reference, Vec<conjure_cp::ast::DeclarationPtr>) {
-        let domain = Domain::set(SetAttr::<i32>::default(), domain_int!(1..3));
+        occurrence_set_over(domain_int!(1..3))
+    }
+
+    fn occurrence_set_over(
+        inner: conjure_cp::ast::DomainPtr,
+    ) -> (SymbolTable, Reference, Vec<conjure_cp::ast::DeclarationPtr>) {
+        let domain = Domain::set(SetAttr::<i32>::default(), inner);
         let mut symbols = SymbolTable::new();
         let mut declaration = symbols.gen_find(&domain);
         SetOccurrence::init_for(&mut declaration).unwrap();
@@ -60,6 +66,49 @@ mod tests {
                 .unwrap()
                 .new_expression,
             Expr::from(Reference::new(occurs[1].clone()))
+        );
+    }
+
+    /// A variable member must not unroll into one disjunct per inner-domain value: that is
+    /// quadratic to rewrite and hides the native `Element` constraint from the Minion backend.
+    #[test]
+    fn variable_membership_is_an_indexed_lookup() {
+        let (symbols, set, occurs) = occurrence_set();
+        let member = symbols.clone().gen_find(&domain_int!(1..3));
+        let membership = Expr::In(
+            Metadata::new(),
+            Moo::new(Reference::new(member).into()),
+            Moo::new(set.into()),
+        );
+
+        let lowered = membership_occurrence(&membership, &symbols)
+            .unwrap()
+            .new_expression;
+        let Expr::SafeIndex(_, subject, indices) = &lowered else {
+            panic!("expected an indexed lookup, got {lowered}");
+        };
+        assert_eq!(indices.len(), 1);
+        assert_eq!(subject.unwrap_list().unwrap().len(), occurs.len());
+    }
+
+    /// A gappy inner domain has no value-to-position shift, so it keeps the disjunction.
+    #[test]
+    fn variable_membership_over_a_gappy_domain_stays_a_disjunction() {
+        let inner = Domain::int_ground(vec![range!(1), range!(3), range!(5)]);
+        let (symbols, set, _) = occurrence_set_over(inner);
+        let member = symbols.clone().gen_find(&domain_int!(1..5));
+        let membership = Expr::In(
+            Metadata::new(),
+            Moo::new(Reference::new(member).into()),
+            Moo::new(set.into()),
+        );
+
+        let lowered = membership_occurrence(&membership, &symbols)
+            .unwrap()
+            .new_expression;
+        assert!(
+            matches!(lowered, Expr::Or(..)),
+            "expected a disjunction, got {lowered}"
         );
     }
 
