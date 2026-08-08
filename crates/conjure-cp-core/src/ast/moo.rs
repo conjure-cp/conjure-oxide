@@ -181,6 +181,41 @@ where
             )
         }
     }
+
+    /// Counts children through the pointer, without cloning the pointee.
+    ///
+    /// The default implementation materialises `children_bi`, which goes via [`Biplate::biplate`]
+    /// and therefore clones the whole inner value. Payload syncs call this once per tree level, so
+    /// the default turns a single rewrite under a wide node (e.g. `or` over a large matrix) into
+    /// O(n) work, and a full rewrite pass into O(n^2).
+    fn children_bi_count(&self) -> usize {
+        if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<To>() {
+            // Biplate<T> for T treats the value as its only child.
+            return 1;
+        }
+        <U as Biplate<To>>::children_bi_count(&**self)
+    }
+
+    /// Replaces a child through the pointer, cloning the pointee only when it is shared.
+    ///
+    /// Mirrors [`Biplate::children_bi_count`] above: the default implementation clones the inner
+    /// value twice (once to list children, once to rebuild) and structurally compares the old and
+    /// new trees.
+    fn try_replace_child_at_bi(&mut self, index: usize, child: To) -> bool {
+        if std::any::TypeId::of::<Self>() == std::any::TypeId::of::<To>() {
+            if index != 0 {
+                return false;
+            }
+            // SAFETY: TypeId equality means `Self` and `To` are the same type.
+            unsafe {
+                let child_as_self = std::mem::transmute_copy::<To, Self>(&child);
+                std::mem::forget(child);
+                *self = child_as_self;
+            }
+            return true;
+        }
+        <U as Biplate<To>>::try_replace_child_at_bi(Moo::make_mut(self), index, child)
+    }
 }
 
 impl<'de, T: Deserialize<'de>> Deserialize<'de> for Moo<T> {
