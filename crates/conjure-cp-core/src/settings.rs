@@ -185,6 +185,33 @@ pub fn begin_heuristic_all_choices(requested: Vec<usize>) {
     });
 }
 
+/// Restores the previous heuristic when a scoped override ends.
+struct HeuristicGuard(Heuristic);
+
+impl Drop for HeuristicGuard {
+    fn drop(&mut self) {
+        set_heuristic(self.0);
+    }
+}
+
+/// Runs `f` with the compact heuristic in force, whatever the configured one is.
+///
+/// Rewriting a temporary model -- a comprehension generator submodel, say -- picks representations
+/// too, but those are not modelling choices about the user's problem: a representation is
+/// semantics-preserving, so whichever one a submodel gets, it enumerates the same values. Compact
+/// takes the smallest and moves on, leaving the configured heuristic's state for the decisions that
+/// do matter: `x` keeps enumerating combinations of the real model only, the random stream is not
+/// advanced, and the interactive heuristic does not ask the user about throwaway variables.
+///
+/// A representation named on the domain itself (`set{packed}`) still wins -- representation
+/// selection honours that before it consults the heuristic at all.
+pub fn with_compact_heuristic<T>(f: impl FnOnce() -> T) -> T {
+    let previous = heuristic();
+    set_heuristic(Heuristic::Compact);
+    let _guard = HeuristicGuard(previous);
+    f()
+}
+
 /// Selects the requested branch at the next `x` decision and records all available options.
 pub fn next_heuristic_all_index(options: &[&str]) -> usize {
     bug_assert!(

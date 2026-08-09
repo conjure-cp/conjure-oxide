@@ -15,12 +15,12 @@ use conjure_cp::{
     },
     bug,
     context::Context,
-    representation::util::try_up,
+    representation::{ReprStore, util::try_up},
     rule_engine::{
         RuleSet,
         rewrite_model_with_configured_rewriter as rewrite_model_with_configured_rewriter_core,
     },
-    settings::Rewriter,
+    settings::{Rewriter, with_compact_heuristic},
     solver::SolverError,
 };
 use uniplate::{Biplate as _, Uniplate as _};
@@ -33,13 +33,19 @@ pub(super) fn with_temporary_model(model: Model, search_order: Option<Vec<Name>>
     model
 }
 
-/// Rewrites a model using the currently configured rewriter and Minion-oriented rule sets.
+/// Rewrites a temporary model using the currently configured rewriter and Minion-oriented rule
+/// sets.
+///
+/// Representations for a throwaway model are chosen compactly rather than by the configured
+/// heuristic -- see [`with_compact_heuristic`].
 pub(super) fn rewrite_model_with_configured_rewriter<'a>(
     model: Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     configured_rewriter: Rewriter,
 ) -> Model {
-    rewrite_model_with_configured_rewriter_core(model, rule_sets, configured_rewriter).unwrap()
+    with_compact_heuristic(|| {
+        rewrite_model_with_configured_rewriter_core(model, rule_sets, configured_rewriter).unwrap()
+    })
 }
 
 /// Splits out the guards that reference non-quantified decision variables.
@@ -484,18 +490,26 @@ fn temporarily_bind_quantified_vars_to_values(
 
 /// Guard that temporarily converts quantified declarations to find declarations.
 pub(super) struct TempQuantifiedFindGuard {
-    originals: Vec<(DeclarationPtr, DeclarationKind)>,
+    originals: Vec<(DeclarationPtr, DeclarationKind, ReprStore)>,
 }
 
 impl Drop for TempQuantifiedFindGuard {
     fn drop(&mut self) {
-        for (mut decl, kind) in self.originals.drain(..) {
+        for (mut decl, kind, reprs) in self.originals.drain(..) {
             let _ = decl.replace_kind(kind);
+            *decl.reprs_mut() = reprs;
         }
     }
 }
 
 /// Converts quantified declarations in `model` to temporary find declarations.
+///
+/// Declarations are shared, so the guard also restores the representations they carried. Rewriting
+/// the temporary model picks a representation for each of these finds and records it on the
+/// declaration; left there, the next temporary model built from the same comprehension scope would
+/// start from a variable already claiming to be represented, while its representation variables
+/// belong to the previous model and constrain nothing here -- so the solver is free to assign them
+/// anything, and every such assignment comes back as another copy of the same expanded element.
 pub(super) fn temporarily_materialise_quantified_vars_as_finds(
     model: &Model,
     quantified_vars: &[Name],
@@ -512,9 +526,11 @@ pub(super) fn temporarily_materialise_quantified_vars_as_finds(
         let Some(domain) = decl.domain() else {
             continue;
         };
+        let old_reprs = decl.reprs().clone();
+
         let new_kind = DeclarationKind::Find(DecisionVariable::new(domain));
         let _ = decl.replace_kind(new_kind);
-        originals.push((decl, old_kind));
+        originals.push((decl, old_kind, old_reprs));
     }
 
     TempQuantifiedFindGuard { originals }
