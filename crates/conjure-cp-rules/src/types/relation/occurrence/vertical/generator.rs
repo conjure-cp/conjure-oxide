@@ -1,6 +1,7 @@
 use super::super::RelationOccurrence;
+use crate::types::relation::common::fresh_column_declarations;
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Metadata, Moo, Name, Reference,
+    AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Metadata, Moo, Reference,
     SymbolTable, comprehension::ComprehensionQualifier,
 };
 use conjure_cp::rule_engine::{
@@ -54,14 +55,14 @@ fn lower_relation_occurrence_expression_generator(
         return Err(RuleNotApplicable);
     };
 
-    let column_ptrs: Vec<DeclarationPtr> = representation
-        .inner_domains
-        .iter()
-        .enumerate()
-        .map(|(i, dom)| {
-            DeclarationPtr::new_quantified(Name::user(&format!("i{i}")), dom.clone().into())
-        })
-        .collect();
+    let column_ptrs: Vec<DeclarationPtr> = fresh_column_declarations(
+        &old_ptr,
+        representation
+            .inner_domains
+            .iter()
+            .map(|dom| dom.clone().into()),
+        &comprehension.symbols,
+    );
     let column_exprs: Vec<Expr> = column_ptrs
         .iter()
         .map(|ptr| Expr::from(Reference::new(ptr.clone())))

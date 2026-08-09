@@ -1,7 +1,8 @@
 use super::super::RelationPacked;
+use crate::types::relation::common::fresh_column_declarations;
 use conjure_cp::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, GroundDomain, HasDomain, Metadata,
-    Moo, Name, Reference, SymbolTable, comprehension::ComprehensionQualifier,
+    Moo, Reference, SymbolTable, comprehension::ComprehensionQualifier,
 };
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
@@ -50,13 +51,11 @@ fn lower_relation_packed_expression_generator(expr: &Expr, _: &SymbolTable) -> A
         return Err(RuleNotApplicable);
     };
 
-    let column_ptrs: Vec<DeclarationPtr> = inner_doms
-        .iter()
-        .enumerate()
-        .map(|(i, dom)| {
-            DeclarationPtr::new_quantified(Name::user(&format!("i{i}")), dom.clone().into())
-        })
-        .collect();
+    let column_ptrs: Vec<DeclarationPtr> = fresh_column_declarations(
+        &old_ptr,
+        inner_doms.iter().map(|dom| dom.clone().into()),
+        &comprehension.symbols,
+    );
     let column_exprs: Vec<Expr> = column_ptrs
         .iter()
         .map(|ptr| Expr::from(Reference::new(ptr.clone())))
