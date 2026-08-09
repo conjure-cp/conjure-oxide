@@ -21,7 +21,7 @@ use tracing::warn;
 use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
 
 use super::via_solver_common::{
-    instantiate_return_expressions_from_values, retain_quantified_solution_values,
+    detach_symbols, instantiate_return_expressions_from_values, retain_quantified_solution_values,
     rewrite_model_with_configured_rewriter, split_symbolic_guards,
     temporarily_materialise_quantified_vars_as_finds, with_temporary_model,
 };
@@ -49,11 +49,12 @@ pub fn expand_via_solver_ac(
     // Replace all boolean expressions referencing non-quantified variables in the return
     // expression with dummy variables. This allows us to add it as a constraint to the
     // generator model.
-    let generator_model = add_return_expression_to_generator_model(
-        comprehension.to_generator_model(),
-        return_expression,
-        &ac_operator,
-    );
+    // Detach before adding dummies: they and the localised references below are declarations of
+    // this throwaway model, not of the comprehension's own scope.
+    let mut generator_model = comprehension.to_generator_model();
+    detach_symbols(&mut generator_model);
+    let generator_model =
+        add_return_expression_to_generator_model(generator_model, return_expression, &ac_operator);
 
     // REWRITE GENERATOR MODEL AND PASS TO MINION
     // ==========================================

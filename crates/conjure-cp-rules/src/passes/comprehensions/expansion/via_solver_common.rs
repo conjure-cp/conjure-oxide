@@ -36,6 +36,19 @@ pub(super) fn with_temporary_model(model: Model, search_order: Option<Vec<Name>>
     model
 }
 
+/// Gives `model` a symbol table of its own, so the declarations a temporary model's rewrite
+/// introduces stay inside that model.
+///
+/// A generator model shares the comprehension's own symbol table, and both building and rewriting
+/// it add declarations -- auxiliaries from flattening, dummy variables standing in for non-local
+/// fragments. Left in the comprehension's scope they reappear in the *next* model built from that
+/// scope, as finds with nothing constraining them (and sometimes with domains that only made sense
+/// in the model they came from).
+pub(super) fn detach_symbols(model: &mut Model) {
+    let detached = model.symbols_ptr_unchecked_mut().detach();
+    *model.symbols_ptr_unchecked_mut() = detached;
+}
+
 /// Rewrites a temporary model using the currently configured rewriter and Minion-oriented rule
 /// sets.
 ///

@@ -1,14 +1,14 @@
 use std::sync::{Arc, Mutex};
 
 use conjure_cp::{
-    ast::{Expression, Model, comprehension::Comprehension},
+    ast::{Expression, comprehension::Comprehension},
     rule_engine::resolve_rule_sets,
     settings::{SolverFamily, current_rewriter},
     solver::{Solver, SolverError, adaptors::Minion},
 };
 
 use super::via_solver_common::{
-    instantiate_return_expressions_from_values, retain_quantified_solution_values,
+    detach_symbols, instantiate_return_expressions_from_values, retain_quantified_solution_values,
     rewrite_model_with_configured_rewriter, split_symbolic_guards,
     temporarily_materialise_quantified_vars_as_finds, with_temporary_model,
 };
@@ -112,10 +112,4 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
         &symbolic_guards,
         skip_operator,
     )
-}
-
-/// Gives `model` a symbol table of its own, so changes to it stay inside this model.
-fn detach_symbols(model: &mut Model) {
-    let detached = model.symbols_ptr_unchecked_mut().detach();
-    *model.symbols_ptr_unchecked_mut() = detached;
 }
