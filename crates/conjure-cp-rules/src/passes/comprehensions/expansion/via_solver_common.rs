@@ -6,10 +6,14 @@ use std::{
 use crate::types::matrix::try_lower_const_unsafe_index_matrix_components;
 use conjure_cp::{
     ast::{
-        Atom, DecisionVariable, DeclarationKind, DeclarationPtr, Expression, Literal, Metadata,
-        Model, Name, Reference, SymbolTable, eval_constant, run_partial_evaluator,
+        Atom, DecisionVariable, DeclarationKind, DeclarationPtr, Expression, GroundDomain, Literal,
+        Metadata, Model, Name, Range, Reference, SymbolTable,
+        ac_operators::ACOperatorKind,
+        comprehension::{Comprehension, ComprehensionQualifier},
+        eval_constant, run_partial_evaluator,
         serde::{HasId as _, ObjId},
     },
+    bug,
     context::Context,
     representation::util::try_up,
     rule_engine::{
@@ -17,6 +21,7 @@ use conjure_cp::{
         rewrite_model_with_configured_rewriter as rewrite_model_with_configured_rewriter_core,
     },
     settings::Rewriter,
+    solver::SolverError,
 };
 use uniplate::{Biplate as _, Uniplate as _};
 
@@ -37,15 +42,99 @@ pub(super) fn rewrite_model_with_configured_rewriter<'a>(
     rewrite_model_with_configured_rewriter_core(model, rule_sets, configured_rewriter).unwrap()
 }
 
+/// Splits out the guards that reference non-quantified decision variables.
+///
+/// These guards cannot be decided while expanding: the outer decision variables they mention do
+/// not belong to the generator submodel, so putting them in it both asks Minion a meaningless
+/// question and leaves undeclared names (e.g. the components of a represented outer matrix) in
+/// the model handed to it. They are re-applied to each expanded element instead, through the
+/// enclosing AC operator's skip semantics -- the same treatment the native expander gives them.
+///
+/// Returns the comprehension with those guards removed, alongside the guards themselves.
+pub(super) fn split_symbolic_guards(
+    comprehension: &Comprehension,
+) -> (Comprehension, Vec<Expression>) {
+    let mut symbolic_guards = vec![];
+    let mut qualifiers = vec![];
+
+    for qualifier in &comprehension.qualifiers {
+        match qualifier {
+            ComprehensionQualifier::Condition(condition)
+                if !comprehension.is_quantified_guard(condition) =>
+            {
+                symbolic_guards.push(condition.clone());
+            }
+            qualifier => qualifiers.push(qualifier.clone()),
+        }
+    }
+
+    let mut stripped = comprehension.clone();
+    stripped.qualifiers = qualifiers;
+    (stripped, symbolic_guards)
+}
+
+/// The domain bound to substitute for a guarded-out element in a min/max skip operation: the
+/// return expression's own upper bound (for `min`) or lower bound (for `max`). Minion requires
+/// every decision variable to have a finite, bounded domain, so this is always expected to
+/// resolve; if it somehow doesn't, that's a genuine "can't expand this comprehension" failure
+/// (not a bug to hide), surfaced as a model-feature error rather than a panic.
+pub(super) fn min_max_skip_value(
+    return_expression: &Expression,
+    want_max: bool,
+) -> Result<Literal, SolverError> {
+    let not_supported = || {
+        SolverError::ModelFeatureNotSupported(format!(
+            "min/max comprehension with a symbolic guard: could not determine a bounded domain \
+             for the return expression {return_expression} to build a safe skip value"
+        ))
+    };
+    let ranges = return_expression
+        .domain_of()
+        .and_then(|domain| domain.as_ground().cloned())
+        .and_then(|ground| match ground {
+            GroundDomain::Int(ranges) => Some(ranges),
+            _ => None,
+        })
+        .ok_or_else(not_supported)?;
+    let spanning = Range::spanning(&ranges);
+    let bound = if want_max {
+        spanning.high()
+    } else {
+        spanning.low()
+    };
+    Ok(Literal::Int(*bound.ok_or_else(not_supported)?))
+}
+
 /// Instantiates rewritten return expressions with quantified assignments.
+///
+/// `symbolic_guards` are the guards held back by [`split_symbolic_guards`]. They are instantiated
+/// under the same assignment as the return expression: a guard that becomes false drops the
+/// element, a guard that becomes true is discharged, and one that stays symbolic wraps the element
+/// in `skip_operator`'s skip operation.
 ///
 /// This does not mutate any parent symbol table.
 pub(super) fn instantiate_return_expressions_from_values(
     values: Vec<HashMap<Name, Literal>>,
     return_expression_model: &Model,
     quantified_vars: &[Name],
-) -> Vec<Expression> {
+    symbolic_guards: &[Expression],
+    skip_operator: Option<ACOperatorKind>,
+) -> Result<Vec<Expression>, SolverError> {
     let mut return_expressions = vec![];
+
+    // As in the native expander, the safe value to substitute for a guarded-out min/max element
+    // must come from the return expression's *general* domain, computed once before any quantified
+    // variable is bound to a concrete value.
+    let min_max_skip_value = match skip_operator {
+        Some(op @ (ACOperatorKind::Min | ACOperatorKind::Max)) if !symbolic_guards.is_empty() => {
+            let return_expression = return_expression_model.clone().into_single_expression();
+            Some(min_max_skip_value(
+                &return_expression,
+                op == ACOperatorKind::Max,
+            )?)
+        }
+        _ => None,
+    };
 
     for value in values {
         let return_expression_model = return_expression_model.clone();
@@ -58,9 +147,19 @@ pub(super) fn instantiate_return_expressions_from_values(
             .filter(|(name, _)| quantified_vars.contains(name))
             .collect();
 
-        // Bind quantified references by updating declaration targets, then simplify.
+        // Bind quantified references by updating declaration targets, then simplify. The held-back
+        // guards are bound alongside the return expression: they quantify over the same variables.
+        let mut binding_targets = Vec::with_capacity(symbolic_guards.len() + 1);
+        binding_targets.push(return_expression.clone());
+        binding_targets.extend(symbolic_guards.iter().cloned());
         let _temp_value_bindings =
-            temporarily_bind_quantified_vars_to_values(&child_symtab, &return_expression, &value);
+            temporarily_bind_quantified_vars_to_values(&child_symtab, &binding_targets, &value);
+
+        let Some(guards) = instantiate_symbolic_guards(symbolic_guards)? else {
+            // A guard is false under this assignment: the element is skipped entirely.
+            continue;
+        };
+
         return_expression = concretise_resolved_reference_atoms(return_expression);
         let Some(mut return_expression) = strip_guarded_safe_index_conditions(return_expression)
         else {
@@ -68,10 +167,53 @@ pub(super) fn instantiate_return_expressions_from_values(
         };
         return_expression = simplify_expression(return_expression);
 
+        for guard in guards {
+            let Some(ac_operator) = skip_operator else {
+                return Err(SolverError::ModelInvalid(format!(
+                    "comprehension has symbolic guard but no AC operator context for \
+                     solver-backed expansion: {guard}"
+                )));
+            };
+            return_expression = match (ac_operator, &min_max_skip_value) {
+                (ACOperatorKind::Min | ACOperatorKind::Max, Some(skip_value)) => ac_operator
+                    .make_min_max_skip_operation(guard, return_expression, skip_value.clone()),
+                (ACOperatorKind::Min | ACOperatorKind::Max, None) => {
+                    bug!("min/max comprehension expansion is missing its precomputed skip value")
+                }
+                _ => ac_operator.make_skip_operation(guard, return_expression),
+            };
+        }
+
         return_expressions.push(return_expression);
     }
 
-    return_expressions
+    Ok(return_expressions)
+}
+
+/// Instantiates the held-back guards under the bindings currently in force.
+///
+/// Returns `Ok(None)` when a guard is false (the element is skipped), otherwise the guards that
+/// are still symbolic and so have to be attached to the element.
+fn instantiate_symbolic_guards(
+    symbolic_guards: &[Expression],
+) -> Result<Option<Vec<Expression>>, SolverError> {
+    let mut remaining = vec![];
+
+    for guard in symbolic_guards {
+        let guard = simplify_expression(concretise_resolved_reference_atoms(guard.clone()));
+        match eval_constant(&guard) {
+            Some(Literal::Bool(true)) => {}
+            Some(Literal::Bool(false)) => return Ok(None),
+            Some(other) => {
+                return Err(SolverError::ModelInvalid(format!(
+                    "comprehension guard must evaluate to Bool, got {other}: {guard}"
+                )));
+            }
+            None => remaining.push(guard),
+        }
+    }
+
+    Ok(Some(remaining))
 }
 
 /// Keeps only the quantified assignments of a solver solution, discarding auxiliaries and locals.
@@ -295,7 +437,7 @@ fn maybe_bind_temp_value_letting(
 
 fn temporarily_bind_quantified_vars_to_values(
     symbols: &SymbolTable,
-    expr: &Expression,
+    exprs: &[Expression],
     values: &HashMap<Name, Literal>,
 ) -> TempQuantifiedValueLettingGuard {
     let mut originals = Vec::new();
@@ -318,7 +460,10 @@ fn temporarily_bind_quantified_vars_to_values(
     // Some expressions can still reference quantified declarations from an earlier scope
     // (e.g. after comprehension rewrites that rebuild generator declarations). Bind those
     // declaration pointers directly as well.
-    for decl in uniplate::Biplate::<DeclarationPtr>::universe_bi(expr) {
+    for decl in exprs
+        .iter()
+        .flat_map(uniplate::Biplate::<DeclarationPtr>::universe_bi)
+    {
         let name = decl.name().clone();
         let Some(lit) = values.get(&name) else {
             continue;
@@ -367,7 +512,6 @@ pub(super) fn temporarily_materialise_quantified_vars_as_finds(
         let Some(domain) = decl.domain() else {
             continue;
         };
-
         let new_kind = DeclarationKind::Find(DecisionVariable::new(domain));
         let _ = decl.replace_kind(new_kind);
         originals.push((decl, old_kind));

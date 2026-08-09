@@ -11,15 +11,19 @@ use conjure_cp::{
 
 use super::via_solver_common::{
     instantiate_return_expressions_from_values, retain_quantified_solution_values,
-    rewrite_model_with_configured_rewriter, with_temporary_model,
+    rewrite_model_with_configured_rewriter, split_symbolic_guards, with_temporary_model,
 };
 
 /// Expands the comprehension by solving quantified variables with Minion.
 ///
 /// This returns one expression per assignment to quantified variables that satisfies the static
-/// guards of the comprehension.
+/// guards of the comprehension. Guards that reference non-quantified decision variables cannot be
+/// solved here; they are held back and re-applied to each expanded element under the enclosing AC
+/// operator's skip semantics.
 pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>, SolverError> {
     let minion = Solver::new(Minion::new());
+    let skip_operator = comprehension.skip_operator;
+    let (comprehension, symbolic_guards) = split_symbolic_guards(&comprehension);
     let quantified_vars = comprehension.quantified_vars();
 
     let mut generator_model = comprehension.to_generator_model();
@@ -91,11 +95,13 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
 
         values.lock().unwrap().clone()
     };
-    Ok(instantiate_return_expressions_from_values(
+    instantiate_return_expressions_from_values(
         values,
         &return_expression_model,
         &quantified_vars,
-    ))
+        &symbolic_guards,
+        skip_operator,
+    )
 }
 
 fn materialise_quantified_finds(model: &mut Model, quantified_vars: &[Name]) {

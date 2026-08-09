@@ -214,6 +214,15 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
         }
     }
 
+    // A guard over non-quantified decision variables can only be re-attached to the expanded
+    // elements through an enclosing AC operator's skip semantics. Without one there is nothing to
+    // attach it to, so leave the comprehension alone (the native expander bails here too).
+    if comprehension.skip_operator.is_none()
+        && comprehension_has_non_quantified_guards(&comprehension)
+    {
+        return Err(RuleNotApplicable);
+    }
+
     let results = expand_via_solver(comprehension)
         .unwrap_or_else(|e| bug!("via-solver comprehension expansion failed: {e}"));
     Ok(RuleEffect::with_symbols(
@@ -288,6 +297,18 @@ fn as_exists_comprehension(expr: &Expr) -> Option<Comprehension> {
     };
 
     as_single_comprehension(or_child.as_ref())
+}
+
+/// True iff some guard references decision variables the comprehension does not quantify over.
+///
+/// Such a guard cannot be evaluated during expansion, however the quantified variables are bound.
+fn comprehension_has_non_quantified_guards(comprehension: &Comprehension) -> bool {
+    comprehension.qualifiers.iter().any(|qualifier| {
+        let ComprehensionQualifier::Condition(condition) = qualifier else {
+            return false;
+        };
+        !comprehension.is_quantified_guard(condition)
+    })
 }
 
 fn comprehension_has_symbolic_guards(comprehension: &Comprehension) -> bool {

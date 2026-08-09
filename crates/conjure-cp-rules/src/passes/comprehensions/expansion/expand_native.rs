@@ -1,7 +1,7 @@
 use conjure_cp::{
     ast::{
-        Atom, DeclarationKind, DeclarationPtr, DomainPtr, Expression, GroundDomain, Literal,
-        Metadata, Name, Range, SymbolTable,
+        Atom, DeclarationKind, DeclarationPtr, DomainPtr, Expression, Literal, Metadata, Name,
+        SymbolTable,
         ac_operators::ACOperatorKind,
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
@@ -12,7 +12,7 @@ use conjure_cp::{
 use uniplate::Uniplate as _;
 
 use super::via_solver_common::{
-    lift_machine_references_into_parent_scope, simplify_expression,
+    lift_machine_references_into_parent_scope, min_max_skip_value, simplify_expression,
     strip_guarded_safe_index_conditions,
 };
 
@@ -46,38 +46,6 @@ pub fn expand_native(
         comprehension.skip_operator,
         min_max_skip_value,
     )
-}
-
-/// The domain bound to substitute for a guarded-out element in a min/max skip operation: the
-/// return expression's own upper bound (for `min`) or lower bound (for `max`). Minion requires
-/// every decision variable to have a finite, bounded domain, so this is always expected to
-/// resolve; if it somehow doesn't, that's a genuine "can't expand this comprehension" failure
-/// (not a bug to hide), surfaced as a model-feature error rather than a panic.
-fn min_max_skip_value(
-    return_expression: &Expression,
-    want_max: bool,
-) -> Result<Literal, SolverError> {
-    let not_supported = || {
-        SolverError::ModelFeatureNotSupported(format!(
-            "min/max comprehension with a symbolic guard: could not determine a bounded domain \
-             for the return expression {return_expression} to build a safe skip value"
-        ))
-    };
-    let ranges = return_expression
-        .domain_of()
-        .and_then(|domain| domain.as_ground().cloned())
-        .and_then(|ground| match ground {
-            GroundDomain::Int(ranges) => Some(ranges),
-            _ => None,
-        })
-        .ok_or_else(not_supported)?;
-    let spanning = Range::spanning(&ranges);
-    let bound = if want_max {
-        spanning.high()
-    } else {
-        spanning.low()
-    };
-    Ok(Literal::Int(*bound.ok_or_else(not_supported)?))
 }
 
 fn expand_qualifiers(

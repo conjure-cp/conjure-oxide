@@ -22,8 +22,8 @@ use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
 
 use super::via_solver_common::{
     instantiate_return_expressions_from_values, retain_quantified_solution_values,
-    rewrite_model_with_configured_rewriter, temporarily_materialise_quantified_vars_as_finds,
-    with_temporary_model,
+    rewrite_model_with_configured_rewriter, split_symbolic_guards,
+    temporarily_materialise_quantified_vars_as_finds, with_temporary_model,
 };
 
 /// Expands the comprehension using Minion, returning the resulting expressions.
@@ -37,6 +37,9 @@ pub fn expand_via_solver_ac(
     comprehension: Comprehension,
     ac_operator: ACOperatorKind,
 ) -> Result<Vec<Expression>, SolverError> {
+    // Guards over non-quantified decision variables belong to the outer model, not the generator
+    // submodel; hold them back and re-apply them per element with this operator's skip semantics.
+    let (comprehension, symbolic_guards) = split_symbolic_guards(&comprehension);
     let quantified_vars = comprehension.quantified_vars();
 
     // ADD RETURN EXPRESSION TO GENERATOR MODEL AS CONSTRAINT
@@ -117,11 +120,13 @@ pub fn expand_via_solver_ac(
 
         values.lock().unwrap().clone()
     };
-    Ok(instantiate_return_expressions_from_values(
+    instantiate_return_expressions_from_values(
         values,
         &return_expression_model,
         &quantified_vars,
-    ))
+        &symbolic_guards,
+        Some(ac_operator),
+    )
 }
 
 /// Eliminate all references to non-quantified variables by introducing dummy variables to the
