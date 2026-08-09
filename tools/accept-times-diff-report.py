@@ -17,6 +17,7 @@ STATS_PATHSPEC = ":(glob)test-suite/tests/**/stats.toml"
 
 FIELDNAMES = [
     "test",
+    "config",
     "old_status",
     "new_status",
     "old_conjure_status",
@@ -54,8 +55,9 @@ def main() -> int:
         output = root / output
 
     rows = [
-        build_row(root, args.base, path)
+        row
         for path in changed_stats_paths(root, args.base)
+        for row in build_rows(root, args.base, path)
     ]
 
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -119,16 +121,32 @@ def changed_stats_paths(root: Path, base: str) -> list[str]:
     return sorted(paths)
 
 
-def build_row(root: Path, base: str, path: str) -> dict[str, str]:
+def build_rows(root: Path, base: str, path: str) -> list[dict[str, str]]:
     old_stats = read_git_stats(root, base, path)
     new_stats = read_worktree_stats(root / path)
 
+    configs = sorted(run_names(old_stats) | run_names(new_stats))
+    if not configs:
+        return [build_row(path, None, old_stats, new_stats)]
+    return [build_row(path, config, old_stats, new_stats) for config in configs]
+
+
+def build_row(
+    path: str,
+    config: str | None,
+    old_stats: dict[str, Any],
+    new_stats: dict[str, Any],
+) -> dict[str, str]:
+    old_config = run_stats(old_stats, config)
+    new_config = run_stats(new_stats, config)
+    is_new_config = config is not None and not old_config and bool(new_config)
+
     old_conjure = tool_stats(old_stats, "conjure")
     new_conjure = tool_stats(new_stats, "conjure")
-    old_oxide = tool_stats(old_stats, "oxide")
-    new_oxide = tool_stats(new_stats, "oxide")
-    old_rule_trace = rule_trace_stats(old_stats)
-    new_rule_trace = rule_trace_stats(new_stats)
+    old_oxide = oxide_run_stats(old_config)
+    new_oxide = oxide_run_stats(new_config)
+    old_rule_trace = rule_trace_stats(old_config)
+    new_rule_trace = rule_trace_stats(new_config)
 
     old_conjure_total = total_time(old_conjure)
     new_conjure_total = total_time(new_conjure)
@@ -139,8 +157,8 @@ def build_row(root: Path, base: str, path: str) -> dict[str, str]:
     new_status = status_from_stats(new_stats)
     old_conjure_status = status_from_tool(old_conjure)
     new_conjure_status = status_from_tool(new_conjure)
-    old_oxide_status = status_from_tool(old_oxide)
-    new_oxide_status = status_from_tool(new_oxide)
+    old_oxide_status = status_from_stats(old_config) or status_from_tool(old_oxide)
+    new_oxide_status = status_from_stats(new_config) or status_from_tool(new_oxide)
     old_effective_status = effective_status(
         old_status, old_oxide_status, old_conjure_status
     )
@@ -150,6 +168,7 @@ def build_row(root: Path, base: str, path: str) -> dict[str, str]:
 
     return {
         "test": path.removesuffix("/stats.toml"),
+        "config": value(config),
         "old_status": value(old_status),
         "new_status": value(new_status),
         "old_conjure_status": value(old_conjure_status),
@@ -200,7 +219,9 @@ def build_row(root: Path, base: str, path: str) -> dict[str, str]:
         "new_total_rule_applications": integer(
             new_rule_trace["total-rule-applications"]
         ),
-        "summary": summarize(
+        "summary": "new config"
+        if is_new_config
+        else summarize(
             old_status=old_status,
             new_status=new_status,
             old_conjure_status=old_conjure_status,
@@ -215,16 +236,46 @@ def build_row(root: Path, base: str, path: str) -> dict[str, str]:
     }
 
 
+def run_names(stats_file: dict[str, Any]) -> set[str]:
+    runs = stats_file.get("runs")
+    if not isinstance(runs, list):
+        return set()
+    return {
+        unroller
+        for run in runs
+        if isinstance(run, dict)
+        and isinstance((unroller := run.get("unroller")), str)
+    }
+
+
+def run_stats(stats_file: dict[str, Any], config: str | None) -> dict[str, Any]:
+    if config is None:
+        return stats_file
+
+    runs = stats_file.get("runs")
+    if isinstance(runs, list):
+        for run in runs:
+            if isinstance(run, dict) and run.get("unroller") == config:
+                return run
+    return {}
+
+
+def oxide_run_stats(run: dict[str, Any]) -> dict[str, float | str | None]:
+    return {
+        "status": string_value(run.get("status")),
+        "translation-time": numeric_value(run.get("translation-time")),
+        "solve-time": numeric_value(run.get("solve-time")),
+    }
+
+
 def rule_trace_stats(stats_file: dict[str, Any]) -> dict[str, int | None]:
     table = stats_file.get("rule-trace")
     if not isinstance(table, dict):
         table = {}
 
     return {
-        "total-rule-attempts": integer_value(table.get("total-rule-attempts")),
-        "total-rule-applications": integer_value(
-            table.get("total-rule-applications")
-        ),
+        "total-rule-attempts": integer_value(table.get("attempts")),
+        "total-rule-applications": integer_value(table.get("applications")),
     }
 
 
