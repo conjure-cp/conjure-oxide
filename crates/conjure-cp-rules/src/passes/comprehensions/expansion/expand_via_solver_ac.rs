@@ -53,8 +53,17 @@ pub fn expand_via_solver_ac(
     // this throwaway model, not of the comprehension's own scope.
     let mut generator_model = comprehension.to_generator_model();
     detach_symbols(&mut generator_model);
-    let generator_model =
-        add_return_expression_to_generator_model(generator_model, return_expression, &ac_operator);
+    let generator_model = if contains_comprehension(&return_expression) {
+        // The return expression is added to the generator model purely to prune quantified values
+        // that cannot matter. A nested comprehension cannot survive that: its own generator domains
+        // may depend on the variables this model is still solving for -- `sum pos :
+        // int(start..start + n)` inside a `forAll start` -- and a domain over an unassigned find is
+        // not ground. Skip the pruning constraint and enumerate the quantified variables plainly;
+        // the nested comprehension is expanded later, once this assignment binds `start`.
+        generator_model
+    } else {
+        add_return_expression_to_generator_model(generator_model, return_expression, &ac_operator)
+    };
 
     // REWRITE GENERATOR MODEL AND PASS TO MINION
     // ==========================================
@@ -128,6 +137,16 @@ pub fn expand_via_solver_ac(
         &symbolic_guards,
         Some(ac_operator),
     )
+}
+
+/// True iff `expr` contains a comprehension.
+///
+/// Comprehensions are leaves of the traversal, so this finds nested ones without descending into
+/// their own scopes.
+fn contains_comprehension(expr: &Expression) -> bool {
+    expr.universe()
+        .iter()
+        .any(|subexpr| matches!(subexpr, Expression::Comprehension(_, _)))
 }
 
 /// Eliminate all references to non-quantified variables by introducing dummy variables to the
