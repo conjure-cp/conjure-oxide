@@ -58,9 +58,10 @@ use test_suite::diagnostics::{
 };
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
-    NumberOfSolutions, RecordedRunStats, RuleTraceAggregateStats, read_stats_or_default,
-    round_expected_time, stats_path, upsert_expected_time_stats, upsert_oxide_timing_stats,
-    upsert_recorded_run_stats, upsert_rule_trace_aggregate_stats, upsert_status_stats,
+    NumberOfSolutions, RecordedConjureStats, RuleTraceAggregateStats, read_stats_or_default,
+    reset_stats_for_run, round_expected_time, stats_path, upsert_config_oxide_timing_stats,
+    upsert_config_rule_trace_aggregate_stats, upsert_config_status_stats,
+    upsert_conjure_timing_stats, upsert_expected_time_stats, upsert_status_stats,
     upsert_tool_status_stats,
 };
 
@@ -142,10 +143,12 @@ where
         if started_at.elapsed() >= timeout {
             terminate_timed_child(&mut child)?;
             let child_output = format_child_output(stdout, stderr);
-            upsert_status_stats(
-                &stats_path(Path::new(test_dir)),
-                &format!("timeout({})", timeout.as_secs()),
-            )?;
+            if AcceptMode::from_env().accepts_outputs() {
+                upsert_status_stats(
+                    &stats_path(Path::new(test_dir)),
+                    &format!("timeout({})", timeout.as_secs()),
+                )?;
+            }
             let _ = write_failure_record(
                 Path::new(test_dir),
                 &FailureRecord {
@@ -350,6 +353,9 @@ fn integration_test_inner_with_status(
         };
 
     let run_stats = read_stats_or_default(&stats_path(Path::new(path)))?;
+    if accept {
+        reset_stats_for_run(&stats_path(Path::new(path)))?;
+    }
     let config = file_config;
 
     let skip_conjure_validation = config.should_skip_conjure_validation();
@@ -434,13 +440,16 @@ fn integration_test_inner_with_status(
         .map(|(solutions, _)| Arc::clone(solutions));
     let conjure_timings = conjure_solutions.and_then(|(_, timings)| timings);
     let mut allowed_expected_files = BTreeSet::new();
-    let mut oxide_timings = RunTimings::default();
     let rule_trace_snapshots_enabled = !test_tracing_disabled();
 
-    let oxide_result = (|| -> Result<(), Box<dyn Error>> {
-        for parser in parsers.iter().copied() {
-            for rewriter in rewriters.clone() {
-                for comprehension_expander in comprehension_expanders.clone() {
+    let mut first_config_error = None;
+    for comprehension_expander in comprehension_expanders {
+        let config_name = comprehension_expander.to_string();
+        let mut config_timings = RunTimings::default();
+        let mut config_case_names = BTreeSet::new();
+        let config_result = (|| -> Result<(), Box<dyn Error>> {
+            for parser in parsers.iter().copied() {
+                for rewriter in rewriters.clone() {
                     for heuristic in heuristics.iter().copied() {
                         for channelling in channelling_settings.iter().copied() {
                             for solver in solvers.clone() {
@@ -475,6 +484,13 @@ fn integration_test_inner_with_status(
                                         choice_path: &choice_path,
                                         case_name: case_name.as_str(),
                                     };
+                                    config_case_names.insert(case_name.clone());
+                                    allowed_expected_files.extend(
+                                        expected_integration_files_for_case(
+                                            run_case.case_name,
+                                            solver,
+                                        ),
+                                    );
                                     let run_timings = execute_integration_run(
                                         path,
                                         essence_base,
@@ -487,13 +503,7 @@ fn integration_test_inner_with_status(
                                         accept,
                                         rule_trace_snapshots_enabled,
                                     )?;
-                                    oxide_timings.add(run_timings);
-                                    allowed_expected_files.extend(
-                                        expected_integration_files_for_case(
-                                            run_case.case_name,
-                                            solver,
-                                        ),
-                                    );
+                                    config_timings.add(run_timings);
 
                                     if heuristic != Heuristic::All {
                                         break;
@@ -510,16 +520,50 @@ fn integration_test_inner_with_status(
                     }
                 }
             }
+            Ok(())
+        })();
+
+        if accept {
+            let config_status = if config_result.is_ok() { "ok" } else { "fail" };
+            upsert_config_status_stats(&stats_path, &config_name, config_status)?;
+            let solve_time = solver_solution_limit.map(|_| config_timings.solve_time_s);
+            upsert_config_oxide_timing_stats(
+                &stats_path,
+                &config_name,
+                config_timings.translation_time_s,
+                solve_time,
+            )?;
+
+            if rule_trace_snapshots_enabled {
+                let aggregates = collect_rule_trace_aggregates(
+                    Path::new(path),
+                    "-generated-rule-trace.txt",
+                    &config_case_names,
+                )?;
+                let aggregates = RuleTraceAggregateStats {
+                    total_rule_attempts: collect_rule_attempts(
+                        Path::new(path),
+                        &config_case_names,
+                    )?,
+                    ..aggregates
+                };
+                upsert_config_rule_trace_aggregate_stats(&stats_path, &config_name, &aggregates)?;
+            }
         }
 
-        assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
-        Ok(())
-    })();
-
-    if accept {
-        let oxide_status = if oxide_result.is_ok() { "ok" } else { "fail" };
-        upsert_tool_status_stats(&stats_path, "oxide", oxide_status)?;
+        if let Err(err) = config_result
+            && first_config_error.is_none()
+        {
+            first_config_error = Some(err);
+        }
     }
+
+    let oxide_result = if let Some(err) = first_config_error {
+        Err(err)
+    } else {
+        assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)
+            .map_err(|err| -> Box<dyn Error> { Box::new(err) })
+    };
 
     if let Err(err) = &oxide_result {
         record_integration_failure(
@@ -545,40 +589,20 @@ fn integration_test_inner_with_status(
         }
     }
 
-    if accept {
-        let oxide_solve_time = solver_solution_limit.map(|_| oxide_timings.solve_time_s);
-        upsert_oxide_timing_stats(
+    if accept
+        && !skip_conjure_validation
+        && let Some(conjure_timings) = conjure_timings
+    {
+        upsert_conjure_timing_stats(
             &stats_path,
-            oxide_timings.translation_time_s,
-            oxide_solve_time,
+            RecordedConjureStats {
+                conjure_wall_clock_time: conjure_timings.wall_clock_time_s,
+                conjure_translation_time: conjure_timings.translation_time_s,
+                conjure_driver_translation_time: conjure_timings.conjure_translation_time_s,
+                savilerow_translation_time: conjure_timings.savilerow_translation_time_s,
+                conjure_solve_time: conjure_timings.solve_time_s,
+            },
         )?;
-    }
-
-    if accept && !skip_conjure_validation {
-        if let Some(conjure_timings) = conjure_timings {
-            upsert_recorded_run_stats(
-                &stats_path,
-                RecordedRunStats {
-                    oxide_translation_time: oxide_timings.translation_time_s,
-                    oxide_solve_time: oxide_timings.solve_time_s,
-                    conjure_wall_clock_time: conjure_timings.wall_clock_time_s,
-                    conjure_translation_time: conjure_timings.translation_time_s,
-                    conjure_driver_translation_time: conjure_timings.conjure_translation_time_s,
-                    savilerow_translation_time: conjure_timings.savilerow_translation_time_s,
-                    conjure_solve_time: conjure_timings.solve_time_s,
-                },
-            )?;
-        }
-    }
-
-    if accept && rule_trace_snapshots_enabled {
-        let aggregates =
-            collect_rule_trace_aggregates(Path::new(path), "-generated-rule-trace.txt")?;
-        let aggregates = RuleTraceAggregateStats {
-            total_rule_attempts: collect_rule_attempts(Path::new(path))?,
-            ..aggregates
-        };
-        upsert_rule_trace_aggregate_stats(&stats_path, &aggregates)?;
     }
 
     Ok(())
@@ -899,6 +923,7 @@ fn expected_integration_files_for_case(case_name: &str, solver: SolverFamily) ->
 fn collect_rule_trace_aggregates(
     path: &Path,
     file_suffix: &str,
+    case_names: &BTreeSet<String>,
 ) -> Result<RuleTraceAggregateStats, std::io::Error> {
     let mut aggregates = RuleTraceAggregateStats::default();
 
@@ -906,7 +931,7 @@ fn collect_rule_trace_aggregates(
         let entry = entry?;
         let file_name = entry.file_name();
         let file_name = file_name.to_string_lossy();
-        if !file_name.ends_with(file_suffix) {
+        if !file_name.ends_with(file_suffix) || !belongs_to_case(&file_name, case_names) {
             continue;
         }
 
@@ -932,14 +957,17 @@ fn collect_rule_trace_aggregates(
     Ok(aggregates)
 }
 
-fn collect_rule_attempts(path: &Path) -> Result<u64, std::io::Error> {
+fn collect_rule_attempts(
+    path: &Path,
+    case_names: &BTreeSet<String>,
+) -> Result<u64, std::io::Error> {
     let mut total = 0;
 
     for entry in fs::read_dir(path)? {
         let entry = entry?;
         let file_name = entry.file_name();
         let file_name = file_name.to_string_lossy();
-        if !file_name.ends_with("-stats.json") {
+        if !file_name.ends_with("-stats.json") || !belongs_to_case(&file_name, case_names) {
             continue;
         }
 
@@ -963,6 +991,12 @@ fn collect_rule_attempts(path: &Path) -> Result<u64, std::io::Error> {
     }
 
     Ok(total)
+}
+
+fn belongs_to_case(file_name: &str, case_names: &BTreeSet<String>) -> bool {
+    case_names
+        .iter()
+        .any(|case_name| file_name.starts_with(&format!("{case_name}-")))
 }
 
 fn clean_test_dir_for_accept(

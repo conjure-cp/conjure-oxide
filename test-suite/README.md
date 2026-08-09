@@ -23,6 +23,13 @@ separate `model-000`, `model-001`, … golden artifacts for every parser/rewrite
 configuration. Channelling is configured with `channelling = "no"`; `yes` is reserved but currently
 unsupported.
 
+Integration tests run all three comprehension unrollers by default. Configure the same matrix
+explicitly with
+`comprehension-expander = ["native", "via-solver", "via-solver-ac"]`. Accepted oxide timings,
+statuses, and rule-trace aggregates are recorded as separate `[[runs]]` entries in `stats.toml`;
+the Conjure reference run remains shared by all three configurations. Each accepted run replaces
+the previous stats snapshot rather than merging with it.
+
 ### Creating a new test
 
 1. Create a new directory under `test-suite/tests/integration/<folder>`.
@@ -68,8 +75,9 @@ After an accept run, you can write a Git-diff-based timing comparison CSV with
 `python3 ./tools/accept-times-diff-report.py` (default output:
 `target/accept-times-diff.csv`).
 
-`stats.toml` also records the last accepted status, Conjure and oxide timing stats, and
-aggregate rule trace application counts derived from the expected rule trace snapshots.
+`stats.toml` also records the last accepted status, the shared Conjure timing stats, and per-config
+oxide timing stats and aggregate rule trace application counts derived from the expected rule trace
+snapshots.
 
 For timing-only runs where rule trace generation overhead is unwanted, set
 `CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file

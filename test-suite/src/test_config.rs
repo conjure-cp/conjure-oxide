@@ -19,6 +19,11 @@ pub fn stats_path(test_dir: &Path) -> std::path::PathBuf {
     test_dir.join(STATS_FILE_NAME)
 }
 
+/// Starts a fresh stats snapshot for an integration run.
+pub fn reset_stats_for_run(path: &Path) -> io::Result<()> {
+    write_canonical_stats(path, &TestRunStats::default())
+}
+
 fn read_toml_document_or_empty(path: &Path) -> io::Result<DocumentMut> {
     if path.exists() {
         let contents = fs::read_to_string(path)?;
@@ -39,6 +44,38 @@ fn write_toml_document(path: &Path, document: &DocumentMut) -> io::Result<()> {
     contents.truncate(contents.trim_end_matches('\n').len());
     contents.push('\n');
     fs::write(path, contents)
+}
+
+fn quoted_toml_string(value: &str) -> String {
+    toml::Value::String(value.to_string()).to_string()
+}
+
+fn canonical_float(value: f64) -> String {
+    let rounded = (value * 1_000_000.0).round() / 1_000_000.0;
+    let mut rendered = format!("{rounded:.6}");
+    while rendered.ends_with('0') {
+        rendered.pop();
+    }
+    if rendered.ends_with('.') {
+        rendered.push('0');
+    }
+    if rendered == "-0.0" {
+        "0.0".to_string()
+    } else {
+        rendered
+    }
+}
+
+fn canonical_rule_key(rule: &str) -> String {
+    if !rule.is_empty()
+        && rule
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || matches!(character, '_' | '-'))
+    {
+        rule.to_string()
+    } else {
+        quoted_toml_string(rule)
+    }
 }
 
 // toml_edit's Index impl panics on missing keys, so use .get() before creating tables.
@@ -192,17 +229,7 @@ pub fn round_expected_time(duration: Duration) -> u64 {
 
 /// Inserts or updates the `expected-time` entry in a test `stats.toml`.
 pub fn upsert_expected_time_stats(path: &Path, expected_time: u64) -> io::Result<()> {
-    let expected_time = i64::try_from(expected_time).map_err(|err| {
-        io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("expected-time is too large to write to TOML: {err}"),
-        )
-    })?;
-
-    let mut document = read_toml_document_or_empty(path)?;
-    document["expected-time"] = value(expected_time);
-
-    write_toml_document(path, &document)
+    update_canonical_stats(path, |stats| stats.expected_time = Some(expected_time))
 }
 
 /// Inserts or updates the `expected-time` entry in a test `config.toml`.
@@ -210,50 +237,61 @@ pub fn upsert_expected_time_stats(path: &Path, expected_time: u64) -> io::Result
 /// Custom tests still keep their expected-time metadata in `config.toml`; integration tests use
 /// `stats.toml`.
 pub fn upsert_expected_time_config(path: &Path, expected_time: u64) -> io::Result<()> {
-    upsert_expected_time_stats(path, expected_time)
+    let expected_time = i64::try_from(expected_time).map_err(|err| {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("expected-time is too large to write to TOML: {err}"),
+        )
+    })?;
+    let mut document = read_toml_document_or_empty(path)?;
+    document["expected-time"] = value(expected_time);
+    write_toml_document(path, &document)
 }
 
 /// Inserts or updates the latest observed integration status in a test `stats.toml`.
 pub fn upsert_status_stats(path: &Path, status: &str) -> io::Result<()> {
-    let mut document = read_toml_document_or_empty(path)?;
-    document["status"] = value(status);
-
-    write_toml_document(path, &document)
+    update_canonical_stats(path, |stats| stats.status = Some(status.to_string()))
 }
 
 /// Inserts or updates the latest observed status for one part of an integration test.
 pub fn upsert_tool_status_stats(path: &Path, tool: &str, status: &str) -> io::Result<()> {
-    let mut document = read_toml_document_or_empty(path)?;
-    ensure_table(&mut document, tool);
-    document[tool]["status"] = value(status);
-
-    write_toml_document(path, &document)
+    if tool != "conjure" {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("'{tool}' does not have shared tool stats"),
+        ));
+    }
+    update_canonical_stats(path, |stats| {
+        stats.conjure.status = Some(status.to_string());
+    })
 }
 
-/// Inserts or updates the recorded conjure-oxide timing stats in a test `stats.toml`.
-pub fn upsert_oxide_timing_stats(
+/// Inserts or updates the latest observed status for one integration-test configuration.
+pub fn upsert_config_status_stats(path: &Path, config: &str, status: &str) -> io::Result<()> {
+    update_canonical_stats(path, |stats| {
+        config_run_mut(stats, config).status = Some(status.to_string());
+    })
+}
+
+/// Inserts or updates the conjure-oxide timing stats for one integration-test configuration.
+pub fn upsert_config_oxide_timing_stats(
     path: &Path,
+    config: &str,
     translation_time: f64,
     solve_time: Option<f64>,
 ) -> io::Result<()> {
-    let mut document = read_toml_document_or_empty(path)?;
-
-    ensure_table(&mut document, "oxide");
-    document["oxide"]["translation-time"] = value(translation_time);
-    if let Some(solve_time) = solve_time {
-        document["oxide"]["solve-time"] = value(solve_time);
-    }
-
-    write_toml_document(path, &document)
+    update_canonical_stats(path, |stats| {
+        let run = config_run_mut(stats, config);
+        run.translation_time = Some(translation_time);
+        if let Some(solve_time) = solve_time {
+            run.solve_time = Some(solve_time);
+        }
+    })
 }
 
-/// Timing measurements recorded from one accepted integration test run.
+/// Timing measurements recorded from one accepted Conjure reference run.
 #[derive(Clone, Copy, Debug)]
-pub struct RecordedRunStats {
-    /// Time spent translating the model through conjure-oxide, in seconds.
-    pub oxide_translation_time: f64,
-    /// Time spent solving through conjure-oxide's configured solver, in seconds.
-    pub oxide_solve_time: f64,
+pub struct RecordedConjureStats {
     /// Wall-clock time of the complete `conjure solve` command, in seconds.
     pub conjure_wall_clock_time: f64,
     /// Total Conjure plus Savile Row translation time, in seconds.
@@ -266,22 +304,15 @@ pub struct RecordedRunStats {
     pub conjure_solve_time: f64,
 }
 
-/// Inserts or updates the recorded timing stats in a test `stats.toml`.
-pub fn upsert_recorded_run_stats(path: &Path, stats: RecordedRunStats) -> io::Result<()> {
-    let mut document = read_toml_document_or_empty(path)?;
-
-    ensure_table(&mut document, "oxide");
-    document["oxide"]["translation-time"] = value(stats.oxide_translation_time);
-    document["oxide"]["solve-time"] = value(stats.oxide_solve_time);
-
-    ensure_table(&mut document, "conjure");
-    document["conjure"]["wall-clock-time"] = value(stats.conjure_wall_clock_time);
-    document["conjure"]["translation-time"] = value(stats.conjure_translation_time);
-    document["conjure"]["conjure-translation-time"] = value(stats.conjure_driver_translation_time);
-    document["conjure"]["savilerow-translation-time"] = value(stats.savilerow_translation_time);
-    document["conjure"]["solve-time"] = value(stats.conjure_solve_time);
-
-    write_toml_document(path, &document)
+/// Inserts or updates the recorded Conjure reference timings in a test `stats.toml`.
+pub fn upsert_conjure_timing_stats(path: &Path, stats: RecordedConjureStats) -> io::Result<()> {
+    update_canonical_stats(path, |current| {
+        current.conjure.wall_clock_time = Some(stats.conjure_wall_clock_time);
+        current.conjure.translation_time = Some(stats.conjure_translation_time);
+        current.conjure.conjure_translation_time = Some(stats.conjure_driver_translation_time);
+        current.conjure.savilerow_translation_time = Some(stats.savilerow_translation_time);
+        current.conjure.solve_time = Some(stats.conjure_solve_time);
+    })
 }
 
 /// Aggregated rule application counts for the expected rule traces in one integration test.
@@ -302,46 +333,18 @@ fn rule_trace_rules_by_count_desc(
     sorted_rules
 }
 
-/// Replaces the recorded rule trace aggregates in a test `stats.toml`.
-pub fn upsert_rule_trace_aggregate_stats(
+/// Replaces the rule-trace aggregates for one integration-test configuration.
+pub fn upsert_config_rule_trace_aggregate_stats(
     path: &Path,
+    config: &str,
     aggregates: &RuleTraceAggregateStats,
 ) -> io::Result<()> {
-    let mut document = read_toml_document_or_empty(path)?;
-
-    ensure_nested_table(&mut document, &["rule-trace", "rules"]);
-    document["rule-trace"]["total-rule-attempts"] = value(
-        i64::try_from(aggregates.total_rule_attempts).map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("rule trace attempt count is too large to write to TOML: {err}"),
-            )
-        })?,
-    );
-    document["rule-trace"]["total-rule-applications"] = value(
-        i64::try_from(aggregates.total_rule_applications).map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("rule trace application count is too large to write to TOML: {err}"),
-            )
-        })?,
-    );
-
-    let rules = document["rule-trace"]["rules"]
-        .as_table_mut()
-        .expect("rule trace rules table exists");
-    rules.clear();
-
-    for (rule, count) in rule_trace_rules_by_count_desc(&aggregates.rules) {
-        rules[rule.as_str()] = value(i64::try_from(count).map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("rule trace count for '{rule}' is too large to write to TOML: {err}"),
-            )
-        })?);
-    }
-
-    write_toml_document(path, &document)
+    update_canonical_stats(path, |stats| {
+        let rule_trace = &mut config_run_mut(stats, config).rule_trace;
+        rule_trace.total_rule_attempts = Some(aggregates.total_rule_attempts);
+        rule_trace.total_rule_applications = Some(aggregates.total_rule_applications);
+        rule_trace.rules.clone_from(&aggregates.rules);
+    })
 }
 
 /// Recorded integration-run metadata for one test directory.
@@ -360,12 +363,24 @@ pub struct TestRunStats {
     )]
     pub expected_time: Option<u64>,
 
-    /// Metadata recorded for conjure-oxide.
-    pub oxide: RecordedToolStats,
     /// Metadata recorded for the Conjure plus Savile Row reference run.
     pub conjure: RecordedToolStats,
 
-    /// Aggregated data derived from expected rule traces.
+    /// Canonical per-configuration run records.
+    pub runs: Vec<RecordedConfigRunStats>,
+}
+
+/// Canonical metadata for one integration-test configuration.
+#[derive(Deserialize, Debug, Default)]
+#[serde(default)]
+#[serde(deny_unknown_fields)]
+pub struct RecordedConfigRunStats {
+    pub unroller: String,
+    pub status: Option<String>,
+    #[serde(rename = "translation-time")]
+    pub translation_time: Option<f64>,
+    #[serde(rename = "solve-time")]
+    pub solve_time: Option<f64>,
     #[serde(rename = "rule-trace")]
     pub rule_trace: RecordedRuleTraceStats,
 }
@@ -375,9 +390,9 @@ pub struct TestRunStats {
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct RecordedRuleTraceStats {
-    #[serde(rename = "total-rule-attempts")]
+    #[serde(rename = "attempts")]
     pub total_rule_attempts: Option<u64>,
-    #[serde(rename = "total-rule-applications")]
+    #[serde(rename = "applications")]
     pub total_rule_applications: Option<u64>,
     pub rules: std::collections::BTreeMap<String, u64>,
 }
@@ -418,6 +433,114 @@ pub struct RecordedToolStats {
     /// Savile Row translation time in seconds, when available.
     #[serde(rename = "savilerow-translation-time")]
     pub savilerow_translation_time: Option<f64>,
+}
+
+fn config_run_mut<'a>(
+    stats: &'a mut TestRunStats,
+    unroller: &str,
+) -> &'a mut RecordedConfigRunStats {
+    if let Some(index) = stats.runs.iter().position(|run| run.unroller == unroller) {
+        return &mut stats.runs[index];
+    }
+
+    stats.runs.push(RecordedConfigRunStats {
+        unroller: unroller.to_string(),
+        ..RecordedConfigRunStats::default()
+    });
+    stats.runs.last_mut().expect("run was just inserted")
+}
+
+fn update_canonical_stats(path: &Path, update: impl FnOnce(&mut TestRunStats)) -> io::Result<()> {
+    let mut stats = read_stats_or_default(path)?;
+    update(&mut stats);
+    write_canonical_stats(path, &stats)
+}
+
+fn push_optional_float(contents: &mut String, key: &str, value: Option<f64>) {
+    if let Some(value) = value {
+        contents.push_str(key);
+        contents.push_str(" = ");
+        contents.push_str(&canonical_float(value));
+        contents.push('\n');
+    }
+}
+
+fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()> {
+    let mut contents = String::new();
+
+    if let Some(expected_time) = stats.expected_time {
+        contents.push_str(&format!("expected-time = {expected_time}\n"));
+    }
+    if let Some(status) = &stats.status {
+        contents.push_str(&format!("status = {}\n", quoted_toml_string(status)));
+    }
+
+    let conjure = &stats.conjure;
+    let has_conjure_stats = conjure.status.is_some()
+        || conjure.translation_time.is_some()
+        || conjure.solve_time.is_some()
+        || conjure.wall_clock_time.is_some()
+        || conjure.conjure_translation_time.is_some()
+        || conjure.savilerow_translation_time.is_some();
+    if has_conjure_stats {
+        if !contents.is_empty() {
+            contents.push('\n');
+        }
+        contents.push_str("[conjure]\n");
+        if let Some(status) = &conjure.status {
+            contents.push_str(&format!("status = {}\n", quoted_toml_string(status)));
+        }
+        push_optional_float(&mut contents, "wall-clock-time", conjure.wall_clock_time);
+        push_optional_float(&mut contents, "translation-time", conjure.translation_time);
+        push_optional_float(
+            &mut contents,
+            "conjure-translation-time",
+            conjure.conjure_translation_time,
+        );
+        push_optional_float(
+            &mut contents,
+            "savilerow-translation-time",
+            conjure.savilerow_translation_time,
+        );
+        push_optional_float(&mut contents, "solve-time", conjure.solve_time);
+    }
+
+    for run in &stats.runs {
+        if !contents.is_empty() {
+            contents.push('\n');
+        }
+        contents.push_str("[[runs]]\n");
+        contents.push_str(&format!(
+            "unroller = {}\n",
+            quoted_toml_string(&run.unroller)
+        ));
+        if let Some(status) = &run.status {
+            contents.push_str(&format!("status = {}\n", quoted_toml_string(status)));
+        }
+        push_optional_float(&mut contents, "translation-time", run.translation_time);
+        push_optional_float(&mut contents, "solve-time", run.solve_time);
+
+        if run.rule_trace.total_rule_attempts.is_some()
+            || run.rule_trace.total_rule_applications.is_some()
+            || !run.rule_trace.rules.is_empty()
+        {
+            contents.push('\n');
+        }
+        if let Some(attempts) = run.rule_trace.total_rule_attempts {
+            contents.push_str(&format!("rule-trace.attempts = {attempts}\n"));
+        }
+        if let Some(applications) = run.rule_trace.total_rule_applications {
+            contents.push_str(&format!("rule-trace.applications = {applications}\n"));
+        }
+        for (rule, count) in rule_trace_rules_by_count_desc(&run.rule_trace.rules) {
+            contents.push_str(&format!(
+                "rule-trace.rules.{} = {count}\n",
+                canonical_rule_key(rule)
+            ));
+        }
+    }
+
+    fs::write(path, contents)
 }
 
 /// Solution search limit requested by an integration test.
@@ -655,42 +778,90 @@ mod tests {
     use super::*;
 
     #[test]
-    fn recorded_run_stats_adds_conjure_wall_clock_time_without_removing_existing_stats() {
+    fn records_runs_in_the_canonical_shape() {
         let temp_dir = tempfile::tempdir().unwrap();
         let path = temp_dir.path().join(STATS_FILE_NAME);
-        fs::write(
-            &path,
-            "expected-time = 30\nstatus = \"ok\"\n\n[rule-trace]\ntotal-rule-attempts = 42\n",
-        )
-        .unwrap();
+        reset_stats_for_run(&path).unwrap();
+        upsert_expected_time_stats(&path, 1).unwrap();
+        upsert_status_stats(&path, "ok").unwrap();
+        upsert_tool_status_stats(&path, "conjure", "ok").unwrap();
 
-        upsert_recorded_run_stats(
+        upsert_conjure_timing_stats(
             &path,
-            RecordedRunStats {
-                oxide_translation_time: 1.0,
-                oxide_solve_time: 2.0,
-                conjure_wall_clock_time: 3.0,
-                conjure_translation_time: 4.0,
-                conjure_driver_translation_time: 5.0,
-                savilerow_translation_time: 6.0,
-                conjure_solve_time: 7.0,
+            RecordedConjureStats {
+                conjure_wall_clock_time: 0.572383542,
+                conjure_translation_time: 0.572305542,
+                conjure_driver_translation_time: 0.566305542,
+                savilerow_translation_time: 0.006,
+                conjure_solve_time: 0.000078,
             },
         )
         .unwrap();
 
-        let contents = fs::read_to_string(&path).unwrap();
-        let document = contents.parse::<DocumentMut>().unwrap();
-        assert_eq!(document["expected-time"].as_integer(), Some(30));
-        assert_eq!(document["status"].as_str(), Some("ok"));
-        assert_eq!(
-            document["rule-trace"]["total-rule-attempts"].as_integer(),
-            Some(42)
-        );
-        assert_eq!(document["conjure"]["wall-clock-time"].as_float(), Some(3.0));
-        assert_eq!(
-            document["conjure"]["translation-time"].as_float(),
-            Some(4.0)
-        );
-        assert_eq!(document["conjure"]["solve-time"].as_float(), Some(7.0));
+        for (config, translation_time) in [("native", 1.0), ("via-solver", 2.0)] {
+            upsert_config_status_stats(&path, config, "ok").unwrap();
+            upsert_config_oxide_timing_stats(&path, config, translation_time, Some(3.0)).unwrap();
+            upsert_config_rule_trace_aggregate_stats(
+                &path,
+                config,
+                &RuleTraceAggregateStats {
+                    total_rule_attempts: 4,
+                    total_rule_applications: 5,
+                    rules: std::collections::BTreeMap::from([("rule_name".to_string(), 5)]),
+                },
+            )
+            .unwrap();
+        }
+
+        let expected = r#"expected-time = 1
+status = "ok"
+
+[conjure]
+status = "ok"
+wall-clock-time = 0.572384
+translation-time = 0.572306
+conjure-translation-time = 0.566306
+savilerow-translation-time = 0.006
+solve-time = 0.000078
+
+[[runs]]
+unroller = "native"
+status = "ok"
+translation-time = 1.0
+solve-time = 3.0
+
+rule-trace.attempts = 4
+rule-trace.applications = 5
+rule-trace.rules.rule_name = 5
+
+[[runs]]
+unroller = "via-solver"
+status = "ok"
+translation-time = 2.0
+solve-time = 3.0
+
+rule-trace.attempts = 4
+rule-trace.applications = 5
+rule-trace.rules.rule_name = 5
+"#;
+        assert_eq!(fs::read_to_string(&path).unwrap(), expected);
+
+        let stats = read_stats_or_default(&path).unwrap();
+        assert_eq!(stats.runs.len(), 2);
+    }
+
+    #[test]
+    fn resetting_stats_discards_the_previous_snapshot() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let path = temp_dir.path().join(STATS_FILE_NAME);
+        fs::write(
+            &path,
+            "status = \"fail\"\n\n[[runs]]\nunroller = \"native\"\nstatus = \"fail\"\n",
+        )
+        .unwrap();
+
+        reset_stats_for_run(&path).unwrap();
+
+        assert_eq!(fs::read_to_string(path).unwrap(), "");
     }
 }
