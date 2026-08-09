@@ -15,6 +15,7 @@ use conjure_cp::{
     },
     bug,
     context::Context,
+    into_matrix_expr,
     representation::{ReprStore, util::try_up},
     rule_engine::{
         RuleSet,
@@ -24,6 +25,8 @@ use conjure_cp::{
     solver::SolverError,
 };
 use uniplate::{Biplate as _, Uniplate as _};
+
+use super::expand_via_solver;
 
 /// Configures a temporary model for solver-based comprehension expansion.
 pub(super) fn with_temporary_model(model: Model, search_order: Option<Vec<Name>>) -> Model {
@@ -167,6 +170,7 @@ pub(super) fn instantiate_return_expressions_from_values(
         };
 
         return_expression = concretise_resolved_reference_atoms(return_expression);
+        return_expression = expand_nested_comprehensions(return_expression)?;
         let Some(mut return_expression) = strip_guarded_safe_index_conditions(return_expression)
         else {
             continue;
@@ -194,6 +198,45 @@ pub(super) fn instantiate_return_expressions_from_values(
     }
 
     Ok(return_expressions)
+}
+
+/// Expands the comprehensions nested inside an instantiated return expression.
+///
+/// A comprehension is a leaf of `Expression`'s traversal, so a nested one keeps a scope of its own
+/// -- including generator domains that depend on the variables quantified by the comprehension
+/// being expanded here, as in `sum pos : int(start..start + n) . ...` inside a `forAll start`.
+/// Such a domain only resolves while the bindings for this assignment are in force, so the nested
+/// comprehension has to be expanded now instead of being left to a later pass, by which time
+/// `start` is a quantified variable again with no value.
+///
+/// Comprehensions this expander cannot handle are left alone for the rules that can.
+fn expand_nested_comprehensions(expr: Expression) -> Result<Expression, SolverError> {
+    let children = expr
+        .children()
+        .into_iter()
+        .map(expand_nested_comprehensions)
+        .collect::<Result<_, _>>()?;
+    let expr = expr.with_children(children);
+
+    let Expression::Comprehension(_, comprehension) = &expr else {
+        return Ok(expr);
+    };
+    let comprehension = comprehension.as_ref().clone();
+
+    let has_expression_generator = comprehension.qualifiers.iter().any(|qualifier| {
+        matches!(
+            qualifier,
+            ComprehensionQualifier::ExpressionGenerator { .. }
+        )
+    });
+    let (_, symbolic_guards) = split_symbolic_guards(&comprehension);
+    if has_expression_generator
+        || (comprehension.skip_operator.is_none() && !symbolic_guards.is_empty())
+    {
+        return Ok(expr);
+    }
+
+    Ok(into_matrix_expr!(expand_via_solver(comprehension)?))
 }
 
 /// Instantiates the held-back guards under the bindings currently in force.
