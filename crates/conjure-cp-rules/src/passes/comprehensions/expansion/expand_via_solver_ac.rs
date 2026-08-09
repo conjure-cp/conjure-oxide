@@ -82,6 +82,7 @@ pub fn expand_via_solver_ac(
         // introduce auxiliaries for constraints involving quantified variables.
         let solver_model =
             rewrite_model_with_configured_rewriter(solver_model, &rule_sets, configured_rewriter);
+        let symbols_for_solution = solver_model.symbols().clone();
 
         let minion = Solver::new(Minion::new());
         let minion = minion.load_model(solver_model);
@@ -109,6 +110,7 @@ pub fn expand_via_solver_ac(
             values.push(retain_quantified_solution_values(
                 sols,
                 &quantified_vars_for_solution,
+                &symbols_for_solution,
             ));
             true
         }))?;

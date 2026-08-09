@@ -64,7 +64,7 @@ fn load_symbol_table(
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     if let Some(ref vars) = conjure_model.search_order {
-        let search_vars: HashSet<_> = vars.iter().cloned().collect();
+        let mut search_vars: HashSet<conjure_ast::Name> = HashSet::new();
 
         // add search vars in order first
         for name in vars {
@@ -72,13 +72,22 @@ fn load_symbol_table(
                 .symbols()
                 .lookup(name)
                 .ok_or_else(|| ModelInvalid(format!("search variable '{name}' does not exist")))?;
-            let var = decl.as_find().ok_or_else(|| {
-                ModelInvalid(format!(
-                    "search variable '{name}' is not a decision variable"
-                ))
-            })?;
 
-            load_var(name, &var, true, discrete_vars, minion_model)?;
+            // Minion has no variable for an abstract domain, so branching on a represented search
+            // variable means branching on the variables that represent it.
+            for leaf in representation_leaves(decl) {
+                let leaf_name = leaf.name().clone();
+                let var = leaf.as_find().ok_or_else(|| {
+                    ModelInvalid(format!(
+                        "search variable '{leaf_name}' is not a decision variable"
+                    ))
+                })?;
+
+                if !search_vars.insert(leaf_name.clone()) {
+                    continue;
+                }
+                load_var(&leaf_name, &var, true, discrete_vars, minion_model)?;
+            }
         }
 
         // then add the rest as non-search vars
@@ -152,6 +161,31 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
         })
         .flat_map(|tuple_expr| Biplate::<conjure_ast::Reference>::universe_bi(&tuple_expr))
         .map(|reference| reference.name().clone())
+        .collect()
+}
+
+/// The variables a search variable is really branched on.
+///
+/// Minion has no variable for an abstract domain, so a represented variable stands in for the
+/// variables representing it -- recursively, as those can be represented in turn (a matrix of sets,
+/// say). An unrepresented variable is its own only leaf.
+fn representation_leaves(decl: conjure_ast::DeclarationPtr) -> Vec<conjure_ast::DeclarationPtr> {
+    let repr_vars: Vec<_> = {
+        let reprs = decl.reprs();
+        reprs
+            .iter()
+            .next()
+            .map(|(_, state)| state.repr_vars().into_iter().collect())
+            .unwrap_or_default()
+    };
+
+    if repr_vars.is_empty() {
+        return vec![decl];
+    }
+
+    repr_vars
+        .into_iter()
+        .flat_map(representation_leaves)
         .collect()
 }
 

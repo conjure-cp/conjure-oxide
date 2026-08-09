@@ -75,6 +75,7 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
         let values = Arc::new(Mutex::new(Vec::new()));
         let values_ptr = Arc::clone(&values);
         let quantified_vars_for_solution = quantified_vars.clone();
+        let symbols_for_solution = generator_model.symbols().clone();
 
         tracing::debug!(model=%generator_model,comprehension=%comprehension,"Minion solving comprehension (solver mode)");
         minion.solve(Box::new(move |sols| {
@@ -83,6 +84,7 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
             values.push(retain_quantified_solution_values(
                 sols,
                 &quantified_vars_for_solution,
+                &symbols_for_solution,
             ));
             true
         }))?;

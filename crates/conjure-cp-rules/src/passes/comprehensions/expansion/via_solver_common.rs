@@ -11,6 +11,7 @@ use conjure_cp::{
         serde::{HasId as _, ObjId},
     },
     context::Context,
+    representation::util::try_up,
     rule_engine::{
         RuleSet,
         rewrite_model_with_configured_rewriter as rewrite_model_with_configured_rewriter_core,
@@ -73,12 +74,32 @@ pub(super) fn instantiate_return_expressions_from_values(
     return_expressions
 }
 
+/// Keeps only the quantified assignments of a solver solution, discarding auxiliaries and locals.
+///
+/// A quantified variable with an abstract domain is branched on through its representation, so the
+/// solver reports its representation variables rather than the variable itself. Those are lifted
+/// back into one abstract value with [`try_up`], giving a value that can be substituted into the
+/// return expression.
 pub(super) fn retain_quantified_solution_values(
-    mut values: HashMap<Name, Literal>,
+    values: HashMap<Name, Literal>,
     quantified_vars: &[Name],
+    symbols: &SymbolTable,
 ) -> HashMap<Name, Literal> {
-    values.retain(|name, _| quantified_vars.contains(name));
-    values
+    let mut quantified_values = HashMap::new();
+
+    for name in quantified_vars {
+        // `try_up` reads a directly assigned value when there is one, and otherwise goes up
+        // through the declaration's representation.
+        let Some(decl) = symbols.lookup(name) else {
+            continue;
+        };
+        let Ok(value) = try_up(decl, &values) else {
+            continue;
+        };
+        quantified_values.insert(name.clone(), value);
+    }
+
+    quantified_values
 }
 
 /// Simplifies an instantiated comprehension element before it enters the rewriter worklist.
