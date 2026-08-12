@@ -1,0 +1,72 @@
+Model before rewriting:
+
+find x: int(1..20)
+find y: int(1..20)
+
+such that
+
+(y - x) = 3,
+sum([x,x;int(1..)]) = y
+
+--
+
+(y - x)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([y,-(x);int(1..)])
+
+--
+
+sum([y,-(x);int(1..)]) = 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([FlatWeightedSumLeq([-1, 1],[x, y],3),FlatWeightedSumGeq([-1, 1],[x, y],3);int(1..)])
+
+--
+
+sum([x,x;int(1..)]) = y
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([FlatWeightedSumLeq([2],[x],y),FlatWeightedSumGeq([2],[x],y);int(1..)])
+
+--
+
+and([FlatWeightedSumLeq([-1, 1],[x, y],3),FlatWeightedSumGeq([-1, 1],[x, y],3);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux FlatWeightedSumLeq([-1, 1],[x, y],3)
+  __1 =aux FlatWeightedSumGeq([-1, 1],[x, y],3)
+
+--
+
+and([FlatWeightedSumLeq([2],[x],y),FlatWeightedSumGeq([2],[x],y);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__2,__3;int(1..)])
+new variables:
+  find __2: bool
+  find __3: bool
+new constraints:
+  __2 =aux FlatWeightedSumLeq([2],[x],y)
+  __3 =aux FlatWeightedSumGeq([2],[x],y)
+
+--
+
+Final model:
+
+find x: int(1..20)
+find y: int(1..20)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+
+such that
+
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+__0 =aux FlatWeightedSumLeq([-1, 1],[x, y],3),
+__1 =aux FlatWeightedSumGeq([-1, 1],[x, y],3),
+__2 =aux FlatWeightedSumLeq([2],[x],y),
+__3 =aux FlatWeightedSumGeq([2],[x],y)
+

@@ -1,0 +1,1135 @@
+Model before rewriting:
+
+find a: int(1..3)
+find b: int(2..4)
+
+such that
+
+max([a,b;int(1..2)]) <= 2
+
+--
+
+2
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [2, 2])
+
+--
+
+a
+   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3])
+new variables:
+  find a#sat_order_int_01: bool
+  find a#sat_order_int_02: bool
+  find a#sat_order_int_03: bool
+new constraints:
+  or([and([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]) >= 1,SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+b
+   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4])
+new variables:
+  find b#sat_order_int_02: bool
+  find b#sat_order_int_03: bool
+  find b#sat_order_int_04: bool
+new constraints:
+  or([and([SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]) >= 2,SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+1
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+3
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [3, 3])
+
+--
+
+2
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [2, 2])
+
+--
+
+4
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [4, 4])
+
+--
+
+SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]) >= SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__9
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+  find __8: bool
+  find __9: bool
+new clauses:
+  (¬a#sat_order_int_01 \/ ¬__0)
+  (a#sat_order_int_01 \/ __0)
+  (¬__1 \/ __0)
+  (__1 \/ ¬__0)
+  (¬__1 \/ __2)
+  (¬__2 \/ __1)
+  (¬a#sat_order_int_02 \/ ¬__3)
+  (a#sat_order_int_02 \/ __3)
+  (¬__4 \/ __3)
+  (¬__4)
+  (¬__2 \/ __5)
+  (¬__4 \/ __5)
+  (¬__5 \/ __2 \/ __4)
+  (¬a#sat_order_int_03 \/ ¬__6)
+  (a#sat_order_int_03 \/ __6)
+  (¬__7 \/ __6)
+  (¬__7)
+  (¬__5 \/ __8)
+  (¬__7 \/ __8)
+  (¬__8 \/ __5 \/ __7)
+  (¬__8 \/ ¬__9)
+  (__8 \/ __9)
+
+--
+
+SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]) <= SATInt(Order, [true;int(1..)] [3, 3])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__19
+new variables:
+  find __10: bool
+  find __11: bool
+  find __12: bool
+  find __13: bool
+  find __14: bool
+  find __15: bool
+  find __16: bool
+  find __17: bool
+  find __18: bool
+  find __19: bool
+new clauses:
+  (¬__10)
+  (¬__11 \/ __10)
+  (¬__11 \/ a#sat_order_int_01)
+  (__11 \/ ¬__10 \/ ¬a#sat_order_int_01)
+  (¬__11 \/ __12)
+  (¬__12 \/ __11)
+  (¬__13)
+  (¬__14 \/ __13)
+  (¬__14 \/ a#sat_order_int_02)
+  (__14 \/ ¬__13 \/ ¬a#sat_order_int_02)
+  (¬__12 \/ __15)
+  (¬__14 \/ __15)
+  (¬__15 \/ __12 \/ __14)
+  (¬__16)
+  (¬__17 \/ __16)
+  (¬__17 \/ a#sat_order_int_03)
+  (__17 \/ ¬__16 \/ ¬a#sat_order_int_03)
+  (¬__15 \/ __18)
+  (¬__17 \/ __18)
+  (¬__18 \/ __15 \/ __17)
+  (¬__18 \/ ¬__19)
+  (__18 \/ __19)
+
+--
+
+SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]) >= SATInt(Order, [true;int(1..)] [2, 2])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__29
+new variables:
+  find __20: bool
+  find __21: bool
+  find __22: bool
+  find __23: bool
+  find __24: bool
+  find __25: bool
+  find __26: bool
+  find __27: bool
+  find __28: bool
+  find __29: bool
+new clauses:
+  (¬b#sat_order_int_02 \/ ¬__20)
+  (b#sat_order_int_02 \/ __20)
+  (¬__21 \/ __20)
+  (__21 \/ ¬__20)
+  (¬__21 \/ __22)
+  (¬__22 \/ __21)
+  (¬b#sat_order_int_03 \/ ¬__23)
+  (b#sat_order_int_03 \/ __23)
+  (¬__24 \/ __23)
+  (¬__24)
+  (¬__22 \/ __25)
+  (¬__24 \/ __25)
+  (¬__25 \/ __22 \/ __24)
+  (¬b#sat_order_int_04 \/ ¬__26)
+  (b#sat_order_int_04 \/ __26)
+  (¬__27 \/ __26)
+  (¬__27)
+  (¬__25 \/ __28)
+  (¬__27 \/ __28)
+  (¬__28 \/ __25 \/ __27)
+  (¬__28 \/ ¬__29)
+  (__28 \/ __29)
+
+--
+
+SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]) <= SATInt(Order, [true;int(1..)] [4, 4])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__39
+new variables:
+  find __30: bool
+  find __31: bool
+  find __32: bool
+  find __33: bool
+  find __34: bool
+  find __35: bool
+  find __36: bool
+  find __37: bool
+  find __38: bool
+  find __39: bool
+new clauses:
+  (¬__30)
+  (¬__31 \/ __30)
+  (¬__31 \/ b#sat_order_int_02)
+  (__31 \/ ¬__30 \/ ¬b#sat_order_int_02)
+  (¬__31 \/ __32)
+  (¬__32 \/ __31)
+  (¬__33)
+  (¬__34 \/ __33)
+  (¬__34 \/ b#sat_order_int_03)
+  (__34 \/ ¬__33 \/ ¬b#sat_order_int_03)
+  (¬__32 \/ __35)
+  (¬__34 \/ __35)
+  (¬__35 \/ __32 \/ __34)
+  (¬__36)
+  (¬__37 \/ __36)
+  (¬__37 \/ b#sat_order_int_04)
+  (__37 \/ ¬__36 \/ ¬b#sat_order_int_04)
+  (¬__35 \/ __38)
+  (¬__37 \/ __38)
+  (¬__38 \/ __35 \/ __37)
+  (¬__38 \/ ¬__39)
+  (__38 \/ __39)
+
+--
+
+or([and([__9,__19;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__9,__19;int(1..)])
+
+--
+
+or([and([__29,__39;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__29,__39;int(1..)])
+
+--
+
+and([__9,__19;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__40
+new variables:
+  find __40: bool
+new clauses:
+  (¬__40 \/ __9)
+  (¬__40 \/ __19)
+  (__40 \/ ¬__9 \/ ¬__19)
+
+--
+
+and([__29,__39;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__41
+new variables:
+  find __41: bool
+new clauses:
+  (¬__41 \/ __29)
+  (¬__41 \/ __39)
+  (__41 \/ ¬__29 \/ ¬__39)
+
+--
+
+max([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]),SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]);int(1..2)]) <= SATInt(Order, [true;int(1..)] [2, 2]),
+__40,
+__41
+   ~~> remove_single_atom ([("SAT", 8400)])
+max([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]),SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]);int(1..2)]) <= SATInt(Order, [true;int(1..)] [2, 2]),
+__41
+new clauses:
+  (__40)
+
+--
+
+max([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]),SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]);int(1..2)]) <= SATInt(Order, [true;int(1..)] [2, 2]),
+__41
+   ~~> remove_single_atom ([("SAT", 8400)])
+max([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]),SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]);int(1..2)]) <= SATInt(Order, [true;int(1..)] [2, 2])
+new clauses:
+  (__41)
+
+--
+
+max([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]),SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]);int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+max([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]),SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]);int(1..)])
+
+--
+
+max([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]),SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]);int(1..)])
+   ~~> max_to_var ([("Base", 6000)])
+__42
+new variables:
+  find __42: int(2..4)
+new constraints:
+  __42 >= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3])
+  __42 >= SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4])
+  or([__42 = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3]),__42 = SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4]);int(1..)])
+
+--
+
+__42
+   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4])
+new variables:
+  find __42#sat_order_int_02: bool
+  find __42#sat_order_int_03: bool
+  find __42#sat_order_int_04: bool
+new constraints:
+  or([and([SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) >= 2,SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+__42
+   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4])
+
+--
+
+__42
+   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4])
+
+--
+
+__42
+   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4])
+
+--
+
+__42
+   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4])
+
+--
+
+2
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [2, 2])
+
+--
+
+4
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [4, 4])
+
+--
+
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) <= SATInt(Order, [true;int(1..)] [2, 2])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__52
+new variables:
+  find __43: bool
+  find __44: bool
+  find __45: bool
+  find __46: bool
+  find __47: bool
+  find __48: bool
+  find __49: bool
+  find __50: bool
+  find __51: bool
+  find __52: bool
+new clauses:
+  (¬__43)
+  (¬__44 \/ __43)
+  (¬__44 \/ __42#sat_order_int_02)
+  (__44 \/ ¬__43 \/ ¬__42#sat_order_int_02)
+  (¬__44 \/ __45)
+  (¬__45 \/ __44)
+  (__46)
+  (¬__47 \/ __46)
+  (¬__47 \/ __42#sat_order_int_03)
+  (__47 \/ ¬__46 \/ ¬__42#sat_order_int_03)
+  (¬__45 \/ __48)
+  (¬__47 \/ __48)
+  (¬__48 \/ __45 \/ __47)
+  (__49)
+  (¬__50 \/ __49)
+  (¬__50 \/ __42#sat_order_int_04)
+  (__50 \/ ¬__49 \/ ¬__42#sat_order_int_04)
+  (¬__48 \/ __51)
+  (¬__50 \/ __51)
+  (¬__51 \/ __48 \/ __50)
+  (¬__51 \/ ¬__52)
+  (__51 \/ __52)
+
+--
+
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) >= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__65
+new variables:
+  find __53: bool
+  find __54: bool
+  find __55: bool
+  find __56: bool
+  find __57: bool
+  find __58: bool
+  find __59: bool
+  find __60: bool
+  find __61: bool
+  find __62: bool
+  find __63: bool
+  find __64: bool
+  find __65: bool
+new clauses:
+  (¬__53)
+  (¬__54 \/ __53)
+  (¬__54 \/ a#sat_order_int_01)
+  (__54 \/ ¬__53 \/ ¬a#sat_order_int_01)
+  (¬__54 \/ __55)
+  (¬__55 \/ __54)
+  (¬__42#sat_order_int_02 \/ ¬__56)
+  (__42#sat_order_int_02 \/ __56)
+  (¬__57 \/ __56)
+  (¬__57 \/ a#sat_order_int_02)
+  (__57 \/ ¬__56 \/ ¬a#sat_order_int_02)
+  (¬__55 \/ __58)
+  (¬__57 \/ __58)
+  (¬__58 \/ __55 \/ __57)
+  (¬__42#sat_order_int_03 \/ ¬__59)
+  (__42#sat_order_int_03 \/ __59)
+  (¬__60 \/ __59)
+  (¬__60 \/ a#sat_order_int_03)
+  (__60 \/ ¬__59 \/ ¬a#sat_order_int_03)
+  (¬__58 \/ __61)
+  (¬__60 \/ __61)
+  (¬__61 \/ __58 \/ __60)
+  (¬__42#sat_order_int_04 \/ ¬__62)
+  (__42#sat_order_int_04 \/ __62)
+  (¬__63 \/ __62)
+  (¬__63)
+  (¬__61 \/ __64)
+  (¬__63 \/ __64)
+  (¬__64 \/ __61 \/ __63)
+  (¬__64 \/ ¬__65)
+  (__64 \/ __65)
+
+--
+
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) >= SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__75
+new variables:
+  find __66: bool
+  find __67: bool
+  find __68: bool
+  find __69: bool
+  find __70: bool
+  find __71: bool
+  find __72: bool
+  find __73: bool
+  find __74: bool
+  find __75: bool
+new clauses:
+  (¬__42#sat_order_int_02 \/ ¬__66)
+  (__42#sat_order_int_02 \/ __66)
+  (¬__67 \/ __66)
+  (¬__67 \/ b#sat_order_int_02)
+  (__67 \/ ¬__66 \/ ¬b#sat_order_int_02)
+  (¬__67 \/ __68)
+  (¬__68 \/ __67)
+  (¬__42#sat_order_int_03 \/ ¬__69)
+  (__42#sat_order_int_03 \/ __69)
+  (¬__70 \/ __69)
+  (¬__70 \/ b#sat_order_int_03)
+  (__70 \/ ¬__69 \/ ¬b#sat_order_int_03)
+  (¬__68 \/ __71)
+  (¬__70 \/ __71)
+  (¬__71 \/ __68 \/ __70)
+  (¬__42#sat_order_int_04 \/ ¬__72)
+  (__42#sat_order_int_04 \/ __72)
+  (¬__73 \/ __72)
+  (¬__73 \/ b#sat_order_int_04)
+  (__73 \/ ¬__72 \/ ¬b#sat_order_int_04)
+  (¬__71 \/ __74)
+  (¬__73 \/ __74)
+  (¬__74 \/ __71 \/ __73)
+  (¬__74 \/ ¬__75)
+  (__74 \/ __75)
+
+--
+
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02,a#sat_order_int_03;int(1..)] [1, 3])
+   ~~> eq_sat_order ([("SAT_Order", 9100)])
+__83
+new variables:
+  find __76: bool
+  find __77: bool
+  find __78: bool
+  find __79: bool
+  find __80: bool
+  find __81: bool
+  find __82: bool
+  find __83: bool
+new clauses:
+  (¬a#sat_order_int_01 \/ __76)
+  (a#sat_order_int_01 \/ ¬__76)
+  (¬__77 \/ __76)
+  (__77 \/ ¬__76)
+  (¬__42#sat_order_int_02 \/ ¬a#sat_order_int_02 \/ __78)
+  (__42#sat_order_int_02 \/ a#sat_order_int_02 \/ __78)
+  (__42#sat_order_int_02 \/ ¬a#sat_order_int_02 \/ ¬__78)
+  (¬__42#sat_order_int_02 \/ a#sat_order_int_02 \/ ¬__78)
+  (¬__79 \/ __78)
+  (¬__79 \/ __77)
+  (__79 \/ ¬__78 \/ ¬__77)
+  (¬__42#sat_order_int_03 \/ ¬a#sat_order_int_03 \/ __80)
+  (__42#sat_order_int_03 \/ a#sat_order_int_03 \/ __80)
+  (__42#sat_order_int_03 \/ ¬a#sat_order_int_03 \/ ¬__80)
+  (¬__42#sat_order_int_03 \/ a#sat_order_int_03 \/ ¬__80)
+  (¬__81 \/ __80)
+  (¬__81 \/ __79)
+  (__81 \/ ¬__80 \/ ¬__79)
+  (__42#sat_order_int_04 \/ __82)
+  (¬__42#sat_order_int_04 \/ ¬__82)
+  (¬__83 \/ __82)
+  (¬__83 \/ __81)
+  (__83 \/ ¬__82 \/ ¬__81)
+
+--
+
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) = SATInt(Order, [b#sat_order_int_02,b#sat_order_int_03,b#sat_order_int_04;int(1..)] [2, 4])
+   ~~> eq_sat_order ([("SAT_Order", 9100)])
+__89
+new variables:
+  find __84: bool
+  find __85: bool
+  find __86: bool
+  find __87: bool
+  find __88: bool
+  find __89: bool
+new clauses:
+  (¬__42#sat_order_int_02 \/ ¬b#sat_order_int_02 \/ __84)
+  (__42#sat_order_int_02 \/ b#sat_order_int_02 \/ __84)
+  (__42#sat_order_int_02 \/ ¬b#sat_order_int_02 \/ ¬__84)
+  (¬__42#sat_order_int_02 \/ b#sat_order_int_02 \/ ¬__84)
+  (¬__85 \/ __84)
+  (__85 \/ ¬__84)
+  (¬__42#sat_order_int_03 \/ ¬b#sat_order_int_03 \/ __86)
+  (__42#sat_order_int_03 \/ b#sat_order_int_03 \/ __86)
+  (__42#sat_order_int_03 \/ ¬b#sat_order_int_03 \/ ¬__86)
+  (¬__42#sat_order_int_03 \/ b#sat_order_int_03 \/ ¬__86)
+  (¬__87 \/ __86)
+  (¬__87 \/ __85)
+  (__87 \/ ¬__86 \/ ¬__85)
+  (¬__42#sat_order_int_04 \/ ¬b#sat_order_int_04 \/ __88)
+  (__42#sat_order_int_04 \/ b#sat_order_int_04 \/ __88)
+  (__42#sat_order_int_04 \/ ¬b#sat_order_int_04 \/ ¬__88)
+  (¬__42#sat_order_int_04 \/ b#sat_order_int_04 \/ ¬__88)
+  (¬__89 \/ __88)
+  (¬__89 \/ __87)
+  (__89 \/ ¬__88 \/ ¬__87)
+
+--
+
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) >= SATInt(Order, [true;int(1..)] [2, 2])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__99
+new variables:
+  find __90: bool
+  find __91: bool
+  find __92: bool
+  find __93: bool
+  find __94: bool
+  find __95: bool
+  find __96: bool
+  find __97: bool
+  find __98: bool
+  find __99: bool
+new clauses:
+  (¬__42#sat_order_int_02 \/ ¬__90)
+  (__42#sat_order_int_02 \/ __90)
+  (¬__91 \/ __90)
+  (__91 \/ ¬__90)
+  (¬__91 \/ __92)
+  (¬__92 \/ __91)
+  (¬__42#sat_order_int_03 \/ ¬__93)
+  (__42#sat_order_int_03 \/ __93)
+  (¬__94 \/ __93)
+  (¬__94)
+  (¬__92 \/ __95)
+  (¬__94 \/ __95)
+  (¬__95 \/ __92 \/ __94)
+  (¬__42#sat_order_int_04 \/ ¬__96)
+  (__42#sat_order_int_04 \/ __96)
+  (¬__97 \/ __96)
+  (¬__97)
+  (¬__95 \/ __98)
+  (¬__97 \/ __98)
+  (¬__98 \/ __95 \/ __97)
+  (¬__98 \/ ¬__99)
+  (__98 \/ __99)
+
+--
+
+SATInt(Order, [__42#sat_order_int_02,__42#sat_order_int_03,__42#sat_order_int_04;int(1..)] [2, 4]) <= SATInt(Order, [true;int(1..)] [4, 4])
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__109
+new variables:
+  find __100: bool
+  find __101: bool
+  find __102: bool
+  find __103: bool
+  find __104: bool
+  find __105: bool
+  find __106: bool
+  find __107: bool
+  find __108: bool
+  find __109: bool
+new clauses:
+  (¬__100)
+  (¬__101 \/ __100)
+  (¬__101 \/ __42#sat_order_int_02)
+  (__101 \/ ¬__100 \/ ¬__42#sat_order_int_02)
+  (¬__101 \/ __102)
+  (¬__102 \/ __101)
+  (¬__103)
+  (¬__104 \/ __103)
+  (¬__104 \/ __42#sat_order_int_03)
+  (__104 \/ ¬__103 \/ ¬__42#sat_order_int_03)
+  (¬__102 \/ __105)
+  (¬__104 \/ __105)
+  (¬__105 \/ __102 \/ __104)
+  (¬__106)
+  (¬__107 \/ __106)
+  (¬__107 \/ __42#sat_order_int_04)
+  (__107 \/ ¬__106 \/ ¬__42#sat_order_int_04)
+  (¬__105 \/ __108)
+  (¬__107 \/ __108)
+  (¬__108 \/ __105 \/ __107)
+  (¬__108 \/ ¬__109)
+  (__108 \/ __109)
+
+--
+
+or([and([__99,__109;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__99,__109;int(1..)])
+
+--
+
+or([__83,__89;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__110
+new variables:
+  find __110: bool
+new clauses:
+  (¬__83 \/ __110)
+  (¬__89 \/ __110)
+  (¬__110 \/ __83 \/ __89)
+
+--
+
+and([__99,__109;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__111
+new variables:
+  find __111: bool
+new clauses:
+  (¬__111 \/ __99)
+  (¬__111 \/ __109)
+  (__111 \/ ¬__99 \/ ¬__109)
+
+--
+
+__52,
+__65,
+__75,
+__110,
+__111
+   ~~> remove_single_atom ([("SAT", 8400)])
+__65,
+__75,
+__110,
+__111
+new clauses:
+  (__52)
+
+--
+
+__65,
+__75,
+__110,
+__111
+   ~~> remove_single_atom ([("SAT", 8400)])
+__75,
+__110,
+__111
+new clauses:
+  (__65)
+
+--
+
+__75,
+__110,
+__111
+   ~~> remove_single_atom ([("SAT", 8400)])
+__110,
+__111
+new clauses:
+  (__75)
+
+--
+
+__110,
+__111
+   ~~> remove_single_atom ([("SAT", 8400)])
+__111
+new clauses:
+  (__110)
+
+--
+
+__111
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__111)
+
+--
+
+Final model:
+
+find a: int(1..3)
+find b: int(2..4)
+find a#sat_order_int_01: bool
+find a#sat_order_int_02: bool
+find a#sat_order_int_03: bool
+find b#sat_order_int_02: bool
+find b#sat_order_int_03: bool
+find b#sat_order_int_04: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find __26: bool
+find __27: bool
+find __28: bool
+find __29: bool
+find __30: bool
+find __31: bool
+find __32: bool
+find __33: bool
+find __34: bool
+find __35: bool
+find __36: bool
+find __37: bool
+find __38: bool
+find __39: bool
+find __40: bool
+find __41: bool
+find __42: int(2..4)
+find __42#sat_order_int_02: bool
+find __42#sat_order_int_03: bool
+find __42#sat_order_int_04: bool
+find __43: bool
+find __44: bool
+find __45: bool
+find __46: bool
+find __47: bool
+find __48: bool
+find __49: bool
+find __50: bool
+find __51: bool
+find __52: bool
+find __53: bool
+find __54: bool
+find __55: bool
+find __56: bool
+find __57: bool
+find __58: bool
+find __59: bool
+find __60: bool
+find __61: bool
+find __62: bool
+find __63: bool
+find __64: bool
+find __65: bool
+find __66: bool
+find __67: bool
+find __68: bool
+find __69: bool
+find __70: bool
+find __71: bool
+find __72: bool
+find __73: bool
+find __74: bool
+find __75: bool
+find __76: bool
+find __77: bool
+find __78: bool
+find __79: bool
+find __80: bool
+find __81: bool
+find __82: bool
+find __83: bool
+find __84: bool
+find __85: bool
+find __86: bool
+find __87: bool
+find __88: bool
+find __89: bool
+find __90: bool
+find __91: bool
+find __92: bool
+find __93: bool
+find __94: bool
+find __95: bool
+find __96: bool
+find __97: bool
+find __98: bool
+find __99: bool
+find __100: bool
+find __101: bool
+find __102: bool
+find __103: bool
+find __104: bool
+find __105: bool
+find __106: bool
+find __107: bool
+find __108: bool
+find __109: bool
+find __110: bool
+find __111: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a#sat_order_int_02 \/ a#sat_order_int_01),
+(¬a#sat_order_int_03 \/ a#sat_order_int_02),
+(a#sat_order_int_01),
+(¬b#sat_order_int_03 \/ b#sat_order_int_02),
+(¬b#sat_order_int_04 \/ b#sat_order_int_03),
+(b#sat_order_int_02),
+(¬a#sat_order_int_01 \/ ¬__0),
+(a#sat_order_int_01 \/ __0),
+(¬__1 \/ __0),
+(__1 \/ ¬__0),
+(¬__1 \/ __2),
+(¬__2 \/ __1),
+(¬a#sat_order_int_02 \/ ¬__3),
+(a#sat_order_int_02 \/ __3),
+(¬__4 \/ __3),
+(¬__4),
+(¬__2 \/ __5),
+(¬__4 \/ __5),
+(¬__5 \/ __2 \/ __4),
+(¬a#sat_order_int_03 \/ ¬__6),
+(a#sat_order_int_03 \/ __6),
+(¬__7 \/ __6),
+(¬__7),
+(¬__5 \/ __8),
+(¬__7 \/ __8),
+(¬__8 \/ __5 \/ __7),
+(¬__8 \/ ¬__9),
+(__8 \/ __9),
+(¬__10),
+(¬__11 \/ __10),
+(¬__11 \/ a#sat_order_int_01),
+(__11 \/ ¬__10 \/ ¬a#sat_order_int_01),
+(¬__11 \/ __12),
+(¬__12 \/ __11),
+(¬__13),
+(¬__14 \/ __13),
+(¬__14 \/ a#sat_order_int_02),
+(__14 \/ ¬__13 \/ ¬a#sat_order_int_02),
+(¬__12 \/ __15),
+(¬__14 \/ __15),
+(¬__15 \/ __12 \/ __14),
+(¬__16),
+(¬__17 \/ __16),
+(¬__17 \/ a#sat_order_int_03),
+(__17 \/ ¬__16 \/ ¬a#sat_order_int_03),
+(¬__15 \/ __18),
+(¬__17 \/ __18),
+(¬__18 \/ __15 \/ __17),
+(¬__18 \/ ¬__19),
+(__18 \/ __19),
+(¬b#sat_order_int_02 \/ ¬__20),
+(b#sat_order_int_02 \/ __20),
+(¬__21 \/ __20),
+(__21 \/ ¬__20),
+(¬__21 \/ __22),
+(¬__22 \/ __21),
+(¬b#sat_order_int_03 \/ ¬__23),
+(b#sat_order_int_03 \/ __23),
+(¬__24 \/ __23),
+(¬__24),
+(¬__22 \/ __25),
+(¬__24 \/ __25),
+(¬__25 \/ __22 \/ __24),
+(¬b#sat_order_int_04 \/ ¬__26),
+(b#sat_order_int_04 \/ __26),
+(¬__27 \/ __26),
+(¬__27),
+(¬__25 \/ __28),
+(¬__27 \/ __28),
+(¬__28 \/ __25 \/ __27),
+(¬__28 \/ ¬__29),
+(__28 \/ __29),
+(¬__30),
+(¬__31 \/ __30),
+(¬__31 \/ b#sat_order_int_02),
+(__31 \/ ¬__30 \/ ¬b#sat_order_int_02),
+(¬__31 \/ __32),
+(¬__32 \/ __31),
+(¬__33),
+(¬__34 \/ __33),
+(¬__34 \/ b#sat_order_int_03),
+(__34 \/ ¬__33 \/ ¬b#sat_order_int_03),
+(¬__32 \/ __35),
+(¬__34 \/ __35),
+(¬__35 \/ __32 \/ __34),
+(¬__36),
+(¬__37 \/ __36),
+(¬__37 \/ b#sat_order_int_04),
+(__37 \/ ¬__36 \/ ¬b#sat_order_int_04),
+(¬__35 \/ __38),
+(¬__37 \/ __38),
+(¬__38 \/ __35 \/ __37),
+(¬__38 \/ ¬__39),
+(__38 \/ __39),
+(¬__40 \/ __9),
+(¬__40 \/ __19),
+(__40 \/ ¬__9 \/ ¬__19),
+(¬__41 \/ __29),
+(¬__41 \/ __39),
+(__41 \/ ¬__29 \/ ¬__39),
+(__40),
+(__41),
+(¬__42#sat_order_int_03 \/ __42#sat_order_int_02),
+(¬__42#sat_order_int_04 \/ __42#sat_order_int_03),
+(__42#sat_order_int_02),
+(¬__43),
+(¬__44 \/ __43),
+(¬__44 \/ __42#sat_order_int_02),
+(__44 \/ ¬__43 \/ ¬__42#sat_order_int_02),
+(¬__44 \/ __45),
+(¬__45 \/ __44),
+(__46),
+(¬__47 \/ __46),
+(¬__47 \/ __42#sat_order_int_03),
+(__47 \/ ¬__46 \/ ¬__42#sat_order_int_03),
+(¬__45 \/ __48),
+(¬__47 \/ __48),
+(¬__48 \/ __45 \/ __47),
+(__49),
+(¬__50 \/ __49),
+(¬__50 \/ __42#sat_order_int_04),
+(__50 \/ ¬__49 \/ ¬__42#sat_order_int_04),
+(¬__48 \/ __51),
+(¬__50 \/ __51),
+(¬__51 \/ __48 \/ __50),
+(¬__51 \/ ¬__52),
+(__51 \/ __52),
+(¬__53),
+(¬__54 \/ __53),
+(¬__54 \/ a#sat_order_int_01),
+(__54 \/ ¬__53 \/ ¬a#sat_order_int_01),
+(¬__54 \/ __55),
+(¬__55 \/ __54),
+(¬__42#sat_order_int_02 \/ ¬__56),
+(__42#sat_order_int_02 \/ __56),
+(¬__57 \/ __56),
+(¬__57 \/ a#sat_order_int_02),
+(__57 \/ ¬__56 \/ ¬a#sat_order_int_02),
+(¬__55 \/ __58),
+(¬__57 \/ __58),
+(¬__58 \/ __55 \/ __57),
+(¬__42#sat_order_int_03 \/ ¬__59),
+(__42#sat_order_int_03 \/ __59),
+(¬__60 \/ __59),
+(¬__60 \/ a#sat_order_int_03),
+(__60 \/ ¬__59 \/ ¬a#sat_order_int_03),
+(¬__58 \/ __61),
+(¬__60 \/ __61),
+(¬__61 \/ __58 \/ __60),
+(¬__42#sat_order_int_04 \/ ¬__62),
+(__42#sat_order_int_04 \/ __62),
+(¬__63 \/ __62),
+(¬__63),
+(¬__61 \/ __64),
+(¬__63 \/ __64),
+(¬__64 \/ __61 \/ __63),
+(¬__64 \/ ¬__65),
+(__64 \/ __65),
+(¬__42#sat_order_int_02 \/ ¬__66),
+(__42#sat_order_int_02 \/ __66),
+(¬__67 \/ __66),
+(¬__67 \/ b#sat_order_int_02),
+(__67 \/ ¬__66 \/ ¬b#sat_order_int_02),
+(¬__67 \/ __68),
+(¬__68 \/ __67),
+(¬__42#sat_order_int_03 \/ ¬__69),
+(__42#sat_order_int_03 \/ __69),
+(¬__70 \/ __69),
+(¬__70 \/ b#sat_order_int_03),
+(__70 \/ ¬__69 \/ ¬b#sat_order_int_03),
+(¬__68 \/ __71),
+(¬__70 \/ __71),
+(¬__71 \/ __68 \/ __70),
+(¬__42#sat_order_int_04 \/ ¬__72),
+(__42#sat_order_int_04 \/ __72),
+(¬__73 \/ __72),
+(¬__73 \/ b#sat_order_int_04),
+(__73 \/ ¬__72 \/ ¬b#sat_order_int_04),
+(¬__71 \/ __74),
+(¬__73 \/ __74),
+(¬__74 \/ __71 \/ __73),
+(¬__74 \/ ¬__75),
+(__74 \/ __75),
+(¬a#sat_order_int_01 \/ __76),
+(a#sat_order_int_01 \/ ¬__76),
+(¬__77 \/ __76),
+(__77 \/ ¬__76),
+(¬__42#sat_order_int_02 \/ ¬a#sat_order_int_02 \/ __78),
+(__42#sat_order_int_02 \/ a#sat_order_int_02 \/ __78),
+(__42#sat_order_int_02 \/ ¬a#sat_order_int_02 \/ ¬__78),
+(¬__42#sat_order_int_02 \/ a#sat_order_int_02 \/ ¬__78),
+(¬__79 \/ __78),
+(¬__79 \/ __77),
+(__79 \/ ¬__78 \/ ¬__77),
+(¬__42#sat_order_int_03 \/ ¬a#sat_order_int_03 \/ __80),
+(__42#sat_order_int_03 \/ a#sat_order_int_03 \/ __80),
+(__42#sat_order_int_03 \/ ¬a#sat_order_int_03 \/ ¬__80),
+(¬__42#sat_order_int_03 \/ a#sat_order_int_03 \/ ¬__80),
+(¬__81 \/ __80),
+(¬__81 \/ __79),
+(__81 \/ ¬__80 \/ ¬__79),
+(__42#sat_order_int_04 \/ __82),
+(¬__42#sat_order_int_04 \/ ¬__82),
+(¬__83 \/ __82),
+(¬__83 \/ __81),
+(__83 \/ ¬__82 \/ ¬__81),
+(¬__42#sat_order_int_02 \/ ¬b#sat_order_int_02 \/ __84),
+(__42#sat_order_int_02 \/ b#sat_order_int_02 \/ __84),
+(__42#sat_order_int_02 \/ ¬b#sat_order_int_02 \/ ¬__84),
+(¬__42#sat_order_int_02 \/ b#sat_order_int_02 \/ ¬__84),
+(¬__85 \/ __84),
+(__85 \/ ¬__84),
+(¬__42#sat_order_int_03 \/ ¬b#sat_order_int_03 \/ __86),
+(__42#sat_order_int_03 \/ b#sat_order_int_03 \/ __86),
+(__42#sat_order_int_03 \/ ¬b#sat_order_int_03 \/ ¬__86),
+(¬__42#sat_order_int_03 \/ b#sat_order_int_03 \/ ¬__86),
+(¬__87 \/ __86),
+(¬__87 \/ __85),
+(__87 \/ ¬__86 \/ ¬__85),
+(¬__42#sat_order_int_04 \/ ¬b#sat_order_int_04 \/ __88),
+(__42#sat_order_int_04 \/ b#sat_order_int_04 \/ __88),
+(__42#sat_order_int_04 \/ ¬b#sat_order_int_04 \/ ¬__88),
+(¬__42#sat_order_int_04 \/ b#sat_order_int_04 \/ ¬__88),
+(¬__89 \/ __88),
+(¬__89 \/ __87),
+(__89 \/ ¬__88 \/ ¬__87),
+(¬__42#sat_order_int_02 \/ ¬__90),
+(__42#sat_order_int_02 \/ __90),
+(¬__91 \/ __90),
+(__91 \/ ¬__90),
+(¬__91 \/ __92),
+(¬__92 \/ __91),
+(¬__42#sat_order_int_03 \/ ¬__93),
+(__42#sat_order_int_03 \/ __93),
+(¬__94 \/ __93),
+(¬__94),
+(¬__92 \/ __95),
+(¬__94 \/ __95),
+(¬__95 \/ __92 \/ __94),
+(¬__42#sat_order_int_04 \/ ¬__96),
+(__42#sat_order_int_04 \/ __96),
+(¬__97 \/ __96),
+(¬__97),
+(¬__95 \/ __98),
+(¬__97 \/ __98),
+(¬__98 \/ __95 \/ __97),
+(¬__98 \/ ¬__99),
+(__98 \/ __99),
+(¬__100),
+(¬__101 \/ __100),
+(¬__101 \/ __42#sat_order_int_02),
+(__101 \/ ¬__100 \/ ¬__42#sat_order_int_02),
+(¬__101 \/ __102),
+(¬__102 \/ __101),
+(¬__103),
+(¬__104 \/ __103),
+(¬__104 \/ __42#sat_order_int_03),
+(__104 \/ ¬__103 \/ ¬__42#sat_order_int_03),
+(¬__102 \/ __105),
+(¬__104 \/ __105),
+(¬__105 \/ __102 \/ __104),
+(¬__106),
+(¬__107 \/ __106),
+(¬__107 \/ __42#sat_order_int_04),
+(__107 \/ ¬__106 \/ ¬__42#sat_order_int_04),
+(¬__105 \/ __108),
+(¬__107 \/ __108),
+(¬__108 \/ __105 \/ __107),
+(¬__108 \/ ¬__109),
+(__108 \/ __109),
+(¬__83 \/ __110),
+(¬__89 \/ __110),
+(¬__110 \/ __83 \/ __89),
+(¬__111 \/ __99),
+(¬__111 \/ __109),
+(__111 \/ ¬__99 \/ ¬__109),
+(__52),
+(__65),
+(__75),
+(__110),
+(__111)
+

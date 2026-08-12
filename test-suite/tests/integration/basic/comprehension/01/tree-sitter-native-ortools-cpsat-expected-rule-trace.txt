@@ -1,0 +1,111 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+and([ m[i] = i | i : int(1..5) ])
+
+--
+
+and([ m[i] = i | i : int(1..5) ])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([ m[i] = i | i : int(1..5) ])
+new variables:
+  find m#matrix_to_atom_1: int(1..5)
+  find m#matrix_to_atom_2: int(1..5)
+  find m#matrix_to_atom_3: int(1..5)
+  find m#matrix_to_atom_4: int(1..5)
+  find m#matrix_to_atom_5: int(1..5)
+
+--
+
+[ m[i] = i | i : int(1..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[m[1] = 1,m[2] = 2,m[3] = 3,m[4] = 4,m[5] = 5;int(1..)]
+
+--
+
+and([m#matrix_to_atom[1] = 1,m#matrix_to_atom[2] = 2,m#matrix_to_atom[3] = 3,m#matrix_to_atom[4] = 4,m#matrix_to_atom[5] = 5;int(1..)])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([m#matrix_to_atom[1] = 1,m#matrix_to_atom[2] = 2,m#matrix_to_atom[3] = 3,m#matrix_to_atom[4] = 4,m#matrix_to_atom[5] = 5;int(1..)])
+
+--
+
+m#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[1])
+
+--
+
+m#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[2])
+
+--
+
+m#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[3])
+
+--
+
+m#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[4])
+
+--
+
+m#matrix_to_atom[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#matrix_to_atom,[5])
+
+--
+
+and([SafeIndex(m#matrix_to_atom,[1]) = 1,SafeIndex(m#matrix_to_atom,[2]) = 2,SafeIndex(m#matrix_to_atom,[3]) = 3,SafeIndex(m#matrix_to_atom,[4]) = 4,SafeIndex(m#matrix_to_atom,[5]) = 5;int(1..)])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+and([m#matrix_to_atom_1 = 1,m#matrix_to_atom_2 = 2,m#matrix_to_atom_3 = 3,m#matrix_to_atom_4 = 4,m#matrix_to_atom_5 = 5;int(1..)])
+
+--
+
+and([m#matrix_to_atom_1 = 1,m#matrix_to_atom_2 = 2,m#matrix_to_atom_3 = 3,m#matrix_to_atom_4 = 4,m#matrix_to_atom_5 = 5;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1,__2,__3,__4;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+new constraints:
+  __0 =aux m#matrix_to_atom_1 = 1
+  __1 =aux m#matrix_to_atom_2 = 2
+  __2 =aux m#matrix_to_atom_3 = 3
+  __3 =aux m#matrix_to_atom_4 = 4
+  __4 =aux m#matrix_to_atom_5 = 5
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find m#matrix_to_atom_1: int(1..5)
+find m#matrix_to_atom_2: int(1..5)
+find m#matrix_to_atom_3: int(1..5)
+find m#matrix_to_atom_4: int(1..5)
+find m#matrix_to_atom_5: int(1..5)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+
+such that
+
+and([__0,__1,__2,__3,__4;int(1..)]),
+__0 =aux m#matrix_to_atom_1 = 1,
+__1 =aux m#matrix_to_atom_2 = 2,
+__2 =aux m#matrix_to_atom_3 = 3,
+__3 =aux m#matrix_to_atom_4 = 4,
+__4 =aux m#matrix_to_atom_5 = 5
+

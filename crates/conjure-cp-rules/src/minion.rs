@@ -34,9 +34,6 @@ register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Minion)
 });
 
-
-
-
 /// Inlines constant matrix references just for Minion so Base matrix rules can lower them
 /// without affecting other backends.
 #[register_rule(["Minion", "OrToolsCpSat"], 9000, [SafeIndex])]
@@ -892,7 +889,7 @@ fn unwrap_flatten_operand(operand: &Moo<Expr>) -> Option<Moo<Expr>> {
 }
 
 /// Unwraps `flatten(m)` operands in global cardinality constraints.
-#[register_rule("Minion", 4050, [AtMost, AtLeast, Gcc, GccWeak])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4050, [AtMost, AtLeast, Gcc, GccWeak])]
 fn unwrap_flatten_in_global_cardinality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::AtMost(meta, vars, counts, values) => {
@@ -2172,4 +2169,3 @@ fn iff_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         y.clone(),
     )))
 }
-

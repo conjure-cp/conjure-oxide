@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find x: int(0..6)
+
+such that
+
+and([ i <= x | i : int(1..5) ])
+
+--
+
+[ i <= x | i : int(1..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1 <= x,2 <= x,3 <= x,4 <= x,5 <= x;int(1..)]
+
+--
+
+and([1 <= x,2 <= x,3 <= x,4 <= x,5 <= x;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1,__2,__3,__4;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+new constraints:
+  __0 =aux 1 <= x
+  __1 =aux 2 <= x
+  __2 =aux 3 <= x
+  __3 =aux 4 <= x
+  __4 =aux 5 <= x
+
+--
+
+Final model:
+
+find x: int(0..6)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+
+such that
+
+and([__0,__1,__2,__3,__4;int(1..)]),
+__0 =aux 1 <= x,
+__1 =aux 2 <= x,
+__2 =aux 3 <= x,
+__3 =aux 4 <= x,
+__4 =aux 5 <= x
+

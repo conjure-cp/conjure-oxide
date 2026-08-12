@@ -138,8 +138,8 @@ fn retroactively_prune_dominated(
         .collect()
 }
 
-fn validate_solution_collection_options(model: &Model, num_sols: i32) -> Result<(), anyhow::Error> {
-    if model.objective.is_some() && num_sols != 1 {
+fn validate_solution_collection_options(model: &Model, num_sols: i32, keep_intermediate_solutions: bool) -> Result<(), anyhow::Error> {
+    if model.objective.is_some() && num_sols != 1 && !keep_intermediate_solutions {
         let got = if num_sols == 0 {
             "all".to_string()
         } else {
@@ -162,7 +162,7 @@ pub fn get_solutions(
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     set_rule_trace_enabled(rule_trace_cdp && configured_rule_trace_enabled());
 
-    validate_solution_collection_options(&model, num_sols)?;
+    validate_solution_collection_options(&model, num_sols, keep_intermediate_solutions)?;
 
     let is_optimisation = model.objective.is_some();
 
@@ -177,8 +177,9 @@ pub fn get_solutions(
 
     // Create for later since we consume the model when loading it
     let symbols_ptr = model.symbols_ptr_unchecked().clone();
+    let mut solver = solver.load_model(model)?;
 
-    let solver = solver.load_model(model)?;
+    solver.set_enumerate_all(num_sols != 1);
 
     if let Some(solver_input_file) = solver_input_file {
         eprintln!(

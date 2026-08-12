@@ -64,15 +64,15 @@ fn expand_qualifiers(
             let mut expanded = Vec::new();
 
             for literal in values {
-                let mut suffix = with_temporary_quantified_binding(comprehension, ptr, &literal, || {
-                    expand_qualifiers(
-                        comprehension,
-                        qualifier_index + 1,
-                        parent_symbols,
-                        ac_operator,
-                    )
-
-                })?;
+                let mut suffix =
+                    with_temporary_quantified_binding(comprehension, ptr, &literal, || {
+                        expand_qualifiers(
+                            comprehension,
+                            qualifier_index + 1,
+                            parent_symbols,
+                            ac_operator,
+                        )
+                    })?;
                 expanded.append(&mut suffix);
             }
 
@@ -216,11 +216,15 @@ fn concretise_resolved_reference_atoms(expr: Expression) -> Expression {
 }
 
 fn transform_nested_comprehensions(expr: Expression) -> Expression {
-    use conjure_cp::ast::{Moo, abstract_comprehension::{Qualifier, Generator}};
+    use conjure_cp::ast::{
+        Moo,
+        abstract_comprehension::{Generator, Qualifier},
+    };
     match expr {
         Expression::Comprehension(meta, comp) => {
             let mut comp_val = comp.as_ref().clone();
-            comp_val.return_expression = concretise_resolved_reference_atoms(comp_val.return_expression);
+            comp_val.return_expression =
+                concretise_resolved_reference_atoms(comp_val.return_expression);
             for qualifier in &mut comp_val.qualifiers {
                 match qualifier {
                     ComprehensionQualifier::Condition(cond) => {
@@ -240,10 +244,12 @@ fn transform_nested_comprehensions(expr: Expression) -> Expression {
                         *cond = concretise_resolved_reference_atoms(cond.clone());
                     }
                     Qualifier::ComprehensionLetting(letting) => {
-                        letting.expression = concretise_resolved_reference_atoms(letting.expression.clone());
+                        letting.expression =
+                            concretise_resolved_reference_atoms(letting.expression.clone());
                     }
                     Qualifier::Generator(Generator::ExpressionGenerator(generator)) => {
-                        generator.expression = concretise_resolved_reference_atoms(generator.expression.clone());
+                        generator.expression =
+                            concretise_resolved_reference_atoms(generator.expression.clone());
                     }
                     _ => {}
                 }
@@ -258,12 +264,18 @@ fn transform_nested_comprehensions(expr: Expression) -> Expression {
     }
 }
 
-fn map_tree(tree: uniplate::Tree<Expression>, f: &dyn Fn(Expression) -> Expression) -> uniplate::Tree<Expression> {
+fn map_tree(
+    tree: uniplate::Tree<Expression>,
+    f: &dyn Fn(Expression) -> Expression,
+) -> uniplate::Tree<Expression> {
     match tree {
         uniplate::Tree::Zero => uniplate::Tree::Zero,
         uniplate::Tree::One(val) => uniplate::Tree::One(f(val)),
         uniplate::Tree::Many(children) => uniplate::Tree::Many(
-            children.into_iter().map(|child| map_tree(child, f)).collect()
+            children
+                .into_iter()
+                .map(|child| map_tree(child, f))
+                .collect(),
         ),
     }
 }

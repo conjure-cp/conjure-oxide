@@ -59,10 +59,13 @@ impl crate::solver::SolverAdaptor for OrToolsCpSat {
         "ortools-cpsat"
     }
 
-    fn write_solver_input_file(&self, _writer: &mut Box<dyn std::io::Write>) -> Result<(), std::io::Error> {
+    fn write_solver_input_file(
+        &self,
+        _writer: &mut Box<dyn std::io::Write>,
+    ) -> Result<(), std::io::Error> {
         Err(std::io::Error::new(
             std::io::ErrorKind::Unsupported,
-            "OR-Tools support not compiled"
+            "OR-Tools support not compiled",
         ))
     }
 }

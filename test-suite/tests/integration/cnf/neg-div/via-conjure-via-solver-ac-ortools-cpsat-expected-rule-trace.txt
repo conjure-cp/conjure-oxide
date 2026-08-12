@@ -1,0 +1,62 @@
+Model before rewriting:
+
+find a: int(-20..20)
+find b: int(-20..20)
+find c: int(-20..20)
+
+such that
+
+(a / b) = c
+
+--
+
+(a / b)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(a, b) @ b != 0}
+
+--
+
+{SafeDiv(a, b) @ b != 0} = c
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeDiv(a, b) = c @ b != 0}
+
+--
+
+{SafeDiv(a, b) = c @ b != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeDiv(a, b) = c,b != 0;int(1..)])
+
+--
+
+and([SafeDiv(a, b) = c,b != 0;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux SafeDiv(a, b) = c
+  __1 =aux b != 0
+
+--
+
+SafeDiv(a, b) = c
+   ~~> introduce_diveq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+DivEq(a, b, c)
+
+--
+
+Final model:
+
+find a: int(-20..20)
+find b: int(-20..20)
+find c: int(-20..20)
+find __0: bool
+find __1: bool
+
+such that
+
+and([__0,__1;int(1..)]),
+__0 =aux DivEq(a, b, c),
+__1 =aux b != 0
+

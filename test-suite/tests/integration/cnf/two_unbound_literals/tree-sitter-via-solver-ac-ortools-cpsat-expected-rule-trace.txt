@@ -1,0 +1,56 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
+
+--
+
+and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux or([a,a;int(1..)])
+  __1 =aux or([!(b),!(b);int(1..)])
+
+--
+
+or([!(b),!(b);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__2,__3;int(1..)])
+new variables:
+  find __2: bool
+  find __3: bool
+new constraints:
+  __2 =aux !(b)
+  __3 =aux !(b)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+
+such that
+
+and([__0,__1;int(1..)]),
+__0 =aux or([a,a;int(1..)]),
+__1 =aux or([__2,__3;int(1..)]),
+__2 =aux !(b),
+__3 =aux !(b)
+

@@ -1,0 +1,951 @@
+Model before rewriting:
+
+letting vertices be 5
+letting colours be 3
+letting VERTICES be domain int(1..vertices)
+letting COLOURS be domain int(1..colours)
+letting edges be [[false,true,false,true,false;int(1..5)],[true,false,true,false,true;int(1..5)],[false,true,false,true,true;int(1..5)],[true,false,true,false,false;int(1..5)],[false,true,true,false,false;int(1..5)];int(1..5)]
+find colouring: matrix indexed by [VERTICES] of COLOURS
+find usedColours: matrix indexed by [COLOURS] of bool
+find __0: int(0..3)
+
+such that
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+
+--
+
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ])
+
+--
+
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+new variables:
+  find colouring#matrix_to_atom_1: int(1..3)
+  find colouring#matrix_to_atom_2: int(1..3)
+  find colouring#matrix_to_atom_3: int(1..3)
+  find colouring#matrix_to_atom_4: int(1..3)
+  find colouring#matrix_to_atom_5: int(1..3)
+  find usedColours#matrix_to_atom_1: bool
+  find usedColours#matrix_to_atom_2: bool
+  find usedColours#matrix_to_atom_3: bool
+
+--
+
+[ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true,colouring[1] != colouring[2],true,colouring[1] != colouring[4],true,colouring[2] != colouring[1],true,colouring[2] != colouring[3],true,colouring[2] != colouring[5],true,colouring[3] != colouring[2],true,colouring[3] != colouring[4],colouring[3] != colouring[5],colouring[4] != colouring[1],true,colouring[4] != colouring[3],true,true,true,colouring[5] != colouring[2],colouring[5] != colouring[3],true,true;int(1..)]
+
+--
+
+and([colouring#matrix_to_atom[1] != colouring#matrix_to_atom[2],colouring#matrix_to_atom[1] != colouring#matrix_to_atom[4],colouring#matrix_to_atom[2] != colouring#matrix_to_atom[1],colouring#matrix_to_atom[2] != colouring#matrix_to_atom[3],colouring#matrix_to_atom[2] != colouring#matrix_to_atom[5],colouring#matrix_to_atom[3] != colouring#matrix_to_atom[2],colouring#matrix_to_atom[3] != colouring#matrix_to_atom[4],colouring#matrix_to_atom[3] != colouring#matrix_to_atom[5],colouring#matrix_to_atom[4] != colouring#matrix_to_atom[1],colouring#matrix_to_atom[4] != colouring#matrix_to_atom[3],colouring#matrix_to_atom[5] != colouring#matrix_to_atom[2],colouring#matrix_to_atom[5] != colouring#matrix_to_atom[3];int(1..)]),
+and([ (colouring#matrix_to_atom[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([colouring#matrix_to_atom[1] != colouring#matrix_to_atom[2],colouring#matrix_to_atom[1] != colouring#matrix_to_atom[4],colouring#matrix_to_atom[2] != colouring#matrix_to_atom[1],colouring#matrix_to_atom[2] != colouring#matrix_to_atom[3],colouring#matrix_to_atom[2] != colouring#matrix_to_atom[5],colouring#matrix_to_atom[3] != colouring#matrix_to_atom[2],colouring#matrix_to_atom[3] != colouring#matrix_to_atom[4],colouring#matrix_to_atom[3] != colouring#matrix_to_atom[5],colouring#matrix_to_atom[4] != colouring#matrix_to_atom[1],colouring#matrix_to_atom[4] != colouring#matrix_to_atom[3],colouring#matrix_to_atom[5] != colouring#matrix_to_atom[2],colouring#matrix_to_atom[5] != colouring#matrix_to_atom[3];int(1..)]),
+and([ (colouring#matrix_to_atom[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+
+--
+
+colouring#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[1])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[1])
+
+--
+
+colouring#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[4])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[1])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[5])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[4])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[5])
+
+--
+
+colouring#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[4])
+
+--
+
+colouring#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[1])
+
+--
+
+colouring#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[4])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[5])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[5])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+and([SafeIndex(colouring#matrix_to_atom,[1]) != SafeIndex(colouring#matrix_to_atom,[2]),SafeIndex(colouring#matrix_to_atom,[1]) != SafeIndex(colouring#matrix_to_atom,[4]),SafeIndex(colouring#matrix_to_atom,[2]) != SafeIndex(colouring#matrix_to_atom,[1]),SafeIndex(colouring#matrix_to_atom,[2]) != SafeIndex(colouring#matrix_to_atom,[3]),SafeIndex(colouring#matrix_to_atom,[2]) != SafeIndex(colouring#matrix_to_atom,[5]),SafeIndex(colouring#matrix_to_atom,[3]) != SafeIndex(colouring#matrix_to_atom,[2]),SafeIndex(colouring#matrix_to_atom,[3]) != SafeIndex(colouring#matrix_to_atom,[4]),SafeIndex(colouring#matrix_to_atom,[3]) != SafeIndex(colouring#matrix_to_atom,[5]),SafeIndex(colouring#matrix_to_atom,[4]) != SafeIndex(colouring#matrix_to_atom,[1]),SafeIndex(colouring#matrix_to_atom,[4]) != SafeIndex(colouring#matrix_to_atom,[3]),SafeIndex(colouring#matrix_to_atom,[5]) != SafeIndex(colouring#matrix_to_atom,[2]),SafeIndex(colouring#matrix_to_atom,[5]) != SafeIndex(colouring#matrix_to_atom,[3]);int(1..)]),
+and([ (colouring#matrix_to_atom[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+and([colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3;int(1..)]),
+and([ (colouring#matrix_to_atom[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+
+--
+
+and([colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12;int(1..)])
+new variables:
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+  find __8: bool
+  find __9: bool
+  find __10: bool
+  find __11: bool
+  find __12: bool
+new constraints:
+  __1 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2
+  __2 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4
+  __3 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1
+  __4 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3
+  __5 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5
+  __6 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2
+  __7 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4
+  __8 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5
+  __9 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1
+  __10 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3
+  __11 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2
+  __12 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3
+
+--
+
+[ (colouring#matrix_to_atom[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(colouring#matrix_to_atom[1] = 1) -> (usedColours[1]),(colouring#matrix_to_atom[1] = 2) -> (usedColours[2]),(colouring#matrix_to_atom[1] = 3) -> (usedColours[3]),(colouring#matrix_to_atom[2] = 1) -> (usedColours[1]),(colouring#matrix_to_atom[2] = 2) -> (usedColours[2]),(colouring#matrix_to_atom[2] = 3) -> (usedColours[3]),(colouring#matrix_to_atom[3] = 1) -> (usedColours[1]),(colouring#matrix_to_atom[3] = 2) -> (usedColours[2]),(colouring#matrix_to_atom[3] = 3) -> (usedColours[3]),(colouring#matrix_to_atom[4] = 1) -> (usedColours[1]),(colouring#matrix_to_atom[4] = 2) -> (usedColours[2]),(colouring#matrix_to_atom[4] = 3) -> (usedColours[3]),(colouring#matrix_to_atom[5] = 1) -> (usedColours[1]),(colouring#matrix_to_atom[5] = 2) -> (usedColours[2]),(colouring#matrix_to_atom[5] = 3) -> (usedColours[3]);int(1..)]
+
+--
+
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12;int(1..)]),
+and([(colouring#matrix_to_atom[1] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[1] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[1] = 3) -> (usedColours#matrix_to_atom[3]),(colouring#matrix_to_atom[2] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[2] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[2] = 3) -> (usedColours#matrix_to_atom[3]),(colouring#matrix_to_atom[3] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[3] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[3] = 3) -> (usedColours#matrix_to_atom[3]),(colouring#matrix_to_atom[4] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[4] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[4] = 3) -> (usedColours#matrix_to_atom[3]),(colouring#matrix_to_atom[5] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[5] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[5] = 3) -> (usedColours#matrix_to_atom[3]);int(1..)]),
+__0 =aux sum([ toInt(usedColours#matrix_to_atom[c]) | c : COLOURS ]),
+__1 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,
+__2 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,
+__3 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,
+__4 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,
+__5 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,
+__6 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,
+__7 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,
+__8 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,
+__9 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,
+__10 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,
+__11 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,
+__12 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12;int(1..)]),
+and([(colouring#matrix_to_atom[1] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[1] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[1] = 3) -> (usedColours#matrix_to_atom[3]),(colouring#matrix_to_atom[2] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[2] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[2] = 3) -> (usedColours#matrix_to_atom[3]),(colouring#matrix_to_atom[3] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[3] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[3] = 3) -> (usedColours#matrix_to_atom[3]),(colouring#matrix_to_atom[4] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[4] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[4] = 3) -> (usedColours#matrix_to_atom[3]),(colouring#matrix_to_atom[5] = 1) -> (usedColours#matrix_to_atom[1]),(colouring#matrix_to_atom[5] = 2) -> (usedColours#matrix_to_atom[2]),(colouring#matrix_to_atom[5] = 3) -> (usedColours#matrix_to_atom[3]);int(1..)]),
+__0 =aux sum([ toInt(usedColours#matrix_to_atom[c]) | c : COLOURS ]),
+__1 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,
+__2 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,
+__3 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,
+__4 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,
+__5 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,
+__6 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,
+__7 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,
+__8 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,
+__9 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,
+__10 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,
+__11 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,
+__12 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3
+
+--
+
+usedColours#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[1])
+
+--
+
+usedColours#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[2])
+
+--
+
+usedColours#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[3])
+
+--
+
+usedColours#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[1])
+
+--
+
+usedColours#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[2])
+
+--
+
+usedColours#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[3])
+
+--
+
+usedColours#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[1])
+
+--
+
+usedColours#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[2])
+
+--
+
+usedColours#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[3])
+
+--
+
+usedColours#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[1])
+
+--
+
+usedColours#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[2])
+
+--
+
+usedColours#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[3])
+
+--
+
+usedColours#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[1])
+
+--
+
+usedColours#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[2])
+
+--
+
+usedColours#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[1])
+
+--
+
+colouring#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[1])
+
+--
+
+colouring#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[1])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[2])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[3])
+
+--
+
+colouring#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[4])
+
+--
+
+colouring#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[4])
+
+--
+
+colouring#matrix_to_atom[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[4])
+
+--
+
+colouring#matrix_to_atom[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[5])
+
+--
+
+colouring#matrix_to_atom[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[5])
+
+--
+
+colouring#matrix_to_atom[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(colouring#matrix_to_atom,[5])
+
+--
+
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12;int(1..)]),
+and([(SafeIndex(colouring#matrix_to_atom,[1]) = 1) -> (SafeIndex(usedColours#matrix_to_atom,[1])),(SafeIndex(colouring#matrix_to_atom,[1]) = 2) -> (SafeIndex(usedColours#matrix_to_atom,[2])),(SafeIndex(colouring#matrix_to_atom,[1]) = 3) -> (SafeIndex(usedColours#matrix_to_atom,[3])),(SafeIndex(colouring#matrix_to_atom,[2]) = 1) -> (SafeIndex(usedColours#matrix_to_atom,[1])),(SafeIndex(colouring#matrix_to_atom,[2]) = 2) -> (SafeIndex(usedColours#matrix_to_atom,[2])),(SafeIndex(colouring#matrix_to_atom,[2]) = 3) -> (SafeIndex(usedColours#matrix_to_atom,[3])),(SafeIndex(colouring#matrix_to_atom,[3]) = 1) -> (SafeIndex(usedColours#matrix_to_atom,[1])),(SafeIndex(colouring#matrix_to_atom,[3]) = 2) -> (SafeIndex(usedColours#matrix_to_atom,[2])),(SafeIndex(colouring#matrix_to_atom,[3]) = 3) -> (SafeIndex(usedColours#matrix_to_atom,[3])),(SafeIndex(colouring#matrix_to_atom,[4]) = 1) -> (SafeIndex(usedColours#matrix_to_atom,[1])),(SafeIndex(colouring#matrix_to_atom,[4]) = 2) -> (SafeIndex(usedColours#matrix_to_atom,[2])),(SafeIndex(colouring#matrix_to_atom,[4]) = 3) -> (SafeIndex(usedColours#matrix_to_atom,[3])),(SafeIndex(colouring#matrix_to_atom,[5]) = 1) -> (SafeIndex(usedColours#matrix_to_atom,[1])),(SafeIndex(colouring#matrix_to_atom,[5]) = 2) -> (SafeIndex(usedColours#matrix_to_atom,[2])),(SafeIndex(colouring#matrix_to_atom,[5]) = 3) -> (SafeIndex(usedColours#matrix_to_atom,[3]));int(1..)]),
+__0 =aux sum([ toInt(usedColours#matrix_to_atom[c]) | c : COLOURS ]),
+__1 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,
+__2 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,
+__3 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,
+__4 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,
+__5 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,
+__6 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,
+__7 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,
+__8 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,
+__9 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,
+__10 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,
+__11 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,
+__12 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12;int(1..)]),
+and([(colouring#matrix_to_atom_1 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_1 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_1 = 3) -> (usedColours#matrix_to_atom_3),(colouring#matrix_to_atom_2 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_2 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_2 = 3) -> (usedColours#matrix_to_atom_3),(colouring#matrix_to_atom_3 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_3 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_3 = 3) -> (usedColours#matrix_to_atom_3),(colouring#matrix_to_atom_4 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_4 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_4 = 3) -> (usedColours#matrix_to_atom_3),(colouring#matrix_to_atom_5 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_5 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_5 = 3) -> (usedColours#matrix_to_atom_3);int(1..)]),
+__0 =aux sum([ toInt(usedColours#matrix_to_atom[c]) | c : COLOURS ]),
+__1 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,
+__2 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,
+__3 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,
+__4 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,
+__5 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,
+__6 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,
+__7 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,
+__8 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,
+__9 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,
+__10 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,
+__11 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,
+__12 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3
+
+--
+
+and([(colouring#matrix_to_atom_1 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_1 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_1 = 3) -> (usedColours#matrix_to_atom_3),(colouring#matrix_to_atom_2 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_2 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_2 = 3) -> (usedColours#matrix_to_atom_3),(colouring#matrix_to_atom_3 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_3 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_3 = 3) -> (usedColours#matrix_to_atom_3),(colouring#matrix_to_atom_4 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_4 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_4 = 3) -> (usedColours#matrix_to_atom_3),(colouring#matrix_to_atom_5 = 1) -> (usedColours#matrix_to_atom_1),(colouring#matrix_to_atom_5 = 2) -> (usedColours#matrix_to_atom_2),(colouring#matrix_to_atom_5 = 3) -> (usedColours#matrix_to_atom_3);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27;int(1..)])
+new variables:
+  find __13: bool
+  find __14: bool
+  find __15: bool
+  find __16: bool
+  find __17: bool
+  find __18: bool
+  find __19: bool
+  find __20: bool
+  find __21: bool
+  find __22: bool
+  find __23: bool
+  find __24: bool
+  find __25: bool
+  find __26: bool
+  find __27: bool
+new constraints:
+  __13 =aux (colouring#matrix_to_atom_1 = 1) -> (usedColours#matrix_to_atom_1)
+  __14 =aux (colouring#matrix_to_atom_1 = 2) -> (usedColours#matrix_to_atom_2)
+  __15 =aux (colouring#matrix_to_atom_1 = 3) -> (usedColours#matrix_to_atom_3)
+  __16 =aux (colouring#matrix_to_atom_2 = 1) -> (usedColours#matrix_to_atom_1)
+  __17 =aux (colouring#matrix_to_atom_2 = 2) -> (usedColours#matrix_to_atom_2)
+  __18 =aux (colouring#matrix_to_atom_2 = 3) -> (usedColours#matrix_to_atom_3)
+  __19 =aux (colouring#matrix_to_atom_3 = 1) -> (usedColours#matrix_to_atom_1)
+  __20 =aux (colouring#matrix_to_atom_3 = 2) -> (usedColours#matrix_to_atom_2)
+  __21 =aux (colouring#matrix_to_atom_3 = 3) -> (usedColours#matrix_to_atom_3)
+  __22 =aux (colouring#matrix_to_atom_4 = 1) -> (usedColours#matrix_to_atom_1)
+  __23 =aux (colouring#matrix_to_atom_4 = 2) -> (usedColours#matrix_to_atom_2)
+  __24 =aux (colouring#matrix_to_atom_4 = 3) -> (usedColours#matrix_to_atom_3)
+  __25 =aux (colouring#matrix_to_atom_5 = 1) -> (usedColours#matrix_to_atom_1)
+  __26 =aux (colouring#matrix_to_atom_5 = 2) -> (usedColours#matrix_to_atom_2)
+  __27 =aux (colouring#matrix_to_atom_5 = 3) -> (usedColours#matrix_to_atom_3)
+
+--
+
+(colouring#matrix_to_atom_1 = 1) -> (usedColours#matrix_to_atom_1)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__28) -> (usedColours#matrix_to_atom_1)
+new variables:
+  find __28: bool
+new constraints:
+  __28 =aux colouring#matrix_to_atom_1 = 1
+
+--
+
+(colouring#matrix_to_atom_1 = 2) -> (usedColours#matrix_to_atom_2)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__29) -> (usedColours#matrix_to_atom_2)
+new variables:
+  find __29: bool
+new constraints:
+  __29 =aux colouring#matrix_to_atom_1 = 2
+
+--
+
+(colouring#matrix_to_atom_1 = 3) -> (usedColours#matrix_to_atom_3)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__30) -> (usedColours#matrix_to_atom_3)
+new variables:
+  find __30: bool
+new constraints:
+  __30 =aux colouring#matrix_to_atom_1 = 3
+
+--
+
+(colouring#matrix_to_atom_2 = 1) -> (usedColours#matrix_to_atom_1)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__31) -> (usedColours#matrix_to_atom_1)
+new variables:
+  find __31: bool
+new constraints:
+  __31 =aux colouring#matrix_to_atom_2 = 1
+
+--
+
+(colouring#matrix_to_atom_2 = 2) -> (usedColours#matrix_to_atom_2)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__32) -> (usedColours#matrix_to_atom_2)
+new variables:
+  find __32: bool
+new constraints:
+  __32 =aux colouring#matrix_to_atom_2 = 2
+
+--
+
+(colouring#matrix_to_atom_2 = 3) -> (usedColours#matrix_to_atom_3)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__33) -> (usedColours#matrix_to_atom_3)
+new variables:
+  find __33: bool
+new constraints:
+  __33 =aux colouring#matrix_to_atom_2 = 3
+
+--
+
+(colouring#matrix_to_atom_3 = 1) -> (usedColours#matrix_to_atom_1)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__34) -> (usedColours#matrix_to_atom_1)
+new variables:
+  find __34: bool
+new constraints:
+  __34 =aux colouring#matrix_to_atom_3 = 1
+
+--
+
+(colouring#matrix_to_atom_3 = 2) -> (usedColours#matrix_to_atom_2)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__35) -> (usedColours#matrix_to_atom_2)
+new variables:
+  find __35: bool
+new constraints:
+  __35 =aux colouring#matrix_to_atom_3 = 2
+
+--
+
+(colouring#matrix_to_atom_3 = 3) -> (usedColours#matrix_to_atom_3)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__36) -> (usedColours#matrix_to_atom_3)
+new variables:
+  find __36: bool
+new constraints:
+  __36 =aux colouring#matrix_to_atom_3 = 3
+
+--
+
+(colouring#matrix_to_atom_4 = 1) -> (usedColours#matrix_to_atom_1)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__37) -> (usedColours#matrix_to_atom_1)
+new variables:
+  find __37: bool
+new constraints:
+  __37 =aux colouring#matrix_to_atom_4 = 1
+
+--
+
+(colouring#matrix_to_atom_4 = 2) -> (usedColours#matrix_to_atom_2)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__38) -> (usedColours#matrix_to_atom_2)
+new variables:
+  find __38: bool
+new constraints:
+  __38 =aux colouring#matrix_to_atom_4 = 2
+
+--
+
+(colouring#matrix_to_atom_4 = 3) -> (usedColours#matrix_to_atom_3)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__39) -> (usedColours#matrix_to_atom_3)
+new variables:
+  find __39: bool
+new constraints:
+  __39 =aux colouring#matrix_to_atom_4 = 3
+
+--
+
+(colouring#matrix_to_atom_5 = 1) -> (usedColours#matrix_to_atom_1)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__40) -> (usedColours#matrix_to_atom_1)
+new variables:
+  find __40: bool
+new constraints:
+  __40 =aux colouring#matrix_to_atom_5 = 1
+
+--
+
+(colouring#matrix_to_atom_5 = 2) -> (usedColours#matrix_to_atom_2)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__41) -> (usedColours#matrix_to_atom_2)
+new variables:
+  find __41: bool
+new constraints:
+  __41 =aux colouring#matrix_to_atom_5 = 2
+
+--
+
+(colouring#matrix_to_atom_5 = 3) -> (usedColours#matrix_to_atom_3)
+   ~~> flatten_imply ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+(__42) -> (usedColours#matrix_to_atom_3)
+new variables:
+  find __42: bool
+new constraints:
+  __42 =aux colouring#matrix_to_atom_5 = 3
+
+--
+
+[ toInt(usedColours#matrix_to_atom[c]) | c : COLOURS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(usedColours#matrix_to_atom[1]),toInt(usedColours#matrix_to_atom[2]),toInt(usedColours#matrix_to_atom[3]);int(1..)]
+
+--
+
+usedColours#matrix_to_atom[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[1])
+
+--
+
+usedColours#matrix_to_atom[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[2])
+
+--
+
+usedColours#matrix_to_atom[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(usedColours#matrix_to_atom,[3])
+
+--
+
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12;int(1..)]),
+and([__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27;int(1..)]),
+__0 =aux sum([toInt(SafeIndex(usedColours#matrix_to_atom,[1])),toInt(SafeIndex(usedColours#matrix_to_atom,[2])),toInt(SafeIndex(usedColours#matrix_to_atom,[3]));int(1..)]),
+__1 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,
+__2 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,
+__3 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,
+__4 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,
+__5 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,
+__6 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,
+__7 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,
+__8 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,
+__9 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,
+__10 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,
+__11 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,
+__12 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3,
+__13 =aux (__28) -> (usedColours#matrix_to_atom_1),
+__14 =aux (__29) -> (usedColours#matrix_to_atom_2),
+__15 =aux (__30) -> (usedColours#matrix_to_atom_3),
+__16 =aux (__31) -> (usedColours#matrix_to_atom_1),
+__17 =aux (__32) -> (usedColours#matrix_to_atom_2),
+__18 =aux (__33) -> (usedColours#matrix_to_atom_3),
+__19 =aux (__34) -> (usedColours#matrix_to_atom_1),
+__20 =aux (__35) -> (usedColours#matrix_to_atom_2),
+__21 =aux (__36) -> (usedColours#matrix_to_atom_3),
+__22 =aux (__37) -> (usedColours#matrix_to_atom_1),
+__23 =aux (__38) -> (usedColours#matrix_to_atom_2),
+__24 =aux (__39) -> (usedColours#matrix_to_atom_3),
+__25 =aux (__40) -> (usedColours#matrix_to_atom_1),
+__26 =aux (__41) -> (usedColours#matrix_to_atom_2),
+__27 =aux (__42) -> (usedColours#matrix_to_atom_3),
+__28 =aux colouring#matrix_to_atom_1 = 1,
+__29 =aux colouring#matrix_to_atom_1 = 2,
+__30 =aux colouring#matrix_to_atom_1 = 3,
+__31 =aux colouring#matrix_to_atom_2 = 1,
+__32 =aux colouring#matrix_to_atom_2 = 2,
+__33 =aux colouring#matrix_to_atom_2 = 3,
+__34 =aux colouring#matrix_to_atom_3 = 1,
+__35 =aux colouring#matrix_to_atom_3 = 2,
+__36 =aux colouring#matrix_to_atom_3 = 3,
+__37 =aux colouring#matrix_to_atom_4 = 1,
+__38 =aux colouring#matrix_to_atom_4 = 2,
+__39 =aux colouring#matrix_to_atom_4 = 3,
+__40 =aux colouring#matrix_to_atom_5 = 1,
+__41 =aux colouring#matrix_to_atom_5 = 2,
+__42 =aux colouring#matrix_to_atom_5 = 3
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12;int(1..)]),
+and([__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27;int(1..)]),
+__0 =aux sum([toInt(usedColours#matrix_to_atom_1),toInt(usedColours#matrix_to_atom_2),toInt(usedColours#matrix_to_atom_3);int(1..)]),
+__1 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,
+__2 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,
+__3 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,
+__4 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,
+__5 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,
+__6 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,
+__7 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,
+__8 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,
+__9 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,
+__10 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,
+__11 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,
+__12 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3,
+__13 =aux (__28) -> (usedColours#matrix_to_atom_1),
+__14 =aux (__29) -> (usedColours#matrix_to_atom_2),
+__15 =aux (__30) -> (usedColours#matrix_to_atom_3),
+__16 =aux (__31) -> (usedColours#matrix_to_atom_1),
+__17 =aux (__32) -> (usedColours#matrix_to_atom_2),
+__18 =aux (__33) -> (usedColours#matrix_to_atom_3),
+__19 =aux (__34) -> (usedColours#matrix_to_atom_1),
+__20 =aux (__35) -> (usedColours#matrix_to_atom_2),
+__21 =aux (__36) -> (usedColours#matrix_to_atom_3),
+__22 =aux (__37) -> (usedColours#matrix_to_atom_1),
+__23 =aux (__38) -> (usedColours#matrix_to_atom_2),
+__24 =aux (__39) -> (usedColours#matrix_to_atom_3),
+__25 =aux (__40) -> (usedColours#matrix_to_atom_1),
+__26 =aux (__41) -> (usedColours#matrix_to_atom_2),
+__27 =aux (__42) -> (usedColours#matrix_to_atom_3),
+__28 =aux colouring#matrix_to_atom_1 = 1,
+__29 =aux colouring#matrix_to_atom_1 = 2,
+__30 =aux colouring#matrix_to_atom_1 = 3,
+__31 =aux colouring#matrix_to_atom_2 = 1,
+__32 =aux colouring#matrix_to_atom_2 = 2,
+__33 =aux colouring#matrix_to_atom_2 = 3,
+__34 =aux colouring#matrix_to_atom_3 = 1,
+__35 =aux colouring#matrix_to_atom_3 = 2,
+__36 =aux colouring#matrix_to_atom_3 = 3,
+__37 =aux colouring#matrix_to_atom_4 = 1,
+__38 =aux colouring#matrix_to_atom_4 = 2,
+__39 =aux colouring#matrix_to_atom_4 = 3,
+__40 =aux colouring#matrix_to_atom_5 = 1,
+__41 =aux colouring#matrix_to_atom_5 = 2,
+__42 =aux colouring#matrix_to_atom_5 = 3
+
+--
+
+__0 =aux sum([toInt(usedColours#matrix_to_atom_1),toInt(usedColours#matrix_to_atom_2),toInt(usedColours#matrix_to_atom_3);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([__43, __44, __45], __0),SumGeq([__43, __44, __45], __0);int(1..)])
+new variables:
+  find __43: int(0..1)
+  find __44: int(0..1)
+  find __45: int(0..1)
+new constraints:
+  __43 =aux toInt(usedColours#matrix_to_atom_1)
+  __44 =aux toInt(usedColours#matrix_to_atom_2)
+  __45 =aux toInt(usedColours#matrix_to_atom_3)
+
+--
+
+and([SumLeq([__43, __44, __45], __0),SumGeq([__43, __44, __45], __0);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__46,__47;int(1..)])
+new variables:
+  find __46: bool
+  find __47: bool
+new constraints:
+  __46 =aux SumLeq([__43, __44, __45], __0)
+  __47 =aux SumGeq([__43, __44, __45], __0)
+
+--
+
+Final model:
+
+letting vertices be 5
+letting colours be 3
+letting VERTICES be domain int(1..vertices)
+letting COLOURS be domain int(1..colours)
+letting edges be [[false,true,false,true,false;int(1..5)],[true,false,true,false,true;int(1..5)],[false,true,false,true,true;int(1..5)],[true,false,true,false,false;int(1..5)],[false,true,true,false,false;int(1..5)];int(1..5)]
+find colouring: matrix indexed by [VERTICES] of COLOURS
+find usedColours: matrix indexed by [COLOURS] of bool
+find __0: int(0..3)
+find colouring#matrix_to_atom_1: int(1..3)
+find colouring#matrix_to_atom_2: int(1..3)
+find colouring#matrix_to_atom_3: int(1..3)
+find colouring#matrix_to_atom_4: int(1..3)
+find colouring#matrix_to_atom_5: int(1..3)
+find usedColours#matrix_to_atom_1: bool
+find usedColours#matrix_to_atom_2: bool
+find usedColours#matrix_to_atom_3: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find __26: bool
+find __27: bool
+find __28: bool
+find __29: bool
+find __30: bool
+find __31: bool
+find __32: bool
+find __33: bool
+find __34: bool
+find __35: bool
+find __36: bool
+find __37: bool
+find __38: bool
+find __39: bool
+find __40: bool
+find __41: bool
+find __42: bool
+find __43: int(0..1)
+find __44: int(0..1)
+find __45: int(0..1)
+find __46: bool
+find __47: bool
+
+such that
+
+and([__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12;int(1..)]),
+and([__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27;int(1..)]),
+and([__46,__47;int(1..)]),
+__1 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_2,
+__2 =aux colouring#matrix_to_atom_1 != colouring#matrix_to_atom_4,
+__3 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_1,
+__4 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_3,
+__5 =aux colouring#matrix_to_atom_2 != colouring#matrix_to_atom_5,
+__6 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_2,
+__7 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_4,
+__8 =aux colouring#matrix_to_atom_3 != colouring#matrix_to_atom_5,
+__9 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_1,
+__10 =aux colouring#matrix_to_atom_4 != colouring#matrix_to_atom_3,
+__11 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_2,
+__12 =aux colouring#matrix_to_atom_5 != colouring#matrix_to_atom_3,
+__13 =aux (__28) -> (usedColours#matrix_to_atom_1),
+__14 =aux (__29) -> (usedColours#matrix_to_atom_2),
+__15 =aux (__30) -> (usedColours#matrix_to_atom_3),
+__16 =aux (__31) -> (usedColours#matrix_to_atom_1),
+__17 =aux (__32) -> (usedColours#matrix_to_atom_2),
+__18 =aux (__33) -> (usedColours#matrix_to_atom_3),
+__19 =aux (__34) -> (usedColours#matrix_to_atom_1),
+__20 =aux (__35) -> (usedColours#matrix_to_atom_2),
+__21 =aux (__36) -> (usedColours#matrix_to_atom_3),
+__22 =aux (__37) -> (usedColours#matrix_to_atom_1),
+__23 =aux (__38) -> (usedColours#matrix_to_atom_2),
+__24 =aux (__39) -> (usedColours#matrix_to_atom_3),
+__25 =aux (__40) -> (usedColours#matrix_to_atom_1),
+__26 =aux (__41) -> (usedColours#matrix_to_atom_2),
+__27 =aux (__42) -> (usedColours#matrix_to_atom_3),
+__28 =aux colouring#matrix_to_atom_1 = 1,
+__29 =aux colouring#matrix_to_atom_1 = 2,
+__30 =aux colouring#matrix_to_atom_1 = 3,
+__31 =aux colouring#matrix_to_atom_2 = 1,
+__32 =aux colouring#matrix_to_atom_2 = 2,
+__33 =aux colouring#matrix_to_atom_2 = 3,
+__34 =aux colouring#matrix_to_atom_3 = 1,
+__35 =aux colouring#matrix_to_atom_3 = 2,
+__36 =aux colouring#matrix_to_atom_3 = 3,
+__37 =aux colouring#matrix_to_atom_4 = 1,
+__38 =aux colouring#matrix_to_atom_4 = 2,
+__39 =aux colouring#matrix_to_atom_4 = 3,
+__40 =aux colouring#matrix_to_atom_5 = 1,
+__41 =aux colouring#matrix_to_atom_5 = 2,
+__42 =aux colouring#matrix_to_atom_5 = 3,
+__43 =aux toInt(usedColours#matrix_to_atom_1),
+__44 =aux toInt(usedColours#matrix_to_atom_2),
+__45 =aux toInt(usedColours#matrix_to_atom_3),
+__46 =aux SumLeq([__43, __44, __45], __0),
+__47 =aux SumGeq([__43, __44, __45], __0)
+

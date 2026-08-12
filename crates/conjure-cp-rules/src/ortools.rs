@@ -67,19 +67,21 @@ fn flatten_logical(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// Matrix a = b iff every index in the union of their indices has the same value.
 #[register_rule("OrToolsCpSat", 3000, [Eq, Neq])]
 fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    use conjure_cp::rule_engine::ApplicationError;
-    use conjure_cp::essence_expr;
-    use conjure_cp::ast::matrix;
     use conjure_cp::ast::Atom;
     use conjure_cp::ast::Expression;
+    use conjure_cp::ast::matrix;
+    use conjure_cp::essence_expr;
+    use conjure_cp::rule_engine::ApplicationError;
 
     let (a, b) = match expr {
         Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
         _ => return Err(ApplicationError::RuleNotApplicable),
     };
 
-    let a_idx_domains = matrix::bound_index_domains_of_expr(a.as_ref()).ok_or(ApplicationError::RuleNotApplicable)?;
-    let b_idx_domains = matrix::bound_index_domains_of_expr(b.as_ref()).ok_or(ApplicationError::RuleNotApplicable)?;
+    let a_idx_domains = matrix::bound_index_domains_of_expr(a.as_ref())
+        .ok_or(ApplicationError::RuleNotApplicable)?;
+    let b_idx_domains = matrix::bound_index_domains_of_expr(b.as_ref())
+        .ok_or(ApplicationError::RuleNotApplicable)?;
 
     // Only apply if the index domains are actually different, to avoid unnecessary expansion
     // for standard same-domain matrix equality.

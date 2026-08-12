@@ -1,0 +1,65 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(1..x)
+find z: int(y..3)
+
+--
+
+true
+   ~~> handle_variables_in_domains ([("Base", 8990)])
+true
+
+updated variables:
+  find y: int(1..x) ~~> find y: int(1..3)
+  find z: int(y..3) ~~> find z: int(1..3)
+new constraints:
+  and([y >= 1,y <= x;int(1..)])
+  and([z >= y,z <= 3;int(1..)])
+
+--
+
+and([y >= 1,y <= x;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux y >= 1
+  __1 =aux y <= x
+
+--
+
+and([z >= y,z <= 3;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__2,__3;int(1..)])
+new variables:
+  find __2: bool
+  find __3: bool
+new constraints:
+  __2 =aux z >= y
+  __3 =aux z <= 3
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(1..3)
+find z: int(1..3)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+
+such that
+
+true,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+__0 =aux y >= 1,
+__1 =aux y <= x,
+__2 =aux z >= y,
+__3 =aux z <= 3
+

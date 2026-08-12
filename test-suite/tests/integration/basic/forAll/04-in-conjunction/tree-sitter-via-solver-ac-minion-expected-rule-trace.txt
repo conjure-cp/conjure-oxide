@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+and([a,b = and([ k <= 5 | k : int(1..2) ]);int(1..)])
+
+--
+
+b = true
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, b)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+
+such that
+
+and([a,Reify(true, b);int(1..)])
+

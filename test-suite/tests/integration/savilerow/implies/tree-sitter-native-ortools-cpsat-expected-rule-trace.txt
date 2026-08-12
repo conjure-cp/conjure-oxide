@@ -1,0 +1,40 @@
+Model before rewriting:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(t) -> (z) = (x) -> (y)
+
+--
+
+(t) -> (z) = (x) -> (y)
+   ~~> flatten_eq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+__0 = __1
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux (t) -> (z)
+  __1 =aux (x) -> (y)
+
+--
+
+Final model:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+find __1: bool
+
+such that
+
+__0 = __1,
+__0 =aux (t) -> (z),
+__1 =aux (x) -> (y)
+

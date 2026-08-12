@@ -1,0 +1,86 @@
+Model before rewriting:
+
+find x: int(2..5)
+find y: int(0..5)
+
+such that
+
+(x ** y) = 4
+
+--
+
+(x ** y)
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(x, y) @ and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])}
+
+--
+
+{SafePow(x, y) @ and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])} = 4
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafePow(x, y) = 4 @ and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])}
+
+--
+
+{SafePow(x, y) = 4 @ and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafePow(x, y) = 4,and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)]);int(1..)])
+
+--
+
+and([SafePow(x, y) = 4,and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SafePow(x, y) = 4,or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])
+
+--
+
+and([SafePow(x, y) = 4,or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1,__2;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+new constraints:
+  __0 =aux SafePow(x, y) = 4
+  __1 =aux or([x != 0,y != 0;int(1..)])
+  __2 =aux y >= 0
+
+--
+
+SafePow(x, y) = 4
+   ~~> introduce_poweq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+MinionPow(x,y,4)
+
+--
+
+or([x != 0,y != 0;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__3,__4;int(1..)])
+new variables:
+  find __3: bool
+  find __4: bool
+new constraints:
+  __3 =aux x != 0
+  __4 =aux y != 0
+
+--
+
+Final model:
+
+find x: int(2..5)
+find y: int(0..5)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+
+such that
+
+and([__0,__1,__2;int(1..)]),
+__0 =aux MinionPow(x,y,4),
+__1 =aux or([__3,__4;int(1..)]),
+__2 =aux y >= 0,
+__3 =aux x != 0,
+__4 =aux y != 0
+

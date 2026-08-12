@@ -1,0 +1,60 @@
+Model before rewriting:
+
+find x: int(1..10)
+find y: int(2..4)
+
+such that
+
+x % y = 3
+
+--
+
+x % y
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x,y) @ y != 0}
+
+--
+
+{SafeMod(x,y) @ y != 0} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeMod(x,y) = 3 @ y != 0}
+
+--
+
+{SafeMod(x,y) = 3 @ y != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeMod(x,y) = 3,y != 0;int(1..)])
+
+--
+
+and([SafeMod(x,y) = 3,y != 0;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux SafeMod(x,y) = 3
+  __1 =aux y != 0
+
+--
+
+SafeMod(x,y) = 3
+   ~~> introduce_modeq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+ModEq(x, y, 3)
+
+--
+
+Final model:
+
+find x: int(1..10)
+find y: int(2..4)
+find __0: bool
+find __1: bool
+
+such that
+
+and([__0,__1;int(1..)]),
+__0 =aux ModEq(x, y, 3),
+__1 =aux y != 0
+

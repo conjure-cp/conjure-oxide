@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+and([(x) <-> (x),(false) <-> (y);int(1..2)])
+
+--
+
+and([true,!(y);int(1..2)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([true,__0;int(1..2)])
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux !(y)
+
+--
+
+and([true,__0;int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+and([true,__0;int(1..)])
+
+--
+
+and([__0;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__0
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find __0: bool
+
+such that
+
+__0,
+__0 =aux !(y)
+

@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find a: int(-10..10)
+find b: int(-5..5)
+find c: int(-20..20)
+
+such that
+
+sum([a,b;int(1..2)]) = c
+
+--
+
+sum([a,b;int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([a,b;int(1..)])
+
+--
+
+sum([a,b;int(1..)]) = c
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([a, b], c),SumGeq([a, b], c);int(1..)])
+
+--
+
+and([SumLeq([a, b], c),SumGeq([a, b], c);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux SumLeq([a, b], c)
+  __1 =aux SumGeq([a, b], c)
+
+--
+
+Final model:
+
+find a: int(-10..10)
+find b: int(-5..5)
+find c: int(-20..20)
+find __0: bool
+find __1: bool
+
+such that
+
+and([__0,__1;int(1..)]),
+__0 =aux SumLeq([a, b], c),
+__1 =aux SumGeq([a, b], c)
+

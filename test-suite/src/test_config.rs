@@ -490,7 +490,7 @@ pub struct TestConfig {
     )]
     pub skip_conjure_validation: String,
 
-
+    
 
     #[serde(
         default = "default_number_of_solutions",

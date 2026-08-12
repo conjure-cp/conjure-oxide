@@ -1,0 +1,134 @@
+Model before rewriting:
+
+find x: int(0..1000)
+find y: int(7..8)
+
+such that
+
+x = sum([ 1 | i : set (size 2) of int(7..9), y in i ])
+
+--
+
+[ 1 | i : set (size 2) of int(7..9), y in i ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(y in {7,8}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {7,9}),sum([1;int(1..)]);int(1..)]),product([toInt(y in {8,9}),sum([1;int(1..)]);int(1..)]);int(1..)]
+
+--
+
+product([toInt(y in {7,8}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(y in {7,8});int(1..)])
+
+--
+
+product([toInt(y in {7,9}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(y in {7,9});int(1..)])
+
+--
+
+product([toInt(y in {8,9}),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(y in {8,9});int(1..)])
+
+--
+
+product([toInt(y in {7,8});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(y in {7,8})
+
+--
+
+product([toInt(y in {7,9});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(y in {7,9})
+
+--
+
+product([toInt(y in {8,9});int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(y in {8,9})
+
+--
+
+x = sum([toInt(y in {7,8}),toInt(y in {7,9}),toInt(y in {8,9});int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([__0, __1, __2], x),SumGeq([__0, __1, __2], x);int(1..)])
+new variables:
+  find __0: int(0..1)
+  find __1: int(0..1)
+  find __2: int(0..1)
+new constraints:
+  __0 =aux toInt(y in {7,8})
+  __1 =aux toInt(y in {7,9})
+  __2 =aux toInt(y in {8,9})
+
+--
+
+and([SumLeq([__0, __1, __2], x),SumGeq([__0, __1, __2], x);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__3,__4;int(1..)])
+new variables:
+  find __3: bool
+  find __4: bool
+new constraints:
+  __3 =aux SumLeq([__0, __1, __2], x)
+  __4 =aux SumGeq([__0, __1, __2], x)
+
+--
+
+toInt(y in {7,8})
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+toInt(__5)
+new variables:
+  find __5: bool
+new constraints:
+  __5 =aux y in {7,8}
+
+--
+
+toInt(y in {7,9})
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+toInt(__6)
+new variables:
+  find __6: bool
+new constraints:
+  __6 =aux y in {7,9}
+
+--
+
+toInt(y in {8,9})
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+toInt(__7)
+new variables:
+  find __7: bool
+new constraints:
+  __7 =aux y in {8,9}
+
+--
+
+Final model:
+
+find x: int(0..1000)
+find y: int(7..8)
+find __0: int(0..1)
+find __1: int(0..1)
+find __2: int(0..1)
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+
+such that
+
+and([__3,__4;int(1..)]),
+__0 =aux toInt(__5),
+__1 =aux toInt(__6),
+__2 =aux toInt(__7),
+__3 =aux SumLeq([__0, __1, __2], x),
+__4 =aux SumGeq([__0, __1, __2], x),
+__5 =aux y in {7,8},
+__6 =aux y in {7,9},
+__7 =aux y in {8,9}
+

@@ -680,7 +680,15 @@ fn rewrite_solve_xyz() {
 
     // Check if the expression is in its simplest form
 
-    assert!(rewritten_expr.iter().all(is_simple));
+    let active_rules: Vec<&Rule> = rule_sets
+        .iter()
+        .flat_map(|rs| rs.get_rules().keys().copied())
+        .collect();
+    assert!(
+        rewritten_expr
+            .iter()
+            .all(|expr| is_simple(expr, &active_rules))
+    );
 
     let solver: Solver = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();
@@ -696,10 +704,9 @@ struct RuleResult<'a> {
 /// # Returns
 /// - True if `expression` is in its simplest form.
 /// - False otherwise.
-pub fn is_simple(expression: &Expression) -> bool {
-    let rules = get_all_rules();
+pub fn is_simple<'a>(expression: &'a Expression, rules: &'a Vec<&'a Rule<'a>>) -> bool {
     let mut new = expression.clone();
-    while let Some(step) = is_simple_iteration(&new, &rules) {
+    while let Some(step) = is_simple_iteration(&new, rules) {
         new = step;
     }
     new == *expression

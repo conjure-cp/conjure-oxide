@@ -26,7 +26,10 @@ register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
     ) {
         return true;
     }
-    matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion | SolverFamily::OrToolsCpSat)
+    matches!(
+        f,
+        SolverFamily::Sat(_) | SolverFamily::Minion | SolverFamily::OrToolsCpSat
+    )
 });
 
 // special case rule to select representations for matrices in one go.

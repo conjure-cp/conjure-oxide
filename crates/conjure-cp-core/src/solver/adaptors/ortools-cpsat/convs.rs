@@ -1,15 +1,19 @@
-use crate::solver::{SolverError, SolverResult};
 use super::proto::{
-    CpModelProto, IntegerVariableProto, ConstraintProto, LinearConstraintProto,
-    constraint_proto, CpSolverResponse, BoolArgumentProto,
+    BoolArgumentProto, ConstraintProto, CpModelProto, CpObjectiveProto, CpSolverResponse,
+    DecisionStrategyProto, IntegerVariableProto, LinearConstraintProto, constraint_proto,
 };
-use std::collections::HashMap;
 use crate::Model;
-use crate::ast::{AbstractLiteral, Atom, Expression, GroundDomain, HasDomain, Literal, Metadata, Name, Range, eval_constant};
+use crate::ast::{
+    AbstractLiteral, Atom, Expression, GroundDomain, HasDomain, Literal, Metadata, Name,
+    OptimiseDirection, Range, eval_constant,
+};
+use crate::solver::{SolverError, SolverResult};
+use std::cell::RefCell;
+use std::collections::HashMap;
 use ustr::Ustr;
 
 struct TranslationContext {
-    var_mapping: HashMap<Name, i32>,
+    var_mapping: RefCell<HashMap<Name, i32>>,
 }
 
 #[derive(Clone)]
@@ -32,9 +36,7 @@ fn extract_domain_intervals(domain: &GroundDomain) -> SolverResult<Vec<i64>> {
                     Range::Bounded(lb, ub) => {
                         intervals.push((*lb as i64, *ub as i64));
                     }
-                    Range::UnboundedL(_)
-                    | Range::UnboundedR(_)
-                    | Range::Unbounded => {
+                    Range::UnboundedL(_) | Range::UnboundedR(_) | Range::Unbounded => {
                         return Err(SolverError::ModelFeatureNotSupported(
                             "CP-SAT does not support Unbounded int domains".into(),
                         ));
@@ -98,7 +100,10 @@ fn complement_domain_intervals(intervals: &[i64]) -> Vec<i64> {
 
 fn extract_set_values(expr: &Expression) -> Option<Vec<i64>> {
     match expr {
-        Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(vals)))) => {
+        Expression::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(vals))),
+        ) => {
             let mut result = Vec::new();
             for val in vals {
                 if let Literal::Int(i) = val {
@@ -154,14 +159,39 @@ fn values_to_flat_domain(values: &[i64]) -> Vec<i64> {
 }
 
 fn get_matrix_element_vars(src_var: &Name, ctx: &TranslationContext) -> Vec<i32> {
+    if let Some(&idx) = ctx.var_mapping.borrow().get(src_var) {
+        return vec![idx];
+    }
     let mut matching_vars = Vec::new();
-    for (name, &idx) in &ctx.var_mapping {
+    let src_str = src_var.to_string();
+    let src_base = src_str.split('#').next().unwrap_or(&src_str);
+
+    let var_map = ctx.var_mapping.borrow();
+    for (name, &idx) in var_map.iter() {
+        let name_str = name.to_string();
         if let Name::Represented(box_tuple) = name {
             let (ref_var, repr_name, suffix) = box_tuple.as_ref();
-            if ref_var == src_var && repr_name.as_str() == "matrix_to_atom" {
-                let parts: Vec<i32> = suffix.split('_').filter_map(|s| s.parse::<i32>().ok()).collect();
+            let ref_str = ref_var.to_string();
+            let ref_base = ref_str.split('#').next().unwrap_or(&ref_str);
+
+            if (ref_var == src_var || ref_str == src_str || ref_base == src_base)
+                && repr_name.as_str() == "matrix_to_atom"
+            {
+                let parts: Vec<i32> = suffix
+                    .split('_')
+                    .filter_map(|s| s.parse::<i32>().ok())
+                    .collect();
                 matching_vars.push((parts, idx));
             }
+        } else if name_str.starts_with(&(src_str.clone() + "_"))
+            || name_str.starts_with(&(src_base.to_string() + "#matrix_to_atom_"))
+        {
+            let suffix = name_str.split("matrix_to_atom_").last().unwrap_or("");
+            let parts: Vec<i32> = suffix
+                .split('_')
+                .filter_map(|s| s.parse::<i32>().ok())
+                .collect();
+            matching_vars.push((parts, idx));
         }
     }
     matching_vars.sort_by(|(indices_a, _), (indices_b, _)| indices_a.cmp(indices_b));
@@ -171,29 +201,25 @@ fn get_matrix_element_vars(src_var: &Name, ctx: &TranslationContext) -> Vec<i32>
 fn expr_to_linear_list(expr: &Expression, ctx: &TranslationContext) -> Option<Vec<LinearExpr>> {
     match expr {
         Expression::Atomic(_, Atom::Reference(reference)) => {
-            let name = &*reference.name();
-            if let Name::Represented(_) = name {
-                // A Represented name is a single scalar element of a matrix (e.g. after matrix_to_list)
-                if let Ok(linear) = expr_to_linear(expr, ctx) {
-                    return Some(vec![linear]);
-                } else {
-                    return None;
-                }
-            }
-            
-            let base_name = match name {
-                Name::WithRepresentation(name_box, _) => name_box.as_ref(),
-                _ => name,
-            };
-            let vars = get_matrix_element_vars(base_name, ctx);
+            let name = reference.name();
+            let vars = get_matrix_element_vars(&name, ctx);
             if !vars.is_empty() {
-                Some(vars.into_iter().map(|idx| LinearExpr {
-                    vars: vec![idx],
-                    coeffs: vec![1],
-                    offset: 0,
-                }).collect())
+                Some(
+                    vars.into_iter()
+                        .map(|idx| LinearExpr {
+                            vars: vec![idx],
+                            coeffs: vec![1],
+                            offset: 0,
+                        })
+                        .collect(),
+                )
+            } else if let Ok(linear) = expr_to_linear(expr, ctx) {
+                Some(vec![linear])
             } else if let Some(constant_literal) = reference.resolve_constant() {
-                expr_to_linear_list(&Expression::Atomic(Metadata::default(), Atom::Literal(constant_literal)), ctx)
+                expr_to_linear_list(
+                    &Expression::Atomic(Metadata::default(), Atom::Literal(constant_literal)),
+                    ctx,
+                )
             } else {
                 None
             }
@@ -211,6 +237,23 @@ fn expr_to_linear_list(expr: &Expression, ctx: &TranslationContext) -> Option<Ve
             }
             Some(list)
         }
+        Expression::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) => {
+            let mut list = Vec::new();
+            for elem in elems {
+                let expr = Expression::Atomic(Metadata::default(), Atom::Literal(elem.clone()));
+                if let Some(sub_list) = expr_to_linear_list(&expr, ctx) {
+                    list.extend(sub_list);
+                } else if let Ok(lin) = expr_to_linear(&expr, ctx) {
+                    list.push(lin);
+                } else {
+                    return None;
+                }
+            }
+            Some(list)
+        }
         _ => None,
     }
 }
@@ -218,88 +261,198 @@ fn expr_to_linear_list(expr: &Expression, ctx: &TranslationContext) -> Option<Ve
 fn extract_linear_parts(
     expr: &Expression,
     ctx: &TranslationContext,
-) -> SolverResult<Option<(LinearExpr, LinearExpr, Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>)>> {
+) -> SolverResult<
+    Option<(
+        LinearExpr,
+        LinearExpr,
+        Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+    )>,
+> {
     let result = match expr {
-        Expression::Eq(_, lhs, rhs) => (
-            expr_to_linear(lhs.as_ref(), ctx)?,
-            expr_to_linear(rhs.as_ref(), ctx)?,
-            Box::new(|offset: i64| Ok(vec![-offset, -offset])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
-        ),
-        Expression::Neq(_, lhs, rhs) => (
-            expr_to_linear(lhs.as_ref(), ctx)?,
-            expr_to_linear(rhs.as_ref(), ctx)?,
-            Box::new(|offset: i64| Ok(vec![i64::MIN, -offset - 1, -offset + 1, i64::MAX])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
-        ),
-        Expression::Leq(_, lhs, rhs) => (
-            expr_to_linear(lhs.as_ref(), ctx)?,
-            expr_to_linear(rhs.as_ref(), ctx)?,
-            Box::new(|offset: i64| Ok(vec![i64::MIN, -offset])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
-        ),
-        Expression::Geq(_, lhs, rhs) => (
-            expr_to_linear(lhs.as_ref(), ctx)?,
-            expr_to_linear(rhs.as_ref(), ctx)?,
-            Box::new(|offset: i64| Ok(vec![-offset, i64::MAX])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
-        ),
-        Expression::Lt(_, lhs, rhs) => (
-            expr_to_linear(lhs.as_ref(), ctx)?,
-            expr_to_linear(rhs.as_ref(), ctx)?,
-            Box::new(|offset: i64| Ok(vec![i64::MIN, -offset - 1])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
-        ),
-        Expression::Gt(_, lhs, rhs) => (
-            expr_to_linear(lhs.as_ref(), ctx)?,
-            expr_to_linear(rhs.as_ref(), ctx)?,
-            Box::new(|offset: i64| Ok(vec![-offset + 1, i64::MAX])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
-        ),
+        Expression::Eq(_, lhs, rhs) | Expression::Iff(_, lhs, rhs) => {
+            let (Ok(lhs_lin), Ok(rhs_lin)) =
+                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
+            else {
+                return Ok(None);
+            };
+            (
+                lhs_lin,
+                rhs_lin,
+                Box::new(|offset: i64| Ok(vec![-offset, -offset]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
+        Expression::Neq(_, lhs, rhs) => {
+            let (Ok(lhs_lin), Ok(rhs_lin)) =
+                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
+            else {
+                return Ok(None);
+            };
+            (
+                lhs_lin,
+                rhs_lin,
+                Box::new(|offset: i64| Ok(vec![i64::MIN, -offset - 1, -offset + 1, i64::MAX]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
+        Expression::Leq(_, lhs, rhs) => {
+            let (Ok(lhs_lin), Ok(rhs_lin)) =
+                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
+            else {
+                return Ok(None);
+            };
+            (
+                lhs_lin,
+                rhs_lin,
+                Box::new(|offset: i64| Ok(vec![i64::MIN, -offset]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
+        Expression::Geq(_, lhs, rhs) => {
+            let (Ok(lhs_lin), Ok(rhs_lin)) =
+                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
+            else {
+                return Ok(None);
+            };
+            (
+                lhs_lin,
+                rhs_lin,
+                Box::new(|offset: i64| Ok(vec![-offset, i64::MAX]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
+        Expression::Lt(_, lhs, rhs) => {
+            let (Ok(lhs_lin), Ok(rhs_lin)) =
+                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
+            else {
+                return Ok(None);
+            };
+            (
+                lhs_lin,
+                rhs_lin,
+                Box::new(|offset: i64| Ok(vec![i64::MIN, -offset - 1]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
+        Expression::Gt(_, lhs, rhs) => {
+            let (Ok(lhs_lin), Ok(rhs_lin)) =
+                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
+            else {
+                return Ok(None);
+            };
+            (
+                lhs_lin,
+                rhs_lin,
+                Box::new(|offset: i64| Ok(vec![-offset + 1, i64::MAX]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
         Expression::FlatSumLeq(_, vars, total) => {
-            let mut lhs_linear = LinearExpr { vars: vec![], coeffs: vec![], offset: 0 };
+            let mut lhs_linear = LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            };
             for var in vars {
-                let var_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                let var_linear =
+                    expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
                 lhs_linear.vars.extend(var_linear.vars);
                 lhs_linear.coeffs.extend(var_linear.coeffs);
                 lhs_linear.offset += var_linear.offset;
             }
-            let rhs_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), total.clone()), ctx)?;
-            (lhs_linear, rhs_linear, Box::new(|offset: i64| Ok(vec![i64::MIN, -offset])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>)
-        },
+            let rhs_linear =
+                expr_to_linear(&Expression::Atomic(Metadata::default(), total.clone()), ctx)?;
+            (
+                lhs_linear,
+                rhs_linear,
+                Box::new(|offset: i64| Ok(vec![i64::MIN, -offset]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
         Expression::FlatWeightedSumLeq(_, coeffs, vars, total) => {
-            let mut lhs_linear = LinearExpr { vars: vec![], coeffs: vec![], offset: 0 };
+            let mut lhs_linear = LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            };
             for (coeff_lit, var) in coeffs.iter().zip(vars) {
                 let Literal::Int(coeff_val) = coeff_lit else {
-                    return Err(SolverError::ModelInvalid("Weighted sum coefficient is not an integer".into()));
+                    return Err(SolverError::ModelInvalid(
+                        "Weighted sum coefficient is not an integer".into(),
+                    ));
                 };
-                let var_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                let var_linear =
+                    expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
                 lhs_linear.vars.extend(var_linear.vars.clone());
-                lhs_linear.coeffs.extend(var_linear.coeffs.iter().map(|c| c * *coeff_val as i64));
+                lhs_linear
+                    .coeffs
+                    .extend(var_linear.coeffs.iter().map(|c| c * *coeff_val as i64));
                 lhs_linear.offset += var_linear.offset * *coeff_val as i64;
             }
-            let rhs_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), total.as_ref().clone()), ctx)?;
-            (lhs_linear, rhs_linear, Box::new(|offset: i64| Ok(vec![i64::MIN, -offset])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>)
-        },
+            let rhs_linear = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), total.as_ref().clone()),
+                ctx,
+            )?;
+            (
+                lhs_linear,
+                rhs_linear,
+                Box::new(|offset: i64| Ok(vec![i64::MIN, -offset]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
         Expression::FlatSumGeq(_, vars, total) => {
-            let mut lhs_linear = LinearExpr { vars: vec![], coeffs: vec![], offset: 0 };
+            let mut lhs_linear = LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            };
             for var in vars {
-                let var_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                let var_linear =
+                    expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
                 lhs_linear.vars.extend(var_linear.vars);
                 lhs_linear.coeffs.extend(var_linear.coeffs);
                 lhs_linear.offset += var_linear.offset;
             }
-            let rhs_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), total.clone()), ctx)?;
-            (lhs_linear, rhs_linear, Box::new(|offset: i64| Ok(vec![-offset, i64::MAX])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>)
-        },
+            let rhs_linear =
+                expr_to_linear(&Expression::Atomic(Metadata::default(), total.clone()), ctx)?;
+            (
+                lhs_linear,
+                rhs_linear,
+                Box::new(|offset: i64| Ok(vec![-offset, i64::MAX]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
         Expression::FlatWeightedSumGeq(_, coeffs, vars, total) => {
-            let mut lhs_linear = LinearExpr { vars: vec![], coeffs: vec![], offset: 0 };
+            let mut lhs_linear = LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            };
             for (coeff_lit, var) in coeffs.iter().zip(vars) {
                 let Literal::Int(coeff_val) = coeff_lit else {
-                    return Err(SolverError::ModelInvalid("Weighted sum coefficient is not an integer".into()));
+                    return Err(SolverError::ModelInvalid(
+                        "Weighted sum coefficient is not an integer".into(),
+                    ));
                 };
-                let var_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                let var_linear =
+                    expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
                 lhs_linear.vars.extend(var_linear.vars.clone());
-                lhs_linear.coeffs.extend(var_linear.coeffs.iter().map(|c| c * *coeff_val as i64));
+                lhs_linear
+                    .coeffs
+                    .extend(var_linear.coeffs.iter().map(|c| c * *coeff_val as i64));
                 lhs_linear.offset += var_linear.offset * *coeff_val as i64;
             }
-            let rhs_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), total.as_ref().clone()), ctx)?;
-            (lhs_linear, rhs_linear, Box::new(|offset: i64| Ok(vec![-offset, i64::MAX])) as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>)
-        },
+            let rhs_linear = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), total.as_ref().clone()),
+                ctx,
+            )?;
+            (
+                lhs_linear,
+                rhs_linear,
+                Box::new(|offset: i64| Ok(vec![-offset, i64::MAX]))
+                    as Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>,
+            )
+        }
         _ => return Ok(None),
     };
     Ok(Some(result))
@@ -319,19 +472,25 @@ fn expr_to_linear(expr: &Expression, ctx: &TranslationContext) -> SolverResult<L
         }),
         Expression::Atomic(_, Atom::Reference(reference)) => {
             if let Some(Literal::Int(val)) = reference.resolve_constant() {
-                return Ok(LinearExpr { vars: vec![], coeffs: vec![], offset: val as i64 });
+                return Ok(LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: val as i64,
+                });
             }
             if let Some(Literal::Bool(val)) = reference.resolve_constant() {
-                return Ok(LinearExpr { vars: vec![], coeffs: vec![], offset: i64::from(val) });
+                return Ok(LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: i64::from(val),
+                });
             }
 
             let name = reference.name();
-            let var_index = ctx.var_mapping.get(&name).ok_or_else(|| {
-                SolverError::ModelInvalid(format!("Unknown variable in constraint: {}", name))
-            })?;
+            let var_index = resolve_var_index(&name, ctx)?;
 
             Ok(LinearExpr {
-                vars: vec![*var_index],
+                vars: vec![var_index],
                 coeffs: vec![1],
                 offset: 0,
             })
@@ -352,37 +511,143 @@ fn expr_to_linear(expr: &Expression, ctx: &TranslationContext) -> SolverResult<L
                 offset: 1 - lin.offset,
             })
         }
-        Expression::Sum(_, inner) => {
-            match inner.as_ref() {
-                Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) => {
-                    let mut vars = Vec::new();
-                    let mut coeffs = Vec::new();
-                    let mut offset = 0;
-                    for elem in elems {
-                        let lin = expr_to_linear(elem, ctx)?;
-                        vars.extend(lin.vars);
-                        coeffs.extend(lin.coeffs);
-                        offset += lin.offset;
+        Expression::Sum(_, inner) => match inner.as_ref() {
+            Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) => {
+                let mut vars = Vec::new();
+                let mut coeffs = Vec::new();
+                let mut offset = 0;
+                for elem in elems {
+                    let lin = expr_to_linear(elem, ctx)?;
+                    vars.extend(lin.vars);
+                    coeffs.extend(lin.coeffs);
+                    offset += lin.offset;
+                }
+                Ok(simplify_linear_expr(LinearExpr {
+                    vars,
+                    coeffs,
+                    offset,
+                }))
+            }
+            _ => Err(SolverError::ModelFeatureNotSupported(format!(
+                "Unsupported sum argument in linear constraint: {:?}",
+                inner
+            ))),
+        },
+        Expression::Product(_, inner) => match inner.as_ref() {
+            Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) => {
+                let mut scalar_mult: i64 = 1;
+                let mut linear_opt: Option<LinearExpr> = None;
+
+                for elem in elems {
+                    if let Ok(lin) = expr_to_linear(elem, ctx) {
+                        if lin.vars.is_empty() {
+                            scalar_mult *= lin.offset;
+                        } else if linear_opt.is_none() {
+                            linear_opt = Some(lin);
+                        } else {
+                            return Err(SolverError::ModelFeatureNotSupported(format!(
+                                "Non-linear Product in linear constraint: {:?}",
+                                inner
+                            )));
+                        }
+                    } else {
+                        return Err(SolverError::ModelFeatureNotSupported(format!(
+                            "Unsupported Product element in linear constraint: {:?}",
+                            elem
+                        )));
                     }
+                }
+
+                if let Some(lin) = linear_opt {
+                    Ok(simplify_linear_expr(LinearExpr {
+                        vars: lin.vars,
+                        coeffs: lin.coeffs.into_iter().map(|c| c * scalar_mult).collect(),
+                        offset: lin.offset * scalar_mult,
+                    }))
+                } else {
                     Ok(LinearExpr {
-                        vars,
-                        coeffs,
-                        offset,
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: scalar_mult,
                     })
                 }
-                _ => Err(SolverError::ModelFeatureNotSupported(format!(
-                    "Unsupported sum argument in linear constraint: {:?}",
-                    inner
-                ))),
+            }
+            _ => Err(SolverError::ModelFeatureNotSupported(format!(
+                "Unsupported Product argument in linear constraint: {:?}",
+                inner
+            ))),
+        },
+        Expression::ToInt(_, inner) => expr_to_linear(inner, ctx),
+        _ => {
+            if let Some(lit) = eval_element_id_constant(expr) {
+                if let Literal::Int(val) = lit {
+                    return Ok(LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: val as i64,
+                    });
+                }
+                if let Literal::Bool(val) = lit {
+                    return Ok(LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: if val { 1 } else { 0 },
+                    });
+                }
+            }
+            Err(SolverError::ModelFeatureNotSupported(format!(
+                "Unsupported expression in linear constraint: {expr:?}"
+            )))
+        }
+    }
+}
+
+fn simplify_linear_expr(lin: LinearExpr) -> LinearExpr {
+    use std::collections::BTreeMap;
+    let mut map: BTreeMap<i32, i64> = BTreeMap::new();
+    for (v, c) in lin.vars.into_iter().zip(lin.coeffs.into_iter()) {
+        *map.entry(v).or_insert(0) += c;
+    }
+    let mut vars = Vec::new();
+    let mut coeffs = Vec::new();
+    for (v, c) in map {
+        if c != 0 {
+            vars.push(v);
+            coeffs.push(c);
+        }
+    }
+    LinearExpr {
+        vars,
+        coeffs,
+        offset: lin.offset,
+    }
+}
+
+fn eval_element_id_constant(expr: &Expression) -> Option<Literal> {
+    match expr {
+        Expression::ElementId(_, matrix, idx_expr) => {
+            let idx_lit = eval_element_id_constant(idx_expr)?;
+            let Literal::Int(idx_val) = idx_lit else { return None; };
+            if let Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) = matrix.as_ref() {
+                let p = idx_val as usize;
+                if p >= 1 && p <= elems.len() {
+                    return Some(elems[p - 1].clone());
+                }
             }
         }
-        Expression::ToInt(_, inner) => {
-            expr_to_linear(inner, ctx)
+        Expression::SafeIndex(_, matrix, indices) if indices.len() == 1 => {
+            let idx_lit = eval_element_id_constant(&indices[0])?;
+            let Literal::Int(idx_val) = idx_lit else { return None; };
+            if let Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) = matrix.as_ref() {
+                let p = idx_val as usize;
+                if p >= 1 && p <= elems.len() {
+                    return Some(elems[p - 1].clone());
+                }
+            }
         }
-        _ => Err(SolverError::ModelFeatureNotSupported(format!(
-            "Unsupported expression in linear constraint: {expr:?}"
-        ))),
+        _ => {}
     }
+    eval_constant(expr)
 }
 
 /// Helper to build a Protobuf linear constraint that enforces exactly one specific value.
@@ -390,20 +655,25 @@ fn exact_linear_constraint(linear_expr: LinearExpr, value: i64) -> ConstraintPro
     ConstraintProto {
         name: String::new(),
         enforcement_literal: vec![],
-        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-            vars: linear_expr.vars,
-            coeffs: linear_expr.coeffs,
-            domain: vec![value - linear_expr.offset, value - linear_expr.offset],
-        })),
+        constraint: Some(constraint_proto::Constraint::Linear(
+            LinearConstraintProto {
+                vars: linear_expr.vars,
+                coeffs: linear_expr.coeffs,
+                domain: vec![value - linear_expr.offset, value - linear_expr.offset],
+            },
+        )),
     }
 }
 
-fn get_or_create_var_for_linear(
-    linear: LinearExpr,
-    cp_model: &mut CpModelProto,
-) -> i32 {
+fn get_or_create_var_for_linear(linear: LinearExpr, cp_model: &mut CpModelProto) -> i32 {
     if linear.vars.len() == 1 && linear.coeffs == vec![1] && linear.offset == 0 {
         linear.vars[0]
+    } else if linear.vars.is_empty() {
+        let var_index = cp_model.variables.len() as i32;
+        let mut var_proto = IntegerVariableProto::default();
+        var_proto.domain = vec![linear.offset, linear.offset];
+        cp_model.variables.push(var_proto);
+        var_index
     } else {
         let var_index = cp_model.variables.len() as i32;
         let mut var_proto = IntegerVariableProto::default();
@@ -418,11 +688,13 @@ fn get_or_create_var_for_linear(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars,
-                coeffs,
-                domain: vec![linear.offset, linear.offset],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars,
+                    coeffs,
+                    domain: vec![linear.offset, linear.offset],
+                },
+            )),
         });
         var_index
     }
@@ -504,12 +776,7 @@ fn translate_div_mod_undef_zero(
     };
 
     let get_prod_bounds = |q_min: i64, q_max: i64, b_min: i64, b_max: i64| -> (i64, i64) {
-        let candidates = [
-            q_min * b_min,
-            q_min * b_max,
-            q_max * b_min,
-            q_max * b_max,
-        ];
+        let candidates = [q_min * b_min, q_min * b_max, q_max * b_min, q_max * b_max];
         let min_c = *candidates.iter().min().unwrap();
         let max_c = *candidates.iter().max().unwrap();
         (min_c, max_c)
@@ -548,11 +815,13 @@ fn translate_div_mod_undef_zero(
                 cp_model.constraints.push(ConstraintProto {
                     name: String::new(),
                     enforcement_literal: vec![],
-                    constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                        vars: target_expr.vars.clone(),
-                        coeffs: target_expr.coeffs.clone(),
-                        domain: vec![0 - target_expr.offset, val - 1 - target_expr.offset],
-                    })),
+                    constraint: Some(constraint_proto::Constraint::Linear(
+                        LinearConstraintProto {
+                            vars: target_expr.vars.clone(),
+                            coeffs: target_expr.coeffs.clone(),
+                            domain: vec![0 - target_expr.offset, val - 1 - target_expr.offset],
+                        },
+                    )),
                 });
                 let q_var = cp_model.variables.len() as i32;
                 cp_model.variables.push(IntegerVariableProto {
@@ -589,13 +858,22 @@ fn translate_div_mod_undef_zero(
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars,
-                    coeffs,
-                    domain: vec![-offset, -offset],
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars,
+                        coeffs,
+                        domain: vec![-offset, -offset],
+                    },
+                )),
             });
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
         } else {
             // val < 0
             // q = target_expr if is_div else aux_var
@@ -619,11 +897,13 @@ fn translate_div_mod_undef_zero(
                 cp_model.constraints.push(ConstraintProto {
                     name: String::new(),
                     enforcement_literal: vec![],
-                    constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                        vars: target_expr.vars.clone(),
-                        coeffs: target_expr.coeffs.clone(),
-                        domain: vec![val + 1 - target_expr.offset, 0 - target_expr.offset],
-                    })),
+                    constraint: Some(constraint_proto::Constraint::Linear(
+                        LinearConstraintProto {
+                            vars: target_expr.vars.clone(),
+                            coeffs: target_expr.coeffs.clone(),
+                            domain: vec![val + 1 - target_expr.offset, 0 - target_expr.offset],
+                        },
+                    )),
                 });
                 let q_var = cp_model.variables.len() as i32;
                 cp_model.variables.push(IntegerVariableProto {
@@ -660,13 +940,22 @@ fn translate_div_mod_undef_zero(
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars,
-                    coeffs,
-                    domain: vec![-offset, -offset],
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars,
+                        coeffs,
+                        domain: vec![-offset, -offset],
+                    },
+                )),
             });
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
         }
     }
 
@@ -687,11 +976,13 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_pos],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![b_var],
-                coeffs: vec![1],
-                domain: vec![1, i64::MAX],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![b_var],
+                    coeffs: vec![1],
+                    domain: vec![1, i64::MAX],
+                },
+            )),
         });
 
         // Define b_pos variable in [0, b_max]
@@ -705,11 +996,13 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_pos],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![b_pos, b_var],
-                coeffs: vec![1, -1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![b_pos, b_var],
+                    coeffs: vec![1, -1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
 
         // Now implement floor division relation under is_pos:
@@ -736,11 +1029,13 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_pos],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars,
-                coeffs,
-                domain: vec![-target_expr.offset, -target_expr.offset],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars,
+                    coeffs,
+                    domain: vec![-target_expr.offset, -target_expr.offset],
+                },
+            )),
         });
 
         // Enforce product: prod_var == q_pos * b_pos
@@ -760,8 +1055,16 @@ fn translate_div_mod_undef_zero(
                     offset: 0,
                 }),
                 exprs: vec![
-                    LinearExpressionProto { vars: vec![q_pos], coeffs: vec![1], offset: 0 },
-                    LinearExpressionProto { vars: vec![b_pos], coeffs: vec![1], offset: 0 },
+                    LinearExpressionProto {
+                        vars: vec![q_pos],
+                        coeffs: vec![1],
+                        offset: 0,
+                    },
+                    LinearExpressionProto {
+                        vars: vec![b_pos],
+                        coeffs: vec![1],
+                        offset: 0,
+                    },
                 ],
             })),
         });
@@ -776,11 +1079,13 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_pos],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars,
-                coeffs,
-                domain: vec![-a_expr.offset, -a_expr.offset],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars,
+                    coeffs,
+                    domain: vec![-a_expr.offset, -a_expr.offset],
+                },
+            )),
         });
 
         // Enforce remainder bounds under is_pos:
@@ -788,44 +1093,52 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_pos],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![r_pos, b_pos],
-                coeffs: vec![1, -1],
-                domain: vec![i64::MIN, -1],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![r_pos, b_pos],
+                    coeffs: vec![1, -1],
+                    domain: vec![i64::MIN, -1],
+                },
+            )),
         });
 
         // Enforce q_pos == 0 if !is_pos
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![-is_pos - 1],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![q_pos],
-                coeffs: vec![1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![q_pos],
+                    coeffs: vec![1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
 
         // Enforce r_pos == 0 if !is_pos
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![-is_pos - 1],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![r_pos],
-                coeffs: vec![1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![r_pos],
+                    coeffs: vec![1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
 
         // Enforce b_pos == 0 if !is_pos
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![-is_pos - 1],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![b_pos],
-                coeffs: vec![1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![b_pos],
+                    coeffs: vec![1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
     }
 
@@ -837,11 +1150,13 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_neg],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![b_var],
-                coeffs: vec![1],
-                domain: vec![i64::MIN, -1],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![b_var],
+                    coeffs: vec![1],
+                    domain: vec![i64::MIN, -1],
+                },
+            )),
         });
 
         // Define b_neg variable in [b_min, 0]
@@ -855,11 +1170,13 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_neg],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![b_neg, b_var],
-                coeffs: vec![1, -1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![b_neg, b_var],
+                    coeffs: vec![1, -1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
 
         // Now implement floor division relation under is_neg:
@@ -886,11 +1203,13 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_neg],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars,
-                coeffs,
-                domain: vec![-target_expr.offset, -target_expr.offset],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars,
+                    coeffs,
+                    domain: vec![-target_expr.offset, -target_expr.offset],
+                },
+            )),
         });
 
         // Enforce product: prod_var == q_neg * b_neg
@@ -910,8 +1229,16 @@ fn translate_div_mod_undef_zero(
                     offset: 0,
                 }),
                 exprs: vec![
-                    LinearExpressionProto { vars: vec![q_neg], coeffs: vec![1], offset: 0 },
-                    LinearExpressionProto { vars: vec![b_neg], coeffs: vec![1], offset: 0 },
+                    LinearExpressionProto {
+                        vars: vec![q_neg],
+                        coeffs: vec![1],
+                        offset: 0,
+                    },
+                    LinearExpressionProto {
+                        vars: vec![b_neg],
+                        coeffs: vec![1],
+                        offset: 0,
+                    },
                 ],
             })),
         });
@@ -926,11 +1253,13 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_neg],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars,
-                coeffs,
-                domain: vec![-a_expr.offset, -a_expr.offset],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars,
+                    coeffs,
+                    domain: vec![-a_expr.offset, -a_expr.offset],
+                },
+            )),
         });
 
         // Enforce remainder bounds under is_neg:
@@ -938,44 +1267,52 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_neg],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![r_neg, b_neg],
-                coeffs: vec![1, -1],
-                domain: vec![1, i64::MAX],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![r_neg, b_neg],
+                    coeffs: vec![1, -1],
+                    domain: vec![1, i64::MAX],
+                },
+            )),
         });
 
         // Enforce q_neg == 0 if !is_neg
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![-is_neg - 1],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![q_neg],
-                coeffs: vec![1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![q_neg],
+                    coeffs: vec![1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
 
         // Enforce r_neg == 0 if !is_neg
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![-is_neg - 1],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![r_neg],
-                coeffs: vec![1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![r_neg],
+                    coeffs: vec![1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
 
         // Enforce b_neg == 0 if !is_neg
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![-is_neg - 1],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![b_neg],
-                coeffs: vec![1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![b_neg],
+                    coeffs: vec![1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
     }
 
@@ -987,22 +1324,26 @@ fn translate_div_mod_undef_zero(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_zero],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![b_var],
-                coeffs: vec![1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![b_var],
+                    coeffs: vec![1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
 
         // Enforce target == 0 if is_zero
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![is_zero],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: target_expr.vars.clone(),
-                coeffs: target_expr.coeffs.clone(),
-                domain: vec![0 - target_expr.offset, 0 - target_expr.offset],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: target_expr.vars.clone(),
+                    coeffs: target_expr.coeffs.clone(),
+                    domain: vec![0 - target_expr.offset, 0 - target_expr.offset],
+                },
+            )),
         });
     }
 
@@ -1011,15 +1352,24 @@ fn translate_div_mod_undef_zero(
     cp_model.constraints.push(ConstraintProto {
         name: String::new(),
         enforcement_literal: vec![],
-        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-            vars: partition_vars,
-            coeffs: vec![1; num_partition_vars],
-            domain: vec![1, 1],
-        })),
+        constraint: Some(constraint_proto::Constraint::Linear(
+            LinearConstraintProto {
+                vars: partition_vars,
+                coeffs: vec![1; num_partition_vars],
+                domain: vec![1, 1],
+            },
+        )),
     });
 
     // Return a dummy constraint that is always true
-    Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0))
+    Ok(exact_linear_constraint(
+        LinearExpr {
+            vars: vec![],
+            coeffs: vec![],
+            offset: 0,
+        },
+        0,
+    ))
 }
 
 /// Maps a relational operator (e.g. <=, >=, =) to a valid CP-SAT interval bound, applying the given offset.
@@ -1036,29 +1386,88 @@ fn comparison_domain(expr: &Expression, offset: i64) -> SolverResult<Vec<i64>> {
     }
 }
 
-fn get_literal(expr: &Expression, ctx: &TranslationContext) -> SolverResult<i32> {
+fn resolve_var_index(name: &Name, ctx: &TranslationContext) -> SolverResult<i32> {
+    if let Some(&idx) = ctx.var_mapping.borrow().get(name) {
+        return Ok(idx);
+    }
+    let elem_vars = get_matrix_element_vars(name, ctx);
+    if elem_vars.len() == 1 {
+        return Ok(elem_vars[0]);
+    }
+    let name_str = name.to_string();
+    for (m_name, &idx) in ctx.var_mapping.borrow().iter() {
+        if m_name.to_string() == name_str {
+            return Ok(idx);
+        }
+    }
+    Err(SolverError::ModelInvalid(format!("Unknown variable in constraint: {}", name)))
+}
+
+fn get_literal_strict(expr: &Expression, ctx: &TranslationContext) -> SolverResult<i32> {
     match expr {
         Expression::Atomic(_, Atom::Reference(reference)) => {
             let name = reference.name();
-            let var_index = ctx.var_mapping.get(&name).ok_or_else(|| {
-                SolverError::ModelInvalid(format!("Unknown variable in constraint: {}", name))
-            })?;
-            Ok(*var_index)
+            resolve_var_index(&name, ctx)
         }
-        Expression::Atomic(_, Atom::Literal(Literal::Bool(value))) => {
-            Err(SolverError::ModelFeatureNotSupported("Constant boolean literal inside logical constraint not supported yet".to_string()))
+        Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => {
+            Err(SolverError::ModelFeatureNotSupported(
+                "Constant boolean literal inside logical constraint not supported yet".to_string(),
+            ))
         }
         Expression::Not(_, inner) => {
-            let inner_lit = get_literal(inner.as_ref(), ctx)?;
+            let inner_lit = get_literal_strict(inner.as_ref(), ctx)?;
             Ok(-inner_lit - 1)
         }
-        _ => {
-            Err(SolverError::ModelFeatureNotSupported(format!(
-                "Logical constraint children must be atomic or negation of atomic, got {:?}",
-                expr
-            )))
-        }
+        _ => Err(SolverError::ModelFeatureNotSupported(format!(
+            "Logical constraint children must be atomic or negation of atomic, got {:?}",
+            expr
+        ))),
     }
+}
+
+fn create_bool_var(model: &mut CpModelProto, name: &str) -> i32 {
+    let idx = model.variables.len() as i32;
+    model.variables.push(IntegerVariableProto {
+        name: format!("{}_{}", name, idx),
+        domain: vec![0, 1],
+    });
+    idx
+}
+
+fn get_or_create_literal(
+    expr: &Expression,
+    cp_model: &mut CpModelProto,
+    ctx: &TranslationContext,
+) -> SolverResult<i32> {
+    if let Ok(lit) = get_literal_strict(expr, ctx) {
+        return Ok(lit);
+    }
+
+    if let Expression::Atomic(_, Atom::Literal(Literal::Bool(value))) = expr {
+        let b = create_bool_var(cp_model, "const_bool");
+        let target_val = if *value { 1 } else { 0 };
+        cp_model.constraints.push(ConstraintProto {
+            name: String::new(),
+            enforcement_literal: vec![],
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![b],
+                    coeffs: vec![1],
+                    domain: vec![target_val, target_val],
+                },
+            )),
+        });
+        return Ok(b);
+    }
+
+    if let Expression::Not(_, inner) = expr {
+        let inner_lit = get_or_create_literal(inner.as_ref(), cp_model, ctx)?;
+        return Ok(-inner_lit - 1);
+    }
+
+    let b = create_bool_var(cp_model, "reified_expr");
+    translate_reified_constraint(b, expr, cp_model, ctx)?;
+    Ok(b)
 }
 
 fn equate_literal_and_var(ref_var: i32, lit: i32, cp_model: &mut CpModelProto) {
@@ -1066,22 +1475,26 @@ fn equate_literal_and_var(ref_var: i32, lit: i32, cp_model: &mut CpModelProto) {
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![ref_var, lit],
-                coeffs: vec![1, -1],
-                domain: vec![0, 0],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![ref_var, lit],
+                    coeffs: vec![1, -1],
+                    domain: vec![0, 0],
+                },
+            )),
         });
     } else {
         let var = -lit - 1;
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![ref_var, var],
-                coeffs: vec![1, 1],
-                domain: vec![1, 1],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![ref_var, var],
+                    coeffs: vec![1, 1],
+                    domain: vec![1, 1],
+                },
+            )),
         });
     }
 }
@@ -1124,14 +1537,16 @@ fn translate_table_constraint(
     ctx: &TranslationContext,
 ) -> SolverResult<ConstraintProto> {
     let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(tuple_elems, _)) = tuple_expr else {
-        return Err(SolverError::ModelInvalid("Table first argument is not a matrix".into()));
+        return Err(SolverError::ModelInvalid(
+            "Table first argument is not a matrix".into(),
+        ));
     };
-    
+
     // Identify which tuple elements are constant vs variable
     let mut active_indices = Vec::new();
     let mut constant_values = Vec::new(); // Store (index, value) for constant elements
     let mut vars = Vec::new();
-    
+
     for (i, elem) in tuple_elems.iter().enumerate() {
         let linear = expr_to_linear(elem, ctx)?;
         if linear.vars.is_empty() {
@@ -1141,25 +1556,34 @@ fn translate_table_constraint(
             if linear.vars.len() == 1 && linear.coeffs == vec![1] && linear.offset == 0 {
                 vars.push(linear.vars[0]);
             } else {
-                return Err(SolverError::ModelFeatureNotSupported("Complex expression in Table constraint".into()));
+                return Err(SolverError::ModelFeatureNotSupported(
+                    "Complex expression in Table constraint".into(),
+                ));
             }
         }
     }
-    
-    let Some(Literal::AbstractLiteral(AbstractLiteral::Matrix(rows, _))) = eval_constant(rows_expr) else {
-        return Err(SolverError::ModelInvalid("Table second argument is not a constant matrix".into()));
+
+    let Some(Literal::AbstractLiteral(AbstractLiteral::Matrix(rows, _))) = eval_constant(rows_expr)
+    else {
+        return Err(SolverError::ModelInvalid(
+            "Table second argument is not a constant matrix".into(),
+        ));
     };
-    
+
     let mut values = Vec::new();
     let mut matched_any_row = false;
     for row in rows {
         let Literal::AbstractLiteral(AbstractLiteral::Matrix(row_elems, _)) = row else {
-            return Err(SolverError::ModelInvalid("Table row is not a constant matrix".into()));
+            return Err(SolverError::ModelInvalid(
+                "Table row is not a constant matrix".into(),
+            ));
         };
         if row_elems.len() != tuple_elems.len() {
-            return Err(SolverError::ModelInvalid("Table row width does not match tuple width".into()));
+            return Err(SolverError::ModelInvalid(
+                "Table row width does not match tuple width".into(),
+            ));
         }
-        
+
         // Check if constant elements match the row's values
         let mut row_values = Vec::new();
         for elem in row_elems {
@@ -1171,11 +1595,13 @@ fn translate_table_constraint(
                     row_values.push(if val { 1 } else { 0 });
                 }
                 _ => {
-                    return Err(SolverError::ModelInvalid("Table row contains non-integer/bool literal".into()));
+                    return Err(SolverError::ModelInvalid(
+                        "Table row contains non-integer/bool literal".into(),
+                    ));
                 }
             }
         }
-        
+
         let mut matches_constants = true;
         for &(idx, const_val) in &constant_values {
             if row_values[idx] != const_val {
@@ -1183,7 +1609,7 @@ fn translate_table_constraint(
                 break;
             }
         }
-        
+
         if matches_constants {
             matched_any_row = true;
             // Project row values to only active indices
@@ -1196,13 +1622,27 @@ fn translate_table_constraint(
     if vars.is_empty() {
         if matched_any_row {
             let target_val = if negated { 1 } else { 0 };
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, target_val));
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                target_val,
+            ));
         } else {
             let target_val = if negated { 0 } else { 1 };
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, target_val));
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                target_val,
+            ));
         }
     }
-    
+
     use super::proto::TableConstraintProto;
     Ok(ConstraintProto {
         name: String::new(),
@@ -1214,6 +1654,229 @@ fn translate_table_constraint(
             negated,
         })),
     })
+}
+
+fn translate_lex_comparison(
+    op: &str,
+    elems_l: Vec<LinearExpr>,
+    elems_r: Vec<LinearExpr>,
+    cp_model: &mut CpModelProto,
+    ctx: &TranslationContext,
+) -> SolverResult<ConstraintProto> {
+    let n = elems_l.len();
+    let m = elems_r.len();
+    let min_len = n.min(m);
+
+    if min_len == 0 {
+        let is_true = match op {
+            "<" => n < m,
+            "<=" => n <= m,
+            ">" => n > m,
+            ">=" => n >= m,
+            "=" => n == m,
+            "!=" => n != m,
+            _ => unreachable!(),
+        };
+        let target_val = if is_true { 0 } else { 1 };
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            target_val,
+        ));
+    }
+
+    if op == "=" && n != m {
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            1,
+        ));
+    }
+    if op == "!=" && n != m {
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            0,
+        ));
+    }
+
+    const ORTOOLS_MIN: i64 = -9_223_372_036_854_775_800;
+    const ORTOOLS_MAX: i64 = 9_223_372_036_854_775_800;
+
+    let mut max_val: i64 = 1000;
+    for expr in elems_l.iter().chain(elems_r.iter()) {
+        for &c in &expr.coeffs {
+            max_val = max_val.max(c.abs() * 1000);
+        }
+        max_val = max_val.max(expr.offset.abs() * 1000);
+    }
+    let base = max_val * 2 + 1;
+
+    let mut can_use_base = true;
+    let mut multiplier: i128 = 1;
+    for _ in 0..min_len {
+        if multiplier > (i64::MAX / 4) as i128 {
+            can_use_base = false;
+            break;
+        }
+        multiplier = multiplier.saturating_mul(base as i128);
+    }
+
+    if can_use_base {
+        let mut combined_diff = LinearExpr {
+            vars: vec![],
+            coeffs: vec![],
+            offset: 0,
+        };
+
+        let mut mult: i64 = 1;
+        for i in (0..min_len).rev() {
+            let diff = subtract_linear_exprs(elems_l[i].clone(), elems_r[i].clone());
+            for (v, c) in diff.vars.into_iter().zip(diff.coeffs.into_iter()) {
+                combined_diff.vars.push(v);
+                combined_diff.coeffs.push(c.saturating_mul(mult));
+            }
+            combined_diff.offset += diff.offset.saturating_mul(mult);
+            mult = mult.saturating_mul(base);
+        }
+
+        let domain = match op {
+            "<" => {
+                if n < m {
+                    vec![ORTOOLS_MIN, -combined_diff.offset]
+                } else {
+                    vec![ORTOOLS_MIN, -1 - combined_diff.offset]
+                }
+            }
+            "<=" => {
+                if n <= m {
+                    vec![ORTOOLS_MIN, -combined_diff.offset]
+                } else {
+                    vec![ORTOOLS_MIN, -1 - combined_diff.offset]
+                }
+            }
+            ">" => {
+                if n > m {
+                    vec![-combined_diff.offset, ORTOOLS_MAX]
+                } else {
+                    vec![1 - combined_diff.offset, ORTOOLS_MAX]
+                }
+            }
+            ">=" => {
+                if n >= m {
+                    vec![-combined_diff.offset, ORTOOLS_MAX]
+                } else {
+                    vec![1 - combined_diff.offset, ORTOOLS_MAX]
+                }
+            }
+            "=" => vec![-combined_diff.offset, -combined_diff.offset],
+            "!=" => vec![
+                ORTOOLS_MIN,
+                -1 - combined_diff.offset,
+                1 - combined_diff.offset,
+                ORTOOLS_MAX,
+            ],
+            _ => unreachable!(),
+        };
+
+        return Ok(ConstraintProto {
+            name: String::new(),
+            enforcement_literal: vec![],
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: combined_diff.vars,
+                    coeffs: combined_diff.coeffs,
+                    domain,
+                },
+            )),
+        });
+    }
+
+    Err(SolverError::OpNotSupported("Matrix lex comparison too large for base encoding".into()))
+}
+
+fn bind_reified_constraint(
+    ref_var: i32,
+    proto: ConstraintProto,
+    cp_model: &mut CpModelProto,
+) -> SolverResult<ConstraintProto> {
+    if let Some(constraint_proto::Constraint::BoolOr(bool_or)) = proto.constraint {
+        let b = cp_model.variables.len() as i32;
+        cp_model.variables.push(IntegerVariableProto {
+            name: format!("__reified_lex_{b}"),
+            domain: vec![0, 1],
+        });
+
+        for &lit in &bool_or.literals {
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::BoolOr(BoolArgumentProto {
+                    literals: vec![-lit - 1, b],
+                })),
+            });
+        }
+        let mut not_b_or_lits = bool_or.literals.clone();
+        not_b_or_lits.push(-b - 1);
+        cp_model.constraints.push(ConstraintProto {
+            name: String::new(),
+            enforcement_literal: vec![],
+            constraint: Some(constraint_proto::Constraint::BoolOr(BoolArgumentProto {
+                literals: not_b_or_lits,
+            })),
+        });
+
+        equate_literal_and_var(ref_var, b, cp_model);
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            0,
+        ));
+    }
+    if let Some(constraint_proto::Constraint::Linear(lin)) = proto.constraint {
+        let comp_domain = complement_domain_intervals(&lin.domain);
+        cp_model.constraints.push(ConstraintProto {
+            name: String::new(),
+            enforcement_literal: vec![ref_var],
+            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
+                vars: lin.vars.clone(),
+                coeffs: lin.coeffs.clone(),
+                domain: lin.domain,
+            })),
+        });
+        cp_model.constraints.push(ConstraintProto {
+            name: String::new(),
+            enforcement_literal: vec![-ref_var - 1],
+            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
+                vars: lin.vars,
+                coeffs: lin.coeffs,
+                domain: comp_domain,
+            })),
+        });
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            0,
+        ));
+    }
+    Err(SolverError::ModelFeatureNotSupported(
+        "Unsupported reified constraint binding".into(),
+    ))
 }
 
 fn translate_reified_constraint(
@@ -1228,19 +1891,29 @@ fn translate_reified_constraint(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: vec![ref_var],
-                coeffs: vec![1],
-                domain: vec![target_val, target_val],
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: vec![ref_var],
+                    coeffs: vec![1],
+                    domain: vec![target_val, target_val],
+                },
+            )),
         });
-        return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            0,
+        ));
     }
 
     // Check for logical operators: And, Or
     match inner_expr {
         Expression::And(_, inner) => {
-            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref() else {
+            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref()
+            else {
                 return Err(SolverError::ModelFeatureNotSupported(format!(
                     "Unsupported And argument in reification: {:?}",
                     inner
@@ -1248,9 +1921,9 @@ fn translate_reified_constraint(
             };
             let mut literals = Vec::new();
             for elem in elems {
-                literals.push(get_literal(elem, ctx)?);
+                literals.push(get_or_create_literal(elem, cp_model, ctx)?);
             }
-            
+
             // ref_var <=> And(literals)
             // 1. ref_var => each literal
             for &lit in &literals {
@@ -1272,11 +1945,19 @@ fn translate_reified_constraint(
                     literals: or_literals,
                 })),
             });
-            
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
         }
         Expression::Or(_, inner) => {
-            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref() else {
+            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref()
+            else {
                 return Err(SolverError::ModelFeatureNotSupported(format!(
                     "Unsupported Or argument in reification: {:?}",
                     inner
@@ -1284,9 +1965,9 @@ fn translate_reified_constraint(
             };
             let mut literals = Vec::new();
             for elem in elems {
-                literals.push(get_literal(elem, ctx)?);
+                literals.push(get_or_create_literal(elem, cp_model, ctx)?);
             }
-            
+
             // ref_var <=> Or(literals)
             // 1. each literal => ref_var
             for &lit in &literals {
@@ -1308,13 +1989,70 @@ fn translate_reified_constraint(
                     literals: or_literals,
                 })),
             });
-            
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        }
+
+
+        Expression::Lt(_, lhs, rhs) | Expression::LexLt(_, lhs, rhs) => {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
+                if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
+                    let lex_proto = translate_lex_comparison("<", elems_l, elems_r, cp_model, ctx)?;
+                    return bind_reified_constraint(ref_var, lex_proto, cp_model);
+                }
+            }
+        }
+        Expression::Leq(_, lhs, rhs) | Expression::LexLeq(_, lhs, rhs) => {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
+                if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
+                    let lex_proto = translate_lex_comparison("<=", elems_l, elems_r, cp_model, ctx)?;
+                    return bind_reified_constraint(ref_var, lex_proto, cp_model);
+                }
+            }
+        }
+        Expression::Gt(_, lhs, rhs) | Expression::LexGt(_, lhs, rhs) => {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
+                if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
+                    let lex_proto = translate_lex_comparison(">", elems_l, elems_r, cp_model, ctx)?;
+                    return bind_reified_constraint(ref_var, lex_proto, cp_model);
+                }
+            }
+        }
+        Expression::Geq(_, lhs, rhs) | Expression::LexGeq(_, lhs, rhs) => {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
+                if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
+                    let lex_proto = translate_lex_comparison(">=", elems_l, elems_r, cp_model, ctx)?;
+                    return bind_reified_constraint(ref_var, lex_proto, cp_model);
+                }
+            }
         }
         Expression::Eq(meta, lhs, rhs) => {
-            if let (Some(elems_l), Some(elems_r)) = (expr_to_linear_list(lhs.as_ref(), ctx), expr_to_linear_list(rhs.as_ref(), ctx)) {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
                 if elems_l.len() != elems_r.len() {
-                    return Err(SolverError::ModelInvalid("Matrix equality with different lengths".into()));
+                    let lex_proto = translate_lex_comparison("=", elems_l, elems_r, cp_model, ctx)?;
+                    return bind_reified_constraint(ref_var, lex_proto, cp_model);
                 }
                 let mut aux_vars = Vec::new();
                 for (el, er) in elems_l.into_iter().zip(elems_r) {
@@ -1324,28 +2062,32 @@ fn translate_reified_constraint(
                         name: format!("aux_matrix_eq_{}", aux_idx),
                         domain: vec![0, 1],
                     });
-                    
+
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
                         enforcement_literal: vec![aux_idx],
-                        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                            vars: diff.vars.clone(),
-                            coeffs: diff.coeffs.clone(),
-                            domain: vec![0, 0],
-                        })),
+                        constraint: Some(constraint_proto::Constraint::Linear(
+                            LinearConstraintProto {
+                                vars: diff.vars.clone(),
+                                coeffs: diff.coeffs.clone(),
+                                domain: vec![0, 0],
+                            },
+                        )),
                     });
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
                         enforcement_literal: vec![-aux_idx - 1],
-                        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                            vars: diff.vars,
-                            coeffs: diff.coeffs,
-                            domain: vec![i64::MIN, -1, 1, i64::MAX],
-                        })),
+                        constraint: Some(constraint_proto::Constraint::Linear(
+                            LinearConstraintProto {
+                                vars: diff.vars,
+                                coeffs: diff.coeffs,
+                                domain: vec![i64::MIN, -1, 1, i64::MAX],
+                            },
+                        )),
                     });
                     aux_vars.push(aux_idx);
                 }
-                
+
                 for &xi in &aux_vars {
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
@@ -1355,23 +2097,106 @@ fn translate_reified_constraint(
                         })),
                     });
                 }
-                let mut or_literals = aux_vars.iter().map(|&x| -x - 1).collect::<Vec<_>>();
+                let mut or_literals = aux_vars.iter().map(|&xi| -xi - 1).collect::<Vec<_>>();
                 or_literals.push(ref_var);
                 cp_model.constraints.push(ConstraintProto {
                     name: String::new(),
                     enforcement_literal: vec![],
                     constraint: Some(constraint_proto::Constraint::BoolOr(BoolArgumentProto {
                         literals: or_literals,
-                })),
+                    })),
                 });
-                
-                return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
             }
         }
+        Expression::AtMost(_, vars, counts, values) => {
+            translate_cardinality_constraint(
+                vars.as_ref(),
+                counts.as_ref(),
+                values.as_ref(),
+                "AtMost",
+                Some(ref_var),
+                cp_model,
+                ctx,
+            )?;
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        }
+        Expression::AtLeast(_, vars, counts, values) => {
+            translate_cardinality_constraint(
+                vars.as_ref(),
+                counts.as_ref(),
+                values.as_ref(),
+                "AtLeast",
+                Some(ref_var),
+                cp_model,
+                ctx,
+            )?;
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        }
+        Expression::Gcc(_, vars, values, counts) => {
+            translate_cardinality_constraint(
+                vars.as_ref(),
+                counts.as_ref(),
+                values.as_ref(),
+                "Gcc",
+                Some(ref_var),
+                cp_model,
+                ctx,
+            )?;
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        }
+        Expression::GccWeak(_, vars, values, counts) => {
+            translate_cardinality_constraint(
+                vars.as_ref(),
+                counts.as_ref(),
+                values.as_ref(),
+                "GccWeak",
+                Some(ref_var),
+                cp_model,
+                ctx,
+            )?;
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        }
+
         Expression::Imply(_, lhs, rhs) => {
-            let lhs_lit = get_literal(lhs.as_ref(), ctx)?;
-            let rhs_lit = get_literal(rhs.as_ref(), ctx)?;
-            
+            let lhs_lit = get_or_create_literal(lhs.as_ref(), cp_model, ctx)?;
+            let rhs_lit = get_or_create_literal(rhs.as_ref(), cp_model, ctx)?;
+
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![ref_var],
@@ -1393,12 +2218,23 @@ fn translate_reified_constraint(
                     literals: vec![-rhs_lit - 1],
                 })),
             });
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
         }
         Expression::Neq(meta, lhs, rhs) => {
-            if let (Some(elems_l), Some(elems_r)) = (expr_to_linear_list(lhs.as_ref(), ctx), expr_to_linear_list(rhs.as_ref(), ctx)) {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
                 if elems_l.len() != elems_r.len() {
-                    return Err(SolverError::ModelInvalid("Matrix inequality with different lengths".into()));
+                    let lex_proto = translate_lex_comparison("!=", elems_l, elems_r, cp_model, ctx)?;
+                    return bind_reified_constraint(ref_var, lex_proto, cp_model);
                 }
                 let mut aux_vars = Vec::new();
                 for (el, er) in elems_l.into_iter().zip(elems_r) {
@@ -1408,28 +2244,32 @@ fn translate_reified_constraint(
                         name: format!("aux_matrix_neq_{}", aux_idx),
                         domain: vec![0, 1],
                     });
-                    
+
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
                         enforcement_literal: vec![aux_idx],
-                        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                            vars: diff.vars.clone(),
-                            coeffs: diff.coeffs.clone(),
-                            domain: vec![i64::MIN, -1, 1, i64::MAX],
-                        })),
+                        constraint: Some(constraint_proto::Constraint::Linear(
+                            LinearConstraintProto {
+                                vars: diff.vars.clone(),
+                                coeffs: diff.coeffs.clone(),
+                                domain: vec![i64::MIN, -1, 1, i64::MAX],
+                            },
+                        )),
                     });
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
                         enforcement_literal: vec![-aux_idx - 1],
-                        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                            vars: diff.vars,
-                            coeffs: diff.coeffs,
-                            domain: vec![0, 0],
-                        })),
+                        constraint: Some(constraint_proto::Constraint::Linear(
+                            LinearConstraintProto {
+                                vars: diff.vars,
+                                coeffs: diff.coeffs,
+                                domain: vec![0, 0],
+                            },
+                        )),
                     });
                     aux_vars.push(aux_idx);
                 }
-                
+
                 let mut or_literals = aux_vars.clone();
                 or_literals.push(-ref_var - 1);
                 cp_model.constraints.push(ConstraintProto {
@@ -1448,16 +2288,33 @@ fn translate_reified_constraint(
                         })),
                     });
                 }
-                
-                return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
             }
         }
-                Expression::MinionDivEqUndefZero(_, a, b, target) | Expression::MinionModuloEqUndefZero(_, a, b, target) => {
+        Expression::MinionDivEqUndefZero(_, a, b, target)
+        | Expression::MinionModuloEqUndefZero(_, a, b, target) => {
             let is_div = matches!(inner_expr, Expression::MinionDivEqUndefZero(..));
-            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
-            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
-            let target_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
-            
+            let a_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), a.as_ref().clone()),
+                ctx,
+            )?;
+            let b_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), b.as_ref().clone()),
+                ctx,
+            )?;
+            let target_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), target.as_ref().clone()),
+                ctx,
+            )?;
+
             let target_aux = cp_model.variables.len() as i32;
             cp_model.variables.push(IntegerVariableProto {
                 name: format!("div_target_aux_{}", target_aux),
@@ -1468,10 +2325,11 @@ fn translate_reified_constraint(
                 coeffs: vec![1],
                 offset: 0,
             };
-            
-            let constraint = translate_div_mod_undef_zero(is_div, &a_expr, &b_expr, &target_aux_expr, cp_model)?;
+
+            let constraint =
+                translate_div_mod_undef_zero(is_div, &a_expr, &b_expr, &target_aux_expr, cp_model)?;
             cp_model.constraints.push(constraint);
-            
+
             let diff = subtract_linear_exprs(target_aux_expr, target_expr);
             let domain_true = vec![-diff.offset, -diff.offset];
             let domain_false = vec![i64::MIN, -diff.offset - 1, -diff.offset + 1, i64::MAX];
@@ -1479,23 +2337,34 @@ fn translate_reified_constraint(
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![ref_var],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: diff.vars.clone(),
-                    coeffs: diff.coeffs.clone(),
-                    domain: domain_true,
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff.vars.clone(),
+                        coeffs: diff.coeffs.clone(),
+                        domain: domain_true,
+                    },
+                )),
             });
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![-ref_var - 1],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: diff.vars,
-                    coeffs: diff.coeffs,
-                    domain: domain_false,
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff.vars,
+                        coeffs: diff.coeffs,
+                        domain: domain_false,
+                    },
+                )),
             });
-            
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
         }
 
         Expression::In(_, lhs, rhs) => {
@@ -1504,30 +2373,44 @@ fn translate_reified_constraint(
                 SolverError::ModelFeatureNotSupported(format!("Unsupported In set: {:?}", rhs))
             })?;
             let domain_intervals = values_to_flat_domain(&vals);
-            let shifted_domain = domain_intervals.into_iter().map(|v| v - lhs_linear.offset).collect::<Vec<_>>();
+            let shifted_domain = domain_intervals
+                .into_iter()
+                .map(|v| v - lhs_linear.offset)
+                .collect::<Vec<_>>();
 
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![ref_var],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: lhs_linear.vars.clone(),
-                    coeffs: lhs_linear.coeffs.clone(),
-                    domain: shifted_domain.clone(),
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: lhs_linear.vars.clone(),
+                        coeffs: lhs_linear.coeffs.clone(),
+                        domain: shifted_domain.clone(),
+                    },
+                )),
             });
 
             let comp_intervals = complement_domain_intervals(&shifted_domain);
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![-ref_var - 1],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: lhs_linear.vars,
-                    coeffs: lhs_linear.coeffs,
-                    domain: comp_intervals,
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: lhs_linear.vars,
+                        coeffs: lhs_linear.coeffs,
+                        domain: comp_intervals,
+                    },
+                )),
             });
 
-            return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
         }
         _ => {}
     }
@@ -1541,32 +2424,49 @@ fn translate_reified_constraint(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![ref_var],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: diff.vars.clone(),
-                coeffs: diff.coeffs.clone(),
-                domain: domain_true,
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: diff.vars.clone(),
+                    coeffs: diff.coeffs.clone(),
+                    domain: domain_true,
+                },
+            )),
         });
 
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![-ref_var - 1],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: diff.vars,
-                coeffs: diff.coeffs,
-                domain: domain_false,
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: diff.vars,
+                    coeffs: diff.coeffs,
+                    domain: domain_false,
+                },
+            )),
         });
 
-        return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            0,
+        ));
     }
 
     // Rest of the match inner_expr
     match inner_expr {
         Expression::MinionElementOne(_, array, index, target) => {
             use super::proto::ElementConstraintProto;
-            let index_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), index.as_ref().clone()), ctx)?;
-            let target_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
+            let index_linear = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), index.as_ref().clone()),
+                ctx,
+            )?;
+            let target_linear = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), target.as_ref().clone()),
+                ctx,
+            )?;
             let index_1_var = get_or_create_var_for_linear(index_linear, cp_model);
             let target_var = get_or_create_var_for_linear(target_linear, cp_model);
 
@@ -1587,21 +2487,25 @@ fn translate_reified_constraint(
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![in_bounds_var],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![index_1_var],
-                    coeffs: vec![1],
-                    domain: bounds_domain.clone(),
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![index_1_var],
+                        coeffs: vec![1],
+                        domain: bounds_domain.clone(),
+                    },
+                )),
             });
             let bounds_comp = complement_domain_intervals(&bounds_domain);
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![-in_bounds_var - 1],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![index_1_var],
-                    coeffs: vec![1],
-                    domain: bounds_comp,
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![index_1_var],
+                        coeffs: vec![1],
+                        domain: bounds_comp,
+                    },
+                )),
             });
 
             let index_0_var = cp_model.variables.len() as i32;
@@ -1612,11 +2516,13 @@ fn translate_reified_constraint(
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![in_bounds_var],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![index_1_var, index_0_var],
-                    coeffs: vec![1, -1],
-                    domain: vec![1, 1],
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![index_1_var, index_0_var],
+                        coeffs: vec![1, -1],
+                        domain: vec![1, 1],
+                    },
+                )),
             });
 
             let mut combined_domain = Vec::new();
@@ -1642,34 +2548,40 @@ fn translate_reified_constraint(
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::Element(ElementConstraintProto {
-                    index: index_0_var,
-                    target: element_val_var,
-                    vars: element_vars,
-                    linear_index: None,
-                    linear_target: None,
-                    exprs: vec![],
-                })),
+                constraint: Some(constraint_proto::Constraint::Element(
+                    ElementConstraintProto {
+                        index: index_0_var,
+                        target: element_val_var,
+                        vars: element_vars,
+                        linear_index: None,
+                        linear_target: None,
+                        exprs: vec![],
+                    },
+                )),
             });
 
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![ref_var, in_bounds_var],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![element_val_var, target_var],
-                    coeffs: vec![1, -1],
-                    domain: vec![0, 0],
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![element_val_var, target_var],
+                        coeffs: vec![1, -1],
+                        domain: vec![0, 0],
+                    },
+                )),
             });
 
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![-ref_var - 1, in_bounds_var],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![element_val_var, target_var],
-                    coeffs: vec![1, -1],
-                    domain: vec![i64::MIN, -1, 1, i64::MAX],
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![element_val_var, target_var],
+                        coeffs: vec![1, -1],
+                        domain: vec![i64::MIN, -1, 1, i64::MAX],
+                    },
+                )),
             });
 
             cp_model.constraints.push(ConstraintProto {
@@ -1680,7 +2592,14 @@ fn translate_reified_constraint(
                 })),
             });
 
-            Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0))
+            Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ))
         }
         Expression::InDomain(_, var_expr, domain) => {
             let var_linear = expr_to_linear(var_expr.as_ref(), ctx)?;
@@ -1694,33 +2613,45 @@ fn translate_reified_constraint(
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![ref_var],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![var_idx],
-                    coeffs: vec![1],
-                    domain: domain_intervals.clone(),
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![var_idx],
+                        coeffs: vec![1],
+                        domain: domain_intervals.clone(),
+                    },
+                )),
             });
 
             let comp_intervals = complement_domain_intervals(&domain_intervals);
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![-ref_var - 1],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![var_idx],
-                    coeffs: vec![1],
-                    domain: comp_intervals,
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![var_idx],
+                        coeffs: vec![1],
+                        domain: comp_intervals,
+                    },
+                )),
             });
 
-            Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0))
+            Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ))
         }
         Expression::FlatAllDiff(_, vars) => {
             let mut exprs = Vec::new();
             for var in vars {
-                let var_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                let var_expr =
+                    expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
                 exprs.push(var_expr);
             }
-            
+
             let mut pair_eq_literals = Vec::new();
             for i in 0..exprs.len() {
                 for j in (i + 1)..exprs.len() {
@@ -1743,23 +2674,32 @@ fn translate_reified_constraint(
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
                         enforcement_literal: vec![eq_lit],
-                        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                            vars: diff_vars.clone(),
-                            coeffs: diff_coeffs.clone(),
-                            domain: vec![-diff_offset, -diff_offset],
-                        })),
+                        constraint: Some(constraint_proto::Constraint::Linear(
+                            LinearConstraintProto {
+                                vars: diff_vars.clone(),
+                                coeffs: diff_coeffs.clone(),
+                                domain: vec![-diff_offset, -diff_offset],
+                            },
+                        )),
                     });
 
                     // 2. ref_var => exprs[i] != exprs[j]
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
                         enforcement_literal: vec![ref_var],
-                        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                            vars: diff_vars,
-                            coeffs: diff_coeffs,
-                            // x_i - x_j != 0 translates to domain [MIN, -1] U [1, MAX]
-                            domain: vec![i64::MIN, -diff_offset - 1, -diff_offset + 1, i64::MAX],
-                        })),
+                        constraint: Some(constraint_proto::Constraint::Linear(
+                            LinearConstraintProto {
+                                vars: diff_vars,
+                                coeffs: diff_coeffs,
+                                // x_i - x_j != 0 translates to domain [MIN, -1] U [1, MAX]
+                                domain: vec![
+                                    i64::MIN,
+                                    -diff_offset - 1,
+                                    -diff_offset + 1,
+                                    i64::MAX,
+                                ],
+                            },
+                        )),
                     });
                 }
             }
@@ -1775,14 +2715,240 @@ fn translate_reified_constraint(
                 })),
             });
 
-            Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0))
+            Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ))
+        }
+        Expression::MinionPow(_, a, b, target) => {
+            let a_expr = Expression::Atomic(Metadata::default(), a.as_ref().clone());
+            let b_expr = Expression::Atomic(Metadata::default(), b.as_ref().clone());
+            let target_expr = Expression::Atomic(Metadata::default(), target.as_ref().clone());
+
+            let mut pos_constraint = translate_minion_pow_constraint(
+                &a_expr,
+                &b_expr,
+                &target_expr,
+                false,
+                cp_model,
+                ctx,
+            )?;
+            pos_constraint.enforcement_literal.push(ref_var);
+            cp_model.constraints.push(pos_constraint);
+
+            let mut neg_constraint = translate_minion_pow_constraint(
+                &a_expr,
+                &b_expr,
+                &target_expr,
+                true,
+                cp_model,
+                ctx,
+            )?;
+            neg_constraint.enforcement_literal.push(-ref_var - 1);
+            cp_model.constraints.push(neg_constraint);
+
+            Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ))
+        }
+        Expression::FlatAbsEq(_, a, b) => {
+            let a_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), a.as_ref().clone()),
+                ctx,
+            )?;
+            let b_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), b.as_ref().clone()),
+                ctx,
+            )?;
+
+            let abs_b_var = cp_model.variables.len() as i32;
+            cp_model.variables.push(IntegerVariableProto {
+                name: format!("__abs_aux_{abs_b_var}"),
+                domain: vec![0, 1_000_000_000],
+            });
+
+            let abs_b_expr = LinearExpr {
+                vars: vec![abs_b_var],
+                coeffs: vec![1],
+                offset: 0,
+            };
+
+            let diff_abs_b = subtract_linear_exprs(abs_b_expr.clone(), b_expr.clone());
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_abs_b.vars.clone(),
+                        coeffs: diff_abs_b.coeffs.clone(),
+                        domain: vec![-diff_abs_b.offset, i64::MAX],
+                    },
+                )),
+            });
+
+            let mut minus_b = b_expr.clone();
+            for c in &mut minus_b.coeffs {
+                *c = -*c;
+            }
+            minus_b.offset = -minus_b.offset;
+            let diff_abs_minus_b = subtract_linear_exprs(abs_b_expr.clone(), minus_b);
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_abs_minus_b.vars.clone(),
+                        coeffs: diff_abs_minus_b.coeffs.clone(),
+                        domain: vec![-diff_abs_minus_b.offset, i64::MAX],
+                    },
+                )),
+            });
+
+            let is_pos_var = cp_model.variables.len() as i32;
+            cp_model.variables.push(IntegerVariableProto {
+                name: format!("__abs_pos_{is_pos_var}"),
+                domain: vec![0, 1],
+            });
+
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![is_pos_var],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: b_expr.vars.clone(),
+                        coeffs: b_expr.coeffs.clone(),
+                        domain: vec![-b_expr.offset, i64::MAX],
+                    },
+                )),
+            });
+
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-is_pos_var - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: b_expr.vars.clone(),
+                        coeffs: b_expr.coeffs.clone(),
+                        domain: vec![i64::MIN, -b_expr.offset],
+                    },
+                )),
+            });
+
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![is_pos_var],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_abs_b.vars.clone(),
+                        coeffs: diff_abs_b.coeffs.clone(),
+                        domain: vec![i64::MIN, -diff_abs_b.offset],
+                    },
+                )),
+            });
+
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-is_pos_var - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_abs_minus_b.vars.clone(),
+                        coeffs: diff_abs_minus_b.coeffs.clone(),
+                        domain: vec![i64::MIN, -diff_abs_minus_b.offset],
+                    },
+                )),
+            });
+
+            let diff_a_abs = subtract_linear_exprs(a_expr, abs_b_expr);
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![ref_var],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_a_abs.vars.clone(),
+                        coeffs: diff_a_abs.coeffs.clone(),
+                        domain: vec![-diff_a_abs.offset, -diff_a_abs.offset],
+                    },
+                )),
+            });
+
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-ref_var - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_a_abs.vars,
+                        coeffs: diff_a_abs.coeffs,
+                        domain: vec![
+                            i64::MIN,
+                            -diff_a_abs.offset - 1,
+                            -diff_a_abs.offset + 1,
+                            i64::MAX,
+                        ],
+                    },
+                )),
+            });
+
+            Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ))
+        }
+        Expression::ElementId(_, matrix, value) => {
+            translate_element_id_aux(ref_var, matrix.as_ref(), value.as_ref(), cp_model, ctx)
+        }
+        Expression::SafeIndex(_, matrix, indices) if indices.len() == 1 => {
+            translate_element_id_aux(ref_var, matrix.as_ref(), &indices[0], cp_model, ctx)
+        }
+        Expression::ToInt(_, inner) => {
+            translate_reified_constraint(ref_var, inner.as_ref(), cp_model, ctx)
+        }
+        Expression::Table(_, tuple, allowed_rows) => {
+            translate_table_reified(ref_var, tuple.as_ref(), allowed_rows.as_ref(), cp_model, ctx)
         }
         _ => {
-            if let Ok(lit) = get_literal(inner_expr, ctx) {
-                equate_literal_and_var(ref_var, lit, cp_model);
-                return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+            if let Ok(linear_expr) = expr_to_linear(inner_expr, ctx) {
+                let ref_linear = LinearExpr {
+                    vars: vec![ref_var],
+                    coeffs: vec![1],
+                    offset: 0,
+                };
+                let diff = subtract_linear_exprs(ref_linear, linear_expr);
+                cp_model.constraints.push(exact_linear_constraint(diff, 0));
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
             }
-            
+
+            if let Ok(lit) = get_literal_strict(inner_expr, ctx) {
+                equate_literal_and_var(ref_var, lit, cp_model);
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
+            }
+
             Err(SolverError::ModelFeatureNotSupported(format!(
                 "Unsupported expression inside AuxDeclaration: {:?}",
                 inner_expr
@@ -1791,13 +2957,575 @@ fn translate_reified_constraint(
     }
 }
 
+fn get_constant_int_vector(expr: &Expression) -> Option<Vec<i64>> {
+    match expr {
+        Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) => {
+            let mut vec = Vec::new();
+            for elem in elems {
+                if let Literal::Int(val) = elem {
+                    vec.push(*val as i64);
+                } else {
+                    return None;
+                }
+            }
+            Some(vec)
+        }
+        Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) => {
+            let mut vec = Vec::new();
+            for elem in elems {
+                if let Some(Literal::Int(val)) = eval_constant(elem) {
+                    vec.push(val as i64);
+                } else {
+                    return None;
+                }
+            }
+            Some(vec)
+        }
+        _ => None,
+    }
+}
+
+fn compose_matrix_with_indices(matrix: &Expression, indices: &[i64]) -> Option<Expression> {
+    match matrix {
+        Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, domain)))) => {
+            let mut min_idx: i64 = 1;
+            if let Ok(intervals) = extract_domain_intervals(domain) {
+                if let Some(&start) = intervals.first() {
+                    min_idx = start;
+                }
+            }
+            let mut composed_elems = Vec::new();
+            for &idx in indices {
+                let pos = (idx - min_idx) as usize;
+                if pos < elems.len() {
+                    composed_elems.push(Expression::Atomic(Metadata::default(), Atom::Literal(elems[pos].clone())));
+                } else {
+                    return None;
+                }
+            }
+            let domain_ptr: crate::ast::DomainPtr = domain.clone().into();
+            Some(Expression::AbstractLiteral(
+                Metadata::default(),
+                AbstractLiteral::Matrix(composed_elems, domain_ptr),
+            ))
+        }
+        Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain)) => {
+            let mut composed_elems = Vec::new();
+            for &idx in indices {
+                let pos = (idx - 1) as usize;
+                if pos < elems.len() {
+                    composed_elems.push(elems[pos].clone());
+                } else {
+                    return None;
+                }
+            }
+            Some(Expression::AbstractLiteral(
+                Metadata::default(),
+                AbstractLiteral::Matrix(composed_elems, domain.clone()),
+            ))
+        }
+        _ => None,
+    }
+}
+
+fn translate_element_id_aux(
+    ref_var: i32,
+    matrix: &Expression,
+    value: &Expression,
+    cp_model: &mut CpModelProto,
+    ctx: &TranslationContext,
+) -> SolverResult<ConstraintProto> {
+    use super::proto::ElementConstraintProto;
+
+    // Nested Element Collapsing: X[A[k]] where A is a constant index matrix
+    if let Expression::ElementId(_, inner_matrix, inner_k) = value {
+        if let Some(a_consts) = get_constant_int_vector(inner_matrix.as_ref()) {
+            if let Some(composed_matrix) = compose_matrix_with_indices(matrix, &a_consts) {
+                return translate_element_id_aux(ref_var, &composed_matrix, inner_k.as_ref(), cp_model, ctx);
+            }
+        }
+    }
+    if let Expression::SafeIndex(_, inner_matrix, inner_indices) = value {
+        if inner_indices.len() == 1 {
+            if let Some(a_consts) = get_constant_int_vector(inner_matrix.as_ref()) {
+                if let Some(composed_matrix) = compose_matrix_with_indices(matrix, &a_consts) {
+                    return translate_element_id_aux(ref_var, &composed_matrix, &inner_indices[0], cp_model, ctx);
+                }
+            }
+        }
+    }
+
+    let index_linear = expr_to_linear(value, ctx)?;
+    let index_1_var = get_or_create_var_for_linear(index_linear, cp_model);
+    let target_var = ref_var;
+
+    let element_linears = expr_to_linear_list(matrix, ctx)
+        .ok_or_else(|| SolverError::ModelFeatureNotSupported("ElementId matrix argument".into()))?;
+
+    let mut pos_and_vars = Vec::new();
+    let mut max_pos: usize = 0;
+
+    for (idx, lin) in element_linears.into_iter().enumerate() {
+        let elem_var = get_or_create_var_for_linear(lin.clone(), cp_model);
+        let mut pos = idx + 1;
+
+        if lin.vars.len() == 1 {
+            let var_idx = lin.vars[0];
+            let var_map = ctx.var_mapping.borrow();
+            for (name, &mapped_idx) in var_map.iter() {
+                if mapped_idx == var_idx {
+                    if let Name::Represented(box_tuple) = name {
+                        let (_, repr_name, suffix) = box_tuple.as_ref();
+                        if repr_name.as_str() == "matrix_to_atom" {
+                            if let Ok(p) = suffix.as_str().parse::<usize>() {
+                                pos = p;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        max_pos = std::cmp::max(max_pos, pos);
+        pos_and_vars.push((pos, elem_var));
+    }
+
+    let index_domain_max = cp_model.variables[index_1_var as usize]
+        .domain
+        .last()
+        .copied()
+        .unwrap_or(0);
+    if index_domain_max > 0 {
+        max_pos = std::cmp::max(max_pos, index_domain_max as usize);
+    }
+
+    let mut padded_vars = Vec::with_capacity(max_pos);
+    for p in 1..=max_pos {
+        let var = if let Some(&(_, elem_var)) = pos_and_vars.iter().find(|&&(pos, _)| pos == p) {
+            elem_var
+        } else {
+            get_or_create_var_for_linear(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: p as i64,
+                },
+                cp_model,
+            )
+        };
+        padded_vars.push(var);
+    }
+
+    let index_0_var = cp_model.variables.len() as i32;
+    let mut index_0_proto = IntegerVariableProto::default();
+    index_0_proto.domain = vec![0, (padded_vars.len() - 1) as i64];
+    cp_model.variables.push(index_0_proto);
+
+    let mut min_idx: i64 = 1;
+    if let Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(_, domain)))) = matrix {
+        if let Ok(intervals) = extract_domain_intervals(domain) {
+            if let Some(&start) = intervals.first() {
+                min_idx = start;
+            }
+        }
+    }
+
+    cp_model.constraints.push(ConstraintProto {
+        name: String::new(),
+        enforcement_literal: vec![],
+        constraint: Some(constraint_proto::Constraint::Linear(
+            LinearConstraintProto {
+                vars: vec![index_1_var, index_0_var],
+                coeffs: vec![1, -1],
+                domain: vec![min_idx, min_idx],
+            },
+        )),
+    });
+
+    Ok(ConstraintProto {
+        name: String::new(),
+        enforcement_literal: vec![],
+        constraint: Some(constraint_proto::Constraint::Element(
+            ElementConstraintProto {
+                index: index_0_var,
+                target: target_var,
+                vars: padded_vars,
+                linear_index: None,
+                linear_target: None,
+                exprs: vec![],
+            },
+        )),
+    })
+}
+
+fn translate_table_reified(
+    ref_var: i32,
+    tuple_expr: &Expression,
+    rows_expr: &Expression,
+    cp_model: &mut CpModelProto,
+    ctx: &TranslationContext,
+) -> SolverResult<ConstraintProto> {
+    let tuple_linears = expr_to_linear_list(tuple_expr, ctx)
+        .ok_or_else(|| SolverError::ModelFeatureNotSupported("Complex expression in Table constraint tuple".into()))?;
+
+    let Some(Literal::AbstractLiteral(AbstractLiteral::Matrix(rows, _))) = eval_constant(rows_expr)
+    else {
+        return Err(SolverError::ModelInvalid(
+            "Table second argument is not a constant matrix".into(),
+        ));
+    };
+
+    let mut row_match_vars = Vec::new();
+
+    for row in rows {
+        let Literal::AbstractLiteral(AbstractLiteral::Matrix(row_elems, _)) = row else {
+            return Err(SolverError::ModelInvalid(
+                "Table row is not a constant matrix".into(),
+            ));
+        };
+
+        if row_elems.len() != tuple_linears.len() {
+            return Err(SolverError::ModelInvalid(
+                "Table row width does not match tuple width".into(),
+            ));
+        }
+
+        let mut row_vals = Vec::new();
+        for elem in row_elems {
+            match elem {
+                Literal::Int(val) => row_vals.push(val as i64),
+                Literal::Bool(val) => row_vals.push(if val { 1 } else { 0 }),
+                _ => return Err(SolverError::ModelInvalid("Table row non-int/bool".into())),
+            }
+        }
+
+        let row_var = cp_model.variables.len() as i32;
+        cp_model.variables.push(IntegerVariableProto {
+            name: format!("__table_row_match_{row_var}"),
+            domain: vec![0, 1],
+        });
+        row_match_vars.push(row_var);
+
+        // 1. row_var => each element == row_val
+        for (lin, &val) in tuple_linears.iter().zip(row_vals.iter()) {
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![row_var],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: lin.vars.clone(),
+                        coeffs: lin.coeffs.clone(),
+                        domain: vec![val - lin.offset, val - lin.offset],
+                    },
+                )),
+            });
+        }
+
+        // 2. tuple == row_vals => row_var
+        let mut elem_match_vars = Vec::new();
+        for (lin, &val) in tuple_linears.iter().zip(row_vals.iter()) {
+            let b = cp_model.variables.len() as i32;
+            cp_model.variables.push(IntegerVariableProto {
+                name: format!("__elem_eq_{b}"),
+                domain: vec![0, 1],
+            });
+            elem_match_vars.push(b);
+
+            // b => lin == val
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![b],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: lin.vars.clone(),
+                        coeffs: lin.coeffs.clone(),
+                        domain: vec![val - lin.offset, val - lin.offset],
+                    },
+                )),
+            });
+
+            // !b => lin != val
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-b - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: lin.vars.clone(),
+                        coeffs: lin.coeffs.clone(),
+                        domain: vec![
+                            i64::MIN,
+                            val - lin.offset - 1,
+                            val - lin.offset + 1,
+                            i64::MAX,
+                        ],
+                    },
+                )),
+            });
+        }
+
+        // And(elem_match_vars) => row_var (i.e. not b1 \/ not b2 \/ ... \/ row_var)
+        let mut not_elems_or_row = elem_match_vars.iter().map(|&b| -b - 1).collect::<Vec<_>>();
+        not_elems_or_row.push(row_var);
+        cp_model.constraints.push(ConstraintProto {
+            name: String::new(),
+            enforcement_literal: vec![],
+            constraint: Some(constraint_proto::Constraint::BoolOr(BoolArgumentProto {
+                literals: not_elems_or_row,
+            })),
+        });
+    }
+
+    // Now ref_var <=> Or(row_match_vars)
+    for &row_var in &row_match_vars {
+        cp_model.constraints.push(ConstraintProto {
+            name: String::new(),
+            enforcement_literal: vec![],
+            constraint: Some(constraint_proto::Constraint::BoolOr(BoolArgumentProto {
+                literals: vec![-row_var - 1, ref_var],
+            })),
+        });
+    }
+
+    let mut not_ref_or_rows = row_match_vars.clone();
+    not_ref_or_rows.push(-ref_var - 1);
+    cp_model.constraints.push(ConstraintProto {
+        name: String::new(),
+        enforcement_literal: vec![],
+        constraint: Some(constraint_proto::Constraint::BoolOr(BoolArgumentProto {
+            literals: not_ref_or_rows,
+        })),
+    });
+
+    Ok(exact_linear_constraint(
+        LinearExpr {
+            vars: vec![],
+            coeffs: vec![],
+            offset: 0,
+        },
+        0,
+    ))
+}
+
 fn translate_aux_declaration(
     reference: &crate::ast::Reference,
     inner_expr: &Expression,
     cp_model: &mut CpModelProto,
     ctx: &TranslationContext,
 ) -> SolverResult<ConstraintProto> {
-    let ref_var = get_literal(&Expression::Atomic(Metadata::default(), Atom::Reference(reference.clone())), ctx)?;
+    let mut ref_vars = get_matrix_element_vars(&reference.name(), ctx);
+
+    let inner_linears_opt = expr_to_linear_list(inner_expr, ctx).or_else(|| {
+        if let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner_expr {
+            let mut list = Vec::new();
+            for elem in elems {
+                if let Ok(lin) = expr_to_linear(elem, ctx) {
+                    list.push(lin);
+                } else if let Ok(lit) = get_or_create_literal(elem, cp_model, ctx) {
+                    list.push(LinearExpr {
+                        vars: vec![lit],
+                        coeffs: vec![1],
+                        offset: 0,
+                    });
+                } else {
+                    return None;
+                }
+            }
+            Some(list)
+        } else {
+            None
+        }
+    });
+
+    if ref_vars.is_empty() {
+        if let Some(inner_linears) = inner_linears_opt {
+            if inner_linears.len() > 1 {
+                for (i, inner_lin) in inner_linears.into_iter().enumerate() {
+                    let var_idx = get_or_create_var_for_linear(inner_lin, cp_model);
+                    let suffix = format!("{}", i + 1);
+                    let elem_name = match &*reference.name() {
+                        Name::WithRepresentation(box_name, reprs) => {
+                            Name::Represented(Box::new((
+                                box_name.as_ref().clone(),
+                                reprs.first().cloned().unwrap_or_else(|| "matrix_to_atom".into()),
+                                suffix.into(),
+                            )))
+                        }
+                        Name::Represented(box_tuple) => {
+                            let (r_var, r_name, _) = box_tuple.as_ref();
+                            Name::Represented(Box::new((r_var.clone(), r_name.clone(), suffix.into())))
+                        }
+                        name => Name::Represented(Box::new((name.clone(), "matrix_to_atom".into(), suffix.into()))),
+                    };
+                    ctx.var_mapping.borrow_mut().insert(elem_name, var_idx);
+                }
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
+            } else if inner_linears.len() == 1 {
+                let var_idx = get_or_create_var_for_linear(inner_linears.into_iter().next().unwrap(), cp_model);
+                ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
+            }
+        } else if let Expression::ToInt(_, inner) = inner_expr {
+            let inner_linear = expr_to_linear(inner, ctx).or_else(|_| {
+                let lit = get_or_create_literal(inner, cp_model, ctx)?;
+                Ok(LinearExpr {
+                    vars: vec![lit],
+                    coeffs: vec![1],
+                    offset: 0,
+                })
+            })?;
+            let var_idx = get_or_create_var_for_linear(inner_linear, cp_model);
+            ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        } else if let Ok(inner_linear) = expr_to_linear(inner_expr, ctx) {
+            let var_idx = get_or_create_var_for_linear(inner_linear, cp_model);
+            ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        } else if let Expression::Eq(_, lhs, rhs) = inner_expr {
+            let elem_opt = match lhs.as_ref() {
+                Expression::ElementId(_, m, v) => Some((m.as_ref(), v.as_ref())),
+                Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => Some((m.as_ref(), &idxs[0])),
+                _ => None,
+            }.or_else(|| match rhs.as_ref() {
+                Expression::ElementId(_, m, v) => Some((m.as_ref(), v.as_ref())),
+                Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => Some((m.as_ref(), &idxs[0])),
+                _ => None,
+            });
+            if let Some((matrix, value)) = elem_opt {
+                let var_idx = get_or_create_literal(
+                    &Expression::Atomic(Metadata::default(), Atom::Reference(reference.clone())),
+                    cp_model,
+                    ctx,
+                )?;
+                ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
+                return translate_element_id_aux(var_idx, matrix, value, cp_model, ctx);
+            }
+        } else if let Expression::FlatProductEq(..) = inner_expr {
+            return translate_constraint(inner_expr, cp_model, ctx);
+        }
+
+        let ref_var = get_or_create_literal(
+            &Expression::Atomic(Metadata::default(), Atom::Reference(reference.clone())),
+            cp_model,
+            ctx,
+        )?;
+        return translate_reified_constraint(ref_var, inner_expr, cp_model, ctx);
+    } else {
+        let inner_linears = inner_linears_opt.or_else(|| {
+            let mut list = Vec::new();
+            for i in 0..ref_vars.len() {
+                let index_expr = Expression::ElementId(
+                    Metadata::default(),
+                    inner_expr.clone().into(),
+                    Expression::Atomic(Metadata::default(), Atom::Literal(Literal::Int((i + 1) as i32))).into(),
+                );
+                if let Ok(lin) = expr_to_linear(&index_expr, ctx) {
+                    list.push(lin);
+                } else if let Ok(lit) = get_or_create_literal(&index_expr, cp_model, ctx) {
+                    list.push(LinearExpr {
+                        vars: vec![lit],
+                        coeffs: vec![1],
+                        offset: 0,
+                    });
+                } else {
+                    return None;
+                }
+            }
+            Some(list)
+        });
+
+        if let Some(inner_linears) = inner_linears {
+            let count = ref_vars.len().min(inner_linears.len());
+            if count > 0 {
+                for (ref_v, inner_lin) in ref_vars.into_iter().take(count).zip(inner_linears.into_iter().take(count)) {
+                    let ref_linear = LinearExpr {
+                        vars: vec![ref_v],
+                        coeffs: vec![1],
+                        offset: 0,
+                    };
+                    let diff = subtract_linear_exprs(ref_linear, inner_lin);
+                    cp_model.constraints.push(exact_linear_constraint(diff, 0));
+                }
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
+            }
+        }
+    }
+
+    let ref_var = if ref_vars.len() == 1 {
+        ref_vars[0]
+    } else {
+        get_literal_strict(
+            &Expression::Atomic(Metadata::default(), Atom::Reference(reference.clone())),
+            ctx,
+        )?
+    };
+
+    if let Expression::ElementId(_, matrix, value) = inner_expr {
+        return translate_element_id_aux(ref_var, matrix.as_ref(), value.as_ref(), cp_model, ctx);
+    }
+    if let Expression::SafeIndex(_, matrix, indices) = inner_expr {
+        if indices.len() == 1 {
+            return translate_element_id_aux(ref_var, matrix.as_ref(), &indices[0], cp_model, ctx);
+        }
+    }
+    if let Expression::Eq(_, lhs, rhs) = inner_expr {
+        let lhs_elem = match lhs.as_ref() {
+            Expression::ElementId(_, m, v) => Some((m.as_ref(), v.as_ref())),
+            Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => Some((m.as_ref(), &idxs[0])),
+            _ => None,
+        };
+        if let Some((matrix, value)) = lhs_elem {
+            return translate_element_id_aux(ref_var, matrix, value, cp_model, ctx);
+        }
+        let rhs_elem = match rhs.as_ref() {
+            Expression::ElementId(_, m, v) => Some((m.as_ref(), v.as_ref())),
+            Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => Some((m.as_ref(), &idxs[0])),
+            _ => None,
+        };
+        if let Some((matrix, value)) = rhs_elem {
+            return translate_element_id_aux(ref_var, matrix, value, cp_model, ctx);
+        }
+    }
+    if let Expression::FlatProductEq(..) = inner_expr {
+        return translate_constraint(inner_expr, cp_model, ctx);
+    }
+    if let Expression::Table(_, tuple, allowed_rows) = inner_expr {
+        return translate_table_reified(ref_var, tuple.as_ref(), allowed_rows.as_ref(), cp_model, ctx);
+    }
     if let Ok(inner_linear) = expr_to_linear(inner_expr, ctx) {
         let ref_linear = LinearExpr {
             vars: vec![ref_var],
@@ -1827,7 +3555,9 @@ fn translate_pow_constraint(
         let var = a_expr.vars[0];
         get_domain_values(&cp_model.variables[var as usize].domain)
     } else {
-        return Err(SolverError::ModelFeatureNotSupported("Complex base expression in Pow not supported".into()));
+        return Err(SolverError::ModelFeatureNotSupported(
+            "Complex base expression in Pow not supported".into(),
+        ));
     };
 
     let b_vals = if b_expr.vars.is_empty() {
@@ -1836,16 +3566,23 @@ fn translate_pow_constraint(
         let var = b_expr.vars[0];
         get_domain_values(&cp_model.variables[var as usize].domain)
     } else {
-        return Err(SolverError::ModelFeatureNotSupported("Complex exponent expression in Pow not supported".into()));
+        return Err(SolverError::ModelFeatureNotSupported(
+            "Complex exponent expression in Pow not supported".into(),
+        ));
     };
 
     let target_domain = if target_expr.vars.is_empty() {
         vec![target_expr.offset, target_expr.offset]
-    } else if target_expr.vars.len() == 1 && target_expr.coeffs == vec![1] && target_expr.offset == 0 {
+    } else if target_expr.vars.len() == 1
+        && target_expr.coeffs == vec![1]
+        && target_expr.offset == 0
+    {
         let var = target_expr.vars[0];
         cp_model.variables[var as usize].domain.clone()
     } else {
-        return Err(SolverError::ModelFeatureNotSupported("Complex target expression in Pow not supported".into()));
+        return Err(SolverError::ModelFeatureNotSupported(
+            "Complex target expression in Pow not supported".into(),
+        ));
     };
 
     let mut vars = Vec::new();
@@ -1889,7 +3626,14 @@ fn translate_pow_constraint(
 
     if vars.is_empty() {
         let target_val = if matched_any { 0 } else { 1 };
-        return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, target_val));
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            target_val,
+        ));
     }
 
     use super::proto::TableConstraintProto;
@@ -1912,9 +3656,9 @@ fn translate_iff_constraint(
     cp_model: &mut CpModelProto,
     ctx: &TranslationContext,
 ) -> SolverResult<ConstraintProto> {
-    let (target_lit, expr) = if let Ok(lit) = get_literal(lhs, ctx) {
+    let (target_lit, expr) = if let Ok(lit) = get_or_create_literal(lhs, cp_model, ctx) {
         (lit, rhs)
-    } else if let Ok(lit) = get_literal(rhs, ctx) {
+    } else if let Ok(lit) = get_or_create_literal(rhs, cp_model, ctx) {
         (lit, lhs)
     } else {
         return Err(SolverError::ModelFeatureNotSupported(
@@ -1924,12 +3668,15 @@ fn translate_iff_constraint(
 
     match expr {
         Expression::And(_, inner) => {
-            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref() else {
-                return Err(SolverError::ModelFeatureNotSupported("Unsupported And in Iff".into()));
+            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref()
+            else {
+                return Err(SolverError::ModelFeatureNotSupported(
+                    "Unsupported And in Iff".into(),
+                ));
             };
             let mut literals = Vec::new();
             for elem in elems {
-                literals.push(get_literal(elem, ctx)?);
+                literals.push(get_or_create_literal(elem, cp_model, ctx)?);
             }
             for &lit in &literals {
                 cp_model.constraints.push(ConstraintProto {
@@ -1951,12 +3698,15 @@ fn translate_iff_constraint(
             })
         }
         Expression::Or(_, inner) => {
-            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref() else {
-                return Err(SolverError::ModelFeatureNotSupported("Unsupported Or in Iff".into()));
+            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref()
+            else {
+                return Err(SolverError::ModelFeatureNotSupported(
+                    "Unsupported Or in Iff".into(),
+                ));
             };
             let mut literals = Vec::new();
             for elem in elems {
-                literals.push(get_literal(elem, ctx)?);
+                literals.push(get_or_create_literal(elem, cp_model, ctx)?);
             }
             for &lit in &literals {
                 cp_model.constraints.push(ConstraintProto {
@@ -1978,7 +3728,7 @@ fn translate_iff_constraint(
             })
         }
         _ => {
-            let other_lit = get_literal(expr, ctx)?;
+            let other_lit = get_or_create_literal(expr, cp_model, ctx)?;
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![target_lit],
@@ -1997,8 +3747,189 @@ fn translate_iff_constraint(
     }
 }
 
+fn translate_cardinality_constraint(
+    vars: &Expression,
+    counts: &Expression,
+    values: &Expression,
+    c_type: &str, // "AtMost", "AtLeast", "Gcc", "GccWeak"
+    enforcement_lit: Option<i32>,
+    cp_model: &mut CpModelProto,
+    ctx: &TranslationContext,
+) -> SolverResult<()> {
+    let vars_lin = expr_to_linear_list(vars, ctx)
+        .ok_or_else(|| SolverError::ModelFeatureNotSupported(format!("{} variables", c_type)))?;
+    let counts_lin = expr_to_linear_list(counts, ctx)
+        .ok_or_else(|| SolverError::ModelFeatureNotSupported(format!("{} counts", c_type)))?;
+    let values_lin = expr_to_linear_list(values, ctx)
+        .ok_or_else(|| SolverError::ModelFeatureNotSupported(format!("{} values", c_type)))?;
+
+    if counts_lin.len() != values_lin.len() {
+        return Err(SolverError::ModelInvalid(format!(
+            "{}: counts and values length mismatch",
+            c_type
+        )));
+    }
+
+    for (count_lin, value_lin) in counts_lin.into_iter().zip(values_lin.into_iter()) {
+        let mut indicator_vars = Vec::new();
+        for var_lin in &vars_lin {
+            let diff = subtract_linear_exprs(var_lin.clone(), value_lin.clone());
+
+            // create indicator variable b <=> diff == 0
+            let b = cp_model.variables.len() as i32;
+            cp_model.variables.push(IntegerVariableProto {
+                name: format!("card_ind_{}", b),
+                domain: vec![0, 1],
+            });
+            let not_b = -b - 1;
+
+            // b => diff == 0
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![b],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff.vars.clone(),
+                        coeffs: diff.coeffs.clone(),
+                        domain: vec![-diff.offset, -diff.offset],
+                    },
+                )),
+            });
+
+            // !b => diff != 0
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![not_b],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff.vars,
+                        coeffs: diff.coeffs,
+                        domain: vec![i64::MIN, -1 - diff.offset, 1 - diff.offset, i64::MAX],
+                    },
+                )),
+            });
+
+            indicator_vars.push(b);
+        }
+
+        let mut sum_lin = LinearExpr {
+            vars: indicator_vars,
+            coeffs: vec![1; vars_lin.len()],
+            offset: 0,
+        };
+        sum_lin = subtract_linear_exprs(sum_lin, count_lin);
+
+        let exact_linear_with_enforcement =
+            |expr: LinearExpr, min: i64, max: i64, enf: i32| -> ConstraintProto {
+                ConstraintProto {
+                    name: String::new(),
+                    enforcement_literal: vec![enf],
+                    constraint: Some(constraint_proto::Constraint::Linear(
+                        LinearConstraintProto {
+                            vars: expr.vars,
+                            coeffs: expr.coeffs,
+                            domain: vec![
+                                if min == i64::MIN {
+                                    i64::MIN
+                                } else {
+                                    min - expr.offset
+                                },
+                                if max == i64::MAX {
+                                    i64::MAX
+                                } else {
+                                    max - expr.offset
+                                },
+                            ],
+                        },
+                    )),
+                }
+            };
+
+        if let Some(e_lit) = enforcement_lit {
+            let not_e_lit = -e_lit - 1;
+            match c_type {
+                "AtMost" => {
+                    cp_model.constraints.push(exact_linear_with_enforcement(
+                        sum_lin.clone(),
+                        i64::MIN,
+                        0,
+                        e_lit,
+                    ));
+                    cp_model.constraints.push(exact_linear_with_enforcement(
+                        sum_lin,
+                        1,
+                        i64::MAX,
+                        not_e_lit,
+                    ));
+                }
+                "AtLeast" => {
+                    cp_model.constraints.push(exact_linear_with_enforcement(
+                        sum_lin.clone(),
+                        0,
+                        i64::MAX,
+                        e_lit,
+                    ));
+                    cp_model.constraints.push(exact_linear_with_enforcement(
+                        sum_lin,
+                        i64::MIN,
+                        -1,
+                        not_e_lit,
+                    ));
+                }
+                "Gcc" | "GccWeak" => {
+                    cp_model.constraints.push(exact_linear_with_enforcement(
+                        sum_lin.clone(),
+                        0,
+                        0,
+                        e_lit,
+                    ));
+                    cp_model.constraints.push(exact_linear_with_enforcement(
+                        sum_lin.clone(),
+                        i64::MIN,
+                        -1,
+                        not_e_lit,
+                    ));
+                    cp_model.constraints.push(exact_linear_with_enforcement(
+                        sum_lin,
+                        1,
+                        i64::MAX,
+                        not_e_lit,
+                    ));
+                }
+                _ => unreachable!(),
+            }
+        } else {
+            let mut cons = exact_linear_constraint(sum_lin.clone(), 0); // Placeholder
+            match c_type {
+                "AtMost" => {
+                    if let Some(constraint_proto::Constraint::Linear(lin)) = &mut cons.constraint {
+                        lin.domain = vec![i64::MIN, -sum_lin.offset];
+                    }
+                }
+                "AtLeast" => {
+                    if let Some(constraint_proto::Constraint::Linear(lin)) = &mut cons.constraint {
+                        lin.domain = vec![-sum_lin.offset, i64::MAX];
+                    }
+                }
+                "Gcc" | "GccWeak" => {
+                    if let Some(constraint_proto::Constraint::Linear(lin)) = &mut cons.constraint {
+                        lin.domain = vec![-sum_lin.offset, -sum_lin.offset];
+                    }
+                }
+                _ => unreachable!(),
+            }
+            cp_model.constraints.push(cons);
+        }
+    }
+    Ok(())
+}
+
 /// Main dispatcher: takes a Conjure constraint, extracts LHS and RHS, linearizes them, and builds a Protobuf constraint.
-fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &TranslationContext) -> SolverResult<ConstraintProto> {
+fn translate_constraint(
+    expr: &Expression,
+    cp_model: &mut CpModelProto,
+    ctx: &TranslationContext,
+) -> SolverResult<ConstraintProto> {
     match expr {
         // Top-level boolean constraints must evaluate to true.
         Expression::Atomic(_, Atom::Literal(Literal::Bool(_)))
@@ -2012,32 +3943,159 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             return translate_aux_declaration(reference, inner_expr.as_ref(), cp_model, ctx);
         }
         Expression::Imply(_, lhs, rhs) => {
-            let enforcement_lit = get_literal(lhs.as_ref(), ctx)?;
+            let enforcement_lit = get_or_create_literal(lhs.as_ref(), cp_model, ctx)?;
             let mut constraint = translate_constraint(rhs.as_ref(), cp_model, ctx)?;
             constraint.enforcement_literal.push(enforcement_lit);
             return Ok(constraint);
         }
+        Expression::AtMost(_, vars, counts, values) => {
+            translate_cardinality_constraint(
+                vars.as_ref(),
+                counts.as_ref(),
+                values.as_ref(),
+                "AtMost",
+                None,
+                cp_model,
+                ctx,
+            )?;
+            return Ok(ConstraintProto {
+                constraint: Some(constraint_proto::Constraint::BoolAnd(BoolArgumentProto {
+                    literals: vec![],
+                })),
+                name: String::new(),
+                enforcement_literal: vec![],
+            });
+        }
+        Expression::AtLeast(_, vars, counts, values) => {
+            translate_cardinality_constraint(
+                vars.as_ref(),
+                counts.as_ref(),
+                values.as_ref(),
+                "AtLeast",
+                None,
+                cp_model,
+                ctx,
+            )?;
+            return Ok(ConstraintProto {
+                constraint: Some(constraint_proto::Constraint::BoolAnd(BoolArgumentProto {
+                    literals: vec![],
+                })),
+                name: String::new(),
+                enforcement_literal: vec![],
+            });
+        }
+        Expression::Gcc(_, vars, values, counts) => {
+            translate_cardinality_constraint(
+                vars.as_ref(),
+                counts.as_ref(),
+                values.as_ref(),
+                "Gcc",
+                None,
+                cp_model,
+                ctx,
+            )?;
+            return Ok(ConstraintProto {
+                constraint: Some(constraint_proto::Constraint::BoolAnd(BoolArgumentProto {
+                    literals: vec![],
+                })),
+                name: String::new(),
+                enforcement_literal: vec![],
+            });
+        }
+        Expression::GccWeak(_, vars, values, counts) => {
+            translate_cardinality_constraint(
+                vars.as_ref(),
+                counts.as_ref(),
+                values.as_ref(),
+                "GccWeak",
+                None,
+                cp_model,
+                ctx,
+            )?;
+            return Ok(ConstraintProto {
+                constraint: Some(constraint_proto::Constraint::BoolAnd(BoolArgumentProto {
+                    literals: vec![],
+                })),
+                name: String::new(),
+                enforcement_literal: vec![],
+            });
+        }
         _ => {}
     }
 
+
+
     // 1. Matrix Equality/Inequality, Neq, and In constraints
     match expr {
+        Expression::Lt(_, lhs, rhs) | Expression::LexLt(_, lhs, rhs) => {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
+                if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
+                    return translate_lex_comparison("<", elems_l, elems_r, cp_model, ctx);
+                }
+            }
+        }
+        Expression::Leq(_, lhs, rhs) | Expression::LexLeq(_, lhs, rhs) => {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
+                if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
+                    return translate_lex_comparison("<=", elems_l, elems_r, cp_model, ctx);
+                }
+            }
+        }
+        Expression::Gt(_, lhs, rhs) | Expression::LexGt(_, lhs, rhs) => {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
+                if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
+                    return translate_lex_comparison(">", elems_l, elems_r, cp_model, ctx);
+                }
+            }
+        }
+        Expression::Geq(_, lhs, rhs) | Expression::LexGeq(_, lhs, rhs) => {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
+                if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
+                    return translate_lex_comparison(">=", elems_l, elems_r, cp_model, ctx);
+                }
+            }
+        }
         Expression::Eq(meta, lhs, rhs) => {
-            if let (Some(elems_l), Some(elems_r)) = (expr_to_linear_list(lhs.as_ref(), ctx), expr_to_linear_list(rhs.as_ref(), ctx)) {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
                 if elems_l.len() != elems_r.len() {
-                    return Err(SolverError::ModelInvalid("Matrix equality with different lengths".into()));
+                    return translate_lex_comparison("=", elems_l, elems_r, cp_model, ctx);
                 }
                 for (el, er) in elems_l.into_iter().zip(elems_r) {
                     let diff = subtract_linear_exprs(el, er);
                     cp_model.constraints.push(exact_linear_constraint(diff, 0));
                 }
-                return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
             }
         }
         Expression::Neq(meta, lhs, rhs) => {
-            if let (Some(elems_l), Some(elems_r)) = (expr_to_linear_list(lhs.as_ref(), ctx), expr_to_linear_list(rhs.as_ref(), ctx)) {
+            if let (Some(elems_l), Some(elems_r)) = (
+                expr_to_linear_list(lhs.as_ref(), ctx),
+                expr_to_linear_list(rhs.as_ref(), ctx),
+            ) {
                 if elems_l.len() != elems_r.len() {
-                    return Err(SolverError::ModelInvalid("Matrix inequality with different lengths".into()));
+                    return translate_lex_comparison("!=", elems_l, elems_r, cp_model, ctx);
                 }
                 let mut aux_vars = Vec::new();
                 for (el, er) in elems_l.into_iter().zip(elems_r) {
@@ -2047,30 +4105,34 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
                         name: format!("aux_matrix_neq_{}", aux_idx),
                         domain: vec![0, 1],
                     });
-                    
+
                     let domain_true = vec![i64::MIN, -1, 1, i64::MAX];
                     let domain_false = vec![0, 0];
-                    
+
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
                         enforcement_literal: vec![aux_idx],
-                        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                            vars: diff.vars.clone(),
-                            coeffs: diff.coeffs.clone(),
-                            domain: domain_true,
-                        })),
+                        constraint: Some(constraint_proto::Constraint::Linear(
+                            LinearConstraintProto {
+                                vars: diff.vars.clone(),
+                                coeffs: diff.coeffs.clone(),
+                                domain: domain_true,
+                            },
+                        )),
                     });
 
                     cp_model.constraints.push(ConstraintProto {
                         name: String::new(),
                         enforcement_literal: vec![-aux_idx - 1],
-                        constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                            vars: diff.vars,
-                            coeffs: diff.coeffs,
-                            domain: domain_false,
-                        })),
+                        constraint: Some(constraint_proto::Constraint::Linear(
+                            LinearConstraintProto {
+                                vars: diff.vars,
+                                coeffs: diff.coeffs,
+                                domain: domain_false,
+                            },
+                        )),
                     });
-                    
+
                     aux_vars.push(aux_idx);
                 }
                 return Ok(ConstraintProto {
@@ -2081,7 +4143,7 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
                     })),
                 });
             }
-            
+
             // Otherwise, fallback to AllDiff for scalar Neq:
             use super::proto::AllDifferentConstraintProto;
             let lhs_linear = expr_to_linear(lhs.as_ref(), ctx)?;
@@ -2089,20 +4151,22 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             return Ok(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::AllDiff(AllDifferentConstraintProto {
-                    exprs: vec![
-                        super::proto::LinearExpressionProto {
-                            vars: lhs_linear.vars,
-                            coeffs: lhs_linear.coeffs,
-                            offset: lhs_linear.offset,
-                        },
-                        super::proto::LinearExpressionProto {
-                            vars: rhs_linear.vars,
-                            coeffs: rhs_linear.coeffs,
-                            offset: rhs_linear.offset,
-                        },
-                    ],
-                })),
+                constraint: Some(constraint_proto::Constraint::AllDiff(
+                    AllDifferentConstraintProto {
+                        exprs: vec![
+                            super::proto::LinearExpressionProto {
+                                vars: lhs_linear.vars,
+                                coeffs: lhs_linear.coeffs,
+                                offset: lhs_linear.offset,
+                            },
+                            super::proto::LinearExpressionProto {
+                                vars: rhs_linear.vars,
+                                coeffs: rhs_linear.coeffs,
+                                offset: rhs_linear.offset,
+                            },
+                        ],
+                    },
+                )),
             });
         }
         Expression::In(_, lhs, rhs) => {
@@ -2111,27 +4175,32 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
                 SolverError::ModelFeatureNotSupported(format!("Unsupported In set: {:?}", rhs))
             })?;
             let domain = values_to_flat_domain(&vals);
-            let shifted_domain = domain.into_iter().map(|v| v - lhs_linear.offset).collect::<Vec<_>>();
-            
+            let shifted_domain = domain
+                .into_iter()
+                .map(|v| v - lhs_linear.offset)
+                .collect::<Vec<_>>();
+
             return Ok(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: lhs_linear.vars,
-                    coeffs: lhs_linear.coeffs,
-                    domain: shifted_domain,
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: lhs_linear.vars,
+                        coeffs: lhs_linear.coeffs,
+                        domain: shifted_domain,
+                    },
+                )),
             });
         }
         _ => {}
     }
 
     if let Expression::Eq(_, lhs, rhs) = expr {
-        if let Ok(ref_var) = get_literal(lhs.as_ref(), ctx) {
+        if let Ok(ref_var) = get_literal_strict(lhs.as_ref(), ctx) {
             if matches!(rhs.as_ref(), Expression::FlatAllDiff(_, _)) {
                 return translate_reified_constraint(ref_var, rhs.as_ref(), cp_model, ctx);
             }
-        } else if let Ok(ref_var) = get_literal(rhs.as_ref(), ctx) {
+        } else if let Ok(ref_var) = get_literal_strict(rhs.as_ref(), ctx) {
             if matches!(lhs.as_ref(), Expression::FlatAllDiff(_, _)) {
                 return translate_reified_constraint(ref_var, lhs.as_ref(), cp_model, ctx);
             }
@@ -2146,55 +4215,135 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
         return Ok(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: linear_expr.vars,
-                coeffs: linear_expr.coeffs,
-                domain,
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: linear_expr.vars,
+                    coeffs: linear_expr.coeffs,
+                    domain,
+                },
+            )),
         });
     }
 
     match expr {
         Expression::FlatAbsEq(_, a, b) => {
-            // a = |b| 
-            // In CP-SAT, LinMax(target=a, exprs=[b, -b])
-            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
-            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
-            
-            let mut minus_b_expr = b_expr.clone();
-            for c in &mut minus_b_expr.coeffs { *c = -*c; }
-            minus_b_expr.offset = -minus_b_expr.offset;
+            // a = |b|
+            let a_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), a.as_ref().clone()),
+                ctx,
+            )?;
+            let b_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), b.as_ref().clone()),
+                ctx,
+            )?;
 
-            use super::proto::{LinearExpressionProto, LinearArgumentProto};
-            return Ok(ConstraintProto {
+            // 1. a >= b  (a - b >= 0)
+            let diff_ab = subtract_linear_exprs(a_expr.clone(), b_expr.clone());
+            cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::LinMax(LinearArgumentProto {
-                    target: Some(LinearExpressionProto {
-                        vars: a_expr.vars,
-                        coeffs: a_expr.coeffs,
-                        offset: a_expr.offset,
-                    }),
-                    exprs: vec![
-                        LinearExpressionProto {
-                            vars: b_expr.vars,
-                            coeffs: b_expr.coeffs,
-                            offset: b_expr.offset,
-                        },
-                        LinearExpressionProto {
-                            vars: minus_b_expr.vars,
-                            coeffs: minus_b_expr.coeffs,
-                            offset: minus_b_expr.offset,
-                        },
-                    ]
-                }))
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_ab.vars.clone(),
+                        coeffs: diff_ab.coeffs.clone(),
+                        domain: vec![-diff_ab.offset, i64::MAX],
+                    },
+                )),
             });
-        },
+
+            // 2. a >= -b  (a + b >= 0)
+            let mut minus_b = b_expr.clone();
+            for c in &mut minus_b.coeffs {
+                *c = -*c;
+            }
+            minus_b.offset = -minus_b.offset;
+            let diff_a_minus_b = subtract_linear_exprs(a_expr.clone(), minus_b);
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_a_minus_b.vars.clone(),
+                        coeffs: diff_a_minus_b.coeffs.clone(),
+                        domain: vec![-diff_a_minus_b.offset, i64::MAX],
+                    },
+                )),
+            });
+
+            // 3. Create boolean indicator variable for b >= 0
+            let is_pos_var = cp_model.variables.len() as i32;
+            cp_model.variables.push(IntegerVariableProto {
+                name: format!("__abs_pos_{is_pos_var}"),
+                domain: vec![0, 1],
+            });
+
+            // is_pos => b >= 0
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![is_pos_var],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: b_expr.vars.clone(),
+                        coeffs: b_expr.coeffs.clone(),
+                        domain: vec![-b_expr.offset, i64::MAX],
+                    },
+                )),
+            });
+
+            // !is_pos => b <= 0
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-is_pos_var - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: b_expr.vars.clone(),
+                        coeffs: b_expr.coeffs.clone(),
+                        domain: vec![i64::MIN, -b_expr.offset],
+                    },
+                )),
+            });
+
+            // is_pos => a <= b  (a - b <= 0)
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![is_pos_var],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_ab.vars.clone(),
+                        coeffs: diff_ab.coeffs.clone(),
+                        domain: vec![i64::MIN, -diff_ab.offset],
+                    },
+                )),
+            });
+
+            // !is_pos => a <= -b  (a + b <= 0)
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-is_pos_var - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff_a_minus_b.vars.clone(),
+                        coeffs: diff_a_minus_b.coeffs.clone(),
+                        domain: vec![i64::MIN, -diff_a_minus_b.offset],
+                    },
+                )),
+            });
+
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        }
         Expression::FlatAllDiff(_, vars) => {
             use super::proto::AllDifferentConstraintProto;
             let mut exprs = Vec::new();
             for var in vars {
-                let var_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                let var_expr =
+                    expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
                 exprs.push(super::proto::LinearExpressionProto {
                     vars: var_expr.vars,
                     coeffs: var_expr.coeffs,
@@ -2204,11 +4353,11 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             return Ok(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::AllDiff(AllDifferentConstraintProto {
-                    exprs,
-                })),
+                constraint: Some(constraint_proto::Constraint::AllDiff(
+                    AllDifferentConstraintProto { exprs },
+                )),
             });
-        },
+        }
         Expression::Table(_, tuple, allowed_rows) => {
             return translate_table_constraint(false, tuple.as_ref(), allowed_rows.as_ref(), ctx);
         }
@@ -2216,114 +4365,66 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             return translate_table_constraint(true, tuple.as_ref(), forbidden_rows.as_ref(), ctx);
         }
         Expression::MinionPow(_, a, b, target) => {
-            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
-            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
-            let target_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
-
-            let a_vals = if a_expr.vars.is_empty() {
-                vec![a_expr.offset]
-            } else if a_expr.vars.len() == 1 && a_expr.coeffs == vec![1] && a_expr.offset == 0 {
-                let var = a_expr.vars[0];
-                get_domain_values(&cp_model.variables[var as usize].domain)
-            } else {
-                return Err(SolverError::ModelFeatureNotSupported("Complex base expression in Pow not supported".into()));
-            };
-
-            let b_vals = if b_expr.vars.is_empty() {
-                vec![b_expr.offset]
-            } else if b_expr.vars.len() == 1 && b_expr.coeffs == vec![1] && b_expr.offset == 0 {
-                let var = b_expr.vars[0];
-                get_domain_values(&cp_model.variables[var as usize].domain)
-            } else {
-                return Err(SolverError::ModelFeatureNotSupported("Complex exponent expression in Pow not supported".into()));
-            };
-
-            let target_domain = if target_expr.vars.is_empty() {
-                vec![target_expr.offset, target_expr.offset]
-            } else if target_expr.vars.len() == 1 && target_expr.coeffs == vec![1] && target_expr.offset == 0 {
-                let var = target_expr.vars[0];
-                cp_model.variables[var as usize].domain.clone()
-            } else {
-                return Err(SolverError::ModelFeatureNotSupported("Complex target expression in Pow not supported".into()));
-            };
-
-            // Identify active (non-constant) columns
-            let mut vars = Vec::new();
-            let mut active_cols = Vec::new(); // 0 for a, 1 for b, 2 for target
-
-            if !a_expr.vars.is_empty() {
-                active_cols.push(0);
-                vars.push(a_expr.vars[0]);
-            }
-            if !b_expr.vars.is_empty() {
-                active_cols.push(1);
-                vars.push(b_expr.vars[0]);
-            }
-            if !target_expr.vars.is_empty() {
-                active_cols.push(2);
-                vars.push(target_expr.vars[0]);
-            }
-
-            let mut values = Vec::new();
-            let mut matched_any = false;
-            for &val_a in &a_vals {
-                for &val_b in &b_vals {
-                    if val_b < 0 {
-                        continue; // Pow is undefined for negative exponents in CP
-                    }
-                    if let Some(val_target) = checked_pow(val_a, val_b) {
-                        if domain_contains(&target_domain, val_target) {
-                            matched_any = true;
-                            // Only push values for active variables
-                            for &col in &active_cols {
-                                match col {
-                                    0 => values.push(val_a),
-                                    1 => values.push(val_b),
-                                    2 => values.push(val_target),
-                                    _ => unreachable!(),
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if vars.is_empty() {
-                let target_val = if matched_any { 0 } else { 1 };
-                return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, target_val));
-            }
-
-            let table_constraint = super::proto::TableConstraintProto {
-                vars,
-                values,
-                exprs: vec![],
-                negated: false,
-            };
-            return Ok(ConstraintProto {
-                name: String::new(),
-                enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::Table(table_constraint)),
-            });
+            let a_expr = Expression::Atomic(Metadata::default(), a.as_ref().clone());
+            let b_expr = Expression::Atomic(Metadata::default(), b.as_ref().clone());
+            let target_expr = Expression::Atomic(Metadata::default(), target.as_ref().clone());
+            return translate_minion_pow_constraint(
+                &a_expr,
+                &b_expr,
+                &target_expr,
+                false,
+                cp_model,
+                ctx,
+            );
         }
         Expression::MinionDivEqUndefZero(_, a, b, target) => {
-            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
-            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
-            let target_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
-            let constraint = translate_div_mod_undef_zero(true, &a_expr, &b_expr, &target_expr, cp_model)?;
+            let a_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), a.as_ref().clone()),
+                ctx,
+            )?;
+            let b_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), b.as_ref().clone()),
+                ctx,
+            )?;
+            let target_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), target.as_ref().clone()),
+                ctx,
+            )?;
+            let constraint =
+                translate_div_mod_undef_zero(true, &a_expr, &b_expr, &target_expr, cp_model)?;
             return Ok(constraint);
         }
         Expression::MinionModuloEqUndefZero(_, a, b, target) => {
-            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
-            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
-            let target_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
-            let constraint = translate_div_mod_undef_zero(false, &a_expr, &b_expr, &target_expr, cp_model)?;
+            let a_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), a.as_ref().clone()),
+                ctx,
+            )?;
+            let b_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), b.as_ref().clone()),
+                ctx,
+            )?;
+            let target_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), target.as_ref().clone()),
+                ctx,
+            )?;
+            let constraint =
+                translate_div_mod_undef_zero(false, &a_expr, &b_expr, &target_expr, cp_model)?;
             return Ok(constraint);
         }
         Expression::FlatProductEq(_, a, b, target) => {
             use super::proto::{LinearArgumentProto, LinearExpressionProto};
-            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
-            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
-            let target_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
+            let a_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), a.as_ref().clone()),
+                ctx,
+            )?;
+            let b_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), b.as_ref().clone()),
+                ctx,
+            )?;
+            let target_expr = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), target.as_ref().clone()),
+                ctx,
+            )?;
             return Ok(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
@@ -2347,9 +4448,10 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
                     ],
                 })),
             });
-        },
+        }
         Expression::Or(_, inner) => {
-            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref() else {
+            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref()
+            else {
                 return Err(SolverError::ModelFeatureNotSupported(format!(
                     "Unsupported Or argument in constraint: {:?}",
                     inner
@@ -2357,7 +4459,7 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             };
             let mut literals = Vec::new();
             for elem in elems {
-                literals.push(get_literal(elem, ctx)?);
+                literals.push(get_or_create_literal(elem, cp_model, ctx)?);
             }
             return Ok(ConstraintProto {
                 name: String::new(),
@@ -2366,9 +4468,10 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
                     literals,
                 })),
             });
-        },
+        }
         Expression::And(_, inner) => {
-            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref() else {
+            let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) = inner.as_ref()
+            else {
                 return Err(SolverError::ModelFeatureNotSupported(format!(
                     "Unsupported And argument in constraint: {:?}",
                     inner
@@ -2376,7 +4479,7 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             };
             let mut literals = Vec::new();
             for elem in elems {
-                literals.push(get_literal(elem, ctx)?);
+                literals.push(get_or_create_literal(elem, cp_model, ctx)?);
             }
             return Ok(ConstraintProto {
                 name: String::new(),
@@ -2385,11 +4488,17 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
                     literals,
                 })),
             });
-        },
+        }
         Expression::MinionElementOne(_, array, index, target) => {
             use super::proto::ElementConstraintProto;
-            let index_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), index.as_ref().clone()), ctx)?;
-            let target_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
+            let index_linear = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), index.as_ref().clone()),
+                ctx,
+            )?;
+            let target_linear = expr_to_linear(
+                &Expression::Atomic(Metadata::default(), target.as_ref().clone()),
+                ctx,
+            )?;
 
             let index_1_var = get_or_create_var_for_linear(index_linear, cp_model);
             let target_var = get_or_create_var_for_linear(target_linear, cp_model);
@@ -2410,24 +4519,28 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             cp_model.constraints.push(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![index_1_var, index_0_var],
-                    coeffs: vec![1, -1],
-                    domain: vec![1, 1],
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![index_1_var, index_0_var],
+                        coeffs: vec![1, -1],
+                        domain: vec![1, 1],
+                    },
+                )),
             });
 
             return Ok(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::Element(ElementConstraintProto {
-                    index: index_0_var,
-                    target: target_var,
-                    vars: element_vars,
-                    linear_index: None,
-                    linear_target: None,
-                    exprs: vec![],
-                })),
+                constraint: Some(constraint_proto::Constraint::Element(
+                    ElementConstraintProto {
+                        index: index_0_var,
+                        target: target_var,
+                        vars: element_vars,
+                        linear_index: None,
+                        linear_target: None,
+                        exprs: vec![],
+                    },
+                )),
             });
         }
         Expression::InDomain(_, var_expr, domain) => {
@@ -2441,11 +4554,13 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
             return Ok(ConstraintProto {
                 name: String::new(),
                 enforcement_literal: vec![],
-                constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                    vars: vec![var_idx],
-                    coeffs: vec![1],
-                    domain: domain_intervals,
-                })),
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![var_idx],
+                        coeffs: vec![1],
+                        domain: domain_intervals,
+                    },
+                )),
             });
         }
         Expression::Iff(_, lhs, rhs) => {
@@ -2453,40 +4568,48 @@ fn translate_constraint(expr: &Expression, cp_model: &mut CpModelProto, ctx: &Tr
         }
         Expression::Atomic(_, Atom::Literal(Literal::Bool(val))) => {
             if *val {
-                return Ok(exact_linear_constraint(LinearExpr { vars: vec![], coeffs: vec![], offset: 0 }, 0));
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
             } else {
                 return Ok(ConstraintProto {
                     name: String::new(),
                     enforcement_literal: vec![],
-                    constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                        vars: vec![],
-                        coeffs: vec![],
-                        domain: vec![1, 0], // Unsatisfiable domain
-                    })),
+                    constraint: Some(constraint_proto::Constraint::Linear(
+                        LinearConstraintProto {
+                            vars: vec![],
+                            coeffs: vec![],
+                            domain: vec![1, 0], // Unsatisfiable domain
+                        },
+                    )),
                 });
             }
         }
         _ => {
             return Err(SolverError::ModelFeatureNotSupported(format!(
                 "Unsupported top-level constraint: {expr:?}"
-            )))
+            )));
         }
     }
 }
 
-
 #[derive(Clone)]
 pub(super) struct SolutionVar {
     pub name: Name,
+    pub var_index: usize,
     pub is_bool: bool,
 }
 
 /// Entry point for translation: iterates over all variables and constraints to build the final CpModelProto.
 pub(super) fn model_to_cp_sat(model: Model) -> SolverResult<(CpModelProto, Vec<SolutionVar>)> {
     let mut cp_model = CpModelProto::default();
-    let mut solution_vars = Vec::new();
-    let mut ctx = TranslationContext {
-        var_mapping: HashMap::new(),
+    let ctx = TranslationContext {
+        var_mapping: RefCell::new(HashMap::new()),
     };
 
     for (name, decl) in model.symbols().iter_local() {
@@ -2505,19 +4628,36 @@ pub(super) fn model_to_cp_sat(model: Model) -> SolverResult<(CpModelProto, Vec<S
             let domain = resolved_domain.as_deref().map_err(|_| {
                 SolverError::ModelInvalid(format!("Variable {} without resolvable domain", name))
             })?;
-            
-            var_proto.domain = extract_domain_intervals(domain)?;
 
-            let is_bool = matches!(domain, GroundDomain::Bool);
-            solution_vars.push(SolutionVar {
-                name: name.clone(),
-                is_bool,
-            });
+            var_proto.domain = extract_domain_intervals(domain)?;
 
             let var_index = cp_model.variables.len() as i32;
             cp_model.variables.push(var_proto);
-            
-            ctx.var_mapping.insert(name.clone(), var_index);
+
+            ctx.var_mapping.borrow_mut().insert(name.clone(), var_index);
+        }
+    }
+
+    let mut decision_var_indices = Vec::new();
+    if let Some(ref search_order) = model.search_order {
+        for name in search_order {
+            if let Some(&var_index) = ctx.var_mapping.borrow().get(name) {
+                decision_var_indices.push(var_index);
+            } else {
+                let elem_vars = get_matrix_element_vars(name, &ctx);
+                decision_var_indices.extend(elem_vars);
+            }
+        }
+    } else {
+        for (name, _) in model.symbols().iter_local() {
+            if !matches!(name, Name::Machine(_)) {
+                if let Some(&var_index) = ctx.var_mapping.borrow().get(name) {
+                    decision_var_indices.push(var_index);
+                } else {
+                    let elem_vars = get_matrix_element_vars(name, &ctx);
+                    decision_var_indices.extend(elem_vars);
+                }
+            }
         }
     }
 
@@ -2526,32 +4666,187 @@ pub(super) fn model_to_cp_sat(model: Model) -> SolverResult<(CpModelProto, Vec<S
         cp_model.constraints.push(constraint_proto);
     }
 
+    if let Some(objective) = &model.objective {
+        let linear = expr_to_linear(&objective.expression, &ctx)?;
+        let mut cp_objective = CpObjectiveProto::default();
+        cp_objective.vars = linear.vars;
+
+        match objective.direction {
+            OptimiseDirection::Minimising => {
+                cp_objective.coeffs = linear.coeffs;
+                cp_objective.offset = linear.offset as f64;
+                cp_objective.scaling_factor = 1.0;
+            }
+            OptimiseDirection::Maximising => {
+                cp_objective.coeffs = linear.coeffs.into_iter().map(|coeff| -coeff).collect();
+                cp_objective.offset = -(linear.offset as f64);
+                cp_objective.scaling_factor = -1.0;
+            }
+        }
+
+        cp_model.objective = Some(cp_objective);
+    }
+
+    if !decision_var_indices.is_empty() {
+        cp_model.search_strategy.push(DecisionStrategyProto {
+            variables: decision_var_indices,
+            exprs: vec![],
+            variable_selection_strategy: super::proto::decision_strategy_proto::VariableSelectionStrategy::ChooseFirst as i32,
+            domain_reduction_strategy: super::proto::decision_strategy_proto::DomainReductionStrategy::SelectMinValue as i32,
+        });
+    }
+
+    let mut solution_vars = Vec::new();
+    let var_map = ctx.var_mapping.borrow();
+    for (name, &var_index) in var_map.iter() {
+        let is_bool = if (var_index as usize) < cp_model.variables.len() {
+            let domain = &cp_model.variables[var_index as usize].domain;
+            domain == &[0, 1]
+        } else {
+            false
+        };
+        solution_vars.push(SolutionVar {
+            name: name.clone(),
+            var_index: var_index as usize,
+            is_bool,
+        });
+    }
+
     Ok((cp_model, solution_vars))
 }
 
-/// Reverse mapping: takes the raw integer array from C++ and maps the values back to the original Conjure variable names.
 pub(super) fn response_to_solution(
     response: &CpSolverResponse,
     solution_vars: &[SolutionVar],
-) -> Result<std::collections::HashMap<Name, Literal>, SolverError> {
-    if response.solution.len() < solution_vars.len() {
-        return Err(SolverError::Runtime(format!(
-            "OR-Tools returned {} values for {} decision variables",
-            response.solution.len(),
-            solution_vars.len()
-        )));
+) -> SolverResult<HashMap<Name, Literal>> {
+    let mut solution = HashMap::with_capacity(solution_vars.len());
+    for var in solution_vars {
+        if var.var_index < response.solution.len() {
+            let value = response.solution[var.var_index];
+            let literal = if var.is_bool {
+                Literal::Bool(value != 0)
+            } else {
+                Literal::Int(value as i32)
+            };
+            solution.insert(var.name.clone(), literal);
+        }
     }
-
-    let mut solution = std::collections::HashMap::with_capacity(solution_vars.len());
-    for (var, value) in solution_vars.iter().zip(response.solution.iter()) {
-        let literal = if var.is_bool {
-            Literal::Bool(*value != 0)
-        } else {
-            Literal::Int(*value as i32)
-        };
-        solution.insert(var.name.clone(), literal);
-    }
-
     Ok(solution)
 }
 
+fn translate_minion_pow_constraint(
+    a: &Expression,
+    b: &Expression,
+    target: &Expression,
+    negated: bool,
+    cp_model: &CpModelProto,
+    ctx: &TranslationContext,
+) -> SolverResult<ConstraintProto> {
+    let a_expr = expr_to_linear(a, ctx)?;
+    let b_expr = expr_to_linear(b, ctx)?;
+    let target_expr = expr_to_linear(target, ctx)?;
+
+    let a_vals = if a_expr.vars.is_empty() {
+        vec![a_expr.offset]
+    } else if a_expr.vars.len() == 1 && a_expr.coeffs == vec![1] && a_expr.offset == 0 {
+        let var = a_expr.vars[0];
+        get_domain_values(&cp_model.variables[var as usize].domain)
+    } else {
+        return Err(SolverError::ModelFeatureNotSupported(
+            "Complex base expression in Pow not supported".into(),
+        ));
+    };
+
+    let b_vals = if b_expr.vars.is_empty() {
+        vec![b_expr.offset]
+    } else if b_expr.vars.len() == 1 && b_expr.coeffs == vec![1] && b_expr.offset == 0 {
+        let var = b_expr.vars[0];
+        get_domain_values(&cp_model.variables[var as usize].domain)
+    } else {
+        return Err(SolverError::ModelFeatureNotSupported(
+            "Complex exponent expression in Pow not supported".into(),
+        ));
+    };
+
+    let target_domain = if target_expr.vars.is_empty() {
+        vec![target_expr.offset, target_expr.offset]
+    } else if target_expr.vars.len() == 1
+        && target_expr.coeffs == vec![1]
+        && target_expr.offset == 0
+    {
+        let var = target_expr.vars[0];
+        cp_model.variables[var as usize].domain.clone()
+    } else {
+        return Err(SolverError::ModelFeatureNotSupported(
+            "Complex target expression in Pow not supported".into(),
+        ));
+    };
+
+    // Identify active (non-constant) columns
+    let mut vars = Vec::new();
+    let mut active_cols = Vec::new(); // 0 for a, 1 for b, 2 for target
+
+    if !a_expr.vars.is_empty() {
+        active_cols.push(0);
+        vars.push(a_expr.vars[0]);
+    }
+    if !b_expr.vars.is_empty() {
+        active_cols.push(1);
+        vars.push(b_expr.vars[0]);
+    }
+    if !target_expr.vars.is_empty() {
+        active_cols.push(2);
+        vars.push(target_expr.vars[0]);
+    }
+
+    let mut values = Vec::new();
+    let mut matched_any = false;
+    for &val_a in &a_vals {
+        for &val_b in &b_vals {
+            if val_b < 0 {
+                continue; // Pow is undefined for negative exponents in CP
+            }
+            if let Some(val_target) = checked_pow(val_a, val_b) {
+                if domain_contains(&target_domain, val_target) {
+                    matched_any = true;
+                    // Only push values for active variables
+                    for &col in &active_cols {
+                        match col {
+                            0 => values.push(val_a),
+                            1 => values.push(val_b),
+                            2 => values.push(val_target),
+                            _ => unreachable!(),
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if vars.is_empty() {
+        let mut target_val = if matched_any { 0 } else { 1 };
+        if negated {
+            target_val = 1 - target_val;
+        }
+        return Ok(exact_linear_constraint(
+            LinearExpr {
+                vars: vec![],
+                coeffs: vec![],
+                offset: 0,
+            },
+            target_val,
+        ));
+    }
+
+    let table_constraint = super::proto::TableConstraintProto {
+        vars,
+        values,
+        exprs: vec![],
+        negated,
+    };
+    Ok(ConstraintProto {
+        name: String::new(),
+        enforcement_literal: vec![],
+        constraint: Some(constraint_proto::Constraint::Table(table_constraint)),
+    })
+}

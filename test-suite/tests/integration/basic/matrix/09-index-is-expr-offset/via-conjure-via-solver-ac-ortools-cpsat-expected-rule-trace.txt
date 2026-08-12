@@ -1,0 +1,273 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..3), int(2..4)] of int(1..5)
+find i: int(2..4)
+
+such that
+
+a[1, 2] = 1,
+a[1, 3] = 1,
+a[1, 4] = 1,
+a[2, 3] = 1,
+a[2, 4] = 1,
+a[3, 2] = 1,
+a[3, 4] = 1,
+a[i, i] = i
+
+--
+
+a#matrix_to_atom[1, 2] = 1,
+a#matrix_to_atom[1, 3] = 1,
+a#matrix_to_atom[1, 4] = 1,
+a#matrix_to_atom[2, 3] = 1,
+a#matrix_to_atom[2, 4] = 1,
+a#matrix_to_atom[3, 2] = 1,
+a#matrix_to_atom[3, 4] = 1,
+a#matrix_to_atom[i, i] = i
+   ~~> select_representation_matrix ([("Representations", 8001)])
+a#matrix_to_atom[1, 2] = 1,
+a#matrix_to_atom[1, 3] = 1,
+a#matrix_to_atom[1, 4] = 1,
+a#matrix_to_atom[2, 3] = 1,
+a#matrix_to_atom[2, 4] = 1,
+a#matrix_to_atom[3, 2] = 1,
+a#matrix_to_atom[3, 4] = 1,
+a#matrix_to_atom[i, i] = i
+new variables:
+  find a#matrix_to_atom_1_2: int(1..5)
+  find a#matrix_to_atom_1_3: int(1..5)
+  find a#matrix_to_atom_1_4: int(1..5)
+  find a#matrix_to_atom_2_2: int(1..5)
+  find a#matrix_to_atom_2_3: int(1..5)
+  find a#matrix_to_atom_2_4: int(1..5)
+  find a#matrix_to_atom_3_2: int(1..5)
+  find a#matrix_to_atom_3_3: int(1..5)
+  find a#matrix_to_atom_3_4: int(1..5)
+
+--
+
+a#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[1, 2])
+
+--
+
+a#matrix_to_atom[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[1, 3])
+
+--
+
+a#matrix_to_atom[1, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[1, 4])
+
+--
+
+a#matrix_to_atom[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[2, 3])
+
+--
+
+a#matrix_to_atom[2, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[2, 4])
+
+--
+
+a#matrix_to_atom[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[3, 2])
+
+--
+
+a#matrix_to_atom[3, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[3, 4])
+
+--
+
+a#matrix_to_atom[i, i]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(a#matrix_to_atom,[i, i]) @ __inDomain(i,int(1..3))}
+
+--
+
+{SafeIndex(a#matrix_to_atom,[i, i]) @ __inDomain(i,int(1..3))} = i
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(a#matrix_to_atom,[i, i]) = i @ __inDomain(i,int(1..3))}
+
+--
+
+{SafeIndex(a#matrix_to_atom,[i, i]) = i @ __inDomain(i,int(1..3))}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(a#matrix_to_atom,[i, i]) = i,__inDomain(i,int(1..3));int(1..)])
+
+--
+
+SafeIndex(a#matrix_to_atom,[1, 2]) = 1,
+SafeIndex(a#matrix_to_atom,[1, 3]) = 1,
+SafeIndex(a#matrix_to_atom,[1, 4]) = 1,
+SafeIndex(a#matrix_to_atom,[2, 3]) = 1,
+SafeIndex(a#matrix_to_atom,[2, 4]) = 1,
+SafeIndex(a#matrix_to_atom,[3, 2]) = 1,
+SafeIndex(a#matrix_to_atom,[3, 4]) = 1,
+and([SafeIndex(a#matrix_to_atom,[i, i]) = i,__inDomain(i,int(1..3));int(1..)])
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+a#matrix_to_atom_1_2 = 1,
+a#matrix_to_atom_1_3 = 1,
+a#matrix_to_atom_1_4 = 1,
+a#matrix_to_atom_2_3 = 1,
+a#matrix_to_atom_2_4 = 1,
+a#matrix_to_atom_3_2 = 1,
+a#matrix_to_atom_3_4 = 1,
+and([SafeIndex([a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4,a#matrix_to_atom_2_2,a#matrix_to_atom_2_3,a#matrix_to_atom_2_4,a#matrix_to_atom_3_2,a#matrix_to_atom_3_3,a#matrix_to_atom_3_4;int(1..)],[sum([product([3,(i - 1);int(1..)]),product([1,(i - 2);int(1..)]),1;int(1..)])]) = i,__inDomain(i,int(1..3));int(1..)])
+
+--
+
+product([1,(i - 2);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(i - 2);int(1..)])
+
+--
+
+product([(i - 2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(i - 2)
+
+--
+
+(i - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([i,-(2);int(1..)])
+
+--
+
+sum([product([3,(i - 1);int(1..)]),sum([i,-2;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,(i - 1);int(1..)]),i,-2,1;int(1..)])
+
+--
+
+(i - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([i,-(1);int(1..)])
+
+--
+
+and([SafeIndex([a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4,a#matrix_to_atom_2_2,a#matrix_to_atom_2_3,a#matrix_to_atom_2_4,a#matrix_to_atom_3_2,a#matrix_to_atom_3_3,a#matrix_to_atom_3_4;int(1..)],[sum([product([3,sum([i,-1;int(1..)]);int(1..)]),i,-1;int(1..)])]) = i,__inDomain(i,int(1..3));int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux SafeIndex([a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4,a#matrix_to_atom_2_2,a#matrix_to_atom_2_3,a#matrix_to_atom_2_4,a#matrix_to_atom_3_2,a#matrix_to_atom_3_3,a#matrix_to_atom_3_4;int(1..)],[sum([product([3,sum([i,-1;int(1..)]);int(1..)]),i,-1;int(1..)])]) = i
+  __1 =aux __inDomain(i,int(1..3))
+
+--
+
+SafeIndex([a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4,a#matrix_to_atom_2_2,a#matrix_to_atom_2_3,a#matrix_to_atom_2_4,a#matrix_to_atom_3_2,a#matrix_to_atom_3_3,a#matrix_to_atom_3_4;int(1..)],[sum([product([3,sum([i,-1;int(1..)]);int(1..)]),i,-1;int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+SafeIndex([a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4,a#matrix_to_atom_2_2,a#matrix_to_atom_2_3,a#matrix_to_atom_2_4,a#matrix_to_atom_3_2,a#matrix_to_atom_3_3,a#matrix_to_atom_3_4;int(1..)],[__2])
+new variables:
+  find __2: int(4..12)
+new constraints:
+  __2 =aux sum([product([3,sum([i,-1;int(1..)]);int(1..)]),i,-1;int(1..)])
+
+--
+
+__2 =aux sum([product([3,sum([i,-1;int(1..)]);int(1..)]),i,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([FlatWeightedSumLeq([1, 3, 1],[-1, __3, i],__2),FlatWeightedSumGeq([1, 3, 1],[-1, __3, i],__2);int(1..)])
+new variables:
+  find __3: int(1..3)
+new constraints:
+  __3 =aux product([sum([i,-1;int(1..)]);int(1..)])
+
+--
+
+product([sum([i,-1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+sum([i,-1;int(1..)])
+
+--
+
+__3 =aux sum([i,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([-1, i], __3),SumGeq([-1, i], __3);int(1..)])
+
+--
+
+SafeIndex([a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4,a#matrix_to_atom_2_2,a#matrix_to_atom_2_3,a#matrix_to_atom_2_4,a#matrix_to_atom_3_2,a#matrix_to_atom_3_3,a#matrix_to_atom_3_4;int(1..)],[__2]) = i
+   ~~> introduce_element_from_index ([("Minion", 4400), ("OrToolsCpSat", 4400)])
+__minion_element_one([a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4,a#matrix_to_atom_2_2,a#matrix_to_atom_2_3,a#matrix_to_atom_2_4,a#matrix_to_atom_3_2,a#matrix_to_atom_3_3,a#matrix_to_atom_3_4],__2,i)
+
+--
+
+and([FlatWeightedSumLeq([1, 3, 1],[-1, __3, i],__2),FlatWeightedSumGeq([1, 3, 1],[-1, __3, i],__2);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__4,__5;int(1..)])
+new variables:
+  find __4: bool
+  find __5: bool
+new constraints:
+  __4 =aux FlatWeightedSumLeq([1, 3, 1],[-1, __3, i],__2)
+  __5 =aux FlatWeightedSumGeq([1, 3, 1],[-1, __3, i],__2)
+
+--
+
+and([SumLeq([-1, i], __3),SumGeq([-1, i], __3);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__6,__7;int(1..)])
+new variables:
+  find __6: bool
+  find __7: bool
+new constraints:
+  __6 =aux SumLeq([-1, i], __3)
+  __7 =aux SumGeq([-1, i], __3)
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..3), int(2..4)] of int(1..5)
+find i: int(2..4)
+find a#matrix_to_atom_1_2: int(1..5)
+find a#matrix_to_atom_1_3: int(1..5)
+find a#matrix_to_atom_1_4: int(1..5)
+find a#matrix_to_atom_2_2: int(1..5)
+find a#matrix_to_atom_2_3: int(1..5)
+find a#matrix_to_atom_2_4: int(1..5)
+find a#matrix_to_atom_3_2: int(1..5)
+find a#matrix_to_atom_3_3: int(1..5)
+find a#matrix_to_atom_3_4: int(1..5)
+find __0: bool
+find __1: bool
+find __2: int(4..12)
+find __3: int(1..3)
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+
+such that
+
+a#matrix_to_atom_1_2 = 1,
+a#matrix_to_atom_1_3 = 1,
+a#matrix_to_atom_1_4 = 1,
+a#matrix_to_atom_2_3 = 1,
+a#matrix_to_atom_2_4 = 1,
+a#matrix_to_atom_3_2 = 1,
+a#matrix_to_atom_3_4 = 1,
+and([__0,__1;int(1..)]),
+__0 =aux __minion_element_one([a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4,a#matrix_to_atom_2_2,a#matrix_to_atom_2_3,a#matrix_to_atom_2_4,a#matrix_to_atom_3_2,a#matrix_to_atom_3_3,a#matrix_to_atom_3_4],__2,i),
+__1 =aux __inDomain(i,int(1..3)),
+and([__4,__5;int(1..)]),
+and([__6,__7;int(1..)]),
+__4 =aux FlatWeightedSumLeq([1, 3, 1],[-1, __3, i],__2),
+__5 =aux FlatWeightedSumGeq([1, 3, 1],[-1, __3, i],__2),
+__6 =aux SumLeq([-1, i], __3),
+__7 =aux SumGeq([-1, i], __3)
+

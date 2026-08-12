@@ -199,7 +199,19 @@ fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let or_eq = matches!(expr, Expr::LexLeq(..));
 
     if let (Some(a_elems), Some(b_elems)) = (a.unwrap_list(), b.unwrap_list()) {
-        let new_expr = lex_lt_to_recursive_or_elems(&a_elems, &b_elems, or_eq);
+        // If matrices are of different lengths:
+        // If |a| < |b|: a <lex b <-> a <=lex b (since if prefix equal, a is prefix of b so a < b is true). So allow_eq = true regardless of op.
+        // If |a| > |b|: a <lex b <-> a <=lex b (since if prefix equal, a has b as prefix so a > b is true, so a < b and a <= b are both false). So allow_eq = false regardless of op.
+        // If |a| == |b|: allow_eq = or_eq.
+        let (a_len, b_len) = (a_elems.len(), b_elems.len());
+        let allow_eq = if a_len < b_len {
+            true
+        } else if a_len > b_len {
+            false
+        } else {
+            or_eq
+        };
+        let new_expr = lex_lt_to_recursive_or_elems(&a_elems, &b_elems, allow_eq);
         return Ok(RuleEffect::pure(new_expr));
     }
 
@@ -227,7 +239,20 @@ fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             .collect_vec(),
     );
 
-    let new_expr = lex_lt_to_recursive_or(a, b, &a_idxs, &b_idxs, or_eq);
+    // If matrices are of different lengths:
+    // If |a| < |b|: a <lex b <-> a <=lex b (since if prefix equal, a is prefix of b so a < b is true). So allow_eq = true regardless of op.
+    // If |a| > |b|: a <lex b <-> a <=lex b (since if prefix equal, a has b as prefix so a > b is true, so a < b and a <= b are both false). So allow_eq = false regardless of op.
+    // If |a| == |b|: allow_eq = or_eq.
+    let (a_len, b_len) = (a_idxs.len(), b_idxs.len());
+    let allow_eq = if a_len < b_len {
+        true
+    } else if a_len > b_len {
+        false
+    } else {
+        or_eq
+    };
+
+    let new_expr = lex_lt_to_recursive_or(a, b, &a_idxs, &b_idxs, allow_eq);
     Ok(RuleEffect::pure(new_expr))
 }
 
@@ -239,9 +264,9 @@ fn lex_lt_to_recursive_or(
     allow_eq: bool,
 ) -> Expr {
     match (a_idxs, b_idxs) {
-        ([], []) => allow_eq.into(), // Base case: same length
-        ([..], []) => false.into(),  // Base case: b is shorter
-        ([], [..]) => true.into(),   // Base case: a is shorter
+        ([], []) => allow_eq.into(), // Base case: same length, allow_eq determines if equality is allowed
+        ([..], []) => false.into(),  // Base case: a is longer than b, prefix equal => a > b, so a < b is false (and a <= b is false)
+        ([], [..]) => true.into(),   // Base case: a is shorter than b, prefix equal => a < b is true (and a <= b is true)
 
         ([a_idx, a_tail @ ..], [b_idx, b_tail @ ..]) => {
             let a_at_idx = safe_index_optimised(a.clone(), a_idx.clone()).unwrap();
@@ -253,11 +278,7 @@ fn lex_lt_to_recursive_or(
     }
 }
 
-fn lex_lt_to_recursive_or_elems(
-    a_elems: &[Expr],
-    b_elems: &[Expr],
-    allow_eq: bool,
-) -> Expr {
+fn lex_lt_to_recursive_or_elems(a_elems: &[Expr], b_elems: &[Expr], allow_eq: bool) -> Expr {
     match (a_elems, b_elems) {
         ([], []) => allow_eq.into(),
         ([..], []) => false.into(),

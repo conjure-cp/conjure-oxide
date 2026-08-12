@@ -243,6 +243,9 @@ pub trait SolverAdaptor: private::Sealed + Any {
     /// + This function is ran after model loading but before solving - therefore, it is safe for
     ///   solving to mutate the model object.
     fn write_solver_input_file(&self, writer: &mut Box<dyn Write>) -> Result<(), std::io::Error>;
+
+    /// Sets whether the solver should enumerate all solutions or stop at the first one.
+    fn set_enumerate_all(&mut self, _enumerate_all: bool) {}
 }
 
 /// An abstract representation of a constraints solver.
@@ -378,6 +381,10 @@ impl Solver<ModelLoaded> {
         writer: &mut Box<dyn Write>,
     ) -> Result<(), std::io::Error> {
         self.adaptor.write_solver_input_file(writer)
+    }
+
+    pub fn set_enumerate_all(&mut self, enumerate_all: bool) {
+        self.adaptor.set_enumerate_all(enumerate_all);
     }
 }
 

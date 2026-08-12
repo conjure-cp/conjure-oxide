@@ -1,0 +1,76 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+or([a,b;int(1..)]),
+or([!(c),and([b,d;int(1..)]);int(1..)]),
+b,
+or([d,c;int(1..)])
+
+--
+
+or([!(c),and([b,d;int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([!(c),b;int(1..)]),or([!(c),d;int(1..)]);int(1..)])
+
+--
+
+and([or([!(c),b;int(1..)]),or([!(c),d;int(1..)]);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux or([!(c),b;int(1..)])
+  __1 =aux or([!(c),d;int(1..)])
+
+--
+
+or([!(c),b;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__2,b;int(1..)])
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux !(c)
+
+--
+
+or([!(c),d;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__3,d;int(1..)])
+new variables:
+  find __3: bool
+new constraints:
+  __3 =aux !(c)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+
+such that
+
+or([a,b;int(1..)]),
+and([__0,__1;int(1..)]),
+b,
+or([d,c;int(1..)]),
+__0 =aux or([__2,b;int(1..)]),
+__1 =aux or([__3,d;int(1..)]),
+__2 =aux !(c),
+__3 =aux !(c)
+

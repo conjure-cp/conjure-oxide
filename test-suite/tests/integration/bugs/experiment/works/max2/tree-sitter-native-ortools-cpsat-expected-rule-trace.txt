@@ -1,0 +1,140 @@
+Model before rewriting:
+
+find a: int(1..4)
+find b: int(1..4)
+find x: int(1..4)
+
+such that
+
+max([a,b;int(1..2)]) >= 2,
+x = sum([max([a,b;int(1..2)]),1;int(1..)])
+
+--
+
+x = sum([max([a,b;int(1..2)]),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([1, __0], x),SumGeq([1, __0], x);int(1..)])
+new variables:
+  find __0: int(1..4)
+new constraints:
+  __0 =aux max([a,b;int(1..2)])
+
+--
+
+and([SumLeq([1, __0], x),SumGeq([1, __0], x);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__1,__2;int(1..)])
+new variables:
+  find __1: bool
+  find __2: bool
+new constraints:
+  __1 =aux SumLeq([1, __0], x)
+  __2 =aux SumGeq([1, __0], x)
+
+--
+
+max([a,b;int(1..2)]) >= 2
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+__3 >= 2
+new variables:
+  find __3: int(1..4)
+new constraints:
+  __3 =aux max([a,b;int(1..2)])
+
+--
+
+max([a,b;int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+max([a,b;int(1..)])
+
+--
+
+max([a,b;int(1..)])
+   ~~> max_to_var ([("Base", 6000)])
+__4
+new variables:
+  find __4: int(1..4)
+new constraints:
+  __4 >= a
+  __4 >= b
+  or([__4 = a,__4 = b;int(1..)])
+
+--
+
+or([__4 = a,__4 = b;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__5,__6;int(1..)])
+new variables:
+  find __5: bool
+  find __6: bool
+new constraints:
+  __5 =aux __4 = a
+  __6 =aux __4 = b
+
+--
+
+max([a,b;int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+max([a,b;int(1..)])
+
+--
+
+max([a,b;int(1..)])
+   ~~> max_to_var ([("Base", 6000)])
+__7
+new variables:
+  find __7: int(1..4)
+new constraints:
+  __7 >= a
+  __7 >= b
+  or([__7 = a,__7 = b;int(1..)])
+
+--
+
+or([__7 = a,__7 = b;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__8,__9;int(1..)])
+new variables:
+  find __8: bool
+  find __9: bool
+new constraints:
+  __8 =aux __7 = a
+  __9 =aux __7 = b
+
+--
+
+Final model:
+
+find a: int(1..4)
+find b: int(1..4)
+find x: int(1..4)
+find __0: int(1..4)
+find __1: bool
+find __2: bool
+find __3: int(1..4)
+find __4: int(1..4)
+find __5: bool
+find __6: bool
+find __7: int(1..4)
+find __8: bool
+find __9: bool
+
+such that
+
+__3 >= 2,
+and([__1,__2;int(1..)]),
+__0 =aux __4,
+__1 =aux SumLeq([1, __0], x),
+__2 =aux SumGeq([1, __0], x),
+__3 =aux __7,
+__4 >= a,
+__4 >= b,
+or([__5,__6;int(1..)]),
+__5 =aux __4 = a,
+__6 =aux __4 = b,
+__7 >= a,
+__7 >= b,
+or([__8,__9;int(1..)]),
+__8 =aux __7 = a,
+__9 =aux __7 = b
+

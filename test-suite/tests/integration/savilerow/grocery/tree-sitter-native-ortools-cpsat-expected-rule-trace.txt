@@ -1,0 +1,62 @@
+Model before rewriting:
+
+letting RANGE be domain int(0..711)
+find item1: RANGE
+find item2: RANGE
+find item3: RANGE
+find item4: RANGE
+
+such that
+
+sum([sum([sum([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)]) = 711,
+product([product([product([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)]) = product([product([product([711,100;int(1..)]),100;int(1..)]),100;int(1..)]),
+item1 >= item2,
+item2 >= item3,
+item3 >= item4
+
+--
+
+sum([sum([sum([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([item1,item2,item3,item4;int(1..)])
+
+--
+
+sum([item1,item2,item3,item4;int(1..)]) = 711
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([item1, item2, item3, item4], 711),SumGeq([item1, item2, item3, item4], 711);int(1..)])
+
+--
+
+and([SumLeq([item1, item2, item3, item4], 711),SumGeq([item1, item2, item3, item4], 711);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux SumLeq([item1, item2, item3, item4], 711)
+  __1 =aux SumGeq([item1, item2, item3, item4], 711)
+
+--
+
+Final model:
+
+letting RANGE be domain int(0..711)
+find item1: RANGE
+find item2: RANGE
+find item3: RANGE
+find item4: RANGE
+find __0: bool
+find __1: bool
+
+such that
+
+and([__0,__1;int(1..)]),
+false,
+item1 >= item2,
+item2 >= item3,
+item3 >= item4,
+__0 =aux SumLeq([item1, item2, item3, item4], 711),
+__1 =aux SumGeq([item1, item2, item3, item4], 711)
+

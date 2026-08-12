@@ -17,7 +17,12 @@ mod ffi {
     unsafe extern "C++" {
         include!("src/solver/adaptors/ortools-cpsat/wrapper.hpp");
 
-        unsafe fn solve_wrapper(model_proto: &[u8], callback_ptr: usize) -> Vec<u8>;
+        unsafe fn solve_wrapper(
+            model_proto: &[u8],
+            callback_ptr: usize,
+            enumerate_all: bool,
+            num_decision_vars: usize,
+        ) -> Vec<u8>;
     }
     extern "Rust" {
         unsafe fn invoke_callback(callback_ptr: usize, response_proto: &[u8]) -> bool;
