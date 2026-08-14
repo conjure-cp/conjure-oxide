@@ -623,6 +623,7 @@ pub fn current_rewriter() -> Rewriter {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum QuantifiedExpander {
+    Auto,
     Native,
     ViaSolver,
     ViaSolverAc,
@@ -631,6 +632,7 @@ pub enum QuantifiedExpander {
 impl Display for QuantifiedExpander {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            QuantifiedExpander::Auto => write!(f, "auto"),
             QuantifiedExpander::Native => write!(f, "native"),
             QuantifiedExpander::ViaSolver => write!(f, "via-solver"),
             QuantifiedExpander::ViaSolverAc => write!(f, "via-solver-ac"),
@@ -643,12 +645,13 @@ impl FromStr for QuantifiedExpander {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
+            "auto" => Ok(QuantifiedExpander::Auto),
             "native" => Ok(QuantifiedExpander::Native),
             "via-solver" => Ok(QuantifiedExpander::ViaSolver),
             "via-solver-ac" => Ok(QuantifiedExpander::ViaSolverAc),
             _ => Err(format!(
                 "unknown comprehension expander: {s}; expected one of: \
-                 native, via-solver, via-solver-ac"
+                 auto, native, via-solver, via-solver-ac"
             )),
         }
     }
@@ -906,10 +909,10 @@ pub struct SolverArgs {
 #[cfg(test)]
 mod tests {
     use super::{
-        Channelling, Heuristic, RewriteConfig, Rewriter, begin_heuristic_all_choices,
-        clear_heuristic_responses, heuristic_all_choices, next_heuristic_all_index,
-        next_heuristic_interactive_index, next_heuristic_random_index, set_heuristic_responses,
-        set_heuristic_seed,
+        Channelling, Heuristic, QuantifiedExpander, RewriteConfig, Rewriter,
+        begin_heuristic_all_choices, clear_heuristic_responses, heuristic_all_choices,
+        next_heuristic_all_index, next_heuristic_interactive_index, next_heuristic_random_index,
+        set_heuristic_responses, set_heuristic_seed,
     };
     use std::str::FromStr;
 
@@ -931,6 +934,15 @@ mod tests {
         assert_eq!(Heuristic::from_str("x"), Ok(Heuristic::All));
         assert_eq!(Channelling::from_str("no"), Ok(Channelling::No));
         assert_eq!(Channelling::from_str("yes"), Ok(Channelling::Yes));
+    }
+
+    #[test]
+    fn parses_auto_comprehension_expander() {
+        assert_eq!(
+            QuantifiedExpander::from_str("auto"),
+            Ok(QuantifiedExpander::Auto)
+        );
+        assert_eq!(QuantifiedExpander::Auto.to_string(), "auto");
     }
 
     #[test]

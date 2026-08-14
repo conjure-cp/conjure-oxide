@@ -1,6 +1,6 @@
 use std::{
     cell::RefCell,
-    collections::{HashMap, VecDeque},
+    collections::{BTreeSet, HashMap, VecDeque},
     sync::{Arc, Mutex},
 };
 
@@ -22,7 +22,7 @@ use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
 
 use super::via_solver_common::{
     detach_symbols, instantiate_return_expressions_from_values, retain_quantified_solution_values,
-    rewrite_model_with_configured_rewriter, split_symbolic_guards,
+    rewrite_model_with_configured_rewriter, simplify_expression, split_symbolic_guards,
     temporarily_materialise_quantified_vars_as_finds, with_temporary_model,
 };
 
@@ -42,28 +42,10 @@ pub fn expand_via_solver_ac(
     let (comprehension, symbolic_guards) = split_symbolic_guards(&comprehension);
     let quantified_vars = comprehension.quantified_vars();
 
-    // ADD RETURN EXPRESSION TO GENERATOR MODEL AS CONSTRAINT
-    // ======================================================
-    let return_expression = comprehension.return_expression.clone();
-
-    // Replace all boolean expressions referencing non-quantified variables in the return
-    // expression with dummy variables. This allows us to add it as a constraint to the
-    // generator model.
-    // Detach before adding dummies: they and the localised references below are declarations of
-    // this throwaway model, not of the comprehension's own scope.
-    let mut generator_model = comprehension.to_generator_model();
-    detach_symbols(&mut generator_model);
-    let generator_model = if contains_comprehension(&return_expression) {
-        // The return expression is added to the generator model purely to prune quantified values
-        // that cannot matter. A nested comprehension cannot survive that: its own generator domains
-        // may depend on the variables this model is still solving for -- `sum pos :
-        // int(start..start + n)` inside a `forAll start` -- and a domain over an unassigned find is
-        // not ground. Skip the pruning constraint and enumerate the quantified variables plainly;
-        // the nested comprehension is expanded later, once this assignment binds `start`.
-        generator_model
-    } else {
-        add_return_expression_to_generator_model(generator_model, return_expression, &ac_operator)
-    };
+    // Add the return-expression constraint only when it can restrict at least one quantified
+    // variable. If dummy replacement removes every quantified dependency, the constraint cannot
+    // prune the generator assignments and ordinary guard-only solver expansion is cheaper.
+    let (generator_model, _) = prepare_ac_generator_model(&comprehension, ac_operator);
 
     // REWRITE GENERATOR MODEL AND PASS TO MINION
     // ==========================================
@@ -139,6 +121,43 @@ pub fn expand_via_solver_ac(
     )
 }
 
+/// Build the detached AC generator model and add its derived return constraint when useful.
+fn prepare_ac_generator_model(
+    comprehension: &Comprehension,
+    ac_operator: ACOperatorKind,
+) -> (Model, bool) {
+    let mut generator_model = comprehension.to_generator_model();
+    detach_symbols(&mut generator_model);
+
+    let return_expression = comprehension.return_expression.clone();
+    if contains_comprehension(&return_expression) {
+        // A nested comprehension may have generator domains depending on variables this model is
+        // still solving for. It is expanded later, once those variables have concrete bindings.
+        return (generator_model, false);
+    }
+
+    let quantified_vars: BTreeSet<_> = comprehension.quantified_vars().into_iter().collect();
+    let constraint = {
+        let mut symtab = generator_model.symbols_mut();
+        derive_return_expression_constraint(
+            return_expression,
+            &mut symtab,
+            &quantified_vars,
+            &ac_operator,
+        )
+    };
+    let constraint = simplify_expression(constraint);
+    let useful = Biplate::<Name>::universe_bi(&constraint)
+        .iter()
+        .any(|name| quantified_vars.contains(name));
+
+    if useful {
+        generator_model.add_constraint(constraint);
+    }
+
+    (generator_model, useful)
+}
+
 /// True iff `expr` contains a comprehension.
 ///
 /// Comprehensions are leaves of the traversal, so this finds nested ones without descending into
@@ -149,9 +168,8 @@ fn contains_comprehension(expr: &Expression) -> bool {
         .any(|subexpr| matches!(subexpr, Expression::Comprehension(_, _)))
 }
 
-/// Eliminate all references to non-quantified variables by introducing dummy variables to the
-/// return expression. This modified return expression is added to the generator model, which is
-/// returned.
+/// Eliminate all references to non-quantified variables by introducing dummy variables, then
+/// derive the constraint that discards AC-identity return values.
 ///
 /// Dummy variables must be the same type as the AC operators identity value.
 ///
@@ -161,13 +179,13 @@ fn contains_comprehension(expr: &Expression) -> bool {
 /// If there is no such expression, (e.g. and[(a<i) | i: int(1..10)]) , we use the smallest
 /// expression of the correct type that contains a non-quantified variable. This ensures that
 /// we lose as few references to quantified variables as possible.
-fn add_return_expression_to_generator_model(
-    mut generator_model: Model,
+fn derive_return_expression_constraint(
     return_expression: Expression,
+    symtab: &mut SymbolTable,
+    quantified_vars: &BTreeSet<Name>,
     ac_operator: &ACOperatorKind,
-) -> Model {
-    let mut symtab = generator_model.symbols_mut();
-    let return_expression = localise_non_local_references_deep(return_expression, &mut symtab);
+) -> Expression {
+    let return_expression = localise_non_local_references_deep(return_expression, symtab);
 
     let mut zipper = Zipper::new(return_expression);
 
@@ -178,14 +196,15 @@ fn add_return_expression_to_generator_model(
     'outer: loop {
         let focus: &mut Expression = zipper.focus_mut();
 
-        let (non_quantified_vars, quantified_vars) = partition_variables(focus, &symtab);
+        let (non_quantified_vars, quantified_references) =
+            partition_variables(focus, quantified_vars);
 
         // an expression or its descendants needs to be turned into a dummy variable if it
         // contains non-quantified variables.
         let has_non_quantified_vars = !non_quantified_vars.is_empty();
 
         // does this expression contain quantified variables?
-        let has_quantified_vars = !quantified_vars.is_empty();
+        let has_quantified_vars = !quantified_references.is_empty();
 
         // can this expression be turned into a dummy variable?
         let can_be_dummy_var = can_be_dummy_variable(focus, &dummy_var_type);
@@ -210,7 +229,7 @@ fn add_return_expression_to_generator_model(
             // eligible if it can be turned into a dummy variable, and turning it into a
             // dummy variable removes a non-quantified variable from the model.
             can_be_dummy_variable(expr, &dummy_var_type)
-                && contains_non_quantified_variables(expr, &symtab)
+                && contains_non_quantified_variables(expr, quantified_vars)
         });
 
         // This expression has no child that can be turned into a dummy variable, but can
@@ -316,11 +335,7 @@ fn add_return_expression_to_generator_model(
         "generator model should only contain references to variables in its symbol table."
     );
 
-    std::mem::drop(symtab);
-
-    generator_model.add_constraint(new_return_expression);
-
-    generator_model
+    new_return_expression
 }
 
 /// Replaces references to declarations outside `symtab` with local dummy declarations.
@@ -394,23 +409,20 @@ fn localise_non_local_references_shallow(expr: Expression, symtab: &mut SymbolTa
     })
 }
 
-/// Returns a tuple of non-quantified decision variables and quantified variables inside the expression.
+/// Returns the non-quantified and quantified references inside the expression.
 ///
-/// As lettings, givens, etc. will eventually be subsituted for constants, this only returns
-/// non-quantified _decision_ variables.
+/// Membership is tested against the comprehension's original quantified names. In particular,
+/// dummy declarations introduced while localising outer references are local to the temporary
+/// model but remain non-quantified for pruning analysis.
 #[inline]
 fn partition_variables(
     expr: &Expression,
-    symtab: &SymbolTable,
+    quantified_vars: &BTreeSet<Name>,
 ) -> (VecDeque<Name>, VecDeque<Name>) {
-    // doing this as two functions non_quantified_variables and quantified_variables might've been
-    // easier to read.
-    //
-    // However, doing this in one function avoids an extra universe call...
     let (non_quantified_vars, quantified_vars): (VecDeque<Name>, VecDeque<Name>) =
         Biplate::<Name>::universe_bi(expr)
             .into_iter()
-            .partition(|x| symtab.lookup_local(x).is_none());
+            .partition(|name| !quantified_vars.contains(name));
 
     (non_quantified_vars, quantified_vars)
 }
@@ -429,11 +441,9 @@ fn can_be_dummy_variable(expr: &Expression, dummy_variable_type: &ReturnType) ->
 
 /// Returns `true` if `expr` or its descendants contains non-quantified variables.
 #[inline]
-fn contains_non_quantified_variables(expr: &Expression, symtab: &SymbolTable) -> bool {
+fn contains_non_quantified_variables(expr: &Expression, quantified_vars: &BTreeSet<Name>) -> bool {
     let names_referenced: VecDeque<Name> = expr.universe_bi();
-    // a name is a non-quantified variable if its definition is not in the local scope of the
-    // comprehension's generators.
     names_referenced
         .iter()
-        .any(|x| symtab.lookup_local(x).is_none())
+        .any(|name| !quantified_vars.contains(name))
 }

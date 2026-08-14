@@ -24,10 +24,218 @@ use conjure_cp::{
     },
     settings::{QuantifiedExpander, comprehension_expander},
 };
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use uniplate::{Biplate, Uniplate};
 
 use via_solver_common::simplify_expression;
+
+/// Candidate assignments below this limit are cheaper to enumerate natively. The Pythagorean
+/// benchmark brackets the crossover between 125 assignments (native wins) and 1,000 assignments
+/// (solver-backed expansion wins decisively), so use a deliberately coarse power-of-two boundary.
+const AUTO_SOLVER_THRESHOLD: u64 = 512;
+
+/// Resolve `auto` to one of the concrete expansion implementations for this comprehension.
+fn selected_comprehension_expander(comprehension: &Comprehension) -> QuantifiedExpander {
+    match comprehension_expander() {
+        QuantifiedExpander::Auto => auto_comprehension_expander(comprehension),
+        explicit => explicit,
+    }
+}
+
+/// Choose native expansion unless the candidate space is large and the temporary solver model
+/// has a constraint that can potentially discard quantified assignments.
+fn auto_comprehension_expander(comprehension: &Comprehension) -> QuantifiedExpander {
+    let Some(candidate_assignments) = estimated_candidate_assignments(comprehension) else {
+        if has_dependent_generators_and_nested_return(comprehension) {
+            return QuantifiedExpander::ViaSolverAc;
+        }
+        return QuantifiedExpander::Native;
+    };
+
+    if candidate_assignments < AUTO_SOLVER_THRESHOLD {
+        return QuantifiedExpander::Native;
+    }
+
+    let useful_guard = has_useful_quantified_guard(comprehension);
+    let useful_ac_pruning = match comprehension.skip_operator {
+        Some(
+            ACOperatorKind::And
+            | ACOperatorKind::Or
+            | ACOperatorKind::Sum
+            | ACOperatorKind::Product,
+        ) => has_cheap_ac_return_pruning(comprehension),
+        _ => false,
+    };
+
+    if useful_guard || useful_ac_pruning {
+        QuantifiedExpander::ViaSolverAc
+    } else {
+        QuantifiedExpander::Native
+    }
+}
+
+/// Estimate the maximum number of generator assignments before guards are applied.
+///
+/// Dependent or otherwise unresolved domains deliberately return `None`: native expansion already
+/// handles them one binding at a time, whereas guessing a solver-backed path risks changing which
+/// models are supported. Multiplication saturates because only comparison with the threshold is
+/// relevant.
+fn estimated_candidate_assignments(comprehension: &Comprehension) -> Option<u64> {
+    let mut assignments = 1u64;
+
+    for qualifier in &comprehension.qualifiers {
+        match qualifier {
+            ComprehensionQualifier::Generator { ptr } => {
+                let domain = ptr.domain()?;
+                let length = domain.resolve().ok()?.length().ok()?;
+                assignments = assignments.saturating_mul(length);
+            }
+            ComprehensionQualifier::ExpressionGenerator { .. } => return None,
+            ComprehensionQualifier::Condition(_) => {}
+        }
+    }
+
+    Some(assignments)
+}
+
+/// Detect the supported dependent-generator shape where native expansion repeatedly duplicates a
+/// nested comprehension. The solver expander binds the outer assignment first and then expands the
+/// nested return, which is substantially cheaper for models such as car sequencing.
+///
+/// This remains a narrow syntactic check: expression generators and missing domains stay native.
+fn has_dependent_generators_and_nested_return(comprehension: &Comprehension) -> bool {
+    if !matches!(
+        comprehension.skip_operator,
+        Some(
+            ACOperatorKind::And
+                | ACOperatorKind::Or
+                | ACOperatorKind::Sum
+                | ACOperatorKind::Product
+        )
+    ) {
+        return false;
+    }
+
+    let mut generator_count = 0;
+    for qualifier in &comprehension.qualifiers {
+        match qualifier {
+            ComprehensionQualifier::Generator { ptr } if ptr.domain().is_some() => {
+                generator_count += 1;
+            }
+            ComprehensionQualifier::Generator { .. }
+            | ComprehensionQualifier::ExpressionGenerator { .. } => return false,
+            ComprehensionQualifier::Condition(_) => {}
+        }
+    }
+
+    generator_count >= 2
+        && comprehension
+            .return_expression
+            .universe()
+            .iter()
+            .any(|expression| matches!(expression, Expr::Comprehension(_, _)))
+}
+
+/// A useful guard is a nonconstant condition whose remaining references include at least one
+/// quantified variable and no non-quantified decision variable.
+fn has_useful_quantified_guard(comprehension: &Comprehension) -> bool {
+    let quantified_vars: BTreeSet<_> = comprehension.quantified_vars().into_iter().collect();
+
+    comprehension.qualifiers.iter().any(|qualifier| {
+        let ComprehensionQualifier::Condition(condition) = qualifier else {
+            return false;
+        };
+
+        comprehension.is_quantified_guard(condition)
+            && Biplate::<Name>::universe_bi(condition)
+                .iter()
+                .any(|name| quantified_vars.contains(name))
+    })
+}
+
+/// Cheaply detect return-expression pruning that is likely to repay solver setup.
+///
+/// A fully quantified return can be passed to the temporary solver without dummy variables. For
+/// mixed returns, require a quantified-only conjunction: this recognises selective filters such as
+/// the Pythagorean antecedent while rejecting single weak comparisons and pairwise representation
+/// implications. This is deliberately syntactic; `auto` must not build or simplify a temporary
+/// model merely to decide whether to build one.
+fn has_cheap_ac_return_pruning(comprehension: &Comprehension) -> bool {
+    let quantified_vars: BTreeSet<_> = comprehension.quantified_vars().into_iter().collect();
+    let return_expression = &comprehension.return_expression;
+
+    if !comprehension_has_non_quantified_guards(comprehension)
+        && expression_depends_only_on_quantified_decisions(
+            comprehension,
+            return_expression,
+            &quantified_vars,
+        )
+    {
+        return true;
+    }
+
+    has_quantified_conjunction_in_pruning_position(
+        comprehension,
+        return_expression,
+        &quantified_vars,
+    )
+}
+
+/// Look only where an `and` can filter AC identities: at the return root or in an implication's
+/// antecedent. A conjunction in the consequent describes the emitted constraint; treating it as a
+/// filter made battleship-style returns pay for solver expansion without useful pruning.
+fn has_quantified_conjunction_in_pruning_position(
+    comprehension: &Comprehension,
+    expression: &Expr,
+    quantified_vars: &BTreeSet<Name>,
+) -> bool {
+    match expression {
+        Expr::And(_, terms) => {
+            if expression_depends_only_on_quantified_decisions(
+                comprehension,
+                expression,
+                quantified_vars,
+            ) {
+                return true;
+            }
+
+            Moo::unwrap_or_clone(terms.clone())
+                .unwrap_list()
+                .is_some_and(|terms| {
+                    terms.iter().any(|term| {
+                        has_quantified_conjunction_in_pruning_position(
+                            comprehension,
+                            term,
+                            quantified_vars,
+                        )
+                    })
+                })
+        }
+        Expr::Imply(_, antecedent, _) => {
+            antecedent.as_ref().universe().iter().any(|subexpression| {
+                matches!(subexpression, Expr::And(_, _))
+                    && expression_depends_only_on_quantified_decisions(
+                        comprehension,
+                        subexpression,
+                        quantified_vars,
+                    )
+            })
+        }
+        _ => false,
+    }
+}
+
+fn expression_depends_only_on_quantified_decisions(
+    comprehension: &Comprehension,
+    expression: &Expr,
+    quantified_vars: &BTreeSet<Name>,
+) -> bool {
+    let referenced_names = Biplate::<Name>::universe_bi(expression);
+    referenced_names
+        .iter()
+        .any(|name| quantified_vars.contains(name))
+        && comprehension.is_quantified_guard(expression)
+}
 
 /// Simplifies an expanded comprehension under its AC operator before the rewrite is committed.
 ///
@@ -97,10 +305,6 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
 /// Skip semantics come from [`Comprehension::skip_operator`].
 #[register_rule("Base", 1999, [And, Or, Sum, Product])]
 fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    if comprehension_expander() != QuantifiedExpander::Native {
-        return Err(RuleNotApplicable);
-    }
-
     let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
     let children = expr.children();
     debug_assert_eq!(
@@ -113,6 +317,10 @@ fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applica
         .front()
         .and_then(as_single_comprehension)
         .ok_or(RuleNotApplicable)?;
+
+    if selected_comprehension_expander(&comprehension) != QuantifiedExpander::Native {
+        return Err(RuleNotApplicable);
+    }
 
     if comprehension.skip_operator.is_none() {
         return Err(RuleNotApplicable);
@@ -146,15 +354,15 @@ fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applica
 /// Constant quantifier collections are constant-folded via [`eval_constant`] instead.
 #[register_rule("Base", 2000, [Comprehension])]
 fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    if comprehension_expander() != QuantifiedExpander::Native {
-        return Err(RuleNotApplicable);
-    }
-
     let Expr::Comprehension(_, comprehension) = expr else {
         return Err(RuleNotApplicable);
     };
 
     let comprehension = comprehension.as_ref().clone();
+
+    if selected_comprehension_expander(&comprehension) != QuantifiedExpander::Native {
+        return Err(RuleNotApplicable);
+    }
 
     for qual in &comprehension.qualifiers {
         if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
@@ -195,18 +403,18 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 /// 8. Replace the comprehension by a matrix literal containing all instantiated return values.
 #[register_rule("Base", 2000, [Comprehension])]
 fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    if !matches!(
-        comprehension_expander(),
-        QuantifiedExpander::ViaSolver | QuantifiedExpander::ViaSolverAc
-    ) {
-        return Err(RuleNotApplicable);
-    }
-
     let Expr::Comprehension(_, comprehension) = expr else {
         return Err(RuleNotApplicable);
     };
 
     let comprehension = comprehension.as_ref().clone();
+
+    if !matches!(
+        selected_comprehension_expander(&comprehension),
+        QuantifiedExpander::ViaSolver | QuantifiedExpander::ViaSolverAc
+    ) {
+        return Err(RuleNotApplicable);
+    }
 
     for qual in &comprehension.qualifiers {
         if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
@@ -245,10 +453,6 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
 /// 7. Rebuild the same AC operator around the instantiated matrix literal.
 #[register_rule("Base", 2002, [And, Or, Sum, Product])]
 fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    if comprehension_expander() != QuantifiedExpander::ViaSolverAc {
-        return Err(RuleNotApplicable);
-    }
-
     // Is this an ac expression?
     let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
 
@@ -263,6 +467,10 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
         .front()
         .and_then(as_single_comprehension)
         .ok_or(RuleNotApplicable)?;
+
+    if selected_comprehension_expander(&comprehension) != QuantifiedExpander::ViaSolverAc {
+        return Err(RuleNotApplicable);
+    }
 
     for qual in &comprehension.qualifiers {
         if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
@@ -616,6 +824,200 @@ mod tests {
     };
 
     use super::*;
+
+    fn literal(literal: Literal) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::Literal(literal))
+    }
+
+    fn reference(declaration: DeclarationPtr) -> Expr {
+        Expr::Atomic(Metadata::new(), Atom::new_ref(declaration))
+    }
+
+    fn eq(lhs: Expr, rhs: Expr) -> Expr {
+        Expr::Eq(Metadata::new(), Moo::new(lhs), Moo::new(rhs))
+    }
+
+    fn comprehension_with_int_generator(
+        upper: i32,
+        parent: SymbolTablePtr,
+    ) -> (Comprehension, DeclarationPtr) {
+        let declaration = DeclarationPtr::new_quantified(
+            Name::user("i"),
+            Domain::int(vec![Range::Bounded(1, upper)]),
+        );
+        let comprehension = ComprehensionBuilder::new(parent)
+            .generator(declaration)
+            .with_return_value(literal(Literal::Bool(true)));
+        let ComprehensionQualifier::Generator { ptr } = &comprehension.qualifiers[0] else {
+            panic!("expected generator qualifier");
+        };
+
+        (comprehension.clone(), ptr.clone())
+    }
+
+    #[test]
+    fn auto_keeps_small_guarded_comprehensions_native() {
+        let (mut comprehension, quantified) = comprehension_with_int_generator(
+            AUTO_SOLVER_THRESHOLD as i32 - 1,
+            SymbolTablePtr::new(),
+        );
+        comprehension
+            .qualifiers
+            .push(ComprehensionQualifier::Condition(eq(
+                reference(quantified),
+                literal(Literal::Int(1)),
+            )));
+
+        assert_eq!(
+            auto_comprehension_expander(&comprehension),
+            QuantifiedExpander::Native
+        );
+    }
+
+    #[test]
+    fn auto_uses_solver_for_large_quantified_guards() {
+        let parent = SymbolTablePtr::new();
+        let outer = DeclarationPtr::new_find(Name::user("outer"), Domain::bool());
+        parent.write().insert(outer.clone());
+        let (mut comprehension, quantified) =
+            comprehension_with_int_generator(AUTO_SOLVER_THRESHOLD as i32, parent);
+        comprehension
+            .qualifiers
+            .push(ComprehensionQualifier::Condition(eq(
+                reference(quantified),
+                literal(Literal::Int(1)),
+            )));
+        comprehension.return_expression = reference(outer);
+        comprehension.skip_operator = Some(ACOperatorKind::And);
+
+        assert_eq!(
+            auto_comprehension_expander(&comprehension),
+            QuantifiedExpander::ViaSolverAc
+        );
+    }
+
+    #[test]
+    fn auto_keeps_single_ac_comparison_with_outer_decision_native() {
+        let parent = SymbolTablePtr::new();
+        let outer = DeclarationPtr::new_find(Name::user("outer"), Domain::bool());
+        parent.write().insert(outer.clone());
+        let (mut comprehension, quantified) =
+            comprehension_with_int_generator(AUTO_SOLVER_THRESHOLD as i32, parent);
+        let quantified_filter = eq(reference(quantified), literal(Literal::Int(1)));
+        comprehension.return_expression = Expr::Imply(
+            Metadata::new(),
+            Moo::new(quantified_filter),
+            Moo::new(reference(outer)),
+        );
+        comprehension.skip_operator = Some(ACOperatorKind::And);
+
+        assert_eq!(
+            auto_comprehension_expander(&comprehension),
+            QuantifiedExpander::Native
+        );
+    }
+
+    #[test]
+    fn auto_uses_solver_for_quantified_conjunction_in_ac_return() {
+        let parent = SymbolTablePtr::new();
+        let outer = DeclarationPtr::new_find(Name::user("outer"), Domain::bool());
+        parent.write().insert(outer.clone());
+        let (mut comprehension, quantified) =
+            comprehension_with_int_generator(AUTO_SOLVER_THRESHOLD as i32, parent);
+        let filters = vec![
+            eq(reference(quantified.clone()), literal(Literal::Int(1))),
+            eq(reference(quantified), literal(Literal::Int(2))),
+        ];
+        let quantified_filter = Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(filters)));
+        comprehension.return_expression = Expr::Imply(
+            Metadata::new(),
+            Moo::new(quantified_filter),
+            Moo::new(reference(outer)),
+        );
+        comprehension.skip_operator = Some(ACOperatorKind::And);
+
+        assert_eq!(
+            auto_comprehension_expander(&comprehension),
+            QuantifiedExpander::ViaSolverAc
+        );
+    }
+
+    #[test]
+    fn auto_ignores_quantified_conjunctions_in_implication_consequents() {
+        let parent = SymbolTablePtr::new();
+        let outer = DeclarationPtr::new_find(Name::user("outer"), Domain::bool());
+        parent.write().insert(outer.clone());
+        let (mut comprehension, quantified) =
+            comprehension_with_int_generator(AUTO_SOLVER_THRESHOLD as i32, parent);
+        let single_filter = eq(reference(quantified.clone()), literal(Literal::Int(1)));
+        let quantified_conjunction = Expr::And(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(vec![
+                eq(reference(quantified.clone()), literal(Literal::Int(1)),),
+                eq(reference(quantified), literal(Literal::Int(2))),
+            ])),
+        );
+        let consequent = Expr::And(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(vec![
+                quantified_conjunction,
+                reference(outer),
+            ])),
+        );
+        comprehension.return_expression = Expr::Imply(
+            Metadata::new(),
+            Moo::new(single_filter),
+            Moo::new(consequent),
+        );
+        comprehension.skip_operator = Some(ACOperatorKind::And);
+
+        assert_eq!(
+            auto_comprehension_expander(&comprehension),
+            QuantifiedExpander::Native
+        );
+    }
+
+    #[test]
+    fn auto_uses_solver_for_dependent_generators_with_nested_returns() {
+        let parent = SymbolTablePtr::new();
+        let (mut comprehension, outer) =
+            comprehension_with_int_generator(AUTO_SOLVER_THRESHOLD as i32, parent);
+        let dependent_domain = Domain::int(vec![Range::Bounded(
+            IntVal::Const(1),
+            IntVal::Reference(Reference::new(outer)),
+        )]);
+        let inner_generator = DeclarationPtr::new_quantified(Name::user("j"), dependent_domain);
+        comprehension
+            .qualifiers
+            .push(ComprehensionQualifier::Generator {
+                ptr: inner_generator,
+            });
+        let nested = ComprehensionBuilder::new(SymbolTablePtr::new())
+            .with_return_value(literal(Literal::Bool(true)));
+        comprehension.return_expression = Expr::Comprehension(Metadata::new(), Moo::new(nested));
+        comprehension.skip_operator = Some(ACOperatorKind::And);
+
+        assert_eq!(
+            auto_comprehension_expander(&comprehension),
+            QuantifiedExpander::ViaSolverAc
+        );
+    }
+
+    #[test]
+    fn auto_keeps_large_unprunable_comprehensions_native() {
+        let parent = SymbolTablePtr::new();
+        let outer = DeclarationPtr::new_find(Name::user("outer"), Domain::bool());
+        parent.write().insert(outer.clone());
+        let (mut comprehension, _) =
+            comprehension_with_int_generator(AUTO_SOLVER_THRESHOLD as i32, parent);
+        comprehension.return_expression = reference(outer);
+        comprehension.skip_operator = Some(ACOperatorKind::And);
+
+        assert_eq!(
+            auto_comprehension_expander(&comprehension),
+            QuantifiedExpander::Native
+        );
+    }
 
     #[test]
     fn replaces_references_in_expressions() {
