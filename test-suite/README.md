@@ -23,12 +23,11 @@ separate `model-000`, `model-001`, … golden artifacts for every parser/rewrite
 configuration. Channelling is configured with `channelling = "no"`; `yes` is reserved but currently
 unsupported.
 
-Integration tests run all three comprehension unrollers by default. Configure the same matrix
-explicitly with
-`comprehension-expander = ["native", "via-solver", "via-solver-ac"]`. Accepted oxide timings,
-statuses, and rule-trace aggregates are recorded as separate `[[runs]]` entries in `stats.toml`;
-the Conjure reference run remains shared by all three configurations. Each accepted run replaces
-the previous stats snapshot rather than merging with it.
+Integration tests use the `auto` comprehension expander by default, matching the CLI default.
+Configure it explicitly with `comprehension-expander = "auto"`. Accepted oxide timings, statuses,
+and rule-trace aggregates are recorded in a `[[runs]]` entry in `stats.toml`; the Conjure reference
+run is recorded separately. Each accepted run replaces the previous stats snapshot rather than
+merging with it.
 
 ### Creating a new test
 

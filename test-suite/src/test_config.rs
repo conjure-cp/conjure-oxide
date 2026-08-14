@@ -659,11 +659,7 @@ impl Default for TestConfig {
             skip: String::new(),
             parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
             rewriter: vec!["optimised".to_string()],
-            comprehension_expander: vec![
-                "native".to_string(),
-                "via-solver".to_string(),
-                "via-solver-ac".to_string(),
-            ],
+            comprehension_expander: vec!["auto".to_string()],
             heuristic: vec!["x".to_string()],
             channelling: vec!["no".to_string()],
             seed: 0,
@@ -732,7 +728,7 @@ impl TestConfig {
 
     pub fn configured_comprehension_expanders(&self) -> Result<Vec<QuantifiedExpander>, String> {
         let values = if self.comprehension_expander.is_empty() {
-            vec!["native".to_string()]
+            vec!["auto".to_string()]
         } else {
             self.comprehension_expander.clone()
         };
