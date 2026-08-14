@@ -6,9 +6,12 @@
 
 set -eu
 
+conjure_oxide=${CONJURE_OXIDE:-conjure-oxide}
+export conjure_oxide
+
 for formulation in guarded unguarded; do
     for n in 10 20 30 40 50 100 250; do
-        for expander in native via-solver via-solver-ac; do
+        for expander in native via-solver via-solver-ac auto; do
             rm -f \
                 "model-$formulation-$n-$expander.minion" \
                 "model-$formulation-$n-$expander.stderr" \
@@ -20,17 +23,17 @@ done
 rm -f parallel.joblog parallel.stderr
 
 if parallel -j1 --no-notice --timeout 2 --joblog parallel.joblog \
-        'if conjure-oxide solve --comprehension-expander {3} --no-run-solver --save-solver-input-file model-{1}-{2}-{3}.minion {1}.essence n{2}.param >/dev/null 2>model-{1}-{2}-{3}.stderr; then : >model-{1}-{2}-{3}.ok; else : >model-{1}-{2}-{3}.failed; fi' \
+        'if "$conjure_oxide" solve --comprehension-expander {3} --no-run-solver --save-solver-input-file model-{1}-{2}-{3}.minion {1}.essence n{2}.param >/dev/null 2>model-{1}-{2}-{3}.stderr; then : >model-{1}-{2}-{3}.ok; else : >model-{1}-{2}-{3}.failed; fi' \
         ::: guarded unguarded \
         ::: 10 20 30 40 50 100 250 \
-        ::: native via-solver via-solver-ac \
+        ::: native via-solver via-solver-ac auto \
         2>parallel.stderr; then
     :
 fi
 
 jobs_completed=$(awk 'NR > 1 { count++ } END { print count + 0 }' parallel.joblog)
-if [ "$jobs_completed" -ne 42 ]; then
-    echo "GNU Parallel ran $jobs_completed of 42 jobs" >&2
+if [ "$jobs_completed" -ne 56 ]; then
+    echo "GNU Parallel ran $jobs_completed of 56 jobs" >&2
     sed 's/^/  /' parallel.stderr >&2
     exit 1
 fi
@@ -42,7 +45,7 @@ for formulation in guarded unguarded; do
         echo "n=$n"
         reference_expander=
 
-        for expander in native via-solver via-solver-ac; do
+        for expander in native via-solver via-solver-ac auto; do
             result_prefix="model-$formulation-$n-$expander"
 
             if [ -f "$result_prefix.ok" ]; then
@@ -53,7 +56,11 @@ for formulation in guarded unguarded; do
                 elif cmp -s \
                         "model-$formulation-$n-$reference_expander.minion" \
                         "$result_prefix.minion"; then
-                    echo "  $expander: ok (agrees with $reference_expander)"
+                    if [ "$expander" = auto ]; then
+                        echo "  auto: ok"
+                    else
+                        echo "  $expander: ok (agrees with $reference_expander)"
+                    fi
                 else
                     echo "  $expander: DIFFERENT from $reference_expander"
                     diff \
@@ -73,7 +80,7 @@ done
 
 for formulation in guarded unguarded; do
     for n in 10 20 30 40 50 100 250; do
-        for expander in native via-solver via-solver-ac; do
+        for expander in native via-solver via-solver-ac auto; do
             rm -f \
                 "model-$formulation-$n-$expander.minion" \
                 "model-$formulation-$n-$expander.stderr" \
