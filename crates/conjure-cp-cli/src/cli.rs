@@ -151,10 +151,12 @@ pub struct GlobalArgs {
 
     /// Which strategy to use for expanding quantified variables in comprehensions.
     ///
-    /// Possible values: `native`, `via-solver`, `via-solver-ac`.
+    /// Possible values: `auto`, `native`, `via-solver`, `via-solver-ac`. `auto` chooses
+    /// between native and solver-backed expansion from the comprehension's estimated size and
+    /// available pruning constraints.
     #[arg(
         long,
-        default_value_t = QuantifiedExpander::Native,
+        default_value_t = QuantifiedExpander::Auto,
         value_parser = parse_comprehension_expander,
         global = true,
         help_heading = CONFIGURATION_HELP_HEADING
@@ -347,5 +349,14 @@ mod tests {
     fn compact_is_the_default_cli_heuristic() {
         let cli = Cli::try_parse_from(["conjure-oxide", "solve", "model.essence"]).unwrap();
         assert_eq!(cli.global_args.heuristic, Heuristic::Compact);
+    }
+
+    #[test]
+    fn auto_is_the_default_comprehension_expander() {
+        let cli = Cli::try_parse_from(["conjure-oxide", "solve", "model.essence"]).unwrap();
+        assert_eq!(
+            cli.global_args.comprehension_expander,
+            QuantifiedExpander::Auto
+        );
     }
 }
