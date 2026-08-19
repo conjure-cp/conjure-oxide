@@ -65,10 +65,9 @@ use super::{
 // lot bigger still when we start using it for memoisation, so it should really be
 // boxed ~niklasdewally
 
-// Grew from 120 to 152 bytes when Metadata gained a domain-memoisation cache (see
-// Metadata::domain_or_init) -- exactly the growth the TODO above anticipated.
-// expect size of Expression to be 152 bytes
-static_assertions::assert_eq_size!([u8; 152], Expression);
+// Metadata's mutex makes the exact layout platform-dependent, so enforce only the intended
+// upper bound. The largest known layout is 152 bytes.
+static_assertions::const_assert!(std::mem::size_of::<Expression>() <= 152);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
