@@ -100,17 +100,38 @@ register_representation!(
         }
 
         pub fn equality_expr(&self, other: &Self) -> Expression {
-            let constraints = self
-                .elements
-                .iter()
-                .map(|value| {
-                    Expression::Eq(
-                        Metadata::new(),
-                        Moo::new(self.frequency_expr(value.clone().into())),
-                        Moo::new(other.frequency_expr(value.clone().into())),
-                    )
-                })
-                .collect::<Vec<_>>();
+            // Counts is canonical: active value/count pairs are strictly ordered and left-aligned,
+            // while inactive slots contain count zero and the shared padding value. Equal
+            // multisets therefore have equal corresponding slots. If the representations have
+            // different capacities, every unmatched slot in the longer one must be inactive.
+            let shared_slots = self.max_distinct.min(other.max_distinct);
+            let mut constraints = Vec::new();
+            for index in 1..=shared_slots {
+                constraints.push(Expression::Eq(
+                    Metadata::new(),
+                    Moo::new(self.count_expr(index)),
+                    Moo::new(other.count_expr(index)),
+                ));
+                constraints.push(Expression::Eq(
+                    Metadata::new(),
+                    Moo::new(self.value_expr(index)),
+                    Moo::new(other.value_expr(index)),
+                ));
+            }
+            for index in (shared_slots + 1)..=self.max_distinct {
+                constraints.push(Expression::Eq(
+                    Metadata::new(),
+                    Moo::new(self.count_expr(index)),
+                    Moo::new(0.into()),
+                ));
+            }
+            for index in (shared_slots + 1)..=other.max_distinct {
+                constraints.push(Expression::Eq(
+                    Metadata::new(),
+                    Moo::new(other.count_expr(index)),
+                    Moo::new(0.into()),
+                ));
+            }
             Expression::And(Metadata::new(), Moo::new(into_matrix_expr!(constraints)))
         }
 

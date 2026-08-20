@@ -40,6 +40,36 @@ fn representation_short_names_describe_the_generated_layout() {
 }
 
 #[test]
+fn counts_equality_compares_canonical_slots_instead_of_enumerating_values() {
+    let domain = |max_size| Domain::mset(MSetAttr::new_max_size(max_size), domain_int!(1..999));
+    let mut symbols = SymbolTable::new();
+    let mut lhs = symbols.gen_find(&domain(6));
+    let mut rhs = symbols.gen_find(&domain(8));
+    MSetCounts::init_for(&mut lhs).unwrap();
+    MSetCounts::init_for(&mut rhs).unwrap();
+
+    let equality = lhs
+        .get_repr::<MSetCounts>()
+        .unwrap()
+        .equality_expr(&rhs.get_repr::<MSetCounts>().unwrap());
+    let universe = equality.universe();
+
+    // Six shared slots compare count and value; the two unmatched slots must have count zero.
+    assert_eq!(
+        universe
+            .iter()
+            .filter(|expr| matches!(expr, Expression::Eq(..)))
+            .count(),
+        14
+    );
+    assert!(
+        universe
+            .iter()
+            .all(|expr| !matches!(expr, Expression::Sum(..) | Expression::Product(..)))
+    );
+}
+
+#[test]
 fn variant_components_and_packed_round_trip() {
     let domain = Domain::variant(vec![
         Field {
