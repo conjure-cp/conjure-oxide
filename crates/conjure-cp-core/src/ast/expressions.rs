@@ -918,6 +918,63 @@ fn sum_domain_of_child(child: &Expression) -> Option<DomainPtr> {
     })
 }
 
+fn finite_mset_bounds(attrs: &MSetAttr<i32>, inner_len: i32) -> Option<((i32, i32), i32)> {
+    let min_size = attrs.size.low().copied().unwrap_or(0);
+    let max_from_size = attrs.size.high().copied();
+    let max_from_occurrence = attrs
+        .occurrence
+        .high()
+        .copied()
+        .and_then(|max| max.checked_mul(inner_len));
+    let max_size = match (max_from_size, max_from_occurrence) {
+        (Some(size), Some(occurrence)) => size.min(occurrence),
+        (Some(size), None) => size,
+        (None, Some(occurrence)) => occurrence,
+        (None, None) => return None,
+    };
+    let max_occurrence = attrs.occurrence.high().copied().unwrap_or(max_size);
+    Some(((min_size, max_size), max_occurrence))
+}
+
+/// The value-level union of two multisets adds their cardinalities and occurrence counts.
+///
+/// [`Domain::union`] instead computes a common type envelope and intentionally drops collection
+/// attributes, so it is too weak for the domain of an `a union b` expression.
+fn mset_union_result_domain(lhs: &DomainPtr, rhs: &DomainPtr) -> Option<DomainPtr> {
+    let lhs = lhs.resolve().ok()?;
+    let rhs = rhs.resolve().ok()?;
+    let GroundDomain::MSet(lhs_attrs, lhs_inner) = lhs.as_ref() else {
+        return None;
+    };
+    let GroundDomain::MSet(rhs_attrs, rhs_inner) = rhs.as_ref() else {
+        return None;
+    };
+
+    let lhs_len = i32::try_from(lhs_inner.length().ok()?).ok()?;
+    let rhs_len = i32::try_from(rhs_inner.length().ok()?).ok()?;
+    let ((lhs_min, lhs_max), lhs_max_occurrence) = finite_mset_bounds(lhs_attrs, lhs_len)?;
+    let ((rhs_min, rhs_max), rhs_max_occurrence) = finite_mset_bounds(rhs_attrs, rhs_len)?;
+
+    let min_size = lhs_min.checked_add(rhs_min)?;
+    let max_size = lhs_max.checked_add(rhs_max)?;
+    let max_occurrence = lhs_max_occurrence.checked_add(rhs_max_occurrence)?;
+    let size = Range::new(Some(min_size), Some(max_size));
+    let occurrence = Range::new(Some(1), Some(max_occurrence));
+    let representation = match (
+        lhs_attrs.representation.as_deref(),
+        rhs_attrs.representation.as_deref(),
+    ) {
+        (Some(lhs), Some(rhs)) if lhs == rhs => Some(lhs.to_owned()),
+        (Some(preference), None) | (None, Some(preference)) => Some(preference.to_owned()),
+        _ => None,
+    };
+    let inner = lhs_inner.union(rhs_inner).ok()?;
+
+    let mut attrs = MSetAttr::new(size, occurrence);
+    attrs.representation = representation;
+    Some(Domain::mset(attrs, DomainPtr::from(inner)))
+}
+
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions.
     ///
@@ -938,7 +995,11 @@ impl Expression {
     /// documented for `Reference::get_repr_as` and comprehension `ExpressionGenerator` sources.
     pub(crate) fn domain_of_uncached(&self) -> Option<DomainPtr> {
         match self {
-            Expression::Union(_, a, b) => a.domain_of()?.union(&b.domain_of()?).ok(),
+            Expression::Union(_, a, b) => {
+                let lhs = a.domain_of()?;
+                let rhs = b.domain_of()?;
+                mset_union_result_domain(&lhs, &rhs).or_else(|| lhs.union(&rhs).ok())
+            }
             Expression::Intersect(_, a, b) => a.domain_of()?.intersect(&b.domain_of()?).ok(),
             Expression::In(_, _, _) => Some(Domain::bool()),
             Expression::Supset(_, _, _) => Some(Domain::bool()),
@@ -3671,5 +3732,35 @@ mod tests {
             ]),
         );
         assert_eq!(product.domain_of(), None);
+    }
+
+    #[test]
+    fn mset_union_domain_adds_finite_operand_bounds() {
+        let lhs = DeclarationPtr::new_find(
+            Name::user("xs"),
+            Domain::mset(
+                MSetAttr::new_max_size(6).with_representation("counts"),
+                Domain::int(vec![Range::Bounded(1, 999)]),
+            ),
+        );
+        let rhs = Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::MSet(vec![1.into(), 2.into()]),
+        );
+        let union = Expression::Union(
+            Metadata::new(),
+            Moo::new(Expression::from(Reference::new(lhs))),
+            Moo::new(rhs),
+        );
+
+        let domain = union.domain_of().expect("multiset union has a domain");
+        let (attrs, inner) = domain.as_mset_ground().expect("ground multiset domain");
+        assert_eq!(attrs.size, Range::Bounded(2, 8));
+        assert_eq!(attrs.occurrence, Range::Bounded(1, 8));
+        assert_eq!(attrs.representation.as_deref(), Some("counts"));
+        assert_eq!(
+            inner.as_ref(),
+            &GroundDomain::Int(vec![Range::Bounded(1, 999)])
+        );
     }
 }

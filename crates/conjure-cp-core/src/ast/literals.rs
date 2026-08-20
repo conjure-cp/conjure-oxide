@@ -282,6 +282,7 @@ impl AbstractLiteral<Expression> {
             }
 
             AbstractLiteral::MSet(items) => {
+                let cardinality = i32::try_from(items.len()).ok()?;
                 // ensure that all items have a domain, or return None
                 let item_domains: Vec<DomainPtr> = items
                     .iter()
@@ -291,7 +292,15 @@ impl AbstractLiteral<Expression> {
                 // union all item domains together
                 let item_domain = union_item_domains(item_domains, "mset")?;
 
-                Some(Domain::mset(MSetAttr::<Int>::default(), item_domain))
+                let occurrence = if cardinality == 0 {
+                    Range::Single(0)
+                } else {
+                    Range::Bounded(1, cardinality)
+                };
+                Some(Domain::mset(
+                    MSetAttr::new(Range::Single(cardinality), occurrence),
+                    item_domain,
+                ))
             }
 
             AbstractLiteral::Sequence(elems) => {
