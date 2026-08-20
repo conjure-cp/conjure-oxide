@@ -82,21 +82,49 @@ register_representation!(
         }
 
         pub fn equality_to_literal_expr(&self, elems: &[Literal]) -> Expression {
-            let constraints = self.elements.iter().map(|value| {
-                let count = elems
-                    .iter()
-                    .filter(|elem| elem.essence_cmp(value).is_eq())
-                    .count() as i32;
-                Expression::Eq(
-                    Metadata::new(),
-                    Moo::new(self.frequency_expr(value.clone().into())),
-                    Moo::new(count.into()),
-                )
-            });
-            Expression::And(
-                Metadata::new(),
-                Moo::new(into_matrix_expr!(constraints.collect::<Vec<_>>())),
-            )
+            let mut sorted = elems.to_vec();
+            sorted.sort_by(Literal::essence_cmp);
+
+            let mut entries: Vec<(Literal, i32)> = Vec::new();
+            for value in sorted {
+                if let Some((previous, count)) = entries.last_mut()
+                    && previous.essence_cmp(&value).is_eq()
+                {
+                    *count += 1;
+                } else {
+                    entries.push((value, 1));
+                }
+            }
+
+            if entries.len() > self.max_distinct as usize {
+                return false.into();
+            }
+
+            // Counts is canonical: active value/count pairs are strictly ordered and
+            // left-aligned. A literal can therefore be channelled directly to those slots instead
+            // of comparing frequencies for every value in the element domain.
+            let mut constraints = Vec::new();
+            for index in 1..=self.max_distinct {
+                if let Some((value, count)) = entries.get(index as usize - 1) {
+                    constraints.push(Expression::Eq(
+                        Metadata::new(),
+                        Moo::new(self.count_expr(index)),
+                        Moo::new((*count).into()),
+                    ));
+                    constraints.push(Expression::Eq(
+                        Metadata::new(),
+                        Moo::new(self.value_expr(index)),
+                        Moo::new(value.clone().into()),
+                    ));
+                } else {
+                    constraints.push(Expression::Eq(
+                        Metadata::new(),
+                        Moo::new(self.count_expr(index)),
+                        Moo::new(0.into()),
+                    ));
+                }
+            }
+            Expression::And(Metadata::new(), Moo::new(into_matrix_expr!(constraints)))
         }
 
         pub fn equality_expr(&self, other: &Self) -> Expression {
