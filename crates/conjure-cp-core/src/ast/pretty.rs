@@ -252,7 +252,8 @@ mod tests {
 /// ```
 ///
 /// When a representation has been selected for an abstract domain, the domain is printed with
-/// that representation's short name, e.g. `find x: set{occurrence} (maxSize 3) of int(1..4)`.
+/// that representation's short name, e.g.
+/// `find x: set (representation occurrence, maxSize 3) of int(1..4)`.
 ///
 /// Returns None if the symbol is not in the symbol table, or if it is not a variable.
 pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
@@ -293,7 +294,7 @@ fn format_domain_with_selected_representation(
 
 /// Pretty-print a find/findAux declaration with `repr` annotated on its domain.
 ///
-/// Example: `find x: set{packed} (maxSize 3) of int(1..4)`.
+/// Example: `find x: set (representation packed, maxSize 3) of int(1..4)`.
 pub fn pretty_find_with_representation(
     decl: &crate::ast::DeclarationPtr,
     repr: &str,
@@ -315,39 +316,27 @@ pub fn format_domain_with_representation(domain: &crate::ast::DomainPtr, repr: &
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
             GroundDomain::Set(attrs, inner) => {
-                let size = attrs.to_string();
-                if size.is_empty() {
-                    format!("set{{{repr}}} of {inner}")
-                } else {
-                    format!("set{{{repr}}} {size} of {inner}")
-                }
+                let mut attrs = attrs.clone();
+                attrs.representation = Some(repr.to_owned());
+                format!("set {attrs} of {inner}")
             }
             GroundDomain::MSet(attrs, inner) => {
-                let attributes = attrs.to_string();
-                if attributes.is_empty() {
-                    format!("mset{{{repr}}} of {inner}")
-                } else {
-                    format!("mset{{{repr}}} {attributes} of {inner}")
-                }
+                let mut attrs = attrs.clone();
+                attrs.representation = Some(repr.to_owned());
+                format!("mset {attrs} of {inner}")
             }
             _ => domain.to_string(),
         },
         Domain::Unresolved(ud) => match ud.as_ref() {
             UnresolvedDomain::Set(attrs, inner) => {
-                let size = attrs.to_string();
-                if size.is_empty() {
-                    format!("set{{{repr}}} of {inner}")
-                } else {
-                    format!("set{{{repr}}} {size} of {inner}")
-                }
+                let mut attrs = attrs.clone();
+                attrs.representation = Some(repr.to_owned());
+                format!("set {attrs} of {inner}")
             }
             UnresolvedDomain::MSet(attrs, inner) => {
-                let attributes = attrs.to_string();
-                if attributes.is_empty() {
-                    format!("mset{{{repr}}} of {inner}")
-                } else {
-                    format!("mset{{{repr}}} {attributes} of {inner}")
-                }
+                let mut attrs = attrs.clone();
+                attrs.representation = Some(repr.to_owned());
+                format!("mset {attrs} of {inner}")
             }
             _ => domain.to_string(),
         },

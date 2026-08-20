@@ -203,7 +203,7 @@ impl Drop for HeuristicGuard {
 /// do matter: `x` keeps enumerating combinations of the real model only, the random stream is not
 /// advanced, and the interactive heuristic does not ask the user about throwaway variables.
 ///
-/// A representation named on the domain itself (`set{packed}`) still wins -- representation
+/// A representation named on the domain itself (`set (representation packed)`) still wins -- representation
 /// selection honours that before it consults the heuristic at all.
 pub fn with_compact_heuristic<T>(f: impl FnOnce() -> T) -> T {
     let previous = heuristic();

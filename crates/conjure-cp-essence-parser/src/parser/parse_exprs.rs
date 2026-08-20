@@ -221,7 +221,7 @@ mod test {
         );
         symbols.write().insert(x).unwrap();
 
-        let find_domain = parse_expr("x : set{packed} of int", symbols.clone())
+        let find_domain = parse_expr("x : set (representation packed) of int", symbols.clone())
             .unwrap()
             .unwrap();
         let Expression::DomainAnnotation(_, _, domain) = find_domain else {
@@ -230,21 +230,30 @@ mod test {
         assert_eq!(domain.representation_preference(), Some("packed"));
         assert_eq!(
             domain.to_string(),
-            "set{packed} of int(-2147483647..2147483647)"
+            "set (representation packed) of int(-2147483647..2147483647)"
         );
 
-        let type_ann = parse_expr("x :: set{occurrence} of int", symbols.clone())
-            .unwrap()
-            .unwrap();
-        assert_eq!(type_ann.to_string(), "x :: set{occurrence} of int");
+        let type_ann = parse_expr(
+            "x :: set (representation occurrence) of int",
+            symbols.clone(),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(
+            type_ann.to_string(),
+            "x :: set (representation occurrence) of int"
+        );
         let Expression::TypeAnnotation(_, _, ty_domain) = type_ann else {
             panic!("expected type annotation");
         };
         assert_eq!(ty_domain.representation_preference(), Some("occurrence"));
 
-        let nested = parse_expr("x : set{explicit} of set{occurrence} of int", symbols)
-            .unwrap()
-            .unwrap();
+        let nested = parse_expr(
+            "x : set (representation explicit) of set (representation occurrence) of int",
+            symbols,
+        )
+        .unwrap()
+        .unwrap();
         let Expression::DomainAnnotation(_, _, nested_domain) = nested else {
             panic!("expected domain annotation");
         };
@@ -253,7 +262,7 @@ mod test {
         assert_eq!(inner.representation_preference(), Some("occurrence"));
         assert_eq!(
             nested_domain.to_string(),
-            "set{explicit} of set{occurrence} of int(-2147483647..2147483647)"
+            "set (representation explicit) of set (representation occurrence) of int(-2147483647..2147483647)"
         );
     }
 
@@ -264,7 +273,7 @@ mod test {
         symbols.write().insert(x).unwrap();
 
         let annotation = parse_expr(
-            "x : matrix indexed by [int(1..2)] of record { before: mset{repetition} (maxSize 6) of int(1..9) }",
+            "x : matrix indexed by [int(1..2)] of record { before: mset (representation repetition, maxSize 6) of int(1..9) }",
             symbols,
         )
         .unwrap()
@@ -284,7 +293,25 @@ mod test {
         assert_eq!(before.representation_preference(), Some("repetition"));
         assert_eq!(
             domain.to_string(),
-            "matrix indexed by [int(1..2)] of record {before: mset{repetition} (maxSize 6) of int(1..9)}"
+            "matrix indexed by [int(1..2)] of record {before: mset (representation repetition, maxSize 6) of int(1..9)}"
+        );
+    }
+
+    #[test]
+    pub fn test_braced_representation_preference_is_rejected() {
+        let symbols = SymbolTablePtr::new();
+        let x = DeclarationPtr::new_find(Name::User("x".into()), Domain::bool());
+        symbols.write().insert(x).unwrap();
+
+        assert!(
+            parse_expr("x : set{packed} of int", symbols.clone())
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            parse_expr("x : mset{counts} of int", symbols)
+                .unwrap()
+                .is_none()
         );
     }
 
@@ -338,9 +365,12 @@ mod test {
         );
         symbols.write().insert(x).unwrap();
 
-        let expr = parse_expr("1 in x :: set{packed} of int", symbols.clone())
-            .unwrap()
-            .unwrap();
+        let expr = parse_expr(
+            "1 in x :: set (representation packed) of int",
+            symbols.clone(),
+        )
+        .unwrap()
+        .unwrap();
         println!("no parens: {expr}");
         assert!(
             matches!(expr, Expression::In(_, _, _)),
@@ -354,7 +384,7 @@ mod test {
             "expected type annotation on in-rhs, got {rhs:?}"
         );
 
-        let expr = parse_expr("1 in (x :: set{packed} of int)", symbols)
+        let expr = parse_expr("1 in (x :: set (representation packed) of int)", symbols)
             .unwrap()
             .unwrap();
         println!("with parens: {expr}");
@@ -364,7 +394,7 @@ mod test {
         // Parentheses may wrap as Atomic-ish structure; accept TypeAnnotation directly or inside.
         let rhs_str = rhs.to_string();
         assert!(
-            rhs_str.contains("set{packed}")
+            rhs_str.contains("set (representation packed)")
                 || matches!(rhs.as_ref(), Expression::TypeAnnotation(_, _, _)),
             "expected annotated set on rhs, got {rhs:?}"
         );

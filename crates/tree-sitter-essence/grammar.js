@@ -171,37 +171,22 @@ module.exports = grammar ({
 
     set_domain: $ => seq(
         "set",
-        optional(seq("{", field("representation", $.identifier), "}")),
         optional(seq("(", $.set_attributes, ")")),
         "of",
         field("value_domain", $.domain)
     ),
 
-    set_attributes: $ => choice(
-      seq(
-        field("attribute", "size"),
-        field("size_value", $.integer)
-      ),
-      seq(
-        field("attribute", "minSize"),
-        field("min_value", $.integer)
-      ),
-      seq(
-        field("attribute", "maxSize"),
-        field("max_value", $.integer)
-      ),
-      seq(
-        field("attribute", "minSize"),
-        field("min_value", $.integer),
-        ",",
-        field("attribute", "maxSize"),
-        field("max_value", $.integer)
-      )
+    set_attributes: $ => commaSep1($.set_attribute),
+
+    set_attribute: $ => choice(
+      seq(field("attribute", "size"), field("value", $.integer)),
+      seq(field("attribute", "minSize"), field("value", $.integer)),
+      seq(field("attribute", "maxSize"), field("value", $.integer)),
+      seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
     mset_domain: $ => seq(
       "mset",
-      optional(seq("{", field("representation", $.identifier), "}")),
       optional(seq("(", $.mset_attributes, ")")),
       "of",
       field("value_domain", $.domain)
@@ -214,7 +199,8 @@ module.exports = grammar ({
       seq(field("attribute", "minSize"), field("value", $.integer)),
       seq(field("attribute", "maxSize"), field("value", $.integer)),
       seq(field("attribute", "minOccur"), field("value", $.integer)),
-      seq(field("attribute", "maxOccur"), field("value", $.integer))
+      seq(field("attribute", "maxOccur"), field("value", $.integer)),
+      seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
     // e.g. sequence (size 2) of int(1..3), sequence (maxSize 3) of int(0..2),
@@ -1048,7 +1034,6 @@ module.exports = grammar ({
 
     annotation_set_domain: $ => seq(
       "set",
-      optional(seq("{", field("representation", $.identifier), "}")),
       optional(seq("(", $.set_attributes, ")")),
       "of",
       field("value_domain", $.annotation_domain)
@@ -1056,7 +1041,6 @@ module.exports = grammar ({
 
     annotation_mset_domain: $ => seq(
       "mset",
-      optional(seq("{", field("representation", $.identifier), "}")),
       optional(seq("(", $.mset_attributes, ")")),
       "of",
       field("value_domain", $.annotation_domain)

@@ -24,7 +24,7 @@ register_rule_set!("ReprGeneral", ("Base"), |_| true);
 
 /// Select a representation named in a `: domain` or `:: type` annotation.
 ///
-/// Example: `1 in (x :: set{packed} of int)` selects the packed representation for this use of `x`.
+/// Example: `1 in (x :: set (representation packed) of int)` selects the packed representation for this use of `x`.
 /// Using different representations at different call sites requires channelling (`--channelling yes`).
 #[register_rule("ReprGeneral", 10200, [In, TypeAnnotation, DomainAnnotation])]
 fn select_representation_from_annotation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -212,7 +212,7 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
         .collect();
     candidates.sort_by_key(|(rule, _)| rule.name());
 
-    // User-specified representation preference on the domain (e.g. set{packed}) defaults the choice
+    // User-specified representation preference on the domain (e.g. set (representation packed)) defaults the choice
     // when that representation is applicable.
     if let Some(dom) = decl.domain()
         && let Some(pref) = dom.representation_preference()

@@ -1767,9 +1767,9 @@ impl GroundDomain {
             GroundDomain::Set(attrs, inner) => {
                 let mut out = String::from("set");
                 if let Some(repr) = &attrs.representation {
-                    out.push('{');
+                    out.push_str(" (representation ");
                     out.push_str(repr);
-                    out.push('}');
+                    out.push(')');
                 }
                 out.push_str(" of ");
                 out.push_str(&inner.as_type_string());
@@ -1778,9 +1778,9 @@ impl GroundDomain {
             GroundDomain::MSet(attrs, inner) => {
                 let mut out = String::from("mset");
                 if let Some(repr) = &attrs.representation {
-                    out.push('{');
+                    out.push_str(" (representation ");
                     out.push_str(repr);
-                    out.push('}');
+                    out.push(')');
                 }
                 out.push_str(" of ");
                 out.push_str(&inner.as_type_string());
@@ -1904,9 +1904,6 @@ impl Display for GroundDomain {
             }
             GroundDomain::Set(attrs, inner_dom) => {
                 write!(f, "set")?;
-                if let Some(repr) = &attrs.representation {
-                    write!(f, "{{{repr}}}")?;
-                }
                 let attrs = attrs.to_string();
                 if attrs.is_empty() {
                     write!(f, " of {inner_dom}")
@@ -1916,9 +1913,6 @@ impl Display for GroundDomain {
             }
             GroundDomain::MSet(attrs, inner_dom) => {
                 write!(f, "mset")?;
-                if let Some(repr) = &attrs.representation {
-                    write!(f, "{{{repr}}}")?;
-                }
                 let attrs = attrs.to_string();
                 if attrs.is_empty() {
                     write!(f, " of {inner_dom}")

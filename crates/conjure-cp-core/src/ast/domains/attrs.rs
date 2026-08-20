@@ -12,7 +12,7 @@ pub struct SetAttr<A = Int> {
     pub size: Range<A>,
     /// Optional user-facing representation preference (short name), e.g. `"packed"`.
     ///
-    /// Written in Essence as `set{packed} of …`. When present, representation selection
+    /// Written in Essence as `set (representation packed) of …`. When present, representation selection
     /// heuristics default to this representation if it is applicable.
     pub representation: Option<String>,
 }
@@ -59,10 +59,18 @@ impl<A> Default for SetAttr<A> {
 
 impl<A: Display> Display for SetAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        // Representation is printed by the domain (`set{name}`), not inside size attributes.
-        match self.size {
-            Range::Unbounded => Ok(()),
-            _ => write!(f, "({})", fmt_size("size", &self.size)),
+        let mut attrs = Vec::new();
+        if let Some(representation) = &self.representation {
+            attrs.push(format!("representation {representation}"));
+        }
+        let size = fmt_size("size", &self.size);
+        if !size.is_empty() {
+            attrs.push(size);
+        }
+        if attrs.is_empty() {
+            Ok(())
+        } else {
+            write!(f, "({})", attrs.join(", "))
         }
     }
 }
@@ -74,7 +82,7 @@ pub struct MSetAttr<A = Int> {
     pub occurrence: Range<A>,
     /// Optional user-facing representation preference (short name), e.g. `"repetition"`.
     ///
-    /// Written in Essence as `mset{repetition} of …`. When present, representation selection
+    /// Written in Essence as `mset (representation repetition) of …`. When present, representation selection
     /// heuristics default to this representation if it is applicable.
     #[serde(default)]
     pub representation: Option<String>,
@@ -126,7 +134,12 @@ impl<A: Display> Display for MSetAttr<A> {
             Range::Unbounded => "".to_string(),
         };
 
-        let mut strs = [size_str, occ_str]
+        let representation_str = self
+            .representation
+            .as_ref()
+            .map(|name| format!("representation {name}"))
+            .unwrap_or_default();
+        let mut strs = [representation_str, size_str, occ_str]
             .iter()
             .filter(|s| !s.is_empty())
             .join(", ");

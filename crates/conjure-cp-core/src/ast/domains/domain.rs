@@ -539,7 +539,7 @@ impl Domain {
     /// User-specified representation preference on this domain, if any (Essence short name).
     ///
     /// For set, multiset, and sequence domains this is the optional name in
-    /// `set{packed} of …` / `mset{repetition} of …` / `sequence{packed} of …`. Nested
+    /// `set (representation packed) of …` / `mset (representation repetition) of …`. Nested
     /// preferences on element domains are not returned here; only the preference attached to
     /// this domain node.
     pub fn representation_preference(&self) -> Option<&str> {
@@ -575,7 +575,7 @@ impl Domain {
         }
     }
 
-    /// Format this domain in Essence type style (`int`, `set{packed} of int`, …),
+    /// Format this domain in Essence type style (`int`, `set (representation packed) of int`, …),
     /// omitting size attributes and integer ranges.
     pub fn as_type_string(&self) -> String {
         match self {
@@ -1241,8 +1241,11 @@ mod tests {
             SetAttr::new_max_size(3).with_representation("packed"),
             domain_int!(1..4),
         );
-        assert_eq!(s.to_string(), "set{packed} (maxSize 3) of int(1..4)");
-        assert_eq!(s.as_type_string(), "set{packed} of int");
+        assert_eq!(
+            s.to_string(),
+            "set (representation packed, maxSize 3) of int(1..4)"
+        );
+        assert_eq!(s.as_type_string(), "set (representation packed) of int");
         assert_eq!(s.representation_preference(), Some("packed"));
 
         let nested = Domain::set(
@@ -1254,11 +1257,11 @@ mod tests {
         );
         assert_eq!(
             nested.to_string(),
-            "set{explicit} of set{occurrence} of int(1..2)"
+            "set (representation explicit) of set (representation occurrence) of int(1..2)"
         );
         assert_eq!(
             nested.as_type_string(),
-            "set{explicit} of set{occurrence} of int"
+            "set (representation explicit) of set (representation occurrence) of int"
         );
     }
 
@@ -1277,15 +1280,18 @@ mod tests {
         );
 
         assert_eq!(mset.representation_preference(), Some("repetition"));
-        assert_eq!(mset.as_type_string(), "mset{repetition} of int");
+        assert_eq!(
+            mset.as_type_string(),
+            "mset (representation repetition) of int"
+        );
         assert_eq!(
             mset.to_string(),
-            "mset{repetition} (maxSize 6) of int(1..9)"
+            "mset (representation repetition, maxSize 6) of int(1..9)"
         );
         assert!(nested.has_representation_preference());
         assert_eq!(
             nested.to_string(),
-            "matrix indexed by [int(1..2)] of record {before: mset{repetition} (maxSize 6) of int(1..9)}"
+            "matrix indexed by [int(1..2)] of record {before: mset (representation repetition, maxSize 6) of int(1..9)}"
         );
     }
 

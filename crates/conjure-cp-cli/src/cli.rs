@@ -206,7 +206,7 @@ pub struct GlobalArgs {
     ///
     /// Possible values: `no`, `yes`. Channelling is disabled by default. Enable `yes` to allow
     /// different representations of the same variable at different call sites, e.g.
-    /// `1 in (x :: set{packed} of int) /\ 2 in (x :: set{occurrence} of int)`.
+    /// `1 in (x :: set (representation packed) of int) /\ 2 in (x :: set (representation occurrence) of int)`.
     #[arg(
         long,
         default_value_t = Channelling::No,

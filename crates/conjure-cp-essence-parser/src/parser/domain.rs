@@ -96,9 +96,7 @@ fn parse_mset_domain(
     ctx: &mut ParseContext,
     mset_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
-    let representation = mset_domain
-        .child_by_field_name("representation")
-        .map(|node| ctx.source_code[node.start_byte()..node.end_byte()].to_string());
+    let mut representation = None;
     let mut size = Range::Unbounded;
     let mut occurrence = Range::Unbounded;
     let mut min_size = None;
@@ -115,13 +113,20 @@ fn parse_mset_domain(
                     let Some(value_node) = attribute.child_by_field_name("value") else {
                         return Ok(None);
                     };
-                    let Some(value) = parse_int(ctx, &value_node) else {
-                        return Ok(None);
-                    };
                     let name = attribute
                         .child_by_field_name("attribute")
                         .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
                         .unwrap_or_default();
+                    if name == "representation" {
+                        representation = Some(
+                            ctx.source_code[value_node.start_byte()..value_node.end_byte()]
+                                .to_string(),
+                        );
+                        continue;
+                    }
+                    let Some(value) = parse_int(ctx, &value_node) else {
+                        return Ok(None);
+                    };
                     match name {
                         "size" => size = Range::Single(value),
                         "minSize" => min_size = Some(value),
@@ -872,52 +877,39 @@ pub fn parse_set_domain(
     ctx: &mut ParseContext,
     set_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
-    let mut set_attribute: Option<SetAttr> = None;
+    let mut size = Range::Unbounded;
+    let mut min_size = None;
+    let mut max_size = None;
+    let mut representation = None;
     let mut value_domain: Option<DomainPtr> = None;
-
-    let representation = set_domain
-        .child_by_field_name("representation")
-        .map(|node| ctx.source_code[node.start_byte()..node.end_byte()].to_string());
 
     for child in named_children(&set_domain) {
         match child.kind() {
-            "identifier" => {
-                // Representation preference is handled via the `representation` field above.
-            }
             "set_attributes" => {
-                // Check if we have both minSize and maxSize (minMax case)
-                let min_value_node = child.child_by_field_name("min_value");
-                let max_value_node = child.child_by_field_name("max_value");
-                let size_value_node = child.child_by_field_name("size_value");
-
-                if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
-                    // MinMax case
-                    let Some(min_val) = parse_int(ctx, &min_node) else {
+                for attribute in named_children(&child) {
+                    let Some(value_node) = attribute.child_by_field_name("value") else {
                         return Ok(None);
                     };
-                    let Some(max_val) = parse_int(ctx, &max_node) else {
+                    let name = attribute
+                        .child_by_field_name("attribute")
+                        .map(|node| &ctx.source_code[node.start_byte()..node.end_byte()])
+                        .unwrap_or_default();
+                    if name == "representation" {
+                        representation = Some(
+                            ctx.source_code[value_node.start_byte()..value_node.end_byte()]
+                                .to_string(),
+                        );
+                        continue;
+                    }
+                    let Some(value) = parse_int(ctx, &value_node) else {
                         return Ok(None);
                     };
-
-                    set_attribute = Some(SetAttr::new_min_max_size(min_val, max_val));
-                } else if let Some(size_node) = size_value_node {
-                    // Size case
-                    let Some(size_val) = parse_int(ctx, &size_node) else {
-                        return Ok(None);
-                    };
-                    set_attribute = Some(SetAttr::new_size(size_val));
-                } else if let Some(min_node) = min_value_node {
-                    // MinSize only case
-                    let Some(min_val) = parse_int(ctx, &min_node) else {
-                        return Ok(None);
-                    };
-                    set_attribute = Some(SetAttr::new_min_size(min_val));
-                } else if let Some(max_node) = max_value_node {
-                    // MaxSize only case
-                    let Some(max_val) = parse_int(ctx, &max_node) else {
-                        return Ok(None);
-                    };
-                    set_attribute = Some(SetAttr::new_max_size(max_val));
+                    match name {
+                        "size" => size = Range::Single(value),
+                        "minSize" => min_size = Some(value),
+                        "maxSize" => max_size = Some(value),
+                        _ => return Ok(None),
+                    }
                 }
             }
             "domain" | "annotation_domain" => {
@@ -941,7 +933,15 @@ pub fn parse_set_domain(
         let set_keyword_node = child!(set_domain, 0, "set");
         // No documentation available for set domain, using fallback description
         ctx.add_span_and_doc_hover(&set_keyword_node, "set", SymbolKind::Domain, None, None);
-        let mut attr = set_attribute.unwrap_or_default();
+        if !matches!(size, Range::Single(_)) {
+            size = match (min_size, max_size) {
+                (Some(min), Some(max)) => Range::Bounded(min, max),
+                (Some(min), None) => Range::UnboundedR(min),
+                (None, Some(max)) => Range::UnboundedL(max),
+                (None, None) => Range::Unbounded,
+            };
+        }
+        let mut attr = SetAttr::new(size);
         if let Some(repr) = representation {
             attr = attr.with_representation(repr);
         }
