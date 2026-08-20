@@ -7,7 +7,7 @@ use conjure_cp::settings::{
     Channelling, DEFAULT_HEURISTIC_SEED, DEFAULT_MINION_DISCRETE_THRESHOLD, Heuristic,
     Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
 };
-use conjure_cp::solver::adaptors::MinionValueOrder;
+use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder};
 
 use crate::{pretty, solve, test_solve};
 
@@ -243,6 +243,19 @@ pub struct GlobalArgs {
     )]
     pub minion_discrete_threshold: usize,
 
+    /// Override Minion variable ordering.
+    ///
+    /// Possible values: `static`, `sdf`, `srf`, `ldf`, `random`, `conflict`, `wdeg`,
+    /// `domoverwdeg`.
+    #[arg(
+        long,
+        value_name = "ORDER",
+        value_parser = parse_minion_variable_order,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub minion_varorder: Option<MinionVariableOrder>,
+
     /// Override Minion value ordering.
     ///
     /// Possible values: `ascend`, `descend`, `random`.
@@ -341,6 +354,23 @@ fn parse_minion_value_order(input: &str) -> Result<MinionValueOrder, String> {
     }
 }
 
+fn parse_minion_variable_order(input: &str) -> Result<MinionVariableOrder, String> {
+    match input {
+        "static" => Ok(MinionVariableOrder::Static),
+        "sdf" => Ok(MinionVariableOrder::SmallestDomainFirst),
+        "srf" => Ok(MinionVariableOrder::SmallestRatioFirst),
+        "ldf" => Ok(MinionVariableOrder::LargestDomainFirst),
+        "random" => Ok(MinionVariableOrder::Random),
+        "conflict" => Ok(MinionVariableOrder::Conflict),
+        "wdeg" => Ok(MinionVariableOrder::WeightedDegree),
+        "domoverwdeg" => Ok(MinionVariableOrder::DomainOverWeightedDegree),
+        other => Err(format!(
+            "unknown minion variable order '{other}', expected one of: static, sdf, srf, ldf, \
+             random, conflict, wdeg, domoverwdeg"
+        )),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -358,5 +388,31 @@ mod tests {
             cli.global_args.comprehension_expander,
             QuantifiedExpander::Auto
         );
+    }
+
+    #[test]
+    fn parses_all_minion_variable_orders() {
+        let cases = [
+            ("static", MinionVariableOrder::Static),
+            ("sdf", MinionVariableOrder::SmallestDomainFirst),
+            ("srf", MinionVariableOrder::SmallestRatioFirst),
+            ("ldf", MinionVariableOrder::LargestDomainFirst),
+            ("random", MinionVariableOrder::Random),
+            ("conflict", MinionVariableOrder::Conflict),
+            ("wdeg", MinionVariableOrder::WeightedDegree),
+            ("domoverwdeg", MinionVariableOrder::DomainOverWeightedDegree),
+        ];
+
+        for (name, expected) in cases {
+            let cli = Cli::try_parse_from([
+                "conjure-oxide",
+                "solve",
+                "model.essence",
+                "--minion-varorder",
+                name,
+            ])
+            .unwrap();
+            assert_eq!(cli.global_args.minion_varorder, Some(expected));
+        }
     }
 }

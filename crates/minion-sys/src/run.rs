@@ -112,6 +112,33 @@ pub enum ValueOrder {
     Random,
 }
 
+/// Variable-order override for Minion search.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VariableOrder {
+    Static,
+    SmallestDomainFirst,
+    SmallestRatioFirst,
+    LargestDomainFirst,
+    Random,
+    Conflict,
+    WeightedDegree,
+    DomainOverWeightedDegree,
+}
+
+impl VariableOrder {
+    fn ffi_order(self) -> ffi::VarOrderEnum {
+        match self {
+            VariableOrder::Static | VariableOrder::Random => ffi::VarOrderEnum_ORDER_STATIC,
+            VariableOrder::SmallestDomainFirst => ffi::VarOrderEnum_ORDER_SDF,
+            VariableOrder::SmallestRatioFirst => ffi::VarOrderEnum_ORDER_SRF,
+            VariableOrder::LargestDomainFirst => ffi::VarOrderEnum_ORDER_LDF,
+            VariableOrder::Conflict => ffi::VarOrderEnum_ORDER_CONFLICT,
+            VariableOrder::WeightedDegree => ffi::VarOrderEnum_ORDER_WDEG,
+            VariableOrder::DomainOverWeightedDegree => ffi::VarOrderEnum_ORDER_DOMOVERWDEG,
+        }
+    }
+}
+
 /// Minion preprocess strength applied before search.
 ///
 /// Matches the `-preprocess` levels accepted by the Minion CLI. SavileRow's
@@ -133,6 +160,8 @@ pub enum PreprocessLevel {
 /// Optional runtime controls for [`run_minion_with_options`].
 #[derive(Debug, Clone, Copy)]
 pub struct RunOptions {
+    /// Override Minion variable ordering.
+    pub variable_order: Option<VariableOrder>,
     /// Override Minion value ordering.
     ///
     /// When unset, Minion keeps its default behaviour (or whatever was encoded
@@ -147,6 +176,7 @@ pub struct RunOptions {
 impl Default for RunOptions {
     fn default() -> Self {
         Self {
+            variable_order: None,
             value_order: None,
             preprocess: PreprocessLevel::SacBoundsLimit,
         }
@@ -275,6 +305,10 @@ pub fn run_minion_with_options(
         // themselves instead of going through this wrapper.
         (*search_opts).silent = true;
         (*search_opts).print_solution = false;
+        if let Some(variable_order) = options.variable_order {
+            (*search_method).order = variable_order.ffi_order();
+            (*search_opts).randomiseValvarorder = matches!(variable_order, VariableOrder::Random);
+        }
         if let Some(value_order) = options.value_order {
             let value_order = match value_order {
                 ValueOrder::Ascend => ffi::ValOrderEnum_VALORDER_ASCEND,
