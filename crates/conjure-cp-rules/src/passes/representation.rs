@@ -110,6 +110,35 @@ fn select_representation(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult
     Ok(Reduction::new(re.into(), new_constraints, new_symbols))
 }
 
+/// Select the representation on an auxiliary declaration's result reference as well as on its
+/// declaration. Unlike ordinary references, this reference is stored outside the expression's
+/// child list and is therefore not visited by `select_representation` above.
+#[register_rule("ReprGeneral", 10000, [AuxDeclaration])]
+fn select_aux_declaration_representation(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    let Expr::AuxDeclaration(meta, reference, inner) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    guard!(
+        domain_needs_representation(&reference.domain_of()) && reference.repr.is_none()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    let mut reference = reference.clone();
+    let Some(rule) = choose_representation_rule(reference.ptr(), symtab) else {
+        return Err(RuleNotApplicable);
+    };
+    let (_, new_symbols, new_constraints) = reference
+        .select_or_init_repr_via(rule)
+        .map_err(|_| RuleNotApplicable)?;
+    Ok(Reduction::new(
+        Expr::AuxDeclaration(meta.clone(), reference, inner.clone()),
+        new_constraints,
+        new_symbols,
+    ))
+}
+
 /// Select a representation for unconstrained finds with abstract domains
 #[register_rule("ReprGeneral", 9900, [Root])]
 fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
@@ -431,6 +460,33 @@ mod tests {
         );
 
         assert!(get_applicable_repr_by_short_name(&declaration, "explicit").is_none());
+    }
+
+    #[test]
+    fn auxiliary_declaration_reference_selects_the_initialised_representation() {
+        use conjure_cp::ast::{AbstractLiteral, Expression, Metadata, Moo, Reference};
+
+        let mut symbols = SymbolTable::new();
+        let declaration = symbols.gen_find_auxiliary(&Domain::mset(
+            MSetAttr::new_max_size(2).with_representation("counts"),
+            domain_int!(1..3),
+        ));
+        let auxiliary = Expression::AuxDeclaration(
+            Metadata::new(),
+            Reference::new(declaration),
+            Moo::new(Expression::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::MSet(vec![1.into(), 2.into()]),
+            )),
+        );
+
+        let rewritten = select_aux_declaration_representation(&auxiliary, &symbols)
+            .unwrap()
+            .new_expression;
+        let Expression::AuxDeclaration(_, selected, _) = rewritten else {
+            panic!("expected an auxiliary declaration, got {rewritten}");
+        };
+        assert_eq!(selected.get_repr().unwrap().0.short_name(), "counts");
     }
 
     #[test]
