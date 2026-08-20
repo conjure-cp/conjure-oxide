@@ -96,7 +96,7 @@ fn parse_mset_domain(
     ctx: &mut ParseContext,
     mset_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
-    let _representation = mset_domain
+    let representation = mset_domain
         .child_by_field_name("representation")
         .map(|node| ctx.source_code[node.start_byte()..node.end_byte()].to_string());
     let mut size = Range::Unbounded;
@@ -159,7 +159,10 @@ fn parse_mset_domain(
         ));
         return Ok(None);
     };
-    let attrs = MSetAttr::new(size, occurrence);
+    let mut attrs = MSetAttr::new(size, occurrence);
+    if let Some(representation) = representation {
+        attrs = attrs.with_representation(representation);
+    }
     Ok(Some(Domain::mset(attrs, value_domain)))
 }
 

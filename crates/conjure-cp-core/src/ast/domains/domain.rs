@@ -538,14 +538,21 @@ impl Domain {
 
     /// User-specified representation preference on this domain, if any (Essence short name).
     ///
-    /// For set and sequence domains this is the optional name in `set{packed} of …` /
-    /// `sequence{packed} of …`. Nested preferences on element domains are not returned here;
-    /// only the preference attached to this domain node.
+    /// For set, multiset, and sequence domains this is the optional name in
+    /// `set{packed} of …` / `mset{repetition} of …` / `sequence{packed} of …`. Nested
+    /// preferences on element domains are not returned here; only the preference attached to
+    /// this domain node.
     pub fn representation_preference(&self) -> Option<&str> {
         if let Some(GroundDomain::Set(attr, _)) = self.as_ground() {
             return attr.representation.as_deref();
         }
         if let Some(UnresolvedDomain::Set(attr, _)) = self.as_unresolved() {
+            return attr.representation.as_deref();
+        }
+        if let Some(GroundDomain::MSet(attr, _)) = self.as_ground() {
+            return attr.representation.as_deref();
+        }
+        if let Some(UnresolvedDomain::MSet(attr, _)) = self.as_unresolved() {
             return attr.representation.as_deref();
         }
         if let Some(GroundDomain::Sequence(attr, _)) = self.as_ground() {
@@ -1252,6 +1259,33 @@ mod tests {
         assert_eq!(
             nested.as_type_string(),
             "set{explicit} of set{occurrence} of int"
+        );
+    }
+
+    #[test]
+    fn test_mset_representation_preference_survives_nesting() {
+        let mset = Domain::mset(
+            MSetAttr::new_max_size(IntVal::Const(6)).with_representation("repetition"),
+            domain_int!(1..9),
+        );
+        let nested = Domain::matrix(
+            Domain::record(vec![Field {
+                name: Name::user("before"),
+                value: mset.clone(),
+            }]),
+            vec![domain_int!(1..2)],
+        );
+
+        assert_eq!(mset.representation_preference(), Some("repetition"));
+        assert_eq!(mset.as_type_string(), "mset{repetition} of int");
+        assert_eq!(
+            mset.to_string(),
+            "mset{repetition} (maxSize 6) of int(1..9)"
+        );
+        assert!(nested.has_representation_preference());
+        assert_eq!(
+            nested.to_string(),
+            "matrix indexed by [int(1..2)] of record {before: mset{repetition} (maxSize 6) of int(1..9)}"
         );
     }
 

@@ -302,7 +302,7 @@ impl UnresolvedDomain {
         }
     }
 
-    /// True if any set domain in this tree has a representation preference.
+    /// True if any domain in this tree has a representation preference.
     pub fn has_representation_preference(&self) -> bool {
         match self {
             UnresolvedDomain::Int(_) => false,
@@ -325,7 +325,9 @@ impl UnresolvedDomain {
             UnresolvedDomain::Set(attr, inner) => {
                 attr.representation.is_some() || inner.has_representation_preference()
             }
-            UnresolvedDomain::MSet(_, inner) => inner.has_representation_preference(),
+            UnresolvedDomain::MSet(attr, inner) => {
+                attr.representation.is_some() || inner.has_representation_preference()
+            }
             UnresolvedDomain::Function(_, dom, cdom) => {
                 dom.has_representation_preference() || cdom.has_representation_preference()
             }
@@ -382,7 +384,17 @@ impl UnresolvedDomain {
                 out.push_str(&inner.as_type_string());
                 out
             }
-            UnresolvedDomain::MSet(_, inner) => format!("mset of {}", inner.as_type_string()),
+            UnresolvedDomain::MSet(attrs, inner) => {
+                let mut out = String::from("mset");
+                if let Some(repr) = &attrs.representation {
+                    out.push('{');
+                    out.push_str(repr);
+                    out.push('}');
+                }
+                out.push_str(" of ");
+                out.push_str(&inner.as_type_string());
+                out
+            }
             UnresolvedDomain::Function(_, dom, cdom) => {
                 format!(
                     "function {} --> {}",
@@ -511,7 +523,18 @@ impl Display for UnresolvedDomain {
                     write!(f, " {attrs} of {inner_dom}")
                 }
             }
-            UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
+            UnresolvedDomain::MSet(attrs, inner_dom) => {
+                write!(f, "mset")?;
+                if let Some(repr) = &attrs.representation {
+                    write!(f, "{{{repr}}}")?;
+                }
+                let attrs = attrs.to_string();
+                if attrs.is_empty() {
+                    write!(f, " of {inner_dom}")
+                } else {
+                    write!(f, " {attrs} of {inner_dom}")
+                }
+            }
             UnresolvedDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }

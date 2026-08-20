@@ -308,7 +308,7 @@ pub fn pretty_find_with_representation(
     Some(format!("{keyword} {}: {domain_str}", decl.name()))
 }
 
-/// Print `domain` as usual, but with `repr` as the top-level set representation preference.
+/// Print `domain` as usual, but with `repr` as its top-level representation preference.
 pub fn format_domain_with_representation(domain: &crate::ast::DomainPtr, repr: &str) -> String {
     use crate::ast::{Domain, GroundDomain, UnresolvedDomain};
 
@@ -322,6 +322,14 @@ pub fn format_domain_with_representation(domain: &crate::ast::DomainPtr, repr: &
                     format!("set{{{repr}}} {size} of {inner}")
                 }
             }
+            GroundDomain::MSet(attrs, inner) => {
+                let attributes = attrs.to_string();
+                if attributes.is_empty() {
+                    format!("mset{{{repr}}} of {inner}")
+                } else {
+                    format!("mset{{{repr}}} {attributes} of {inner}")
+                }
+            }
             _ => domain.to_string(),
         },
         Domain::Unresolved(ud) => match ud.as_ref() {
@@ -331,6 +339,14 @@ pub fn format_domain_with_representation(domain: &crate::ast::DomainPtr, repr: &
                     format!("set{{{repr}}} of {inner}")
                 } else {
                     format!("set{{{repr}}} {size} of {inner}")
+                }
+            }
+            UnresolvedDomain::MSet(attrs, inner) => {
+                let attributes = attrs.to_string();
+                if attributes.is_empty() {
+                    format!("mset{{{repr}}} of {inner}")
+                } else {
+                    format!("mset{{{repr}}} {attributes} of {inner}")
                 }
             }
             _ => domain.to_string(),

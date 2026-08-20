@@ -72,11 +72,21 @@ impl<A: Display> Display for SetAttr<A> {
 pub struct MSetAttr<A = Int> {
     pub size: Range<A>,
     pub occurrence: Range<A>,
+    /// Optional user-facing representation preference (short name), e.g. `"repetition"`.
+    ///
+    /// Written in Essence as `mset{repetition} of …`. When present, representation selection
+    /// heuristics default to this representation if it is applicable.
+    #[serde(default)]
+    pub representation: Option<String>,
 }
 
 impl<A> MSetAttr<A> {
     pub fn new(size: Range<A>, occurrence: Range<A>) -> Self {
-        Self { size, occurrence }
+        Self {
+            size,
+            occurrence,
+            representation: None,
+        }
     }
 
     pub fn new_min_max_size(min: A, max: A) -> Self {
@@ -93,6 +103,12 @@ impl<A> MSetAttr<A> {
 
     pub fn new_size(sz: A) -> Self {
         Self::new(Range::Single(sz), Range::Unbounded)
+    }
+
+    /// Set the representation preference (Essence short name), returning the updated attributes.
+    pub fn with_representation(mut self, name: impl Into<String>) -> Self {
+        self.representation = Some(name.into());
+        self
     }
 }
 
@@ -126,6 +142,7 @@ impl<A> Default for MSetAttr<A> {
         MSetAttr {
             size: Range::Unbounded,
             occurrence: Range::Unbounded,
+            representation: None,
         }
     }
 }

@@ -258,6 +258,37 @@ mod test {
     }
 
     #[test]
+    pub fn test_parse_nested_mset_representation_preference() {
+        let symbols = SymbolTablePtr::new();
+        let x = DeclarationPtr::new_find(Name::User("x".into()), Domain::bool());
+        symbols.write().insert(x).unwrap();
+
+        let annotation = parse_expr(
+            "x : matrix indexed by [int(1..2)] of record { before: mset{repetition} (maxSize 6) of int(1..9) }",
+            symbols,
+        )
+        .unwrap()
+        .unwrap();
+        let Expression::DomainAnnotation(_, _, domain) = annotation else {
+            panic!("expected domain annotation");
+        };
+
+        assert!(domain.has_representation_preference());
+        let (record, _) = domain.as_matrix().expect("expected matrix domain");
+        let fields = record.as_record().expect("expected record domain");
+        let before = &fields
+            .iter()
+            .find(|field| field.name == Name::User("before".into()))
+            .expect("expected before field")
+            .value;
+        assert_eq!(before.representation_preference(), Some("repetition"));
+        assert_eq!(
+            domain.to_string(),
+            "matrix indexed by [int(1..2)] of record {before: mset{repetition} (maxSize 6) of int(1..9)}"
+        );
+    }
+
+    #[test]
     pub fn test_expression_annotations_bind_tighter_than_addition() {
         let symbols = SymbolTablePtr::new();
         let x = DeclarationPtr::new_find(

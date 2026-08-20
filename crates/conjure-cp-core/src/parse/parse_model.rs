@@ -258,7 +258,11 @@ fn parse_domain(
                 .ok_or(error!("MSet occurrence attributes is not an object"))?;
             let occurrence = parse_occur_attr(occurrence, symbols)?;
 
-            let attr: MSetAttr<IntVal> = MSetAttr { size, occurrence };
+            let attr: MSetAttr<IntVal> = MSetAttr {
+                size,
+                occurrence,
+                representation: None,
+            };
             Ok(Domain::mset(attr, domain))
         }
         "DomainPartition" => {

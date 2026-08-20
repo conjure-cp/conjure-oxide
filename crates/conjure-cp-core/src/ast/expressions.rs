@@ -1599,18 +1599,21 @@ impl Expression {
                     let set_attrs = MSetAttr {
                         size: attrs.size,
                         occurrence: Range::Single(IntVal::Const(1)),
+                        representation: None,
                     };
                     Some(Domain::mset(set_attrs, Domain::tuple(vec![dom, codom])))
                 } else if let Some((attrs, doms)) = other.domain_of()?.as_relation() {
                     let set_attrs = MSetAttr {
                         size: attrs.size,
                         occurrence: Range::Single(IntVal::Const(1)),
+                        representation: None,
                     };
                     Some(Domain::mset(set_attrs, Domain::tuple(doms)))
                 } else if let Some((attrs, dom)) = other.domain_of()?.as_set() {
                     let set_attrs = MSetAttr {
                         size: attrs.size,
                         occurrence: Range::Single(IntVal::Const(1)),
+                        representation: None,
                     };
                     Some(Domain::mset(set_attrs, dom))
                 } else {
