@@ -266,8 +266,24 @@ pub fn upsert_tool_status_stats(path: &Path, tool: &str, status: &str) -> io::Re
     })
 }
 
+/// Identifies one configured integration-test run.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RecordedRunConfig {
+    pub parser: String,
+    pub rewriter: String,
+    pub comprehension_expander: String,
+    pub heuristic: String,
+    pub channelling: String,
+    pub seed: u64,
+    pub solver: String,
+}
+
 /// Inserts or updates the latest observed status for one integration-test configuration.
-pub fn upsert_config_status_stats(path: &Path, config: &str, status: &str) -> io::Result<()> {
+pub fn upsert_config_status_stats(
+    path: &Path,
+    config: &RecordedRunConfig,
+    status: &str,
+) -> io::Result<()> {
     update_canonical_stats(path, |stats| {
         config_run_mut(stats, config).status = Some(status.to_string());
     })
@@ -276,7 +292,7 @@ pub fn upsert_config_status_stats(path: &Path, config: &str, status: &str) -> io
 /// Inserts or updates the conjure-oxide timing stats for one integration-test configuration.
 pub fn upsert_config_oxide_timing_stats(
     path: &Path,
-    config: &str,
+    config: &RecordedRunConfig,
     translation_time: f64,
     solve_time: Option<f64>,
 ) -> io::Result<()> {
@@ -336,7 +352,7 @@ fn rule_trace_rules_by_count_desc(
 /// Replaces the rule-trace aggregates for one integration-test configuration.
 pub fn upsert_config_rule_trace_aggregate_stats(
     path: &Path,
-    config: &str,
+    config: &RecordedRunConfig,
     aggregates: &RuleTraceAggregateStats,
 ) -> io::Result<()> {
     update_canonical_stats(path, |stats| {
@@ -375,7 +391,14 @@ pub struct TestRunStats {
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct RecordedConfigRunStats {
-    pub unroller: String,
+    pub parser: String,
+    pub rewriter: String,
+    #[serde(rename = "comprehension-expander")]
+    pub comprehension_expander: String,
+    pub heuristic: String,
+    pub channelling: String,
+    pub seed: Option<u64>,
+    pub solver: String,
     pub status: Option<String>,
     #[serde(rename = "translation-time")]
     pub translation_time: Option<f64>,
@@ -437,14 +460,28 @@ pub struct RecordedToolStats {
 
 fn config_run_mut<'a>(
     stats: &'a mut TestRunStats,
-    unroller: &str,
+    config: &RecordedRunConfig,
 ) -> &'a mut RecordedConfigRunStats {
-    if let Some(index) = stats.runs.iter().position(|run| run.unroller == unroller) {
+    if let Some(index) = stats.runs.iter().position(|run| {
+        run.parser == config.parser
+            && run.rewriter == config.rewriter
+            && run.comprehension_expander == config.comprehension_expander
+            && run.heuristic == config.heuristic
+            && run.channelling == config.channelling
+            && run.seed == Some(config.seed)
+            && run.solver == config.solver
+    }) {
         return &mut stats.runs[index];
     }
 
     stats.runs.push(RecordedConfigRunStats {
-        unroller: unroller.to_string(),
+        parser: config.parser.clone(),
+        rewriter: config.rewriter.clone(),
+        comprehension_expander: config.comprehension_expander.clone(),
+        heuristic: config.heuristic.clone(),
+        channelling: config.channelling.clone(),
+        seed: Some(config.seed),
+        solver: config.solver.clone(),
         ..RecordedConfigRunStats::default()
     });
     stats.runs.last_mut().expect("run was just inserted")
@@ -511,9 +548,36 @@ fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()> {
         }
         contents.push_str("[[runs]]\n");
         contents.push_str(&format!(
-            "unroller = {}\n",
-            quoted_toml_string(&run.unroller)
+            "comprehension-expander = {}\n",
+            quoted_toml_string(&run.comprehension_expander)
         ));
+        if !run.parser.is_empty() {
+            contents.push_str(&format!("parser = {}\n", quoted_toml_string(&run.parser)));
+        }
+        if !run.rewriter.is_empty() {
+            contents.push_str(&format!(
+                "rewriter = {}\n",
+                quoted_toml_string(&run.rewriter)
+            ));
+        }
+        if !run.heuristic.is_empty() {
+            contents.push_str(&format!(
+                "heuristic = {}\n",
+                quoted_toml_string(&run.heuristic)
+            ));
+        }
+        if !run.channelling.is_empty() {
+            contents.push_str(&format!(
+                "channelling = {}\n",
+                quoted_toml_string(&run.channelling)
+            ));
+        }
+        if let Some(seed) = run.seed {
+            contents.push_str(&format!("seed = {seed}\n"));
+        }
+        if !run.solver.is_empty() {
+            contents.push_str(&format!("solver = {}\n", quoted_toml_string(&run.solver)));
+        }
         if let Some(status) = &run.status {
             contents.push_str(&format!("status = {}\n", quoted_toml_string(status)));
         }
@@ -794,12 +858,21 @@ mod tests {
         )
         .unwrap();
 
-        for (config, translation_time) in [("native", 1.0), ("via-solver", 2.0)] {
-            upsert_config_status_stats(&path, config, "ok").unwrap();
-            upsert_config_oxide_timing_stats(&path, config, translation_time, Some(3.0)).unwrap();
+        for (solver, translation_time) in [("minion", 1.0), ("sat-log", 2.0)] {
+            let config = RecordedRunConfig {
+                parser: "tree-sitter".to_string(),
+                rewriter: "optimised".to_string(),
+                comprehension_expander: "auto".to_string(),
+                heuristic: "x".to_string(),
+                channelling: "no".to_string(),
+                seed: 0,
+                solver: solver.to_string(),
+            };
+            upsert_config_status_stats(&path, &config, "ok").unwrap();
+            upsert_config_oxide_timing_stats(&path, &config, translation_time, Some(3.0)).unwrap();
             upsert_config_rule_trace_aggregate_stats(
                 &path,
-                config,
+                &config,
                 &RuleTraceAggregateStats {
                     total_rule_attempts: 4,
                     total_rule_applications: 5,
@@ -821,7 +894,13 @@ savilerow-translation-time = 0.006
 solve-time = 0.000078
 
 [[runs]]
-unroller = "native"
+comprehension-expander = "auto"
+parser = "tree-sitter"
+rewriter = "optimised"
+heuristic = "x"
+channelling = "no"
+seed = 0
+solver = "minion"
 status = "ok"
 translation-time = 1.0
 solve-time = 3.0
@@ -831,7 +910,13 @@ rule-trace.applications = 5
 rule-trace.rules.rule_name = 5
 
 [[runs]]
-unroller = "via-solver"
+comprehension-expander = "auto"
+parser = "tree-sitter"
+rewriter = "optimised"
+heuristic = "x"
+channelling = "no"
+seed = 0
+solver = "sat-log"
 status = "ok"
 translation-time = 2.0
 solve-time = 3.0
@@ -852,9 +937,12 @@ rule-trace.rules.rule_name = 5
         let path = temp_dir.path().join(STATS_FILE_NAME);
         fs::write(
             &path,
-            "status = \"fail\"\n\n[[runs]]\nunroller = \"native\"\nstatus = \"fail\"\n",
+            "status = \"fail\"\n\n[[runs]]\ncomprehension-expander = \"native\"\nstatus = \"fail\"\n",
         )
         .unwrap();
+
+        let previous = read_stats_or_default(&path).unwrap();
+        assert_eq!(previous.runs[0].solver, "");
 
         reset_stats_for_run(&path).unwrap();
 

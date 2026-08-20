@@ -14,6 +14,15 @@ from typing import Any
 
 
 STATS_PATHSPEC = ":(glob)test-suite/tests/**/stats.toml"
+RUN_CONFIG_FIELDS = (
+    "parser",
+    "rewriter",
+    "comprehension-expander",
+    "heuristic",
+    "channelling",
+    "seed",
+    "solver",
+)
 
 FIELDNAMES = [
     "test",
@@ -125,21 +134,25 @@ def build_rows(root: Path, base: str, path: str) -> list[dict[str, str]]:
     old_stats = read_git_stats(root, base, path)
     new_stats = read_worktree_stats(root / path)
 
-    configs = sorted(run_names(old_stats) | run_names(new_stats))
-    if not configs:
+    runs = sorted(
+        run_keys(old_stats) | run_keys(new_stats),
+        key=lambda run: tuple("" if value is None else str(value) for value in run),
+    )
+    if not runs:
         return [build_row(path, None, old_stats, new_stats)]
-    return [build_row(path, config, old_stats, new_stats) for config in configs]
+    return [build_row(path, run, old_stats, new_stats) for run in runs]
 
 
 def build_row(
     path: str,
-    config: str | None,
+    run_key: tuple[Any, ...] | None,
     old_stats: dict[str, Any],
     new_stats: dict[str, Any],
 ) -> dict[str, str]:
-    old_config = run_stats(old_stats, config)
-    new_config = run_stats(new_stats, config)
-    is_new_config = config is not None and not old_config and bool(new_config)
+    old_config = run_stats(old_stats, run_key)
+    new_config = run_stats(new_stats, run_key)
+    is_new_config = run_key is not None and not old_config and bool(new_config)
+    config = config_name(run_key)
 
     old_conjure = tool_stats(old_stats, "conjure")
     new_conjure = tool_stats(new_stats, "conjure")
@@ -236,28 +249,43 @@ def build_row(
     }
 
 
-def run_names(stats_file: dict[str, Any]) -> set[str]:
+def run_keys(stats_file: dict[str, Any]) -> set[tuple[Any, ...]]:
     runs = stats_file.get("runs")
     if not isinstance(runs, list):
         return set()
     return {
-        unroller
+        tuple(run.get(field) for field in RUN_CONFIG_FIELDS)
         for run in runs
         if isinstance(run, dict)
-        and isinstance((unroller := run.get("unroller")), str)
+        if isinstance(run.get("comprehension-expander"), str)
     }
 
 
-def run_stats(stats_file: dict[str, Any], config: str | None) -> dict[str, Any]:
-    if config is None:
+def run_stats(
+    stats_file: dict[str, Any], run_key: tuple[Any, ...] | None
+) -> dict[str, Any]:
+    if run_key is None:
         return stats_file
 
     runs = stats_file.get("runs")
     if isinstance(runs, list):
         for run in runs:
-            if isinstance(run, dict) and run.get("unroller") == config:
+            if (
+                isinstance(run, dict)
+                and tuple(run.get(field) for field in RUN_CONFIG_FIELDS) == run_key
+            ):
                 return run
     return {}
+
+
+def config_name(run_key: tuple[Any, ...] | None) -> str | None:
+    if run_key is None:
+        return None
+    return ", ".join(
+        f"{field}={field_value}"
+        for field, field_value in zip(RUN_CONFIG_FIELDS, run_key, strict=True)
+        if field_value is not None
+    )
 
 
 def oxide_run_stats(run: dict[str, Any]) -> dict[str, float | str | None]:

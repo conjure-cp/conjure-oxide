@@ -25,9 +25,9 @@ unsupported.
 
 Integration tests use the `auto` comprehension expander by default, matching the CLI default.
 Configure it explicitly with `comprehension-expander = "auto"`. Accepted oxide timings, statuses,
-and rule-trace aggregates are recorded in a `[[runs]]` entry in `stats.toml`; the Conjure reference
-run is recorded separately. Each accepted run replaces the previous stats snapshot rather than
-merging with it.
+and rule-trace aggregates are recorded in a `[[runs]]` entry in `stats.toml` for each configured
+run; the Conjure reference run is recorded separately. Each accepted run replaces the previous
+stats snapshot rather than merging with it.
 
 ### Creating a new test
 

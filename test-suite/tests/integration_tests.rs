@@ -58,11 +58,11 @@ use test_suite::diagnostics::{
 };
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
-    NumberOfSolutions, RecordedConjureStats, RuleTraceAggregateStats, read_stats_or_default,
-    reset_stats_for_run, round_expected_time, stats_path, upsert_config_oxide_timing_stats,
-    upsert_config_rule_trace_aggregate_stats, upsert_config_status_stats,
-    upsert_conjure_timing_stats, upsert_expected_time_stats, upsert_status_stats,
-    upsert_tool_status_stats,
+    NumberOfSolutions, RecordedConjureStats, RecordedRunConfig, RuleTraceAggregateStats,
+    read_stats_or_default, reset_stats_for_run, round_expected_time, stats_path,
+    upsert_config_oxide_timing_stats, upsert_config_rule_trace_aggregate_stats,
+    upsert_config_status_stats, upsert_conjure_timing_stats, upsert_expected_time_stats,
+    upsert_status_stats, upsert_tool_status_stats,
 };
 
 const DISABLE_TRACING_ENV: &str = "CONJURE_OXIDE_TEST_DISABLE_TRACING";
@@ -444,15 +444,23 @@ fn integration_test_inner_with_status(
 
     let mut first_config_error = None;
     for comprehension_expander in comprehension_expanders {
-        let config_name = comprehension_expander.to_string();
-        let mut config_timings = RunTimings::default();
-        let mut config_case_names = BTreeSet::new();
-        let config_result = (|| -> Result<(), Box<dyn Error>> {
-            for parser in parsers.iter().copied() {
-                for rewriter in rewriters.clone() {
-                    for heuristic in heuristics.iter().copied() {
-                        for channelling in channelling_settings.iter().copied() {
-                            for solver in solvers.clone() {
+        for parser in parsers.iter().copied() {
+            for rewriter in rewriters.clone() {
+                for heuristic in heuristics.iter().copied() {
+                    for channelling in channelling_settings.iter().copied() {
+                        for solver in solvers.iter().copied() {
+                            let run_config = RecordedRunConfig {
+                                parser: parser.to_string(),
+                                rewriter: rewriter.to_string(),
+                                comprehension_expander: comprehension_expander.to_string(),
+                                heuristic: heuristic.to_string(),
+                                channelling: channelling.to_string(),
+                                seed,
+                                solver: solver.as_str(),
+                            };
+                            let mut config_timings = RunTimings::default();
+                            let mut config_case_names = BTreeSet::new();
+                            let config_result = (|| -> Result<(), Box<dyn Error>> {
                                 let base_case_name = run_case_name(
                                     parser,
                                     rewriter,
@@ -515,46 +523,58 @@ fn integration_test_inner_with_status(
                                     choice_path = next_path;
                                     model_index += 1;
                                 }
+                                Ok(())
+                            })();
+
+                            if accept {
+                                let config_status =
+                                    if config_result.is_ok() { "ok" } else { "fail" };
+                                upsert_config_status_stats(
+                                    &stats_path,
+                                    &run_config,
+                                    config_status,
+                                )?;
+                                let solve_time =
+                                    solver_solution_limit.map(|_| config_timings.solve_time_s);
+                                upsert_config_oxide_timing_stats(
+                                    &stats_path,
+                                    &run_config,
+                                    config_timings.translation_time_s,
+                                    solve_time,
+                                )?;
+
+                                if rule_trace_snapshots_enabled {
+                                    let aggregates = collect_rule_trace_aggregates(
+                                        Path::new(path),
+                                        "-generated-rule-trace.txt",
+                                        &config_case_names,
+                                        &run_config,
+                                    )?;
+                                    let aggregates = RuleTraceAggregateStats {
+                                        total_rule_attempts: collect_rule_attempts(
+                                            Path::new(path),
+                                            &config_case_names,
+                                            &run_config,
+                                        )?,
+                                        ..aggregates
+                                    };
+                                    upsert_config_rule_trace_aggregate_stats(
+                                        &stats_path,
+                                        &run_config,
+                                        &aggregates,
+                                    )?;
+                                }
+                            }
+
+                            if let Err(err) = config_result
+                                && first_config_error.is_none()
+                            {
+                                first_config_error = Some(err);
                             }
                         }
                     }
                 }
             }
-            Ok(())
-        })();
-
-        if accept {
-            let config_status = if config_result.is_ok() { "ok" } else { "fail" };
-            upsert_config_status_stats(&stats_path, &config_name, config_status)?;
-            let solve_time = solver_solution_limit.map(|_| config_timings.solve_time_s);
-            upsert_config_oxide_timing_stats(
-                &stats_path,
-                &config_name,
-                config_timings.translation_time_s,
-                solve_time,
-            )?;
-
-            if rule_trace_snapshots_enabled {
-                let aggregates = collect_rule_trace_aggregates(
-                    Path::new(path),
-                    "-generated-rule-trace.txt",
-                    &config_case_names,
-                )?;
-                let aggregates = RuleTraceAggregateStats {
-                    total_rule_attempts: collect_rule_attempts(
-                        Path::new(path),
-                        &config_case_names,
-                    )?,
-                    ..aggregates
-                };
-                upsert_config_rule_trace_aggregate_stats(&stats_path, &config_name, &aggregates)?;
-            }
-        }
-
-        if let Err(err) = config_result
-            && first_config_error.is_none()
-        {
-            first_config_error = Some(err);
         }
     }
 
@@ -924,6 +944,7 @@ fn collect_rule_trace_aggregates(
     path: &Path,
     file_suffix: &str,
     case_names: &BTreeSet<String>,
+    config: &RecordedRunConfig,
 ) -> Result<RuleTraceAggregateStats, std::io::Error> {
     let mut aggregates = RuleTraceAggregateStats::default();
 
@@ -931,7 +952,7 @@ fn collect_rule_trace_aggregates(
         let entry = entry?;
         let file_name = entry.file_name();
         let file_name = file_name.to_string_lossy();
-        if !file_name.ends_with(file_suffix) || !belongs_to_case(&file_name, case_names) {
+        if !belongs_to_case(&file_name, file_suffix, case_names, config) {
             continue;
         }
 
@@ -960,6 +981,7 @@ fn collect_rule_trace_aggregates(
 fn collect_rule_attempts(
     path: &Path,
     case_names: &BTreeSet<String>,
+    config: &RecordedRunConfig,
 ) -> Result<u64, std::io::Error> {
     let mut total = 0;
 
@@ -967,7 +989,7 @@ fn collect_rule_attempts(
         let entry = entry?;
         let file_name = entry.file_name();
         let file_name = file_name.to_string_lossy();
-        if !file_name.ends_with("-stats.json") || !belongs_to_case(&file_name, case_names) {
+        if !belongs_to_case(&file_name, "-stats.json", case_names, config) {
             continue;
         }
 
@@ -993,10 +1015,15 @@ fn collect_rule_attempts(
     Ok(total)
 }
 
-fn belongs_to_case(file_name: &str, case_names: &BTreeSet<String>) -> bool {
+fn belongs_to_case(
+    file_name: &str,
+    file_suffix: &str,
+    case_names: &BTreeSet<String>,
+    config: &RecordedRunConfig,
+) -> bool {
     case_names
         .iter()
-        .any(|case_name| file_name.starts_with(&format!("{case_name}-")))
+        .any(|case_name| file_name == format!("{case_name}-{}{file_suffix}", config.solver))
 }
 
 fn clean_test_dir_for_accept(
