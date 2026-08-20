@@ -969,8 +969,29 @@ impl Domain {
         None
     }
 
-    /// Compute the intersection of two domains
+    /// Compute the union of two domains.
+    ///
+    /// Domain-letting references are transparent here: the result may remain unresolved when the
+    /// referenced domain has symbolic bounds.
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
+        if let Domain::Unresolved(domain) = self
+            && let UnresolvedDomain::Reference(reference) = domain.as_ref()
+        {
+            let referenced_domain = reference.domain().unwrap_or_else(|| {
+                crate::bug!("domain reference should point to a domain letting: {reference}")
+            });
+            return referenced_domain.as_ref().union(other);
+        }
+
+        if let Domain::Unresolved(domain) = other
+            && let UnresolvedDomain::Reference(reference) = domain.as_ref()
+        {
+            let referenced_domain = reference.domain().unwrap_or_else(|| {
+                crate::bug!("domain reference should point to a domain letting: {reference}")
+            });
+            return self.union(referenced_domain.as_ref());
+        }
+
         match (self, other) {
             (Domain::Ground(a), Domain::Ground(b)) => Ok(Domain::Ground(Moo::new(a.union(b)?))),
             (Domain::Unresolved(a), Domain::Unresolved(b)) => {
@@ -978,7 +999,19 @@ impl Domain {
             }
             (Domain::Unresolved(u), Domain::Ground(g))
             | (Domain::Ground(g), Domain::Unresolved(u)) => {
-                todo!("Union of unresolved domain {u} and ground domain {g} is not yet implemented")
+                if let GroundDomain::Empty(ty) = g.as_ref() {
+                    return if *ty == u.return_type() {
+                        Ok(Domain::Unresolved(u.clone()))
+                    } else {
+                        Err(DomainOpError::WrongType)
+                    };
+                }
+
+                let ground_as_unresolved =
+                    UnresolvedDomain::from_ground(g).ok_or(DomainOpError::WrongType)?;
+                Ok(Domain::Unresolved(Moo::new(
+                    u.union_unresolved(&ground_as_unresolved)?,
+                )))
             }
         }
     }
@@ -1086,6 +1119,50 @@ mod tests {
             domain.resolve(),
             Ok(GroundDomain::Int(vec![Range::Bounded(3, 7)]))
         );
+    }
+
+    #[test]
+    fn union_dereferences_domain_lettings() {
+        let declaration = DeclarationPtr::new_domain_letting(
+            Name::user("Alias"),
+            Domain::int(vec![Range::Bounded(1, 3)]),
+        );
+        let alias = Domain::reference(declaration).unwrap();
+
+        assert_eq!(
+            alias
+                .union(&Domain::int(vec![Range::Bounded(5, 7)]))
+                .unwrap()
+                .resolve(),
+            Ok(Moo::new(GroundDomain::Int(vec![
+                Range::Bounded(1, 3),
+                Range::Bounded(5, 7),
+            ])))
+        );
+    }
+
+    #[test]
+    fn union_preserves_symbolic_domain_bounds() {
+        let upper_bound =
+            DeclarationPtr::new_given(Name::user("n"), Domain::int(vec![Range::Bounded(1, 10)]));
+        let symbolic_upper = IntVal::new_ref(&Reference::new(upper_bound)).unwrap();
+        let symbolic_domain = Domain::int(vec![Range::Bounded(
+            IntVal::Const(1),
+            symbolic_upper.clone(),
+        )]);
+        let declaration = DeclarationPtr::new_domain_letting(Name::user("Alias"), symbolic_domain);
+        let alias = Domain::reference(declaration).unwrap();
+
+        let union = alias.union(&Domain::int(vec![Range::Single(20)])).unwrap();
+
+        assert_eq!(
+            union.as_int(),
+            Some(vec![
+                Range::Bounded(IntVal::Const(1), symbolic_upper),
+                Range::Single(IntVal::Const(20)),
+            ])
+        );
+        assert_eq!(union.resolve(), Err(DomainOpError::NotGround));
     }
 
     #[test]

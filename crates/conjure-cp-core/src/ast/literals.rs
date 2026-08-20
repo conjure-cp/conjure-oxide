@@ -250,6 +250,21 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
+fn union_item_domains(item_domains: Vec<DomainPtr>, literal_kind: &str) -> Option<DomainPtr> {
+    let mut item_domain_iter = item_domains.into_iter();
+    let first_item = item_domain_iter.next()?;
+
+    Some(
+        item_domain_iter
+            .try_fold(first_item, |x, y| x.union(&y))
+            .unwrap_or_else(|error| {
+                bug!(
+                    "taking the union of all item domains of a {literal_kind} literal should succeed: {error}"
+                )
+            }),
+    )
+}
+
 impl AbstractLiteral<Expression> {
     pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
@@ -261,12 +276,7 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect("taking the union of all item domains of a set literal should succeed");
+                let item_domain = union_item_domains(item_domains, "set")?;
 
                 Some(Domain::set(SetAttr::<Int>::default(), item_domain))
             }
@@ -279,12 +289,7 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect("taking the union of all item domains of a set literal should succeed");
+                let item_domain = union_item_domains(item_domains, "mset")?;
 
                 Some(Domain::mset(MSetAttr::<Int>::default(), item_domain))
             }
@@ -297,12 +302,7 @@ impl AbstractLiteral<Expression> {
 
                 // Get the union of all domains in the sequence.
                 // i.e. if <(1..3), (1..3), (5), (8..9)> then seq dom is (1..3, 5, 8..9)
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect("taking the union of all item domains of a set literal should succeed");
+                let item_domain = union_item_domains(item_domains, "sequence")?;
 
                 Some(Domain::sequence(
                     SequenceAttr::<Int>::default(),
@@ -321,12 +321,7 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect("taking the union of all item domains of a partition literal should succeed");
+                let item_domain = union_item_domains(item_domains, "partition")?;
 
                 Some(Domain::partition(
                     PartitionAttr::<Int>::default(),
@@ -344,11 +339,7 @@ impl AbstractLiteral<Expression> {
                     .map(|x| x.domain_of())
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
-                let mut item_domain_iter = item_domains.iter().cloned();
-                let first_item = item_domain_iter.next()?;
-                let item_domain = item_domains.iter().try_fold(first_item, |x, y| x.union(y)).expect(
-                    "taking the union of all item domains of a permutation literal should succeed",
-                );
+                let item_domain = union_item_domains(item_domains, "permutation")?;
 
                 Some(Domain::permutation(
                     PermutationAttr::<Int>::default(),
@@ -364,16 +355,7 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
-                let mut item_domain_iter = item_domains.iter().cloned();
-
-                let first_item = item_domain_iter.next()?;
-
-                let item_domain = item_domains
-                    .iter()
-                    .try_fold(first_item, |x, y| x.union(y))
-                    .expect(
-                        "taking the union of all item domains of a matrix literal should succeed",
-                    );
+                let item_domain = union_item_domains(item_domains, "matrix")?;
 
                 let mut new_index_domain = vec![];
 
@@ -1275,6 +1257,7 @@ mod tests {
 
     use super::*;
     use crate::ast::matrix::{flatten, partial_flatten, shape_of};
+    use crate::ast::{DeclarationPtr, Name};
     use crate::{domain_int_ground, into_matrix, matrix, matrix_lit, range};
     use uniplate::Uniplate;
 
@@ -1326,6 +1309,33 @@ mod tests {
         assert_eq!(
             matrix(&[1, 2]).essence_cmp(&matrix(&[1, 3])),
             Ordering::Less
+        );
+    }
+
+    #[test]
+    fn mset_domain_accepts_domain_letting_references() {
+        let declaration = DeclarationPtr::new_domain_letting(
+            Name::user("NUM"),
+            Domain::int(vec![Range::Bounded(1, 999)]),
+        );
+        let alias = Domain::reference(declaration).unwrap();
+        let item = Expression::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(Expression::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Int(1)),
+            )),
+            alias,
+        );
+
+        let domain = AbstractLiteral::MSet(vec![item.clone(), item])
+            .domain_of()
+            .unwrap();
+        let (_, item_domain) = domain.as_mset().unwrap();
+
+        assert_eq!(
+            item_domain.resolve(),
+            Ok(Moo::new(GroundDomain::Int(vec![Range::Bounded(1, 999)])))
         );
     }
 

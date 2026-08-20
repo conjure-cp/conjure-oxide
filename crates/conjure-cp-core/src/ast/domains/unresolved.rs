@@ -69,6 +69,54 @@ pub enum UnresolvedDomain {
 }
 
 impl UnresolvedDomain {
+    pub(super) fn from_ground(domain: &GroundDomain) -> Option<UnresolvedDomain> {
+        let unresolved = match domain {
+            GroundDomain::Empty(_) | GroundDomain::Bool => return None,
+            GroundDomain::Int(ranges) => {
+                UnresolvedDomain::Int(ranges.iter().cloned().map(Into::into).collect())
+            }
+            GroundDomain::Tuple(inners) => {
+                UnresolvedDomain::Tuple(inners.iter().map(DomainPtr::from).collect())
+            }
+            GroundDomain::Record(fields) => {
+                UnresolvedDomain::Record(fields.iter().cloned().map(Into::into).collect())
+            }
+            GroundDomain::Variant(fields) => {
+                UnresolvedDomain::Variant(fields.iter().cloned().map(Into::into).collect())
+            }
+            GroundDomain::Matrix(inner, indices) => UnresolvedDomain::Matrix(
+                DomainPtr::from(inner),
+                indices.iter().map(DomainPtr::from).collect(),
+            ),
+            GroundDomain::Sequence(attributes, inner) => {
+                UnresolvedDomain::Sequence(attributes.clone().into(), DomainPtr::from(inner))
+            }
+            GroundDomain::Set(attributes, inner) => {
+                UnresolvedDomain::Set(attributes.clone().into(), DomainPtr::from(inner))
+            }
+            GroundDomain::MSet(attributes, inner) => {
+                UnresolvedDomain::MSet(attributes.clone().into(), DomainPtr::from(inner))
+            }
+            GroundDomain::Function(attributes, domain, codomain) => UnresolvedDomain::Function(
+                attributes.clone().into(),
+                DomainPtr::from(domain),
+                DomainPtr::from(codomain),
+            ),
+            GroundDomain::Relation(attributes, inners) => UnresolvedDomain::Relation(
+                attributes.clone().into(),
+                inners.iter().map(DomainPtr::from).collect(),
+            ),
+            GroundDomain::Partition(attributes, inner) => {
+                UnresolvedDomain::Partition(attributes.clone().into(), DomainPtr::from(inner))
+            }
+            GroundDomain::Permutation(attributes, inner) => {
+                UnresolvedDomain::Permutation(attributes.clone().into(), DomainPtr::from(inner))
+            }
+        };
+
+        Some(unresolved)
+    }
+
     pub fn resolve(&self) -> Result<GroundDomain, DomainOpError> {
         match self {
             UnresolvedDomain::Int(rngs) => rngs
