@@ -25,10 +25,13 @@ fn mset_bounds(attrs: &MSetAttr<i32>, inner_len: usize) -> Option<MSetBounds> {
         return None;
     }
 
+    let intrinsic_min_size = min_occurrence.checked_mul(inner_len)?;
     let intrinsic_max_size = max_occurrence.checked_mul(inner_len)?;
-    // `minOccur` constrains values that occur: each count is either zero or at least the minimum.
-    // It does not require every value in the inner domain to occur.
-    let min_size = range_lower(&attrs.size).unwrap_or(0);
+    // Occurrence bounds apply to every value in the inner domain, including values whose count
+    // would otherwise be zero.
+    let min_size = range_lower(&attrs.size)
+        .unwrap_or(intrinsic_min_size)
+        .max(intrinsic_min_size);
     let max_size = explicit_max_size
         .unwrap_or(intrinsic_max_size)
         .min(intrinsic_max_size);

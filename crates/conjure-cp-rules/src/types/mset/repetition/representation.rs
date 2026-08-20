@@ -161,9 +161,7 @@ register_representation!(
         for value in state.elements.iter() {
             let frequency = state.frequency_expr(value.clone().into());
             if min_occurrence > 0 {
-                constraints.push(essence_expr!(
-                    r"(&frequency = 0) \/ (&frequency >= &min_occurrence)"
-                ));
+                constraints.push(essence_expr!(&frequency >= &min_occurrence));
             }
             constraints.push(essence_expr!(&frequency <= &max_occurrence));
         }
@@ -182,7 +180,7 @@ register_representation!(
         let (min_occurrence, max_occurrence) = state.occurrence;
         for candidate in state.elements.iter() {
             let count = elems.iter().filter(|elem| elem.essence_cmp(candidate).is_eq()).count() as i32;
-            if count != 0 && (count < min_occurrence.max(1) || count > max_occurrence) {
+            if count < min_occurrence || count > max_occurrence {
                 return Err(ReprDownError::BadValue(original, format!("occurrence count for {candidate} is outside its bounds")));
             }
         }
