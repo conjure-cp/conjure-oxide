@@ -1,4 +1,4 @@
-use super::super::MSetExplicit;
+use super::super::MSetRepetition;
 use crate::guard;
 use conjure_cp::ast::{AbstractLiteral, Atom, Expression as Expr, Literal, SymbolTable};
 use conjure_cp::rule_engine::{
@@ -6,7 +6,7 @@ use conjure_cp::rule_engine::{
 };
 
 #[register_rule("ReprGeneral", 9500, [Eq])]
-fn equality_explicit_mset_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn equality_repetition_mset_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -22,7 +22,7 @@ fn equality_explicit_mset_literal(expr: &Expr, _: &SymbolTable) -> ApplicationRe
         _ => return Err(RuleNotApplicable),
     };
     let representation = reference
-        .get_repr_as::<MSetExplicit>()
+        .get_repr_as::<MSetRepetition>()
         .ok_or(RuleNotApplicable)?;
     Ok(RuleEffect::pure(
         representation.equality_to_literal_expr(elems),
@@ -30,12 +30,12 @@ fn equality_explicit_mset_literal(expr: &Expr, _: &SymbolTable) -> ApplicationRe
 }
 
 #[register_rule("ReprGeneral", 9500, [Eq])]
-fn equality_explicit_msets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn equality_repetition_msets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(let Expr::Eq(_, lhs, rhs) = expr &&
         let Expr::Atomic(_, Atom::Reference(lhs)) = lhs.as_ref() &&
         let Expr::Atomic(_, Atom::Reference(rhs)) = rhs.as_ref() &&
-        let Some(lhs) = lhs.get_repr_as::<MSetExplicit>() &&
-        let Some(rhs) = rhs.get_repr_as::<MSetExplicit>()
+        let Some(lhs) = lhs.get_repr_as::<MSetRepetition>() &&
+        let Some(rhs) = rhs.get_repr_as::<MSetRepetition>()
         else { return Err(RuleNotApplicable) });
     if lhs.elements.as_ref() != rhs.elements.as_ref() {
         return Err(RuleNotApplicable);

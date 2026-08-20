@@ -3,7 +3,7 @@
 pub use crate::types::function::{FunctionAsRelation, FunctionExplicit};
 pub use crate::types::int::{IntDirect, IntLog, IntOrder};
 pub use crate::types::matrix::{MatrixComponents, MatrixPacked};
-pub use crate::types::mset::{MSetExplicit, MSetOccurrence, MSetPacked};
+pub use crate::types::mset::{MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition};
 pub use crate::types::partition::{PartitionAsSet, PartitionOccurrence, PartitionPacked};
 pub use crate::types::permutation::PermutationAsFunction;
 pub use crate::types::record::{RecordComponents, RecordPacked};

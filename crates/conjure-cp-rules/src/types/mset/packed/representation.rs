@@ -28,7 +28,28 @@ register_representation!(
         pub fn element_frequency_expr(&self, index: usize) -> Expression {
             let digit = self.digit_expr(index);
             let minimum = self.occurrence.0;
-            essence_expr!(&digit + &minimum)
+            if minimum <= 1 {
+                digit
+            } else {
+                let terms = (1..self.radix)
+                    .map(|encoded| {
+                        let count = encoded + minimum - 1;
+                        let selected = Expression::ToInt(
+                            Metadata::new(),
+                            Moo::new(Expression::Eq(
+                                Metadata::new(),
+                                Moo::new(digit.clone()),
+                                Moo::new(encoded.into()),
+                            )),
+                        );
+                        Expression::Product(
+                            Metadata::new(),
+                            Moo::new(matrix_expr![count.into(), selected]),
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                Expression::Sum(Metadata::new(), Moo::new(into_matrix_expr!(terms)))
+            }
         }
 
         pub fn frequency_expr(&self, member: Expression) -> Expression {
@@ -72,7 +93,7 @@ register_representation!(
             .collect::<Vec<_>>();
         let bounds = mset_bounds(attrs, elements.len())
             .ok_or_else(|| domain_err("multiset attributes do not define a finite domain"))?;
-        let radix = bounds.occurrence.1.checked_sub(bounds.occurrence.0).and_then(|value| value.checked_add(1))
+        let radix = bounds.occurrence.1.checked_sub(bounds.occurrence.0.max(1)).and_then(|value| value.checked_add(2))
             .ok_or_else(|| domain_err("invalid occurrence bounds"))?;
         let total_size = radix.checked_pow(elements.len() as u32)
             .ok_or_else(|| domain_err("packed multiset domain would overflow i32"))?;
@@ -108,7 +129,12 @@ register_representation!(
         let Literal::Int(mut packed) = state.packed else { bug!("expected a packed multiset integer, got {}", state.packed) };
         let mut elems = Vec::new();
         for value in state.elements.iter() {
-            let count = packed % state.radix + state.occurrence.0;
+            let digit = packed % state.radix;
+            let count = if digit == 0 {
+                0
+            } else {
+                digit + state.occurrence.0.max(1) - 1
+            };
             packed /= state.radix;
             elems.extend(std::iter::repeat_n(value.clone(), count as usize));
         }
@@ -132,10 +158,15 @@ fn encode(
             .iter()
             .filter(|elem| elem.essence_cmp(candidate).is_eq())
             .count() as i32;
-        if count < occurrence.0 || count > occurrence.1 {
+        if count != 0 && (count < occurrence.0.max(1) || count > occurrence.1) {
             return None;
         }
-        packed = packed.checked_add((count - occurrence.0).checked_mul(place)?)?;
+        let digit = if count == 0 {
+            0
+        } else {
+            count.checked_sub(occurrence.0.max(1))?.checked_add(1)?
+        };
+        packed = packed.checked_add(digit.checked_mul(place)?)?;
         place = place.checked_mul(radix)?;
     }
     elems
@@ -155,7 +186,8 @@ fn valid_count(elements: usize, cardinality: (i32, i32), occurrence: (i32, i32))
     for _ in 0..elements {
         let mut next = vec![0usize; max_sum + 1];
         for (sum, ways) in counts.iter().copied().enumerate() {
-            for count in occurrence.0..=occurrence.1 {
+            let allowed_counts = std::iter::once(0).chain(occurrence.0.max(1)..=occurrence.1);
+            for count in allowed_counts {
                 let new_sum = sum + count as usize;
                 if new_sum <= max_sum {
                     next[new_sum] = next[new_sum].saturating_add(ways);

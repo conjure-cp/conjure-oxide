@@ -85,18 +85,29 @@ register_representation!(
             .collect::<Vec<_>>();
         let bounds = mset_bounds(attrs, values.len())
             .ok_or_else(|| domain_err("multiset attributes do not define a finite domain"))?;
-        let (min_occurrence, max_occurrence) = bounds.occurrence;
-        let occurs = values.into_iter().map(|value| (value, domain_int!(min_occurrence..max_occurrence))).collect();
+        let (_, max_occurrence) = bounds.occurrence;
+        let occurs = values
+            .into_iter()
+            .map(|value| (value, domain_int!(0..max_occurrence)))
+            .collect();
         Ok(State { cardinality: bounds.cardinality, occurrence: bounds.occurrence, occurs: Moo::new(occurs) })
     }
     fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
         let (min, max) = state.cardinality;
         let cardinality = state.cardinality_expr();
-        if min == max {
+        let mut constraints = if min == max {
             vec![essence_expr!(&cardinality = &min)]
         } else {
             vec![essence_expr!(r"(&cardinality >= &min) /\ (&cardinality <= &max)")]
+        };
+        let min_occurrence = state.occurrence.0;
+        if min_occurrence > 0 {
+            constraints.extend(state.occurs.iter().map(|(_, declaration)| {
+                let count = Expression::from(Reference::new(declaration.clone()));
+                essence_expr!(r"(&count = 0) \/ (&count >= &min_occurrence)")
+            }));
         }
+        constraints
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
         let Literal::AbstractLiteral(AbstractLiteral::MSet(elems)) = value else {
@@ -113,6 +124,15 @@ register_representation!(
         }).collect();
         if elems.iter().any(|elem| !state.occurs.iter().any(|(candidate, _)| candidate.essence_cmp(elem).is_eq())) {
             return Err(ReprDownError::BadValue(original, "multiset contains an element outside its domain".to_owned()));
+        }
+        if state.occurs.iter().any(|(candidate, _)| {
+            let count = elems
+                .iter()
+                .filter(|elem| elem.essence_cmp(candidate).is_eq())
+                .count() as i32;
+            count != 0 && (count < state.occurrence.0 || count > state.occurrence.1)
+        }) {
+            return Err(ReprDownError::BadValue(original, "multiset occurrence counts are outside their bounds".to_owned()));
         }
         Ok(State { cardinality: state.cardinality, occurrence: state.occurrence, occurs: Moo::new(occurs) })
     }

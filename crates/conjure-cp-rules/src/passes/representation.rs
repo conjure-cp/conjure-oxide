@@ -342,7 +342,7 @@ pub(crate) fn domain_needs_representation(domain: &DomainPtr) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use conjure_cp::ast::{Domain, SetAttr};
+    use conjure_cp::ast::{Domain, MSetAttr, SetAttr};
     use conjure_cp::settings::set_heuristic;
     use conjure_cp::{domain_int, range};
 
@@ -366,6 +366,8 @@ mod tests {
 
     #[test]
     fn domain_representation_preference_defaults_the_choice() {
+        use conjure_cp::representation::get_applicable_repr_by_short_name;
+
         set_heuristic(Heuristic::First);
         let mut symbols = SymbolTable::new();
         let declaration = symbols.gen_find(&Domain::set(
@@ -391,6 +393,44 @@ mod tests {
                 .short_name(),
             "explicit"
         );
+
+        let declaration = symbols.gen_find(&Domain::mset(
+            MSetAttr::new_max_size(3).with_representation("occurrence"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "occurrence"
+        );
+
+        let declaration = symbols.gen_find(&Domain::mset(
+            MSetAttr::new_max_size(3).with_representation("counts"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "counts"
+        );
+
+        let declaration = symbols.gen_find(&Domain::mset(
+            MSetAttr::new_max_size(3).with_representation("repetition"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "repetition"
+        );
+
+        assert!(get_applicable_repr_by_short_name(&declaration, "explicit").is_none());
     }
 
     #[test]

@@ -4,7 +4,7 @@ use conjure_cp::ast::{Domain, GroundDomain, Moo, Reference};
 use conjure_cp::{domain_int, essence_expr, into_matrix_expr, matrix_expr, range};
 
 register_representation!(
-    MSetExplicit("explicit")
+    MSetRepetition("repetition")
     struct State<T> {
         /// Inclusive cardinality bounds.
         pub cardinality: (i32, i32),
@@ -107,7 +107,7 @@ register_representation!(
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |message: &str| ReprInitError::UnsupportedDomain(
-            dom.clone(), MSetExplicit::NAME, message.to_owned());
+            dom.clone(), MSetRepetition::NAME, message.to_owned());
         let Some(GroundDomain::MSet(attrs, inner)) = dom.as_ground() else {
             return Err(domain_err("expected a ground multiset domain"));
         };
@@ -160,7 +160,12 @@ register_representation!(
         let (min_occurrence, max_occurrence) = state.occurrence;
         for value in state.elements.iter() {
             let frequency = state.frequency_expr(value.clone().into());
-            constraints.push(essence_expr!(r"(&frequency >= &min_occurrence) /\ (&frequency <= &max_occurrence)"));
+            if min_occurrence > 0 {
+                constraints.push(essence_expr!(
+                    r"(&frequency = 0) \/ (&frequency >= &min_occurrence)"
+                ));
+            }
+            constraints.push(essence_expr!(&frequency <= &max_occurrence));
         }
         constraints
     }
@@ -177,7 +182,7 @@ register_representation!(
         let (min_occurrence, max_occurrence) = state.occurrence;
         for candidate in state.elements.iter() {
             let count = elems.iter().filter(|elem| elem.essence_cmp(candidate).is_eq()).count() as i32;
-            if count < min_occurrence || count > max_occurrence {
+            if count != 0 && (count < min_occurrence.max(1) || count > max_occurrence) {
                 return Err(ReprDownError::BadValue(original, format!("occurrence count for {candidate} is outside its bounds")));
             }
         }

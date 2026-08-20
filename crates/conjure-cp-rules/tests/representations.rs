@@ -5,9 +5,9 @@ use conjure_cp::ast::{
     SequenceAttr, SetAttr, SymbolTable,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
-use conjure_cp::{domain_int, range};
+use conjure_cp::{domain_int, into_matrix, range};
 use conjure_cp_rules::representation::{
-    FunctionAsRelation, FunctionExplicit, MSetExplicit, MSetOccurrence, MSetPacked,
+    FunctionAsRelation, FunctionExplicit, MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition,
     MatrixComponents, MatrixPacked, PartitionAsSet, PartitionOccurrence, PartitionPacked,
     PermutationAsFunction, RecordComponents, RecordPacked, RelationAsSet, RelationOccurrence,
     RelationPacked, SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked,
@@ -33,6 +33,10 @@ fn representation_short_names_describe_the_generated_layout() {
     assert_eq!(RelationAsSet::SHORT_NAME, "as_set");
     assert_eq!(FunctionAsRelation::SHORT_NAME, "as_relation");
     assert_eq!(FunctionExplicit::SHORT_NAME, "explicit");
+    assert_eq!(MSetRepetition::SHORT_NAME, "repetition");
+    assert_eq!(MSetCounts::SHORT_NAME, "counts");
+    assert_eq!(MSetOccurrence::SHORT_NAME, "occurrence");
+    assert_eq!(MSetPacked::SHORT_NAME, "packed");
 }
 
 #[test]
@@ -498,9 +502,9 @@ fn packed_set_supports_non_integer_elements() {
 }
 
 #[test]
-fn explicit_mset_round_trips_and_omits_fixed_size_marker() {
+fn repetition_mset_round_trips_and_omits_fixed_size_marker() {
     let domain = Domain::mset(MSetAttr::new(range!(3), range!(0..2)), domain_int!(1..2));
-    let state = <MSetExplicit as ReprRule>::DomainLevel::init(domain).unwrap();
+    let state = <MSetRepetition as ReprRule>::DomainLevel::init(domain).unwrap();
     let value = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
         Literal::Int(2),
         Literal::Int(1),
@@ -517,6 +521,60 @@ fn explicit_mset_round_trips_and_omits_fixed_size_marker() {
             Literal::Int(2),
         ]))
     );
+}
+
+#[test]
+fn counts_mset_round_trips_distinct_values_and_multiplicities() {
+    let domain = Domain::mset(MSetAttr::new(range!(0..4), range!(0..3)), domain_int!(0..2));
+    let state = <MSetCounts as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
+        Literal::Int(1),
+        Literal::Int(1),
+        Literal::Int(2),
+    ]));
+
+    let assignment = state.down(value.clone()).unwrap();
+    assert_eq!(
+        assignment.values_matrix,
+        Literal::from(into_matrix!(vec![
+            Literal::Int(1),
+            Literal::Int(2),
+            Literal::Int(0)
+        ]))
+    );
+    assert_eq!(
+        assignment.counts_matrix,
+        Literal::from(into_matrix!(vec![
+            Literal::Int(2),
+            Literal::Int(1),
+            Literal::Int(0)
+        ]))
+    );
+    assert_eq!(assignment.up(), value);
+}
+
+#[test]
+fn mset_min_occurrence_only_constrains_values_that_are_present() {
+    let domain = Domain::mset(MSetAttr::new(range!(0..6), range!(2..3)), domain_int!(1..2));
+    let valid = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
+        Literal::Int(1),
+        Literal::Int(1),
+    ]));
+    let invalid = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![Literal::Int(1)]));
+
+    let repetition = <MSetRepetition as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let counts = <MSetCounts as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let occurrence = <MSetOccurrence as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    let packed = <MSetPacked as ReprRule>::DomainLevel::init(domain).unwrap();
+
+    assert_eq!(repetition.down(valid.clone()).unwrap().up(), valid);
+    assert!(repetition.down(invalid.clone()).is_err());
+    assert_eq!(counts.down(valid.clone()).unwrap().up(), valid);
+    assert!(counts.down(invalid.clone()).is_err());
+    assert_eq!(occurrence.down(valid.clone()).unwrap().up(), valid);
+    assert!(occurrence.down(invalid.clone()).is_err());
+    assert_eq!(packed.down(valid.clone()).unwrap().up(), valid);
+    assert!(packed.down(invalid).is_err());
 }
 
 #[test]
