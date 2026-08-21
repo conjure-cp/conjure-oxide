@@ -109,16 +109,8 @@ register_representation!(
     fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
         let cardinality = state.cardinality_expr();
         let (min, max) = state.cardinality;
-        let mut constraints = if min == max { vec![essence_expr!(&cardinality = &min)] }
-        else { vec![essence_expr!(r"(&cardinality >= &min) /\ (&cardinality <= &max)")] };
-        let min_occurrence = state.occurrence.0;
-        if min_occurrence > 0 {
-            constraints.extend((0..state.elements.len()).map(|index| {
-                let frequency = state.element_frequency_expr(index);
-                essence_expr!(&frequency >= &min_occurrence)
-            }));
-        }
-        constraints
+        if min == max { vec![essence_expr!(&cardinality = &min)] }
+        else { vec![essence_expr!(r"(&cardinality >= &min) /\ (&cardinality <= &max)")] }
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
         let Literal::AbstractLiteral(AbstractLiteral::MSet(elems)) = value else {
@@ -166,7 +158,7 @@ fn encode(
             .iter()
             .filter(|elem| elem.essence_cmp(candidate).is_eq())
             .count() as i32;
-        if count < occurrence.0 || count > occurrence.1 {
+        if count != 0 && (count < occurrence.0.max(1) || count > occurrence.1) {
             return None;
         }
         let digit = if count == 0 {
@@ -194,7 +186,8 @@ fn valid_count(elements: usize, cardinality: (i32, i32), occurrence: (i32, i32))
     for _ in 0..elements {
         let mut next = vec![0usize; max_sum + 1];
         for (sum, ways) in counts.iter().copied().enumerate() {
-            for count in occurrence.0..=occurrence.1 {
+            let allowed_counts = std::iter::once(0).chain(occurrence.0.max(1)..=occurrence.1);
+            for count in allowed_counts {
                 let new_sum = sum + count as usize;
                 if new_sum <= max_sum {
                     next[new_sum] = next[new_sum].saturating_add(ways);

@@ -584,26 +584,13 @@ fn counts_mset_round_trips_distinct_values_and_multiplicities() {
 }
 
 #[test]
-fn mset_min_occurrence_requires_every_domain_value() {
+fn mset_min_occurrence_only_constrains_values_that_are_present() {
     let domain = Domain::mset(MSetAttr::new(range!(0..6), range!(2..3)), domain_int!(1..2));
     let valid = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
         Literal::Int(1),
         Literal::Int(1),
-        Literal::Int(2),
-        Literal::Int(2),
     ]));
-    let missing_value = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
-        Literal::Int(1),
-        Literal::Int(1),
-        Literal::Int(1),
-        Literal::Int(1),
-    ]));
-    let below_minimum = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![
-        Literal::Int(1),
-        Literal::Int(2),
-        Literal::Int(2),
-        Literal::Int(2),
-    ]));
+    let invalid = Literal::AbstractLiteral(AbstractLiteral::MSet(vec![Literal::Int(1)]));
 
     let repetition = <MSetRepetition as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
     let counts = <MSetCounts as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
@@ -611,17 +598,13 @@ fn mset_min_occurrence_requires_every_domain_value() {
     let packed = <MSetPacked as ReprRule>::DomainLevel::init(domain).unwrap();
 
     assert_eq!(repetition.down(valid.clone()).unwrap().up(), valid);
-    assert!(repetition.down(missing_value.clone()).is_err());
-    assert!(repetition.down(below_minimum.clone()).is_err());
+    assert!(repetition.down(invalid.clone()).is_err());
     assert_eq!(counts.down(valid.clone()).unwrap().up(), valid);
-    assert!(counts.down(missing_value.clone()).is_err());
-    assert!(counts.down(below_minimum.clone()).is_err());
+    assert!(counts.down(invalid.clone()).is_err());
     assert_eq!(occurrence.down(valid.clone()).unwrap().up(), valid);
-    assert!(occurrence.down(missing_value.clone()).is_err());
-    assert!(occurrence.down(below_minimum.clone()).is_err());
+    assert!(occurrence.down(invalid.clone()).is_err());
     assert_eq!(packed.down(valid.clone()).unwrap().up(), valid);
-    assert!(packed.down(missing_value).is_err());
-    assert!(packed.down(below_minimum).is_err());
+    assert!(packed.down(invalid).is_err());
 }
 
 #[test]

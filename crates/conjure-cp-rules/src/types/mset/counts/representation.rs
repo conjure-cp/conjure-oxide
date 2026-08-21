@@ -206,7 +206,7 @@ register_representation!(
             cardinality: (min, max),
             occurrence: bounds.occurrence,
             counts_matrix: Domain::matrix(
-                domain_int!(bounds.occurrence.0..bounds.occurrence.1),
+                domain_int!(0..bounds.occurrence.1),
                 vec![domain_int!(1..max_distinct)],
             ),
             values_matrix: Domain::matrix(inner.clone().into(), vec![domain_int!(1..max_distinct)]),
@@ -221,8 +221,12 @@ register_representation!(
         let (min, max) = state.cardinality;
         constraints.push(essence_expr!(r"(&cardinality >= &min) /\ (&cardinality <= &max)"));
 
+        let min_occurrence = state.occurrence.0;
         for index in 1..=state.max_distinct {
             let count = state.count_expr(index);
+            if min_occurrence > 0 {
+                constraints.push(essence_expr!(r"(&count = 0) \/ (&count >= &min_occurrence)"));
+            }
             constraints.push(Expression::Or(
                 Metadata::new(),
                 Moo::new(matrix_expr![
@@ -279,16 +283,6 @@ register_representation!(
         }) {
             return Err(ReprDownError::BadValue(original, "multiset contains an element outside its domain".to_owned()));
         }
-        if state.elements.iter().any(|candidate| {
-            let count = elems
-                .iter()
-                .filter(|elem| elem.essence_cmp(candidate).is_eq())
-                .count() as i32;
-            count < state.occurrence.0 || count > state.occurrence.1
-        }) {
-            return Err(ReprDownError::BadValue(original, "multiset occurrence counts are outside their bounds".to_owned()));
-        }
-
         let mut histogram = Vec::<(Literal, i32)>::new();
         for elem in elems {
             if let Some((_, count)) = histogram
