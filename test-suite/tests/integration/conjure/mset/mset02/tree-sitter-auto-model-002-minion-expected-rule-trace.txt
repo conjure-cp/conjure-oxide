@@ -10,19 +10,7 @@ true
 new variables:
   find x#packed_1: int(0..24)
 new constraints:
-  and([sum([sum([(x#packed_1 / 1) % 5,0;int(1..)]),sum([(x#packed_1 / 5) % 5,0;int(1..)]);int(1..)]) >= 0,sum([sum([(x#packed_1 / 1) % 5,0;int(1..)]),sum([(x#packed_1 / 5) % 5,0;int(1..)]);int(1..)]) <= 4;int(1..)])
-
---
-
-sum([sum([(x#packed_1 / 1) % 5,0;int(1..)]),sum([(x#packed_1 / 5) % 5,0;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([(x#packed_1 / 1) % 5,0,(x#packed_1 / 5) % 5,0;int(1..)])
-
---
-
-sum([sum([(x#packed_1 / 1) % 5,0;int(1..)]),sum([(x#packed_1 / 5) % 5,0;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([(x#packed_1 / 1) % 5,0,(x#packed_1 / 5) % 5,0;int(1..)])
+  and([sum([(x#packed_1 / 1) % 5,(x#packed_1 / 5) % 5;int(1..)]) >= 0,sum([(x#packed_1 / 1) % 5,(x#packed_1 / 5) % 5;int(1..)]) <= 4;int(1..)])
 
 --
 
@@ -188,7 +176,7 @@ DivEq(x#packed_1, 5, __7)
 
 Final model:
 
-find x: mset (maxSize 4) of int(1..2)
+find x: mset (representation packed, maxSize 4) of int(1..2)
 find x#packed_1: int(0..24)
 findAux __0: int(0..4)
 findAux __1: int(0..4)

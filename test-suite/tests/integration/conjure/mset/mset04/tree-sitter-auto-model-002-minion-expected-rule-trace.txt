@@ -10,13 +10,7 @@ true
 new variables:
   find x#packed_1: int(0..8)
 new constraints:
-  sum([sum([(x#packed_1 / 1) % 3,0;int(1..)]),sum([(x#packed_1 / 3) % 3,0;int(1..)]);int(1..)]) = 4
-
---
-
-sum([sum([(x#packed_1 / 1) % 3,0;int(1..)]),sum([(x#packed_1 / 3) % 3,0;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([(x#packed_1 / 1) % 3,0,(x#packed_1 / 3) % 3,0;int(1..)])
+  sum([(x#packed_1 / 1) % 3,(x#packed_1 / 3) % 3;int(1..)]) = 4
 
 --
 
@@ -102,7 +96,7 @@ DivEq(x#packed_1, 3, __3)
 
 Final model:
 
-find x: mset (size 4, maxOccur(2)) of int(1..2)
+find x: mset (representation packed, size 4, maxOccur(2)) of int(1..2)
 find x#packed_1: int(0..8)
 findAux __0: int(0..2)
 findAux __1: int(0..2)

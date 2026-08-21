@@ -1,0 +1,2287 @@
+Model before rewriting:
+
+find x: mset (minOccur(2), maxOccur(3)) of int(1..2)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#repetition_1: matrix indexed by [int(1..6)] of int(1..2)
+  find x#repetition_2: int(0..6)
+new constraints:
+  or([x#repetition_2 < 2,([SafeIndex(x#repetition_1,[1]);int(1..)] <=lex [SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)])
+  or([x#repetition_2 < 3,([SafeIndex(x#repetition_1,[2]);int(1..)] <=lex [SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)])
+  or([x#repetition_2 < 4,([SafeIndex(x#repetition_1,[3]);int(1..)] <=lex [SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)])
+  or([x#repetition_2 < 5,([SafeIndex(x#repetition_1,[4]);int(1..)] <=lex [SafeIndex(x#repetition_1,[5]);int(1..)]);int(1..)])
+  or([x#repetition_2 < 6,([SafeIndex(x#repetition_1,[5]);int(1..)] <=lex [SafeIndex(x#repetition_1,[6]);int(1..)]);int(1..)])
+  or([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])
+  or([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])
+  or([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])
+  or([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])
+  or([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])
+  or([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)])
+  or([sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) >= 2;int(1..)])
+  sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) <= 3
+  or([sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) = 0,sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) >= 2;int(1..)])
+  sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) <= 3
+
+--
+
+true,
+or([x#repetition_2 < 2,([SafeIndex(x#repetition_1,[1]);int(1..)] <=lex [SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 3,([SafeIndex(x#repetition_1,[2]);int(1..)] <=lex [SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 4,([SafeIndex(x#repetition_1,[3]);int(1..)] <=lex [SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 5,([SafeIndex(x#repetition_1,[4]);int(1..)] <=lex [SafeIndex(x#repetition_1,[5]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 6,([SafeIndex(x#repetition_1,[5]);int(1..)] <=lex [SafeIndex(x#repetition_1,[6]);int(1..)]);int(1..)]),
+or([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+or([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)]),
+or([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]),
+or([sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) >= 2;int(1..)]),
+sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) <= 3,
+or([sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) = 0,sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) >= 2;int(1..)]),
+sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) <= 3
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+true,
+or([x#repetition_2 < 2,([SafeIndex(x#repetition_1,[1]);int(1..)] <=lex [SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 3,([SafeIndex(x#repetition_1,[2]);int(1..)] <=lex [SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 4,([SafeIndex(x#repetition_1,[3]);int(1..)] <=lex [SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 5,([SafeIndex(x#repetition_1,[4]);int(1..)] <=lex [SafeIndex(x#repetition_1,[5]);int(1..)]);int(1..)]),
+or([x#repetition_2 < 6,([SafeIndex(x#repetition_1,[5]);int(1..)] <=lex [SafeIndex(x#repetition_1,[6]);int(1..)]);int(1..)]),
+or([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)]),
+or([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)]),
+or([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)]),
+or([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)]),
+or([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)]),
+or([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]),
+or([sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) = 0,sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) >= 2;int(1..)]),
+sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 1;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 1;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 1;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 1;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 1;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 1;int(1..)]));int(1..)]) <= 3,
+or([sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) = 0,sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) >= 2;int(1..)]),
+sum([toInt(and([1 <= x#repetition_2,SafeIndex(x#repetition_1,[1]) = 2;int(1..)])),toInt(and([2 <= x#repetition_2,SafeIndex(x#repetition_1,[2]) = 2;int(1..)])),toInt(and([3 <= x#repetition_2,SafeIndex(x#repetition_1,[3]) = 2;int(1..)])),toInt(and([4 <= x#repetition_2,SafeIndex(x#repetition_1,[4]) = 2;int(1..)])),toInt(and([5 <= x#repetition_2,SafeIndex(x#repetition_1,[5]) = 2;int(1..)])),toInt(and([6 <= x#repetition_2,SafeIndex(x#repetition_1,[6]) = 2;int(1..)]));int(1..)]) <= 3
+new variables:
+  find x#repetition_1#components_1: int(1..2)
+  find x#repetition_1#components_2: int(1..2)
+  find x#repetition_1#components_3: int(1..2)
+  find x#repetition_1#components_4: int(1..2)
+  find x#repetition_1#components_5: int(1..2)
+  find x#repetition_1#components_6: int(1..2)
+
+--
+
+x#repetition_2 < 2
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#repetition_2 <= sum([2,-1;int(1..)])
+
+--
+
+x#repetition_2 < 3
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#repetition_2 <= sum([3,-1;int(1..)])
+
+--
+
+x#repetition_2 < 4
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#repetition_2 <= sum([4,-1;int(1..)])
+
+--
+
+x#repetition_2 < 5
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#repetition_2 <= sum([5,-1;int(1..)])
+
+--
+
+x#repetition_2 < 6
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#repetition_2 <= sum([6,-1;int(1..)])
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_6
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_6
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_6
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_6
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_6
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_6
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_6
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
+
+--
+
+SafeIndex(x#repetition_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_2
+
+--
+
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
+SafeIndex(x#repetition_1,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_5
+
+--
+
+SafeIndex(x#repetition_1,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_6
+
+--
+
+sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]));int(1..)]) <= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([__0, __1, __2, __3, __4, __5], 3)
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+  findAux __4: int(0..1)
+  findAux __5: int(0..1)
+new constraints:
+  __0 =aux toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)]))
+  __1 =aux toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)]))
+  __2 =aux toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)]))
+  __3 =aux toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)]))
+  __4 =aux toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)]))
+  __5 =aux toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]))
+
+--
+
+sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]));int(1..)]) <= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([__10, __11, __6, __7, __8, __9], 3)
+new variables:
+  findAux __6: int(0..1)
+  findAux __7: int(0..1)
+  findAux __8: int(0..1)
+  findAux __9: int(0..1)
+  findAux __10: int(0..1)
+  findAux __11: int(0..1)
+new constraints:
+  __6 =aux toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)]))
+  __7 =aux toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)]))
+  __8 =aux toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)]))
+  __9 =aux toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)]))
+  __10 =aux toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)]))
+  __11 =aux toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]))
+
+--
+
+sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]));int(1..)]) = 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__12, __13, __14, __15, __16, __17], 0),SumGeq([__12, __13, __14, __15, __16, __17], 0);int(1..)])
+new variables:
+  findAux __12: int(0..1)
+  findAux __13: int(0..1)
+  findAux __14: int(0..1)
+  findAux __15: int(0..1)
+  findAux __16: int(0..1)
+  findAux __17: int(0..1)
+new constraints:
+  __12 =aux toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)]))
+  __13 =aux toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)]))
+  __14 =aux toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)]))
+  __15 =aux toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)]))
+  __16 =aux toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)]))
+  __17 =aux toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]))
+
+--
+
+or([and([SumLeq([__12, __13, __14, __15, __16, __17], 0),SumGeq([__12, __13, __14, __15, __16, __17], 0);int(1..)]),sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]));int(1..)]) >= 2;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]));int(1..)]) >= 2,SumLeq([__12, __13, __14, __15, __16, __17], 0);int(1..)]),or([sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]));int(1..)]) >= 2,SumGeq([__12, __13, __14, __15, __16, __17], 0);int(1..)]);int(1..)])
+
+--
+
+sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]));int(1..)]) = 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__18, __19, __20, __21, __22, __23], 0),SumGeq([__18, __19, __20, __21, __22, __23], 0);int(1..)])
+new variables:
+  findAux __18: int(0..1)
+  findAux __19: int(0..1)
+  findAux __20: int(0..1)
+  findAux __21: int(0..1)
+  findAux __22: int(0..1)
+  findAux __23: int(0..1)
+new constraints:
+  __18 =aux toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)]))
+  __19 =aux toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)]))
+  __20 =aux toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)]))
+  __21 =aux toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)]))
+  __22 =aux toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)]))
+  __23 =aux toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]))
+
+--
+
+or([and([SumLeq([__18, __19, __20, __21, __22, __23], 0),SumGeq([__18, __19, __20, __21, __22, __23], 0);int(1..)]),sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]));int(1..)]) >= 2;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]));int(1..)]) >= 2,SumLeq([__18, __19, __20, __21, __22, __23], 0);int(1..)]),or([sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]));int(1..)]) >= 2,SumGeq([__18, __19, __20, __21, __22, __23], 0);int(1..)]);int(1..)])
+
+--
+
+sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]));int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([__24, __25, __26, __27, __28, __29], 2)
+new variables:
+  findAux __24: int(0..1)
+  findAux __25: int(0..1)
+  findAux __26: int(0..1)
+  findAux __27: int(0..1)
+  findAux __28: int(0..1)
+  findAux __29: int(0..1)
+new constraints:
+  __24 =aux toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)]))
+  __25 =aux toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)]))
+  __26 =aux toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)]))
+  __27 =aux toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)]))
+  __28 =aux toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)]))
+  __29 =aux toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]))
+
+--
+
+sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]));int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([__30, __31, __32, __33, __34, __35], 2)
+new variables:
+  findAux __30: int(0..1)
+  findAux __31: int(0..1)
+  findAux __32: int(0..1)
+  findAux __33: int(0..1)
+  findAux __34: int(0..1)
+  findAux __35: int(0..1)
+new constraints:
+  __30 =aux toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 1;int(1..)]))
+  __31 =aux toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 1;int(1..)]))
+  __32 =aux toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 1;int(1..)]))
+  __33 =aux toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 1;int(1..)]))
+  __34 =aux toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 1;int(1..)]))
+  __35 =aux toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 1;int(1..)]))
+
+--
+
+sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]));int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([__36, __37, __38, __39, __40, __41], 2)
+new variables:
+  findAux __36: int(0..1)
+  findAux __37: int(0..1)
+  findAux __38: int(0..1)
+  findAux __39: int(0..1)
+  findAux __40: int(0..1)
+  findAux __41: int(0..1)
+new constraints:
+  __36 =aux toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)]))
+  __37 =aux toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)]))
+  __38 =aux toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)]))
+  __39 =aux toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)]))
+  __40 =aux toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)]))
+  __41 =aux toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]))
+
+--
+
+sum([toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)])),toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)])),toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)])),toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)])),toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)])),toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]));int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([__42, __43, __44, __45, __46, __47], 2)
+new variables:
+  findAux __42: int(0..1)
+  findAux __43: int(0..1)
+  findAux __44: int(0..1)
+  findAux __45: int(0..1)
+  findAux __46: int(0..1)
+  findAux __47: int(0..1)
+new constraints:
+  __42 =aux toInt(and([1 <= x#repetition_2,x#repetition_1#components_1 = 2;int(1..)]))
+  __43 =aux toInt(and([2 <= x#repetition_2,x#repetition_1#components_2 = 2;int(1..)]))
+  __44 =aux toInt(and([3 <= x#repetition_2,x#repetition_1#components_3 = 2;int(1..)]))
+  __45 =aux toInt(and([4 <= x#repetition_2,x#repetition_1#components_4 = 2;int(1..)]))
+  __46 =aux toInt(and([5 <= x#repetition_2,x#repetition_1#components_5 = 2;int(1..)]))
+  __47 =aux toInt(and([6 <= x#repetition_2,x#repetition_1#components_6 = 2;int(1..)]))
+
+--
+
+x#repetition_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,1)
+
+--
+
+x#repetition_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,1)
+
+--
+
+x#repetition_1#components_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,1)
+
+--
+
+x#repetition_1#components_4 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,1)
+
+--
+
+x#repetition_1#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,1)
+
+--
+
+x#repetition_1#components_6 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,1)
+
+--
+
+x#repetition_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,1)
+
+--
+
+x#repetition_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,1)
+
+--
+
+x#repetition_1#components_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,1)
+
+--
+
+x#repetition_1#components_4 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,1)
+
+--
+
+x#repetition_1#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,1)
+
+--
+
+x#repetition_1#components_6 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,1)
+
+--
+
+x#repetition_1#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,2)
+
+--
+
+x#repetition_1#components_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,2)
+
+--
+
+x#repetition_1#components_3 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,2)
+
+--
+
+x#repetition_1#components_4 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,2)
+
+--
+
+x#repetition_1#components_5 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,2)
+
+--
+
+x#repetition_1#components_6 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,2)
+
+--
+
+x#repetition_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,1)
+
+--
+
+x#repetition_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,1)
+
+--
+
+x#repetition_1#components_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,1)
+
+--
+
+x#repetition_1#components_4 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,1)
+
+--
+
+x#repetition_1#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,1)
+
+--
+
+x#repetition_1#components_6 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,1)
+
+--
+
+x#repetition_1#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,2)
+
+--
+
+x#repetition_1#components_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,2)
+
+--
+
+x#repetition_1#components_3 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,2)
+
+--
+
+x#repetition_1#components_4 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,2)
+
+--
+
+x#repetition_1#components_5 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,2)
+
+--
+
+x#repetition_1#components_6 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,2)
+
+--
+
+x#repetition_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,1)
+
+--
+
+x#repetition_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,1)
+
+--
+
+x#repetition_1#components_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,1)
+
+--
+
+x#repetition_1#components_4 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,1)
+
+--
+
+x#repetition_1#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,1)
+
+--
+
+x#repetition_1#components_6 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,1)
+
+--
+
+x#repetition_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,1)
+
+--
+
+x#repetition_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,1)
+
+--
+
+x#repetition_1#components_3 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,1)
+
+--
+
+x#repetition_1#components_4 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,1)
+
+--
+
+x#repetition_1#components_5 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,1)
+
+--
+
+x#repetition_1#components_6 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,1)
+
+--
+
+x#repetition_1#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,2)
+
+--
+
+x#repetition_1#components_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,2)
+
+--
+
+x#repetition_1#components_3 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,2)
+
+--
+
+x#repetition_1#components_4 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,2)
+
+--
+
+x#repetition_1#components_5 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,2)
+
+--
+
+x#repetition_1#components_6 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,2)
+
+--
+
+x#repetition_1#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,2)
+
+--
+
+x#repetition_1#components_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,2)
+
+--
+
+x#repetition_1#components_3 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_3,2)
+
+--
+
+x#repetition_1#components_4 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_4,2)
+
+--
+
+x#repetition_1#components_5 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_5,2)
+
+--
+
+x#repetition_1#components_6 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_6,2)
+
+--
+
+toInt(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__48)
+new variables:
+  findAux __48: bool
+new constraints:
+  __48 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)])
+
+--
+
+__48 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)]), __48)
+
+--
+
+toInt(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__49)
+new variables:
+  findAux __49: bool
+new constraints:
+  __49 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)])
+
+--
+
+__49 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)]), __49)
+
+--
+
+toInt(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__50)
+new variables:
+  findAux __50: bool
+new constraints:
+  __50 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)])
+
+--
+
+__50 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)]), __50)
+
+--
+
+toInt(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__51)
+new variables:
+  findAux __51: bool
+new constraints:
+  __51 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)])
+
+--
+
+__51 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)]), __51)
+
+--
+
+toInt(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__52)
+new variables:
+  findAux __52: bool
+new constraints:
+  __52 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)])
+
+--
+
+__52 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)]), __52)
+
+--
+
+toInt(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__53)
+new variables:
+  findAux __53: bool
+new constraints:
+  __53 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)])
+
+--
+
+__53 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)]), __53)
+
+--
+
+toInt(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__54)
+new variables:
+  findAux __54: bool
+new constraints:
+  __54 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)])
+
+--
+
+__54 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)]), __54)
+
+--
+
+toInt(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__55)
+new variables:
+  findAux __55: bool
+new constraints:
+  __55 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)])
+
+--
+
+__55 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)]), __55)
+
+--
+
+toInt(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__56)
+new variables:
+  findAux __56: bool
+new constraints:
+  __56 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)])
+
+--
+
+__56 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)]), __56)
+
+--
+
+toInt(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__57)
+new variables:
+  findAux __57: bool
+new constraints:
+  __57 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)])
+
+--
+
+__57 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)]), __57)
+
+--
+
+toInt(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__58)
+new variables:
+  findAux __58: bool
+new constraints:
+  __58 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)])
+
+--
+
+__58 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)]), __58)
+
+--
+
+toInt(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__59)
+new variables:
+  findAux __59: bool
+new constraints:
+  __59 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)])
+
+--
+
+__59 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)]), __59)
+
+--
+
+toInt(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__60)
+new variables:
+  findAux __60: bool
+new constraints:
+  __60 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)])
+
+--
+
+__60 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)]), __60)
+
+--
+
+toInt(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__61)
+new variables:
+  findAux __61: bool
+new constraints:
+  __61 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)])
+
+--
+
+__61 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)]), __61)
+
+--
+
+toInt(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__62)
+new variables:
+  findAux __62: bool
+new constraints:
+  __62 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)])
+
+--
+
+__62 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)]), __62)
+
+--
+
+toInt(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__63)
+new variables:
+  findAux __63: bool
+new constraints:
+  __63 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)])
+
+--
+
+__63 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)]), __63)
+
+--
+
+toInt(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__64)
+new variables:
+  findAux __64: bool
+new constraints:
+  __64 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)])
+
+--
+
+__64 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)]), __64)
+
+--
+
+toInt(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__65)
+new variables:
+  findAux __65: bool
+new constraints:
+  __65 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)])
+
+--
+
+__65 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)]), __65)
+
+--
+
+toInt(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__66)
+new variables:
+  findAux __66: bool
+new constraints:
+  __66 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)])
+
+--
+
+__66 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)]), __66)
+
+--
+
+toInt(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__67)
+new variables:
+  findAux __67: bool
+new constraints:
+  __67 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)])
+
+--
+
+__67 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)]), __67)
+
+--
+
+toInt(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__68)
+new variables:
+  findAux __68: bool
+new constraints:
+  __68 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)])
+
+--
+
+__68 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)]), __68)
+
+--
+
+toInt(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__69)
+new variables:
+  findAux __69: bool
+new constraints:
+  __69 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)])
+
+--
+
+__69 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)]), __69)
+
+--
+
+toInt(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__70)
+new variables:
+  findAux __70: bool
+new constraints:
+  __70 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)])
+
+--
+
+__70 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)]), __70)
+
+--
+
+toInt(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__71)
+new variables:
+  findAux __71: bool
+new constraints:
+  __71 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)])
+
+--
+
+__71 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)]), __71)
+
+--
+
+toInt(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__72)
+new variables:
+  findAux __72: bool
+new constraints:
+  __72 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)])
+
+--
+
+__72 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)]), __72)
+
+--
+
+toInt(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__73)
+new variables:
+  findAux __73: bool
+new constraints:
+  __73 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)])
+
+--
+
+__73 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)]), __73)
+
+--
+
+toInt(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__74)
+new variables:
+  findAux __74: bool
+new constraints:
+  __74 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)])
+
+--
+
+__74 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)]), __74)
+
+--
+
+toInt(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__75)
+new variables:
+  findAux __75: bool
+new constraints:
+  __75 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)])
+
+--
+
+__75 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)]), __75)
+
+--
+
+toInt(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__76)
+new variables:
+  findAux __76: bool
+new constraints:
+  __76 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)])
+
+--
+
+__76 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)]), __76)
+
+--
+
+toInt(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__77)
+new variables:
+  findAux __77: bool
+new constraints:
+  __77 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)])
+
+--
+
+__77 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)]), __77)
+
+--
+
+toInt(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__78)
+new variables:
+  findAux __78: bool
+new constraints:
+  __78 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)])
+
+--
+
+__78 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,1);int(1..)]), __78)
+
+--
+
+toInt(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__79)
+new variables:
+  findAux __79: bool
+new constraints:
+  __79 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)])
+
+--
+
+__79 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,1);int(1..)]), __79)
+
+--
+
+toInt(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__80)
+new variables:
+  findAux __80: bool
+new constraints:
+  __80 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)])
+
+--
+
+__80 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,1);int(1..)]), __80)
+
+--
+
+toInt(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__81)
+new variables:
+  findAux __81: bool
+new constraints:
+  __81 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)])
+
+--
+
+__81 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,1);int(1..)]), __81)
+
+--
+
+toInt(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__82)
+new variables:
+  findAux __82: bool
+new constraints:
+  __82 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)])
+
+--
+
+__82 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,1);int(1..)]), __82)
+
+--
+
+toInt(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__83)
+new variables:
+  findAux __83: bool
+new constraints:
+  __83 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)])
+
+--
+
+__83 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,1);int(1..)]), __83)
+
+--
+
+toInt(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__84)
+new variables:
+  findAux __84: bool
+new constraints:
+  __84 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)])
+
+--
+
+__84 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)]), __84)
+
+--
+
+toInt(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__85)
+new variables:
+  findAux __85: bool
+new constraints:
+  __85 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)])
+
+--
+
+__85 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)]), __85)
+
+--
+
+toInt(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__86)
+new variables:
+  findAux __86: bool
+new constraints:
+  __86 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)])
+
+--
+
+__86 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)]), __86)
+
+--
+
+toInt(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__87)
+new variables:
+  findAux __87: bool
+new constraints:
+  __87 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)])
+
+--
+
+__87 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)]), __87)
+
+--
+
+toInt(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__88)
+new variables:
+  findAux __88: bool
+new constraints:
+  __88 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)])
+
+--
+
+__88 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)]), __88)
+
+--
+
+toInt(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__89)
+new variables:
+  findAux __89: bool
+new constraints:
+  __89 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)])
+
+--
+
+__89 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)]), __89)
+
+--
+
+toInt(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__90)
+new variables:
+  findAux __90: bool
+new constraints:
+  __90 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)])
+
+--
+
+__90 =aux and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([1 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_1,2);int(1..)]), __90)
+
+--
+
+toInt(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__91)
+new variables:
+  findAux __91: bool
+new constraints:
+  __91 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)])
+
+--
+
+__91 =aux and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([2 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_2,2);int(1..)]), __91)
+
+--
+
+toInt(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__92)
+new variables:
+  findAux __92: bool
+new constraints:
+  __92 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)])
+
+--
+
+__92 =aux and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([3 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_3,2);int(1..)]), __92)
+
+--
+
+toInt(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__93)
+new variables:
+  findAux __93: bool
+new constraints:
+  __93 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)])
+
+--
+
+__93 =aux and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([4 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_4,2);int(1..)]), __93)
+
+--
+
+toInt(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__94)
+new variables:
+  findAux __94: bool
+new constraints:
+  __94 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)])
+
+--
+
+__94 =aux and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([5 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_5,2);int(1..)]), __94)
+
+--
+
+toInt(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__95)
+new variables:
+  findAux __95: bool
+new constraints:
+  __95 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)])
+
+--
+
+__95 =aux and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,2);int(1..)]), __95)
+
+--
+
+x#repetition_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#repetition_2, 1, 0)
+
+--
+
+x#repetition_2 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#repetition_2, 2, 0)
+
+--
+
+x#repetition_2 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#repetition_2, 3, 0)
+
+--
+
+x#repetition_2 <= 4
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#repetition_2, 4, 0)
+
+--
+
+x#repetition_2 <= 5
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#repetition_2, 5, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+([x#repetition_1#components_1;int(1..)] <=lex [x#repetition_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#repetition_1#components_1], [x#repetition_1#components_2])
+
+--
+
+([x#repetition_1#components_2;int(1..)] <=lex [x#repetition_1#components_3;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#repetition_1#components_2], [x#repetition_1#components_3])
+
+--
+
+([x#repetition_1#components_3;int(1..)] <=lex [x#repetition_1#components_4;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#repetition_1#components_3], [x#repetition_1#components_4])
+
+--
+
+([x#repetition_1#components_4;int(1..)] <=lex [x#repetition_1#components_5;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#repetition_1#components_4], [x#repetition_1#components_5])
+
+--
+
+([x#repetition_1#components_5;int(1..)] <=lex [x#repetition_1#components_6;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#repetition_1#components_5], [x#repetition_1#components_6])
+
+--
+
+Final model:
+
+find x: mset (representation repetition, minOccur(2), maxOccur(3)) of int(1..2)
+find x#repetition_1: matrix indexed by [int(1..6)] of int(1..2)
+find x#repetition_2: int(0..6)
+find x#repetition_1#components_1: int(1..2)
+find x#repetition_1#components_2: int(1..2)
+find x#repetition_1#components_3: int(1..2)
+find x#repetition_1#components_4: int(1..2)
+find x#repetition_1#components_5: int(1..2)
+find x#repetition_1#components_6: int(1..2)
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: int(0..1)
+findAux __5: int(0..1)
+findAux __6: int(0..1)
+findAux __7: int(0..1)
+findAux __8: int(0..1)
+findAux __9: int(0..1)
+findAux __10: int(0..1)
+findAux __11: int(0..1)
+findAux __12: int(0..1)
+findAux __13: int(0..1)
+findAux __14: int(0..1)
+findAux __15: int(0..1)
+findAux __16: int(0..1)
+findAux __17: int(0..1)
+findAux __18: int(0..1)
+findAux __19: int(0..1)
+findAux __20: int(0..1)
+findAux __21: int(0..1)
+findAux __22: int(0..1)
+findAux __23: int(0..1)
+findAux __24: int(0..1)
+findAux __25: int(0..1)
+findAux __26: int(0..1)
+findAux __27: int(0..1)
+findAux __28: int(0..1)
+findAux __29: int(0..1)
+findAux __30: int(0..1)
+findAux __31: int(0..1)
+findAux __32: int(0..1)
+findAux __33: int(0..1)
+findAux __34: int(0..1)
+findAux __35: int(0..1)
+findAux __36: int(0..1)
+findAux __37: int(0..1)
+findAux __38: int(0..1)
+findAux __39: int(0..1)
+findAux __40: int(0..1)
+findAux __41: int(0..1)
+findAux __42: int(0..1)
+findAux __43: int(0..1)
+findAux __44: int(0..1)
+findAux __45: int(0..1)
+findAux __46: int(0..1)
+findAux __47: int(0..1)
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+
+such that
+
+true,
+or([Ineq(x#repetition_2, 1, 0),FlatLexLeq([x#repetition_1#components_1], [x#repetition_1#components_2]);int(1..)]),
+or([Ineq(x#repetition_2, 2, 0),FlatLexLeq([x#repetition_1#components_2], [x#repetition_1#components_3]);int(1..)]),
+or([Ineq(x#repetition_2, 3, 0),FlatLexLeq([x#repetition_1#components_3], [x#repetition_1#components_4]);int(1..)]),
+or([Ineq(x#repetition_2, 4, 0),FlatLexLeq([x#repetition_1#components_4], [x#repetition_1#components_5]);int(1..)]),
+or([Ineq(x#repetition_2, 5, 0),FlatLexLeq([x#repetition_1#components_5], [x#repetition_1#components_6]);int(1..)]),
+or([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,1);int(1..)]),
+or([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,1);int(1..)]),
+or([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,1);int(1..)]),
+or([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,1);int(1..)]),
+or([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,1);int(1..)]),
+or([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,1);int(1..)]),
+and([or([SumGeq([__24, __25, __26, __27, __28, __29], 2),SumLeq([__12, __13, __14, __15, __16, __17], 0);int(1..)]),or([SumGeq([__30, __31, __32, __33, __34, __35], 2),SumGeq([__12, __13, __14, __15, __16, __17], 0);int(1..)]);int(1..)]),
+SumLeq([__0, __1, __2, __3, __4, __5], 3),
+and([or([SumGeq([__36, __37, __38, __39, __40, __41], 2),SumLeq([__18, __19, __20, __21, __22, __23], 0);int(1..)]),or([SumGeq([__42, __43, __44, __45, __46, __47], 2),SumGeq([__18, __19, __20, __21, __22, __23], 0);int(1..)]);int(1..)]),
+SumLeq([__10, __11, __6, __7, __8, __9], 3),
+__0 =aux toInt(__48),
+__1 =aux toInt(__49),
+__2 =aux toInt(__50),
+__3 =aux toInt(__51),
+__4 =aux toInt(__52),
+__5 =aux toInt(__53),
+__6 =aux toInt(__54),
+__7 =aux toInt(__55),
+__8 =aux toInt(__56),
+__9 =aux toInt(__57),
+__10 =aux toInt(__58),
+__11 =aux toInt(__59),
+__12 =aux toInt(__60),
+__13 =aux toInt(__61),
+__14 =aux toInt(__62),
+__15 =aux toInt(__63),
+__16 =aux toInt(__64),
+__17 =aux toInt(__65),
+__18 =aux toInt(__66),
+__19 =aux toInt(__67),
+__20 =aux toInt(__68),
+__21 =aux toInt(__69),
+__22 =aux toInt(__70),
+__23 =aux toInt(__71),
+__24 =aux toInt(__72),
+__25 =aux toInt(__73),
+__26 =aux toInt(__74),
+__27 =aux toInt(__75),
+__28 =aux toInt(__76),
+__29 =aux toInt(__77),
+__30 =aux toInt(__78),
+__31 =aux toInt(__79),
+__32 =aux toInt(__80),
+__33 =aux toInt(__81),
+__34 =aux toInt(__82),
+__35 =aux toInt(__83),
+__36 =aux toInt(__84),
+__37 =aux toInt(__85),
+__38 =aux toInt(__86),
+__39 =aux toInt(__87),
+__40 =aux toInt(__88),
+__41 =aux toInt(__89),
+__42 =aux toInt(__90),
+__43 =aux toInt(__91),
+__44 =aux toInt(__92),
+__45 =aux toInt(__93),
+__46 =aux toInt(__94),
+__47 =aux toInt(__95),
+Reify(and([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,1);int(1..)]), __48),
+Reify(and([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,1);int(1..)]), __49),
+Reify(and([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,1);int(1..)]), __50),
+Reify(and([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,1);int(1..)]), __51),
+Reify(and([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,1);int(1..)]), __52),
+Reify(and([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,1);int(1..)]), __53),
+Reify(and([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,2);int(1..)]), __54),
+Reify(and([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,2);int(1..)]), __55),
+Reify(and([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,2);int(1..)]), __56),
+Reify(and([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,2);int(1..)]), __57),
+Reify(and([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,2);int(1..)]), __58),
+Reify(and([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,2);int(1..)]), __59),
+Reify(and([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,1);int(1..)]), __60),
+Reify(and([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,1);int(1..)]), __61),
+Reify(and([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,1);int(1..)]), __62),
+Reify(and([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,1);int(1..)]), __63),
+Reify(and([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,1);int(1..)]), __64),
+Reify(and([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,1);int(1..)]), __65),
+Reify(and([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,2);int(1..)]), __66),
+Reify(and([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,2);int(1..)]), __67),
+Reify(and([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,2);int(1..)]), __68),
+Reify(and([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,2);int(1..)]), __69),
+Reify(and([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,2);int(1..)]), __70),
+Reify(and([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,2);int(1..)]), __71),
+Reify(and([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,1);int(1..)]), __72),
+Reify(and([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,1);int(1..)]), __73),
+Reify(and([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,1);int(1..)]), __74),
+Reify(and([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,1);int(1..)]), __75),
+Reify(and([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,1);int(1..)]), __76),
+Reify(and([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,1);int(1..)]), __77),
+Reify(and([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,1);int(1..)]), __78),
+Reify(and([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,1);int(1..)]), __79),
+Reify(and([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,1);int(1..)]), __80),
+Reify(and([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,1);int(1..)]), __81),
+Reify(and([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,1);int(1..)]), __82),
+Reify(and([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,1);int(1..)]), __83),
+Reify(and([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,2);int(1..)]), __84),
+Reify(and([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,2);int(1..)]), __85),
+Reify(and([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,2);int(1..)]), __86),
+Reify(and([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,2);int(1..)]), __87),
+Reify(and([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,2);int(1..)]), __88),
+Reify(and([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,2);int(1..)]), __89),
+Reify(and([Ineq(1, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_1,2);int(1..)]), __90),
+Reify(and([Ineq(2, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_2,2);int(1..)]), __91),
+Reify(and([Ineq(3, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_3,2);int(1..)]), __92),
+Reify(and([Ineq(4, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_4,2);int(1..)]), __93),
+Reify(and([Ineq(5, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_5,2);int(1..)]), __94),
+Reify(and([Ineq(6, x#repetition_2, 0),WatchedLiteral(x#repetition_1#components_6,2);int(1..)]), __95)
+
