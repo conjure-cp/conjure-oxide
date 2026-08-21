@@ -128,6 +128,7 @@ fn union_counts(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::shared::utils::to_aux_var;
     use conjure_cp::ast::{Domain, MSetAttr, Reference};
     use conjure_cp::representation::ReprRule;
     use conjure_cp::{domain_int, range};
@@ -170,6 +171,40 @@ mod tests {
             universe
                 .iter()
                 .all(|expr| !matches!(expr, Expr::Union(..) | Expr::AuxDeclaration(..)))
+        );
+    }
+
+    #[test]
+    fn union_auxiliary_inherits_the_selected_counts_representation() {
+        let domain = Domain::mset(MSetAttr::new_max_size(2), domain_int!(1..999));
+        let mut symbols = SymbolTable::new();
+        let mut operand = symbols.gen_find_auxiliary(&domain);
+        MSetCounts::init_for(&mut operand).unwrap();
+        symbols.update_insert(operand.clone());
+
+        let source = Expr::Union(
+            Metadata::new(),
+            Moo::new(Expr::from(Reference {
+                ptr: operand,
+                repr: Some(MSetCounts::STORED),
+            })),
+            Moo::new(Expr::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::MSet(vec![1.into(), 2.into()]),
+            )),
+        );
+
+        let auxiliary = to_aux_var(&source, &symbols).unwrap();
+        let Atom::Reference(reference) = auxiliary.as_atom() else {
+            panic!("expected an auxiliary reference");
+        };
+        assert_eq!(reference.get_repr().unwrap().0.short_name(), "counts");
+        assert!(
+            auxiliary
+                .top_level_expr()
+                .universe()
+                .iter()
+                .any(|expr| matches!(expr, Expr::AuxDeclaration(_, reference, _) if reference.repr == Some(MSetCounts::STORED)))
         );
     }
 }

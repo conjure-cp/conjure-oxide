@@ -940,9 +940,31 @@ fn finite_mset_bounds(attrs: &MSetAttr<i32>, inner_len: i32) -> Option<((i32, i3
 ///
 /// [`Domain::union`] instead computes a common type envelope and intentionally drops collection
 /// attributes, so it is too weak for the domain of an `a union b` expression.
-fn mset_union_result_domain(lhs: &DomainPtr, rhs: &DomainPtr) -> Option<DomainPtr> {
-    let lhs = lhs.resolve().ok()?;
-    let rhs = rhs.resolve().ok()?;
+fn selected_representation(expr: &Expression) -> Option<String> {
+    match expr {
+        Expression::Atomic(_, Atom::Reference(reference)) => reference
+            .repr
+            .map(|rule| rule.short_name().to_owned())
+            .or_else(|| {
+                reference
+                    .domain_of()
+                    .representation_preference()
+                    .map(str::to_owned)
+            }),
+        Expression::TypeAnnotation(_, inner, domain)
+        | Expression::DomainAnnotation(_, inner, domain) => domain
+            .representation_preference()
+            .map(str::to_owned)
+            .or_else(|| selected_representation(inner)),
+        _ => None,
+    }
+}
+
+fn mset_union_result_domain(lhs: &Expression, rhs: &Expression) -> Option<DomainPtr> {
+    let lhs_selected = selected_representation(lhs);
+    let rhs_selected = selected_representation(rhs);
+    let lhs = lhs.domain_of()?.resolve().ok()?;
+    let rhs = rhs.domain_of()?.resolve().ok()?;
     let GroundDomain::MSet(lhs_attrs, lhs_inner) = lhs.as_ref() else {
         return None;
     };
@@ -961,8 +983,12 @@ fn mset_union_result_domain(lhs: &DomainPtr, rhs: &DomainPtr) -> Option<DomainPt
     let size = Range::new(Some(min_size), Some(max_size));
     let occurrence = Range::new(Some(1), Some(max_occurrence));
     let representation = match (
-        lhs_attrs.representation.as_deref(),
-        rhs_attrs.representation.as_deref(),
+        lhs_selected
+            .as_deref()
+            .or(lhs_attrs.representation.as_deref()),
+        rhs_selected
+            .as_deref()
+            .or(rhs_attrs.representation.as_deref()),
     ) {
         (Some(lhs), Some(rhs)) if lhs == rhs => Some(lhs.to_owned()),
         (Some(preference), None) | (None, Some(preference)) => Some(preference.to_owned()),
@@ -998,7 +1024,7 @@ impl Expression {
             Expression::Union(_, a, b) => {
                 let lhs = a.domain_of()?;
                 let rhs = b.domain_of()?;
-                mset_union_result_domain(&lhs, &rhs).or_else(|| lhs.union(&rhs).ok())
+                mset_union_result_domain(a, b).or_else(|| lhs.union(&rhs).ok())
             }
             Expression::Intersect(_, a, b) => a.domain_of()?.intersect(&b.domain_of()?).ok(),
             Expression::In(_, _, _) => Some(Domain::bool()),

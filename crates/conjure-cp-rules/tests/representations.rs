@@ -1,8 +1,8 @@
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::{
     AbstractLiteral, BinaryAttr, Domain, Expression, FuncAttr, GroundDomain, JectivityAttr,
-    Literal, MSetAttr, Moo, Name, PartialityAttr, PartitionAttr, PermutationAttr, RelAttr,
-    SequenceAttr, SetAttr, SymbolTable,
+    Literal, MSetAttr, Metadata, Moo, Name, PartialityAttr, PartitionAttr, PermutationAttr,
+    Reference, RelAttr, SequenceAttr, SetAttr, SymbolTable,
 };
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, into_matrix, range};
@@ -67,6 +67,31 @@ fn counts_equality_compares_canonical_slots_instead_of_enumerating_values() {
             .iter()
             .all(|expr| !matches!(expr, Expression::Sum(..) | Expression::Product(..)))
     );
+}
+
+#[test]
+fn mset_union_domain_preserves_the_selected_reference_representation() {
+    let domain = Domain::mset(MSetAttr::new_max_size(6), domain_int!(1..999));
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    MSetCounts::init_for(&mut declaration).unwrap();
+
+    let union = Expression::Union(
+        Metadata::new(),
+        Moo::new(Expression::from(Reference {
+            ptr: declaration,
+            repr: Some(MSetCounts::STORED),
+        })),
+        Moo::new(Expression::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::MSet(vec![1.into(), 2.into()]),
+        )),
+    );
+
+    let result = union.domain_of().unwrap();
+    let (attrs, _) = result.as_mset_ground().unwrap();
+    assert_eq!(attrs.size, range!(2..8));
+    assert_eq!(attrs.representation.as_deref(), Some("counts"));
 }
 
 #[test]

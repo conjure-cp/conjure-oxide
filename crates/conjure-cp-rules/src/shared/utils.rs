@@ -3,11 +3,12 @@ use std::collections::VecDeque;
 use conjure_cp::ast::eval_constant;
 use conjure_cp::ast::{
     AbstractLiteral, Atom, DeclarationPtr, DomainPtr, Expression as Expr, Literal, Metadata, Moo,
-    SymbolTable,
+    Reference, SymbolTable,
     categories::Category,
     comprehension::{Comprehension, ComprehensionQualifier},
     records::Field,
 };
+use conjure_cp::representation::get_applicable_repr_by_short_name;
 use conjure_cp::rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, RuleEffect};
 use conjure_cp::{bug, bug_assert, bug_assert_eq, essence_expr, into_matrix_expr, matrix_expr};
 use itertools::{Itertools, izip};
@@ -397,18 +398,51 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
 fn materialise_aux_var(expr: &Expr, symbols: &SymbolTable, domain: &DomainPtr) -> ToAuxVarOutput {
     let mut symbols = symbols.clone();
     let decl = symbols.gen_find_auxiliary(domain);
+    let mut reference = Reference::new(decl);
+    let mut representation_constraints = Vec::new();
+
+    if let Some(preference) = domain.representation_preference() {
+        let reference_name = reference.name().clone();
+        let rule =
+            get_applicable_repr_by_short_name(reference.ptr(), preference).unwrap_or_else(|| {
+                bug!(
+                    "representation `{preference}` inferred for auxiliary `{}` is not applicable",
+                    reference_name
+                )
+            });
+        let (repr_symbols, constraints) = {
+            let (_, repr_symbols, constraints) = reference
+                .select_or_init_repr_via(rule)
+                .unwrap_or_else(|error| {
+                    bug!(
+                        "could not initialise representation `{preference}` for auxiliary `{}`: {error}",
+                        reference_name
+                    )
+                });
+            (repr_symbols, constraints)
+        };
+        symbols.update_insert(reference.ptr().clone());
+        symbols.extend(repr_symbols);
+        representation_constraints = constraints;
+    }
 
     if cfg!(debug_assertions) {
         trace!(expr=%expr, "to_auxvar() succeeded in putting expr into an auxvar");
     }
 
+    let auxiliary =
+        Expr::AuxDeclaration(Metadata::new(), reference.clone(), Moo::new(expr.clone()));
+    let aux_expression = if representation_constraints.is_empty() {
+        auxiliary
+    } else {
+        let mut expressions = vec![auxiliary];
+        expressions.extend(representation_constraints);
+        Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(expressions)))
+    };
+
     ToAuxVarOutput {
-        aux_declaration: decl.clone(),
-        aux_expression: Expr::AuxDeclaration(
-            Metadata::new(),
-            conjure_cp::ast::Reference::new(decl),
-            Moo::new(expr.clone()),
-        ),
+        aux_reference: reference,
+        aux_expression,
         symbols,
         _unconstructable: (),
     }
@@ -430,7 +464,7 @@ pub fn defer_aux_var(
 
 /// Output data of `to_aux_var`.
 pub struct ToAuxVarOutput {
-    aux_declaration: DeclarationPtr,
+    aux_reference: Reference,
     aux_expression: Expr,
     symbols: SymbolTable,
     _unconstructable: (),
@@ -439,9 +473,7 @@ pub struct ToAuxVarOutput {
 impl ToAuxVarOutput {
     /// Returns the new auxiliary variable as an `Atom`.
     pub fn as_atom(&self) -> Atom {
-        Atom::Reference(conjure_cp::ast::Reference::new(
-            self.aux_declaration.clone(),
-        ))
+        Atom::Reference(self.aux_reference.clone())
     }
 
     /// Returns the new auxiliary variable as an `Expression`.
