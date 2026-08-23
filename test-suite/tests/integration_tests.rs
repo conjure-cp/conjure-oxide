@@ -834,13 +834,30 @@ fn integration_test_inner(
             .as_deref()
             .expect("oxide solutions should be present when solver ran");
 
-        let oxide_solutions = normalize_solutions_for_comparison(solutions);
-        let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
+        if search_was_truncated(
+            number_of_solutions,
+            solutions.len().max(conjure_solutions.len()),
+        ) {
+            // The search stopped at the configured limit, so each tool holds an arbitrary subset
+            // of the solution set. Only the number of solutions found is comparable.
+            assert_eq!(
+                solutions.len(),
+                conjure_solutions.len(),
+                "Oxide found {} solutions but Conjure found {} (number-of-solutions = {}, so only \
+                 the counts are compared)",
+                solutions.len(),
+                conjure_solutions.len(),
+                solution_limit_description(number_of_solutions),
+            );
+        } else {
+            let oxide_solutions = normalize_solutions_for_comparison(solutions);
+            let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
 
-        assert_eq!(
-            oxide_solutions, conjure_solutions,
-            "Oxide solutions (<) do not match Conjure solutions (>)!"
-        );
+            assert_eq!(
+                oxide_solutions, conjure_solutions,
+                "Oxide solutions (<) do not match Conjure solutions (>)!"
+            );
+        }
     }
 
     // When accept mode is enabled, copy all generated files to expected
@@ -864,7 +881,24 @@ fn integration_test_inner(
     if solutions.is_some() {
         let expected_solutions = read_solutions_essence(path, case_name, "expected", solver_fam)?;
         let generated_solutions = read_solutions_essence(path, case_name, "generated", solver_fam)?;
-        assert_eq!(generated_solutions, expected_solutions);
+
+        let expected_count = count_essence_solutions(&expected_solutions);
+        let generated_count = count_essence_solutions(&generated_solutions);
+
+        if search_was_truncated(number_of_solutions, expected_count.max(generated_count)) {
+            // Solutions are enumerated in solver order, so a truncated search can legitimately
+            // return a different subset from the one recorded in the expected artefact. Only the
+            // number of solutions found is comparable.
+            assert_eq!(
+                generated_count,
+                expected_count,
+                "Generated {generated_count} solutions but expected {expected_count} \
+                 (number-of-solutions = {}, so only the counts are compared)",
+                solution_limit_description(number_of_solutions),
+            );
+        } else {
+            assert_eq!(generated_solutions, expected_solutions);
+        }
     }
 
     if rule_trace_snapshots_enabled {
@@ -883,6 +917,37 @@ fn integration_test_inner(
         translation_time_s,
         solve_time_s,
     })
+}
+
+/// Reports whether the search stopped early because it hit a numeric `number-of-solutions` limit.
+///
+/// Once the search is cut short, the solutions found are an arbitrary subset of the full solution
+/// set: two runs that enumerate in different orders keep different subsets of the same size. Set
+/// comparisons are meaningless in that case, so callers fall back to comparing counts. `count` is
+/// the largest number of solutions any of the runs being compared found; a run that finished below
+/// the limit searched exhaustively, and its solutions remain comparable.
+fn search_was_truncated(number_of_solutions: NumberOfSolutions, count: usize) -> bool {
+    match number_of_solutions {
+        NumberOfSolutions::Limit(limit) if limit > 0 => count >= limit as usize,
+        _ => false,
+    }
+}
+
+/// Describes the configured solution limit for assertion messages.
+fn solution_limit_description(number_of_solutions: NumberOfSolutions) -> String {
+    match number_of_solutions {
+        NumberOfSolutions::All => "all".to_string(),
+        NumberOfSolutions::Limit(limit) => limit.to_string(),
+        NumberOfSolutions::Skip => "skip".to_string(),
+    }
+}
+
+/// Counts the solutions in a rendered Essence solutions artefact.
+fn count_essence_solutions(rendered: &str) -> usize {
+    rendered
+        .lines()
+        .filter(|line| line.starts_with("$ Solution:"))
+        .count()
 }
 
 fn run_case_name(
