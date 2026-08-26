@@ -21,7 +21,7 @@ use conjure_cp::{
         RuleSet,
         rewrite_model_with_configured_rewriter as rewrite_model_with_configured_rewriter_core,
     },
-    settings::{Rewriter, with_compact_heuristic},
+    settings::{Rewriter, SolverFamily, with_compact_heuristic, with_solver_family},
     solver::SolverError,
 };
 use uniplate::{Biplate as _, Uniplate as _};
@@ -53,14 +53,19 @@ pub(super) fn detach_symbols(model: &mut Model) {
 /// sets.
 ///
 /// Representations for a throwaway model are chosen compactly rather than by the configured
-/// heuristic -- see [`with_compact_heuristic`].
+/// heuristic, and for Minion rather than the outer model's solver. The rewritten model is passed
+/// directly to Minion, so inheriting (for example) Z3 array/LIA applicability would produce a model
+/// Minion cannot consume.
 pub(super) fn rewrite_model_with_configured_rewriter<'a>(
     model: Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     configured_rewriter: Rewriter,
 ) -> Model {
-    with_compact_heuristic(|| {
-        rewrite_model_with_configured_rewriter_core(model, rule_sets, configured_rewriter).unwrap()
+    with_solver_family(SolverFamily::Minion, || {
+        with_compact_heuristic(|| {
+            rewrite_model_with_configured_rewriter_core(model, rule_sets, configured_rewriter)
+                .unwrap()
+        })
     })
 }
 
