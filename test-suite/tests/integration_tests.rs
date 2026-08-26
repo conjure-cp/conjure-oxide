@@ -1238,10 +1238,6 @@ fn essence_file_in_test_dir(test_dir: &str) -> Option<(String, String)> {
             if extension != "essence" {
                 return None;
             }
-            let name = path.file_name()?.to_str()?;
-            if name.contains(".disabled") {
-                return None;
-            }
             Some((
                 path.file_stem()?.to_str()?.to_string(),
                 extension.to_string(),
