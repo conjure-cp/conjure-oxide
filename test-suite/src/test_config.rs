@@ -727,28 +727,10 @@ impl Default for TestConfig {
             heuristic: vec!["x".to_string()],
             channelling: vec!["no".to_string()],
             seed: 0,
-            solver: {
-                let mut solvers = vec![
-                    "minion".to_string(),
-                    "sat-log".to_string(),
-                    "sat-direct".to_string(),
-                    "sat-order".to_string(),
-                ];
-
-                {
-                    solvers.extend([
-                        "smt".to_string(),
-                        "smt-lia-arrays-nodiscrete".to_string(),
-                        "smt-lia-atomic".to_string(),
-                        "smt-lia-atomic-nodiscrete".to_string(),
-                        "smt-bv-arrays".to_string(),
-                        "smt-bv-arrays-nodiscrete".to_string(),
-                        "smt-bv-atomic".to_string(),
-                        "smt-bv-atomic-nodiscrete".to_string(),
-                    ]);
-                }
-                solvers
-            },
+            // How a model is expressed for a solver -- which SAT integer encoding, which Z3
+            // integer theory -- is a representation choice, so the `x` heuristic above enumerates
+            // those combinations rather than them being separate solvers here.
+            solver: vec!["minion".to_string(), "sat".to_string(), "z3".to_string()],
             extra_rule_sets: Vec::new(),
             minion_discrete_threshold: default_minion_discrete_threshold(),
             skip_conjure_validation: String::new(),
@@ -827,9 +809,7 @@ impl TestConfig {
     }
 
     pub fn uses_smt_solver(&self) -> bool {
-        self.solver
-            .iter()
-            .any(|solver| solver == "smt" || solver.starts_with("smt-"))
+        self.solver.iter().any(|solver| solver == "z3")
     }
 }
 
