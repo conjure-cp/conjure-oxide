@@ -26,7 +26,7 @@ run_case() {
     conjure-oxide solve \
         --parser tree-sitter \
         --rewriter optimised \
-        --solver smt-lia-arrays \
+        --solver z3 \
         --no-run-solver \
         --rule-trace-aggregates "$aggregate_path" \
         "$model_path" \
