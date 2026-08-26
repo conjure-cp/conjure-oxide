@@ -18,7 +18,7 @@ use minion_sys::ast::{Constant, Constraint, Optimisation, Var};
 use minion_sys::error::MinionError;
 use std::cell::Ref;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::rc::Rc;
 use uniplate::{Biplate, Uniplate};
@@ -197,7 +197,16 @@ fn for_each_unrepresented_var(
         &conjure_ast::DeclarationPtr,
     ) -> Result<(), SolverError>,
 ) -> Result<(), SolverError> {
-    for (name, decl) in conjure_model.symbols().clone().into_iter_local() {
+    let symbols = conjure_model.symbols();
+    let original_find_positions: HashMap<_, _> = symbols
+        .iter_local()
+        .filter(|(_, decl)| decl.as_find().is_some() && decl.source().is_none())
+        .enumerate()
+        .map(|(position, (name, _))| (name.clone(), position))
+        .collect();
+
+    let mut variables = Vec::new();
+    for (name, decl) in symbols.clone().into_iter_local() {
         let Some(var) = decl.as_find() else {
             continue;
         };
@@ -214,10 +223,53 @@ fn for_each_unrepresented_var(
             continue;
         }
 
+        drop(var);
+        variables.push((name, decl));
+    }
+    drop(symbols);
+
+    // Representation variables are inserted when the rewriter first encounters a reference. That
+    // traversal order need not match the order of the original `find` declarations, but Minion's
+    // static variable order is highly sensitive to it. Group leaves by their ultimate source's
+    // original declaration position. `sort_by_key` is stable, so the representation's own order
+    // (matrix component 1, component 2, ...) is retained within each group.
+    sort_by_original_find_order(&mut variables, &original_find_positions);
+
+    for (name, decl) in variables {
+        let var = decl.as_find().ok_or_else(|| {
+            ModelInvalid(format!(
+                "decision variable '{name}' changed kind while loading the Minion model"
+            ))
+        })?;
         f(&name, &var, &decl)?;
     }
 
     Ok(())
+}
+
+fn sort_by_original_find_order(
+    variables: &mut [(conjure_ast::Name, conjure_ast::DeclarationPtr)],
+    original_find_positions: &HashMap<conjure_ast::Name, usize>,
+) {
+    variables.sort_by_key(|(_, decl)| {
+        let source_name = ultimate_source(decl).name().clone();
+        original_find_positions
+            .get(&source_name)
+            .copied()
+            .unwrap_or(usize::MAX)
+    });
+}
+
+/// Follow representation-generated declarations back to the original declaration.
+fn ultimate_source(decl: &conjure_ast::DeclarationPtr) -> conjure_ast::DeclarationPtr {
+    let mut current = decl.clone();
+    loop {
+        let source = current.source().clone();
+        let Some(source) = source else {
+            return current;
+        };
+        current = source;
+    }
 }
 
 /// Loads a single variable into `minion_model`
@@ -957,7 +1009,7 @@ fn parse_name(name: conjure_ast::Name) -> Result<minion_ast::Var, SolverError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{Literal, Metadata};
+    use crate::ast::{DeclarationPtr, Domain, Literal, Metadata};
 
     #[test]
     fn flat_alldiff_uses_gac_propagation() {
@@ -985,5 +1037,43 @@ mod tests {
         let err = load_expr(expr, &mut model).unwrap_err();
         assert!(matches!(err, SolverError::ModelInvalid(_)));
         assert!(model.constraints.is_empty());
+    }
+
+    #[test]
+    fn ultimate_source_follows_nested_representations() {
+        let domain = Domain::int(vec![Range::Bounded(0, 1)]);
+        let original = DeclarationPtr::new_find(Name::user("original"), domain.clone());
+        let mut component = DeclarationPtr::new_find(Name::user("component"), domain.clone());
+        *component.source_mut() = Some(original.clone());
+        let mut encoded = DeclarationPtr::new_find(Name::user("encoded"), domain);
+        *encoded.source_mut() = Some(component);
+
+        assert_eq!(ultimate_source(&encoded), original);
+    }
+
+    #[test]
+    fn represented_variables_follow_original_find_order() {
+        let domain = Domain::int(vec![Range::Bounded(0, 1)]);
+        let first = DeclarationPtr::new_find(Name::user("first"), domain.clone());
+        let second = DeclarationPtr::new_find(Name::user("second"), domain.clone());
+        let mut first_component =
+            DeclarationPtr::new_find(Name::user("first_component"), domain.clone());
+        *first_component.source_mut() = Some(first.clone());
+        let mut second_component = DeclarationPtr::new_find(Name::user("second_component"), domain);
+        *second_component.source_mut() = Some(second.clone());
+        let first_component_name = first_component.name().clone();
+        let second_component_name = second_component.name().clone();
+
+        // Simulate the rewriter encountering the second variable first.
+        let mut variables = vec![
+            (second_component_name, second_component),
+            (first_component_name, first_component),
+        ];
+        let positions = HashMap::from([(first.name().clone(), 0), (second.name().clone(), 1)]);
+
+        sort_by_original_find_order(&mut variables, &positions);
+
+        assert_eq!(variables[0].0, Name::user("first_component"));
+        assert_eq!(variables[1].0, Name::user("second_component"));
     }
 }
