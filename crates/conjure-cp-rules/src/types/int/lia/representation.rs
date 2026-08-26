@@ -19,7 +19,7 @@ register_representation!(
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         if !holds_integers(&dom) {
             return Err(ReprInitError::UnsupportedDomain(
-                dom.clone(),
+                dom,
                 SmtLia::NAME,
                 String::from("expected an integer domain, or a matrix of them"),
             ));

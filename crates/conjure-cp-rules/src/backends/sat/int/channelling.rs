@@ -35,7 +35,7 @@ use uniplate::Uniplate;
 fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let encodings: HashSet<SATIntEncoding> = operands(expr)
         .filter_map(|operand| match operand {
-            Expr::SATInt(_, encoding, _, _) => Some(encoding.clone()),
+            Expr::SATInt(_, encoding, _, _) => Some(encoding),
             _ => None,
         })
         .collect();
