@@ -55,7 +55,10 @@ This will show:
 + Tseytin transformations
 + All rules that were tried and applied
 
-> This also applies for the other possible SAT solver encodings such as `sat-direct`, `sat-log` and `sat-order`.
+> Which integer encoding each variable gets -- `int_log`, `int_direct` or `int_order` -- is a
+> representation choice made per declaration rather than part of the solver name. Use
+> `--heuristic` to steer it: `-h i` prompts for each choice, and `-h c` (the default) takes the
+> most compact.
 
 For more detailed testing output (including JSON traces and rewritten models), run specific tests:
 

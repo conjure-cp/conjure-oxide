@@ -17,26 +17,25 @@ If you are curious about more complex models, you can check out the models that 
 
 ## Running with Different Solvers
 
+`--solver` takes `minion`, `sat`, or `z3`.
+
+How a model is *expressed* for the chosen solver is separate from which solver it is. SAT has no
+integers, so each integer variable is encoded into Booleans as `int_log`, `int_direct` or
+`int_order`; Z3 has integers but two theories to hold them in, `lia` or `bv`. Both are
+representation choices made per declaration, exactly like choosing `occurrence` or `explicit` for a
+set, and both are steered with `--heuristic` (see the modelling-choices guide). Variables in
+different encodings are channelled together automatically where a constraint needs them to agree.
+
 ### SAT Solver
-
-`--sat-encoding` specifies the encoding strategy used by the SAT solver. This affects performance and solution structure.
-
-Supported options:
-
-- `log` (default)
-- `direct`
-- `order`
-
-Default usage (uses `log`):
 
 ```bash
 cargo run -- solve --solver sat my_problem.essence
 ```
 
-Specify an encoding:
+### Z3 (SMT)
 
 ```bash
-cargo run -- solve --solver sat my_problem.essence
+cargo run -- solve --solver z3 my_problem.essence
 ```
 
 ### Minion Solver
