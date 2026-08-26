@@ -194,13 +194,24 @@ fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> App
 /// representation to a whole matrix-of-sets, rather than letting each matrix component pick
 /// independently under the `x` heuristic.
 fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> Option<ReprRulePtr> {
+    // A declaration left holding the whole value of the one it represents has its shape settled
+    // already -- an SMT array is the solver's variable, not a step towards one. The only choice
+    // still open for it is how its integers are held, and once that is chosen there is nothing
+    // left to decide. This comes first because the shortcuts below would otherwise hand it the
+    // very layout that produced it, and it would be wrapped again, forever.
+    let settled_layout = holds_whole_value_of_source(decl);
+    if settled_layout && source_has_encoding_repr(decl) {
+        return None;
+    }
+
     if channelling() == Channelling::No
         && let Some(existing) = decl.reprs().iter().next().map(|(_, state)| state.rule())
     {
         return Some(existing);
     }
 
-    if channelling() == Channelling::No
+    if !settled_layout
+        && channelling() == Channelling::No
         && let Some(dom) = decl.domain()
         && let Some(rule) = representation_for_identical_domain(decl, &dom, symbols)
     {
@@ -211,6 +222,20 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
         .filter_map(|rule| rule.probe_for(decl).ok().map(|score| (rule, score)))
         .collect();
     candidates.sort_by_key(|(rule, _)| rule.name());
+
+    // A declaration left holding the whole value of the one it represents has its shape settled
+    // already -- an SMT array is the solver's variable, not a step towards one. The only choice
+    // still open for it is how its integers are held, and once that is chosen there is nothing
+    // left to decide. Without this a whole-value layout would be offered to itself forever.
+    if settled_layout {
+        candidates.retain(|(rule, _)| is_encoding_repr(*rule));
+    } else if decl.domain().is_some_and(|dom| is_matrix_domain(&dom)) {
+        // A matrix decides its layout first. Whether its integers are held as machine words or as
+        // mathematical integers is a question for whatever that layout leaves behind: one variable
+        // per entry under `components`, a single packed integer under `packed`, or the matrix
+        // itself under `array`. Offering both questions at once would make them look like one.
+        candidates.retain(|(rule, _)| !is_encoding_repr(*rule));
+    }
 
     // User-specified representation preference on the domain (e.g. set (representation packed)) defaults the choice
     // when that representation is applicable.
@@ -254,11 +279,74 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
             .get(next_heuristic_random_index(candidates.len()))
             .map(|(rule, _)| *rule),
         Heuristic::Random => None,
-        Heuristic::Compact => candidates
-            .iter()
-            .min_by_key(|(rule, score)| (*score, rule.name()))
-            .map(|(rule, _)| *rule),
+        Heuristic::Compact => compact_representation_choice(&candidates),
     }
+}
+
+/// Choose the lowest-scoring representation, with semantic tie-breaking for SMT integers.
+///
+/// Representation compactness scores saturate at [`usize::MAX`].  Large matrix domains can
+/// therefore make both `SmtLia` and the deliberately more expensive `SmtBv` score saturate, even
+/// though compact should still prefer LIA.  Falling back to the representation name picked BV in
+/// that case.  Keep the ordinary name-based tie-break for every other representation, but preserve
+/// the intended LIA-before-BV ordering when their scores collide.
+fn compact_representation_choice(candidates: &[(ReprRulePtr, usize)]) -> Option<ReprRulePtr> {
+    candidates
+        .iter()
+        .min_by_key(|(rule, score)| {
+            let smt_integer_tie_break = match rule.name() {
+                "SmtLia" => 0,
+                "SmtBv" => 1,
+                _ => 0,
+            };
+            (*score, smt_integer_tie_break, rule.name())
+        })
+        .map(|(rule, _)| *rule)
+}
+
+/// Representations that record only how a declaration's integers are held, leaving its shape and
+/// domain untouched.
+///
+/// Every other representation lays a value out differently -- decomposing it, packing it, changing
+/// what the solver sees -- and so answers a different question. Keeping the two apart is what lets
+/// a matrix choose `array` and its integers choose `bv` as two independent decisions rather than
+/// one combined `bv-array`.
+fn is_encoding_repr(rule: ReprRulePtr) -> bool {
+    matches!(
+        rule.name(),
+        "SmtLia" | "SmtBv" | "IntLog" | "IntDirect" | "IntOrder"
+    )
+}
+
+/// True if `decl` was introduced by a representation that left it holding the whole value, rather
+/// than a piece of one -- recognisable because it kept the source's domain.
+pub(crate) fn holds_whole_value_of_source(decl: &DeclarationPtr) -> bool {
+    let source = decl.source().clone();
+    let Some(source) = source else {
+        return false;
+    };
+    // Compare resolved forms: a representation stores the domain it was initialised with, which
+    // has already been resolved, while the declaration it came from may still name a letting.
+    let resolved = |decl: &DeclarationPtr| {
+        decl.domain()
+            .and_then(|dom| dom.resolve().ok().map(DomainPtr::from).or(Some(dom)))
+    };
+    match (resolved(decl), resolved(&source)) {
+        (Some(mine), Some(theirs)) => mine == theirs,
+        _ => false,
+    }
+}
+
+/// True if the declaration `decl` represents has already had its integer encoding chosen.
+fn source_has_encoding_repr(decl: &DeclarationPtr) -> bool {
+    let source = decl.source().clone();
+    let Some(source) = source else {
+        return false;
+    };
+    source
+        .reprs()
+        .iter()
+        .any(|(_, state)| is_encoding_repr(state.rule()))
 }
 
 /// Find a representation already chosen for another declaration with the same domain.
@@ -309,6 +397,12 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
         }
     }
 
+    // A variable left holding the whole value of another has its representation settled by the
+    // rules above; propagating another one onto it would wrap it again, and again.
+    if holds_whole_value_of_source(lhs_re.ptr()) || holds_whole_value_of_source(rhs_re.ptr()) {
+        return Err(RuleNotApplicable);
+    }
+
     match (lhs_re.get_repr(), rhs_re.get_repr()) {
         (Some((lhs_rule, _)), None) => {
             let mut new_rhs = rhs_re.clone();
@@ -332,38 +426,96 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
     }
 }
 
-/// True if the domain is abstract w.r.t Essence'
-#[allow(clippy::match_like_matches_macro)]
+/// True if integers are an abstract type for the solver being targeted.
+///
+/// SAT has no integers: an int variable is encoded as a vector of Booleans, and which encoding it
+/// gets is a modelling choice like any other representation. Solvers with native integers leave
+/// them alone.
+fn int_needs_representation() -> bool {
+    conjure_cp::settings::ints_need_representation()
+}
+
+/// True if a declaration with this domain needs a representation chosen for it.
+///
+/// Three separate reasons: the domain is abstract in Essence' terms (a set, a tuple, ...), it is a
+/// matrix and so has a layout to choose, or it is an integer and the solver has no integers of its
+/// own to hold it.
+///
+/// The integer reason deliberately does not look inside a matrix. How a matrix is laid out and how
+/// its integers are held are independent choices: pick `components` and each entry becomes its own
+/// integer declaration which then picks its own encoding, pick a whole-matrix layout and the
+/// encoding choice lands on the matrix that layout leaves behind. Folding the two together would
+/// mean one decision pretending to be two.
 pub(crate) fn domain_needs_representation(domain: &DomainPtr) -> bool {
+    is_abstract_domain(domain)
+        || is_matrix_domain(domain)
+        || (is_int_domain(domain) && int_needs_representation())
+}
+
+/// True if this domain is a matrix one, following domain lettings.
+///
+/// Every matrix has a layout to choose -- one variable per entry, the whole thing packed into a
+/// single integer, or for a solver with arrays, the whole thing as an array -- so matrices go
+/// through representation selection like any other type, and the heuristic weighs the options
+/// against each other.
+fn is_matrix_domain(domain: &DomainPtr) -> bool {
+    match domain.as_ref() {
+        Domain::Ground(gd) => matches!(gd.as_ref(), GroundDomain::Matrix(..)),
+        Domain::Unresolved(ud) => match ud.as_ref() {
+            UnresolvedDomain::Matrix(..) => true,
+            UnresolvedDomain::Reference(re) => is_matrix_domain(&re.domain_of()),
+            _ => false,
+        },
+    }
+}
+
+/// True if the domain is abstract w.r.t Essence', ignoring how the solver holds integers and how a
+/// matrix is laid out.
+///
+/// This is the narrower question of whether a *type* is compound -- a set, a tuple, a record. Ask
+/// it when what matters is the shape of the values themselves; ask
+/// [`domain_needs_representation`] when what matters is whether a declaration still has a choice
+/// to make.
+#[allow(clippy::match_like_matches_macro)]
+pub(crate) fn is_abstract_domain(domain: &DomainPtr) -> bool {
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
             // These domains are concrete for all solvers
-            GroundDomain::Empty(..) | GroundDomain::Bool => false,
-            // SAT integer encodings remain on the legacy representation path.
-            GroundDomain::Int(_) => false,
+            GroundDomain::Empty(..) | GroundDomain::Bool | GroundDomain::Int(_) => false,
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
             // `ReprMatrixComponents`rule set
             GroundDomain::Matrix(inner_dom, idx_doms) => {
-                domain_needs_representation(&inner_dom.into())
-                    || any(idx_doms, |d| domain_needs_representation(&d.into()))
+                is_abstract_domain(&inner_dom.into())
+                    || any(idx_doms, |d| is_abstract_domain(&d.into()))
             }
             // All other domains are abstract
             _ => true,
         },
         Domain::Unresolved(ud) => match ud.as_ref() {
-            // Int domains are concrete for all solvers bar SAT
             UnresolvedDomain::Int(..) => false,
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
             // `ReprMatrixComponents`rule set
             UnresolvedDomain::Matrix(inner_dom, idx_doms) => {
-                domain_needs_representation(inner_dom) || any(idx_doms, domain_needs_representation)
+                is_abstract_domain(inner_dom) || any(idx_doms, is_abstract_domain)
             }
             // Recurse into domain letting
-            UnresolvedDomain::Reference(re) => domain_needs_representation(&re.domain_of()),
+            UnresolvedDomain::Reference(re) => is_abstract_domain(&re.domain_of()),
             // All other domains are abstract
             _ => true,
+        },
+    }
+}
+
+/// True if this domain is an integer one, following domain lettings.
+fn is_int_domain(domain: &DomainPtr) -> bool {
+    match domain.as_ref() {
+        Domain::Ground(gd) => matches!(gd.as_ref(), GroundDomain::Int(_)),
+        Domain::Unresolved(ud) => match ud.as_ref() {
+            UnresolvedDomain::Int(..) => true,
+            UnresolvedDomain::Reference(re) => is_int_domain(&re.domain_of()),
+            _ => false,
         },
     }
 }
@@ -391,6 +543,23 @@ mod tests {
             "SetPacked"
         );
         set_heuristic(Heuristic::First);
+    }
+
+    #[test]
+    fn compact_prefers_lia_when_smt_integer_scores_saturate() {
+        let lia = get_repr_rules()
+            .find(|rule| rule.name() == "SmtLia")
+            .expect("SmtLia representation should be registered");
+        let bv = get_repr_rules()
+            .find(|rule| rule.name() == "SmtBv")
+            .expect("SmtBv representation should be registered");
+
+        assert_eq!(
+            compact_representation_choice(&[(bv, usize::MAX), (lia, usize::MAX)])
+                .unwrap()
+                .name(),
+            "SmtLia"
+        );
     }
 
     #[test]

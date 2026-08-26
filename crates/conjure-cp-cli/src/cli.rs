@@ -216,11 +216,14 @@ pub struct GlobalArgs {
     )]
     pub channelling: Channelling,
 
-    /// Solver family to use.
+    /// Solver to use.
     ///
-    /// Possible values: `minion`, `sat`, `sat-log`, `sat-direct`, `sat-order`,
-    /// `smt[-<ints>][-<matrices>][-nodiscrete]`
-    /// where `<ints>` is `lia` or `bv`, and `<matrices>` is `arrays` or `atomic`.
+    /// Possible values: `minion`, `sat`, `z3`.
+    ///
+    /// How a model is expressed for the chosen solver -- which SAT encoding an integer gets, or
+    /// which Z3 theory -- is a modelling choice made per declaration, not part of the solver name.
+    /// Use `--heuristic` to steer those choices and `--channelling` to allow more than one per
+    /// declaration.
     #[arg(
         long,
         value_name = "SOLVER",

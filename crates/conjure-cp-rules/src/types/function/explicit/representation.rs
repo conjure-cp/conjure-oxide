@@ -23,9 +23,11 @@ register_representation!(
         pub jectivity: JectivityAttr,
         /// Number of defined entries a partial function may have; irrelevant for total functions.
         pub size: Range<i32>,
-        /// Whether `values_matrix` itself needs representation selection, because the codomain
-        /// (its elements) is compound (e.g. set/record/tuple) -- its index is always plain
-        /// `int(1..n)`, so it never contributes abstractness. Minion's native `AllDiff` only
+        /// Whether `values_matrix` holds compound elements, because the codomain is compound
+        /// (e.g. set/record/tuple) -- its index is always plain `int(1..n)`, so it never
+        /// contributes abstractness. This asks about the element *type*, not about whether the
+        /// matrix has a layout to choose: every matrix has one of those, and it says nothing about
+        /// what the elements are. Minion's native `AllDiff` only
         /// supports a matrix of already-scalar elements, so an abstract codomain must fall back to
         /// pairwise `Neq` instead.
         pub values_matrix_is_abstract: bool
@@ -102,7 +104,7 @@ register_representation!(
         // codomain makes `values_matrix` itself need representation, which rules out a plain
         // AllDiff.
         let values_matrix_is_abstract =
-            crate::passes::representation::domain_needs_representation(&values_matrix);
+            crate::passes::representation::is_abstract_domain(&values_matrix);
         let flags_matrix = match attr.partiality {
             PartialityAttr::Total => None,
             PartialityAttr::Partial => Some(Domain::matrix(Domain::bool(), vec![domain_int!(1..n)])),

@@ -69,6 +69,9 @@ pub trait ReprRuleStored: Send + Sync {
 
     fn short_name(&self) -> &'static str;
 
+    /// Whether this representation is available when targeting `family`.
+    fn applies_to(&self, family: crate::settings::SolverFamily) -> bool;
+
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult;
 
     fn init_for_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult;
@@ -100,6 +103,10 @@ impl<R: ReprRule> ReprRuleStored for R {
 
     fn short_name(&self) -> &'static str {
         R::SHORT_NAME
+    }
+
+    fn applies_to(&self, family: crate::settings::SolverFamily) -> bool {
+        R::applies_to(family)
     }
 
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult {

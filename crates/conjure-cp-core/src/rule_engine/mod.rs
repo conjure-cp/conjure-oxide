@@ -76,7 +76,7 @@ pub use conjure_cp_rule_macros::register_rule;
 /// use conjure_cp_core::rule_engine::register_rule_set;
 /// use conjure_cp_core::settings::SolverFamily;
 /// register_rule_set!("MyRuleSet", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion));
-/// register_rule_set!("AnotherRuleSet", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion | SolverFamily::Sat(_)));
+/// register_rule_set!("AnotherRuleSet", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion | SolverFamily::Sat));
 /// ```
 #[doc(inline)]
 pub use conjure_cp_rule_macros::register_rule_set;
@@ -249,9 +249,9 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 /// use conjure_cp_core::settings::SolverFamily;
 /// use conjure_cp_core::rule_engine::{get_rule_sets_for_solver_family, register_rule_set};
 ///
-/// register_rule_set!("CNF", (), |f: &SolverFamily| matches!(f, SolverFamily::Sat(_)));
+/// register_rule_set!("CNF", (), |f: &SolverFamily| matches!(f, SolverFamily::Sat));
 ///
-/// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::Sat(Default::default()));
+/// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::Sat);
 /// assert_eq!(rule_sets.len(), 2);
 /// assert_eq!(rule_sets[0].name, "CNF");
 /// ```

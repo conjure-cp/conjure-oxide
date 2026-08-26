@@ -10,8 +10,25 @@ use uniplate::Uniplate;
 
 // These rules are applicable regardless of what theories are used.
 register_rule_set!("Smt", ("Base"), |f: &SolverFamily| {
-    matches!(f, SolverFamily::Smt(..))
+    matches!(f, SolverFamily::Z3)
 });
+
+/// An auxiliary declaration is an equality.
+///
+/// `x =aux e` says the fresh variable `x` stands for `e`. Minion keeps these around so its flat
+/// constraint forms can absorb them (`sumeq(..., x)` rather than a separate equality); a solver
+/// with no such forms just asserts the equality.
+#[register_rule("Smt", 2000, [AuxDeclaration])]
+fn aux_declaration_is_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::AuxDeclaration(_, reference, value) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    Ok(RuleEffect::pure(Expr::Eq(
+        Metadata::new(),
+        Moo::new(reference.clone().into()),
+        value.clone(),
+    )))
+}
 
 #[register_rule("Smt", 1000, [InDomain])]
 fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {

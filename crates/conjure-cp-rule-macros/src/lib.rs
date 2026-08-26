@@ -269,6 +269,9 @@ struct ReprDefArgs {
     /// Measuring the representation-domain size. If omitted, this is generated using
     /// uniplate; representations with non-uniplate containers can provide it explicitly.
     compactness_fn: Option<ItemFn>,
+    /// Restricting this representation to some solver families:
+    /// `applies: (SolverFamily) -> bool`. If omitted, the representation is solver-independent.
+    applies_fn: Option<ItemFn>,
 }
 
 impl Parse for ReprDefArgs {
@@ -283,7 +286,7 @@ impl Parse for ReprDefArgs {
 
         let mut funcs = HashMap::<String, ItemFn>::new();
         let mut errors: Vec<syn::Error> = Vec::new();
-        for _ in 0..6 {
+        for _ in 0..7 {
             match input.parse::<ItemFn>() {
                 Ok(func) => {
                     let ident = func.sig.ident.to_string();
@@ -314,6 +317,7 @@ impl Parse for ReprDefArgs {
         })?;
         let repr_vars_fn = funcs.remove("repr_vars");
         let compactness_fn = funcs.remove("compactness");
+        let applies_fn = funcs.remove("applies");
 
         if repr_vars_fn.is_none() && matches!(state_ty, ReprStateType::Path(..)) {
             return Err(input.error("A repr_vars implementation is required for external types"));
@@ -329,6 +333,7 @@ impl Parse for ReprDefArgs {
             up_fn,
             repr_vars_fn,
             compactness_fn,
+            applies_fn,
         })
     }
 }
@@ -399,6 +404,25 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         .compactness_fn
         .as_ref()
         .map(|f| Ident::new(&format!("{}compactness", prefix), f.sig.ident.span()));
+    let prefixed_applies = args
+        .applies_fn
+        .as_ref()
+        .map(|f| Ident::new(&format!("{}applies", prefix), f.sig.ident.span()));
+    let applies_fn = args.applies_fn.map(|f| {
+        let f = rename_fn(f, prefixed_applies.as_ref().unwrap());
+        quote! {
+            #[allow(non_snake_case)]
+            #f
+        }
+    });
+    let applies_impl = match &prefixed_applies {
+        Some(ident) => quote! {
+            fn applies_to(family: ::conjure_cp::settings::SolverFamily) -> bool {
+                #ident(family)
+            }
+        },
+        None => quote! {},
+    };
 
     let mut init_fn = rename_fn(args.init_fn, &prefixed_init);
     let mut structural_fn = rename_fn(args.structural_fn, &prefixed_structural);
@@ -558,6 +582,8 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         // -- ReprRule marker struct
         pub struct #repr_ident;
 
+        #applies_fn
+
         impl ReprRule for #repr_ident {
             const STORED: &'static dyn ReprRuleStored = &#repr_ident;
             const NAME: &'static str = #repr_name_str;
@@ -565,6 +591,8 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             type Assignment = #state_ident<Literal>;
             type DeclLevel = #state_ident<DeclarationPtr>;
             type DomainLevel = #state_ident<DomainPtr>;
+
+            #applies_impl
         }
 
         // -- Registry entry

@@ -3,6 +3,7 @@ use crate::shared::representation_prelude::*;
 use conjure_cp::ast::matrix::shape_of_dom;
 use conjure_cp::ast::{GroundDomain, Moo, Reference};
 use conjure_cp::representation::ReprInitError;
+use conjure_cp::settings::SolverFamily;
 use conjure_cp::utils::{BiMap, MatrixShape};
 use conjure_cp::{domain_int, essence_expr, into_matrix_expr, range};
 
@@ -156,5 +157,25 @@ register_representation!(
     }
     fn compactness(state: &State<DomainPtr>) -> usize {
         state.total_size as usize
+    }
+    fn applies(_family: SolverFamily) -> bool {
+        // TEMPORARILY DISABLED.
+        //
+        // Nothing had ever selected this representation before matrices joined representation
+        // selection, and doing so uncovered a queue of defects in it -- several already fixed
+        // (slicing and offset-indexing its decoded literal, rendering the value lettings it
+        // introduces) and at least one open: in `tests/integration/antichain`, the comparisons
+        // inside `exists k . S[i,k] < S[j,k]` reach `promote_abstract_cmp_to_lex` with the whole
+        // decoded matrix as their operands rather than the indexed cells, so they are promoted to
+        // a lex comparison between scalars that no backend can lower.
+        //
+        // Turning it off here rather than disabling its rule set keeps the two registries
+        // consistent: a representation that cannot be selected, rather than one that can be
+        // selected but has no rules to lower it.
+        //
+        // To re-enable, restore: `!matches!(family, SolverFamily::Sat)` -- SAT genuinely cannot
+        // support this, as decoding reads an element from a constant table at a computed position,
+        // which Minion has `element` for and Z3 has arrays for, but SAT has neither.
+        false
     }
 );

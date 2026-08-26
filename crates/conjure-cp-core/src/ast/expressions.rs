@@ -342,6 +342,16 @@ pub enum Expression {
     #[compatible(JsonInput)]
     AllDiff(Metadata, Moo<Expression>),
 
+    /// Z3's native `distinct` over the elements of `<vec_expr>`.
+    ///
+    /// This is emitted for the SMT backend only, and never appears in a model bound for any other
+    /// solver. It exists so that "hand `allDifferent` to Z3 as `distinct`" and "encode
+    /// `allDifferent` explicitly" are two rules competing at the same choice site, which is what
+    /// lets the heuristics pick between them -- and what records the choice in the model, so it is
+    /// not asked again every time the expression is visited.
+    #[compatible(SMT)]
+    SmtDistinct(Metadata, Moo<Expression>),
+
     /// `allDifferentExcept(<matrix>, <except>)`
     #[compatible(JsonInput)]
     AllDifferentExcept(Metadata, Moo<Expression>, Moo<Expression>),
@@ -1050,11 +1060,37 @@ impl Expression {
             Expression::UnsafeIndex(_, matrix, index) | Expression::SafeIndex(_, matrix, index) => {
                 let dom = matrix.domain_of()?;
                 let resolved_dom = dom.resolve().ok().map(Domain::Ground);
-                if let Some((elem_domain, _)) = dom
-                    .as_matrix()
-                    .or_else(|| resolved_dom.as_ref()?.as_matrix())
+                if dom.as_matrix().is_some()
+                    || resolved_dom
+                        .as_ref()
+                        .is_some_and(|dom| dom.as_matrix().is_some())
                 {
-                    return Some(elem_domain);
+                    // A matrix domain may be written flat -- `Matrix(int, [d1, d2])` -- or nested
+                    // -- `Matrix(Matrix(int, [d2]), [d1])` -- and both mean the same thing. Each
+                    // level consumes as many indices as it declares, so peel a level at a time
+                    // until the indices run out rather than assuming one level covers them all.
+                    let mut current = dom;
+                    let mut remaining = index.len();
+                    while remaining > 0 {
+                        let resolved = current.resolve().ok().map(Domain::Ground);
+                        let Some((elem_domain, idx_domains)) = current
+                            .as_matrix()
+                            .or_else(|| resolved.as_ref()?.as_matrix())
+                        else {
+                            break;
+                        };
+                        // Fewer indices than this level declares is a partial index: what is left
+                        // is a matrix over the dimensions that were not given.
+                        if idx_domains.len() > remaining {
+                            return Some(Domain::matrix(
+                                elem_domain,
+                                idx_domains[remaining..].to_vec(),
+                            ));
+                        }
+                        remaining -= idx_domains.len();
+                        current = elem_domain;
+                    }
+                    return Some(current);
                 }
 
                 // may actually use the value in the future
@@ -1296,6 +1332,7 @@ impl Expression {
                 None
             }
             Expression::AllDiff(_, _) => Some(Domain::bool()),
+            Expression::SmtDistinct(_, _) => Some(Domain::bool()),
             Expression::AllDifferentExcept(_, _, _) => Some(Domain::bool()),
             Expression::ElementId(_, matrix, value) => {
                 let dom = matrix.domain_of()?.resolve().ok()?;
@@ -1998,6 +2035,7 @@ impl Expression {
             Flatten,
             AttributeAsConstraint,
             AllDiff,
+            SmtDistinct,
             AllDifferentExcept,
             ElementId,
             Minus,
@@ -2558,6 +2596,9 @@ impl Display for Expression {
             Expression::AllDiff(_, e) => {
                 write!(f, "allDifferent({e})")
             }
+            Expression::SmtDistinct(_, e) => {
+                write!(f, "smtDistinct({e})")
+            }
             Expression::AllDifferentExcept(_, matrix, except) => {
                 write!(f, "allDifferentExcept({matrix}, {except})")
             }
@@ -2895,6 +2936,7 @@ impl Typeable for Expression {
                 }
             }
             Expression::AllDiff(_, _) => ReturnType::Bool,
+            Expression::SmtDistinct(_, _) => ReturnType::Bool,
             Expression::AllDifferentExcept(_, _, _) => ReturnType::Bool,
             Expression::ElementId(_, _, _) => ReturnType::Int,
             Expression::Table(_, _, _) => ReturnType::Bool,
@@ -3167,6 +3209,7 @@ impl Expression {
             | Expression::PermInverse(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
+            | Expression::SmtDistinct(_, m1)
             | Expression::Factorial(_, m1)
             | Expression::Range(_, m1)
             | Expression::Participants(_, m1)
@@ -3446,6 +3489,7 @@ impl Expression {
             | Expression::PermInverse(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
+            | Expression::SmtDistinct(_, m1)
             | Expression::Factorial(_, m1)
             | Expression::Participants(_, m1)
             | Expression::Parts(_, m1)

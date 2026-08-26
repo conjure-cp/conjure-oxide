@@ -11,6 +11,9 @@ pub enum ReprInitError {
     /// The given domain isn't supported by this representation
     #[error("domain `{}` is not supported by representation `{}`{}", .0, .1, if .2.is_empty() { String::from("") } else { format!(": {}", .2) })]
     UnsupportedDomain(DomainPtr, &'static str, String),
+    /// This representation only targets other solver families.
+    #[error("representation `{}` is not applicable to solver family `{}`", .0, .1.as_str())]
+    WrongSolverFamily(&'static str, crate::settings::SolverFamily),
     /// Can't initialise representation for a different reason
     #[error(transparent)]
     Other(#[from] anyhow::Error),

@@ -228,10 +228,6 @@ pub(crate) fn init_context(
         extra_rule_sets.push(rs.as_str());
     }
 
-    if let SolverFamily::Sat(sat_encoding) = target_family {
-        extra_rule_sets.push(sat_encoding.as_rule_set());
-    }
-
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
         Ok(rs) => rs,
         Err(e) => {
@@ -286,8 +282,8 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
             global_args.minion_varorder,
             global_args.minion_valorder,
         )),
-        SolverFamily::Sat(_) => Solver::new(Sat::default()),
-        SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
+        SolverFamily::Sat => Solver::new(Sat::default()),
+        SolverFamily::Z3 => Solver::new(Smt::new(timeout_ms)),
     }
 }
 

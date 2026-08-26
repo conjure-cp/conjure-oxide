@@ -1,8 +1,8 @@
 //! Public representation types provided by this rule crate.
 
 pub use crate::types::function::{FunctionAsRelation, FunctionExplicit};
-pub use crate::types::int::{IntDirect, IntLog, IntOrder};
-pub use crate::types::matrix::{MatrixComponents, MatrixPacked};
+pub use crate::types::int::{IntDirect, IntLog, IntOrder, SmtBv, SmtLia};
+pub use crate::types::matrix::{MatrixArray, MatrixComponents, MatrixPacked};
 pub use crate::types::mset::{MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition};
 pub use crate::types::partition::{PartitionAsSet, PartitionOccurrence, PartitionPacked};
 pub use crate::types::permutation::PermutationAsFunction;

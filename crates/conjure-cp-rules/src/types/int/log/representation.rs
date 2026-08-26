@@ -1,170 +1,119 @@
-// https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
-use conjure_cp::ast::GroundDomain;
-use conjure_cp::bug;
-use conjure_cp::{
-    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, SymbolTable},
-    register_legacy_representation,
-    representation::Representation,
-    rule_engine::ApplicationError,
-};
+//! Two's-complement bit-vector representation of an integer, for the SAT backend.
+//!
+//! `x` becomes `n` Boolean variables holding `x` in two's complement, least significant bit
+//! first. `n` is the smallest width that can hold every value of `x`'s domain, so the encoding is
+//! logarithmic in the size of the domain -- much smaller than [`IntDirect`](super::super::IntDirect)
+//! or [`IntOrder`](super::super::IntOrder), at the cost of needing adder circuits for arithmetic.
 
-register_legacy_representation!(IntLog, "int_log");
+use crate::shared::representation_prelude::*;
+use crate::types::int::{finite_int_bounds, int_domain_to_expr, int_ranges};
+use conjure_cp::ast::{Domain, Moo, Reference, SATIntEncoding};
+use conjure_cp::into_matrix_expr;
+use conjure_cp::settings::SolverFamily;
+use std::collections::VecDeque;
 
-#[derive(Clone, Debug)]
-pub struct IntLog {
-    src_var: Name,
-    bits: u32,
-}
-
-impl IntLog {
-    /// Returns the names of the representation variable
-    fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..self.bits).map(move |index| self.index_to_name(index))
+register_representation!(
+    IntLog("int_log")
+    struct State<T> {
+        /// Overall lower and upper bound of the represented domain.
+        pub bounds: (i32, i32),
+        /// The domain's inclusive intervals, kept so the structural constraint can rule out gaps.
+        pub ranges: Vec<(i32, i32)>,
+        /// Two's-complement bits, least significant first; the last is the sign bit.
+        pub bits: Moo<Vec<T>>
     }
-
-    /// Gets the representation variable name for a specific index.
-    fn index_to_name(&self, index: u32) -> Name {
-        Name::Represented(Box::new((
-            self.src_var.clone(),
-            self.repr_name().into(),
-            format!("{index:02}").into(), // stored as _00, _01, ...
-        )))
-    }
-}
-
-impl Representation for IntLog {
-    /// Creates a log int representation object for the given name.
-    fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
-        let domain = symtab.resolve_domain(name)?;
-
-        if !domain.is_finite() {
-            return None;
+    impl State<DeclarationPtr> {
+        /// This variable as a log-encoded `SATInt`, the form the SAT rules operate on.
+        pub fn sat_int_expr(&self) -> Expression {
+            let bits: Vec<Expression> = self
+                .bits
+                .iter()
+                .map(|declaration| Reference::new(declaration.clone()).into())
+                .collect();
+            Expression::SATInt(
+                Metadata::new(),
+                SATIntEncoding::Log,
+                Moo::new(into_matrix_expr!(bits)),
+                self.bounds,
+            )
         }
+    }
+    fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
+        let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(
+            dom.clone(),
+            IntLog::NAME,
+            String::from(msg),
+        );
 
-        let GroundDomain::Int(ranges) = domain.as_ref() else {
-            return None;
+        let ranges = int_ranges(&dom)
+            .ok_or_else(|| domain_err("expected a finite ground integer domain"))?;
+        let bounds @ (low, high) = finite_int_bounds(&ranges)
+            .ok_or_else(|| domain_err("expected a non-empty integer domain"))?;
+
+        let width = log_width(low, high);
+        let bits = Moo::new(std::iter::repeat_n(Domain::bool(), width).collect());
+        Ok(State { bounds, ranges, bits })
+    }
+    fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
+        // The bit vector can hold values outside the domain -- both the gaps between ranges and,
+        // where the domain does not fill the width, values beyond its bounds. Say so explicitly.
+        vec![int_domain_to_expr(state.sat_int_expr(), &state.ranges)]
+    }
+    fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
+        let Literal::Int(value) = value else {
+            return Err(ReprDownError::BadValue(value, String::from("expected an integer")));
         };
 
-        // Determine min/max and return None if range is unbounded
-        let (min, max) =
-            ranges
-                .iter()
-                .try_fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
-                    let lb = range.low()?;
-                    let ub = range.high()?;
-                    Some((min_a.min(*lb), max_b.max(*ub)))
-                })?;
+        let bits = (0..state.bits.len())
+            .map(|index| Literal::Bool((value >> index) & 1 != 0))
+            .collect();
 
-        // calculate the bits needed to represent the integer
-        let bit_count = (1..=32)
-            .find(|&bits| {
-                let min_possible = -(1i64 << (bits - 1));
-                let max_possible = (1i64 << (bits - 1)) - 1;
-                (min as i64) >= min_possible && (max as i64) <= max_possible
-            })
-            .unwrap_or_else(|| bug!("Should never be reached: i32 integer should always be with storable with 32 bits.")); // safe unwrap as i32 fits in 32 bits
-
-        Some(IntLog {
-            src_var: name.clone(),
-            bits: bit_count,
+        Ok(State {
+            bounds: state.bounds,
+            ranges: state.ranges.clone(),
+            bits: Moo::new(bits),
         })
     }
-
-    /// The variable being represented.
-    fn variable_name(&self) -> &Name {
-        &self.src_var
-    }
-
-    /// Given the integer assignment for `self`, creates assignments for its representation variables.
-    fn value_down(
-        &self,
-        value: Literal,
-    ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
-        let Literal::Int(mut value_i32) = value else {
-            return Err(ApplicationError::RuleNotApplicable);
-        };
-
-        let mut result = std::collections::BTreeMap::new();
-
-        // name_0 is the least significant bit, name_<final> is the sign bit
-        for name in self.names() {
-            result.insert(name, Literal::Bool((value_i32 & 1) != 0));
-            value_i32 >>= 1;
-        }
-
-        Ok(result)
-    }
-
-    /// Given the values for its boolean representation variables, creates an assignment for `self` - the integer form.
-    fn value_up(
-        &self,
-        values: &std::collections::BTreeMap<Name, Literal>,
-    ) -> Result<Literal, ApplicationError> {
-        let mut out: i32 = 0;
-        let mut power: i32 = 1;
-
-        for name in self.names() {
-            let value = values
-                .get(&name)
-                .ok_or(ApplicationError::RuleNotApplicable)?;
-
-            if let Literal::Int(value) = value {
-                out += *value * power;
-                power <<= 1;
-            } else {
-                return Err(ApplicationError::RuleNotApplicable);
+    fn up(state: State<Literal>) -> Literal {
+        let width = state.bits.len();
+        let mut value: i32 = 0;
+        for (index, bit) in state.bits.iter().enumerate() {
+            let set = match bit {
+                Literal::Bool(set) => *set,
+                Literal::Int(0) => false,
+                Literal::Int(1) => true,
+                other => bug!("expected a Boolean bit value, got {other}"),
+            };
+            if set {
+                value |= 1 << index;
             }
         }
 
-        let sign_bit = 1 << (self.bits - 1);
-        // Mask to `BITS` bits
-        out &= (sign_bit << 1) - 1;
-
-        // If the sign bit is set, convert to negative using two's complement
-        if out & sign_bit != 0 {
-            out -= sign_bit << 1;
+        // Reinterpret the top bit as the sign, so the bits read back as two's complement.
+        let sign_bit = 1i32 << (width - 1);
+        if value & sign_bit != 0 {
+            value -= sign_bit << 1;
         }
-
-        Ok(Literal::Int(out))
+        Literal::Int(value)
     }
-
-    /// Returns [`Expression`]s representing each boolean representation variable.
-    fn expression_down(
-        &self,
-        st: &SymbolTable,
-    ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
-        Ok(self
-            .names()
-            .enumerate()
-            .map(|(index, name)| {
-                let decl = st.lookup(&name).unwrap();
-                (
-                    // Machine names are used so that the derived ordering matches the correct ordering of the representation variables
-                    Name::Machine(index as i32),
-                    Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(conjure_cp::ast::Reference::new(decl)),
-                    ),
-                )
-            })
-            .collect())
+    fn repr_vars(state: &State<DeclarationPtr>) -> VecDeque<DeclarationPtr> {
+        state.bits.iter().cloned().collect()
     }
-
-    /// Creates declarations for the boolean representation variables of `self`.
-    fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
-        Ok(self
-            .names()
-            .map(|name| DeclarationPtr::new_find_auxiliary(name, Domain::bool()))
-            .collect())
+    fn compactness(state: &State<DomainPtr>) -> usize {
+        1usize << state.bits.len().min(usize::BITS as usize - 1)
     }
-
-    /// The rule name for this representaion.
-    fn repr_name(&self) -> &str {
-        "int_log"
+    fn applies(family: SolverFamily) -> bool {
+        matches!(family, SolverFamily::Sat)
     }
+);
 
-    /// Makes a clone of `self` into a `Representation` trait object.
-    fn box_clone(&self) -> Box<dyn Representation> {
-        Box::new(self.clone()) as _
-    }
+/// The narrowest two's-complement width that holds every value in `low..=high`.
+fn log_width(low: i32, high: i32) -> usize {
+    (1..=32)
+        .find(|&width| {
+            let min_possible = -(1i64 << (width - 1));
+            let max_possible = (1i64 << (width - 1)) - 1;
+            (low as i64) >= min_possible && (high as i64) <= max_possible
+        })
+        .unwrap_or(32)
 }

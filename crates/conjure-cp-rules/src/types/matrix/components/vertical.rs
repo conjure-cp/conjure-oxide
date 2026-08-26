@@ -14,25 +14,13 @@ use conjure_cp::rule_engine::{
     register_rule_set,
 };
 use conjure_cp::settings::SolverFamily;
-use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
 use conjure_cp::utils::View;
 use conjure_cp::{domain_int, essence_expr, range};
 use std::cell::Cell;
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate};
 
-register_rule_set!("ReprMatrixComponents", ("Base"), |f: &SolverFamily| {
-    if matches!(
-        f,
-        SolverFamily::Smt(TheoryConfig {
-            matrices: MatrixTheory::Atomic,
-            ..
-        })
-    ) {
-        return true;
-    }
-    matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
-});
+register_rule_set!("ReprMatrixComponents", ("Base"), |_: &SolverFamily| true);
 
 /// Compare a component-represented matrix with a matrix literal element by element.
 #[register_rule("ReprMatrixComponents", 9400, [Eq, Neq])]
@@ -143,6 +131,9 @@ fn select_matrix_components(expr: &Expression, symtab: &SymbolTable) -> Applicat
             matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Find(..) | DeclarationKind::FindAuxiliary(..) | DeclarationKind::ValueLetting(..)) &&
             // ...which hasn't been represented yet
             decl.reprs().is_empty() &&
+            // ...and is not a matrix another layout is already holding whole, which is the
+            // solver's own variable and must not be taken apart underneath it
+            !crate::passes::representation::holds_whole_value_of_source(decl) &&
             // ...and its domain resolves to a matrix
             let mut new_decl = decl.clone() &&
             let Some(gd) = new_decl.resolved_domain() &&

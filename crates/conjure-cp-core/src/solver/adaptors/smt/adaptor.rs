@@ -14,7 +14,7 @@ use super::theories::*;
 
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::representation::util::try_up;
-use crate::rule_engine::rewrite_model_with_configured_rewriter;
+use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
 use crate::settings::{RewriteConfig, Rewriter, current_rewriter, set_current_rewriter};
 use crate::{Model, solver::*};
 
@@ -33,8 +33,6 @@ pub struct Smt {
 
     solver_cfg: Config,
 
-    theory_config: TheoryConfig,
-
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<Model>,
 }
@@ -45,10 +43,9 @@ impl Default for Smt {
     fn default() -> Self {
         Smt {
             __non_constructable: private::Internal,
-            store: SymbolStore::new(TheoryConfig::default()),
+            store: SymbolStore::new(),
             solver_inst: Solver::new(),
             solver_cfg: Config::new(),
-            theory_config: TheoryConfig::default(),
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -56,15 +53,16 @@ impl Default for Smt {
 }
 
 impl Smt {
-    /// Constructs a new adaptor using the given theories for representing the relevant constructs.
-    pub fn new(timeout_msec: Option<u64>, theory_config: TheoryConfig) -> Self {
+    /// Constructs a new adaptor.
+    ///
+    /// Which Z3 theory each integer variable lands in is not set here: it is a representation
+    /// choice made per declaration during rewriting, which the adaptor reads back off the model.
+    pub fn new(timeout_msec: Option<u64>) -> Self {
         let mut solver_cfg = Config::new();
         timeout_msec.inspect(|ms| solver_cfg.set_timeout_msec(*ms));
 
         Smt {
-            theory_config,
             solver_cfg,
-            store: SymbolStore::new(theory_config),
             ..Default::default()
         }
     }
@@ -225,7 +223,6 @@ impl Smt {
         dominance_model_template: Option<&Model>,
         solver: &mut Solver,
         store: &mut SymbolStore,
-        theory_config: TheoryConfig,
         solution: &HashMap<Name, Literal>,
     ) -> Result<(), SolverError> {
         let Some(dominance_expression) = dominance_expression else {
@@ -253,7 +250,19 @@ impl Smt {
         dominance_model.dominance = None;
         dominance_model.add_constraint(rewritten_dominance);
 
-        let rule_sets = dominance_model.context.read().unwrap().rule_sets.clone();
+        // Prefer the rule sets the model was built with, but fall back to resolving them for this
+        // adaptor's own family: an embedder is not obliged to populate the context, and rewriting
+        // a dominance constraint with no rules at all silently produces a model referring to
+        // variables that representations have since replaced. The Minion adaptor resolves for its
+        // family unconditionally for the same reason.
+        let rule_sets = {
+            let from_context = dominance_model.context.read().unwrap().rule_sets.clone();
+            if from_context.is_empty() {
+                get_rule_sets_for_solver_family(SolverFamily::Z3)
+            } else {
+                from_context
+            }
+        };
         let rewritten =
             rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
                 .map_err(|e| {
@@ -265,7 +274,6 @@ impl Smt {
         load_model_impl(
             store,
             solver,
-            &theory_config,
             &rewritten.symbols(),
             rewritten.constraints().as_slice(),
         )
@@ -282,7 +290,6 @@ impl SolverAdaptor for Smt {
         let store_send = self.store.synchronized();
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
-        let theory_config = self.theory_config;
         let mut stats: SolverStats = Default::default();
 
         // Apply config when getting solutions
@@ -315,7 +322,6 @@ impl SolverAdaptor for Smt {
                             dominance_model_template.as_ref(),
                             solver,
                             store,
-                            theory_config,
                             &dominance_solution,
                         ) {
                             Ok(()) => true,
@@ -383,7 +389,6 @@ impl SolverAdaptor for Smt {
         load_model_impl(
             &mut self.store,
             &mut self.solver_inst,
-            &self.theory_config,
             &model.symbols(),
             model.constraints().as_slice(),
         )?;
@@ -391,7 +396,7 @@ impl SolverAdaptor for Smt {
     }
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Smt(self.theory_config)
+        SolverFamily::Z3
     }
 
     fn get_name(&self) -> &'static str {
@@ -558,8 +563,7 @@ mod tests {
 
     #[test]
     fn adding_dominance_constraint_rules_out_solution_dominated_by_prior_solution() {
-        let theory_config = TheoryConfig::default();
-        let context = Context::new_ptr_empty(SolverFamily::Smt(theory_config));
+        let context = Context::new_ptr_empty(SolverFamily::Z3);
         set_current_rewriter(Rewriter::Rewrite(RewriteConfig::baseline()));
 
         let x = Name::User("x".into());
@@ -638,7 +642,7 @@ mod tests {
                 )),
             ));
 
-        let mut smt = Smt::new(None, theory_config);
+        let mut smt = Smt::new(None);
         smt.load_model(model, private::Internal)
             .expect("SMT model should load");
 
@@ -651,7 +655,6 @@ mod tests {
             smt.dominance_model_template.as_ref(),
             &mut smt.solver_inst,
             &mut smt.store,
-            theory_config,
             &prior_solution,
         )
         .expect("dominance constraint should be assertable");

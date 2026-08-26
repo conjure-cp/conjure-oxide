@@ -90,6 +90,15 @@ pub trait ReprRule: Send + Sync {
     type DeclLevel: ReprDeclLevel<Assignment = Self::Assignment>;
     type DomainLevel: ReprDomainLevel<DeclLevel = Self::DeclLevel>;
 
+    /// Whether this representation is available when targeting `family`.
+    ///
+    /// Solver-specific representations -- the SAT integer encodings, say, or the SMT integer
+    /// theories -- are only candidates for their own backend. Representations of Essence's
+    /// abstract types are solver-independent and keep the default.
+    fn applies_to(_family: crate::settings::SolverFamily) -> bool {
+        true
+    }
+
     fn compactness_score(dom: DomainPtr) -> Result<usize, ReprInitError> {
         Ok(Self::DomainLevel::init(dom)?.compactness_score())
     }
@@ -113,6 +122,12 @@ pub trait ReprRule: Send + Sync {
     }
 
     fn init_for(decl: &mut DeclarationPtr) -> ReprResult {
+        if let Some(family) = crate::settings::try_current_solver_family()
+            && !Self::applies_to(family)
+        {
+            return Err(ReprInitError::WrongSolverFamily(Self::NAME, family).into());
+        }
+
         if crate::settings::channelling() == crate::settings::Channelling::No {
             let existing_rule = decl.reprs().iter().next().map(|(_, state)| state.rule());
             if let Some(existing_rule) = existing_rule

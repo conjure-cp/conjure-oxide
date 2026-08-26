@@ -1921,26 +1921,29 @@ struct RewritePassContext<'ctx, 'rules> {
 /// True when a domain still needs Essence→Essence' abstract representation
 /// (set/tuple/record/…); concrete bool/int and matrices of those do not.
 fn domain_needs_abstract_repr(domain: &crate::ast::DomainPtr) -> bool {
+    domain_needs_abstract_repr_at(domain, true)
+}
+
+/// `is_value` is false for a matrix's index domains, which describe which entries exist rather
+/// than a value the solver assigns, and so are never encoded.
+fn domain_needs_abstract_repr_at(domain: &crate::ast::DomainPtr, is_value: bool) -> bool {
     use crate::ast::{Domain, GroundDomain, UnresolvedDomain};
+    let int_is_abstract = is_value && crate::settings::ints_need_representation();
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
-            GroundDomain::Empty(..) | GroundDomain::Bool | GroundDomain::Int(_) => false,
-            GroundDomain::Matrix(inner, idxs) => {
-                domain_needs_abstract_repr(&(*inner).clone().into())
-                    || idxs
-                        .iter()
-                        .any(|d| domain_needs_abstract_repr(&(*d).clone().into()))
-            }
+            GroundDomain::Empty(..) | GroundDomain::Bool => false,
+            GroundDomain::Int(_) => int_is_abstract,
+            // Every matrix has a layout to choose between, so representation selection has work
+            // to do whatever the elements are.
+            GroundDomain::Matrix(..) => true,
             _ => true,
         },
         Domain::Unresolved(ud) => match ud.as_ref() {
-            UnresolvedDomain::Int(..) => false,
-            UnresolvedDomain::Matrix(inner, idxs) => {
-                domain_needs_abstract_repr(inner) || idxs.iter().any(domain_needs_abstract_repr)
-            }
-            UnresolvedDomain::Reference(re) => {
-                re.domain().is_some_and(|d| domain_needs_abstract_repr(&d))
-            }
+            UnresolvedDomain::Int(..) => int_is_abstract,
+            UnresolvedDomain::Matrix(..) => true,
+            UnresolvedDomain::Reference(re) => re
+                .domain()
+                .is_some_and(|d| domain_needs_abstract_repr_at(&d, is_value)),
             _ => true,
         },
     }

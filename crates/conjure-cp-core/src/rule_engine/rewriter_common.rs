@@ -6,7 +6,7 @@ use super::{
 };
 use crate::ast::{
     DeclarationPtr, Expression, Model, Name, SymbolTable,
-    pretty::{pretty_variable_declaration, pretty_vec},
+    pretty::{pretty_value_letting_declaration, pretty_variable_declaration, pretty_vec},
 };
 use crate::settings::{
     Heuristic, default_rule_trace_enabled, heuristic, next_heuristic_all_index,
@@ -225,11 +225,14 @@ pub fn log_rule_application(
                 // empty if no new variables
                 let mut vars: Vec<String> = vec![];
                 for var_name in red.added_symbols(initial_symbols) {
-                    #[allow(clippy::unwrap_used)]
-                    vars.push(format!(
-                        "  {}",
-                        pretty_variable_declaration(&red.symbols, &var_name).unwrap()
-                    ));
+                    // Representing a constant introduces value lettings rather than decision
+                    // variables, so a rule can add either kind. A trace is diagnostic output, so
+                    // anything neither renderer knows is skipped rather than brought down.
+                    if let Some(declaration) = pretty_variable_declaration(&red.symbols, &var_name)
+                        .or_else(|| pretty_value_letting_declaration(&red.symbols, &var_name))
+                    {
+                        vars.push(format!("  {declaration}"));
+                    }
                 }
                 let new_variables_str = if vars.is_empty() {
                     String::new()

@@ -207,6 +207,7 @@ fn constraint_skips_deep_root_normalisation(expr: &Expr) -> bool {
         | Expr::FlatMinusEq(_, _, _)
         | Expr::FlatAbsEq(_, _, _)
         | Expr::FlatAllDiff(_, _)
+        | Expr::SmtDistinct(_, _)
         | Expr::FlatWeightedSumLeq(_, _, _, _)
         | Expr::FlatWeightedSumGeq(_, _, _, _)
         | Expr::FlatWatchedLiteral(_, _, _)
@@ -899,7 +900,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             // TODO
             None
         }
-        Expr::AllDiff(_, e) => {
+        // Constant folding treats the SMT-native form exactly like the one it came from.
+        Expr::AllDiff(_, e) | Expr::SmtDistinct(_, e) => {
             let es = (**e).clone().unwrap_list()?;
             let mut lits: HashSet<Lit> = HashSet::new();
             for expr in es {

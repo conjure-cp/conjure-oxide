@@ -22,7 +22,7 @@ use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::bug_assert;
 use crate::representation::util::try_up;
-use crate::rule_engine::rewrite_model_with_configured_rewriter;
+use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
@@ -287,7 +287,18 @@ impl Sat {
         dominance_model.dominance = None;
         dominance_model.add_constraint(rewritten_dominance);
 
-        let rule_sets = dominance_model.context.read().unwrap().rule_sets.clone();
+        // Prefer the rule sets the model was built with, but fall back to resolving them for this
+        // adaptor's own family: an embedder is not obliged to populate the context, and rewriting
+        // a dominance constraint with no rules at all silently produces a model referring to
+        // variables that representations have since replaced.
+        let rule_sets = {
+            let from_context = dominance_model.context.read().unwrap().rule_sets.clone();
+            if from_context.is_empty() {
+                get_rule_sets_for_solver_family(SolverFamily::Sat)
+            } else {
+                from_context
+            }
+        };
         let rewritten =
             rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
                 .map_err(|e| {
@@ -533,21 +544,12 @@ impl SolverAdaptor for Sat {
                 .expect("Decision variable should have a domain");
             let domain = domain.as_ground().expect("Domain should be ground");
 
-            // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (domain != &GroundDomain::Bool
-                && sym_tab
-                    .get_representation(&name, &["sat_log_int"])
-                    .is_none()
-                && sym_tab
-                    .get_representation(&name, &["sat_direct_int"])
-                    .is_none()
-                && sym_tab
-                    .get_representation(&name, &["sat_order_int"])
-                    .is_none())
-            {
-                Err(SolverError::ModelInvalid(
-                    "Only Boolean Decision Variables supported".to_string(),
-                ))?;
+            // Everything reaching the solver must be Boolean by now. Integers are encoded into
+            // Booleans by their representation, and a declaration that has one was skipped above.
+            if domain != &GroundDomain::Bool {
+                Err(SolverError::ModelInvalid(format!(
+                    "Only Boolean Decision Variables supported, but '{name}' has domain {domain}"
+                )))?;
             }
             // Only expose non-internal boolean variables in solver solutions. Machine names are
             // auxiliaries introduced during rewriting and can create huge powersets of don't-care
@@ -587,7 +589,7 @@ impl SolverAdaptor for Sat {
     fn init_solver(&mut self, _: private::Internal) {}
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Sat(crate::settings::SatEncoding::Log)
+        SolverFamily::Sat
     }
 
     fn get_name(&self) -> &'static str {

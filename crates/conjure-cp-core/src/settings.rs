@@ -13,8 +13,6 @@ use strum_macros::{Display as StrumDisplay, EnumIter};
 use crate::bug;
 use crate::bug_assert;
 
-use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
-
 /// Strategy used when a modelling decision has more than one applicable answer.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Heuristic {
@@ -679,57 +677,6 @@ pub fn comprehension_expander() -> QuantifiedExpander {
     })
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default, Serialize, Deserialize, JsonSchema)]
-pub enum SatEncoding {
-    #[default]
-    Log,
-    Direct,
-    Order,
-}
-
-impl SatEncoding {
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            SatEncoding::Log => "log",
-            SatEncoding::Direct => "direct",
-            SatEncoding::Order => "order",
-        }
-    }
-
-    pub const fn as_rule_set(self) -> &'static str {
-        match self {
-            SatEncoding::Log => "SAT_Log",
-            SatEncoding::Direct => "SAT_Direct",
-            SatEncoding::Order => "SAT_Order",
-        }
-    }
-}
-
-impl Display for SatEncoding {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SatEncoding::Log => write!(f, "log"),
-            SatEncoding::Direct => write!(f, "direct"),
-            SatEncoding::Order => write!(f, "order"),
-        }
-    }
-}
-
-impl FromStr for SatEncoding {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim().to_ascii_lowercase().as_str() {
-            "log" => Ok(SatEncoding::Log),
-            "direct" => Ok(SatEncoding::Direct),
-            "order" => Ok(SatEncoding::Order),
-            other => Err(format!(
-                "unknown sat-encoding: {other}; expected one of: log, direct, order"
-            )),
-        }
-    }
-}
-
 #[derive(
     Debug,
     EnumIter,
@@ -745,8 +692,8 @@ impl FromStr for SatEncoding {
 )]
 pub enum SolverFamily {
     Minion,
-    Sat(SatEncoding),
-    Smt(TheoryConfig),
+    Sat,
+    Z3,
 }
 
 thread_local! {
@@ -786,6 +733,34 @@ pub fn set_current_solver_family(solver_family: SolverFamily) {
     CURRENT_SOLVER_FAMILY.with(|current| current.set(Some(solver_family)));
 }
 
+/// Restores the previous solver family when a scoped override ends.
+struct SolverFamilyGuard(Option<SolverFamily>);
+
+impl Drop for SolverFamilyGuard {
+    fn drop(&mut self) {
+        CURRENT_SOLVER_FAMILY.with(|current| current.set(self.0));
+    }
+}
+
+/// Runs `f` as a rewrite for `solver_family`, then restores the surrounding solver context.
+///
+/// Some rewrites build and solve a temporary model with a different backend from the outer model.
+/// Representation applicability must follow the backend that will actually consume that temporary
+/// model, not the user's outer solver setting.
+pub fn with_solver_family<T>(solver_family: SolverFamily, f: impl FnOnce() -> T) -> T {
+    let previous = CURRENT_SOLVER_FAMILY.with(|current| current.replace(Some(solver_family)));
+    let _guard = SolverFamilyGuard(previous);
+    f()
+}
+
+/// The active solver family, or `None` if this thread has not set one.
+///
+/// Unlike [`current_solver_family`] this does not panic. Solver-family gating asks with this so
+/// that unit tests exercising a single component do not have to stand up a solver context.
+pub fn try_current_solver_family() -> Option<SolverFamily> {
+    CURRENT_SOLVER_FAMILY.with(|current| current.get())
+}
+
 pub fn current_solver_family() -> SolverFamily {
     CURRENT_SOLVER_FAMILY.with(|current| {
         current.get().unwrap_or_else(|| {
@@ -795,6 +770,20 @@ pub fn current_solver_family() -> SolverFamily {
             )
         })
     })
+}
+
+/// Whether integers carry a representation choice for the solver being targeted.
+///
+/// SAT has no integers at all: an int variable is encoded as a vector of Booleans, and which
+/// encoding it gets is a representation choice like any other. The SMT backend does have integers,
+/// but has two ways to express them -- linear arithmetic and bit-vectors -- so the choice is a
+/// representation there too. Minion has one native integer and needs none of this. With no solver
+/// family set -- a unit test exercising one component, say -- integers stay concrete.
+pub fn ints_need_representation() -> bool {
+    matches!(
+        try_current_solver_family(),
+        Some(SolverFamily::Sat | SolverFamily::Z3)
+    )
 }
 
 pub fn set_minion_discrete_threshold(threshold: usize) {
@@ -845,48 +834,13 @@ impl FromStr for SolverFamily {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let s = s.trim().to_ascii_lowercase();
-
-        match s.as_str() {
+        match s.trim().to_ascii_lowercase().as_str() {
             "minion" => Ok(SolverFamily::Minion),
-            "sat" | "sat-log" => Ok(SolverFamily::Sat(SatEncoding::Log)),
-            "sat-direct" => Ok(SolverFamily::Sat(SatEncoding::Direct)),
-            "sat-order" => Ok(SolverFamily::Sat(SatEncoding::Order)),
-            "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
-            other => {
-                // allow forms like `smt-bv-atomic` or `smt-lia-arrays`
-                if other.starts_with("smt-") {
-                    let parts = other.split('-').skip(1);
-                    let mut ints = IntTheory::default();
-                    let mut matrices = MatrixTheory::default();
-                    let mut unwrap_alldiff = false;
-
-                    for token in parts {
-                        match token {
-                            "" => {}
-                            "lia" => ints = IntTheory::Lia,
-                            "bv" => ints = IntTheory::Bv,
-                            "arrays" => matrices = MatrixTheory::Arrays,
-                            "atomic" => matrices = MatrixTheory::Atomic,
-                            "nodiscrete" => unwrap_alldiff = true,
-                            other_token => {
-                                return Err(format!(
-                                    "unknown SMT theory option '{other_token}', must be one of bv|lia|arrays|atomic|nodiscrete"
-                                ));
-                            }
-                        }
-                    }
-
-                    return Ok(SolverFamily::Smt(TheoryConfig {
-                        ints,
-                        matrices,
-                        unwrap_alldiff,
-                    }));
-                }
-                Err(format!(
-                    "unknown solver family '{other}', expected one of: minion, sat-log, sat-direct, sat-order, smt[(bv|lia)-(arrays|atomic)][-nodiscrete]"
-                ))
-            }
+            "sat" => Ok(SolverFamily::Sat),
+            "z3" => Ok(SolverFamily::Z3),
+            other => Err(format!(
+                "unknown solver '{other}', expected one of: minion, sat, z3"
+            )),
         }
     }
 }
@@ -895,8 +849,8 @@ impl SolverFamily {
     pub fn as_str(&self) -> String {
         match self {
             SolverFamily::Minion => "minion".to_owned(),
-            SolverFamily::Sat(encoding) => format!("sat-{}", encoding.as_str()),
-            SolverFamily::Smt(theory_config) => format!("smt-{}", theory_config.as_str()),
+            SolverFamily::Sat => "sat".to_owned(),
+            SolverFamily::Z3 => "z3".to_owned(),
         }
     }
 }
@@ -909,16 +863,28 @@ pub struct SolverArgs {
 #[cfg(test)]
 mod tests {
     use super::{
-        Channelling, Heuristic, QuantifiedExpander, RewriteConfig, Rewriter,
+        Channelling, Heuristic, QuantifiedExpander, RewriteConfig, Rewriter, SolverFamily,
         begin_heuristic_all_choices, clear_heuristic_responses, heuristic_all_choices,
         next_heuristic_all_index, next_heuristic_interactive_index, next_heuristic_random_index,
-        set_heuristic_responses, set_heuristic_seed,
+        set_current_solver_family, set_heuristic_responses, set_heuristic_seed,
+        try_current_solver_family, with_solver_family,
     };
     use std::str::FromStr;
 
     #[test]
     fn compact_is_the_default_heuristic() {
         assert_eq!(Heuristic::default(), Heuristic::Compact);
+    }
+
+    #[test]
+    fn scoped_solver_family_restores_the_outer_solver() {
+        set_current_solver_family(SolverFamily::Z3);
+
+        with_solver_family(SolverFamily::Minion, || {
+            assert_eq!(try_current_solver_family(), Some(SolverFamily::Minion));
+        });
+
+        assert_eq!(try_current_solver_family(), Some(SolverFamily::Z3));
     }
 
     #[test]

@@ -14,35 +14,6 @@ use crate::backends::sat::boolean::{
 };
 
 use conjure_cp::ast::CnfClause;
-/// Converts an integer literal to SATInt form
-///
-/// ```text
-///  3
-///  ~~>
-///  SATInt([true;int(1..), (3, 3)])
-///
-/// ```
-#[register_rule("SAT_Direct", 9500, [Atomic])]
-fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let value = {
-        if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
-            *value
-        } else {
-            return Err(RuleNotApplicable);
-        }
-    };
-
-    Ok(RuleEffect::pure(Expr::SATInt(
-        Metadata::new(),
-        SATIntEncoding::Direct,
-        Moo::new(into_matrix_expr!(vec![Expr::Atomic(
-            Metadata::new(),
-            Atom::Literal(Literal::Bool(true)),
-        )])),
-        (value, value),
-    )))
-}
-
 /// This function confirms that all of the input expressions are direct SATInts, and returns vectors for each input of their bits
 /// This function also normalizes direct SATInt operands to a common value range by zero-padding.
 pub fn validate_direct_int_operands(
@@ -111,7 +82,7 @@ pub fn validate_direct_int_operands(
 /// SATInt(a) = SATInt(b) ~> Bool
 /// ```
 /// NOTE: This rule reduces to AND_i (a[i] ≡ b[i]) and does not enforce one-hotness.
-#[register_rule("SAT_Direct", 9100, [Eq])]
+#[register_rule("SAT", 9100, [Eq])]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // TODO: this could be optimised by just going over the sections of both vectors where the ranges intersect
     // this does require enforcing structure separately
@@ -157,7 +128,7 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// ```
 ///
 /// True iff at least one value position differs.
-#[register_rule("SAT_Direct", 9100, [Neq])]
+#[register_rule("SAT", 9100, [Neq])]
 fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -268,7 +239,7 @@ fn sat_direct_lt(
 /// -SATInt(a) ~> SATInt(b)
 ///
 /// ```
-#[register_rule("SAT_Direct", 9100, [Neg])]
+#[register_rule("SAT", 9100, [Neg])]
 fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, value) = expr else {
         return Err(RuleNotApplicable);
@@ -309,7 +280,7 @@ fn floor_div(a: i32, b: i32) -> i32 {
 /// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
 ///
 /// ```
-#[register_rule("SAT_Direct", 9100, [SafeDiv])]
+#[register_rule("SAT", 9100, [SafeDiv])]
 fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
         return Err(RuleNotApplicable);
@@ -397,7 +368,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(RuleEffect::cnf(quot_int, new_clauses, new_symbols))
 }
 
-#[register_rule("SAT_Direct", 9100, [Sum])]
+#[register_rule("SAT", 9100, [Sum])]
 fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, sum_exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -479,7 +450,7 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 }
 
 /// Matches a `|SATInt|` with an absolute value operation and rewrites it to a direct-encoded absolute-value `SATInt` by grouping input indicator bits by `|value|` and OR-ing each group (named here as buckets) into the corresponding output bit.
-#[register_rule("SAT_Direct", 9100, [Abs])]
+#[register_rule("SAT", 9100, [Abs])]
 fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Abs(_, value_expr) = expr else {
         return Err(RuleNotApplicable);
