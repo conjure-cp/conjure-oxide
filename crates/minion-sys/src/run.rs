@@ -160,6 +160,8 @@ pub enum PreprocessLevel {
 /// Optional runtime controls for [`run_minion_with_options`].
 #[derive(Debug, Clone, Copy)]
 pub struct RunOptions {
+    /// Seed for Minion's random search behaviour.
+    pub seed: u32,
     /// Override Minion variable ordering.
     pub variable_order: Option<VariableOrder>,
     /// Override Minion value ordering.
@@ -176,6 +178,7 @@ pub struct RunOptions {
 impl Default for RunOptions {
     fn default() -> Self {
         Self {
+            seed: 0,
             variable_order: None,
             value_order: None,
             preprocess: PreprocessLevel::SacBoundsLimit,
@@ -305,6 +308,7 @@ pub fn run_minion_with_options(
         // themselves instead of going through this wrapper.
         (*search_opts).silent = true;
         (*search_opts).print_solution = false;
+        (*search_method).randomSeed = options.seed;
         if let Some(variable_order) = options.variable_order {
             (*search_method).order = variable_order.ffi_order();
             (*search_opts).randomiseValvarorder = matches!(variable_order, VariableOrder::Random);

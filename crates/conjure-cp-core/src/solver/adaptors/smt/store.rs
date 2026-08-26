@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use itertools::Itertools;
 use z3::{Context, Model, Solvable, SortKind, Symbol, Translate, ast::*};
@@ -14,13 +14,13 @@ use super::helpers::*;
 /// Maps CO variable names to their CO domains, Z3 symbolic constants, and Z3 symbols.
 #[derive(Clone, Debug)]
 pub struct SymbolStore {
-    map: HashMap<Name, (Moo<GroundDomain>, Dynamic, Symbol)>,
+    map: BTreeMap<Name, (Moo<GroundDomain>, Dynamic, Symbol)>,
 }
 
 impl SymbolStore {
     pub fn new() -> Self {
         SymbolStore {
-            map: HashMap::new(),
+            map: BTreeMap::new(),
         }
     }
 
@@ -123,7 +123,7 @@ impl Solvable for SymbolStore {
 
 unsafe impl Translate for SymbolStore {
     fn translate(&self, ctx: &Context) -> Self {
-        let mut new_map = HashMap::new();
+        let mut new_map = BTreeMap::new();
         for (name, (domain, ast, sym)) in self.map.iter() {
             let new_ast = ast.translate(ctx);
             let new_sym = sym.clone(); // Symbols are not translated
@@ -136,13 +136,13 @@ unsafe impl Translate for SymbolStore {
 /// Maps CO variable names to their literal values in both the Z3 model and Essence.
 #[derive(Clone, Debug)]
 pub struct LiteralStore {
-    map: HashMap<Name, (Dynamic, Literal)>,
+    map: BTreeMap<Name, (Dynamic, Literal)>,
 }
 
 impl LiteralStore {
     fn new() -> Self {
         LiteralStore {
-            map: HashMap::new(),
+            map: BTreeMap::new(),
         }
     }
 

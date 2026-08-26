@@ -17,7 +17,9 @@ Each test runs `conjure-oxide` on an `input.essence` file and checks that the re
 `config.toml` may select one or several modelling heuristics with `heuristic = "f"` or
 `heuristic = ["f", "c", "r", "x"]`. The strategies mean first, compact, seeded random, and all
 respectively. Compact minimises representation-domain size for representation choices and resulting
-AST depth for equally-applicable rules. The default is `x`. Set `seed = 123` for random runs. The `x` strategy
+AST depth for equally-applicable rules. The default is `x`. Set `seed = 123` for random runs.
+Backend solver randomness is configured independently with `solver-seed = 123` and defaults to
+`0`. Both seed fields remain explicit in recorded stats. The `x` strategy
 replays every representation and equally-applicable-rule choice from a fresh parsed model and keeps
 separate `model-000`, `model-001`, … golden artifacts for every parser/rewriter/expander/solver
 configuration. Channelling is configured with `channelling = "no"`; `yes` is reserved but currently

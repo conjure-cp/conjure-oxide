@@ -278,12 +278,14 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
         .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
 
     match family {
-        SolverFamily::Minion => Solver::new(Minion::with_search_orders(
-            global_args.minion_varorder,
-            global_args.minion_valorder,
-        )),
-        SolverFamily::Sat => Solver::new(Sat::default()),
-        SolverFamily::Z3 => Solver::new(Smt::new(timeout_ms)),
+        SolverFamily::Minion => Solver::new(
+            Minion::with_search_orders(global_args.minion_varorder, global_args.minion_valorder)
+                .with_solver_seed(global_args.solver_seed),
+        ),
+        SolverFamily::Sat => Solver::new(Sat::default().with_solver_seed(global_args.solver_seed)),
+        SolverFamily::Z3 => {
+            Solver::new(Smt::new(timeout_ms).with_solver_seed(global_args.solver_seed))
+        }
     }
 }
 
@@ -370,11 +372,12 @@ pub(crate) fn rewrite(
     set_heuristic_responses(global_args.responses.clone());
     set_channelling(global_args.channelling);
     tracing::info!(
-        "Heuristic: {}, seed: {}, responses: {:?}, channelling: {}",
+        "Heuristic: {}, seed: {}, responses: {:?}, channelling: {}, solver seed: {}",
         global_args.heuristic,
         global_args.seed,
         global_args.responses,
-        global_args.channelling
+        global_args.channelling,
+        global_args.solver_seed
     );
 
     let rule_sets = context.read().unwrap().rule_sets.clone();

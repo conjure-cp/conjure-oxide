@@ -35,6 +35,7 @@ use super::parse_model::model_to_minion;
 pub struct Minion {
     __non_constructable: private::Internal,
     model: Option<MinionModel>,
+    solver_seed: u32,
     variable_order: Option<MinionVariableOrder>,
     value_order: Option<MinionValueOrder>,
     dominance_expression: Option<Expression>,
@@ -156,6 +157,7 @@ impl Minion {
         Minion {
             __non_constructable: private::Internal,
             model: None,
+            solver_seed: 0,
             variable_order: None,
             value_order: None,
             dominance_expression: None,
@@ -176,11 +178,18 @@ impl Minion {
         Minion {
             __non_constructable: private::Internal,
             model: None,
+            solver_seed: 0,
             variable_order,
             value_order,
             dominance_expression: None,
             dominance_model_template: None,
         }
+    }
+
+    /// Sets the seed used by Minion's random search behaviour.
+    pub fn with_solver_seed(mut self, solver_seed: u32) -> Minion {
+        self.solver_seed = solver_seed;
+        self
     }
 }
 
@@ -242,6 +251,7 @@ impl SolverAdaptor for Minion {
                 true
             }),
             RunOptions {
+                seed: self.solver_seed,
                 variable_order: self.variable_order.map(Into::into),
                 value_order: self.value_order.map(Into::into),
                 ..Default::default()

@@ -5,7 +5,8 @@ use itertools::Itertools;
 use uniplate::Uniplate;
 use versions::Versioning;
 use z3::{
-    Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate, with_z3_config,
+    Config, Params, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate,
+    with_z3_config,
 };
 
 use super::convert_model::*;
@@ -33,6 +34,8 @@ pub struct Smt {
 
     solver_cfg: Config,
 
+    solver_seed: u32,
+
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<Model>,
 }
@@ -46,6 +49,7 @@ impl Default for Smt {
             store: SymbolStore::new(),
             solver_inst: Solver::new(),
             solver_cfg: Config::new(),
+            solver_seed: 0,
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -65,6 +69,12 @@ impl Smt {
             solver_cfg,
             ..Default::default()
         }
+    }
+
+    /// Sets the seed used by Z3's random search behaviour.
+    pub fn with_solver_seed(mut self, solver_seed: u32) -> Self {
+        self.solver_seed = solver_seed;
+        self
     }
 }
 
@@ -290,12 +300,16 @@ impl SolverAdaptor for Smt {
         let store_send = self.store.synchronized();
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
+        let solver_seed = self.solver_seed;
         let mut stats: SolverStats = Default::default();
 
         // Apply config when getting solutions
         let (search_status, final_z3_time) =
             with_z3_config(&self.solver_cfg, move || -> Result<_, SolverError> {
                 let solver = solver_send.recover();
+                let mut solver_params = Params::new();
+                solver_params.set_u32("random_seed", solver_seed);
+                solver.set_params(&solver_params);
                 let mut final_z3_time: Option<f64> = None;
                 let mut found_solution = false;
                 let mut hook_error: Option<SolverError> = None;

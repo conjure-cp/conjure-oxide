@@ -77,6 +77,7 @@ struct RunCase<'a> {
     heuristic: Heuristic,
     channelling: Channelling,
     seed: u64,
+    solver_seed: u32,
     choice_path: &'a [usize],
     case_name: &'a str,
 }
@@ -288,14 +289,15 @@ fn run_case_label(
     run_case: RunCase<'_>,
 ) -> String {
     format!(
-        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, heuristic={}, seed={}, channelling={}, solver={}",
+        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, heuristic={}, seed={}, channelling={}, solver={}, solver_seed={}",
         run_case.parser,
         run_case.rewriter,
         run_case.comprehension_expander,
         run_case.heuristic,
         run_case.seed,
         run_case.channelling,
-        run_case.solver.as_str()
+        run_case.solver.as_str(),
+        run_case.solver_seed
     )
 }
 
@@ -383,6 +385,7 @@ fn integration_test_inner_with_status(
         .configured_channelling()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
     let seed = config.seed;
+    let solver_seed = config.solver_seed;
     let distinguish_rewriter = rewriters.len() > 1;
     let distinguish_heuristic = heuristics.len() > 1 || heuristics.first() != Some(&Heuristic::All);
     let distinguish_channelling =
@@ -456,6 +459,7 @@ fn integration_test_inner_with_status(
                                 heuristic: heuristic.to_string(),
                                 channelling: channelling.to_string(),
                                 seed,
+                                solver_seed,
                                 solver: solver.as_str(),
                             };
                             let mut config_timings = RunTimings::default();
@@ -468,6 +472,7 @@ fn integration_test_inner_with_status(
                                     heuristic,
                                     channelling,
                                     seed,
+                                    solver_seed,
                                     distinguish_rewriter,
                                     distinguish_heuristic,
                                     distinguish_channelling,
@@ -489,6 +494,7 @@ fn integration_test_inner_with_status(
                                         heuristic,
                                         channelling,
                                         seed,
+                                        solver_seed,
                                         choice_path: &choice_path,
                                         case_name: case_name.as_str(),
                                     };
@@ -804,9 +810,11 @@ fn integration_test_inner(
     let solutions = if let Some(number_of_solutions) = number_of_solutions.as_solver_limit() {
         let solver_input_file = None;
         let solver = match solver_fam {
-            SolverFamily::Minion => Solver::new(Minion::default()),
-            SolverFamily::Sat => Solver::new(Sat::default()),
-            SolverFamily::Z3 => Solver::new(Smt::default()),
+            SolverFamily::Minion => {
+                Solver::new(Minion::default().with_solver_seed(run_case.solver_seed))
+            }
+            SolverFamily::Sat => Solver::new(Sat::default().with_solver_seed(run_case.solver_seed)),
+            SolverFamily::Z3 => Solver::new(Smt::default().with_solver_seed(run_case.solver_seed)),
         };
         let solved = get_solutions(
             solver,
@@ -955,6 +963,7 @@ fn run_case_name(
     heuristic: Heuristic,
     channelling: Channelling,
     seed: u64,
+    solver_seed: u32,
     distinguish_rewriter: bool,
     distinguish_heuristic: bool,
     distinguish_channelling: bool,
@@ -968,6 +977,9 @@ fn run_case_name(
     }
     if heuristic == Heuristic::Random {
         name.push_str(&format!("-seed-{seed}"));
+    }
+    if solver_seed != 0 {
+        name.push_str(&format!("-solver-seed-{solver_seed}"));
     }
     if distinguish_channelling {
         name.push_str(&format!("-channelling-{channelling}"));
@@ -1310,7 +1322,8 @@ fn try_capture_oxide_minion(
     if let Some(parent) = minion_path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let solver = Solver::new(Minion::default()).load_model(rewritten_model)?;
+    let solver = Solver::new(Minion::default().with_solver_seed(run_case.solver_seed))
+        .load_model(rewritten_model)?;
     let mut file: Box<dyn std::io::Write> = Box::new(File::create(&minion_path)?);
     solver.write_solver_input_file(&mut file)?;
     Ok(())

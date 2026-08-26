@@ -43,6 +43,7 @@ use itertools::Itertools;
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
 pub struct Sat {
     __non_constructable: private::Internal,
+    solver_seed: u32,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
     solver_inst: CaDiCaL<'static, 'static>,
@@ -57,6 +58,7 @@ impl Default for Sat {
     fn default() -> Self {
         Sat {
             __non_constructable: private::Internal,
+            solver_seed: 0,
             solver_inst: CaDiCaL::default(),
             var_map: None,
             model_inst: None,
@@ -64,6 +66,14 @@ impl Default for Sat {
             dominance_expression: None,
             dominance_model_template: None,
         }
+    }
+}
+
+impl Sat {
+    /// Sets the seed used by the SAT solver's random search behaviour.
+    pub fn with_solver_seed(mut self, solver_seed: u32) -> Self {
+        self.solver_seed = solver_seed;
+        self
     }
 }
 
@@ -387,6 +397,16 @@ impl SolverAdaptor for Sat {
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
         let mut solver = &mut self.solver_inst;
+        let solver_seed = i32::try_from(self.solver_seed).map_err(|_| {
+            SolverError::Runtime(format!(
+                "solver seed {} exceeds CaDiCaL's maximum supported value ({})",
+                self.solver_seed,
+                i32::MAX
+            ))
+        })?;
+        solver.set_option("seed", solver_seed).map_err(|err| {
+            SolverError::Runtime(format!("Failed setting CaDiCaL solver seed: {err}"))
+        })?;
         let mut var_map = self.var_map.clone().ok_or_else(|| {
             SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
         })?;
@@ -530,7 +550,7 @@ impl SolverAdaptor for Sat {
         let mut finds: Vec<Name> = Vec::new();
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
-        for (name, decl) in sym_tab.clone().into_iter_local() {
+        for (name, decl) in sym_tab.into_iter_local() {
             if decl.as_find().is_none() {
                 continue;
             }

@@ -202,6 +202,15 @@ pub struct GlobalArgs {
     )]
     pub seed: u64,
 
+    /// Seed used by the backend solver's random search behaviour.
+    #[arg(
+        long,
+        default_value_t = 0,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub solver_seed: u32,
+
     /// Whether multiple representations of the same declaration may be channelled together.
     ///
     /// Possible values: `no`, `yes`. Channelling is disabled by default. Enable `yes` to allow
@@ -391,6 +400,22 @@ mod tests {
             cli.global_args.comprehension_expander,
             QuantifiedExpander::Auto
         );
+    }
+
+    #[test]
+    fn solver_seed_defaults_to_zero_and_can_be_overridden() {
+        let cli = Cli::try_parse_from(["conjure-oxide", "solve", "model.essence"]).unwrap();
+        assert_eq!(cli.global_args.solver_seed, 0);
+
+        let cli = Cli::try_parse_from([
+            "conjure-oxide",
+            "solve",
+            "model.essence",
+            "--solver-seed",
+            "42",
+        ])
+        .unwrap();
+        assert_eq!(cli.global_args.solver_seed, 42);
     }
 
     #[test]

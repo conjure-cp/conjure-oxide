@@ -275,6 +275,7 @@ pub struct RecordedRunConfig {
     pub heuristic: String,
     pub channelling: String,
     pub seed: u64,
+    pub solver_seed: u32,
     pub solver: String,
 }
 
@@ -398,6 +399,8 @@ pub struct RecordedConfigRunStats {
     pub heuristic: String,
     pub channelling: String,
     pub seed: Option<u64>,
+    #[serde(rename = "solver-seed")]
+    pub solver_seed: Option<u32>,
     pub solver: String,
     pub status: Option<String>,
     #[serde(rename = "translation-time")]
@@ -468,7 +471,8 @@ fn config_run_mut<'a>(
             && run.comprehension_expander == config.comprehension_expander
             && run.heuristic == config.heuristic
             && run.channelling == config.channelling
-            && run.seed == Some(config.seed)
+            && run.seed.unwrap_or_default() == config.seed
+            && run.solver_seed.unwrap_or_default() == config.solver_seed
             && run.solver == config.solver
     }) {
         return &mut stats.runs[index];
@@ -481,6 +485,7 @@ fn config_run_mut<'a>(
         heuristic: config.heuristic.clone(),
         channelling: config.channelling.clone(),
         seed: Some(config.seed),
+        solver_seed: Some(config.solver_seed),
         solver: config.solver.clone(),
         ..RecordedConfigRunStats::default()
     });
@@ -575,6 +580,9 @@ fn write_canonical_stats(path: &Path, stats: &TestRunStats) -> io::Result<()> {
         if let Some(seed) = run.seed {
             contents.push_str(&format!("seed = {seed}\n"));
         }
+        if let Some(solver_seed) = run.solver_seed {
+            contents.push_str(&format!("solver-seed = {solver_seed}\n"));
+        }
         if !run.solver.is_empty() {
             contents.push_str(&format!("solver = {}\n", quoted_toml_string(&run.solver)));
         }
@@ -666,6 +674,8 @@ pub struct TestConfig {
     pub channelling: Vec<String>,
     #[serde(default, rename = "seed")]
     pub seed: u64,
+    #[serde(default, rename = "solver-seed")]
+    pub solver_seed: u32,
     #[serde(
         default,
         rename = "solver",
@@ -727,6 +737,7 @@ impl Default for TestConfig {
             heuristic: vec!["x".to_string()],
             channelling: vec!["no".to_string()],
             seed: 0,
+            solver_seed: 0,
             // How a model is expressed for a solver -- which SAT integer encoding, which Z3
             // integer theory -- is a representation choice, so the `x` heuristic above enumerates
             // those combinations rather than them being separate solvers here.
@@ -846,6 +857,7 @@ mod tests {
                 heuristic: "x".to_string(),
                 channelling: "no".to_string(),
                 seed: 0,
+                solver_seed: 0,
                 solver: solver.to_string(),
             };
             upsert_config_status_stats(&path, &config, "ok").unwrap();
@@ -880,6 +892,7 @@ rewriter = "optimised"
 heuristic = "x"
 channelling = "no"
 seed = 0
+solver-seed = 0
 solver = "minion"
 status = "ok"
 translation-time = 1.0
@@ -896,6 +909,7 @@ rewriter = "optimised"
 heuristic = "x"
 channelling = "no"
 seed = 0
+solver-seed = 0
 solver = "sat-log"
 status = "ok"
 translation-time = 2.0
@@ -909,6 +923,28 @@ rule-trace.rules.rule_name = 5
 
         let stats = read_stats_or_default(&path).unwrap();
         assert_eq!(stats.runs.len(), 2);
+    }
+
+    #[test]
+    fn records_heuristic_and_solver_seeds() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let path = temp_dir.path().join(STATS_FILE_NAME);
+        let config = RecordedRunConfig {
+            parser: "tree-sitter".to_string(),
+            rewriter: "optimised".to_string(),
+            comprehension_expander: "auto".to_string(),
+            heuristic: "r".to_string(),
+            channelling: "no".to_string(),
+            seed: 42,
+            solver_seed: 7,
+            solver: "minion".to_string(),
+        };
+
+        upsert_config_status_stats(&path, &config, "ok").unwrap();
+
+        let contents = fs::read_to_string(path).unwrap();
+        assert!(contents.contains("seed = 42\n"));
+        assert!(contents.contains("solver-seed = 7\n"));
     }
 
     #[test]
