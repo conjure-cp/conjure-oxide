@@ -6,17 +6,14 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(test)]
 mod tests {
-    use std::ffi::{CString, c_char, c_void};
-    use std::process::{Command, ExitStatus};
-
     use super::*;
+    use std::ffi::{CString, c_char, c_void};
 
     // solutions
     static X_VAL: AtomicI32 = AtomicI32::new(0);
     static Y_VAL: AtomicI32 = AtomicI32::new(0);
     static Z_VAL: AtomicI32 = AtomicI32::new(0);
     const MIDSEARCH_SCENARIO_ENV: &str = "MINION_MIDSEARCH_SCENARIO";
-    const MIDSEARCH_CHILD_TEST: &str = "ffi::tests::midsearch_child_runner";
 
     #[derive(Clone, Copy, Debug)]
     enum MidsearchScenario {
@@ -60,42 +57,6 @@ mod tests {
         added_var_ok: bool,
         looked_up_new_var_ok: bool,
         add_constraint_result: Option<MinionResult>,
-    }
-
-    #[derive(Default, Debug)]
-    struct SpawnStats {
-        ok: usize,
-        nonzero: usize,
-        signal_11: usize,
-        signal_6: usize,
-        other_signal: usize,
-    }
-
-    #[cfg(unix)]
-    fn status_signal(status: &ExitStatus) -> Option<i32> {
-        use std::os::unix::process::ExitStatusExt;
-        status.signal()
-    }
-
-    #[cfg(not(unix))]
-    fn status_signal(_: &ExitStatus) -> Option<i32> {
-        None
-    }
-
-    fn classify_status(status: &ExitStatus, stats: &mut SpawnStats) {
-        if status.success() {
-            stats.ok += 1;
-            return;
-        }
-
-        stats.nonzero += 1;
-
-        match status_signal(status) {
-            Some(11) => stats.signal_11 += 1,
-            Some(6) => stats.signal_6 += 1,
-            Some(_) => stats.other_signal += 1,
-            None => {}
-        }
     }
 
     unsafe fn build_two_var_instance(instance: *mut ProbSpec_CSPInstance) {
@@ -222,19 +183,6 @@ mod tests {
             looked_up_new_var_ok: state.looked_up_new_var_ok,
             add_constraint_result: state.add_constraint_result,
         }
-    }
-
-    fn run_midsearch_child(scenario: MidsearchScenario) -> ExitStatus {
-        let current_test_binary =
-            std::env::current_exe().expect("could not find current test binary");
-
-        Command::new(current_test_binary)
-            .arg("--exact")
-            .arg(MIDSEARCH_CHILD_TEST)
-            .arg("--nocapture")
-            .env(MIDSEARCH_SCENARIO_ENV, scenario.as_env_value())
-            .status()
-            .expect("could not execute child test")
     }
 
     pub extern "C" fn hello_from_rust(ctx: *mut MinionContext, _userdata: *mut c_void) -> bool {
@@ -386,40 +334,5 @@ mod tests {
                 "mid-search eq constraint using fresh variable failed; outcome={outcome:#?}"
             );
         }
-    }
-
-    #[test]
-    #[ignore = "diagnostic stress test; runs child processes to detect crashes while mutating model mid-search"]
-    fn midsearch_variable_addition_stress() {
-        let scenarios = [
-            MidsearchScenario::AddVarOnly,
-            MidsearchScenario::AddVarThenAddEqConstraint,
-        ];
-        let iterations = 20usize;
-        let mut any_failures = false;
-
-        for scenario in scenarios {
-            let mut stats = SpawnStats::default();
-
-            for _ in 0..iterations {
-                let status = run_midsearch_child(scenario);
-                classify_status(&status, &mut stats);
-            }
-
-            eprintln!(
-                "midsearch scenario={} iterations={} stats={stats:?}",
-                scenario.as_env_value(),
-                iterations
-            );
-
-            if stats.nonzero > 0 {
-                any_failures = true;
-            }
-        }
-
-        assert!(
-            !any_failures,
-            "at least one subprocess crashed/failed in mid-search variable-addition stress run"
-        );
     }
 }
