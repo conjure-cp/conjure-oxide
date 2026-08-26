@@ -778,17 +778,16 @@ fn integration_test_inner(
         context.clone(),
     )?;
     // Stage 2a: Rewrite the model using the rule engine
-    let mut extra_rules = vec![];
-
-    if let SolverFamily::Sat(sat_encoding) = solver_fam {
-        extra_rules.push(sat_encoding.as_rule_set());
-    }
-
     let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
-    rules_to_load.extend(extra_rules);
     rules_to_load.extend(run_case.extra_rule_sets.iter().map(String::as_str));
 
     let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
+    // Solver-time rewrites -- dominance-blocking constraints, say -- read the rule sets back off
+    // the model's context, so record them there as the CLI does.
+    {
+        let mut context = context.write().unwrap();
+        context.rule_sets = rule_sets.clone();
+    }
 
     let model = parsed_model;
 
@@ -806,9 +805,8 @@ fn integration_test_inner(
         let solver_input_file = None;
         let solver = match solver_fam {
             SolverFamily::Minion => Solver::new(Minion::default()),
-            SolverFamily::Sat(_) => Solver::new(Sat::default()),
-
-            SolverFamily::Smt(_) => Solver::new(Smt::default()),
+            SolverFamily::Sat => Solver::new(Sat::default()),
+            SolverFamily::Z3 => Solver::new(Smt::default()),
         };
         let solved = get_solutions(
             solver,
@@ -1301,12 +1299,7 @@ fn try_capture_oxide_minion(
         context.clone(),
     )?;
 
-    let mut extra_rules = vec![];
-    if let SolverFamily::Sat(sat_encoding) = run_case.solver {
-        extra_rules.push(sat_encoding.as_rule_set());
-    }
     let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
-    rules_to_load.extend(extra_rules);
     rules_to_load.extend(run_case.extra_rule_sets.iter().map(String::as_str));
     let rule_sets = resolve_rule_sets(run_case.solver, &rules_to_load)?;
 
