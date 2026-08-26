@@ -16,7 +16,7 @@ __0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItem
 
 sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
 __0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
 __0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ])
 new variables:
@@ -30,6 +30,14 @@ new variables:
   find packed#components_7: bool
   find packed#components_8: bool
   find packed#components_9: bool
+
+--
+
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
+__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11,
+__0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItems) ])
 
 --
 
@@ -345,6 +353,16 @@ letting weights be [1,7,2,2,2,6,8,5,8,4;int(1..10)]
 letting values be [1,7,2,2,2,6,8,5,8,4;int(1..10)]
 find packed: matrix indexed by [int(1..nItems)] of bool
 findAux __0: int(0..80)
+find packed#components_1: bool
+find packed#components_2: bool
+find packed#components_3: bool
+find packed#components_4: bool
+find packed#components_5: bool
+find packed#components_6: bool
+find packed#components_7: bool
+find packed#components_8: bool
+find packed#components_9: bool
+find packed#components_10: bool
 letting weights#components_1 be 1
 letting weights#components_2 be 7
 letting weights#components_3 be 2
@@ -365,16 +383,6 @@ letting values#components_7 be 8
 letting values#components_8 be 5
 letting values#components_9 be 8
 letting values#components_10 be 4
-find packed#components_1: bool
-find packed#components_2: bool
-find packed#components_3: bool
-find packed#components_4: bool
-find packed#components_5: bool
-find packed#components_6: bool
-find packed#components_7: bool
-find packed#components_8: bool
-find packed#components_9: bool
-find packed#components_10: bool
 findAux __1: int(0..1)
 findAux __2: int(0..1)
 findAux __3: int(0..1)

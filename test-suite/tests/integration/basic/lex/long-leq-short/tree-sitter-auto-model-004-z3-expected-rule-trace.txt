@@ -1,0 +1,223 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..2)] of int(1..2)
+find y: matrix indexed by [int(1..3)] of int(1..2)
+
+such that
+
+(y <=lex x)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#components_1: int(1..2)
+  find y#components_2: int(1..2)
+  find y#components_3: int(1..2)
+
+--
+
+(y <=lex x)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(y <=lex x)
+new variables:
+  find x#components_1: int(1..2)
+  find x#components_2: int(1..2)
+
+--
+
+(y <=lex x)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(y <=lex x)
+new variables:
+  find x#components_1#bv_1: int(1..2)
+  find x#components_2#bv_1: int(1..2)
+  find y#components_1#bv_1: int(1..2)
+  find y#components_2#bv_1: int(1..2)
+  find y#components_3#bv_1: int(1..2)
+
+--
+
+(y <=lex x)
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([SafeIndex(y,[1]) < SafeIndex(x,[1]),and([SafeIndex(y,[1]) = SafeIndex(x,[1]),or([SafeIndex(y,[2]) < SafeIndex(x,[2]),and([SafeIndex(y,[2]) = SafeIndex(x,[2]),false;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([SafeIndex(y,[2]) < SafeIndex(x,[2]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+SafeIndex(y,[2]) < SafeIndex(x,[2])
+
+--
+
+or([SafeIndex(y,[1]) < SafeIndex(x,[1]),and([SafeIndex(y,[1]) = SafeIndex(x,[1]),SafeIndex(y,[2]) < SafeIndex(x,[2]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([SafeIndex(y,[1]) < SafeIndex(x,[1]),SafeIndex(y,[1]) = SafeIndex(x,[1]);int(1..)]),or([SafeIndex(y,[1]) < SafeIndex(x,[1]),SafeIndex(y,[2]) < SafeIndex(x,[2]);int(1..)]);int(1..)])
+
+--
+
+SafeIndex(y,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#components_1
+
+--
+
+y#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#components_1
+
+--
+
+y#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#components_1#bv_1
+
+--
+
+SafeIndex(x,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#components_1
+
+--
+
+x#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_1
+
+--
+
+x#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#components_1#bv_1
+
+--
+
+SafeIndex(y,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#components_1
+
+--
+
+y#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#components_1
+
+--
+
+y#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#components_1#bv_1
+
+--
+
+SafeIndex(x,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#components_1
+
+--
+
+x#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_1
+
+--
+
+x#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#components_1#bv_1
+
+--
+
+SafeIndex(y,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#components_1
+
+--
+
+y#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#components_1
+
+--
+
+y#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#components_1#bv_1
+
+--
+
+SafeIndex(x,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#components_1
+
+--
+
+x#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_1
+
+--
+
+x#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#components_1#bv_1
+
+--
+
+SafeIndex(y,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+y#components_2
+
+--
+
+y#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#components_2
+
+--
+
+y#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#components_2#bv_1
+
+--
+
+SafeIndex(x,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#components_2
+
+--
+
+x#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_2
+
+--
+
+x#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#components_2#bv_1
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..2)] of int(1..2)
+find y: matrix indexed by [int(1..3)] of int(1..2)
+find y#components_1: int(1..2)
+find y#components_2: int(1..2)
+find y#components_3: int(1..2)
+find x#components_1: int(1..2)
+find x#components_2: int(1..2)
+find y#components_1#bv_1: int(1..2)
+find y#components_2#bv_1: int(1..2)
+find y#components_3#bv_1: int(1..2)
+find x#components_1#bv_1: int(1..2)
+find x#components_2#bv_1: int(1..2)
+
+such that
+
+and([or([y#components_1#bv_1 < x#components_1#bv_1,y#components_1#bv_1 = x#components_1#bv_1;int(1..)]),or([y#components_1#bv_1 < x#components_1#bv_1,y#components_2#bv_1 < x#components_2#bv_1;int(1..)]);int(1..)])
+

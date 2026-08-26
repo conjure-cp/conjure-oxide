@@ -26,7 +26,7 @@ sum([ product([x[i],calories[i];int(1..)]) | i : int(1..n) ]) >= 500,
 sum([ product([x[i],chocolate[i];int(1..)]) | i : int(1..n) ]) >= 6,
 sum([ product([x[i],sugar[i];int(1..)]) | i : int(1..n) ]) >= 10,
 sum([ product([x[i],fat[i];int(1..)]) | i : int(1..n) ]) >= 8
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 cost = sum([ product([x[i],price[i];int(1..)]) | i : int(1..p) ]),
 sum([ product([x[i],calories[i];int(1..)]) | i : int(1..n) ]) >= 500,
 sum([ product([x[i],chocolate[i];int(1..)]) | i : int(1..n) ]) >= 6,
@@ -37,6 +37,20 @@ new variables:
   find x#components_2: int(0..1000)
   find x#components_3: int(0..1000)
   find x#components_4: int(0..1000)
+
+--
+
+cost = sum([ product([x[i],price[i];int(1..)]) | i : int(1..p) ]),
+sum([ product([x[i],calories[i];int(1..)]) | i : int(1..n) ]) >= 500,
+sum([ product([x[i],chocolate[i];int(1..)]) | i : int(1..n) ]) >= 6,
+sum([ product([x[i],sugar[i];int(1..)]) | i : int(1..n) ]) >= 10,
+sum([ product([x[i],fat[i];int(1..)]) | i : int(1..n) ]) >= 8
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+cost = sum([ product([x[i],price[i];int(1..)]) | i : int(1..p) ]),
+sum([ product([x[i],calories[i];int(1..)]) | i : int(1..n) ]) >= 500,
+sum([ product([x[i],chocolate[i];int(1..)]) | i : int(1..n) ]) >= 6,
+sum([ product([x[i],sugar[i];int(1..)]) | i : int(1..n) ]) >= 10,
+sum([ product([x[i],fat[i];int(1..)]) | i : int(1..n) ]) >= 8
 
 --
 
@@ -372,6 +386,10 @@ letting sugar be [2,2,4,4;int(1..4)]
 letting fat be [2,4,1,5;int(1..4)]
 find x: matrix indexed by [int(1..p)] of int(0..1000)
 find cost: int(0..10000)
+find x#components_1: int(0..1000)
+find x#components_2: int(0..1000)
+find x#components_3: int(0..1000)
+find x#components_4: int(0..1000)
 letting price#components_1 be 50
 letting price#components_2 be 20
 letting price#components_3 be 30
@@ -396,10 +414,6 @@ letting fat#components_1 be 2
 letting fat#components_2 be 4
 letting fat#components_3 be 1
 letting fat#components_4 be 5
-find x#components_1: int(0..1000)
-find x#components_2: int(0..1000)
-find x#components_3: int(0..1000)
-find x#components_4: int(0..1000)
 findAux __0: int(0..1000)
 findAux __1: int(0..1000)
 findAux __2: int(0..1000)

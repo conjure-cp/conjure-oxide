@@ -19,24 +19,87 @@ new constraints:
 
 --
 
-true,
-and([sum([SafeIndex(x#counts_1,[1]),SafeIndex(x#counts_1,[2]);int(1..)]) >= 0,sum([SafeIndex(x#counts_1,[1]),SafeIndex(x#counts_1,[2]);int(1..)]) <= 4;int(1..)]),
-or([SafeIndex(x#counts_1,[1]) > 0,SafeIndex(x#counts_2,[1]) = 1;int(1..)]),
-or([SafeIndex(x#counts_1,[2]) > 0,SafeIndex(x#counts_2,[2]) = 1;int(1..)]),
-or([SafeIndex(x#counts_1,[2]) = 0,SafeIndex(x#counts_1,[1]) > 0;int(1..)]),
-or([SafeIndex(x#counts_1,[2]) = 0,([SafeIndex(x#counts_2,[1]);int(1..)] <lex [SafeIndex(x#counts_2,[2]);int(1..)]);int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-true,
-and([sum([SafeIndex(x#counts_1,[1]),SafeIndex(x#counts_1,[2]);int(1..)]) >= 0,sum([SafeIndex(x#counts_1,[1]),SafeIndex(x#counts_1,[2]);int(1..)]) <= 4;int(1..)]),
-or([SafeIndex(x#counts_1,[1]) > 0,SafeIndex(x#counts_2,[1]) = 1;int(1..)]),
-or([SafeIndex(x#counts_1,[2]) > 0,SafeIndex(x#counts_2,[2]) = 1;int(1..)]),
-or([SafeIndex(x#counts_1,[2]) = 0,SafeIndex(x#counts_1,[1]) > 0;int(1..)]),
-or([SafeIndex(x#counts_1,[2]) = 0,([SafeIndex(x#counts_2,[1]);int(1..)] <lex [SafeIndex(x#counts_2,[2]);int(1..)]);int(1..)])
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
 new variables:
   find x#counts_1#components_1: int(0..2)
   find x#counts_1#components_2: int(0..2)
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+new variables:
   find x#counts_2#components_1: int(1..2)
   find x#counts_2#components_2: int(1..2)
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
 
 --
 
@@ -58,6 +121,12 @@ sum([SafeIndex(x#counts_1,[1]),-1;int(1..)]) >= 0
 
 --
 
+SafeIndex(x#counts_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_2
+
+--
+
 SafeIndex(x#counts_2,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#counts_2#components_1
@@ -67,12 +136,6 @@ x#counts_2#components_1
 SafeIndex(x#counts_2,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#counts_2#components_2
-
---
-
-SafeIndex(x#counts_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#counts_1#components_2
 
 --
 

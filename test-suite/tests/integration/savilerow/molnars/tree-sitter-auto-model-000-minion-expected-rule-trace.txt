@@ -22,7 +22,7 @@ sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 
 and([ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]),
 and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
 true
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
 sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
 and([ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]),
@@ -44,6 +44,30 @@ new variables:
 [ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [(M[0,..] <=lex M[1,..]),(M[1,..] <=lex M[2,..]);int(1..)]
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
 
 --
 
@@ -98,6 +122,30 @@ SafeSlice(M,[2,..])
 [ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [(M[..,0] <=lex M[..,1]),(M[..,1] <=lex M[..,2]);int(1..)]
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
 
 --
 

@@ -1,0 +1,63 @@
+Model before rewriting:
+
+find x: int(1)
+
+such that
+
+or([ x = i | i : int(1..3) ])
+
+--
+
+or([ x = i | i : int(1..3) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+or([ x = i | i : int(1..3) ])
+new variables:
+  find x#bv_1: int(1)
+
+--
+
+or([ x = i | i : int(1..3) ])
+   ~~> exists_quantified_to_finds ([("Base", 2003)])
+x = __0
+new variables:
+  findAux __0: int(1..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x = __0
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x = __0
+new variables:
+  findAux __0#bv_1: int(1..3)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+Final model:
+
+find x: int(1)
+find x#bv_1: int(1)
+findAux __0: int(1..3)
+findAux __0#bv_1: int(1..3)
+
+such that
+
+x#bv_1 = __0#bv_1
+

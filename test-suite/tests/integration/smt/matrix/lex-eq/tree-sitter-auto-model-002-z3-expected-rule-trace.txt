@@ -1,0 +1,191 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(m <=lex m2),
+(m >=lex m2)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#array_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+(m <=lex m2)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(m <=lex m2)
+new variables:
+  find m2#array_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+(m >=lex m2)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(m >=lex m2)
+
+--
+
+(m <=lex m2),
+(m >=lex m2)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(m <=lex m2),
+(m >=lex m2)
+new variables:
+  find m#array_1#lia_1: matrix indexed by [int(1..2)] of int(1..2)
+  find m2#array_1#bv_1: matrix indexed by [int(1..2)] of int(1..2)
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m2#array_1
+
+--
+
+m2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m2#array_1
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m2#array_1
+
+--
+
+m2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m2#array_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+m2#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m2#array_1#bv_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+m2#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m2#array_1#bv_1
+
+--
+
+(m#array_1#lia_1 >=lex m2#array_1#bv_1)
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(m2#array_1#bv_1 <=lex m#array_1#lia_1)
+
+--
+
+(m2#array_1#bv_1 <=lex m#array_1#lia_1)
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([SafeIndex(m2#array_1#bv_1,[1]) < SafeIndex(m#array_1#lia_1,[1]),and([SafeIndex(m2#array_1#bv_1,[1]) = SafeIndex(m#array_1#lia_1,[1]),or([SafeIndex(m2#array_1#bv_1,[2]) < SafeIndex(m#array_1#lia_1,[2]),and([SafeIndex(m2#array_1#bv_1,[2]) = SafeIndex(m#array_1#lia_1,[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([SafeIndex(m2#array_1#bv_1,[2]) = SafeIndex(m#array_1#lia_1,[2]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(m2#array_1#bv_1,[2]) = SafeIndex(m#array_1#lia_1,[2])
+
+--
+
+or([SafeIndex(m2#array_1#bv_1,[1]) < SafeIndex(m#array_1#lia_1,[1]),and([SafeIndex(m2#array_1#bv_1,[1]) = SafeIndex(m#array_1#lia_1,[1]),or([SafeIndex(m2#array_1#bv_1,[2]) < SafeIndex(m#array_1#lia_1,[2]),SafeIndex(m2#array_1#bv_1,[2]) = SafeIndex(m#array_1#lia_1,[2]);int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([SafeIndex(m2#array_1#bv_1,[1]) < SafeIndex(m#array_1#lia_1,[1]),SafeIndex(m2#array_1#bv_1,[1]) = SafeIndex(m#array_1#lia_1,[1]);int(1..)]),or([SafeIndex(m2#array_1#bv_1,[1]) < SafeIndex(m#array_1#lia_1,[1]),or([SafeIndex(m2#array_1#bv_1,[2]) < SafeIndex(m#array_1#lia_1,[2]),SafeIndex(m2#array_1#bv_1,[2]) = SafeIndex(m#array_1#lia_1,[2]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([SafeIndex(m2#array_1#bv_1,[1]) < SafeIndex(m#array_1#lia_1,[1]),or([SafeIndex(m2#array_1#bv_1,[2]) < SafeIndex(m#array_1#lia_1,[2]),SafeIndex(m2#array_1#bv_1,[2]) = SafeIndex(m#array_1#lia_1,[2]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([SafeIndex(m2#array_1#bv_1,[1]) < SafeIndex(m#array_1#lia_1,[1]),SafeIndex(m2#array_1#bv_1,[2]) < SafeIndex(m#array_1#lia_1,[2]),SafeIndex(m2#array_1#bv_1,[2]) = SafeIndex(m#array_1#lia_1,[2]);int(1..)])
+
+--
+
+(m#array_1#lia_1 <=lex m2#array_1#bv_1)
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([SafeIndex(m#array_1#lia_1,[1]) < SafeIndex(m2#array_1#bv_1,[1]),and([SafeIndex(m#array_1#lia_1,[1]) = SafeIndex(m2#array_1#bv_1,[1]),or([SafeIndex(m#array_1#lia_1,[2]) < SafeIndex(m2#array_1#bv_1,[2]),and([SafeIndex(m#array_1#lia_1,[2]) = SafeIndex(m2#array_1#bv_1,[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([SafeIndex(m#array_1#lia_1,[2]) = SafeIndex(m2#array_1#bv_1,[2]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(m#array_1#lia_1,[2]) = SafeIndex(m2#array_1#bv_1,[2])
+
+--
+
+or([SafeIndex(m#array_1#lia_1,[1]) < SafeIndex(m2#array_1#bv_1,[1]),and([SafeIndex(m#array_1#lia_1,[1]) = SafeIndex(m2#array_1#bv_1,[1]),or([SafeIndex(m#array_1#lia_1,[2]) < SafeIndex(m2#array_1#bv_1,[2]),SafeIndex(m#array_1#lia_1,[2]) = SafeIndex(m2#array_1#bv_1,[2]);int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([SafeIndex(m#array_1#lia_1,[1]) < SafeIndex(m2#array_1#bv_1,[1]),SafeIndex(m#array_1#lia_1,[1]) = SafeIndex(m2#array_1#bv_1,[1]);int(1..)]),or([SafeIndex(m#array_1#lia_1,[1]) < SafeIndex(m2#array_1#bv_1,[1]),or([SafeIndex(m#array_1#lia_1,[2]) < SafeIndex(m2#array_1#bv_1,[2]),SafeIndex(m#array_1#lia_1,[2]) = SafeIndex(m2#array_1#bv_1,[2]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([SafeIndex(m#array_1#lia_1,[1]) < SafeIndex(m2#array_1#bv_1,[1]),or([SafeIndex(m#array_1#lia_1,[2]) < SafeIndex(m2#array_1#bv_1,[2]),SafeIndex(m#array_1#lia_1,[2]) = SafeIndex(m2#array_1#bv_1,[2]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([SafeIndex(m#array_1#lia_1,[1]) < SafeIndex(m2#array_1#bv_1,[1]),SafeIndex(m#array_1#lia_1,[2]) < SafeIndex(m2#array_1#bv_1,[2]),SafeIndex(m#array_1#lia_1,[2]) = SafeIndex(m2#array_1#bv_1,[2]);int(1..)])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+find m#array_1: matrix indexed by [int(1..2)] of int(1..2)
+find m2#array_1: matrix indexed by [int(1..2)] of int(1..2)
+find m#array_1#lia_1: matrix indexed by [int(1..2)] of int(1..2)
+find m2#array_1#bv_1: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+and([or([SafeIndex(m#array_1#lia_1,[1]) < SafeIndex(m2#array_1#bv_1,[1]),SafeIndex(m#array_1#lia_1,[1]) = SafeIndex(m2#array_1#bv_1,[1]);int(1..)]),or([SafeIndex(m#array_1#lia_1,[1]) < SafeIndex(m2#array_1#bv_1,[1]),SafeIndex(m#array_1#lia_1,[2]) < SafeIndex(m2#array_1#bv_1,[2]),SafeIndex(m#array_1#lia_1,[2]) = SafeIndex(m2#array_1#bv_1,[2]);int(1..)]);int(1..)]),
+and([or([SafeIndex(m2#array_1#bv_1,[1]) < SafeIndex(m#array_1#lia_1,[1]),SafeIndex(m2#array_1#bv_1,[1]) = SafeIndex(m#array_1#lia_1,[1]);int(1..)]),or([SafeIndex(m2#array_1#bv_1,[1]) < SafeIndex(m#array_1#lia_1,[1]),SafeIndex(m2#array_1#bv_1,[2]) < SafeIndex(m#array_1#lia_1,[2]),SafeIndex(m2#array_1#bv_1,[2]) = SafeIndex(m#array_1#lia_1,[2]);int(1..)]);int(1..)])
+

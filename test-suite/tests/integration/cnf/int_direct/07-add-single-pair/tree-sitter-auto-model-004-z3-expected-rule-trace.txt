@@ -1,0 +1,67 @@
+Model before rewriting:
+
+find a: int(2..2)
+find b: int(-2..2)
+find c: int(0..0)
+
+such that
+
+sum([a,b;int(1..)]) = c
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#lia_1: int(0..0)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(2..2)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(-2..2)
+
+--
+
+c
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+c#lia_1
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+Final model:
+
+find a: int(2..2)
+find b: int(-2..2)
+find c: int(0..0)
+find c#lia_1: int(0..0)
+find a#bv_1: int(2..2)
+find b#bv_1: int(-2..2)
+
+such that
+
+sum([a#bv_1,b#bv_1;int(1..)]) = c#lia_1
+

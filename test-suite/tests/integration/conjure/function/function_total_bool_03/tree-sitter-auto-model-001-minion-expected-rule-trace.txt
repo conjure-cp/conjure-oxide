@@ -52,6 +52,21 @@ x#as_relation_2
 
 --
 
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+new variables:
+  find x#as_relation_3#components_1: int(13..15)
+  find x#as_relation_3#components_2: int(13..15)
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
 x#as_relation_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#as_relation_2
@@ -290,37 +305,6 @@ SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[
 
 --
 
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13..15)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13..15)), j in x#as_relation_1#as_set_1 ]),
-and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (bool, int(13..15)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13..15)), j in x#as_relation_1#as_set_1 ]),
-or([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[1]),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[1]);int(1..)]),
-SafeIndex(SafeIndex(x#as_relation_2,[1]),[1]) = false,
-SafeIndex(SafeIndex(x#as_relation_2,[1]),[2]) = SafeIndex(x#as_relation_3,[1]),
-or([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[2]),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[2]);int(1..)]),
-SafeIndex(SafeIndex(x#as_relation_2,[2]),[1]) = true,
-SafeIndex(SafeIndex(x#as_relation_2,[2]),[2]) = SafeIndex(x#as_relation_3,[2]),
-([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (bool, int(13..15)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13..15)), j in x#as_relation_1#as_set_1 ]),
-and([ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (bool, int(13..15)), i in x#as_relation_1#as_set_1, j : tuple (bool, int(13..15)), j in x#as_relation_1#as_set_1 ]),
-or([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[1]),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[1]);int(1..)]),
-SafeIndex(SafeIndex(x#as_relation_2,[1]),[1]) = false,
-SafeIndex(SafeIndex(x#as_relation_2,[1]),[2]) = SafeIndex(x#as_relation_3,[1]),
-or([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]) = SafeIndex(x#as_relation_2,[2]),SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]) = SafeIndex(x#as_relation_2,[2]);int(1..)]),
-SafeIndex(SafeIndex(x#as_relation_2,[2]),[1]) = true,
-SafeIndex(SafeIndex(x#as_relation_2,[2]),[2]) = SafeIndex(x#as_relation_3,[2]),
-([SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]),
-true,
-true
-new variables:
-  find x#as_relation_3#components_1: int(13..15)
-  find x#as_relation_3#components_2: int(13..15)
-
---
-
 SafeIndex(x#as_relation_3,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#as_relation_3#components_1
@@ -330,6 +314,42 @@ x#as_relation_3#components_1
 SafeIndex(x#as_relation_3,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#as_relation_3#components_2
+
+--
+
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_1#as_set_1#explicit_1#components_2
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#as_set_1#explicit_1#components_2
+
+--
+
+([x#as_relation_1#as_set_1#explicit_1#components_1;int(1..)] <lex [x#as_relation_1#as_set_1#explicit_1#components_2;int(1..)])
+   ~~> tuple_packed_var_cmp_var ([("ReprTuplePacked", 9700)])
+x#as_relation_1#as_set_1#explicit_1#components_1#packed_1 < x#as_relation_1#as_set_1#explicit_1#components_2#packed_1
+
+--
+
+x#as_relation_1#as_set_1#explicit_1#components_1#packed_1 < x#as_relation_1#as_set_1#explicit_1#components_2#packed_1
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#as_relation_1#as_set_1#explicit_1#components_1#packed_1 <= sum([x#as_relation_1#as_set_1#explicit_1#components_2#packed_1,-1;int(1..)])
 
 --
 
@@ -426,42 +446,6 @@ sum([x#as_relation_2#components_2#packed_1 % 3,13;int(1..)])
 x#as_relation_2#components_2#packed_1 % 3
    ~~> mod_to_bubble ([("Bubble", 6000)])
 {SafeMod(x#as_relation_2#components_2#packed_1,3) @ 3 != 0}
-
---
-
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-SafeIndex(x#as_relation_1#as_set_1#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#as_relation_1#as_set_1#explicit_1#components_2
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_1#as_set_1#explicit_1#components_2
-
---
-
-([x#as_relation_1#as_set_1#explicit_1#components_1;int(1..)] <lex [x#as_relation_1#as_set_1#explicit_1#components_2;int(1..)])
-   ~~> tuple_packed_var_cmp_var ([("ReprTuplePacked", 9700)])
-x#as_relation_1#as_set_1#explicit_1#components_1#packed_1 < x#as_relation_1#as_set_1#explicit_1#components_2#packed_1
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#packed_1 < x#as_relation_1#as_set_1#explicit_1#components_2#packed_1
-   ~~> lt_to_leq ([("Minion", 8400)])
-x#as_relation_1#as_set_1#explicit_1#components_1#packed_1 <= sum([x#as_relation_1#as_set_1#explicit_1#components_2#packed_1,-1;int(1..)])
 
 --
 
@@ -585,6 +569,12 @@ x#as_relation_1#as_set_1#explicit_1#components_2#packed_1 = x#as_relation_2#comp
 
 --
 
+x#as_relation_1#as_set_1#explicit_1#components_1#packed_1 <= sum([x#as_relation_1#as_set_1#explicit_1#components_2#packed_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, x#as_relation_1#as_set_1#explicit_1#components_2#packed_1], x#as_relation_1#as_set_1#explicit_1#components_1#packed_1)
+
+--
+
 sum([SafeMod(x#as_relation_2#components_1#packed_1,3),13;int(1..)]) = x#as_relation_3#components_1
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([13, __0], x#as_relation_3#components_1),SumGeq([13, __0], x#as_relation_3#components_1);int(1..)])
@@ -602,12 +592,6 @@ new variables:
   findAux __1: int(0..2)
 new constraints:
   __1 =aux SafeMod(x#as_relation_2#components_2#packed_1,3)
-
---
-
-x#as_relation_1#as_set_1#explicit_1#components_1#packed_1 <= sum([x#as_relation_1#as_set_1#explicit_1#components_2#packed_1,-1;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([-1, x#as_relation_1#as_set_1#explicit_1#components_2#packed_1], x#as_relation_1#as_set_1#explicit_1#components_1#packed_1)
 
 --
 
@@ -3720,6 +3704,8 @@ find x#as_relation_3: matrix indexed by [int(1..2)] of int(13..15)
 find x#as_relation_1#as_set_1: set (representation explicit, size 2) of tuple (bool, int(13..15))
 find x#as_relation_2#components_1: tuple (bool, int(13..15))
 find x#as_relation_2#components_2: tuple (bool, int(13..15))
+find x#as_relation_3#components_1: int(13..15)
+find x#as_relation_3#components_2: int(13..15)
 find x#as_relation_1#as_set_1#explicit_1: matrix indexed by [int(1..2)] of tuple (bool, int(13..15))
 find x#as_relation_2#components_1#packed_1: int(0..5)
 find x#as_relation_2#components_2#packed_1: int(0..5)
@@ -3727,8 +3713,6 @@ find x#as_relation_1#as_set_1#explicit_1#components_1: tuple (bool, int(13..15))
 find x#as_relation_1#as_set_1#explicit_1#components_2: tuple (bool, int(13..15))
 find x#as_relation_1#as_set_1#explicit_1#components_1#packed_1: int(0..5)
 find x#as_relation_1#as_set_1#explicit_1#components_2#packed_1: int(0..5)
-find x#as_relation_3#components_1: int(13..15)
-find x#as_relation_3#components_2: int(13..15)
 findAux __0: int(0..2)
 findAux __1: int(0..2)
 findAux __2: int(1..2)

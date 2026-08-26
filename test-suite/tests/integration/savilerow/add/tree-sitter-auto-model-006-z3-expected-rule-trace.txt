@@ -1,0 +1,84 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(1..3)
+find z: int(1..10)
+find t: int(0..4)
+
+such that
+
+sum([t,z;int(1..)]) = sum([x,y;int(1..)])
+
+--
+
+t
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t
+new variables:
+  find t#lia_1: int(0..4)
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#lia_1: int(1..10)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1..3)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(1..3)
+
+--
+
+t
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+t#lia_1
+
+--
+
+z
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+z#lia_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(1..3)
+find z: int(1..10)
+find t: int(0..4)
+find t#lia_1: int(0..4)
+find z#lia_1: int(1..10)
+find x#bv_1: int(1..3)
+find y#bv_1: int(1..3)
+
+such that
+
+sum([t#lia_1,z#lia_1;int(1..)]) = sum([x#bv_1,y#bv_1;int(1..)])
+

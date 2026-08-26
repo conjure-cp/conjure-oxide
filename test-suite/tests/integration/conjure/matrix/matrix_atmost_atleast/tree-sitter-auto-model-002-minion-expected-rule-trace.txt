@@ -1,0 +1,71 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..4)] of int(1..4)
+
+such that
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)]),
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#components_1: int(1..4)
+  find m#components_2: int(1..4)
+  find m#components_3: int(1..4)
+  find m#components_4: int(1..4)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+atMost(m, [2,3;int(1..2)], [1,2;int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+atMost(m, [2,3;int(1..)], [1,2;int(1..)])
+
+--
+
+atLeast(m, [2,1;int(1..2)], [2,3;int(1..2)])
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+atLeast([m#components_1,m#components_2,m#components_3,m#components_4;int(1..4)], [2,1;int(1..2)], [2,3;int(1..2)])
+
+--
+
+atMost(m, [2,3;int(1..)], [1,2;int(1..)])
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+atMost([m#components_1,m#components_2,m#components_3,m#components_4;int(1..4)], [2,3;int(1..)], [1,2;int(1..)])
+
+--
+
+atLeast([m#components_1,m#components_2,m#components_3,m#components_4;int(1..4)], [2,1;int(1..2)], [2,3;int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+atLeast([m#components_1,m#components_2,m#components_3,m#components_4;int(1..)], [2,1;int(1..)], [2,3;int(1..)])
+
+--
+
+atMost([m#components_1,m#components_2,m#components_3,m#components_4;int(1..4)], [2,3;int(1..)], [1,2;int(1..)])
+   ~~> matrix_to_list ([("Base", 2000)])
+atMost([m#components_1,m#components_2,m#components_3,m#components_4;int(1..)], [2,3;int(1..)], [1,2;int(1..)])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..4)] of int(1..4)
+find m#components_1: int(1..4)
+find m#components_2: int(1..4)
+find m#components_3: int(1..4)
+find m#components_4: int(1..4)
+
+such that
+
+atMost([m#components_1,m#components_2,m#components_3,m#components_4;int(1..)], [2,3;int(1..)], [1,2;int(1..)]),
+atLeast([m#components_1,m#components_2,m#components_3,m#components_4;int(1..)], [2,1;int(1..)], [2,3;int(1..)])
+

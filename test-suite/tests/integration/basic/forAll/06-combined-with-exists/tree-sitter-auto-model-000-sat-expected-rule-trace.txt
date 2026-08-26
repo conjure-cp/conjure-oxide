@@ -1,0 +1,36 @@
+Model before rewriting:
+
+find result: bool
+
+such that
+
+and([result = and([ i > 0 | i : int(1..3) ]),or([ j = 2 | j <- [1,2,3;int(1..3)] ]);int(1..)])
+
+--
+
+and([result;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+result
+
+--
+
+result
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (result)
+
+--
+
+Final model:
+
+find result: bool
+
+such that
+
+true
+
+clauses:
+
+(result)
+

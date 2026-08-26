@@ -171,6 +171,41 @@ new constraints:
 
 --
 
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+or([f#as_relation_1#as_set_1#explicit_2 < 2,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+or([f#as_relation_1#as_set_1#explicit_2 < 3,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]);int(1..)]);int(1..)]),
+or([f#as_relation_1#as_set_1#explicit_2 < 4,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[4]);int(1..)]);int(1..)]),
+or([1 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,{1});int(1..)]),
+or([2 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = (1,{1});int(1..)]),
+or([3 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]) = (1,{1});int(1..)]),
+or([4 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[4]) = (1,{1});int(1..)]),
+true,
+true,
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+or([f#as_relation_1#as_set_1#explicit_2 < 2,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
+or([f#as_relation_1#as_set_1#explicit_2 < 3,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]);int(1..)]);int(1..)]),
+or([f#as_relation_1#as_set_1#explicit_2 < 4,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[4]);int(1..)]);int(1..)]),
+or([1 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,{1});int(1..)]),
+or([2 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = (1,{1});int(1..)]),
+or([3 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]) = (1,{1});int(1..)]),
+or([4 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[4]) = (1,{1});int(1..)]),
+true,
+true,
+true,
+true
+new variables:
+  find f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1#components_1: int(1..2)
+  find f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1#components_1: int(1..2)
+  find f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1#components_1: int(1..2)
+  find f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1#components_1: int(1..2)
+
+--
+
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]
    ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1 ]
@@ -192,41 +227,6 @@ new constraints:
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), set (size 1) of int(1..2)), i in f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
    ~~> lower_set_expression_generator ([("Base", 8600)])
 [ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), set (size 1) of int(1..2)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), set (size 1) of int(1..2)), j in f#as_relation_1#as_set_1 ]
-
---
-
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), set (size 1) of int(1..2)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), set (size 1) of int(1..2)), j in f#as_relation_1#as_set_1 ]),
-or([f#as_relation_1#as_set_1#explicit_2 < 2,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
-or([f#as_relation_1#as_set_1#explicit_2 < 3,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]);int(1..)]);int(1..)]),
-or([f#as_relation_1#as_set_1#explicit_2 < 4,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[4]);int(1..)]);int(1..)]),
-or([1 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,{1});int(1..)]),
-or([2 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = (1,{1});int(1..)]),
-or([3 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]) = (1,{1});int(1..)]),
-or([4 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[4]) = (1,{1});int(1..)]),
-true,
-true,
-true,
-true
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-true,
-and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), set (size 1) of int(1..2)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), set (size 1) of int(1..2)), j in f#as_relation_1#as_set_1 ]),
-or([f#as_relation_1#as_set_1#explicit_2 < 2,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)]);int(1..)]),
-or([f#as_relation_1#as_set_1#explicit_2 < 3,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]);int(1..)]);int(1..)]),
-or([f#as_relation_1#as_set_1#explicit_2 < 4,([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1,[4]);int(1..)]);int(1..)]),
-or([1 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,{1});int(1..)]),
-or([2 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2]) = (1,{1});int(1..)]),
-or([3 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[3]) = (1,{1});int(1..)]),
-or([4 <= f#as_relation_1#as_set_1#explicit_2,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[4]) = (1,{1});int(1..)]),
-true,
-true,
-true,
-true
-new variables:
-  find f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1#components_1: int(1..2)
-  find f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1#components_1: int(1..2)
-  find f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1#components_1: int(1..2)
-  find f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1#components_1: int(1..2)
 
 --
 
@@ -275,6 +275,12 @@ f#as_relation_1#as_set_1#explicit_1#components_1#components_2
 f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = {1}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
 
 --
 
@@ -332,6 +338,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)])
@@ -386,6 +398,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)])
@@ -437,6 +455,12 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2
 f#as_relation_1#as_set_1#explicit_1#components_4#components_2 = {1}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 
@@ -509,6 +533,18 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2
 ([f#as_relation_1#as_set_1#explicit_1#components_1#components_2;int(1..)] <lex [f#as_relation_1#as_set_1#explicit_1#components_2#components_2;int(1..)])
    ~~> lex_explicit_sets ([("ReprGeneral", 9500)])
 or([1 < 1,and([1 = 1,([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -590,6 +626,18 @@ or([1 < 1,and([1 = 1,([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 or([f#as_relation_1#as_set_1#explicit_2 <= 2,or([and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 < f#as_relation_1#as_set_1#explicit_1#components_3#components_1;int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = f#as_relation_1#as_set_1#explicit_1#components_3#components_1,or([and([([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 or([f#as_relation_1#as_set_1#explicit_2 <= 2,and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 < f#as_relation_1#as_set_1#explicit_1#components_3#components_1;int(1..)]),and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = f#as_relation_1#as_set_1#explicit_1#components_3#components_1,or([and([([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
@@ -665,6 +713,18 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2
 ([f#as_relation_1#as_set_1#explicit_1#components_3#components_2;int(1..)] <lex [f#as_relation_1#as_set_1#explicit_1#components_4#components_2;int(1..)])
    ~~> lex_explicit_sets ([("ReprGeneral", 9500)])
 or([1 < 1,and([1 = 1,([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]);int(1..)] <lex [SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 
@@ -1466,6 +1526,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)])
@@ -1529,6 +1595,12 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != {2}
 {2} = f#as_relation_1#as_set_1#explicit_1#components_2#components_2
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -1598,6 +1670,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)])
@@ -1661,6 +1739,12 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2 != {2}
 {2} = f#as_relation_1#as_set_1#explicit_1#components_4#components_2
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 
@@ -1730,6 +1814,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)])
@@ -1793,6 +1883,12 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != {1}
 {1} = f#as_relation_1#as_set_1#explicit_1#components_2#components_2
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -1862,6 +1958,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)])
@@ -1925,6 +2027,12 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2 != {1}
 {1} = f#as_relation_1#as_set_1#explicit_1#components_4#components_2
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 
@@ -1994,6 +2102,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)])
@@ -2057,6 +2171,12 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != {2}
 {2} = f#as_relation_1#as_set_1#explicit_1#components_2#components_2
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -2126,6 +2246,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)])
@@ -2189,6 +2315,12 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2 != {2}
 {2} = f#as_relation_1#as_set_1#explicit_1#components_4#components_2
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 
@@ -2258,6 +2390,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)])
@@ -2321,6 +2459,12 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2 != {1}
 {1} = f#as_relation_1#as_set_1#explicit_1#components_2#components_2
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -2390,6 +2534,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)])
@@ -2456,6 +2606,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+
+--
+
 and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)])
@@ -2510,6 +2666,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
 and([1 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([1 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
@@ -2555,6 +2717,12 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = {1}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -2606,6 +2774,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([3 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_3#components_1 = 1,and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([3 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_3#components_1 = 1,or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
@@ -2651,6 +2825,12 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2
 f#as_relation_1#as_set_1#explicit_1#components_4#components_2 = {1}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 
@@ -2702,6 +2882,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
 and([1 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([1 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
@@ -2747,6 +2933,12 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = {2}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -2798,6 +2990,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([3 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_3#components_1 = 1,and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([3 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_3#components_1 = 1,or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
@@ -2843,6 +3041,12 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2
 f#as_relation_1#as_set_1#explicit_1#components_4#components_2 = {2}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 
@@ -2894,6 +3098,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
 and([1 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 2,and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([1 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 2,or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
@@ -2939,6 +3149,12 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = {1}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -2990,6 +3206,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([3 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_3#components_1 = 2,and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([3 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_3#components_1 = 2,or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
@@ -3035,6 +3257,12 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2
 f#as_relation_1#as_set_1#explicit_1#components_4#components_2 = {1}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 
@@ -3086,6 +3314,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1
+
+--
+
 and([1 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 2,and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([1 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 2,or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
@@ -3131,6 +3365,12 @@ f#as_relation_1#as_set_1#explicit_1#components_2#components_2
 f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = {2}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2#explicit_1
 
 --
 
@@ -3182,6 +3422,12 @@ and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#compone
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1
+
+--
+
 and([3 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_3#components_1 = 2,and([or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([3 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_3#components_1 = 2,or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_3#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
@@ -3227,6 +3473,12 @@ f#as_relation_1#as_set_1#explicit_1#components_4#components_2
 f#as_relation_1#as_set_1#explicit_1#components_4#components_2 = {2}
    ~~> eq_explicit_literal ([("ReprGeneral", 9500)])
 and([1 = 1,or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1,[1]) = 2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_4#components_2#explicit_1
 
 --
 

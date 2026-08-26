@@ -1,0 +1,35 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: int(42)
+
+such that
+
+x = true,
+y != false
+
+--
+
+x,
+y != false
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x,
+y != false
+new variables:
+  find z#lia_1: int(42)
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: int(42)
+find z#lia_1: int(42)
+
+such that
+
+x,
+y != false
+

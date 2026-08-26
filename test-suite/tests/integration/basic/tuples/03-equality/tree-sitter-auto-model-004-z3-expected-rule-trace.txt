@@ -1,0 +1,111 @@
+Model before rewriting:
+
+find x: tuple (int(1..2), int(1..5))
+find y: tuple (int(2..5), int(1..5))
+
+such that
+
+x = y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#components_1: int(1..2)
+  find x#components_2: int(1..5)
+
+--
+
+x = y
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x = y
+new variables:
+  find y#components_1: int(2..5)
+  find y#components_2: int(1..5)
+
+--
+
+x = y
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x = y
+new variables:
+  find x#components_1#lia_1: int(1..2)
+  find x#components_2#bv_1: int(1..5)
+  find y#components_1#bv_1: int(2..5)
+  find y#components_2#bv_1: int(1..5)
+
+--
+
+x = y
+   ~~> tuple_var_eq_var ([("ReprGeneral", 9400)])
+and([x#components_1 = y#components_1,x#components_2 = y#components_2;int(1..)])
+
+--
+
+x#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_1
+
+--
+
+y#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#components_1
+
+--
+
+x#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_2
+
+--
+
+x#components_2 = y#components_2
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x#components_2 = y#components_2
+
+--
+
+x#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#components_1#lia_1
+
+--
+
+y#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#components_1#bv_1
+
+--
+
+x#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#components_2#bv_1
+
+--
+
+y#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#components_2#bv_1
+
+--
+
+Final model:
+
+find x: tuple (int(1..2), int(1..5))
+find y: tuple (int(2..5), int(1..5))
+find x#components_1: int(1..2)
+find x#components_2: int(1..5)
+find y#components_1: int(2..5)
+find y#components_2: int(1..5)
+find x#components_1#lia_1: int(1..2)
+find x#components_2#bv_1: int(1..5)
+find y#components_1#bv_1: int(2..5)
+find y#components_2#bv_1: int(1..5)
+
+such that
+
+and([x#components_1#lia_1 = y#components_1#bv_1,x#components_2#bv_1 = y#components_2#bv_1;int(1..)])
+

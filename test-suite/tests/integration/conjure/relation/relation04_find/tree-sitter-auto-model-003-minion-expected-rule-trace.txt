@@ -18,16 +18,10 @@ new constraints:
 
 --
 
-[ product([i[1],i[2];int(1..)]) = i[3] | i <- r ]
-   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
-[ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]
-
---
-
-and([ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]),
+and([ product([i[1],i[2];int(1..)]) = i[3] | i <- r ]),
 and([sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) >= 0,sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) <= 42;int(1..)])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-and([ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]),
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ product([i[1],i[2];int(1..)]) = i[3] | i <- r ]),
 and([sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) >= 0,sum([ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]) <= 42;int(1..)])
 new variables:
   find r#occurrence_1#components_1: bool
@@ -75,9 +69,243 @@ new variables:
 
 --
 
+[ product([i[1],i[2];int(1..)]) = i[3] | i <- r ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]
+
+--
+
 [ product([(i0,i1,i2)[1],(i0,i1,i2)[2];int(1..)]) = (i0,i1,i2)[3] | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10), SafeIndex(r#occurrence_1,[i0, i1, i2]) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [!(SafeIndex(r#occurrence_1,[1, 2, 4])),!(SafeIndex(r#occurrence_1,[1, 2, 5])),!(SafeIndex(r#occurrence_1,[1, 2, 6])),!(SafeIndex(r#occurrence_1,[1, 2, 7])),!(SafeIndex(r#occurrence_1,[1, 2, 8])),!(SafeIndex(r#occurrence_1,[1, 2, 9])),!(SafeIndex(r#occurrence_1,[1, 2, 10])),!(SafeIndex(r#occurrence_1,[1, 3, 4])),!(SafeIndex(r#occurrence_1,[1, 3, 5])),!(SafeIndex(r#occurrence_1,[1, 3, 6])),!(SafeIndex(r#occurrence_1,[1, 3, 7])),!(SafeIndex(r#occurrence_1,[1, 3, 8])),!(SafeIndex(r#occurrence_1,[1, 3, 9])),!(SafeIndex(r#occurrence_1,[1, 3, 10])),!(SafeIndex(r#occurrence_1,[2, 2, 5])),!(SafeIndex(r#occurrence_1,[2, 2, 6])),!(SafeIndex(r#occurrence_1,[2, 2, 7])),!(SafeIndex(r#occurrence_1,[2, 2, 8])),!(SafeIndex(r#occurrence_1,[2, 2, 9])),!(SafeIndex(r#occurrence_1,[2, 2, 10])),!(SafeIndex(r#occurrence_1,[2, 3, 4])),!(SafeIndex(r#occurrence_1,[2, 3, 5])),!(SafeIndex(r#occurrence_1,[2, 3, 7])),!(SafeIndex(r#occurrence_1,[2, 3, 8])),!(SafeIndex(r#occurrence_1,[2, 3, 9])),!(SafeIndex(r#occurrence_1,[2, 3, 10])),!(SafeIndex(r#occurrence_1,[3, 2, 4])),!(SafeIndex(r#occurrence_1,[3, 2, 5])),!(SafeIndex(r#occurrence_1,[3, 2, 7])),!(SafeIndex(r#occurrence_1,[3, 2, 8])),!(SafeIndex(r#occurrence_1,[3, 2, 9])),!(SafeIndex(r#occurrence_1,[3, 2, 10])),!(SafeIndex(r#occurrence_1,[3, 3, 4])),!(SafeIndex(r#occurrence_1,[3, 3, 5])),!(SafeIndex(r#occurrence_1,[3, 3, 6])),!(SafeIndex(r#occurrence_1,[3, 3, 7])),!(SafeIndex(r#occurrence_1,[3, 3, 8])),!(SafeIndex(r#occurrence_1,[3, 3, 10]));int(1..)]
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
 
 --
 
@@ -543,6 +771,258 @@ WatchedLiteral(r#occurrence_1#components_42,false)
 
 --
 
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
 SafeIndex(r#occurrence_1,[1, 2, 4])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 r#occurrence_1#components_1
@@ -804,6 +1284,258 @@ SumGeq([r#occurrence_1#components_1, r#occurrence_1#components_10, r#occurrence_
 [ toInt(SafeIndex(r#occurrence_1,[i0, i1, i2])) | i0 : int(1..3), i1 : int(2..3), i2 : int(4..10) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [toInt(SafeIndex(r#occurrence_1,[1, 2, 4])),toInt(SafeIndex(r#occurrence_1,[1, 2, 5])),toInt(SafeIndex(r#occurrence_1,[1, 2, 6])),toInt(SafeIndex(r#occurrence_1,[1, 2, 7])),toInt(SafeIndex(r#occurrence_1,[1, 2, 8])),toInt(SafeIndex(r#occurrence_1,[1, 2, 9])),toInt(SafeIndex(r#occurrence_1,[1, 2, 10])),toInt(SafeIndex(r#occurrence_1,[1, 3, 4])),toInt(SafeIndex(r#occurrence_1,[1, 3, 5])),toInt(SafeIndex(r#occurrence_1,[1, 3, 6])),toInt(SafeIndex(r#occurrence_1,[1, 3, 7])),toInt(SafeIndex(r#occurrence_1,[1, 3, 8])),toInt(SafeIndex(r#occurrence_1,[1, 3, 9])),toInt(SafeIndex(r#occurrence_1,[1, 3, 10])),toInt(SafeIndex(r#occurrence_1,[2, 2, 4])),toInt(SafeIndex(r#occurrence_1,[2, 2, 5])),toInt(SafeIndex(r#occurrence_1,[2, 2, 6])),toInt(SafeIndex(r#occurrence_1,[2, 2, 7])),toInt(SafeIndex(r#occurrence_1,[2, 2, 8])),toInt(SafeIndex(r#occurrence_1,[2, 2, 9])),toInt(SafeIndex(r#occurrence_1,[2, 2, 10])),toInt(SafeIndex(r#occurrence_1,[2, 3, 4])),toInt(SafeIndex(r#occurrence_1,[2, 3, 5])),toInt(SafeIndex(r#occurrence_1,[2, 3, 6])),toInt(SafeIndex(r#occurrence_1,[2, 3, 7])),toInt(SafeIndex(r#occurrence_1,[2, 3, 8])),toInt(SafeIndex(r#occurrence_1,[2, 3, 9])),toInt(SafeIndex(r#occurrence_1,[2, 3, 10])),toInt(SafeIndex(r#occurrence_1,[3, 2, 4])),toInt(SafeIndex(r#occurrence_1,[3, 2, 5])),toInt(SafeIndex(r#occurrence_1,[3, 2, 6])),toInt(SafeIndex(r#occurrence_1,[3, 2, 7])),toInt(SafeIndex(r#occurrence_1,[3, 2, 8])),toInt(SafeIndex(r#occurrence_1,[3, 2, 9])),toInt(SafeIndex(r#occurrence_1,[3, 2, 10])),toInt(SafeIndex(r#occurrence_1,[3, 3, 4])),toInt(SafeIndex(r#occurrence_1,[3, 3, 5])),toInt(SafeIndex(r#occurrence_1,[3, 3, 6])),toInt(SafeIndex(r#occurrence_1,[3, 3, 7])),toInt(SafeIndex(r#occurrence_1,[3, 3, 8])),toInt(SafeIndex(r#occurrence_1,[3, 3, 9])),toInt(SafeIndex(r#occurrence_1,[3, 3, 10]));int(1..)]
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
+
+--
+
+r#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#occurrence_1
 
 --
 

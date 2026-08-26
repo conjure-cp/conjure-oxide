@@ -23,32 +23,20 @@ and([ sum([ toInt(Roster[d, n] = overnight) | d : DAY ]) <= sum([ toInt(Roster[d
 
 --
 
-and([ and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | s : SHIFT ]) | d : DAY ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | d : DAY, s : SHIFT ])
-
---
-
-and([ and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | d : DAY ]) | n : NURSE ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | n : NURSE, d : DAY ])
-
---
-
-and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | d : DAY, s : SHIFT ]),
+and([ and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | s : SHIFT ]) | d : DAY ]),
 and([ or([ Roster[d, n] = dayoff | d : DAY ]) | n : NURSE ]),
 and([ or([ Roster[d, n] = overnight | d : DAY ]) | n : NURSE ]),
 and([ sum([ toInt(Roster[d, n] = morning) | d : DAY ]) <= 4 | n : NURSE ]),
 and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) < (n_nurses / 2) | d : DAY, s : SHIFT ]),
-and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | n : NURSE, d : DAY ]),
+and([ and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | d : DAY ]) | n : NURSE ]),
 and([ sum([ toInt(Roster[d, n] = overnight) | d : DAY ]) <= sum([ toInt(Roster[d, n] = morning) | d : DAY ]) | n : NURSE ])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | d : DAY, s : SHIFT ]),
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | s : SHIFT ]) | d : DAY ]),
 and([ or([ Roster[d, n] = dayoff | d : DAY ]) | n : NURSE ]),
 and([ or([ Roster[d, n] = overnight | d : DAY ]) | n : NURSE ]),
 and([ sum([ toInt(Roster[d, n] = morning) | d : DAY ]) <= 4 | n : NURSE ]),
 and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) < (n_nurses / 2) | d : DAY, s : SHIFT ]),
-and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | n : NURSE, d : DAY ]),
+and([ and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | d : DAY ]) | n : NURSE ]),
 and([ sum([ toInt(Roster[d, n] = overnight) | d : DAY ]) <= sum([ toInt(Roster[d, n] = morning) | d : DAY ]) | n : NURSE ])
 new variables:
   find Roster#components_1: int(0..3)
@@ -93,6 +81,36 @@ new variables:
   find Roster#components_7: int(0..3)
   find Roster#components_8: int(0..3)
   find Roster#components_9: int(0..3)
+
+--
+
+and([ and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | s : SHIFT ]) | d : DAY ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | d : DAY, s : SHIFT ])
+
+--
+
+and([ and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | d : DAY ]) | n : NURSE ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | n : NURSE, d : DAY ])
+
+--
+
+and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | d : DAY, s : SHIFT ]),
+and([ or([ Roster[d, n] = dayoff | d : DAY ]) | n : NURSE ]),
+and([ or([ Roster[d, n] = overnight | d : DAY ]) | n : NURSE ]),
+and([ sum([ toInt(Roster[d, n] = morning) | d : DAY ]) <= 4 | n : NURSE ]),
+and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) < (n_nurses / 2) | d : DAY, s : SHIFT ]),
+and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | n : NURSE, d : DAY ]),
+and([ sum([ toInt(Roster[d, n] = overnight) | d : DAY ]) <= sum([ toInt(Roster[d, n] = morning) | d : DAY ]) | n : NURSE ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) >= Demand[d, s] | d : DAY, s : SHIFT ]),
+and([ or([ Roster[d, n] = dayoff | d : DAY ]) | n : NURSE ]),
+and([ or([ Roster[d, n] = overnight | d : DAY ]) | n : NURSE ]),
+and([ sum([ toInt(Roster[d, n] = morning) | d : DAY ]) <= 4 | n : NURSE ]),
+and([ sum([ toInt(Roster[d, n] = s) | n : NURSE ]) < (n_nurses / 2) | d : DAY, s : SHIFT ]),
+and([ (Roster[d, n] = overnight) -> (or([Roster[sum([d,1;int(1..)]) % 7, n] = overnight,Roster[sum([d,1;int(1..)]) % 7, n] = dayoff;int(1..)])) | n : NURSE, d : DAY ]),
+and([ sum([ toInt(Roster[d, n] = overnight) | d : DAY ]) <= sum([ toInt(Roster[d, n] = morning) | d : DAY ]) | n : NURSE ])
 
 --
 
@@ -14290,34 +14308,6 @@ letting overnight be 2
 letting dayoff be 3
 letting Demand be [[1,0,1,0;int(0..3)],[0,0,1,0;int(0..3)],[1,2,0,0;int(0..3)],[1,0,0,0;int(0..3)],[1,0,1,0;int(0..3)],[1,0,1,0;int(0..3)],[0,2,0,0;int(0..3)];int(0..6)]
 find Roster: matrix indexed by [DAY, NURSE] of SHIFT
-letting Demand#components_1 be 1
-letting Demand#components_2 be 0
-letting Demand#components_3 be 1
-letting Demand#components_4 be 0
-letting Demand#components_5 be 0
-letting Demand#components_6 be 0
-letting Demand#components_7 be 1
-letting Demand#components_8 be 0
-letting Demand#components_9 be 1
-letting Demand#components_10 be 2
-letting Demand#components_11 be 0
-letting Demand#components_12 be 0
-letting Demand#components_13 be 1
-letting Demand#components_14 be 0
-letting Demand#components_15 be 0
-letting Demand#components_16 be 0
-letting Demand#components_17 be 1
-letting Demand#components_18 be 0
-letting Demand#components_19 be 1
-letting Demand#components_20 be 0
-letting Demand#components_21 be 1
-letting Demand#components_22 be 0
-letting Demand#components_23 be 1
-letting Demand#components_24 be 0
-letting Demand#components_25 be 0
-letting Demand#components_26 be 2
-letting Demand#components_27 be 0
-letting Demand#components_28 be 0
 find Roster#components_1: int(0..3)
 find Roster#components_2: int(0..3)
 find Roster#components_3: int(0..3)
@@ -14360,6 +14350,34 @@ find Roster#components_39: int(0..3)
 find Roster#components_40: int(0..3)
 find Roster#components_41: int(0..3)
 find Roster#components_42: int(0..3)
+letting Demand#components_1 be 1
+letting Demand#components_2 be 0
+letting Demand#components_3 be 1
+letting Demand#components_4 be 0
+letting Demand#components_5 be 0
+letting Demand#components_6 be 0
+letting Demand#components_7 be 1
+letting Demand#components_8 be 0
+letting Demand#components_9 be 1
+letting Demand#components_10 be 2
+letting Demand#components_11 be 0
+letting Demand#components_12 be 0
+letting Demand#components_13 be 1
+letting Demand#components_14 be 0
+letting Demand#components_15 be 0
+letting Demand#components_16 be 0
+letting Demand#components_17 be 1
+letting Demand#components_18 be 0
+letting Demand#components_19 be 1
+letting Demand#components_20 be 0
+letting Demand#components_21 be 1
+letting Demand#components_22 be 0
+letting Demand#components_23 be 1
+letting Demand#components_24 be 0
+letting Demand#components_25 be 0
+letting Demand#components_26 be 2
+letting Demand#components_27 be 0
+letting Demand#components_28 be 0
 findAux __0: int(0..1)
 findAux __1: int(0..1)
 findAux __2: int(0..1)

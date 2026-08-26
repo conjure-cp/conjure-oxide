@@ -16,7 +16,7 @@ sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <=
 
 z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
 sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
 sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
 new variables:
@@ -31,6 +31,14 @@ new variables:
   find x#components_7: bool
   find x#components_8: bool
   find x#components_9: bool
+
+--
+
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102
 
 --
 
@@ -376,6 +384,17 @@ letting values be [15,100,90,60,40,15,10,1,12,12,100;int(1..11)]
 letting weights be [2,20,20,30,40,30,60,10,21,12,2;int(1..11)]
 find x: matrix indexed by [int(1..num_entries)] of bool
 find z: int(0..10000)
+find x#components_1: bool
+find x#components_2: bool
+find x#components_3: bool
+find x#components_4: bool
+find x#components_5: bool
+find x#components_6: bool
+find x#components_7: bool
+find x#components_8: bool
+find x#components_9: bool
+find x#components_10: bool
+find x#components_11: bool
 letting values#components_1 be 15
 letting values#components_2 be 100
 letting values#components_3 be 90
@@ -398,17 +417,6 @@ letting weights#components_8 be 10
 letting weights#components_9 be 21
 letting weights#components_10 be 12
 letting weights#components_11 be 2
-find x#components_1: bool
-find x#components_2: bool
-find x#components_3: bool
-find x#components_4: bool
-find x#components_5: bool
-find x#components_6: bool
-find x#components_7: bool
-find x#components_8: bool
-find x#components_9: bool
-find x#components_10: bool
-find x#components_11: bool
 findAux __0: int(0..1)
 findAux __1: int(0..1)
 findAux __2: int(0..1)

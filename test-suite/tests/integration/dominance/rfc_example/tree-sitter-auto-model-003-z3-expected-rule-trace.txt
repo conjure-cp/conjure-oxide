@@ -1,0 +1,361 @@
+Model before rewriting:
+
+letting cost be [9,4,7,6,3,8,5,2,10,1;int(1..10)]
+letting carbon_footprint be [1,7,2,6,8,3,5,9,4,10;int(1..10)]
+find selected: matrix indexed by [int(1..10)] of bool
+find total_cost: int(0..1000)
+find total_carbon: int(0..1000)
+
+such that
+
+sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
+total_cost = sum([ cost[i] | i : int(1..10), selected[i] ]),
+total_cost = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
+total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
+
+--
+
+total_cost
+   ~~> select_representation ([("ReprGeneral", 10000)])
+total_cost
+new variables:
+  find total_cost#lia_1: int(0..1000)
+
+--
+
+total_cost
+   ~~> select_representation ([("ReprGeneral", 10000)])
+total_cost
+
+--
+
+total_carbon
+   ~~> select_representation ([("ReprGeneral", 10000)])
+total_carbon
+new variables:
+  find total_carbon#lia_1: int(0..1000)
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
+total_cost = sum([ cost[i] | i : int(1..10), selected[i] ]),
+total_cost = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
+total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
+total_cost = sum([ cost[i] | i : int(1..10), selected[i] ]),
+total_cost = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
+total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
+new variables:
+  find selected#components_1: bool
+  find selected#components_10: bool
+  find selected#components_2: bool
+  find selected#components_3: bool
+  find selected#components_4: bool
+  find selected#components_5: bool
+  find selected#components_6: bool
+  find selected#components_7: bool
+  find selected#components_8: bool
+  find selected#components_9: bool
+
+--
+
+total_cost
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+total_cost#lia_1
+
+--
+
+total_cost
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+total_cost#lia_1
+
+--
+
+total_carbon
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+total_carbon#lia_1
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
+total_cost#lia_1 = sum([ cost[i] | i : int(1..10), selected[i] ]),
+total_cost#lia_1 = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
+total_carbon#lia_1 = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
+total_cost#lia_1 = sum([ cost[i] | i : int(1..10), selected[i] ]),
+total_cost#lia_1 = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
+total_carbon#lia_1 = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
+
+--
+
+[ toInt(selected[i]) | i : int(1..10) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4),toInt(selected#components_5),toInt(selected#components_6),toInt(selected#components_7),toInt(selected#components_8),toInt(selected#components_9),toInt(selected#components_10);int(1..)]
+
+--
+
+[ cost[i] | i : int(1..10), selected[i] ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(selected#components_1),9;int(1..)]),product([toInt(selected#components_2),4;int(1..)]),product([toInt(selected#components_3),7;int(1..)]),product([toInt(selected#components_4),6;int(1..)]),product([toInt(selected#components_5),3;int(1..)]),product([toInt(selected#components_6),8;int(1..)]),product([toInt(selected#components_7),5;int(1..)]),product([toInt(selected#components_8),2;int(1..)]),product([toInt(selected#components_9),10;int(1..)]),product([toInt(selected#components_10),1;int(1..)]);int(1..)]
+
+--
+
+product([toInt(selected#components_1),9;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([9,toInt(selected#components_1);int(1..)])
+
+--
+
+product([toInt(selected#components_2),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(selected#components_2);int(1..)])
+
+--
+
+product([toInt(selected#components_3),7;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([7,toInt(selected#components_3);int(1..)])
+
+--
+
+product([toInt(selected#components_4),6;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([6,toInt(selected#components_4);int(1..)])
+
+--
+
+product([toInt(selected#components_5),3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,toInt(selected#components_5);int(1..)])
+
+--
+
+product([toInt(selected#components_6),8;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([8,toInt(selected#components_6);int(1..)])
+
+--
+
+product([toInt(selected#components_7),5;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([5,toInt(selected#components_7);int(1..)])
+
+--
+
+product([toInt(selected#components_8),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(selected#components_8);int(1..)])
+
+--
+
+product([toInt(selected#components_9),10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,toInt(selected#components_9);int(1..)])
+
+--
+
+product([toInt(selected#components_10),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(selected#components_10);int(1..)])
+
+--
+
+product([toInt(selected#components_10);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_10)
+
+--
+
+[ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(selected#components_1),9;int(1..)]),product([toInt(selected#components_2),4;int(1..)]),product([toInt(selected#components_3),7;int(1..)]),product([toInt(selected#components_4),6;int(1..)]),product([toInt(selected#components_5),3;int(1..)]),product([toInt(selected#components_6),8;int(1..)]),product([toInt(selected#components_7),5;int(1..)]),product([toInt(selected#components_8),2;int(1..)]),product([toInt(selected#components_9),10;int(1..)]),product([toInt(selected#components_10),1;int(1..)]);int(1..)]
+
+--
+
+product([toInt(selected#components_1),9;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([9,toInt(selected#components_1);int(1..)])
+
+--
+
+product([toInt(selected#components_2),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(selected#components_2);int(1..)])
+
+--
+
+product([toInt(selected#components_3),7;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([7,toInt(selected#components_3);int(1..)])
+
+--
+
+product([toInt(selected#components_4),6;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([6,toInt(selected#components_4);int(1..)])
+
+--
+
+product([toInt(selected#components_5),3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,toInt(selected#components_5);int(1..)])
+
+--
+
+product([toInt(selected#components_6),8;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([8,toInt(selected#components_6);int(1..)])
+
+--
+
+product([toInt(selected#components_7),5;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([5,toInt(selected#components_7);int(1..)])
+
+--
+
+product([toInt(selected#components_8),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(selected#components_8);int(1..)])
+
+--
+
+product([toInt(selected#components_9),10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,toInt(selected#components_9);int(1..)])
+
+--
+
+product([toInt(selected#components_10),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(selected#components_10);int(1..)])
+
+--
+
+product([toInt(selected#components_10);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_10)
+
+--
+
+[ carbon_footprint[i] | i : int(1..10), selected[i] ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(selected#components_1),1;int(1..)]),product([toInt(selected#components_2),7;int(1..)]),product([toInt(selected#components_3),2;int(1..)]),product([toInt(selected#components_4),6;int(1..)]),product([toInt(selected#components_5),8;int(1..)]),product([toInt(selected#components_6),3;int(1..)]),product([toInt(selected#components_7),5;int(1..)]),product([toInt(selected#components_8),9;int(1..)]),product([toInt(selected#components_9),4;int(1..)]),product([toInt(selected#components_10),10;int(1..)]);int(1..)]
+
+--
+
+product([toInt(selected#components_1),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(selected#components_1);int(1..)])
+
+--
+
+product([toInt(selected#components_2),7;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([7,toInt(selected#components_2);int(1..)])
+
+--
+
+product([toInt(selected#components_3),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(selected#components_3);int(1..)])
+
+--
+
+product([toInt(selected#components_4),6;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([6,toInt(selected#components_4);int(1..)])
+
+--
+
+product([toInt(selected#components_5),8;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([8,toInt(selected#components_5);int(1..)])
+
+--
+
+product([toInt(selected#components_6),3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,toInt(selected#components_6);int(1..)])
+
+--
+
+product([toInt(selected#components_7),5;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([5,toInt(selected#components_7);int(1..)])
+
+--
+
+product([toInt(selected#components_8),9;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([9,toInt(selected#components_8);int(1..)])
+
+--
+
+product([toInt(selected#components_9),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(selected#components_9);int(1..)])
+
+--
+
+product([toInt(selected#components_10),10;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([10,toInt(selected#components_10);int(1..)])
+
+--
+
+product([toInt(selected#components_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(selected#components_1)
+
+--
+
+Final model:
+
+letting cost be [9,4,7,6,3,8,5,2,10,1;int(1..10)]
+letting carbon_footprint be [1,7,2,6,8,3,5,9,4,10;int(1..10)]
+find selected: matrix indexed by [int(1..10)] of bool
+find total_cost: int(0..1000)
+find total_carbon: int(0..1000)
+find total_cost#lia_1: int(0..1000)
+find total_carbon#lia_1: int(0..1000)
+find selected#components_1: bool
+find selected#components_2: bool
+find selected#components_3: bool
+find selected#components_4: bool
+find selected#components_5: bool
+find selected#components_6: bool
+find selected#components_7: bool
+find selected#components_8: bool
+find selected#components_9: bool
+find selected#components_10: bool
+letting cost#components_1 be 9
+letting cost#components_2 be 4
+letting cost#components_3 be 7
+letting cost#components_4 be 6
+letting cost#components_5 be 3
+letting cost#components_6 be 8
+letting cost#components_7 be 5
+letting cost#components_8 be 2
+letting cost#components_9 be 10
+letting cost#components_10 be 1
+letting carbon_footprint#components_1 be 1
+letting carbon_footprint#components_2 be 7
+letting carbon_footprint#components_3 be 2
+letting carbon_footprint#components_4 be 6
+letting carbon_footprint#components_5 be 8
+letting carbon_footprint#components_6 be 3
+letting carbon_footprint#components_7 be 5
+letting carbon_footprint#components_8 be 9
+letting carbon_footprint#components_9 be 4
+letting carbon_footprint#components_10 be 10
+
+such that
+
+sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4),toInt(selected#components_5),toInt(selected#components_6),toInt(selected#components_7),toInt(selected#components_8),toInt(selected#components_9),toInt(selected#components_10);int(1..)]) >= 2,
+total_cost#lia_1 = sum([product([9,toInt(selected#components_1);int(1..)]),product([4,toInt(selected#components_2);int(1..)]),product([7,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]),product([3,toInt(selected#components_5);int(1..)]),product([8,toInt(selected#components_6);int(1..)]),product([5,toInt(selected#components_7);int(1..)]),product([2,toInt(selected#components_8);int(1..)]),product([10,toInt(selected#components_9);int(1..)]),toInt(selected#components_10);int(1..)]),
+total_cost#lia_1 = sum([product([9,toInt(selected#components_1);int(1..)]),product([4,toInt(selected#components_2);int(1..)]),product([7,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]),product([3,toInt(selected#components_5);int(1..)]),product([8,toInt(selected#components_6);int(1..)]),product([5,toInt(selected#components_7);int(1..)]),product([2,toInt(selected#components_8);int(1..)]),product([10,toInt(selected#components_9);int(1..)]),toInt(selected#components_10);int(1..)]),
+total_carbon#lia_1 = sum([toInt(selected#components_1),product([7,toInt(selected#components_2);int(1..)]),product([2,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]),product([8,toInt(selected#components_5);int(1..)]),product([3,toInt(selected#components_6);int(1..)]),product([5,toInt(selected#components_7);int(1..)]),product([9,toInt(selected#components_8);int(1..)]),product([4,toInt(selected#components_9);int(1..)]),product([10,toInt(selected#components_10);int(1..)]);int(1..)])
+

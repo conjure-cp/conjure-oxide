@@ -18,7 +18,7 @@ total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
 total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
 total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
 total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
 total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
@@ -27,6 +27,16 @@ new variables:
   find selected#components_2: bool
   find selected#components_3: bool
   find selected#components_4: bool
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ toInt(selected[i]) | i : int(1..n) ]) = 1,
+total_cost = sum([ cost[i] | i : int(1..n), selected[i] ]),
+total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
 
 --
 
@@ -188,6 +198,10 @@ letting carbon be [1,4,2,5;int(1..4)]
 find selected: matrix indexed by [int(1..n)] of bool
 find total_cost: int(0..20)
 find total_carbon: int(0..20)
+find selected#components_1: bool
+find selected#components_2: bool
+find selected#components_3: bool
+find selected#components_4: bool
 letting cost#components_1 be 3
 letting cost#components_2 be 2
 letting cost#components_3 be 4
@@ -196,10 +210,6 @@ letting carbon#components_1 be 1
 letting carbon#components_2 be 4
 letting carbon#components_3 be 2
 letting carbon#components_4 be 5
-find selected#components_1: bool
-find selected#components_2: bool
-find selected#components_3: bool
-find selected#components_4: bool
 findAux __0: int(0..1)
 findAux __1: int(0..1)
 findAux __2: int(0..1)

@@ -12,17 +12,9 @@ allDifferent(position)
 
 --
 
-and([ and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | j : int(1..((l - 1))) ]) | i : int(1..k) ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | i : int(1..k), j : int(1..((l - 1))) ])
-
---
-
-and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | i : int(1..k), j : int(1..((l - 1))) ]),
-allDifferent(position)
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | i : int(1..k), j : int(1..((l - 1))) ]),
-allDifferent(position)
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
 new variables:
   find position#components_1: int(1..27)
   find position#components_10: int(1..27)
@@ -51,6 +43,12 @@ new variables:
   find position#components_7: int(1..27)
   find position#components_8: int(1..27)
   find position#components_9: int(1..27)
+
+--
+
+and([ and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | j : int(1..((l - 1))) ]) | i : int(1..k) ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | i : int(1..k), j : int(1..((l - 1))) ])
 
 --
 

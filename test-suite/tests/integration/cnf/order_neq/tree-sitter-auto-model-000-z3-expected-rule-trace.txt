@@ -1,0 +1,109 @@
+Model before rewriting:
+
+find a: int(-5..5)
+find b: int(-5..5)
+find c: int(-5..5)
+
+such that
+
+a != 2,
+b != a,
+b != c,
+c != 4
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(-5..5)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(-5..5)
+
+--
+
+b != a
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+b != a
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+b != c
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+b != c
+new variables:
+  find c#bv_1: int(-5..5)
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+c
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+c#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+c
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+c#bv_1
+
+--
+
+Final model:
+
+find a: int(-5..5)
+find b: int(-5..5)
+find c: int(-5..5)
+find a#bv_1: int(-5..5)
+find b#bv_1: int(-5..5)
+find c#bv_1: int(-5..5)
+
+such that
+
+a#bv_1 != 2,
+b#bv_1 != a#bv_1,
+b#bv_1 != c#bv_1,
+c#bv_1 != 4
+

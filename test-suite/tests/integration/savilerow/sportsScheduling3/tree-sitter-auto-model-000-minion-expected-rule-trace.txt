@@ -22,33 +22,9 @@ and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,
 
 --
 
-and([ and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | p : PERIODS ]) | w : WEEKS ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ])
-
---
-
-and([ and([ schedule[w, p, 1] < schedule[w, p, 2] | p : PERIODS ]) | w : WEEKS ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ])
-
---
-
-and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
-and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
-allDifferent(flatten(game)),
-and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ]),
-and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ]),
-and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
-and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
-and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
-allDifferent(flatten(game)),
-and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ]),
-and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ]),
-and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
-and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
+game
+   ~~> select_representation ([("ReprGeneral", 10000)])
+game
 new variables:
   find game#components_1: int(1..28)
   find game#components_10: int(1..28)
@@ -78,6 +54,25 @@ new variables:
   find game#components_7: int(1..28)
   find game#components_8: int(1..28)
   find game#components_9: int(1..28)
+
+--
+
+and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
+and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
+allDifferent(flatten(game)),
+and([ and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | p : PERIODS ]) | w : WEEKS ]),
+and([ and([ schedule[w, p, 1] < schedule[w, p, 2] | p : PERIODS ]) | w : WEEKS ]),
+and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
+and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
+and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
+allDifferent(flatten(game)),
+and([ and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | p : PERIODS ]) | w : WEEKS ]),
+and([ and([ schedule[w, p, 1] < schedule[w, p, 2] | p : PERIODS ]) | w : WEEKS ]),
+and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
+and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
+new variables:
   find schedule#components_1: int(1..8)
   find schedule#components_10: int(1..8)
   find schedule#components_11: int(1..8)
@@ -137,6 +132,36 @@ new variables:
 
 --
 
+and([ and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | p : PERIODS ]) | w : WEEKS ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ])
+
+--
+
+and([ and([ schedule[w, p, 1] < schedule[w, p, 2] | p : PERIODS ]) | w : WEEKS ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ])
+
+--
+
+and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
+and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
+allDifferent(flatten(game)),
+and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ]),
+and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ]),
+and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
+and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]),
+and([ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]),
+allDifferent(flatten(game)),
+and([ table([schedule[w, p, 1],schedule[w, p, 2],game[w, p];int(1..3)], values) | w : WEEKS, p : PERIODS ]),
+and([ schedule[w, p, 1] < schedule[w, p, 2] | w : WEEKS, p : PERIODS ]),
+and([ (flatten(schedule[sum([w,1;int(1..)]),..,..]) >lex flatten(schedule[w,..,..])) | w : int(1..((n - 2))) ]),
+and([ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ])
+
+--
+
 flatten(game)
    ~~> flatten_matrix_components ([("ReprMatrixComponents", 5000)])
 [game#components_1,game#components_2,game#components_3,game#components_4,game#components_5,game#components_6,game#components_7,game#components_8,game#components_9,game#components_10,game#components_11,game#components_12,game#components_13,game#components_14,game#components_15,game#components_16,game#components_17,game#components_18,game#components_19,game#components_20,game#components_21,game#components_22,game#components_23,game#components_24,game#components_25,game#components_26,game#components_27,game#components_28;int(1..)]
@@ -152,6 +177,48 @@ __flat_alldiff([game#components_1, game#components_2, game#components_3, game#co
 [ allDifferent(flatten(schedule[w,..,..])) | w : WEEKS ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [allDifferent(flatten(schedule[1,..,..])),allDifferent(flatten(schedule[2,..,..])),allDifferent(flatten(schedule[3,..,..])),allDifferent(flatten(schedule[4,..,..])),allDifferent(flatten(schedule[5,..,..])),allDifferent(flatten(schedule[6,..,..])),allDifferent(flatten(schedule[7,..,..]));int(1..)]
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
 
 --
 
@@ -284,6 +351,30 @@ __flat_alldiff([schedule#components_49, schedule#components_50, schedule#compone
 [ atMost(flatten(schedule[..,p,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]) | p : PERIODS ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [atMost(flatten(schedule[..,1,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]),atMost(flatten(schedule[..,2,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]),atMost(flatten(schedule[..,3,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]),atMost(flatten(schedule[..,4,..]), [2,2,2,2;int(1..4)], [1,2,3,4;int(1..4)]);int(1..)]
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
 
 --
 
@@ -713,6 +804,78 @@ SumGeq([-1, schedule#components_56], schedule#components_55)
 
 --
 
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
 (flatten(schedule[2,..,..]) >lex flatten(schedule[1,..,..]))
    ~~> normalise_lex_gt_geq ([("Base", 9000)])
 (flatten(schedule[1,..,..]) <lex flatten(schedule[2,..,..]))
@@ -896,6 +1059,42 @@ SafeSlice(schedule,[7,..,..])
 [ (flatten(schedule[..,sum([p,1;int(1..)]),..]) >=lex flatten(schedule[..,p,..])) | p : int(1..(((n / 2) - 1))) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [(flatten(schedule[..,2,..]) >=lex flatten(schedule[..,1,..])),(flatten(schedule[..,3,..]) >=lex flatten(schedule[..,2,..])),(flatten(schedule[..,4,..]) >=lex flatten(schedule[..,3,..]));int(1..)]
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
+
+--
+
+schedule
+   ~~> select_representation ([("ReprGeneral", 10000)])
+schedule
 
 --
 
@@ -1246,24 +1445,34 @@ letting PERIODS be domain int(1..((n / 2)))
 letting HOMEAWAY be domain int(1..2)
 find schedule: matrix indexed by [WEEKS, PERIODS, HOMEAWAY] of TEAMS
 find game: matrix indexed by [WEEKS, PERIODS] of GAMES
-letting values#components_1 be 1
-letting values#components_2 be 2
-letting values#components_3 be 1
-letting values#components_4 be 1
-letting values#components_5 be 3
-letting values#components_6 be 2
-letting values#components_7 be 1
-letting values#components_8 be 4
-letting values#components_9 be 3
-letting values#components_10 be 2
-letting values#components_11 be 3
-letting values#components_12 be 4
-letting values#components_13 be 2
-letting values#components_14 be 4
-letting values#components_15 be 5
-letting values#components_16 be 3
-letting values#components_17 be 4
-letting values#components_18 be 6
+find game#components_1: int(1..28)
+find game#components_2: int(1..28)
+find game#components_3: int(1..28)
+find game#components_4: int(1..28)
+find game#components_5: int(1..28)
+find game#components_6: int(1..28)
+find game#components_7: int(1..28)
+find game#components_8: int(1..28)
+find game#components_9: int(1..28)
+find game#components_10: int(1..28)
+find game#components_11: int(1..28)
+find game#components_12: int(1..28)
+find game#components_13: int(1..28)
+find game#components_14: int(1..28)
+find game#components_15: int(1..28)
+find game#components_16: int(1..28)
+find game#components_17: int(1..28)
+find game#components_18: int(1..28)
+find game#components_19: int(1..28)
+find game#components_20: int(1..28)
+find game#components_21: int(1..28)
+find game#components_22: int(1..28)
+find game#components_23: int(1..28)
+find game#components_24: int(1..28)
+find game#components_25: int(1..28)
+find game#components_26: int(1..28)
+find game#components_27: int(1..28)
+find game#components_28: int(1..28)
 find schedule#components_1: int(1..8)
 find schedule#components_2: int(1..8)
 find schedule#components_3: int(1..8)
@@ -1320,34 +1529,24 @@ find schedule#components_53: int(1..8)
 find schedule#components_54: int(1..8)
 find schedule#components_55: int(1..8)
 find schedule#components_56: int(1..8)
-find game#components_1: int(1..28)
-find game#components_2: int(1..28)
-find game#components_3: int(1..28)
-find game#components_4: int(1..28)
-find game#components_5: int(1..28)
-find game#components_6: int(1..28)
-find game#components_7: int(1..28)
-find game#components_8: int(1..28)
-find game#components_9: int(1..28)
-find game#components_10: int(1..28)
-find game#components_11: int(1..28)
-find game#components_12: int(1..28)
-find game#components_13: int(1..28)
-find game#components_14: int(1..28)
-find game#components_15: int(1..28)
-find game#components_16: int(1..28)
-find game#components_17: int(1..28)
-find game#components_18: int(1..28)
-find game#components_19: int(1..28)
-find game#components_20: int(1..28)
-find game#components_21: int(1..28)
-find game#components_22: int(1..28)
-find game#components_23: int(1..28)
-find game#components_24: int(1..28)
-find game#components_25: int(1..28)
-find game#components_26: int(1..28)
-find game#components_27: int(1..28)
-find game#components_28: int(1..28)
+letting values#components_1 be 1
+letting values#components_2 be 2
+letting values#components_3 be 1
+letting values#components_4 be 1
+letting values#components_5 be 3
+letting values#components_6 be 2
+letting values#components_7 be 1
+letting values#components_8 be 4
+letting values#components_9 be 3
+letting values#components_10 be 2
+letting values#components_11 be 3
+letting values#components_12 be 4
+letting values#components_13 be 2
+letting values#components_14 be 4
+letting values#components_15 be 5
+letting values#components_16 be 3
+letting values#components_17 be 4
+letting values#components_18 be 6
 
 such that
 

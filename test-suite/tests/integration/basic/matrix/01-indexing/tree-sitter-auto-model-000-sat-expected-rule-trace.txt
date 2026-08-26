@@ -1,0 +1,201 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..5)] of bool
+
+such that
+
+a[1] = true,
+a[2] = true,
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#components_1: bool
+  find a#components_2: bool
+  find a#components_3: bool
+  find a#components_4: bool
+  find a#components_5: bool
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_1
+
+--
+
+a#components_1,
+a[2] = true,
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+   ~~> remove_single_atom ([("SAT", 8400)])
+a[2] = true,
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+new clauses:
+  (a#components_1)
+
+--
+
+a[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_2
+
+--
+
+a#components_2,
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+   ~~> remove_single_atom ([("SAT", 8400)])
+a[3] = true,
+a[4] = true,
+a[5] = !(a[4])
+new clauses:
+  (a#components_2)
+
+--
+
+a[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_3
+
+--
+
+a#components_3,
+a[4] = true,
+a[5] = !(a[4])
+   ~~> remove_single_atom ([("SAT", 8400)])
+a[4] = true,
+a[5] = !(a[4])
+new clauses:
+  (a#components_3)
+
+--
+
+a[4]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_4
+
+--
+
+a#components_4,
+a[5] = !(a[4])
+   ~~> remove_single_atom ([("SAT", 8400)])
+a[5] = !(a[4])
+new clauses:
+  (a#components_4)
+
+--
+
+a[5]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_5
+
+--
+
+a[4]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_4
+
+--
+
+!(a#components_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (¬a#components_4 \/ ¬__0)
+  (a#components_4 \/ __0)
+
+--
+
+a#components_5 = __0
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new clauses:
+  (¬a#components_5 \/ ¬__0 \/ __1)
+  (a#components_5 \/ __0 \/ __1)
+  (a#components_5 \/ ¬__0 \/ ¬__1)
+  (¬a#components_5 \/ __0 \/ ¬__1)
+
+--
+
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__1)
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..5)] of bool
+find a#components_1: bool
+find a#components_2: bool
+find a#components_3: bool
+find a#components_4: bool
+find a#components_5: bool
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+true
+
+clauses:
+
+(a#components_1),
+(a#components_2),
+(a#components_3),
+(a#components_4),
+(¬a#components_4 \/ ¬__0),
+(a#components_4 \/ __0),
+(¬a#components_5 \/ ¬__0 \/ __1),
+(a#components_5 \/ __0 \/ __1),
+(a#components_5 \/ ¬__0 \/ ¬__1),
+(¬a#components_5 \/ __0 \/ ¬__1),
+(__1)
+

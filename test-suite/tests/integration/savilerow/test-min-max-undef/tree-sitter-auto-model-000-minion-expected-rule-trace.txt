@@ -12,6 +12,27 @@ true
 
 --
 
+!(max([;int(1..0)] :: matrix indexed by [int] of int) = 0),
+!(min([;int(1..0)] :: matrix indexed by [int] of int) = 0),
+!(min([;int(1..0)] :: matrix indexed by [int] of int) = 10),
+!(min([;int(1..)] : matrix indexed by [int(1..)] of int(1..10)) = 0),
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+!(max([;int(1..0)] :: matrix indexed by [int] of int) = 0),
+!(min([;int(1..0)] :: matrix indexed by [int] of int) = 0),
+!(min([;int(1..0)] :: matrix indexed by [int] of int) = 10),
+!(min([;int(1..)] : matrix indexed by [int(1..)] of int(1..10)) = 0),
+true
+new variables:
+  find x#components_1: int(1..10)
+  find x#components_2: int(1..10)
+  find x#components_3: int(1..10)
+  find x#components_4: int(1..10)
+  find x#components_5: int(1..10)
+  find x#components_6: int(1..10)
+
+--
+
 !(max([;int(1..0)] :: matrix indexed by [int] of int) = 0)
    ~~> negated_eq_to_neq ([("Base", 8800)])
 max([;int(1..0)] :: matrix indexed by [int] of int) != 0
@@ -33,27 +54,6 @@ min([;int(1..0)] :: matrix indexed by [int] of int) != 10
 !(min([;int(1..)] : matrix indexed by [int(1..)] of int(1..10)) = 0)
    ~~> negated_eq_to_neq ([("Base", 8800)])
 min([;int(1..)] : matrix indexed by [int(1..)] of int(1..10)) != 0
-
---
-
-true,
-true,
-true,
-true,
-true
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-true,
-true,
-true,
-true,
-true
-new variables:
-  find x#components_1: int(1..10)
-  find x#components_2: int(1..10)
-  find x#components_3: int(1..10)
-  find x#components_4: int(1..10)
-  find x#components_5: int(1..10)
-  find x#components_6: int(1..10)
 
 --
 

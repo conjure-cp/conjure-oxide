@@ -10,22 +10,33 @@ a[1] = 1
 
 --
 
-(a >=lex b)
-   ~~> normalise_lex_gt_geq ([("Base", 9000)])
-(b <=lex a)
-
---
-
-(b <=lex a),
-a[1] = 1
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-(b <=lex a),
-a[1] = 1
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
 new variables:
   find a#components_1: int(1..2)
   find a#components_2: int(1..2)
+
+--
+
+(a >=lex b)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(a >=lex b)
+new variables:
   find b#components_1: int(1..2)
   find b#components_2: int(1..2)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+(a >=lex b)
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(b <=lex a)
 
 --
 

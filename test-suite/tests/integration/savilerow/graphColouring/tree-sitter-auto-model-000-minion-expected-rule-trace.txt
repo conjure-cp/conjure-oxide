@@ -17,6 +17,25 @@ __0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
 
 --
 
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
+and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ]),
+__0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
+new variables:
+  find colouring#components_1: int(1..3)
+  find colouring#components_2: int(1..3)
+  find colouring#components_3: int(1..3)
+  find colouring#components_4: int(1..3)
+  find colouring#components_5: int(1..3)
+  find usedColours#components_1: bool
+  find usedColours#components_2: bool
+  find usedColours#components_3: bool
+
+--
+
 and([ and([ (colouring[a] = c) -> (usedColours[c]) | c : COLOURS ]) | a : VERTICES ])
    ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
 and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ])
@@ -30,15 +49,6 @@ __0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
 and([ (edges[a, b]) -> (colouring[a] != colouring[b]) | a : VERTICES, b : VERTICES ]),
 and([ (colouring[a] = c) -> (usedColours[c]) | a : VERTICES, c : COLOURS ]),
 __0 =aux sum([ toInt(usedColours[c]) | c : COLOURS ])
-new variables:
-  find colouring#components_1: int(1..3)
-  find colouring#components_2: int(1..3)
-  find colouring#components_3: int(1..3)
-  find colouring#components_4: int(1..3)
-  find colouring#components_5: int(1..3)
-  find usedColours#components_1: bool
-  find usedColours#components_2: bool
-  find usedColours#components_3: bool
 
 --
 
@@ -496,6 +506,14 @@ letting edges be [[false,true,false,true,false;int(1..5)],[true,false,true,false
 find colouring: matrix indexed by [VERTICES] of COLOURS
 find usedColours: matrix indexed by [COLOURS] of bool
 findAux __0: int(0..3)
+find colouring#components_1: int(1..3)
+find colouring#components_2: int(1..3)
+find colouring#components_3: int(1..3)
+find colouring#components_4: int(1..3)
+find colouring#components_5: int(1..3)
+find usedColours#components_1: bool
+find usedColours#components_2: bool
+find usedColours#components_3: bool
 letting edges#components_1 be false
 letting edges#components_2 be true
 letting edges#components_3 be false
@@ -521,14 +539,6 @@ letting edges#components_22 be true
 letting edges#components_23 be true
 letting edges#components_24 be false
 letting edges#components_25 be false
-find colouring#components_1: int(1..3)
-find colouring#components_2: int(1..3)
-find colouring#components_3: int(1..3)
-find colouring#components_4: int(1..3)
-find colouring#components_5: int(1..3)
-find usedColours#components_1: bool
-find usedColours#components_2: bool
-find usedColours#components_3: bool
 findAux __1: bool
 findAux __2: bool
 findAux __3: bool

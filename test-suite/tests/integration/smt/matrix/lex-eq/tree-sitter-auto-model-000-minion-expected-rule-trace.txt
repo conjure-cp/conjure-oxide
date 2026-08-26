@@ -10,22 +10,39 @@ such that
 
 --
 
-(m >=lex m2)
-   ~~> normalise_lex_gt_geq ([("Base", 9000)])
-(m2 <=lex m)
-
---
-
-(m <=lex m2),
-(m2 <=lex m)
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-(m <=lex m2),
-(m2 <=lex m)
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
 new variables:
   find m#components_1: int(1..2)
   find m#components_2: int(1..2)
+
+--
+
+(m <=lex m2)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(m <=lex m2)
+new variables:
   find m2#components_1: int(1..2)
   find m2#components_2: int(1..2)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+(m >=lex m2)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(m >=lex m2)
+
+--
+
+(m >=lex m2)
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(m2 <=lex m)
 
 --
 

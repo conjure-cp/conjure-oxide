@@ -15,19 +15,13 @@ __0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring :
 
 --
 
-sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
-
---
-
 and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
-__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
 and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
-__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
+__0 =aux sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ])
 new variables:
   find rings#components_1: bool
   find rings#components_10: bool
@@ -49,6 +43,22 @@ new variables:
   find rings#components_7: bool
   find rings#components_8: bool
   find rings#components_9: bool
+
+--
+
+sum([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) | ring : int(1..r) ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
+
+--
+
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ (client1 < client2) -> ((demand[client1, client2] = 1) -> (or([ sum([toInt(rings[ring, client1]),toInt(rings[ring, client2]);int(1..)]) >= 2 | ring : int(1..r) ]))) | client1 : int(1..n), client2 : int(1..n) ]),
+and([ sum([ toInt(rings[ring, client]) | client : int(1..n) ]) <= capacity_nodes[ring] | ring : int(1..r) ]),
+__0 =aux sum([ toInt(rings[ring, client]) | ring : int(1..r), client : int(1..n) ])
 
 --
 
@@ -204,6 +214,26 @@ letting demand be [[0,1,0,1,0;int(1..5)],[1,0,1,0,0;int(1..5)],[0,1,0,0,1;int(1.
 letting capacity_nodes be [3,2,2,1;int(1..4)]
 find rings: matrix indexed by [int(1..r), int(1..n)] of bool
 findAux __0: int(0..20)
+find rings#components_1: bool
+find rings#components_2: bool
+find rings#components_3: bool
+find rings#components_4: bool
+find rings#components_5: bool
+find rings#components_6: bool
+find rings#components_7: bool
+find rings#components_8: bool
+find rings#components_9: bool
+find rings#components_10: bool
+find rings#components_11: bool
+find rings#components_12: bool
+find rings#components_13: bool
+find rings#components_14: bool
+find rings#components_15: bool
+find rings#components_16: bool
+find rings#components_17: bool
+find rings#components_18: bool
+find rings#components_19: bool
+find rings#components_20: bool
 letting demand#components_1 be 0
 letting demand#components_2 be 1
 letting demand#components_3 be 0
@@ -233,26 +263,6 @@ letting capacity_nodes#components_1 be 3
 letting capacity_nodes#components_2 be 2
 letting capacity_nodes#components_3 be 2
 letting capacity_nodes#components_4 be 1
-find rings#components_1: bool
-find rings#components_2: bool
-find rings#components_3: bool
-find rings#components_4: bool
-find rings#components_5: bool
-find rings#components_6: bool
-find rings#components_7: bool
-find rings#components_8: bool
-find rings#components_9: bool
-find rings#components_10: bool
-find rings#components_11: bool
-find rings#components_12: bool
-find rings#components_13: bool
-find rings#components_14: bool
-find rings#components_15: bool
-find rings#components_16: bool
-find rings#components_17: bool
-find rings#components_18: bool
-find rings#components_19: bool
-find rings#components_20: bool
 
 such that
 

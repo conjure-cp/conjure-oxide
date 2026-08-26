@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find a: int(3)
+find b: int(1..5)
+
+such that
+
+a < 100,
+b < 100
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(3)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(1..5)
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+Final model:
+
+find a: int(3)
+find b: int(1..5)
+find a#bv_1: int(3)
+find b#bv_1: int(1..5)
+
+such that
+
+a#bv_1 < 100,
+b#bv_1 < 100
+

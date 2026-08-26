@@ -1,0 +1,289 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(a <=lex b),
+a[1] = 2
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#components_1: int(1..2)
+  find a#components_2: int(1..2)
+
+--
+
+(a <=lex b)
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+(a <=lex b)
+new variables:
+  find b#components_1: int(1..2)
+  find b#components_2: int(1..2)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+(a <=lex b),
+a[1] = 2
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(a <=lex b),
+a[1] = 2
+new variables:
+  find a#components_1#bv_1: int(1..2)
+  find a#components_2#bv_1: int(1..2)
+  find b#components_1#bv_1: int(1..2)
+  find b#components_2#bv_1: int(1..2)
+
+--
+
+a[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+a#components_1
+
+--
+
+a#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#components_1
+
+--
+
+a#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#components_1#bv_1
+
+--
+
+(a <=lex b)
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([SafeIndex(a,[1]) < SafeIndex(b,[1]),and([SafeIndex(a,[1]) = SafeIndex(b,[1]),or([SafeIndex(a,[2]) < SafeIndex(b,[2]),and([SafeIndex(a,[2]) = SafeIndex(b,[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([SafeIndex(a,[2]) = SafeIndex(b,[2]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(a,[2]) = SafeIndex(b,[2])
+
+--
+
+or([SafeIndex(a,[1]) < SafeIndex(b,[1]),and([SafeIndex(a,[1]) = SafeIndex(b,[1]),or([SafeIndex(a,[2]) < SafeIndex(b,[2]),SafeIndex(a,[2]) = SafeIndex(b,[2]);int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([SafeIndex(a,[1]) < SafeIndex(b,[1]),SafeIndex(a,[1]) = SafeIndex(b,[1]);int(1..)]),or([SafeIndex(a,[1]) < SafeIndex(b,[1]),or([SafeIndex(a,[2]) < SafeIndex(b,[2]),SafeIndex(a,[2]) = SafeIndex(b,[2]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([SafeIndex(a,[1]) < SafeIndex(b,[1]),or([SafeIndex(a,[2]) < SafeIndex(b,[2]),SafeIndex(a,[2]) = SafeIndex(b,[2]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([SafeIndex(a,[1]) < SafeIndex(b,[1]),SafeIndex(a,[2]) < SafeIndex(b,[2]),SafeIndex(a,[2]) = SafeIndex(b,[2]);int(1..)])
+
+--
+
+SafeIndex(a,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+a#components_1
+
+--
+
+a#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#components_1
+
+--
+
+a#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#components_1#bv_1
+
+--
+
+SafeIndex(b,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+b#components_1
+
+--
+
+b#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_1
+
+--
+
+b#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#components_1#bv_1
+
+--
+
+SafeIndex(a,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+a#components_2
+
+--
+
+a#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#components_2
+
+--
+
+a#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#components_2#bv_1
+
+--
+
+SafeIndex(b,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+b#components_2
+
+--
+
+b#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_2
+
+--
+
+b#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#components_2#bv_1
+
+--
+
+SafeIndex(a,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+a#components_2
+
+--
+
+a#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#components_2
+
+--
+
+a#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#components_2#bv_1
+
+--
+
+SafeIndex(b,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+b#components_2
+
+--
+
+b#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_2
+
+--
+
+b#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#components_2#bv_1
+
+--
+
+SafeIndex(a,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+a#components_1
+
+--
+
+a#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#components_1
+
+--
+
+a#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#components_1#bv_1
+
+--
+
+SafeIndex(b,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+b#components_1
+
+--
+
+b#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_1
+
+--
+
+b#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#components_1#bv_1
+
+--
+
+SafeIndex(a,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+a#components_1
+
+--
+
+a#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#components_1
+
+--
+
+a#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#components_1#bv_1
+
+--
+
+SafeIndex(b,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+b#components_1
+
+--
+
+b#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_1
+
+--
+
+b#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#components_1#bv_1
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+find a#components_1: int(1..2)
+find a#components_2: int(1..2)
+find b#components_1: int(1..2)
+find b#components_2: int(1..2)
+find a#components_1#bv_1: int(1..2)
+find a#components_2#bv_1: int(1..2)
+find b#components_1#bv_1: int(1..2)
+find b#components_2#bv_1: int(1..2)
+
+such that
+
+and([or([a#components_1#bv_1 < b#components_1#bv_1,a#components_1#bv_1 = b#components_1#bv_1;int(1..)]),or([a#components_1#bv_1 < b#components_1#bv_1,a#components_2#bv_1 < b#components_2#bv_1,a#components_2#bv_1 = b#components_2#bv_1;int(1..)]);int(1..)]),
+a#components_1#bv_1 = 2
+

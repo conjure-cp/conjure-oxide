@@ -18,41 +18,9 @@ and([ sum([quasiGroup[i, (n - 1)],2;int(1..)]) >= i | i : nDomain ])
 
 --
 
-and([ and([ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | j : nDomain ]) | i : nDomain ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-and([ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | i : nDomain, j : nDomain ])
-
---
-
-and([ and([ (i != j) -> (quasiGroup[i, j] != quasiGroup[j, i]) | j : nDomain ]) | i : nDomain ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-and([ (i != j) -> (quasiGroup[i, j] != quasiGroup[j, i]) | i : nDomain, j : nDomain ])
-
---
-
-and([ and([ (quasiGroup[i, i] = j) -> (quasiGroup[j, j] = i) | j : nDomain ]) | i : nDomain ])
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
-and([ (quasiGroup[i, i] = j) -> (quasiGroup[j, j] = i) | i : nDomain, j : nDomain ])
-
---
-
-and([ qgDiagonal[i] = quasiGroup[i, i] | i : nDomain ]),
-and([ allDifferent(quasiGroup[row,..]) | row : nDomain ]),
-and([ allDifferent(quasiGroup[..,col]) | col : nDomain ]),
-and([ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | i : nDomain, j : nDomain ]),
-allDifferent(qgDiagonal),
-and([ (i != j) -> (quasiGroup[i, j] != quasiGroup[j, i]) | i : nDomain, j : nDomain ]),
-and([ (quasiGroup[i, i] = j) -> (quasiGroup[j, j] = i) | i : nDomain, j : nDomain ]),
-and([ sum([quasiGroup[i, (n - 1)],2;int(1..)]) >= i | i : nDomain ])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-and([ qgDiagonal[i] = quasiGroup[i, i] | i : nDomain ]),
-and([ allDifferent(quasiGroup[row,..]) | row : nDomain ]),
-and([ allDifferent(quasiGroup[..,col]) | col : nDomain ]),
-and([ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | i : nDomain, j : nDomain ]),
-allDifferent(qgDiagonal),
-and([ (i != j) -> (quasiGroup[i, j] != quasiGroup[j, i]) | i : nDomain, j : nDomain ]),
-and([ (quasiGroup[i, i] = j) -> (quasiGroup[j, j] = i) | i : nDomain, j : nDomain ]),
-and([ sum([quasiGroup[i, (n - 1)],2;int(1..)]) >= i | i : nDomain ])
+qgDiagonal
+   ~~> select_representation ([("ReprGeneral", 10000)])
+qgDiagonal
 new variables:
   find qgDiagonal#components_1: int(0..7)
   find qgDiagonal#components_2: int(0..7)
@@ -62,6 +30,27 @@ new variables:
   find qgDiagonal#components_6: int(0..7)
   find qgDiagonal#components_7: int(0..7)
   find qgDiagonal#components_8: int(0..7)
+
+--
+
+and([ qgDiagonal[i] = quasiGroup[i, i] | i : nDomain ]),
+and([ allDifferent(quasiGroup[row,..]) | row : nDomain ]),
+and([ allDifferent(quasiGroup[..,col]) | col : nDomain ]),
+and([ and([ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | j : nDomain ]) | i : nDomain ]),
+allDifferent(qgDiagonal),
+and([ and([ (i != j) -> (quasiGroup[i, j] != quasiGroup[j, i]) | j : nDomain ]) | i : nDomain ]),
+and([ and([ (quasiGroup[i, i] = j) -> (quasiGroup[j, j] = i) | j : nDomain ]) | i : nDomain ]),
+and([ sum([quasiGroup[i, (n - 1)],2;int(1..)]) >= i | i : nDomain ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ qgDiagonal[i] = quasiGroup[i, i] | i : nDomain ]),
+and([ allDifferent(quasiGroup[row,..]) | row : nDomain ]),
+and([ allDifferent(quasiGroup[..,col]) | col : nDomain ]),
+and([ and([ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | j : nDomain ]) | i : nDomain ]),
+allDifferent(qgDiagonal),
+and([ and([ (i != j) -> (quasiGroup[i, j] != quasiGroup[j, i]) | j : nDomain ]) | i : nDomain ]),
+and([ and([ (quasiGroup[i, i] = j) -> (quasiGroup[j, j] = i) | j : nDomain ]) | i : nDomain ]),
+and([ sum([quasiGroup[i, (n - 1)],2;int(1..)]) >= i | i : nDomain ])
+new variables:
   find quasiGroup#components_1: int(0..7)
   find quasiGroup#components_10: int(0..7)
   find quasiGroup#components_11: int(0..7)
@@ -129,6 +118,24 @@ new variables:
 
 --
 
+and([ and([ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | j : nDomain ]) | i : nDomain ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | i : nDomain, j : nDomain ])
+
+--
+
+and([ and([ (i != j) -> (quasiGroup[i, j] != quasiGroup[j, i]) | j : nDomain ]) | i : nDomain ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (i != j) -> (quasiGroup[i, j] != quasiGroup[j, i]) | i : nDomain, j : nDomain ])
+
+--
+
+and([ and([ (quasiGroup[i, i] = j) -> (quasiGroup[j, j] = i) | j : nDomain ]) | i : nDomain ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (quasiGroup[i, i] = j) -> (quasiGroup[j, j] = i) | i : nDomain, j : nDomain ])
+
+--
+
 allDifferent(qgDiagonal)
    ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
 allDifferent([qgDiagonal#components_1,qgDiagonal#components_2,qgDiagonal#components_3,qgDiagonal#components_4,qgDiagonal#components_5,qgDiagonal#components_6,qgDiagonal#components_7,qgDiagonal#components_8;int(0..7)])
@@ -141,315 +148,393 @@ __flat_alldiff([qgDiagonal#components_1, qgDiagonal#components_2, qgDiagonal#com
 
 --
 
-[ qgDiagonal[i] = quasiGroup[i, i] | i : nDomain ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[qgDiagonal#components_1 = quasiGroup#components_1,qgDiagonal#components_2 = quasiGroup#components_10,qgDiagonal#components_3 = quasiGroup#components_19,qgDiagonal#components_4 = quasiGroup#components_28,qgDiagonal#components_5 = quasiGroup#components_37,qgDiagonal#components_6 = quasiGroup#components_46,qgDiagonal#components_7 = quasiGroup#components_55,qgDiagonal#components_8 = quasiGroup#components_64;int(1..)]
-
---
-
-[ allDifferent(quasiGroup[row,..]) | row : nDomain ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[allDifferent(quasiGroup[0,..]),allDifferent(quasiGroup[1,..]),allDifferent(quasiGroup[2,..]),allDifferent(quasiGroup[3,..]),allDifferent(quasiGroup[4,..]),allDifferent(quasiGroup[5,..]),allDifferent(quasiGroup[6,..]),allDifferent(quasiGroup[7,..]);int(1..)]
-
---
-
-quasiGroup[0,..]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[0,..])
-
---
-
-quasiGroup[1,..]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[1,..])
-
---
-
-quasiGroup[2,..]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[2,..])
-
---
-
-quasiGroup[3,..]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[3,..])
-
---
-
-quasiGroup[4,..]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[4,..])
-
---
-
-quasiGroup[5,..]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[5,..])
-
---
-
-quasiGroup[6,..]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[6,..])
-
---
-
-quasiGroup[7,..]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[7,..])
-
---
-
-SafeSlice(quasiGroup,[0,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_1,quasiGroup#components_2,quasiGroup#components_3,quasiGroup#components_4,quasiGroup#components_5,quasiGroup#components_6,quasiGroup#components_7,quasiGroup#components_8;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[1,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_9,quasiGroup#components_10,quasiGroup#components_11,quasiGroup#components_12,quasiGroup#components_13,quasiGroup#components_14,quasiGroup#components_15,quasiGroup#components_16;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[2,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_17,quasiGroup#components_18,quasiGroup#components_19,quasiGroup#components_20,quasiGroup#components_21,quasiGroup#components_22,quasiGroup#components_23,quasiGroup#components_24;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[3,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_25,quasiGroup#components_26,quasiGroup#components_27,quasiGroup#components_28,quasiGroup#components_29,quasiGroup#components_30,quasiGroup#components_31,quasiGroup#components_32;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[4,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_33,quasiGroup#components_34,quasiGroup#components_35,quasiGroup#components_36,quasiGroup#components_37,quasiGroup#components_38,quasiGroup#components_39,quasiGroup#components_40;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[5,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_41,quasiGroup#components_42,quasiGroup#components_43,quasiGroup#components_44,quasiGroup#components_45,quasiGroup#components_46,quasiGroup#components_47,quasiGroup#components_48;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[6,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_49,quasiGroup#components_50,quasiGroup#components_51,quasiGroup#components_52,quasiGroup#components_53,quasiGroup#components_54,quasiGroup#components_55,quasiGroup#components_56;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[7,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_57,quasiGroup#components_58,quasiGroup#components_59,quasiGroup#components_60,quasiGroup#components_61,quasiGroup#components_62,quasiGroup#components_63,quasiGroup#components_64;int(1..)]
-
---
-
-allDifferent([quasiGroup#components_1,quasiGroup#components_2,quasiGroup#components_3,quasiGroup#components_4,quasiGroup#components_5,quasiGroup#components_6,quasiGroup#components_7,quasiGroup#components_8;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_1, quasiGroup#components_2, quasiGroup#components_3, quasiGroup#components_4, quasiGroup#components_5, quasiGroup#components_6, quasiGroup#components_7, quasiGroup#components_8])
-
---
-
-allDifferent([quasiGroup#components_9,quasiGroup#components_10,quasiGroup#components_11,quasiGroup#components_12,quasiGroup#components_13,quasiGroup#components_14,quasiGroup#components_15,quasiGroup#components_16;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_9, quasiGroup#components_10, quasiGroup#components_11, quasiGroup#components_12, quasiGroup#components_13, quasiGroup#components_14, quasiGroup#components_15, quasiGroup#components_16])
-
---
-
-allDifferent([quasiGroup#components_17,quasiGroup#components_18,quasiGroup#components_19,quasiGroup#components_20,quasiGroup#components_21,quasiGroup#components_22,quasiGroup#components_23,quasiGroup#components_24;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_17, quasiGroup#components_18, quasiGroup#components_19, quasiGroup#components_20, quasiGroup#components_21, quasiGroup#components_22, quasiGroup#components_23, quasiGroup#components_24])
-
---
-
-allDifferent([quasiGroup#components_25,quasiGroup#components_26,quasiGroup#components_27,quasiGroup#components_28,quasiGroup#components_29,quasiGroup#components_30,quasiGroup#components_31,quasiGroup#components_32;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_25, quasiGroup#components_26, quasiGroup#components_27, quasiGroup#components_28, quasiGroup#components_29, quasiGroup#components_30, quasiGroup#components_31, quasiGroup#components_32])
-
---
-
-allDifferent([quasiGroup#components_33,quasiGroup#components_34,quasiGroup#components_35,quasiGroup#components_36,quasiGroup#components_37,quasiGroup#components_38,quasiGroup#components_39,quasiGroup#components_40;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_33, quasiGroup#components_34, quasiGroup#components_35, quasiGroup#components_36, quasiGroup#components_37, quasiGroup#components_38, quasiGroup#components_39, quasiGroup#components_40])
-
---
-
-allDifferent([quasiGroup#components_41,quasiGroup#components_42,quasiGroup#components_43,quasiGroup#components_44,quasiGroup#components_45,quasiGroup#components_46,quasiGroup#components_47,quasiGroup#components_48;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_41, quasiGroup#components_42, quasiGroup#components_43, quasiGroup#components_44, quasiGroup#components_45, quasiGroup#components_46, quasiGroup#components_47, quasiGroup#components_48])
-
---
-
-allDifferent([quasiGroup#components_49,quasiGroup#components_50,quasiGroup#components_51,quasiGroup#components_52,quasiGroup#components_53,quasiGroup#components_54,quasiGroup#components_55,quasiGroup#components_56;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_49, quasiGroup#components_50, quasiGroup#components_51, quasiGroup#components_52, quasiGroup#components_53, quasiGroup#components_54, quasiGroup#components_55, quasiGroup#components_56])
-
---
-
-allDifferent([quasiGroup#components_57,quasiGroup#components_58,quasiGroup#components_59,quasiGroup#components_60,quasiGroup#components_61,quasiGroup#components_62,quasiGroup#components_63,quasiGroup#components_64;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_57, quasiGroup#components_58, quasiGroup#components_59, quasiGroup#components_60, quasiGroup#components_61, quasiGroup#components_62, quasiGroup#components_63, quasiGroup#components_64])
-
---
-
-[ allDifferent(quasiGroup[..,col]) | col : nDomain ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[allDifferent(quasiGroup[..,0]),allDifferent(quasiGroup[..,1]),allDifferent(quasiGroup[..,2]),allDifferent(quasiGroup[..,3]),allDifferent(quasiGroup[..,4]),allDifferent(quasiGroup[..,5]),allDifferent(quasiGroup[..,6]),allDifferent(quasiGroup[..,7]);int(1..)]
-
---
-
-quasiGroup[..,0]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[..,0])
-
---
-
-quasiGroup[..,1]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[..,1])
-
---
-
-quasiGroup[..,2]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[..,2])
-
---
-
-quasiGroup[..,3]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[..,3])
-
---
-
-quasiGroup[..,4]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[..,4])
-
---
-
-quasiGroup[..,5]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[..,5])
-
---
-
-quasiGroup[..,6]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[..,6])
-
---
-
-quasiGroup[..,7]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(quasiGroup,[..,7])
-
---
-
-SafeSlice(quasiGroup,[..,0])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_1,quasiGroup#components_9,quasiGroup#components_17,quasiGroup#components_25,quasiGroup#components_33,quasiGroup#components_41,quasiGroup#components_49,quasiGroup#components_57;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[..,1])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_2,quasiGroup#components_10,quasiGroup#components_18,quasiGroup#components_26,quasiGroup#components_34,quasiGroup#components_42,quasiGroup#components_50,quasiGroup#components_58;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[..,2])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_3,quasiGroup#components_11,quasiGroup#components_19,quasiGroup#components_27,quasiGroup#components_35,quasiGroup#components_43,quasiGroup#components_51,quasiGroup#components_59;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[..,3])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_4,quasiGroup#components_12,quasiGroup#components_20,quasiGroup#components_28,quasiGroup#components_36,quasiGroup#components_44,quasiGroup#components_52,quasiGroup#components_60;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[..,4])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_5,quasiGroup#components_13,quasiGroup#components_21,quasiGroup#components_29,quasiGroup#components_37,quasiGroup#components_45,quasiGroup#components_53,quasiGroup#components_61;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[..,5])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_6,quasiGroup#components_14,quasiGroup#components_22,quasiGroup#components_30,quasiGroup#components_38,quasiGroup#components_46,quasiGroup#components_54,quasiGroup#components_62;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[..,6])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_7,quasiGroup#components_15,quasiGroup#components_23,quasiGroup#components_31,quasiGroup#components_39,quasiGroup#components_47,quasiGroup#components_55,quasiGroup#components_63;int(1..)]
-
---
-
-SafeSlice(quasiGroup,[..,7])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[quasiGroup#components_8,quasiGroup#components_16,quasiGroup#components_24,quasiGroup#components_32,quasiGroup#components_40,quasiGroup#components_48,quasiGroup#components_56,quasiGroup#components_64;int(1..)]
-
---
-
-allDifferent([quasiGroup#components_1,quasiGroup#components_9,quasiGroup#components_17,quasiGroup#components_25,quasiGroup#components_33,quasiGroup#components_41,quasiGroup#components_49,quasiGroup#components_57;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_1, quasiGroup#components_9, quasiGroup#components_17, quasiGroup#components_25, quasiGroup#components_33, quasiGroup#components_41, quasiGroup#components_49, quasiGroup#components_57])
-
---
-
-allDifferent([quasiGroup#components_2,quasiGroup#components_10,quasiGroup#components_18,quasiGroup#components_26,quasiGroup#components_34,quasiGroup#components_42,quasiGroup#components_50,quasiGroup#components_58;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_2, quasiGroup#components_10, quasiGroup#components_18, quasiGroup#components_26, quasiGroup#components_34, quasiGroup#components_42, quasiGroup#components_50, quasiGroup#components_58])
-
---
-
-allDifferent([quasiGroup#components_3,quasiGroup#components_11,quasiGroup#components_19,quasiGroup#components_27,quasiGroup#components_35,quasiGroup#components_43,quasiGroup#components_51,quasiGroup#components_59;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_3, quasiGroup#components_11, quasiGroup#components_19, quasiGroup#components_27, quasiGroup#components_35, quasiGroup#components_43, quasiGroup#components_51, quasiGroup#components_59])
-
---
-
-allDifferent([quasiGroup#components_4,quasiGroup#components_12,quasiGroup#components_20,quasiGroup#components_28,quasiGroup#components_36,quasiGroup#components_44,quasiGroup#components_52,quasiGroup#components_60;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_4, quasiGroup#components_12, quasiGroup#components_20, quasiGroup#components_28, quasiGroup#components_36, quasiGroup#components_44, quasiGroup#components_52, quasiGroup#components_60])
-
---
-
-allDifferent([quasiGroup#components_5,quasiGroup#components_13,quasiGroup#components_21,quasiGroup#components_29,quasiGroup#components_37,quasiGroup#components_45,quasiGroup#components_53,quasiGroup#components_61;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_5, quasiGroup#components_13, quasiGroup#components_21, quasiGroup#components_29, quasiGroup#components_37, quasiGroup#components_45, quasiGroup#components_53, quasiGroup#components_61])
-
---
-
-allDifferent([quasiGroup#components_6,quasiGroup#components_14,quasiGroup#components_22,quasiGroup#components_30,quasiGroup#components_38,quasiGroup#components_46,quasiGroup#components_54,quasiGroup#components_62;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_6, quasiGroup#components_14, quasiGroup#components_22, quasiGroup#components_30, quasiGroup#components_38, quasiGroup#components_46, quasiGroup#components_54, quasiGroup#components_62])
-
---
-
-allDifferent([quasiGroup#components_7,quasiGroup#components_15,quasiGroup#components_23,quasiGroup#components_31,quasiGroup#components_39,quasiGroup#components_47,quasiGroup#components_55,quasiGroup#components_63;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_7, quasiGroup#components_15, quasiGroup#components_23, quasiGroup#components_31, quasiGroup#components_39, quasiGroup#components_47, quasiGroup#components_55, quasiGroup#components_63])
-
---
-
-allDifferent([quasiGroup#components_8,quasiGroup#components_16,quasiGroup#components_24,quasiGroup#components_32,quasiGroup#components_40,quasiGroup#components_48,quasiGroup#components_56,quasiGroup#components_64;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([quasiGroup#components_8, quasiGroup#components_16, quasiGroup#components_24, quasiGroup#components_32, quasiGroup#components_40, quasiGroup#components_48, quasiGroup#components_56, quasiGroup#components_64])
-
---
-
 [ quasiGroup[quasiGroup[i, j], quasiGroup[j, i]] = i | i : nDomain, j : nDomain ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [quasiGroup[quasiGroup#components_1, quasiGroup#components_1] = 0,quasiGroup[quasiGroup#components_2, quasiGroup#components_9] = 0,quasiGroup[quasiGroup#components_3, quasiGroup#components_17] = 0,quasiGroup[quasiGroup#components_4, quasiGroup#components_25] = 0,quasiGroup[quasiGroup#components_5, quasiGroup#components_33] = 0,quasiGroup[quasiGroup#components_6, quasiGroup#components_41] = 0,quasiGroup[quasiGroup#components_7, quasiGroup#components_49] = 0,quasiGroup[quasiGroup#components_8, quasiGroup#components_57] = 0,quasiGroup[quasiGroup#components_9, quasiGroup#components_2] = 1,quasiGroup[quasiGroup#components_10, quasiGroup#components_10] = 1,quasiGroup[quasiGroup#components_11, quasiGroup#components_18] = 1,quasiGroup[quasiGroup#components_12, quasiGroup#components_26] = 1,quasiGroup[quasiGroup#components_13, quasiGroup#components_34] = 1,quasiGroup[quasiGroup#components_14, quasiGroup#components_42] = 1,quasiGroup[quasiGroup#components_15, quasiGroup#components_50] = 1,quasiGroup[quasiGroup#components_16, quasiGroup#components_58] = 1,quasiGroup[quasiGroup#components_17, quasiGroup#components_3] = 2,quasiGroup[quasiGroup#components_18, quasiGroup#components_11] = 2,quasiGroup[quasiGroup#components_19, quasiGroup#components_19] = 2,quasiGroup[quasiGroup#components_20, quasiGroup#components_27] = 2,quasiGroup[quasiGroup#components_21, quasiGroup#components_35] = 2,quasiGroup[quasiGroup#components_22, quasiGroup#components_43] = 2,quasiGroup[quasiGroup#components_23, quasiGroup#components_51] = 2,quasiGroup[quasiGroup#components_24, quasiGroup#components_59] = 2,quasiGroup[quasiGroup#components_25, quasiGroup#components_4] = 3,quasiGroup[quasiGroup#components_26, quasiGroup#components_12] = 3,quasiGroup[quasiGroup#components_27, quasiGroup#components_20] = 3,quasiGroup[quasiGroup#components_28, quasiGroup#components_28] = 3,quasiGroup[quasiGroup#components_29, quasiGroup#components_36] = 3,quasiGroup[quasiGroup#components_30, quasiGroup#components_44] = 3,quasiGroup[quasiGroup#components_31, quasiGroup#components_52] = 3,quasiGroup[quasiGroup#components_32, quasiGroup#components_60] = 3,quasiGroup[quasiGroup#components_33, quasiGroup#components_5] = 4,quasiGroup[quasiGroup#components_34, quasiGroup#components_13] = 4,quasiGroup[quasiGroup#components_35, quasiGroup#components_21] = 4,quasiGroup[quasiGroup#components_36, quasiGroup#components_29] = 4,quasiGroup[quasiGroup#components_37, quasiGroup#components_37] = 4,quasiGroup[quasiGroup#components_38, quasiGroup#components_45] = 4,quasiGroup[quasiGroup#components_39, quasiGroup#components_53] = 4,quasiGroup[quasiGroup#components_40, quasiGroup#components_61] = 4,quasiGroup[quasiGroup#components_41, quasiGroup#components_6] = 5,quasiGroup[quasiGroup#components_42, quasiGroup#components_14] = 5,quasiGroup[quasiGroup#components_43, quasiGroup#components_22] = 5,quasiGroup[quasiGroup#components_44, quasiGroup#components_30] = 5,quasiGroup[quasiGroup#components_45, quasiGroup#components_38] = 5,quasiGroup[quasiGroup#components_46, quasiGroup#components_46] = 5,quasiGroup[quasiGroup#components_47, quasiGroup#components_54] = 5,quasiGroup[quasiGroup#components_48, quasiGroup#components_62] = 5,quasiGroup[quasiGroup#components_49, quasiGroup#components_7] = 6,quasiGroup[quasiGroup#components_50, quasiGroup#components_15] = 6,quasiGroup[quasiGroup#components_51, quasiGroup#components_23] = 6,quasiGroup[quasiGroup#components_52, quasiGroup#components_31] = 6,quasiGroup[quasiGroup#components_53, quasiGroup#components_39] = 6,quasiGroup[quasiGroup#components_54, quasiGroup#components_47] = 6,quasiGroup[quasiGroup#components_55, quasiGroup#components_55] = 6,quasiGroup[quasiGroup#components_56, quasiGroup#components_63] = 6,quasiGroup[quasiGroup#components_57, quasiGroup#components_8] = 7,quasiGroup[quasiGroup#components_58, quasiGroup#components_16] = 7,quasiGroup[quasiGroup#components_59, quasiGroup#components_24] = 7,quasiGroup[quasiGroup#components_60, quasiGroup#components_32] = 7,quasiGroup[quasiGroup#components_61, quasiGroup#components_40] = 7,quasiGroup[quasiGroup#components_62, quasiGroup#components_48] = 7,quasiGroup[quasiGroup#components_63, quasiGroup#components_56] = 7,quasiGroup[quasiGroup#components_64, quasiGroup#components_64] = 7;int(1..)]
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
 
 --
 
@@ -7761,6 +7846,408 @@ ReifyImply(WatchedLiteral(quasiGroup#components_64,7), __191)
 
 --
 
+[ qgDiagonal[i] = quasiGroup[i, i] | i : nDomain ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[qgDiagonal#components_1 = quasiGroup#components_1,qgDiagonal#components_2 = quasiGroup#components_10,qgDiagonal#components_3 = quasiGroup#components_19,qgDiagonal#components_4 = quasiGroup#components_28,qgDiagonal#components_5 = quasiGroup#components_37,qgDiagonal#components_6 = quasiGroup#components_46,qgDiagonal#components_7 = quasiGroup#components_55,qgDiagonal#components_8 = quasiGroup#components_64;int(1..)]
+
+--
+
+[ allDifferent(quasiGroup[row,..]) | row : nDomain ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[allDifferent(quasiGroup[0,..]),allDifferent(quasiGroup[1,..]),allDifferent(quasiGroup[2,..]),allDifferent(quasiGroup[3,..]),allDifferent(quasiGroup[4,..]),allDifferent(quasiGroup[5,..]),allDifferent(quasiGroup[6,..]),allDifferent(quasiGroup[7,..]);int(1..)]
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup[0,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[0,..])
+
+--
+
+quasiGroup[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[1,..])
+
+--
+
+quasiGroup[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[2,..])
+
+--
+
+quasiGroup[3,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[3,..])
+
+--
+
+quasiGroup[4,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[4,..])
+
+--
+
+quasiGroup[5,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[5,..])
+
+--
+
+quasiGroup[6,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[6,..])
+
+--
+
+quasiGroup[7,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[7,..])
+
+--
+
+SafeSlice(quasiGroup,[0,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_1,quasiGroup#components_2,quasiGroup#components_3,quasiGroup#components_4,quasiGroup#components_5,quasiGroup#components_6,quasiGroup#components_7,quasiGroup#components_8;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_9,quasiGroup#components_10,quasiGroup#components_11,quasiGroup#components_12,quasiGroup#components_13,quasiGroup#components_14,quasiGroup#components_15,quasiGroup#components_16;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[2,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_17,quasiGroup#components_18,quasiGroup#components_19,quasiGroup#components_20,quasiGroup#components_21,quasiGroup#components_22,quasiGroup#components_23,quasiGroup#components_24;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[3,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_25,quasiGroup#components_26,quasiGroup#components_27,quasiGroup#components_28,quasiGroup#components_29,quasiGroup#components_30,quasiGroup#components_31,quasiGroup#components_32;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[4,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_33,quasiGroup#components_34,quasiGroup#components_35,quasiGroup#components_36,quasiGroup#components_37,quasiGroup#components_38,quasiGroup#components_39,quasiGroup#components_40;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[5,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_41,quasiGroup#components_42,quasiGroup#components_43,quasiGroup#components_44,quasiGroup#components_45,quasiGroup#components_46,quasiGroup#components_47,quasiGroup#components_48;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[6,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_49,quasiGroup#components_50,quasiGroup#components_51,quasiGroup#components_52,quasiGroup#components_53,quasiGroup#components_54,quasiGroup#components_55,quasiGroup#components_56;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[7,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_57,quasiGroup#components_58,quasiGroup#components_59,quasiGroup#components_60,quasiGroup#components_61,quasiGroup#components_62,quasiGroup#components_63,quasiGroup#components_64;int(1..)]
+
+--
+
+allDifferent([quasiGroup#components_1,quasiGroup#components_2,quasiGroup#components_3,quasiGroup#components_4,quasiGroup#components_5,quasiGroup#components_6,quasiGroup#components_7,quasiGroup#components_8;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_1, quasiGroup#components_2, quasiGroup#components_3, quasiGroup#components_4, quasiGroup#components_5, quasiGroup#components_6, quasiGroup#components_7, quasiGroup#components_8])
+
+--
+
+allDifferent([quasiGroup#components_9,quasiGroup#components_10,quasiGroup#components_11,quasiGroup#components_12,quasiGroup#components_13,quasiGroup#components_14,quasiGroup#components_15,quasiGroup#components_16;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_9, quasiGroup#components_10, quasiGroup#components_11, quasiGroup#components_12, quasiGroup#components_13, quasiGroup#components_14, quasiGroup#components_15, quasiGroup#components_16])
+
+--
+
+allDifferent([quasiGroup#components_17,quasiGroup#components_18,quasiGroup#components_19,quasiGroup#components_20,quasiGroup#components_21,quasiGroup#components_22,quasiGroup#components_23,quasiGroup#components_24;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_17, quasiGroup#components_18, quasiGroup#components_19, quasiGroup#components_20, quasiGroup#components_21, quasiGroup#components_22, quasiGroup#components_23, quasiGroup#components_24])
+
+--
+
+allDifferent([quasiGroup#components_25,quasiGroup#components_26,quasiGroup#components_27,quasiGroup#components_28,quasiGroup#components_29,quasiGroup#components_30,quasiGroup#components_31,quasiGroup#components_32;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_25, quasiGroup#components_26, quasiGroup#components_27, quasiGroup#components_28, quasiGroup#components_29, quasiGroup#components_30, quasiGroup#components_31, quasiGroup#components_32])
+
+--
+
+allDifferent([quasiGroup#components_33,quasiGroup#components_34,quasiGroup#components_35,quasiGroup#components_36,quasiGroup#components_37,quasiGroup#components_38,quasiGroup#components_39,quasiGroup#components_40;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_33, quasiGroup#components_34, quasiGroup#components_35, quasiGroup#components_36, quasiGroup#components_37, quasiGroup#components_38, quasiGroup#components_39, quasiGroup#components_40])
+
+--
+
+allDifferent([quasiGroup#components_41,quasiGroup#components_42,quasiGroup#components_43,quasiGroup#components_44,quasiGroup#components_45,quasiGroup#components_46,quasiGroup#components_47,quasiGroup#components_48;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_41, quasiGroup#components_42, quasiGroup#components_43, quasiGroup#components_44, quasiGroup#components_45, quasiGroup#components_46, quasiGroup#components_47, quasiGroup#components_48])
+
+--
+
+allDifferent([quasiGroup#components_49,quasiGroup#components_50,quasiGroup#components_51,quasiGroup#components_52,quasiGroup#components_53,quasiGroup#components_54,quasiGroup#components_55,quasiGroup#components_56;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_49, quasiGroup#components_50, quasiGroup#components_51, quasiGroup#components_52, quasiGroup#components_53, quasiGroup#components_54, quasiGroup#components_55, quasiGroup#components_56])
+
+--
+
+allDifferent([quasiGroup#components_57,quasiGroup#components_58,quasiGroup#components_59,quasiGroup#components_60,quasiGroup#components_61,quasiGroup#components_62,quasiGroup#components_63,quasiGroup#components_64;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_57, quasiGroup#components_58, quasiGroup#components_59, quasiGroup#components_60, quasiGroup#components_61, quasiGroup#components_62, quasiGroup#components_63, quasiGroup#components_64])
+
+--
+
+[ allDifferent(quasiGroup[..,col]) | col : nDomain ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[allDifferent(quasiGroup[..,0]),allDifferent(quasiGroup[..,1]),allDifferent(quasiGroup[..,2]),allDifferent(quasiGroup[..,3]),allDifferent(quasiGroup[..,4]),allDifferent(quasiGroup[..,5]),allDifferent(quasiGroup[..,6]),allDifferent(quasiGroup[..,7]);int(1..)]
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup
+   ~~> select_representation ([("ReprGeneral", 10000)])
+quasiGroup
+
+--
+
+quasiGroup[..,0]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[..,0])
+
+--
+
+quasiGroup[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[..,1])
+
+--
+
+quasiGroup[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[..,2])
+
+--
+
+quasiGroup[..,3]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[..,3])
+
+--
+
+quasiGroup[..,4]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[..,4])
+
+--
+
+quasiGroup[..,5]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[..,5])
+
+--
+
+quasiGroup[..,6]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[..,6])
+
+--
+
+quasiGroup[..,7]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(quasiGroup,[..,7])
+
+--
+
+SafeSlice(quasiGroup,[..,0])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_1,quasiGroup#components_9,quasiGroup#components_17,quasiGroup#components_25,quasiGroup#components_33,quasiGroup#components_41,quasiGroup#components_49,quasiGroup#components_57;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[..,1])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_2,quasiGroup#components_10,quasiGroup#components_18,quasiGroup#components_26,quasiGroup#components_34,quasiGroup#components_42,quasiGroup#components_50,quasiGroup#components_58;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[..,2])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_3,quasiGroup#components_11,quasiGroup#components_19,quasiGroup#components_27,quasiGroup#components_35,quasiGroup#components_43,quasiGroup#components_51,quasiGroup#components_59;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[..,3])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_4,quasiGroup#components_12,quasiGroup#components_20,quasiGroup#components_28,quasiGroup#components_36,quasiGroup#components_44,quasiGroup#components_52,quasiGroup#components_60;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[..,4])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_5,quasiGroup#components_13,quasiGroup#components_21,quasiGroup#components_29,quasiGroup#components_37,quasiGroup#components_45,quasiGroup#components_53,quasiGroup#components_61;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[..,5])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_6,quasiGroup#components_14,quasiGroup#components_22,quasiGroup#components_30,quasiGroup#components_38,quasiGroup#components_46,quasiGroup#components_54,quasiGroup#components_62;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[..,6])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_7,quasiGroup#components_15,quasiGroup#components_23,quasiGroup#components_31,quasiGroup#components_39,quasiGroup#components_47,quasiGroup#components_55,quasiGroup#components_63;int(1..)]
+
+--
+
+SafeSlice(quasiGroup,[..,7])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[quasiGroup#components_8,quasiGroup#components_16,quasiGroup#components_24,quasiGroup#components_32,quasiGroup#components_40,quasiGroup#components_48,quasiGroup#components_56,quasiGroup#components_64;int(1..)]
+
+--
+
+allDifferent([quasiGroup#components_1,quasiGroup#components_9,quasiGroup#components_17,quasiGroup#components_25,quasiGroup#components_33,quasiGroup#components_41,quasiGroup#components_49,quasiGroup#components_57;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_1, quasiGroup#components_9, quasiGroup#components_17, quasiGroup#components_25, quasiGroup#components_33, quasiGroup#components_41, quasiGroup#components_49, quasiGroup#components_57])
+
+--
+
+allDifferent([quasiGroup#components_2,quasiGroup#components_10,quasiGroup#components_18,quasiGroup#components_26,quasiGroup#components_34,quasiGroup#components_42,quasiGroup#components_50,quasiGroup#components_58;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_2, quasiGroup#components_10, quasiGroup#components_18, quasiGroup#components_26, quasiGroup#components_34, quasiGroup#components_42, quasiGroup#components_50, quasiGroup#components_58])
+
+--
+
+allDifferent([quasiGroup#components_3,quasiGroup#components_11,quasiGroup#components_19,quasiGroup#components_27,quasiGroup#components_35,quasiGroup#components_43,quasiGroup#components_51,quasiGroup#components_59;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_3, quasiGroup#components_11, quasiGroup#components_19, quasiGroup#components_27, quasiGroup#components_35, quasiGroup#components_43, quasiGroup#components_51, quasiGroup#components_59])
+
+--
+
+allDifferent([quasiGroup#components_4,quasiGroup#components_12,quasiGroup#components_20,quasiGroup#components_28,quasiGroup#components_36,quasiGroup#components_44,quasiGroup#components_52,quasiGroup#components_60;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_4, quasiGroup#components_12, quasiGroup#components_20, quasiGroup#components_28, quasiGroup#components_36, quasiGroup#components_44, quasiGroup#components_52, quasiGroup#components_60])
+
+--
+
+allDifferent([quasiGroup#components_5,quasiGroup#components_13,quasiGroup#components_21,quasiGroup#components_29,quasiGroup#components_37,quasiGroup#components_45,quasiGroup#components_53,quasiGroup#components_61;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_5, quasiGroup#components_13, quasiGroup#components_21, quasiGroup#components_29, quasiGroup#components_37, quasiGroup#components_45, quasiGroup#components_53, quasiGroup#components_61])
+
+--
+
+allDifferent([quasiGroup#components_6,quasiGroup#components_14,quasiGroup#components_22,quasiGroup#components_30,quasiGroup#components_38,quasiGroup#components_46,quasiGroup#components_54,quasiGroup#components_62;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_6, quasiGroup#components_14, quasiGroup#components_22, quasiGroup#components_30, quasiGroup#components_38, quasiGroup#components_46, quasiGroup#components_54, quasiGroup#components_62])
+
+--
+
+allDifferent([quasiGroup#components_7,quasiGroup#components_15,quasiGroup#components_23,quasiGroup#components_31,quasiGroup#components_39,quasiGroup#components_47,quasiGroup#components_55,quasiGroup#components_63;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_7, quasiGroup#components_15, quasiGroup#components_23, quasiGroup#components_31, quasiGroup#components_39, quasiGroup#components_47, quasiGroup#components_55, quasiGroup#components_63])
+
+--
+
+allDifferent([quasiGroup#components_8,quasiGroup#components_16,quasiGroup#components_24,quasiGroup#components_32,quasiGroup#components_40,quasiGroup#components_48,quasiGroup#components_56,quasiGroup#components_64;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([quasiGroup#components_8, quasiGroup#components_16, quasiGroup#components_24, quasiGroup#components_32, quasiGroup#components_40, quasiGroup#components_48, quasiGroup#components_56, quasiGroup#components_64])
+
+--
+
 [ sum([quasiGroup[i, (n - 1)],2;int(1..)]) >= i | i : nDomain ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [sum([quasiGroup#components_8,2;int(1..)]) >= 0,sum([quasiGroup#components_16,2;int(1..)]) >= 1,sum([quasiGroup#components_24,2;int(1..)]) >= 2,sum([quasiGroup#components_32,2;int(1..)]) >= 3,sum([quasiGroup#components_40,2;int(1..)]) >= 4,sum([quasiGroup#components_48,2;int(1..)]) >= 5,sum([quasiGroup#components_56,2;int(1..)]) >= 6,sum([quasiGroup#components_64,2;int(1..)]) >= 7;int(1..)]
@@ -7821,6 +8308,14 @@ letting n be 8
 letting nDomain be domain int(0..((n - 1)))
 find quasiGroup: matrix indexed by [nDomain, nDomain] of nDomain
 find qgDiagonal: matrix indexed by [nDomain] of nDomain
+find qgDiagonal#components_1: int(0..7)
+find qgDiagonal#components_2: int(0..7)
+find qgDiagonal#components_3: int(0..7)
+find qgDiagonal#components_4: int(0..7)
+find qgDiagonal#components_5: int(0..7)
+find qgDiagonal#components_6: int(0..7)
+find qgDiagonal#components_7: int(0..7)
+find qgDiagonal#components_8: int(0..7)
 find quasiGroup#components_1: int(0..7)
 find quasiGroup#components_2: int(0..7)
 find quasiGroup#components_3: int(0..7)
@@ -7885,14 +8380,6 @@ find quasiGroup#components_61: int(0..7)
 find quasiGroup#components_62: int(0..7)
 find quasiGroup#components_63: int(0..7)
 find quasiGroup#components_64: int(0..7)
-find qgDiagonal#components_1: int(0..7)
-find qgDiagonal#components_2: int(0..7)
-find qgDiagonal#components_3: int(0..7)
-find qgDiagonal#components_4: int(0..7)
-find qgDiagonal#components_5: int(0..7)
-find qgDiagonal#components_6: int(0..7)
-find qgDiagonal#components_7: int(0..7)
-find qgDiagonal#components_8: int(0..7)
 findAux __0: int(1..64)
 findAux __1: int(0..7)
 findAux __2: int(1..64)

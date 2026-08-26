@@ -1,0 +1,78 @@
+Model before rewriting:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+or([or([t,z = x;int(1..)]),y;int(1..)])
+
+--
+
+or([or([t,z = x;int(1..)]),y;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([t,z = x,y;int(1..)])
+
+--
+
+z = x
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (¬z \/ ¬x \/ __0)
+  (z \/ x \/ __0)
+  (z \/ ¬x \/ ¬__0)
+  (¬z \/ x \/ ¬__0)
+
+--
+
+or([t,__0,y;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new clauses:
+  (¬t \/ __1)
+  (¬__0 \/ __1)
+  (¬y \/ __1)
+  (¬__1 \/ t \/ __0 \/ y)
+
+--
+
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__1)
+
+--
+
+Final model:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+true
+
+clauses:
+
+(¬z \/ ¬x \/ __0),
+(z \/ x \/ __0),
+(z \/ ¬x \/ ¬__0),
+(¬z \/ x \/ ¬__0),
+(¬t \/ __1),
+(¬__0 \/ __1),
+(¬y \/ __1),
+(¬__1 \/ t \/ __0 \/ y),
+(__1)
+

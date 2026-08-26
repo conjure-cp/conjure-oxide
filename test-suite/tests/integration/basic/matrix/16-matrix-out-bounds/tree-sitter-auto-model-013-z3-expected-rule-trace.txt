@@ -1,0 +1,226 @@
+Model before rewriting:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+m[sum([a,b;int(1..)])] = c
+
+--
+
+c
+   ~~> select_representation ([("ReprGeneral", 10000)])
+c
+new variables:
+  find c#lia_1: int(1..2)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#components_1: int(1..2)
+  find m#components_2: int(1..2)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(-1..2)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(-1..2)
+
+--
+
+m[sum([a,b;int(1..)])] = c
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+m[sum([a,b;int(1..)])] = c
+new variables:
+  find m#components_1#lia_1: int(1..2)
+  find m#components_2#lia_1: int(1..2)
+
+--
+
+c
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+c#lia_1
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+m[sum([a#bv_1,b#bv_1;int(1..)])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[sum([a#bv_1,b#bv_1;int(1..)])]) @ __inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))}
+
+--
+
+{SafeIndex(m,[sum([a#bv_1,b#bv_1;int(1..)])]) @ __inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))} = c#lia_1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(m,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#lia_1 @ __inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))}
+
+--
+
+{SafeIndex(m,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#lia_1 @ __inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m,[sum([a#bv_1,b#bv_1;int(1..)])]) = c#lia_1,__inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2));int(1..)])
+
+--
+
+SafeIndex(m,[sum([a#bv_1,b#bv_1;int(1..)])])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([m#components_1,m#components_2;int(1..)],[sum([product([1,(__0 - 1);int(1..)]),1;int(1..)])])
+new variables:
+  findAux __0: int(-2..4)
+new constraints:
+  __0 =aux sum([a#bv_1,b#bv_1;int(1..)])
+
+--
+
+__0 =aux sum([a#bv_1,b#bv_1;int(1..)])
+   ~~> select_aux_declaration_representation ([("ReprGeneral", 10000)])
+__0 =aux sum([a#bv_1,b#bv_1;int(1..)])
+new variables:
+  findAux __0#lia_1: int(-2..4)
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+m#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#components_1#lia_1
+
+--
+
+m#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#components_2#lia_1
+
+--
+
+__0
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+__0#lia_1
+
+--
+
+product([1,(__0#lia_1 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(__0#lia_1 - 1);int(1..)])
+
+--
+
+product([(__0#lia_1 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__0#lia_1 - 1)
+
+--
+
+(__0#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__0#lia_1,-(1);int(1..)])
+
+--
+
+sum([sum([__0#lia_1,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__0#lia_1,-1,1;int(1..)])
+
+--
+
+sum([__0#lia_1;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__0#lia_1
+
+--
+
+__0 =aux sum([a#bv_1,b#bv_1;int(1..)])
+   ~~> aux_declaration_is_equality ([("Smt", 2000)])
+__0 = sum([a#bv_1,b#bv_1;int(1..)])
+
+--
+
+__0
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+__0#lia_1
+
+--
+
+__inDomain(sum([a#bv_1,b#bv_1;int(1..)]),int(1..2))
+   ~~> flatten_indomain ([("Smt", 1000)])
+or([and([sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)]);int(1..)])
+
+--
+
+or([and([sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)])
+
+--
+
+and([SafeIndex([m#components_1#lia_1,m#components_2#lia_1;int(1..)],[__0#lia_1]) = c#lia_1,and([sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SafeIndex([m#components_1#lia_1,m#components_2#lia_1;int(1..)],[__0#lia_1]) = c#lia_1,sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)])
+
+--
+
+Final model:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find c#lia_1: int(1..2)
+find m#components_1: int(1..2)
+find m#components_2: int(1..2)
+find a#bv_1: int(-1..2)
+find b#bv_1: int(-1..2)
+find m#components_1#lia_1: int(1..2)
+find m#components_2#lia_1: int(1..2)
+findAux __0: int(-2..4)
+findAux __0#lia_1: int(-2..4)
+
+such that
+
+and([SafeIndex([m#components_1#lia_1,m#components_2#lia_1;int(1..)],[__0#lia_1]) = c#lia_1,sum([a#bv_1,b#bv_1;int(1..)]) >= 1,sum([a#bv_1,b#bv_1;int(1..)]) <= 2;int(1..)]),
+__0#lia_1 = sum([a#bv_1,b#bv_1;int(1..)])
+

@@ -1,0 +1,48 @@
+Model before rewriting:
+
+letting s be permutation(3,4)
+letting sn be permutation(1,4)(2,3)
+find b: bool
+
+such that
+
+b = s = sn
+
+--
+
+b = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (b \/ __0)
+  (¬b \/ ¬__0)
+
+--
+
+__0
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+letting s be permutation(3,4)
+letting sn be permutation(1,4)(2,3)
+find b: bool
+findAux __0: bool
+
+such that
+
+true
+
+clauses:
+
+(b \/ __0),
+(¬b \/ ¬__0),
+(__0)
+

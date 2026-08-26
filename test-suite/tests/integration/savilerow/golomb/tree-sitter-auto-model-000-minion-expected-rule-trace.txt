@@ -13,13 +13,9 @@ __0 =aux ruler[ticks]
 
 --
 
-and([ (and([i < j,j <= ticks;int(1..)])) -> (ruler[i] < ruler[j]) | i : TICKS, j : TICKS ]),
-and([ (and([and([i < j,k < l;int(1..)]),j != l;int(1..)])) -> ((ruler[j] - ruler[i]) != (ruler[l] - ruler[k])) | i : TICKS, j : TICKS, k : TICKS, l : TICKS ]),
-__0 =aux ruler[5]
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-and([ (and([i < j,j <= ticks;int(1..)])) -> (ruler[i] < ruler[j]) | i : TICKS, j : TICKS ]),
-and([ (and([and([i < j,k < l;int(1..)]),j != l;int(1..)])) -> ((ruler[j] - ruler[i]) != (ruler[l] - ruler[k])) | i : TICKS, j : TICKS, k : TICKS, l : TICKS ]),
-__0 =aux ruler[5]
+ruler
+   ~~> select_representation ([("ReprGeneral", 10000)])
+ruler
 new variables:
   find ruler#components_1: int(0..25)
   find ruler#components_2: int(0..25)
@@ -50,21 +46,21 @@ true != (and([and([i < j,k < l;int(1..)]),j != l;int(1..)])) -> (__1)
 
 --
 
-and([and([i < j,k < l;int(1..)]),j != l;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([i < j,k < l,j != l;int(1..)])
-
---
-
-true != (and([i < j,k < l,j != l;int(1..)])) -> (__1)
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-true != (and([i < j,k < l,j != l;int(1..)])) -> (__1)
+true != (and([and([i < j,k < l;int(1..)]),j != l;int(1..)])) -> (__1)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true != (and([and([i < j,k < l;int(1..)]),j != l;int(1..)])) -> (__1)
 new variables:
   findAux __0#components_1: int(0..25)
   findAux __0#components_2: int(0..25)
   findAux __0#components_3: int(0..25)
   findAux __0#components_4: int(0..25)
   findAux __0#components_5: int(0..25)
+
+--
+
+and([and([i < j,k < l;int(1..)]),j != l;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([i < j,k < l,j != l;int(1..)])
 
 --
 

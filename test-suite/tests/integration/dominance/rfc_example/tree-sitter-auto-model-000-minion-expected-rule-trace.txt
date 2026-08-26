@@ -19,7 +19,7 @@ sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
 total_cost = sum([ cost[i] | i : int(1..10), selected[i] ]),
 total_cost = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
 total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
 total_cost = sum([ cost[i] | i : int(1..10), selected[i] ]),
 total_cost = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
@@ -35,6 +35,18 @@ new variables:
   find selected#components_7: bool
   find selected#components_8: bool
   find selected#components_9: bool
+
+--
+
+sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
+total_cost = sum([ cost[i] | i : int(1..10), selected[i] ]),
+total_cost = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
+total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2,
+total_cost = sum([ cost[i] | i : int(1..10), selected[i] ]),
+total_cost = sum([ product([toInt(selected[i]),cost[i];int(1..)]) | i : int(1..10) ]),
+total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
 
 --
 
@@ -513,6 +525,16 @@ letting carbon_footprint be [1,7,2,6,8,3,5,9,4,10;int(1..10)]
 find selected: matrix indexed by [int(1..10)] of bool
 find total_cost: int(0..1000)
 find total_carbon: int(0..1000)
+find selected#components_1: bool
+find selected#components_2: bool
+find selected#components_3: bool
+find selected#components_4: bool
+find selected#components_5: bool
+find selected#components_6: bool
+find selected#components_7: bool
+find selected#components_8: bool
+find selected#components_9: bool
+find selected#components_10: bool
 letting cost#components_1 be 9
 letting cost#components_2 be 4
 letting cost#components_3 be 7
@@ -533,16 +555,6 @@ letting carbon_footprint#components_7 be 5
 letting carbon_footprint#components_8 be 9
 letting carbon_footprint#components_9 be 4
 letting carbon_footprint#components_10 be 10
-find selected#components_1: bool
-find selected#components_2: bool
-find selected#components_3: bool
-find selected#components_4: bool
-find selected#components_5: bool
-find selected#components_6: bool
-find selected#components_7: bool
-find selected#components_8: bool
-find selected#components_9: bool
-find selected#components_10: bool
 findAux __0: int(0..1)
 findAux __1: int(0..1)
 findAux __2: int(0..1)

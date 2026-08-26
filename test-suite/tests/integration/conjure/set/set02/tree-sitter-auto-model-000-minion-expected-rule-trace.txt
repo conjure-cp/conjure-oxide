@@ -20,9 +20,36 @@ new constraints:
 
 --
 
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+new variables:
+  find x#explicit_1#components_1: int(1..3)
+  find x#explicit_1#components_2: int(1..3)
+
+--
+
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+
+--
+
 1 in x
    ~~> in_explicit ([("ReprGeneral", 9500)])
 or([and([1 <= 2,SafeIndex(x#explicit_1,[1]) = 1;int(1..)]),and([2 <= 2,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]);int(1..)])
+
+--
+
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+
+--
+
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
 
 --
 
@@ -41,21 +68,6 @@ SafeIndex(x#explicit_1,[1]) = 1
 and([SafeIndex(x#explicit_1,[2]) = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 SafeIndex(x#explicit_1,[2]) = 1
-
---
-
-or([SafeIndex(x#explicit_1,[1]) = 1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]),
-true,
-true
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-or([SafeIndex(x#explicit_1,[1]) = 1,SafeIndex(x#explicit_1,[2]) = 1;int(1..)]),
-([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]),
-true,
-true
-new variables:
-  find x#explicit_1#components_1: int(1..3)
-  find x#explicit_1#components_2: int(1..3)
 
 --
 

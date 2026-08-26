@@ -53,6 +53,21 @@ x#as_relation_2
 
 --
 
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+new variables:
+  find x#as_relation_3#components_1: int(13, 17)
+  find x#as_relation_3#components_2: int(13, 17)
+
+--
+
+x#as_relation_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_3
+
+--
+
 x#as_relation_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#as_relation_2
@@ -97,6 +112,10 @@ SafeIndex(SafeIndex(x#as_relation_2,[2]),[1]) = true,
 SafeIndex(SafeIndex(x#as_relation_2,[2]),[2]) = SafeIndex(x#as_relation_3,[2]),
 sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13, 17) ]) = 2
 new variables:
+  find x#as_relation_1#occurrence_1#components_1: bool
+  find x#as_relation_1#occurrence_1#components_2: bool
+  find x#as_relation_1#occurrence_1#components_3: bool
+  find x#as_relation_1#occurrence_1#components_4: bool
   find x#as_relation_2#components_1#packed_1: int(0..3)
   find x#as_relation_2#components_2#packed_1: int(0..3)
 
@@ -108,9 +127,21 @@ SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[1])
 
 --
 
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
 SafeIndex(x#as_relation_2,[2]) in x#as_relation_1
    ~~> membership_relation_occurrence ([("Base", 8650)])
 SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[2]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[2]),[2])])
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
 
 --
 
@@ -123,35 +154,6 @@ SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[2])
 [ (SafeIndex((i0,i1),[1]) = SafeIndex(j,[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex(j,[2])) | i0 : bool, i1 : int(13, 17), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j <- x#as_relation_1 ]
    ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
 [ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13, 17), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13, 17), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]
-
---
-
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13, 17), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13, 17), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[1]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[1]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[1]),[1]) = false,
-SafeIndex(SafeIndex(x#as_relation_2,[1]),[2]) = SafeIndex(x#as_relation_3,[1]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[2]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[2]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[2]),[1]) = true,
-SafeIndex(SafeIndex(x#as_relation_2,[2]),[2]) = SafeIndex(x#as_relation_3,[2]),
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13, 17) ]) = 2
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-true,
-and([ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : bool, i1 : int(13, 17), SafeIndex(x#as_relation_1#occurrence_1,[i0, i1]), j0 : bool, j1 : int(13, 17), SafeIndex(x#as_relation_1#occurrence_1,[j0, j1]) ]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[1]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[1]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[1]),[1]) = false,
-SafeIndex(SafeIndex(x#as_relation_2,[1]),[2]) = SafeIndex(x#as_relation_3,[1]),
-SafeIndex(x#as_relation_1#occurrence_1,[SafeIndex(SafeIndex(x#as_relation_2,[2]),[1]), SafeIndex(SafeIndex(x#as_relation_2,[2]),[2])]),
-SafeIndex(SafeIndex(x#as_relation_2,[2]),[1]) = true,
-SafeIndex(SafeIndex(x#as_relation_2,[2]),[2]) = SafeIndex(x#as_relation_3,[2]),
-sum([ toInt(SafeIndex(x#as_relation_1#occurrence_1,[i0, i1])) | i0 : bool, i1 : int(13, 17) ]) = 2
-new variables:
-  find x#as_relation_3#components_1: int(13, 17)
-  find x#as_relation_3#components_2: int(13, 17)
-  find x#as_relation_1#occurrence_1#components_1: bool
-  find x#as_relation_1#occurrence_1#components_2: bool
-  find x#as_relation_1#occurrence_1#components_3: bool
-  find x#as_relation_1#occurrence_1#components_4: bool
 
 --
 
@@ -237,54 +239,6 @@ __0
 
 --
 
-SafeIndex(x#as_relation_2,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#as_relation_2#components_1
-
---
-
-x#as_relation_2#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_2#components_1
-
---
-
-SafeIndex(x#as_relation_2#components_1,[1])
-   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
-SafeIndex([false,true;int(1..)],[sum([(x#as_relation_2#components_1#packed_1 / 2),1;int(1..)])])
-
---
-
-(x#as_relation_2#components_1#packed_1 / 2)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(x#as_relation_2#components_1#packed_1, 2) @ 2 != 0}
-
---
-
-SafeIndex(x#as_relation_2,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#as_relation_2#components_1
-
---
-
-x#as_relation_2#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#as_relation_2#components_1
-
---
-
-SafeIndex(x#as_relation_2#components_1,[2])
-   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
-SafeIndex([13,17;int(1..)],[sum([x#as_relation_2#components_1#packed_1 % 2,1;int(1..)])])
-
---
-
-x#as_relation_2#components_1#packed_1 % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(x#as_relation_2#components_1#packed_1,2) @ 2 != 0}
-
---
-
 SafeIndex(x#as_relation_2,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#as_relation_2#components_2
@@ -352,6 +306,54 @@ product([__1;int(1..)])
 product([__1;int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
 __1
+
+--
+
+SafeIndex(x#as_relation_2,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_1
+
+--
+
+x#as_relation_2#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_2#components_1
+
+--
+
+SafeIndex(x#as_relation_2#components_1,[1])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+SafeIndex([false,true;int(1..)],[sum([(x#as_relation_2#components_1#packed_1 / 2),1;int(1..)])])
+
+--
+
+(x#as_relation_2#components_1#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#as_relation_2#components_1#packed_1, 2) @ 2 != 0}
+
+--
+
+SafeIndex(x#as_relation_2,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#as_relation_2#components_1
+
+--
+
+x#as_relation_2#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_2#components_1
+
+--
+
+SafeIndex(x#as_relation_2#components_1,[2])
+   ~~> tuple_packed_index_lit ([("ReprTuplePacked", 9700)])
+SafeIndex([13,17;int(1..)],[sum([x#as_relation_2#components_1#packed_1 % 2,1;int(1..)])])
+
+--
+
+x#as_relation_2#components_1#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#as_relation_2#components_1#packed_1,2) @ 2 != 0}
 
 --
 
@@ -989,6 +991,54 @@ WatchedLiteral(__21,false)
 
 --
 
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
 and([!(SafeIndex(x#as_relation_1#occurrence_1,[false, 17]));int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 !(SafeIndex(x#as_relation_1#occurrence_1,[false, 17]))
@@ -1115,6 +1165,30 @@ WatchedLiteral(x#as_relation_1#occurrence_1#components_3,false)
 
 --
 
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
+x#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#as_relation_1#occurrence_1
+
+--
+
 SafeIndex(x#as_relation_1#occurrence_1,[false, 13])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#as_relation_1#occurrence_1#components_1
@@ -1154,14 +1228,14 @@ find x#as_relation_3: matrix indexed by [int(1..2)] of int(13, 17)
 find x#as_relation_1#occurrence_1: matrix indexed by [bool, int(13, 17)] of bool
 find x#as_relation_2#components_1: tuple (bool, int(13, 17))
 find x#as_relation_2#components_2: tuple (bool, int(13, 17))
-find x#as_relation_2#components_1#packed_1: int(0..3)
-find x#as_relation_2#components_2#packed_1: int(0..3)
 find x#as_relation_3#components_1: int(13, 17)
 find x#as_relation_3#components_2: int(13, 17)
 find x#as_relation_1#occurrence_1#components_1: bool
 find x#as_relation_1#occurrence_1#components_2: bool
 find x#as_relation_1#occurrence_1#components_3: bool
 find x#as_relation_1#occurrence_1#components_4: bool
+find x#as_relation_2#components_1#packed_1: int(0..3)
+find x#as_relation_2#components_2#packed_1: int(0..3)
 findAux __0: int(0..1)
 findAux __1: int(0..1)
 findAux __2: int(1..4)

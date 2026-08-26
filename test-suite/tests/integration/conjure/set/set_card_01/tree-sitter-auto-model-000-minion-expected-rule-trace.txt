@@ -24,9 +24,25 @@ s
 
 --
 
+|s| in s,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+|s| in s,
+true
+new variables:
+  find s#explicit_1#components_1: int(1..2)
+
+--
+
 |s| in s
    ~~> in_explicit ([("ReprGeneral", 9500)])
 or([and([1 <= 1,SafeIndex(s#explicit_1,[1]) = |s|;int(1..)]);int(1..)])
+
+--
+
+s#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s#explicit_1
 
 --
 
@@ -45,16 +61,6 @@ and([SafeIndex(s#explicit_1,[1]) = 1;int(1..)])
 and([SafeIndex(s#explicit_1,[1]) = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 SafeIndex(s#explicit_1,[1]) = 1
-
---
-
-SafeIndex(s#explicit_1,[1]) = 1,
-true
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
-SafeIndex(s#explicit_1,[1]) = 1,
-true
-new variables:
-  find s#explicit_1#components_1: int(1..2)
 
 --
 

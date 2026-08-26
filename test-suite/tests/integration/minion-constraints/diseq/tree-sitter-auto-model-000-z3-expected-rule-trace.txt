@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(1..3)
+
+such that
+
+x != y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1..3)
+
+--
+
+x != y
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x != y
+new variables:
+  find y#bv_1: int(1..3)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(1..3)
+find x#bv_1: int(1..3)
+find y#bv_1: int(1..3)
+
+such that
+
+x#bv_1 != y#bv_1
+

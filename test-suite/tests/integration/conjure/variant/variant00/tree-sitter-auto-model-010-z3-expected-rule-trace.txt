@@ -1,0 +1,398 @@
+Model before rewriting:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find y1: V
+find y2: V
+find z: V
+find t1: V
+find t2: V
+find someInt: int(0)
+
+such that
+
+x[a] = true,
+y1 = variant{a = false},
+y2 = variant{b = 4},
+x = z,
+t1 = variant{b = someInt},
+t2 = variant{b = t1[b]}
+
+--
+
+y1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y1
+new variables:
+  find y1#packed_1: int(0..3)
+
+--
+
+y2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y2
+new variables:
+  find y2#packed_1: int(0..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..3)
+
+--
+
+x = z
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x = z
+new variables:
+  find z#packed_1: int(0..3)
+
+--
+
+t1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1
+new variables:
+  find t1#packed_1: int(0..3)
+
+--
+
+t2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t2
+new variables:
+  find t2#packed_1: int(0..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+someInt
+   ~~> select_representation ([("ReprGeneral", 10000)])
+someInt
+new variables:
+  find someInt#lia_1: int(0)
+
+--
+
+t1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1
+
+--
+
+x[a] = true,
+y1 = variant{a = false},
+y2 = variant{b = 4},
+x = z,
+t1 = variant{b = someInt},
+t2 = variant{b = t1[b]}
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x[a] = true,
+y1 = variant{a = false},
+y2 = variant{b = 4},
+x = z,
+t1 = variant{b = someInt},
+t2 = variant{b = t1[b]}
+new variables:
+  find t1#packed_1#bv_1: int(0..3)
+  find t2#packed_1#bv_1: int(0..3)
+  find x#packed_1#bv_1: int(0..3)
+  find y1#packed_1#bv_1: int(0..3)
+  find y2#packed_1#bv_1: int(0..3)
+  find z#packed_1#bv_1: int(0..3)
+
+--
+
+x[a] = true
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([x#packed_1 = 0,true = false;int(1..)]),and([x#packed_1 = 1,true = true;int(1..)]);int(1..)])
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+y1 = variant{a = false}
+   ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
+or([and([y1#packed_1 = 0,false = false;int(1..)]),and([y1#packed_1 = 1,false = true;int(1..)]);int(1..)])
+
+--
+
+y1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y1#packed_1
+
+--
+
+y2 = variant{b = 4}
+   ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
+or([and([y2#packed_1 = 2,4 = 0;int(1..)]),and([y2#packed_1 = 3,4 = 4;int(1..)]);int(1..)])
+
+--
+
+y2#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y2#packed_1
+
+--
+
+x = z
+   ~~> variant_packed_var_eq_var ([("ReprVariantPacked", 9700)])
+x#packed_1 = z#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x#packed_1 = z#packed_1
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x#packed_1 = z#packed_1
+
+--
+
+t1 = variant{b = someInt}
+   ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
+or([and([t1#packed_1 = 2,someInt = 0;int(1..)]),and([t1#packed_1 = 3,someInt = 4;int(1..)]);int(1..)])
+
+--
+
+t1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1#packed_1
+
+--
+
+t1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1#packed_1
+
+--
+
+t2 = variant{b = t1[b]}
+   ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
+or([and([t2#packed_1 = 2,t1[b] = 0;int(1..)]),and([t2#packed_1 = 3,t1[b] = 4;int(1..)]);int(1..)])
+
+--
+
+t2#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t2#packed_1
+
+--
+
+t2#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t2#packed_1
+
+--
+
+t1[b] = 0
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([t1#packed_1 = 2,0 = 0;int(1..)]),and([t1#packed_1 = 3,0 = 4;int(1..)]);int(1..)])
+
+--
+
+t1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1#packed_1
+
+--
+
+t1[b] = 4
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([t1#packed_1 = 2,4 = 0;int(1..)]),and([t1#packed_1 = 3,4 = 4;int(1..)]);int(1..)])
+
+--
+
+t1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1#packed_1
+
+--
+
+x#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#packed_1#bv_1
+
+--
+
+z#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#packed_1#bv_1
+
+--
+
+x#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#packed_1#bv_1
+
+--
+
+y1#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y1#packed_1#bv_1
+
+--
+
+y2#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y2#packed_1#bv_1
+
+--
+
+t1#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+t1#packed_1#bv_1
+
+--
+
+t1#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+t1#packed_1#bv_1
+
+--
+
+t2#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+t2#packed_1#bv_1
+
+--
+
+t2#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+t2#packed_1#bv_1
+
+--
+
+someInt
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+someInt#lia_1
+
+--
+
+someInt
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+someInt#lia_1
+
+--
+
+t1#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+t1#packed_1#bv_1
+
+--
+
+t1#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+t1#packed_1#bv_1
+
+--
+
+or([and([x#packed_1#bv_1 = 1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#packed_1#bv_1 = 1;int(1..)])
+
+--
+
+or([and([y1#packed_1#bv_1 = 0;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y1#packed_1#bv_1 = 0;int(1..)])
+
+--
+
+or([and([y2#packed_1#bv_1 = 3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([y2#packed_1#bv_1 = 3;int(1..)])
+
+--
+
+and([x#packed_1#bv_1 = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#packed_1#bv_1 = 1
+
+--
+
+and([y1#packed_1#bv_1 = 0;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+y1#packed_1#bv_1 = 0
+
+--
+
+and([y2#packed_1#bv_1 = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+y2#packed_1#bv_1 = 3
+
+--
+
+or([and([t1#packed_1#bv_1 = 2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([t1#packed_1#bv_1 = 2;int(1..)])
+
+--
+
+or([and([t1#packed_1#bv_1 = 3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([t1#packed_1#bv_1 = 3;int(1..)])
+
+--
+
+and([t1#packed_1#bv_1 = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+t1#packed_1#bv_1 = 2
+
+--
+
+and([t1#packed_1#bv_1 = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+t1#packed_1#bv_1 = 3
+
+--
+
+Final model:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find y1: V
+find y2: V
+find z: V
+find t1: V
+find t2: V
+find someInt: int(0)
+find y1#packed_1: int(0..3)
+find y2#packed_1: int(0..3)
+find x#packed_1: int(0..3)
+find z#packed_1: int(0..3)
+find t1#packed_1: int(0..3)
+find t2#packed_1: int(0..3)
+find someInt#lia_1: int(0)
+find y1#packed_1#bv_1: int(0..3)
+find y2#packed_1#bv_1: int(0..3)
+find x#packed_1#bv_1: int(0..3)
+find z#packed_1#bv_1: int(0..3)
+find t1#packed_1#bv_1: int(0..3)
+find t2#packed_1#bv_1: int(0..3)
+
+such that
+
+x#packed_1#bv_1 = 1,
+y1#packed_1#bv_1 = 0,
+y2#packed_1#bv_1 = 3,
+x#packed_1#bv_1 = z#packed_1#bv_1,
+or([and([t1#packed_1#bv_1 = 2,someInt#lia_1 = 0;int(1..)]),and([t1#packed_1#bv_1 = 3,someInt#lia_1 = 4;int(1..)]);int(1..)]),
+or([and([t2#packed_1#bv_1 = 2,t1#packed_1#bv_1 = 2;int(1..)]),and([t2#packed_1#bv_1 = 3,t1#packed_1#bv_1 = 3;int(1..)]);int(1..)])
+

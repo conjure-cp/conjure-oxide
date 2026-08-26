@@ -15,6 +15,21 @@ new constraints:
 
 --
 
+f#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#explicit_2
+new variables:
+  find f#explicit_2#components_1: bool
+  find f#explicit_2#components_2: bool
+
+--
+
+f#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#explicit_2
+
+--
+
 true,
 sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2]));int(1..)]) >= 1
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
@@ -44,14 +59,12 @@ true,
 sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2]));int(1..)]) >= 1,
 true,
 true
-   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true,
 sum([toInt(SafeIndex(f#explicit_2,[1])),toInt(SafeIndex(f#explicit_2,[2]));int(1..)]) >= 1,
 true,
 true
 new variables:
-  find f#explicit_2#components_1: bool
-  find f#explicit_2#components_2: bool
   find f#explicit_1#components_1#explicit_1#components_1: int(1..2)
   find f#explicit_1#components_2#explicit_1#components_1: int(1..2)
 
@@ -80,12 +93,12 @@ Final model:
 find f: function (minSize 1) int(1..2) --> set (size 1) of int(1..2) 
 find f#explicit_1: matrix indexed by [int(1..2)] of set (size 1) of int(1..2)
 find f#explicit_2: matrix indexed by [int(1..2)] of bool
+find f#explicit_2#components_1: bool
+find f#explicit_2#components_2: bool
 find f#explicit_1#components_1: set (representation explicit, size 1) of int(1..2)
 find f#explicit_1#components_2: set (representation explicit, size 1) of int(1..2)
 find f#explicit_1#components_1#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
 find f#explicit_1#components_2#explicit_1: matrix indexed by [int(1..1)] of int(1..2)
-find f#explicit_2#components_1: bool
-find f#explicit_2#components_2: bool
 find f#explicit_1#components_1#explicit_1#components_1: int(1..2)
 find f#explicit_1#components_2#explicit_1#components_1: int(1..2)
 

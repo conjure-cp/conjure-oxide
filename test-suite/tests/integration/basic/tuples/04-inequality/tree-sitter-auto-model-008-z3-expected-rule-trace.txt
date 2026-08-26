@@ -1,0 +1,127 @@
+Model before rewriting:
+
+find x: tuple (int(1..2), int(1..5))
+find y: tuple (int(2..5), int(1..5))
+
+such that
+
+x != y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..9)
+
+--
+
+x != y
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x != y
+new variables:
+  find y#packed_1: int(0..19)
+
+--
+
+x != y
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x != y
+new variables:
+  find x#packed_1#bv_1: int(0..9)
+  find y#packed_1#bv_1: int(0..19)
+
+--
+
+x != y
+   ~~> tuple_packed_var_eq_var ([("ReprTuplePacked", 9700)])
+or([sum([(x#packed_1 / 5),1;int(1..)]) != sum([(y#packed_1 / 5),2;int(1..)]),sum([x#packed_1 % 5,1;int(1..)]) != sum([y#packed_1 % 5,1;int(1..)]);int(1..)])
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+y#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+y#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y#packed_1
+
+--
+
+x#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#packed_1#bv_1
+
+--
+
+y#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#packed_1#bv_1
+
+--
+
+x#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#packed_1#bv_1
+
+--
+
+y#packed_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#packed_1#bv_1
+
+--
+
+(x#packed_1#bv_1 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#packed_1#bv_1, 5) @ 5 != 0}
+
+--
+
+(y#packed_1#bv_1 / 5)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(y#packed_1#bv_1, 5) @ 5 != 0}
+
+--
+
+x#packed_1#bv_1 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#packed_1#bv_1,5) @ 5 != 0}
+
+--
+
+y#packed_1#bv_1 % 5
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(y#packed_1#bv_1,5) @ 5 != 0}
+
+--
+
+Final model:
+
+find x: tuple (int(1..2), int(1..5))
+find y: tuple (int(2..5), int(1..5))
+find x#packed_1: int(0..9)
+find y#packed_1: int(0..19)
+find x#packed_1#bv_1: int(0..9)
+find y#packed_1#bv_1: int(0..19)
+
+such that
+
+or([sum([SafeDiv(x#packed_1#bv_1, 5),1;int(1..)]) != sum([SafeDiv(y#packed_1#bv_1, 5),2;int(1..)]),sum([SafeMod(x#packed_1#bv_1,5),1;int(1..)]) != sum([SafeMod(y#packed_1#bv_1,5),1;int(1..)]);int(1..)])
+
