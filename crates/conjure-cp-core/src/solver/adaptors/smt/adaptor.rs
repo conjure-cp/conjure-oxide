@@ -293,7 +293,7 @@ impl SolverAdaptor for Smt {
         let mut stats: SolverStats = Default::default();
 
         // Apply config when getting solutions
-        let (search_complete, final_z3_time) =
+        let (search_status, final_z3_time) =
             with_z3_config(&self.solver_cfg, move || -> Result<_, SolverError> {
                 let solver = solver_send.recover();
                 let mut final_z3_time: Option<f64> = None;
@@ -347,17 +347,19 @@ impl SolverAdaptor for Smt {
                     })
                     .count();
 
+                let terminal_result = solutions.terminal_result.take();
+                let unknown_reason = solutions.unknown_reason.take();
                 drop(solutions);
                 if let Some(err) = hook_error {
                     return Err(err);
                 }
 
-                let search_complete = if found_solution {
-                    SearchComplete::HasSolutions
-                } else {
-                    SearchComplete::NoSolutions
-                };
-                Ok((search_complete, final_z3_time))
+                let search_status = search_status_from_terminal_result(
+                    found_solution,
+                    terminal_result,
+                    unknown_reason,
+                )?;
+                Ok((search_status, final_z3_time))
             })?;
 
         if let Some(time) = final_z3_time {
@@ -366,7 +368,7 @@ impl SolverAdaptor for Smt {
 
         Ok(SolveSuccess {
             stats,
-            status: SearchStatus::Complete(search_complete),
+            status: search_status,
         })
     }
 
@@ -441,6 +443,8 @@ impl IntoSolutionsWithStatistics for Solver {
             model_completion,
             on_solution,
             done: false,
+            terminal_result: None,
+            unknown_reason: None,
         }
     }
 }
@@ -451,6 +455,8 @@ struct SolverStatsIterator<T, F> {
     model_completion: bool,
     on_solution: F,
     done: bool,
+    terminal_result: Option<SatResult>,
+    unknown_reason: Option<String>,
 }
 
 impl<T, F> FusedIterator for SolverStatsIterator<T, F>
@@ -487,11 +493,53 @@ where
                 self.solver.assert(counterexample);
                 Some((instance, stats))
             }
-            _ => {
+            SatResult::Unsat => {
                 self.done = true;
+                self.terminal_result = Some(SatResult::Unsat);
+                None
+            }
+            SatResult::Unknown => {
+                self.done = true;
+                self.terminal_result = Some(SatResult::Unknown);
+                self.unknown_reason = self.solver.get_reason_unknown();
                 None
             }
         }
+    }
+}
+
+/// Converts the result that ended Z3's solution iterator into a search status.
+///
+/// `unknown` is not evidence that the model is unsatisfiable. In particular, Z3 returns it when a
+/// configured timeout expires or an in-progress check is interrupted. Treating iterator exhaustion
+/// as `NoSolutions` in that case lets an interrupted integration test pass with an empty solution
+/// file.
+fn search_status_from_terminal_result(
+    found_solution: bool,
+    terminal_result: Option<SatResult>,
+    unknown_reason: Option<String>,
+) -> Result<SearchStatus, SolverError> {
+    match terminal_result {
+        Some(SatResult::Unknown) => {
+            let reason = unknown_reason.unwrap_or_else(|| String::from("no reason given"));
+            let incomplete = if reason.to_ascii_lowercase().contains("timeout") {
+                SearchIncomplete::Timeout
+            } else {
+                SearchIncomplete::UserTerminated
+            };
+            Ok(SearchStatus::Incomplete(incomplete))
+        }
+        Some(SatResult::Unsat) => Ok(SearchStatus::Complete(if found_solution {
+            SearchComplete::HasSolutions
+        } else {
+            SearchComplete::NoSolutions
+        })),
+        // The consumer stopped requesting models, normally because its callback reached a finite
+        // solution limit. It has not established that there are no further solutions.
+        None => Ok(SearchStatus::Incomplete(SearchIncomplete::UserTerminated)),
+        Some(SatResult::Sat) => Err(SolverError::Runtime(String::from(
+            "Z3 solution iteration stopped after a satisfiable check without yielding its model",
+        ))),
     }
 }
 
@@ -500,6 +548,20 @@ mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
     use crate::context::Context;
+
+    #[test]
+    fn unknown_is_not_reported_as_no_solutions() {
+        let result = search_status_from_terminal_result(
+            false,
+            Some(SatResult::Unknown),
+            Some(String::from("timeout")),
+        )
+        .expect("unknown is a non-crashing incomplete search");
+        assert!(matches!(
+            result,
+            SearchStatus::Incomplete(SearchIncomplete::Timeout)
+        ));
+    }
 
     #[test]
     fn from_solution_substitution_replaces_reference_with_literal() {

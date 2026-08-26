@@ -26,7 +26,7 @@ use conjure_cp::Model;
 use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::representation::util::try_up;
-use conjure_cp::solver::Solver;
+use conjure_cp::solver::{SearchStatus, Solver};
 
 use glob::glob;
 
@@ -242,12 +242,26 @@ pub fn get_solutions(
             .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
     };
 
+    let search_status = solver.search_status();
     solver.save_stats_to_context();
 
     // Get the collections of solutions and model symbols
     #[allow(clippy::unwrap_used)]
     let mut sols_guard = (*all_solutions_ref).lock().unwrap();
     let sols = &mut *sols_guard;
+
+    // Stopping after a requested finite number of satisfaction solutions is intentional. Every
+    // other incomplete search -- notably an SMT timeout or interrupt while proving UNSAT -- must
+    // not be accepted as a complete (possibly empty) solution set.
+    let requested_limit_reached = !is_optimisation
+        && num_sols > 0
+        && sols.len() >= usize::try_from(num_sols).unwrap_or(usize::MAX);
+    if let SearchStatus::Incomplete(reason) = search_status
+        && !requested_limit_reached
+    {
+        return Err(anyhow::anyhow!("solver search incomplete: {reason:?}"));
+    }
+
     let symbols = symbols_ptr.read();
 
     // Get the representations for each variable by name, since some variables are
