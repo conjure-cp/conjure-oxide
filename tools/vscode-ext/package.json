@@ -10,11 +10,126 @@
     "description": "VS Code extension for Conjure-Oxide",
     "version": "0.1.0",
     "engines": {
-        "vscode": "^1.22.0"
+        "vscode": "^1.110.0"
     },
+    "activationEvents": [
+        "onLanguage:essence"
+    ],
     "categories": [
         "Programming Languages"
     ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "essence",
+                "aliases": [
+                    "essence",
+                    "Essence"
+                ],
+                "extensions": [
+                    ".essence",
+                    ".params",
+                    ".solution"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "essence",
+                "scopeName": "source.essence",
+                "path": "./syntaxes/essence.tmLanguage.json"
+            }
+        ],
+        "semanticTokenTypes": [
+            {
+                "id": "letting",
+                "description": "An Essence letting binding",
+                "superType": "keyword"
+            },
+            {
+                "id": "lettingVar",
+                "description": "An Essence letting variable",
+                "superType": "variable"
+            },
+            {
+                "id": "find",
+                "description": "An Essence find binding",
+                "superType": "keyword"
+            },
+            {
+                "id": "findVar",
+                "description": "An Essence decision variable",
+                "superType": "property"
+            },
+            {
+                "id": "domain",
+                "description": "An Essence domain",
+                "superType": "type"
+            },
+            {
+                "id": "given",
+                "description": "An Essence given binding",
+                "superType": "keyword"
+            },
+            {
+                "id": "givenVar",
+                "description": "An Essence given variable",
+                "superType": "string"
+            }
+        ],
+        "semanticTokenScopes": [
+            {
+                "scopes": {
+                    "number": [
+                        "constant.numeric"
+                    ],
+                    "function": [
+                        "entity.name.function"
+                    ],
+                    "variable": [
+                        "variable.other"
+                    ],
+                    "letting": [
+                        "keyword.letting"
+                    ],
+                    "find": [
+                        "keyword.find"
+                    ],
+                    "domain": [
+                        "entity.name.type.domain"
+                    ],
+                    "findVar": [
+                        "variable.other.property.findVar"
+                    ],
+                    "lettingVar": [
+                        "variable.other.constant.lettingVar"
+                    ],
+                    "given": [
+                        "keyword.given"
+                    ],
+                    "givenVar": [
+                        "string.other.givenVar"
+                    ]
+                }
+            }
+        ],
+        "configurationDefaults": {
+            "editor.semanticHighlighting.enabled": true,
+            "editor.semanticTokenColorCustomizations": {
+                "rules": {
+                    "findVar": {
+                        "underline": true
+                    }
+                }
+            }
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p .",
+        "watch": "tsc -p . -w",
+        "vscode:prepublish": "npm run compile"
+    },
     "dependencies": {
         "vscode-languageclient": "10.1.0"
     },
@@ -22,6 +137,7 @@
         "@vscode/vsce": "^3.9.2",
         "@types/vscode": "^1.110.0",
         "@types/node": "25.5.0",
-        "@vscode/test-electron": "2.5.2"
+        "@vscode/test-electron": "2.5.2",
+        "typescript": "5.9.3"
     }
 }
