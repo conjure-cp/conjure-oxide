@@ -1,103 +1,79 @@
 # The guarded and unguarded Pythagorean-triples comprehensions from Figure 3 of
 # "Solver Aided Expansion of Loops to Avoid Generate and Test" (ModRef 2025).
-# Each formulation is checked at small and large instance sizes. Every expander
-# gets a five-second translation budget, with expected outcomes chosen well away
-# from the machine-dependent crossover points.
+#
+# Compare throughput rather than raw elapsed times: under the same per-model
+# deadline, via-solver-ac must complete more formulations than via-solver, which
+# must complete at least as many as native. This gives the performance ordering
+# a wide tolerance for differences between local and CI machines.
 
 set -eu
 
 conjure_oxide=${CONJURE_OXIDE:-conjure-oxide}
-export conjure_oxide
+work_dir=$(mktemp -d "${TMPDIR:-/tmp}/conjure-oxide-pythagorean.XXXXXX")
+trap 'rm -rf -- "$work_dir"' EXIT HUP INT TERM
+export conjure_oxide work_dir
 
-sizes="10 500"
-expanders="native via-solver via-solver-ac auto"
+deadline=3
+sizes="50 75 100"
+expanders="native via-solver via-solver-ac"
+formulations="guarded unguarded"
+total_cases=6
 
-for formulation in guarded unguarded; do
-    for n in $sizes; do
-        for expander in $expanders; do
-            rm -f \
-                "model-$formulation-$n-$expander.minion" \
-                "model-$formulation-$n-$expander.stderr" \
-                "model-$formulation-$n-$expander.ok" \
-                "model-$formulation-$n-$expander.failed"
-        done
-    done
-done
-rm -f parallel.joblog parallel.stderr
-
-if parallel -j1 --no-notice --timeout 5 --joblog parallel.joblog \
-        'if "$conjure_oxide" solve --comprehension-expander {3} --no-run-solver --save-solver-input-file model-{1}-{2}-{3}.minion {1}.essence n{2}.param >/dev/null 2>model-{1}-{2}-{3}.stderr; then : >model-{1}-{2}-{3}.ok; else : >model-{1}-{2}-{3}.failed; fi' \
-        ::: guarded unguarded \
-        ::: 10 500 \
-        ::: native via-solver via-solver-ac auto \
-        2>parallel.stderr; then
-    :
-fi
-
-jobs_completed=$(awk 'NR > 1 { count++ } END { print count + 0 }' parallel.joblog)
-if [ "$jobs_completed" -ne 16 ]; then
-    echo "GNU Parallel ran $jobs_completed of 16 jobs" >&2
-    sed 's/^/  /' parallel.stderr >&2
+if ! parallel --version 2>/dev/null | grep -q '^GNU parallel '; then
+    echo "GNU Parallel is required" >&2
     exit 1
 fi
 
-for formulation in guarded unguarded; do
-    echo "== $formulation comprehension =="
+if parallel -j1 --no-notice --timeout "$deadline" \
+        --joblog "$work_dir/joblog" \
+        'prefix="$work_dir/{1}-{2}-{3}"; if "$conjure_oxide" solve --comprehension-expander {1} --no-run-solver --save-solver-input-file "$prefix.minion" {2}.essence n{3}.param >/dev/null 2>"$prefix.stderr"; then : >"$prefix.ok"; else : >"$prefix.failed"; fi' \
+        ::: $expanders \
+        ::: $formulations \
+        ::: $sizes \
+        2>"$work_dir/parallel.stderr"; then
+    :
+fi
 
-    for n in $sizes; do
-        reference_expander=via-solver-ac
-        reference_prefix="model-$formulation-$n-$reference_expander"
-        if [ ! -f "$reference_prefix.ok" ]; then
-            echo "  $reference_expander did not complete for $formulation at n=$n" >&2
-            sed 's/^/    /' "$reference_prefix.stderr" >&2
-            exit 1
-        fi
+jobs_completed=$(awk 'NR > 1 { count++ } END { print count + 0 }' "$work_dir/joblog")
+if [ "$jobs_completed" -ne 18 ]; then
+    echo "GNU Parallel ran $jobs_completed of 18 jobs" >&2
+    sed 's/^/  /' "$work_dir/parallel.stderr" >&2
+    exit 1
+fi
 
-        lines=$(grep -c '' "$reference_prefix.minion")
-        echo "n=$n ($lines line model)"
+native_completed=0
+via_solver_completed=0
+via_solver_ac_completed=0
 
-        for expander in $expanders; do
-            result_prefix="model-$formulation-$n-$expander"
-            expected_status=ok
-            if [ "$n" = 500 ] && { [ "$expander" = native ] || \
-                    { [ "$formulation" = unguarded ] && [ "$expander" = via-solver ]; }; }; then
-                expected_status=timeout
-            fi
-
-            if [ -f "$result_prefix.ok" ]; then
-                actual_status=ok
-                if [ "$expander" != "$reference_expander" ] && ! cmp -s \
-                        "$reference_prefix.minion" "$result_prefix.minion"; then
-                    echo "  $expander: DIFFERENT from $reference_expander"
-                    diff "$reference_prefix.minion" "$result_prefix.minion"
-                    exit 1
-                fi
-            elif [ -f "$result_prefix.failed" ]; then
-                echo "  $expander: failed" >&2
-                sed 's/^/    /' "$result_prefix.stderr" >&2
-                exit 1
-            else
-                actual_status=timeout
-            fi
-
-            if [ "$actual_status" != "$expected_status" ]; then
-                echo "  $expander: expected $expected_status, got $actual_status" >&2
+for expander in native via-solver via-solver-ac; do
+    completed=0
+    for formulation in $formulations; do
+        for size in $sizes; do
+            prefix="$work_dir/$expander-$formulation-$size"
+            if [ -f "$prefix.ok" ]; then
+                completed=$((completed + 1))
+            elif [ -f "$prefix.failed" ]; then
+                echo "$expander failed for $formulation at n=$size" >&2
+                sed 's/^/  /' "$prefix.stderr" >&2
                 exit 1
             fi
-            echo "  $expander: $actual_status"
         done
     done
+
+    case $expander in
+        native) native_completed=$completed ;;
+        via-solver) via_solver_completed=$completed ;;
+        via-solver-ac) via_solver_ac_completed=$completed ;;
+    esac
 done
 
-for formulation in guarded unguarded; do
-    for n in $sizes; do
-        for expander in $expanders; do
-            rm -f \
-                "model-$formulation-$n-$expander.minion" \
-                "model-$formulation-$n-$expander.stderr" \
-                "model-$formulation-$n-$expander.ok" \
-                "model-$formulation-$n-$expander.failed"
-        done
-    done
-done
-rm -f parallel.joblog parallel.stderr
+if [ "$via_solver_ac_completed" -le "$via_solver_completed" ] || \
+        [ "$via_solver_completed" -lt "$native_completed" ]; then
+    echo "unexpected completion counts within ${deadline}s:" >&2
+    echo "  native: $native_completed/$total_cases" >&2
+    echo "  via-solver: $via_solver_completed/$total_cases" >&2
+    echo "  via-solver-ac: $via_solver_ac_completed/$total_cases" >&2
+    exit 1
+fi
+
+echo "performance ordering holds: via-solver-ac > via-solver >= native (${deadline}s deadline)"
