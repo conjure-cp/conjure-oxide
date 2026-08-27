@@ -1,11 +1,7 @@
 use std::collections::VecDeque;
-use std::sync::atomic::Ordering;
-
 use uniplate::Uniplate;
 
 use super::Expression;
-
-const NO_CLEAN_RULE_PRIORITY: u16 = u16::MAX;
 
 /// Stable handle for an expression node stored in an [`ExpressionArena`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -36,8 +32,6 @@ struct ExpressionArenaNode {
     children: Vec<ExpressionNodeId>,
     reachable: bool,
     preorder_path: Vec<usize>,
-    clean_rule_priority: u16,
-    cached_content_hash: Option<u64>,
     /// Incremented when this node's rewrite-relevant content changes.
     generation: u32,
 }
@@ -68,49 +62,8 @@ impl ExpressionArena {
     /// Callers that change the number or order of direct expression children should use
     /// [`ExpressionArena::replace_subtree`] instead so the arena links stay consistent.
     pub fn expression_mut(&mut self, id: ExpressionNodeId) -> &mut Expression {
-        self.invalidate_content_hash_to_root(id);
+        self.invalidate_expression_hashes_to_root(id);
         &mut self.node_mut(id).expr
-    }
-
-    /// Returns the cached content hash for `id`.
-    ///
-    /// Hashes are computed incrementally from arena child node hashes rather than by walking
-    /// embedded expression subtrees in each payload.
-    pub fn content_hash(&mut self, id: ExpressionNodeId) -> u64 {
-        self.content_hash_with_cache_status(id).0
-    }
-
-    /// Returns the cached content hash for `id` and whether it was already cached.
-    ///
-    /// The hash is also stored on the expression [`Metadata`](crate::ast::Metadata) so clones of
-    /// the payload (for example rewrite-cache ancestor mappings) can key in O(1) without walking
-    /// the embedded tree again.
-    pub fn content_hash_with_cache_status(&mut self, id: ExpressionNodeId) -> (u64, bool) {
-        if let Some(hash) = self.node(id).cached_content_hash {
-            self.sync_expression_content_hash(id, hash);
-            return (hash, true);
-        }
-
-        let child_ids: Vec<ExpressionNodeId> = self.children(id).to_vec();
-        let child_hashes: Vec<u64> = child_ids
-            .iter()
-            .map(|&child_id| self.content_hash(child_id))
-            .collect();
-        let hash = self
-            .expression(id)
-            .content_hash_from_child_hashes(&mut child_hashes.into_iter());
-        self.node_mut(id).cached_content_hash = Some(hash);
-        self.sync_expression_content_hash(id, hash);
-        (hash, false)
-    }
-
-    /// Stores `hash` on the expression payload so [`Expression::cached_content_hash`] stays in sync
-    /// with the arena node cache.
-    fn sync_expression_content_hash(&self, id: ExpressionNodeId, hash: u64) {
-        self.expression(id)
-            .meta_ref()
-            .cached_content_hash
-            .store(hash, Ordering::Relaxed);
     }
 
     /// Returns the parent of `id`, or `None` for the root.
@@ -135,27 +88,6 @@ impl ExpressionArena {
         &self.node(id).preorder_path
     }
 
-    /// Records that rules at `priority` and higher have been attempted and failed for `id`.
-    pub fn mark_clean_for_rule_priority(&mut self, id: ExpressionNodeId, priority: u16) {
-        let node = self.node_mut(id);
-        node.clean_rule_priority = node.clean_rule_priority.min(priority);
-    }
-
-    /// Returns whether `id` is known clean for the given rule priority.
-    pub fn is_clean_for_rule_priority(&self, id: ExpressionNodeId, priority: u16) -> bool {
-        priority >= self.node(id).clean_rule_priority
-    }
-
-    /// Returns the highest-priority clean marker currently stored on `id`.
-    pub fn clean_rule_priority(&self, id: ExpressionNodeId) -> u16 {
-        self.node(id).clean_rule_priority
-    }
-
-    /// Clears any clean-rule marker on `id`.
-    pub fn clear_clean_rule_priority(&mut self, id: ExpressionNodeId) {
-        self.node_mut(id).clean_rule_priority = NO_CLEAN_RULE_PRIORITY;
-    }
-
     /// Returns the generation counter for `id`.
     pub fn generation(&self, id: ExpressionNodeId) -> u32 {
         self.node(id).generation
@@ -166,7 +98,6 @@ impl ExpressionArena {
         {
             let node = self.node_mut(id);
             node.generation = node.generation.wrapping_add(1);
-            node.cached_content_hash = None;
         }
         self.expression(id).invalidate_cached_content_hash();
     }
@@ -174,6 +105,8 @@ impl ExpressionArena {
     /// Replaces the subtree at `id` while preserving `id` itself.
     pub fn replace_subtree(&mut self, id: ExpressionNodeId, replacement: Expression) {
         self.assert_valid_id(id);
+        replacement.invalidate_cached_content_hash();
+        replacement.meta_ref().clear_cached_domain();
 
         let old_children = self.children(id).to_vec();
         for old_child in old_children {
@@ -195,8 +128,6 @@ impl ExpressionArena {
         let node = self.node_mut(id);
         node.expr = replacement;
         node.children = children;
-        node.clean_rule_priority = NO_CLEAN_RULE_PRIORITY;
-        node.cached_content_hash = None;
         node.generation = node.generation.wrapping_add(1);
     }
 
@@ -229,8 +160,7 @@ impl ExpressionArena {
         let root_node = self.node_mut(root);
         root_node.expr = root_expr;
         root_node.generation = root_node.generation.wrapping_add(1);
-        self.invalidate_content_hash_to_root(root);
-        self.clear_clean_rule_priority(root);
+        self.invalidate_expression_hashes_to_root(root);
         new_children
     }
 
@@ -244,17 +174,10 @@ impl ExpressionArena {
             .iter()
             .map(|&child_id| self.direct_child_expression(child_id))
             .collect();
-        let clean_rule_priority = self.node(id).clean_rule_priority;
         let rebuilt = self.node(id).expr.with_children(child_exprs);
-        rebuilt.meta_ref().clear_clean_rule_priority();
-        if clean_rule_priority != NO_CLEAN_RULE_PRIORITY {
-            rebuilt
-                .meta_ref()
-                .mark_clean_for_rule_priority(clean_rule_priority);
-        }
+        rebuilt.meta_ref().clear_cached_domain();
         let node = self.node_mut(id);
         node.expr = rebuilt;
-        node.cached_content_hash = None;
         node.generation = node.generation.wrapping_add(1);
     }
 
@@ -278,7 +201,6 @@ impl ExpressionArena {
         };
 
         let child_expr = self.direct_child_expression(child_id);
-        let clean_rule_priority = self.node(parent_id).clean_rule_priority;
         let replaced = self
             .node_mut(parent_id)
             .expr
@@ -289,23 +211,16 @@ impl ExpressionArena {
         }
 
         let node = self.node_mut(parent_id);
-        node.expr.meta_ref().clear_clean_rule_priority();
-        if clean_rule_priority != NO_CLEAN_RULE_PRIORITY {
-            node.expr
-                .meta_ref()
-                .mark_clean_for_rule_priority(clean_rule_priority);
-        }
+        node.expr.meta_ref().clear_cached_domain();
         node.expr.invalidate_cached_content_hash();
-        node.cached_content_hash = None;
         node.generation = node.generation.wrapping_add(1);
     }
 
-    /// Clears cached arena content hashes from `id` through the root.
-    pub fn invalidate_content_hash_to_root(&mut self, id: ExpressionNodeId) {
+    /// Clears cached expression content hashes from `id` through the root.
+    fn invalidate_expression_hashes_to_root(&mut self, id: ExpressionNodeId) {
         let mut node = Some(id);
         while let Some(node_id) = node {
             let parent = self.node(node_id).parent;
-            self.node_mut(node_id).cached_content_hash = None;
             self.expression(node_id).invalidate_cached_content_hash();
             node = parent;
         }
@@ -330,12 +245,6 @@ impl ExpressionArena {
             .collect::<VecDeque<_>>();
 
         let rebuilt = node.expr.with_children(children);
-        rebuilt.meta_ref().clear_clean_rule_priority();
-        if node.clean_rule_priority != NO_CLEAN_RULE_PRIORITY {
-            rebuilt
-                .meta_ref()
-                .mark_clean_for_rule_priority(node.clean_rule_priority);
-        }
         rebuilt.invalidate_cached_content_hash();
         rebuilt
     }
@@ -379,18 +288,16 @@ impl ExpressionArena {
         parent: Option<ExpressionNodeId>,
         preorder_path: Vec<usize>,
     ) -> ExpressionNodeId {
+        expr.invalidate_cached_content_hash();
+        expr.meta_ref().clear_cached_domain();
         let id = ExpressionNodeId(self.nodes.len());
         let child_exprs = expr.children();
-        let clean_rule_priority = expr.meta_ref().clean_rule_priority.load(Ordering::Relaxed);
-
         self.nodes.push(ExpressionArenaNode {
             expr,
             parent,
             children: Vec::new(),
             reachable: true,
             preorder_path: preorder_path.clone(),
-            clean_rule_priority,
-            cached_content_hash: None,
             generation: 0,
         });
 
@@ -416,8 +323,6 @@ impl ExpressionArena {
         let children = self.children(id).to_vec();
         let node = self.node_mut(id);
         node.reachable = false;
-        node.cached_content_hash = None;
-        node.clean_rule_priority = NO_CLEAN_RULE_PRIORITY;
         node.generation = node.generation.wrapping_add(1);
 
         for child in children {
@@ -636,126 +541,6 @@ mod tests {
         assert_eq!(elems[17], int(99));
         assert_eq!(elems[0], int(0));
         assert_eq!(elems[31], int(31));
-    }
-
-    #[test]
-    fn invalidates_content_hashes_on_changed_path() {
-        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2))]));
-        let root_id = arena.root();
-        let eq_id = arena.children(root_id)[0];
-        let left = arena.children(eq_id)[0];
-
-        let old_root_hash = arena.content_hash(root_id);
-        let old_eq_hash = arena.content_hash(eq_id);
-
-        arena.replace_subtree(left, int(3));
-        arena.rebuild_payload_from_children(eq_id);
-        arena.rebuild_payload_from_children(root_id);
-
-        assert_ne!(arena.content_hash(eq_id), old_eq_hash);
-        assert_ne!(arena.content_hash(root_id), old_root_hash);
-    }
-
-    #[test]
-    fn clean_rule_state_is_arena_side_and_exported() {
-        let mut arena = ExpressionArena::from_root(eq(int(1), int(2)));
-        let root = arena.root();
-
-        arena.mark_clean_for_rule_priority(root, 5);
-
-        assert!(arena.is_clean_for_rule_priority(root, 5));
-        assert!(
-            arena
-                .into_root_expression()
-                .meta_ref()
-                .is_clean_for_rule_priority(5)
-        );
-    }
-
-    #[test]
-    fn replacing_subtree_clears_arena_clean_rule_state() {
-        let mut arena = ExpressionArena::from_root(eq(int(1), int(2)));
-        let root = arena.root();
-
-        arena.mark_clean_for_rule_priority(root, 5);
-        arena.replace_subtree(root, eq(int(3), int(4)));
-
-        assert!(!arena.is_clean_for_rule_priority(root, 5));
-    }
-
-    #[test]
-    fn arena_content_hash_matches_expression_hash() {
-        let expr = root(vec![eq(eq(int(1), int(2)), eq(int(3), int(4)))]);
-        let expected = expr.cached_content_hash();
-
-        let mut arena = ExpressionArena::from_root(expr);
-        let root_id = arena.root();
-        assert_eq!(arena.content_hash(root_id), expected);
-
-        let eq_id = arena.children(root_id)[0];
-        assert_eq!(
-            arena.content_hash(eq_id),
-            arena.expression(eq_id).cached_content_hash()
-        );
-    }
-
-    #[test]
-    fn arena_content_hash_warms_expression_metadata() {
-        use crate::ast::metadata::NO_HASH;
-
-        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2))]));
-        let root_id = arena.root();
-        arena.rebuild_payload_from_children(root_id);
-        assert_eq!(
-            arena
-                .expression(root_id)
-                .meta_ref()
-                .cached_content_hash
-                .load(Ordering::Relaxed),
-            NO_HASH
-        );
-
-        let hash = arena.content_hash(root_id);
-        assert_ne!(hash, NO_HASH);
-        assert_eq!(
-            arena
-                .expression(root_id)
-                .meta_ref()
-                .cached_content_hash
-                .load(Ordering::Relaxed),
-            hash
-        );
-        // Clones used by the rewrite cache must keep the warm hash.
-        assert_eq!(
-            arena
-                .expression(root_id)
-                .clone()
-                .meta_ref()
-                .cached_content_hash
-                .load(Ordering::Relaxed),
-            hash
-        );
-    }
-
-    #[test]
-    fn incremental_content_hash_survives_ancestor_rebuild() {
-        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2))]));
-        let root_id = arena.root();
-        let eq_id = arena.children(root_id)[0];
-        let left = arena.children(eq_id)[0];
-
-        let hash_before = arena.content_hash(root_id);
-
-        arena.replace_subtree(left, int(3));
-        arena.rebuild_payload_from_children(eq_id);
-        arena.rebuild_payload_from_children(root_id);
-
-        assert_eq!(arena.expression(eq_id), &eq(int(3), int(2)));
-        assert_ne!(arena.content_hash(root_id), hash_before);
-        assert_eq!(
-            arena.content_hash(root_id),
-            arena.expression(root_id).cached_content_hash()
-        );
     }
 
     #[test]

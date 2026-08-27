@@ -60,7 +60,7 @@ Options:
   --parser tree-sitter|via-conjure
       If set, enable only this parser in [parser]
 
-  --rewriter baseline|optimised|baseline+prefilter|baseline+dirty|baseline+cache
+  --rewriter baseline|optimised|baseline+prefilter|baseline+worklist
       If set, enable only this rewriter in [rewriter]
 
   --comprehension-expander native|via-solver|via-solver-ac
@@ -113,12 +113,11 @@ validate_rewriter() {
     baseline|optimised) return 0 ;;
   esac
 
-  [[ "$value" == baseline+* ]] || err "Invalid rewriter: '$value' (allowed: baseline, optimised, baseline+prefilter, baseline+dirty, baseline+cache and combinations)"
+  [[ "$value" == baseline+* ]] || err "Invalid rewriter: '$value' (allowed: baseline, optimised, baseline+prefilter, baseline+worklist and combinations)"
 
   local seen_baseline=0
   local seen_prefilter=0
-  local seen_dirty=0
-  local seen_cache=0
+  local seen_worklist=0
   local token
   local tokens
   IFS='+' read -ra tokens <<< "$value"
@@ -132,22 +131,18 @@ validate_rewriter() {
         [[ "$seen_prefilter" -eq 0 ]] || err "Invalid rewriter: duplicate 'prefilter'"
         seen_prefilter=1
         ;;
-      dirty)
-        [[ "$seen_dirty" -eq 0 ]] || err "Invalid rewriter: duplicate 'dirty'"
-        seen_dirty=1
-        ;;
-      cache)
-        [[ "$seen_cache" -eq 0 ]] || err "Invalid rewriter: duplicate 'cache'"
-        seen_cache=1
+      worklist)
+        [[ "$seen_worklist" -eq 0 ]] || err "Invalid rewriter: duplicate 'worklist'"
+        seen_worklist=1
         ;;
       *)
-        err "Invalid rewriter option: '$token' (allowed: baseline, prefilter, dirty, cache)"
+        err "Invalid rewriter option: '$token' (allowed: baseline, prefilter, worklist)"
         ;;
     esac
   done
 
   [[ "$seen_baseline" -eq 1 ]] || err "Invalid rewriter: '$value' must start with baseline"
-  [[ "$seen_prefilter$seen_dirty$seen_cache" != "000" ]] || err "Invalid rewriter: '$value' has no options"
+  [[ "$seen_prefilter$seen_worklist" != "00" ]] || err "Invalid rewriter: '$value' has no options"
 }
 
 prepend_comment() {

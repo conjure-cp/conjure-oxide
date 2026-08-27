@@ -1017,9 +1017,8 @@ impl Expression {
     /// Cached in this node's own `Metadata`: `domain_of_uncached` recomputes recursively from
     /// scratch with no memoisation of its own, so repeatedly calling `domain_of` on the same
     /// subtree (as rules that check "is this operand scalar/abstract" tend to, once per rule
-    /// attempt) is quadratic in the worst case without a cache. The cache is invalidated
-    /// alongside the clean-rule marker (see `Metadata::clear_clean_rule_priority`), since both
-    /// go stale under exactly the same condition: this expression or a descendant changed.
+    /// attempt) is quadratic in the worst case without a cache. The cache is invalidated when
+    /// this expression or a descendant changes.
     pub fn domain_of(&self) -> Option<DomainPtr> {
         self.meta_ref().domain_or_init(|| self.domain_of_uncached())
     }
@@ -3375,14 +3374,6 @@ impl Expression {
         metadata
             .cached_content_hash
             .store(NO_HASH, Ordering::Relaxed);
-    }
-
-    /// Invalidates cached content hashes on this expression and all expression children.
-    pub(crate) fn invalidate_cached_content_hash_recursive(&self) {
-        self.invalidate_cached_content_hash();
-        self.for_each_expr_child(&mut |child| {
-            child.invalidate_cached_content_hash_recursive();
-        });
     }
 
     /// Returns the cached expression content hash, computing and storing it when absent.

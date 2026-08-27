@@ -389,7 +389,7 @@ impl DeclarationPtr {
     pub fn domain(&self) -> Option<DomainPtr> {
         // Expressions stored inside a declaration (as opposed to the constraint tree the rewrite
         // engine walks) can be mutated in place by substitution utilities that never touch
-        // `Metadata::clean_rule_priority`, so `domain_of`'s cache would go stale silently for
+        // the constraint-tree metadata cache, so `domain_of`'s cache would go stale silently for
         // them. Use the uncached path here.
         match &self.kind() as &DeclarationKind {
             DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
