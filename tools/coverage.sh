@@ -73,6 +73,10 @@ fi
 export CARGO_INCREMENTAL=0 
 export RUSTFLAGS="$RUSTFLAGS -Cinstrument-coverage"
 export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins"
+CARGO_FEATURE_ARGS=()
+if [[ -n "${CARGO_FEATURES:-}" ]]; then
+  read -r -a CARGO_FEATURE_ARGS <<< "$CARGO_FEATURES"
+fi
 # According to https://doc.rust-lang.org/beta/rustc/instrument-coverage.html#running-the-instrumented-binary-to-generate-raw-coverage-profiling-data
 # If give a path to the LLVM_PROFILE_FILE envvar, you can ensure that the passed directory
 # is created automatically to place all profiling files there. 
@@ -116,15 +120,15 @@ GRCOV_IGNORE_FLAGS=(
 )
 
 echo_err "info: building"
-cargo +nightly build --workspace
+cargo +nightly build --workspace "${CARGO_FEATURE_ARGS[@]}"
 
 # Some custom tests explicitly invoke conjure-oxide-debug. During coverage we
 # only build the instrumented debug binary, so expose it under both names.
 ln -sf conjure-oxide "${TARGET_DIR}/debug/conjure-oxide-debug"
 
 echo_err "info: running tests"
-cargo +nightly test --workspace --doc
-cargo +nightly nextest run --workspace
+cargo +nightly test --workspace --doc "${CARGO_FEATURE_ARGS[@]}"
+cargo +nightly nextest run --workspace "${CARGO_FEATURE_ARGS[@]}"
 
 echo_err "info: generating coverage reports"
 grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t html\
