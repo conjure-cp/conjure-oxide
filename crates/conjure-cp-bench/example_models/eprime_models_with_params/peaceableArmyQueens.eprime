@@ -1,0 +1,87 @@
+$ Peaceable Army of queens
+$
+$ Place 2 equally-sized armies of queens (white and black)
+$ on a chess board without attacking each other
+$ Maximise the size of the armies.
+$
+$ 'occurrence' representation 
+$
+
+
+language ESSENCE' 1.0
+
+
+
+$ board width
+given        n : int
+letting      N be domain int(1..n)
+
+
+$ 0: empty field, 1:white queen, 2: black queen
+find        board : matrix indexed by [N,N] of int(0..2)
+find        amountOfQueens : int(1..(n*n)/2)     
+
+
+maximising   amountOfQueens
+
+
+such that
+
+   
+   $ we have the same amount of white as black queens
+   (sum row : N .
+       (sum col : N .
+          (board[row,col] = 1))) = amountOfQueens,
+
+   (sum row : N .
+       (sum col : N . 
+           (board[row,col] = 2))) = amountOfQueens,
+
+
+  $ for all rows
+  forAll row,col1,col2 : N .
+     (col1 < col2) -> 
+       (board[row,col1] + board[row,col2] != 3),
+
+
+  $ for all cols
+  forAll col, row1, row2 : N .
+     (row1 < row2) -> 
+       (board[row1,col] + board[row2,col] != 3),
+
+ $ for all diagonals 
+   forAll i,col1,col2,row1,row2 : N .
+
+      $ South-West diagonal
+     (((row1 + i <= n) /\ (col1 + i <= n)) ->
+             (((row1 + i = row2) /\ (col1 + i = col2)) ->  
+                   (board[row1,col1] + board[row2,col2] != 3)  
+             ))
+ 
+     /\
+      
+      $ South-East diagonal
+     (((row1 + i <= n) /\ (col1 - i > 0)) ->
+             (((row1 + i = row2) /\ (col1 - i = col2)) ->  
+                   (board[row1,col1] + board[row2,col2] != 3)  
+              ))
+
+     /\
+
+      $ North-East diagonal
+     (((row1 - i > 0) /\ (col1 - i > 0)) ->
+             (((row1 - i = row2) /\ (col1 - i = col2)) ->  
+                   (board[row1,col1] + board[row2,col2] != 3)  
+              ))
+
+     /\
+
+      $ North-West diagonal
+     (((row1 - i > 0) /\ (col1 + i <= n)) ->
+             (((row1 - i = row2) /\ (col1 + i = col2)) ->  
+                   (board[row1,col1] + board[row2,col2] != 3)  
+              ))
+
+    
+
+
