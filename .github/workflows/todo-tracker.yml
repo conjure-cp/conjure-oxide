@@ -1,0 +1,417 @@
+name: TODO/FIXME to issues
+
+on:
+  pull_request_target:
+    types:
+    - opened
+    - synchronize
+    - reopened
+  issue_comment:
+    types:
+    - created
+
+concurrency:
+  group: todo-issues-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+env:
+  FIXME_LABEL: ${{ vars.FIXME_LABEL || 'urgent' }}
+
+jobs:
+  sync-todo-issues:
+    runs-on: ubuntu-latest
+    # On PR pushes: prepare the proposals. On the `/create-todo-issues` slash
+    # command: actually create the issues. Any other comment is ignored.
+    if: >
+      github.event_name == 'pull_request_target' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       contains(github.event.comment.body, '/create-todo-issues'))
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        ref: refs/pull/${{ github.event.pull_request.number || github.event.issue.number }}/merge
+        fetch-depth: 0
+        persist-credentials: false
+        # We only ever *read* the checked-out code (python + git blame), never
+        # execute it, so scanning the PR merge ref under pull_request_target and
+        # issue_comment is safe. The workflow and all code below live in the
+        # base repository's default branch.
+        allow-unsafe-pr-checkout: true
+
+    - name: Find TODO/FIXME comments with git blame
+      run: |
+        python3 - <<'PY'
+        import json
+        import re
+        import subprocess
+        import sys
+
+        KEYWORD_RE = re.compile(r"\b(todo|fixme)\b", re.IGNORECASE)
+        SHA_RE = re.compile(r"^\^?([0-9a-f]{7,40}) ")
+
+        C_STYLE = (["//"], [("/*", "*/")])
+        HASH_STYLE = (["#"], [])
+        HTML_STYLE = ([], [("<!--", "-->")])
+
+        COMMENT_STYLES = {
+            # C/C++-family and JS-family
+            "rs": C_STYLE, "c": C_STYLE, "h": C_STYLE, "hh": C_STYLE,
+            "hpp": C_STYLE, "cpp": C_STYLE, "cc": C_STYLE, "cxx": C_STYLE,
+            "cs": C_STYLE, "go": C_STYLE, "js": C_STYLE, "jsx": C_STYLE,
+            "mjs": C_STYLE, "cjs": C_STYLE, "ts": C_STYLE, "tsx": C_STYLE,
+            "java": C_STYLE, "swift": C_STYLE, "kt": C_STYLE, "kts": C_STYLE,
+            "php": C_STYLE, "scala": C_STYLE, "groovy": C_STYLE, "dart": C_STYLE,
+            "css": C_STYLE, "scss": C_STYLE, "less": C_STYLE, "sass": C_STYLE,
+            # hash-comment languages
+            "py": HASH_STYLE, "pyw": HASH_STYLE, "sh": HASH_STYLE,
+            "bash": HASH_STYLE, "zsh": HASH_STYLE, "rb": HASH_STYLE,
+            "pl": HASH_STYLE, "pm": HASH_STYLE, "yml": HASH_STYLE,
+            "yaml": HASH_STYLE, "toml": HASH_STYLE, "mk": HASH_STYLE,
+            "make": HASH_STYLE, "cmake": HASH_STYLE, "dockerfile": HASH_STYLE,
+            "nix": HASH_STYLE, "r": HASH_STYLE, "ini": (["#", ";"], []),
+            "conf": HASH_STYLE, "cfg": HASH_STYLE,
+            # markup
+            "md": HTML_STYLE, "markdown": HTML_STYLE, "html": HTML_STYLE,
+            "htm": HTML_STYLE, "xml": HTML_STYLE, "svg": HTML_STYLE,
+            "vue": HTML_STYLE, "svelte": HTML_STYLE,
+            # others
+            "sql": (["--", "#"], [("/*", "*/")]),
+            "lua": (["--"], [("--[[", "]]")]),
+            "tex": (["%"], []),
+            "erl": (["%"], []),
+        }
+
+        DEFAULT_STYLE = (["//", "#", "--", ";"], [("/*", "*/"), ("<!--", "-->")])
+
+        EXCLUDE_DIRS = ("/vendor/", "/node_modules/", "/target/", "/.git/")
+        EXCLUDE_FILES = {
+            "Cargo.lock", "package-lock.json", "pnpm-lock.yaml",
+            "poetry.lock", "yarn.lock",
+        }
+        MAX_FILE_BYTES = 1_000_000
+
+
+        def comment_style(ext):
+            return COMMENT_STYLES.get(ext, DEFAULT_STYLE)
+
+
+        def find_comment_regions(text, line_markers, block_markers):
+            """Return [(start_line, content)] comment regions, ignoring strings."""
+            regions = []
+            i, n, line = 0, len(text), 1
+            while i < n:
+                c = text[i]
+                if c == "\n":
+                    line += 1
+                    i += 1
+                    continue
+
+                # skip string/char literals and triple-quoted strings
+                if c in ('"', "'", "`"):
+                    quote = c
+                    triple = text[i:i + 3] == quote * 3
+                    if triple:
+                        end = text.find(quote * 3, i + 3)
+                        seg_len = (end + 3 - i) if end != -1 else (n - i)
+                    else:
+                        end = i + 1
+                        while end < n:
+                            if text[end] == "\\":
+                                end += 2
+                                continue
+                            if text[end] == quote:
+                                break
+                            end += 1
+                        seg_len = end + 1 - i
+                    seg = text[i:i + seg_len]
+                    line += seg.count("\n")
+                    i += seg_len
+                    continue
+
+                handled = False
+                for start_marker, end_marker in block_markers:
+                    if text.startswith(start_marker, i):
+                        end = text.find(end_marker, i + len(start_marker))
+                        if end == -1:
+                            content = text[i:]
+                        else:
+                            content = text[i:end + len(end_marker)]
+                        regions.append((line, content))
+                        line += content.count("\n")
+                        i += len(content)
+                        handled = True
+                        break
+                if handled:
+                    continue
+
+                for marker in line_markers:
+                    if text.startswith(marker, i):
+                        nl = text.find("\n", i)
+                        content = text[i:] if nl == -1 else text[i:nl]
+                        regions.append((line, content))
+                        i += len(content)
+                        handled = True
+                        break
+                if handled:
+                    continue
+
+                i += 1
+            return regions
+
+
+        def blame_line(path, lineno):
+            """Return (commit_sha, author, author_email) for the line."""
+            try:
+                out = subprocess.run(
+                    ["git", "blame", "--line-porcelain", "-L",
+                     f"{lineno},{lineno}", "--", path],
+                    capture_output=True, text=True, timeout=30,
+                ).stdout
+            except (subprocess.SubprocessError, OSError):
+                return None, None, None
+            sha = author = email = None
+            for raw in out.splitlines():
+                if sha is None:
+                    m = SHA_RE.match(raw)
+                    if m:
+                        sha = m.group(1)
+                        continue
+                if raw.startswith("author "):
+                    author = raw[len("author "):]
+                elif raw.startswith("author-mail "):
+                    email = raw[len("author-mail "):]
+                elif raw.startswith("\t"):
+                    break
+            return (sha, author, email)
+
+
+        def main():
+            files = subprocess.run(
+                ["git", "ls-files"], capture_output=True, text=True, check=True
+            ).stdout.splitlines()
+
+            matches = []
+            for path in files:
+                ext = path.rsplit(".", 1)[-1] if "." in path else ""
+                if path in EXCLUDE_FILES:
+                    continue
+                if any(d in f"/{path}" for d in EXCLUDE_DIRS):
+                    continue
+                line_markers, block_markers = comment_style(ext)
+                if not line_markers and not block_markers:
+                    continue
+                try:
+                    with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                        text = fh.read()
+                except OSError:
+                    continue
+                if len(text) > MAX_FILE_BYTES:
+                    continue
+                for start_line, content in find_comment_regions(text, line_markers, block_markers):
+                    for m in KEYWORD_RE.finditer(content):
+                        body = content[m.start():].strip()
+                        lineno = start_line + content[:m.start()].count("\n")
+                        sha, author, email = blame_line(path, lineno)
+                        matches.append({
+                            "file": path,
+                            "line": lineno,
+                            "keyword": m.group(1).upper(),
+                            "commentBody": body,
+                            "blameSha": sha,
+                            "author": author,
+                            "authorMail": email,
+                        })
+
+            matches.sort(key=lambda e: (e["file"], e["line"]))
+            with open(".todo-issues.json", "w", encoding="utf-8") as fh:
+                json.dump(matches, fh, indent=2)
+            print(f"::notice::Found {len(matches)} TODO/FIXME comment(s)")
+
+
+        sys.exit(main())
+        PY
+
+    - name: Post proposed issues on the pull request
+      if: github.event_name == 'pull_request_target'
+      uses: actions/github-script@v9
+      with:
+        script: |
+          const fs = require('fs');
+          const proposals = JSON.parse(fs.readFileSync('.todo-issues.json', 'utf8'));
+          const prNumber = context.payload.pull_request.number;
+          const marker = '<!-- todo-tracker-proposals -->';
+
+          const rows = proposals.map(p =>
+            `| \`${p.file}:${p.line}\` | ${p.keyword} | ${p.author || 'unknown'} | ${p.commentBody.split('\n')[0].slice(0, 80)} |`
+          ).join('\n');
+
+          const body = [
+            marker,
+            '',
+            `## Proposed issues from TODO/FIXME comments (${proposals.length})`,
+            '',
+            'Reply with `/create-todo-issues` to create these issues on the repository. FIXME comments get the `' + process.env.FIXME_LABEL + '` label and every issue is assigned to the git-blame author.',
+            '',
+            '<details>',
+            '<summary>Proposed issues</summary>',
+            '',
+            '| Location | Type | Blame | Comment |',
+            '|---|---|---|---|',
+            rows,
+            '',
+            '</details>',
+          ].join('\n');
+
+          const comments = await github.rest.issues.listComments({
+            owner: context.repo.owner, repo: context.repo.repo, issue_number: prNumber,
+          });
+          const existing = comments.data.find(c => c.body.includes(marker));
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: prNumber, body,
+            });
+          }
+          console.log(`Proposals comment ${existing ? 'updated' : 'created'} (${proposals.length} items)`);
+
+    - name: Create issues from approved proposals
+      if: github.event_name == 'issue_comment'
+      uses: actions/github-script@v9
+      with:
+        script: |
+          const fs = require('fs');
+          const proposals = JSON.parse(fs.readFileSync('.todo-issues.json', 'utf8'));
+
+          const commenter = context.payload.comment.user.login;
+          const prAuthor = context.payload.issue.user.login;
+          const prNumber = context.payload.issue.number;
+
+          // Only the PR author, or a collaborator with write+ access, may approve.
+          let allowed = commenter === prAuthor;
+          if (!allowed) {
+            try {
+              const perm = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner, repo: context.repo.repo, username: commenter,
+              });
+              allowed = ['write', 'maintain', 'admin'].includes(perm.data.permission);
+            } catch (e) { /* not a collaborator */ }
+          }
+          if (!allowed) {
+            console.log(`Ignoring /create-todo-issues from ${commenter}: only the PR author (@${prAuthor}) or a maintainer may approve.`);
+            return;
+          }
+
+          const pr = await github.rest.pulls.get({
+            owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber,
+          });
+          const headSha = pr.data.head.sha;
+
+          const loginCache = {};
+          async function resolveLogin(sha) {
+            if (!sha) return null;
+            if (sha in loginCache) return loginCache[sha];
+            try {
+              const c = await github.rest.repos.getCommit({
+                owner: context.repo.owner, repo: context.repo.repo, ref: sha,
+              });
+              loginCache[sha] =
+                (c.data.author && c.data.author.login) ||
+                (c.data.committer && c.data.committer.login) || null;
+            } catch (e) {
+              loginCache[sha] = null;
+            }
+            return loginCache[sha];
+          }
+
+          const fixmeLabel = process.env.FIXME_LABEL;
+          async function ensureLabel() {
+            if (!fixmeLabel) return;
+            try {
+              await github.rest.issues.getLabel({
+                owner: context.repo.owner, repo: context.repo.repo, name: fixmeLabel,
+              });
+            } catch (e) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  name: fixmeLabel, color: 'FF0000',
+                  description: 'FIXME comment tracked as a high-priority issue',
+                });
+              } catch (e2) { /* already exists or insufficient permission */ }
+            }
+          }
+          await ensureLabel();
+
+          let created = 0, skipped = 0, failed = 0;
+          for (const p of proposals) {
+            const marker = `todo-tracker: ${p.file}:${p.line}`;
+
+            // Idempotency: skip if an open issue already tracks this comment.
+            try {
+              const res = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${context.repo.owner}/${context.repo.repo} "${marker}" in:body is:issue state:open`,
+              });
+              if (res.data.total_count > 0) { skipped++; continue; }
+            } catch (e) { /* search hiccup: proceed to create */ }
+
+            const title = `[${p.keyword}] ${p.commentBody.split('\n')[0].slice(0, 80)}`;
+            const permalink = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${headSha}/${p.file}#L${p.line}`;
+            const login = await resolveLogin(p.blameSha);
+            const labels = p.keyword === 'FIXME' ? [fixmeLabel] : [];
+            const body = [
+              `**Location:** \`${p.file}:${p.line}\``,
+              `**Type:** ${p.keyword}`,
+              `**Source:** ${permalink}`,
+              `**Blamed author:** ${login ? `@${login}` : (p.authorMail || p.author || 'unknown')}`,
+              '',
+              '**Comment:**',
+              '```',
+              p.commentBody,
+              '```',
+              '',
+              `<!-- ${marker} -->`,
+              '',
+              `_Auto-generated from a ${p.keyword} comment by the TODO/FIXME workflow._`,
+            ].join('\n');
+
+            try {
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels,
+              });
+              created++;
+              if (login) {
+                try {
+                  await github.rest.issues.addAssignees({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    issue_number: issue.data.number, assignees: [login],
+                  });
+                } catch (e) {
+                  console.log(`Could not assign @${login} to #${issue.data.number}: ${e.message}`);
+                }
+              }
+            } catch (e) {
+              failed++;
+              console.log(`Failed to create issue for ${marker}: ${e.message}`);
+            }
+          }
+
+          await core.summary
+            .addHeading('TODO/FIXME issue creation', 2)
+            .addTable([
+              ['', 'count'],
+              ['created', created],
+              ['skipped (already exists)', skipped],
+              ['failed', failed],
+            ])
+            .write();
+          console.log(`Created ${created}, skipped ${skipped}, failed ${failed}`);
