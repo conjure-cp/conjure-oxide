@@ -1,4 +1,5 @@
 use crate::RecoverableParseError;
+use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
@@ -224,6 +225,14 @@ pub fn parse_quantifier_or_aggregate_expr(
             return Ok(None);
         }
     };
+
+    if let Some(doc_key) = match operator_str {
+        "min" => Some("min"),
+        "max" => Some("max"),
+        _ => None,
+    } {
+        ctx.add_span_and_doc_hover(&operator_node, doc_key, SymbolKind::Function, None, None);
+    }
 
     // Add variables as generators
     if let Some(dom) = domain {
