@@ -181,7 +181,7 @@ pub fn get_solutions(
 
     let adaptor_name = solver.get_name();
 
-    eprintln!("Building {adaptor_name} model...");
+    tracing::info!(target: "conjure::stage", adaptor = adaptor_name, "building solver model");
 
     // Create for later since we consume the model when loading it
     let symbols_ptr = model.symbols_ptr_unchecked().clone();
@@ -189,7 +189,7 @@ pub fn get_solutions(
     let solver = solver.load_model(model)?;
 
     if let Some(solver_input_file) = solver_input_file {
-        eprintln!(
+        tracing::info!(target: "conjure::stage",
             "Writing solver input file to {}",
             solver_input_file.display()
         );
@@ -197,7 +197,7 @@ pub fn get_solutions(
         solver.write_solver_input_file(&mut (file as Box<dyn std::io::Write>))?;
     }
 
-    eprintln!("Running {adaptor_name}...");
+    tracing::info!(target: "conjure::stage", adaptor = adaptor_name, "running solver");
 
     // Create two arcs, one to pass into the solver callback, one to get solutions out later
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
@@ -341,7 +341,12 @@ pub fn get_solutions(
         let pruned = retroactively_prune_dominated(sols.clone(), dominance_expression);
         let post_prune_len = pruned.len();
 
-        eprintln!("Dominance pruning retained {post_prune_len} of {pre_prune_len} solutions.");
+        tracing::info!(
+            target: "conjure::stage",
+            retained = post_prune_len,
+            considered = pre_prune_len,
+            "pruned dominated solutions"
+        );
 
         *sols = pruned;
     }

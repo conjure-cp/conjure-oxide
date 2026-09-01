@@ -11,14 +11,15 @@ use crate::{
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{
-            RuleResult, VariableDeclarationSnapshot, choose_rule_result_index,
-            log_rule_application, root_variable_snapshot_for_default_trace,
-            snapshot_symbols_after_effect, try_rewrite_value_letting_once,
+            NoopObserver, RuleAttemptObserver, RuleAttemptStatus, RuleResult,
+            VariableDeclarationSnapshot, choose_rule_result_index, log_rule_application,
+            root_variable_snapshot_for_default_trace, snapshot_symbols_after_effect,
+            try_rewrite_value_letting_once,
         },
     },
     settings::{
-        RewriteConfig, Rewriter, default_rule_trace_enabled, rule_trace_enabled,
-        rule_trace_verbose_enabled, set_current_rewriter,
+        RewriteConfig, Rewriter, default_rule_trace_enabled, rule_attempt_trace_enabled,
+        rule_trace_enabled, set_current_rewriter,
     },
     stats::RewriterStats,
 };
@@ -55,12 +56,8 @@ use uniplate::Uniplate;
 // to that symbol declaration. Symbol changes invalidate rule-application context caches; changed
 // declarations and CNF effects may require rebuilding rewrite surfaces from the model.
 
-// debug imports
 #[cfg(debug_assertions)]
-use {
-    crate::ast::assertions::debug_assert_model_well_formed,
-    tracing::{Level, span},
-};
+use crate::ast::assertions::debug_assert_model_well_formed;
 
 type ApplicableRule<'a, CtxFnType> = (
     RuleResult<'a>,
@@ -1250,15 +1247,56 @@ impl RuleEffectImpact {
     }
 }
 
-struct RewritePassContext<'ctx, 'rules> {
+struct RewritePassContext<'ctx, 'rules, O> {
     rules_grouped: &'ctx Vec<(u16, Vec<RuleData<'rules>>)>,
     bucketed_rules: &'ctx Vec<RuleGroup<'rules>>,
-    prop_multiple_equally_applicable: bool,
     stats: &'ctx mut RewriterStats,
     dirty_trace: &'ctx mut DirtyTrace,
     config: RewriteConfig,
-    #[cfg(debug_assertions)]
-    run_start: &'ctx Instant,
+    attempt_observer: &'ctx mut O,
+}
+
+struct TracingObserver<'run> {
+    run_start: &'run Instant,
+    general_enabled: bool,
+    csv_enabled: bool,
+}
+
+impl RuleAttemptObserver for TracingObserver<'_> {
+    fn attempted(
+        &mut self,
+        priority: u16,
+        rule: &RuleData<'_>,
+        expression: &Expr,
+        status: RuleAttemptStatus,
+    ) {
+        let elapsed_s = self.run_start.elapsed().as_secs_f64();
+
+        if self.general_enabled {
+            trace!(
+                target: "conjure::rule_attempt",
+                elapsed_s,
+                rule_level = priority,
+                rule_name = rule.rule.name,
+                rule_set = rule.rule_set.name,
+                status = status.as_str(),
+                expression = %expression,
+                "attempted rule"
+            );
+        }
+
+        if self.csv_enabled {
+            let expression = expression.to_string();
+            trace!(
+                target: "rule_engine_rule_attempt_trace",
+                "{elapsed_s:.3},{priority},{},{},{},{}",
+                csv_escape(rule.rule.name),
+                csv_escape(rule.rule_set.name),
+                status.as_str(),
+                csv_escape(&expression),
+            );
+        }
+    }
 }
 
 /// True when a domain still needs Essence→Essence' abstract representation
@@ -1331,7 +1369,6 @@ fn model_needs_abstract_repr_rules(model: &Model) -> bool {
 pub fn rewrite_model<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
-    prop_multiple_equally_applicable: bool,
     config: RewriteConfig,
 ) -> Result<Model, RewriteError> {
     set_current_rewriter(Rewriter::Rewrite(config));
@@ -1369,33 +1406,45 @@ pub fn rewrite_model<'a>(
             model
         );
     }
-    if rule_trace_enabled() && rule_trace_verbose_enabled() {
+    if rule_trace_enabled() && rule_attempt_trace_enabled() {
         trace!(
-            target: "rule_engine_rule_trace_verbose",
+            target: "rule_engine_rule_attempt_trace",
             "elapsed_s,rule_level,rule_name,rule_set,status,expression"
         );
     }
 
-    // Rewrite until there are no more rules left to apply.
-    {
-        let mut pass_ctx = RewritePassContext {
-            rules_grouped: &rules_grouped,
-            bucketed_rules: &bucketed_rules,
-            prop_multiple_equally_applicable,
-            stats: &mut rewriter_stats,
-            dirty_trace: &mut dirty_trace,
-            config,
-            #[cfg(debug_assertions)]
+    let general_attempt_trace_enabled = tracing::enabled!(
+        target: "conjure::rule_attempt",
+        tracing::Level::TRACE
+    );
+    let csv_attempt_trace_enabled = rule_trace_enabled() && rule_attempt_trace_enabled();
+
+    if general_attempt_trace_enabled || csv_attempt_trace_enabled {
+        let mut observer = TracingObserver {
             run_start: &run_start,
+            general_enabled: general_attempt_trace_enabled,
+            csv_enabled: csv_attempt_trace_enabled,
         };
-        if config.worklist {
-            let _ = try_rewrite_model(&mut model, &mut pass_ctx);
-        } else {
-            let mut done_something = true;
-            while done_something {
-                done_something = try_rewrite_model(&mut model, &mut pass_ctx).is_some();
-            }
-        }
+        rewrite_to_fixpoint(
+            &mut model,
+            &rules_grouped,
+            &bucketed_rules,
+            &mut rewriter_stats,
+            &mut dirty_trace,
+            config,
+            &mut observer,
+        );
+    } else {
+        let mut observer = NoopObserver;
+        rewrite_to_fixpoint(
+            &mut model,
+            &rules_grouped,
+            &bucketed_rules,
+            &mut rewriter_stats,
+            &mut dirty_trace,
+            config,
+            &mut observer,
+        );
     }
 
     let run_end = Instant::now();
@@ -1436,21 +1485,45 @@ pub fn rewrite_model<'a>(
     Ok(model)
 }
 
+#[allow(clippy::too_many_arguments)]
+fn rewrite_to_fixpoint<'rules, O: RuleAttemptObserver>(
+    model: &mut Model,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'rules>>)>,
+    bucketed_rules: &Vec<RuleGroup<'rules>>,
+    stats: &mut RewriterStats,
+    dirty_trace: &mut DirtyTrace,
+    config: RewriteConfig,
+    attempt_observer: &mut O,
+) {
+    let mut pass_ctx = RewritePassContext {
+        rules_grouped,
+        bucketed_rules,
+        stats,
+        dirty_trace,
+        config,
+        attempt_observer,
+    };
+    if config.worklist {
+        let _ = try_rewrite_model(model, &mut pass_ctx);
+    } else {
+        let mut done_something = true;
+        while done_something {
+            done_something = try_rewrite_model(model, &mut pass_ctx).is_some();
+        }
+    }
+}
+
 // Tries to rewrite the model until a full scan finds no applicable rules.
 //
 // Returns None if no change was made.
-fn try_rewrite_model<'ctx, 'rules>(
+fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
     submodel: &mut Model,
-    ctx: &mut RewritePassContext<'ctx, 'rules>,
+    ctx: &mut RewritePassContext<'ctx, 'rules, O>,
 ) -> Option<()> {
     ctx.dirty_trace.passes += 1;
     if !ctx.config.worklist
-        && try_rewrite_value_letting_once(
-            submodel,
-            ctx.rules_grouped,
-            ctx.prop_multiple_equally_applicable,
-        )
-        .is_some()
+        && try_rewrite_value_letting_once(submodel, ctx.rules_grouped, ctx.attempt_observer)
+            .is_some()
     {
         ctx.dirty_trace.value_letting_rewrites += 1;
         increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
@@ -1484,29 +1557,14 @@ fn try_rewrite_model<'ctx, 'rules>(
                         ctx.stats.rewriter_rule_application_attempts =
                             Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
 
-                        #[cfg(debug_assertions)]
-                        let span = span!(Level::TRACE,"trying_rule_application",rule_name=rd.rule.name,rule_target_expression=%expr);
-
-                        #[cfg(debug_assertions)]
-                        let _guard = span.enter();
-
-                        #[cfg(debug_assertions)]
-                        tracing::trace!(rule_name = rd.rule.name, "Trying rule");
-
                         match (rd.rule.application)(expr, &submodel.symbols()) {
                             Ok(red) => {
-                                // when called a lot, this becomes very expensive!
-                                #[cfg(debug_assertions)]
-                                if rule_trace_enabled() && rule_trace_verbose_enabled() {
-                                    log_verbose_rule_attempt(
-                                        ctx.run_start,
-                                        &rule_group.priority,
-                                        rd.rule.name,
-                                        rd.rule_set.name,
-                                        "success",
-                                        expr,
-                                    );
-                                }
+                                ctx.attempt_observer.attempted(
+                                    rule_group.priority,
+                                    rd,
+                                    expr,
+                                    RuleAttemptStatus::Success,
+                                );
 
                                 // Count successful rule applications
                                 ctx.stats.rewriter_rule_applications =
@@ -1528,18 +1586,12 @@ fn try_rewrite_model<'ctx, 'rules>(
                                 ));
                             }
                             Err(_) => {
-                                // when called a lot, this becomes very expensive!
-                                #[cfg(debug_assertions)]
-                                if rule_trace_enabled() && rule_trace_verbose_enabled() {
-                                    log_verbose_rule_attempt(
-                                        ctx.run_start,
-                                        &rule_group.priority,
-                                        rd.rule.name,
-                                        rd.rule_set.name,
-                                        "fail",
-                                        expr,
-                                    );
-                                }
+                                ctx.attempt_observer.attempted(
+                                    rule_group.priority,
+                                    rd,
+                                    expr,
+                                    RuleAttemptStatus::Failure,
+                                );
                             }
                         }
                     }
@@ -1556,9 +1608,6 @@ fn try_rewrite_model<'ctx, 'rules>(
         }
 
         if !results.is_empty() {
-            if ctx.prop_multiple_equally_applicable {
-                assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
-            }
             let selected =
                 choose_rule_result_index(results.iter().map(|(result, _, _, _, _)| result));
             results.swap(0, selected);
@@ -1643,9 +1692,9 @@ fn try_rewrite_model<'ctx, 'rules>(
     did_rewrite.then_some(())
 }
 
-fn try_rewrite_model_with_worklist<'ctx, 'rules>(
+fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
     submodel: &mut Model,
-    ctx: &mut RewritePassContext<'ctx, 'rules>,
+    ctx: &mut RewritePassContext<'ctx, 'rules, O>,
     arena: ExpressionArena,
 ) -> Option<()> {
     let mut did_rewrite = false;
@@ -1699,28 +1748,14 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 ctx.stats.rewriter_rule_application_attempts =
                     Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
 
-                #[cfg(debug_assertions)]
-                let span = span!(Level::TRACE,"trying_rule_application",rule_name=rd.rule.name,rule_target_expression=%expr);
-
-                #[cfg(debug_assertions)]
-                let _guard = span.enter();
-
-                #[cfg(debug_assertions)]
-                tracing::trace!(rule_name = rd.rule.name, "Trying rule");
-
                 match (rd.rule.application)(expr, &submodel.symbols()) {
                     Ok(red) => {
-                        #[cfg(debug_assertions)]
-                        if rule_trace_enabled() && rule_trace_verbose_enabled() {
-                            log_verbose_rule_attempt(
-                                ctx.run_start,
-                                &rule_group.priority,
-                                rd.rule.name,
-                                rd.rule_set.name,
-                                "success",
-                                expr,
-                            );
-                        }
+                        ctx.attempt_observer.attempted(
+                            rule_group.priority,
+                            rd,
+                            expr,
+                            RuleAttemptStatus::Success,
+                        );
 
                         ctx.stats.rewriter_rule_applications =
                             Some(ctx.stats.rewriter_rule_applications.unwrap_or(0) + 1);
@@ -1736,20 +1771,12 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                             root_variable_snapshot_for_default_trace(expr, &submodel.symbols()),
                         ));
                     }
-                    Err(_) =>
-                    {
-                        #[cfg(debug_assertions)]
-                        if rule_trace_enabled() && rule_trace_verbose_enabled() {
-                            log_verbose_rule_attempt(
-                                ctx.run_start,
-                                &rule_group.priority,
-                                rd.rule.name,
-                                rd.rule_set.name,
-                                "fail",
-                                expr,
-                            );
-                        }
-                    }
+                    Err(_) => ctx.attempt_observer.attempted(
+                        rule_group.priority,
+                        rd,
+                        expr,
+                        RuleAttemptStatus::Failure,
+                    ),
                 }
             }
         }
@@ -1775,10 +1802,6 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules>(
                 Some(ctx.dirty_trace),
             );
             continue;
-        }
-
-        if ctx.prop_multiple_equally_applicable {
-            assert_no_multiple_equally_applicable_rules(&results, ctx.rules_grouped);
         }
 
         let selected = choose_rule_result_index(results.iter().map(|(result, _, _, _, _)| result));
@@ -2376,68 +2399,12 @@ fn expr_has_direct_child_discriminant(expr: &Expr, target_discriminants: &[usize
     found
 }
 
-#[cfg(debug_assertions)]
 fn csv_escape(field: &str) -> String {
     if field.contains([',', '"', '\n', '\r']) {
         format!("\"{}\"", field.replace('"', "\"\""))
     } else {
         field.to_string()
     }
-}
-
-#[cfg(debug_assertions)]
-fn log_verbose_rule_attempt(
-    run_start: &Instant,
-    priority: &u16,
-    rule_name: &str,
-    rule_set_name: &str,
-    status: &str,
-    expr: &Expr,
-) {
-    let elapsed_seconds = run_start.elapsed().as_secs_f64();
-    let expr_str = expr.to_string();
-    trace!(
-        target: "rule_engine_rule_trace_verbose",
-        "{:.3},{},{},{},{},{}",
-        elapsed_seconds,
-        priority,
-        csv_escape(rule_name),
-        csv_escape(rule_set_name),
-        status,
-        csv_escape(&expr_str)
-    );
-}
-
-// Exits with a bug if there are multiple equally applicable rules for an expression.
-fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
-    results: &Vec<ApplicableRule<'_, CtxFnType>>,
-    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
-) {
-    if results.len() <= 1 {
-        return;
-    }
-
-    let names: Vec<_> = results
-        .iter()
-        .map(|(result, _, _, _, _)| result.rule_data.rule.name)
-        .collect();
-
-    // Extract the expression from the first result
-    let expr = results[0].2.clone();
-
-    // Construct a single string to display the names of the rules grouped by priority
-    let mut rules_by_priority_string = String::new();
-    rules_by_priority_string.push_str("Rules grouped by priority:\n");
-    for (priority, rules) in rules_grouped.iter() {
-        rules_by_priority_string.push_str(&format!("Priority {priority}:\n"));
-        for rd in rules {
-            rules_by_priority_string.push_str(&format!(
-                "  - {} (from {})\n",
-                rd.rule.name, rd.rule_set.name
-            ));
-        }
-    }
-    bug!("Multiple equally applicable rules for {expr}: {names:#?}\n\n{rules_by_priority_string}");
 }
 
 #[cfg(test)]

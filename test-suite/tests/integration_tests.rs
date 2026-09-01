@@ -36,8 +36,8 @@ use conjure_cp::settings::{
     begin_heuristic_all_choices, heuristic_all_choices, set_channelling,
     set_comprehension_expander, set_current_parser, set_current_rewriter,
     set_current_solver_family, set_default_rule_trace_enabled, set_heuristic, set_heuristic_seed,
-    set_minion_discrete_threshold, set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
-    set_rule_trace_verbose_enabled,
+    set_minion_discrete_threshold, set_rule_attempt_trace_enabled,
+    set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
 };
 use conjure_cp_cli::utils::conjure::{
     ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
@@ -686,7 +686,7 @@ fn execute_integration_run(
     let default_rule_trace_enabled = matches!(run_case.rewriter, Rewriter::Rewrite(_));
     set_rule_trace_enabled(rule_trace_snapshots_enabled);
     set_default_rule_trace_enabled(rule_trace_snapshots_enabled && default_rule_trace_enabled);
-    set_rule_trace_verbose_enabled(false);
+    set_rule_attempt_trace_enabled(false);
     set_rule_trace_aggregates_enabled(false);
     let run_test = || {
         integration_test_inner(
@@ -798,7 +798,7 @@ fn integration_test_inner(
     let model = parsed_model;
 
     let Rewriter::Rewrite(config) = rewriter;
-    let rewritten_model = rewrite_model(&model, &rule_sets, false, config)?;
+    let rewritten_model = rewrite_model(&model, &rule_sets, config)?;
     // `x` enumerates translation-time modelling decisions. Solver-time CDP rewrites must not add
     // branches to that model portfolio.
     if run_case.heuristic == Heuristic::All {
@@ -1312,7 +1312,7 @@ fn try_capture_oxide_minion(
     let rule_sets = resolve_rule_sets(run_case.solver, &rules_to_load)?;
 
     let Rewriter::Rewrite(config) = run_case.rewriter;
-    let rewritten_model = rewrite_model(&parsed_model, &rule_sets, false, config)?;
+    let rewritten_model = rewrite_model(&parsed_model, &rule_sets, config)?;
 
     let minion_path = oxide_artifacts_dir(Path::new(path)).join(format!(
         "{}-{}.minion",

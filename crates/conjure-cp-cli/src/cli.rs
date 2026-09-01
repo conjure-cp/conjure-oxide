@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Args, Parser, Subcommand};
+use clap::{ArgAction, Args, Parser, Subcommand, ValueEnum};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
@@ -11,10 +11,8 @@ use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder};
 
 use crate::{pretty, solve, test_solve};
 
-pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
 pub(crate) const CONFIGURATION_HELP_HEADING: Option<&str> = Some("Configuration");
-pub(crate) const OPTIMISATIONS_HELP_HEADING: Option<&str> = Some("Optimisations");
 
 /// All subcommands of conjure-oxide
 #[derive(Clone, Debug, Subcommand)]
@@ -66,22 +64,22 @@ pub struct GlobalArgs {
     #[arg(long, value_name = "EXTRA_RULE_SETS", global = true)]
     pub extra_rule_sets: Vec<String>,
 
-    /// Log verbosely
-    #[arg(long, short = 'v', help = "Log verbosely to stderr", global = true, help_heading = LOGGING_HELP_HEADING)]
-    pub verbose: bool,
-
-    // --no-x flag disables --x flag : https://jwodder.github.io/kbits/posts/clap-bool-negate/
-    /// Check for multiple equally applicable rules, exiting if any are found.
+    /// Increase stderr logging detail (-v: stages, -vv: rule applications, -vvv: rule attempts).
     ///
-    /// Only compatible with the default rewriter.
+    /// Rule-attempt logging can be expensive and produce a very large amount of output.
     #[arg(
         long,
-        overrides_with = "_no_check_equally_applicable_rules",
-        default_value_t = false,
+        short = 'v',
+        action = ArgAction::Count,
         global = true,
-        help_heading= DEBUG_HELP_HEADING
+        conflicts_with = "quiet",
+        help_heading = LOGGING_HELP_HEADING
     )]
-    pub check_equally_applicable_rules: bool,
+    pub verbose: u8,
+
+    /// Disable warning and progress logs on stderr
+    #[arg(long, short = 'q', global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub quiet: bool,
 
     /// Output file for the default rule trace.
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
@@ -101,17 +99,15 @@ pub struct GlobalArgs {
     #[arg(long, default_value_t = false, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub rule_trace_cdp: bool,
 
-    /// Output file for verbose rule-attempt trace in CSV format.
+    /// Output file for the rule-attempt trace in CSV format.
     ///
     /// Each row includes: elapsed_s, rule_level, rule_name, rule_set, status, expression.
-    #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
-    pub rule_trace_verbose: Option<PathBuf>,
-
-    /// Do not check for multiple equally applicable rules [default].
-    ///
-    /// Only compatible with the default rewriter.
-    #[arg(long, global = true, help_heading = DEBUG_HELP_HEADING)]
-    pub _no_check_equally_applicable_rules: bool,
+    #[arg(
+        long = "rule-attempt-trace",
+        global = true,
+        help_heading=LOGGING_HELP_HEADING
+    )]
+    pub rule_attempt_trace: Option<PathBuf>,
 
     /// Which parser to use.
     ///
@@ -281,21 +277,36 @@ pub struct GlobalArgs {
 
     /// Stop the solver after the given timeout.
     ///
-    /// Currently only SMT supports this feature.
-    #[arg(long, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    /// Minion has one-second timeout resolution, so finer durations are rounded up.
+    #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub solver_timeout: Option<humantime::Duration>,
 
-    /// Generate log files
-    #[arg(long, default_value_t = false, global = true, help_heading = LOGGING_HELP_HEADING)]
-    pub log: bool,
+    /// Write general logs to this file
+    #[arg(long, value_name = "PATH", global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub log_file: Option<PathBuf>,
 
-    /// Output file for conjure-oxide's text logs
-    #[arg(long, value_name = "LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
-    pub logfile: Option<PathBuf>,
+    /// Format used by --log-file [default: text]
+    #[arg(long, value_enum, requires = "log_file", global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub log_format: Option<LogFormat>,
 
-    /// Output file for conjure-oxide's json logs
-    #[arg(long, value_name = "JSON LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
-    pub logfile_json: Option<PathBuf>,
+    /// Detail written by --log-file [default: stages]
+    #[arg(long, value_enum, requires = "log_file", global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub log_detail: Option<LogDetail>,
+}
+
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
+pub enum LogFormat {
+    #[default]
+    Text,
+    Json,
+}
+
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
+pub enum LogDetail {
+    #[default]
+    Stages,
+    Applications,
+    Attempts,
 }
 
 #[derive(Debug, Clone, Args)]

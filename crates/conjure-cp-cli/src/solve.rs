@@ -20,7 +20,7 @@ use conjure_cp::{
         Rewriter, set_channelling, set_comprehension_expander, set_current_parser,
         set_current_rewriter, set_current_solver_family, set_default_rule_trace_enabled,
         set_heuristic, set_heuristic_responses, set_heuristic_seed, set_minion_discrete_threshold,
-        set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
+        set_rule_attempt_trace_enabled, set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
     },
     solver::Solver,
 };
@@ -182,7 +182,11 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 
         if let Some(path) = global_args.save_solver_input_file {
             let solver = solver.load_model(rewritten_model)?;
-            eprintln!("Writing solver input file to {}", path.display());
+            tracing::info!(
+                target: "conjure::stage",
+                path = %path.display(),
+                "writing solver input file"
+            );
             let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
             solver.write_solver_input_file(&mut file)?;
         }
@@ -207,10 +211,10 @@ pub(crate) fn init_context(
     param_file: Option<PathBuf>,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     let default_rule_trace_enabled = global_args.rule_trace.is_some();
-    let verbose_rule_trace_enabled = global_args.rule_trace_verbose.is_some();
+    let rule_attempt_trace_enabled = global_args.rule_attempt_trace.is_some();
     let rule_trace_aggregates_enabled = global_args.rule_trace_aggregates.is_some();
     let rule_trace_enabled =
-        default_rule_trace_enabled || verbose_rule_trace_enabled || rule_trace_aggregates_enabled;
+        default_rule_trace_enabled || rule_attempt_trace_enabled || rule_trace_aggregates_enabled;
 
     set_current_parser(global_args.parser);
     set_current_rewriter(global_args.rewriter);
@@ -219,7 +223,7 @@ pub(crate) fn init_context(
     set_minion_discrete_threshold(global_args.minion_discrete_threshold);
     set_rule_trace_enabled(rule_trace_enabled);
     set_default_rule_trace_enabled(default_rule_trace_enabled);
-    set_rule_trace_verbose_enabled(verbose_rule_trace_enabled);
+    set_rule_attempt_trace_enabled(rule_attempt_trace_enabled);
     set_rule_trace_aggregates_enabled(rule_trace_aggregates_enabled);
 
     let target_family = global_args.solver;
@@ -236,24 +240,28 @@ pub(crate) fn init_context(
         }
     };
 
-    let pretty_rule_sets = rule_sets
-        .iter()
-        .map(|rule_set| rule_set.name)
-        .collect::<Vec<_>>()
-        .join(", ");
-
-    tracing::info!("Enabled rule sets: [{}]", pretty_rule_sets);
     tracing::info!(
-        target: "file",
-        "Rule sets: {}",
-        pretty_rule_sets
+        target: "conjure::stage",
+        count = rule_sets.len(),
+        "resolved rule sets"
+    );
+    tracing::debug!(
+        rule_sets = %rule_sets
+            .iter()
+            .map(|rule_set| rule_set.name)
+            .collect::<Vec<_>>()
+            .join(", "),
+        "enabled rule sets"
     );
 
     let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
-    tracing::info!(
-        target: "file",
+    tracing::debug!(
         "Rules: {}",
-        rules.iter().map(|rd| format!("{rd}")).collect::<Vec<_>>().join("\n")
+        rules
+            .iter()
+            .map(|rd| format!("{rd}"))
+            .collect::<Vec<_>>()
+            .join("\n")
     );
     let context = Context::new_ptr(
         target_family,
@@ -294,7 +302,7 @@ pub(crate) fn parse(
     context: Arc<RwLock<Context<'static>>>,
     file_path: &str,
 ) -> anyhow::Result<Model> {
-    tracing::info!(target: "file", "Input file: {}", file_path);
+    tracing::info!(target: "conjure::stage", path = %file_path, "parsing input model");
 
     match global_args.parser {
         conjure_cp::settings::Parser::TreeSitter => {
@@ -312,7 +320,7 @@ pub(crate) fn parse_param(
     problem_model: &Model,
 ) -> anyhow::Result<Model> {
     if file_path.ends_with(".json") {
-        tracing::info!(target: "file", "Parameter JSON file: {}", file_path);
+        tracing::info!(target: "conjure::stage", path = %file_path, "parsing parameter file");
         let text = std::fs::read_to_string(file_path)?;
         let given_domains = domains_from_model(problem_model);
         let params = params_from_simplified_json_str(&text, &given_domains)?;
@@ -345,9 +353,9 @@ pub(crate) fn parse_with_conjure(
     let astjson = String::from_utf8(output.stdout)?;
 
     if cfg!(feature = "extra-rule-checks") {
-        tracing::info!("extra-rule-checks: enabled");
+        tracing::debug!("extra-rule-checks: enabled");
     } else {
-        tracing::info!("extra-rule-checks: disabled");
+        tracing::debug!("extra-rule-checks: disabled");
     }
 
     model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
@@ -358,20 +366,20 @@ pub(crate) fn rewrite(
     global_args: &GlobalArgs,
     context: Arc<RwLock<Context<'static>>>,
 ) -> anyhow::Result<Model> {
-    tracing::info!("Initial model: \n{}\n", model);
+    tracing::debug!(model = %model, "initial model");
 
     let rewriter = global_args.rewriter;
     set_current_rewriter(rewriter);
 
     let comprehension_expander = global_args.comprehension_expander;
     set_comprehension_expander(comprehension_expander);
-    tracing::info!("Comprehension expander: {}", comprehension_expander);
+    tracing::debug!(%comprehension_expander, "configured comprehension expander");
 
     set_heuristic(global_args.heuristic);
     set_heuristic_seed(global_args.seed);
     set_heuristic_responses(global_args.responses.clone());
     set_channelling(global_args.channelling);
-    tracing::info!(
+    tracing::debug!(
         "Heuristic: {}, seed: {}, responses: {:?}, channelling: {}, solver seed: {}",
         global_args.heuristic,
         global_args.seed,
@@ -383,15 +391,10 @@ pub(crate) fn rewrite(
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
     let Rewriter::Rewrite(config) = rewriter;
-    tracing::info!("Rewriting the model using the rewrite engine ({})", config);
-    let new_model = rewrite_model(
-        &model,
-        &rule_sets,
-        global_args.check_equally_applicable_rules,
-        config,
-    )?;
+    tracing::info!(target: "conjure::stage", %config, "rewriting model");
+    let new_model = rewrite_model(&model, &rule_sets, config)?;
 
-    tracing::info!("Rewritten model: \n{}\n", new_model);
+    tracing::debug!(model = %new_model, "rewritten model");
     Ok(new_model)
 }
 
@@ -410,7 +413,7 @@ fn run_solver(
         &global_args.save_solver_input_file,
         global_args.rule_trace_cdp,
     )?;
-    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
+    tracing::debug!(solutions = %solutions_to_json(&solutions), "solver solutions");
 
     let solutions = coerce_bools_in_solutions(&solutions, &domains);
     write_solutions(&solutions, cmd_args)?;

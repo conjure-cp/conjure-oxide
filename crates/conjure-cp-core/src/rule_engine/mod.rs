@@ -212,7 +212,7 @@ pub fn rewrite_model_with_configured_rewriter<'a>(
     configured_rewriter: Rewriter,
 ) -> Result<Model, RewriteError> {
     match configured_rewriter {
-        Rewriter::Rewrite(config) => rewrite_model(&model, rule_sets, false, config),
+        Rewriter::Rewrite(config) => rewrite_model(&model, rule_sets, config),
     }
 }
 

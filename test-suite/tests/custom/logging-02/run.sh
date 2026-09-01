@@ -1,9 +1,7 @@
-conjure-oxide --log --logfile conjure_oxide_test --logfile-json conjure_oxide_log_test solve --parser=via-conjure model.eprime --number-of-solutions=all
+conjure-oxide --log-file conjure_oxide_test.data --log-format json solve --parser=via-conjure model.eprime --number-of-solutions=all
 
-[ -f "./conjure_oxide_test.log" ] && echo "./conjure_oxide_test.log found" || echo "./conjure_oxide_test.log is missing"
-[ -f "./conjure_oxide_log_test.json" ] && echo "./conjure_oxide_log_test.json found" || echo "./conjure_oxide_log_test.json is missing"
+[ -f "./conjure_oxide_test.data" ] && echo "./conjure_oxide_test.data found" || echo "./conjure_oxide_test.data is missing"
 
-[ -s "./conjure_oxide_test.log" ] && echo "./conjure_oxide_test.log has been written" || echo "./conjure_oxide_test.log is empty"
-[ -s "./conjure_oxide_log_test.json" ] && echo "./conjure_oxide_log_test.json has been written" || echo "./conjure_oxide_log_test.json is empty"
+[ -s "./conjure_oxide_test.data" ] && echo "./conjure_oxide_test.data has been written" || echo "./conjure_oxide_test.data is empty"
 
-rm conjure_oxide_log_test.json conjure_oxide_test.log
+rm conjure_oxide_test.data

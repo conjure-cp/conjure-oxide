@@ -5,39 +5,55 @@ see Conjure Oxide's `--help` output.**
 
 ## To `stderr`
 
-Using `--verbose`, and the `RUST_LOG` environment variable, you can control the
-contents, and formatting of, Conjure Oxide's `stderr` output:
+The verbosity flags form a detail ladder:
 
-+ **`--verbose`** changes the formatting of the logs for improved readability,
-  including printing source locations and line numbers for log events. It also
-  enables the printing of the log levels `INFO` and above.
++ With no flag, only warnings are logged.
++ `-q` / `--quiet` disables logs on `stderr`.
++ `-v` logs concise stage information such as parsing, rewriting, and running the solver.
++ `-vv` additionally logs successful rule applications.
++ `-vvv` additionally logs every rule attempt, including failures. This can be expensive and
+  produce a very large amount of output.
 
-+ The **`RUST_LOG`** environment variable can be used to customise the
-  log levels that are printed depending on the module . For more
-  information, see:
-  <https://docs.rs/env_logger/latest/env_logger/#enabling-logging>.
+The **`RUST_LOG`** environment variable remains available as an advanced override for selecting
+levels or modules when no verbosity flag is supplied. Explicit `-v`/`-vv`/`-vvv` and `--quiet`
+take precedence over it.
+
+## To a file
+
+`--log-file <PATH>` creates one general log file. Its format and detail are independent of the
+terminal verbosity:
+
+```sh
+conjure-oxide solve model.essence \
+  --log-file attempts.json \
+  --log-format json \
+  --log-detail attempts
+```
+
+`--log-format` accepts `text` (the default) or `json`. `--log-detail` accepts `stages` (the
+default), `applications`, or `attempts`. The supplied filename is used exactly as written and is
+truncated at the start of the run.
 
 ### Example: Logging Rule Applications
 
 Different log levels provide different information about the rules applied to
 the model:
 
-+ `INFO` provides information on the rules that were applied to the model.
++ `-vv` prints rules that were successfully applied to the model.
 
-+ `TRACE` additionally prints the rules that were attempted and why they were
-  not applicable.
++ `-vvv` additionally prints every attempted rule and whether it succeeded.
 
 To see TRACE logs in a pretty format (mainly useful for
 debugging):
 
 ```sh
-RUST_LOG=trace conjure-oxide solve --verbose <model>
+conjure-oxide solve -vvv <model>
 ```
 
 Or, using cargo:
 
 ```sh
-RUST_LOG=trace cargo run -- solve --verbose <model>
+cargo run -- solve -vvv <model>
 ```
 
 ### Example: Tracing SAT Solver Rules
@@ -45,7 +61,7 @@ RUST_LOG=trace cargo run -- solve --verbose <model>
 When working with the SAT solver, you can trace the complete transformation pipeline:
 
 ```bash
-RUST_LOG=TRACE cargo run -- solve --solver sat my_problem.essence --verbose
+cargo run -- solve --solver sat -vvv my_problem.essence
 ```
 
 This will show:

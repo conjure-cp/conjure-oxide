@@ -672,7 +672,6 @@ fn rewrite_solve_xyz() {
     model = rewrite_model(
         &model,
         &rule_sets,
-        true,
         conjure_cp::settings::RewriteConfig::baseline(),
     )
     .unwrap();

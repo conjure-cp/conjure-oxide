@@ -25,7 +25,7 @@ pub fn main() {
     // TODO: We will have a nicer way to do this in the future
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS).unwrap();
 
-    let model = rewrite_model(&model, &rule_sets, true, RewriteConfig::optimised()).unwrap();
+    let model = rewrite_model(&model, &rule_sets, RewriteConfig::optimised()).unwrap();
     println!("Rewritten model: \n {model} \n",);
 
     // To tell the `Solver` type what solver to use, you pass it a `SolverAdaptor`.

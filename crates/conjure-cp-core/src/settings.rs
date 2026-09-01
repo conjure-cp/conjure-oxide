@@ -631,7 +631,7 @@ thread_local! {
     static DEFAULT_RULE_TRACE_ENABLED: Cell<bool> = const { Cell::new(false) };
 
     /// Thread-local setting controlling whether verbose rule-attempt traces are configured.
-    static RULE_TRACE_VERBOSE_ENABLED: Cell<bool> = const { Cell::new(false) };
+    static RULE_ATTEMPT_TRACE_ENABLED: Cell<bool> = const { Cell::new(false) };
 
     /// Thread-local setting controlling whether aggregate rule-application traces are configured.
     static RULE_TRACE_AGGREGATES_ENABLED: Cell<bool> = const { Cell::new(false) };
@@ -718,12 +718,12 @@ pub fn default_rule_trace_enabled() -> bool {
     DEFAULT_RULE_TRACE_ENABLED.with(|current| current.get())
 }
 
-pub fn set_rule_trace_verbose_enabled(enabled: bool) {
-    RULE_TRACE_VERBOSE_ENABLED.with(|current| current.set(enabled));
+pub fn set_rule_attempt_trace_enabled(enabled: bool) {
+    RULE_ATTEMPT_TRACE_ENABLED.with(|current| current.set(enabled));
 }
 
-pub fn rule_trace_verbose_enabled() -> bool {
-    RULE_TRACE_VERBOSE_ENABLED.with(|current| current.get())
+pub fn rule_attempt_trace_enabled() -> bool {
+    RULE_ATTEMPT_TRACE_ENABLED.with(|current| current.get())
 }
 
 pub fn set_rule_trace_aggregates_enabled(enabled: bool) {
@@ -735,7 +735,7 @@ pub fn rule_trace_aggregates_enabled() -> bool {
 }
 
 pub fn configured_rule_trace_enabled() -> bool {
-    default_rule_trace_enabled() || rule_trace_verbose_enabled() || rule_trace_aggregates_enabled()
+    default_rule_trace_enabled() || rule_attempt_trace_enabled() || rule_trace_aggregates_enabled()
 }
 
 impl FromStr for SolverFamily {

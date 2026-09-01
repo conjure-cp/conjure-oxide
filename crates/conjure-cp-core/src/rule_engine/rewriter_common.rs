@@ -15,18 +15,61 @@ use crate::settings::{
 };
 
 use itertools::Itertools;
-use serde_json::json;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::sync::Arc;
 use thiserror::Error;
-use tracing::{info, trace};
+use tracing::{debug, trace};
 use uniplate::Uniplate;
 
 #[derive(Debug, Clone)]
 pub struct RuleResult<'a> {
     pub rule_data: RuleData<'a>,
     pub effect: RuleEffect,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum RuleAttemptStatus {
+    Success,
+    Failure,
+}
+
+impl RuleAttemptStatus {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Success => "success",
+            Self::Failure => "fail",
+        }
+    }
+}
+
+pub(crate) trait RuleAttemptObserver {
+    fn attempted(
+        &mut self,
+        priority: u16,
+        rule: &RuleData<'_>,
+        expression: &Expression,
+        status: RuleAttemptStatus,
+    );
+}
+
+/// Observer used when rule-attempt tracing is disabled.
+///
+/// Rewrite loops are generic over their observer, so this empty implementation is inlined and
+/// removed from the monomorphised hot path: disabled tracing performs no per-attempt dispatch,
+/// formatting, allocation, or enabled-level check.
+pub(crate) struct NoopObserver;
+
+impl RuleAttemptObserver for NoopObserver {
+    #[inline(always)]
+    fn attempted(
+        &mut self,
+        _priority: u16,
+        _rule: &RuleData<'_>,
+        _expression: &Expression,
+        _status: RuleAttemptStatus,
+    ) {
+    }
 }
 
 fn expression_ast_depth(expression: &Expression) -> usize {
@@ -156,22 +199,25 @@ pub fn log_rule_application(
     let red = &result.effect;
     let rule = result.rule_data.rule;
 
-    // A reduction can only modify either constraints or clauses, not both. So the the same
-    // variable is used to hold changes in both (or empty if neither are changed).
-    let new_top_string = if !red.new_top.is_empty() {
-        pretty_vec(&red.new_top)
-    } else {
-        pretty_vec(&red.new_clauses)
-    };
+    if tracing::enabled!(target: "conjure::rule_application", tracing::Level::DEBUG) {
+        // A reduction can only modify either constraints or clauses, not both. So the same
+        // field can represent both (or be empty if neither changed).
+        let new_top = if !red.new_top.is_empty() {
+            pretty_vec(&red.new_top)
+        } else {
+            pretty_vec(&red.new_clauses)
+        };
 
-    info!(
-        %new_top_string,
-        "Applying rule: {} ({:?}), to expression: {}, resulting in: {}",
-        rule.name,
-        rule.rule_sets,
-        initial_expression,
-        red.new_expression
-    );
+        debug!(
+            target: "conjure::rule_application",
+            rule = rule.name,
+            rule_sets = ?rule.rule_sets,
+            before = %initial_expression,
+            after = %red.new_expression,
+            %new_top,
+            "applied rule"
+        );
+    }
 
     if rule_trace_enabled() && default_rule_trace_enabled() {
         let new_constraints_str = if !red.new_top.is_empty() {
@@ -262,21 +308,6 @@ pub fn log_rule_application(
             "Applied rule"
         );
     }
-
-    trace!(
-        target: "rule_engine",
-        "{}",
-    json!({
-        "rule_name": result.rule_data.rule.name,
-        "rule_priority": result.rule_data.priority,
-        "rule_set": {
-            "name": result.rule_data.rule_set.name,
-        },
-        "initial_expression": serde_json::to_value(initial_expression).unwrap(),
-        "transformed_expression": serde_json::to_value(&red.new_expression).unwrap()
-    })
-
-    )
 }
 
 type LettingCtxFn = Arc<dyn Fn(Expression) -> Expression>;
@@ -288,10 +319,10 @@ type ApplicableLettingRule<'a> = (
     LettingCtxFn,
 );
 
-pub(crate) fn try_rewrite_value_letting_once(
+pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
     model: &mut Model,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
-    prop_multiple_equally_applicable: bool,
+    observer: &mut O,
 ) -> Option<Name> {
     let symbols = model.symbols().clone();
     let mut results: Vec<ApplicableLettingRule<'_>> = vec![];
@@ -307,20 +338,24 @@ pub(crate) fn try_rewrite_value_letting_once(
                 let ctx = ctx.clone();
 
                 for rd in rules {
-                    let Ok(effect) = (rd.rule.application)(&expr, &symbols) else {
-                        continue;
-                    };
-
-                    results.push((
-                        RuleResult {
-                            rule_data: rd.clone(),
-                            effect,
-                        },
-                        *priority,
-                        expr.clone(),
-                        decl.clone(),
-                        ctx.clone(),
-                    ));
+                    match (rd.rule.application)(&expr, &symbols) {
+                        Ok(effect) => {
+                            observer.attempted(*priority, rd, &expr, RuleAttemptStatus::Success);
+                            results.push((
+                                RuleResult {
+                                    rule_data: rd.clone(),
+                                    effect,
+                                },
+                                *priority,
+                                expr.clone(),
+                                decl.clone(),
+                                ctx.clone(),
+                            ));
+                        }
+                        Err(_) => {
+                            observer.attempted(*priority, rd, &expr, RuleAttemptStatus::Failure)
+                        }
+                    }
                 }
 
                 if !results.is_empty() {
@@ -328,15 +363,6 @@ pub(crate) fn try_rewrite_value_letting_once(
                 }
             }
         }
-    }
-
-    if prop_multiple_equally_applicable && results.len() > 1 {
-        let expr = &results[0].2;
-        let names: Vec<_> = results
-            .iter()
-            .map(|(result, _, _, _, _)| result.rule_data.rule.name)
-            .collect();
-        panic!("Multiple equally applicable rules for value letting expression {expr}: {names:?}");
     }
 
     if results.is_empty() {
