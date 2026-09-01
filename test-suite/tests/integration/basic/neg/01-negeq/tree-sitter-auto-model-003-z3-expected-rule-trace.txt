@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find x: int(1..2)
+find y: int(-1..1)
+
+such that
+
+x = -(y)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(1..2)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(-1..1)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+Final model:
+
+find x: int(1..2)
+find y: int(-1..1)
+find x#lia_1: int(1..2)
+find y#lia_1: int(-1..1)
+
+such that
+
+x#lia_1 = -(y#lia_1)
+

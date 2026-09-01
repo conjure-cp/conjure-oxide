@@ -9,6 +9,7 @@ use serde_json::Value as JsonValue;
 
 use crate::ast::Moo;
 use crate::ast::PartitionAttr;
+use crate::ast::PermutationAttr;
 use crate::ast::Typeable;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
@@ -152,32 +153,38 @@ fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::User(Ustr::from(name));
     // value letting
-    if let Ok(value) = parse_expression(&arr[1], scope) {
-        let mut symtab = scope.write();
-        symtab
-            .insert(DeclarationPtr::new_value_letting(name.clone(), value))
-            .ok_or(Error::Parse(format!(
-                "Could not add {name} to symbol table as it already exists"
-            )))
-    } else {
-        // domain letting
-        let domain = &arr[1]
-            .as_object()
-            .ok_or(error!("Letting[1] is not an object".to_owned()))?["Domain"]
-            .as_object()
-            .ok_or(error!("Letting[1].Domain is not an object"))?
-            .iter()
-            .next()
-            .ok_or(error!("Letting[1].Domain is an empty object"))?;
+    match parse_expression(&arr[1], scope) {
+        Ok(value) => {
+            let mut symtab = scope.write();
+            symtab
+                .insert(DeclarationPtr::new_value_letting(name.clone(), value))
+                .ok_or(Error::Parse(format!(
+                    "Could not add {name} to symbol table as it already exists"
+                )))
+        }
+        Err(expression_error) => {
+            // A letting whose value is not an expression may be a domain letting. Use
+            // `get` here rather than indexing so an unsupported value expression is
+            // reported as a parse error instead of panicking on a missing `Domain` key.
+            let domain = arr[1]
+                .as_object()
+                .and_then(|value| value.get("Domain"))
+                .ok_or(expression_error)?
+                .as_object()
+                .ok_or(error!("Letting[1].Domain is not an object"))?
+                .iter()
+                .next()
+                .ok_or(error!("Letting[1].Domain is an empty object"))?;
 
-        let mut symtab = scope.write();
-        let domain = parse_domain(domain.0, domain.1, &mut symtab)?;
+            let mut symtab = scope.write();
+            let domain = parse_domain(domain.0, domain.1, &mut symtab)?;
 
-        symtab
-            .insert(DeclarationPtr::new_domain_letting(name.clone(), domain))
-            .ok_or(Error::Parse(format!(
-                "Could not add {name} to symbol table as it already exists"
-            )))
+            symtab
+                .insert(DeclarationPtr::new_domain_letting(name.clone(), domain))
+                .ok_or(Error::Parse(format!(
+                    "Could not add {name} to symbol table as it already exists"
+                )))
+        }
     }
 }
 
@@ -219,7 +226,7 @@ fn parse_domain(
                 .and_then(|v| v.as_object())
                 .ok_or(error!("Set size attributes is not an object"))?;
             let size = parse_size_attr(size, symbols)?;
-            let attr: SetAttr<IntVal> = SetAttr { size };
+            let attr: SetAttr<IntVal> = SetAttr::new(size);
             Ok(Domain::set(attr, domain))
         }
         "DomainMSet" => {
@@ -251,7 +258,11 @@ fn parse_domain(
                 .ok_or(error!("MSet occurrence attributes is not an object"))?;
             let occurrence = parse_occur_attr(occurrence, symbols)?;
 
-            let attr: MSetAttr<IntVal> = MSetAttr { size, occurrence };
+            let attr: MSetAttr<IntVal> = MSetAttr {
+                size,
+                occurrence,
+                representation: None,
+            };
             Ok(Domain::mset(attr, domain))
         }
         "DomainPartition" => {
@@ -291,6 +302,30 @@ fn parse_domain(
                 is_regular,
             };
             Ok(Domain::partition(attr, domain))
+        }
+        "DomainPermutation" => {
+            let dom = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
+                .expect("domain object exists");
+            let domain = dom.iter().next().ok_or(Error::Parse(
+                "DomainPermutation is an empty object".to_owned(),
+            ))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
+
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Permutation attributes is not an object"))?;
+
+            let mut num_moved = Range::Unbounded;
+            if let Some(val) = attributes.get("numMoved") {
+                let attr_map = val.as_object().expect("numMoved should be an object");
+                num_moved = parse_size_attr(attr_map, symbols)?;
+            }
+
+            let attr: PermutationAttr<IntVal> = PermutationAttr { num_moved };
+            Ok(Domain::permutation(attr, domain))
         }
         "DomainMatrix" => {
             let domain_value = domain_value
@@ -375,7 +410,11 @@ fn parse_domain(
             let jectivity =
                 jectivity.ok_or(Error::Parse("Jectivity is an unknown type".to_owned()))?;
 
-            let attr: SequenceAttr<IntVal> = SequenceAttr { size, jectivity };
+            let attr: SequenceAttr<IntVal> = SequenceAttr {
+                size,
+                jectivity,
+                representation: None,
+            };
             match attr.size {
                 Range::Unbounded | Range::UnboundedR(_) => Err(Error::Parse(
                     "Sequence must have size or maxSize attribute".to_string(),
@@ -577,6 +616,12 @@ fn parse_domain(
                         "BinRelAttr_Serial" => Ok(BinaryAttr::Serial),
                         "BinRelAttr_Equivalence" => Ok(BinaryAttr::Equivalence),
                         "BinRelAttr_PartialOrder" => Ok(BinaryAttr::PartialOrder),
+                        "BinRelAttr_LeftTotal" => Ok(BinaryAttr::LeftTotal),
+                        "BinRelAttr_RightTotal" => Ok(BinaryAttr::RightTotal),
+                        "BinRelAttr_LinearOrder" => Ok(BinaryAttr::LinearOrder),
+                        "BinRelAttr_WeakOrder" => Ok(BinaryAttr::WeakOrder),
+                        "BinRelAttr_PreOrder" => Ok(BinaryAttr::PreOrder),
+                        "BinRelAttr_StrictPartialOrder" => Ok(BinaryAttr::StrictPartialOrder),
                         _ => Err(Error::Parse(
                             "Relation binary attribute is invalid".to_owned(),
                         )),
@@ -691,6 +736,12 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
         .ok_or(error!("DomainInt is not an array".to_owned()))?[1]
         .as_array()
         .ok_or(error!("DomainInt[1] is not an array".to_owned()))?;
+    if arr.is_empty() {
+        return Ok(Domain::int(vec![Range::Bounded(
+            crate::ast::OXIDE_INT_MIN,
+            crate::ast::OXIDE_INT_MAX,
+        )]));
+    }
     for range in arr {
         let range = range
             .as_object()
@@ -779,6 +830,7 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
         "MkOpImageSet" => Some(Expression::ImageSet),
         "MkOpPreImage" => Some(Expression::PreImage),
         "MkOpInverse" => Some(Expression::Inverse),
+        "MkOpCompose" => Some(Expression::Compose),
         "MkOpRestrict" => Some(Expression::Restrict),
         "MkOpApart" => Some(Expression::Apart),
         "MkOpTogether" => Some(Expression::Together),
@@ -800,8 +852,8 @@ fn unary_operator(op_name: &str, inner: Option<&Expression>) -> Option<UnaryOp> 
                     ReturnType::Matrix(_)
                     | ReturnType::Set(_)
                     | ReturnType::MSet(_)
-                    | ReturnType::Relation(_)
-                    | ReturnType::Function(_, _) => Some(Expression::Card),
+                    | ReturnType::Function(_, _)
+                    | ReturnType::Relation(_) => Some(Expression::Card),
                     _ => None,
                 }
             } else {
@@ -818,6 +870,7 @@ fn unary_operator(op_name: &str, inner: Option<&Expression>) -> Option<UnaryOp> 
         "MkOpAllDiff" => Some(Expression::AllDiff),
         "MkOpToInt" => Some(Expression::ToInt),
         "MkOpDefined" => Some(Expression::Defined),
+        "MkOpPermInverse" => Some(Expression::PermInverse),
         "MkOpRange" => Some(Expression::Range),
         "MkOpFactorial" => Some(Expression::Factorial),
         "MkOpToMSet" => Some(Expression::ToMSet),
@@ -889,7 +942,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
             }
         }
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
-            parse_comprehension(comprehension, scope.clone(), None)
+            parse_comprehension(comprehension, scope.clone())
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let user_name = parse_reference_name(obj)?;
@@ -937,8 +990,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_variant(&abslit["AbstractLiteral"]["AbsLitVariant"], scope)
             } else if abstract_literal.contains_key("AbsLitRelation") {
                 parse_abs_relation(&abslit["AbstractLiteral"]["AbsLitRelation"], scope)
-            } else if abstract_literal.contains_key("AbstractLiteralPartition") {
+            } else if abstract_literal.contains_key("AbsLitPartition") {
                 parse_abs_partition(&abslit["AbstractLiteral"]["AbsLitPartition"], scope)
+            } else if abstract_literal.contains_key("AbsLitPermutation") {
+                parse_abs_permutation(&abslit["AbstractLiteral"]["AbsLitPermutation"], scope)
             } else if abstract_literal.contains_key("AbsLitSequence") {
                 parse_abs_sequence(&abslit["AbstractLiteral"]["AbsLitSequence"], scope)
             } else {
@@ -951,7 +1006,15 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
         }
 
         Value::Object(constant) if constant.contains_key("ConstantAbstract") => {
-            parse_abstract_matrix_as_expr(obj, scope)
+            let literal = constant
+                .get("ConstantAbstract")
+                .and_then(Value::as_object)
+                .ok_or_else(|| fail("ConstantAbstract.as_object"))?;
+            if literal.contains_key("AbsLitMatrix") {
+                parse_abstract_matrix_as_expr(obj, scope)
+            } else {
+                parse_constant_abstract(literal, scope)
+            }
         }
 
         Value::Object(constant) if constant.contains_key("ConstantInt") => {
@@ -978,6 +1041,35 @@ fn parse_abs_lit(abs_set: &Value, scope: &SymbolTablePtr) -> Result<Expression> 
         Metadata::new(),
         AbstractLiteral::Set(expressions),
     ))
+}
+
+fn parse_constant_abstract(
+    literal: &serde_json::Map<String, Value>,
+    scope: &SymbolTablePtr,
+) -> Result<Expression> {
+    if let Some(value) = literal.get("AbsLitSet") {
+        parse_abs_lit(value, scope)
+    } else if let Some(value) = literal.get("AbsLitMSet") {
+        parse_abs_mset(value, scope)
+    } else if let Some(value) = literal.get("AbsLitTuple") {
+        parse_abs_tuple(value, scope)
+    } else if let Some(value) = literal.get("AbsLitRecord") {
+        parse_abs_record(value, scope)
+    } else if let Some(value) = literal.get("AbsLitPartition") {
+        parse_abs_partition(value, scope)
+    } else if let Some(value) = literal.get("AbsLitPermutation") {
+        parse_abs_permutation(value, scope)
+    } else if let Some(value) = literal.get("AbsLitFunction") {
+        parse_abs_function(value, scope)
+    } else if let Some(value) = literal.get("AbsLitVariant") {
+        parse_abs_variant(value, scope)
+    } else if let Some(value) = literal.get("AbsLitRelation") {
+        parse_abs_relation(value, scope)
+    } else if let Some(value) = literal.get("AbsLitSequence") {
+        parse_abs_sequence(value, scope)
+    } else {
+        Err(error!("Unhandled ConstantAbstract literal type"))
+    }
 }
 
 fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
@@ -1018,6 +1110,32 @@ fn parse_abs_partition(abs_partition: &Value, scope: &SymbolTablePtr) -> Result<
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Partition(partition),
+    ))
+}
+
+fn parse_abs_permutation(abs_permutation: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let cycles = abs_permutation
+        .as_array()
+        .ok_or(error!("AbsLitPermutation is not an array"))?;
+
+    let mut permutation: Vec<Vec<_>> = Vec::new();
+
+    for cycle in cycles {
+        let vals = cycle
+            .as_array()
+            .ok_or(error!("Cycle in AbsLitPermutation is not an array"))?;
+
+        let exprs = vals
+            .iter()
+            .map(|values| parse_expression(values, scope))
+            .collect::<Result<Vec<_>>>()?;
+
+        permutation.push(exprs);
+    }
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Permutation(permutation),
     ))
 }
 
@@ -1162,7 +1280,6 @@ fn parse_abs_relation(abs_relation: &Value, scope: &SymbolTablePtr) -> Result<Ex
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: SymbolTablePtr,
-    comprehension_kind: Option<ACOperatorKind>,
 ) -> Result<Expression> {
     let fail = |stage: &str| -> Error {
         Error::Parse(format!("Could not parse comprehension at stage `{stage}`"))
@@ -1260,8 +1377,39 @@ fn parse_comprehension(
 
     Ok(Expression::Comprehension(
         Metadata::new(),
-        Moo::new(comprehension.with_return_value(expr, comprehension_kind)),
+        Moo::new(comprehension.with_return_value(expr)),
     ))
+}
+
+fn unary_skip_operator(op_name: &str) -> Option<ACOperatorKind> {
+    match op_name {
+        "MkOpAnd" => Some(ACOperatorKind::And),
+        "MkOpOr" => Some(ACOperatorKind::Or),
+        "MkOpSum" => Some(ACOperatorKind::Sum),
+        "MkOpProduct" => Some(ACOperatorKind::Product),
+        // Not true AC operators (no universal identity element), but still need their own
+        // skip-operator tag so a symbolic guard lowers correctly instead of silently substituting
+        // Sum's identity (0).
+        "MkOpMin" => Some(ACOperatorKind::Min),
+        "MkOpMax" => Some(ACOperatorKind::Max),
+        _ => None,
+    }
+}
+
+fn set_comprehension_skip_operator(
+    expr: Expression,
+    skip_operator: Option<ACOperatorKind>,
+) -> Expression {
+    let Expression::Comprehension(meta, comprehension) = expr else {
+        return expr;
+    };
+    if let Some(skip_operator) = skip_operator {
+        let mut comprehension = Moo::unwrap_or_clone(comprehension);
+        comprehension.skip_operator = Some(skip_operator);
+        Expression::Comprehension(meta, Moo::new(comprehension))
+    } else {
+        Expression::Comprehension(meta, comprehension)
+    }
 }
 
 fn parse_bin_op(
@@ -1585,19 +1733,15 @@ fn parse_unary_op(
     // if the current expr is a quantifier like and/or/sum and it contains a comprehension, let the comprehension know what it is inside.
     let arg = match value {
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
-            let comprehension_kind = match key.as_str() {
-                "MkOpOr" => Some(ACOperatorKind::Or),
-                "MkOpAnd" => Some(ACOperatorKind::And),
-                "MkOpSum" => Some(ACOperatorKind::Sum),
-                "MkOpProduct" => Some(ACOperatorKind::Product),
-                _ => None,
-            };
-            parse_comprehension(comprehension, scope.clone(), comprehension_kind)
+            parse_comprehension(comprehension, scope.clone())
                 .map_err(|_| fail("value.Comprehension.parse_comprehension"))
         }
         _ => parse_expression(value, scope).map_err(|_| fail("value.parse_expression")),
     }
     .map_err(|_| fail("arg"))?;
+
+    let skip_operator = unary_skip_operator(key.as_str());
+    let arg = set_comprehension_skip_operator(arg, skip_operator);
 
     let constructor =
         unary_operator(key.as_str(), Some(&arg)).ok_or_else(|| fail("unary_operator"))?;
@@ -1736,6 +1880,8 @@ fn parse_constant(
                     return parse_abs_record(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitPartition") {
                     return parse_abs_partition(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitPermutation") {
+                    return parse_abs_permutation(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitVariant") {
@@ -1782,6 +1928,7 @@ fn parse_constant(
 mod tests {
     use super::*;
     use crate::ast::HasDomain;
+    use crate::{domain_int, range};
     use serde_json::json;
 
     #[test]
@@ -1828,5 +1975,81 @@ mod tests {
         assert_eq!(re.name().clone(), Name::user("x"));
         assert!(re.domain_of().as_record().is_some());
         assert_eq!(field_name, Name::user("a"));
+    }
+
+    #[test]
+    fn parses_nested_constant_abstract_sets() {
+        let scope = SymbolTablePtr::new();
+        let value = json!({
+            "ConstantAbstract": {
+                "AbsLitSet": [
+                    {
+                        "ConstantAbstract": {
+                            "AbsLitSet": [
+                                { "ConstantInt": [{ "TagInt": [] }, 1] },
+                                { "ConstantInt": [{ "TagInt": [] }, 2] }
+                            ]
+                        }
+                    },
+                    {
+                        "ConstantAbstract": {
+                            "AbsLitSet": [
+                                { "ConstantInt": [{ "TagInt": [] }, 3] }
+                            ]
+                        }
+                    }
+                ]
+            }
+        });
+
+        let expr = parse_expression(&value, &scope).expect("nested constant sets should parse");
+        let Expression::AbstractLiteral(_, AbstractLiteral::Set(outer_values)) = expr else {
+            panic!("expected an outer set literal");
+        };
+        assert_eq!(outer_values.len(), 2);
+        assert!(outer_values.iter().all(|value| matches!(
+            value,
+            Expression::AbstractLiteral(_, AbstractLiteral::Set(_))
+        )));
+    }
+
+    #[test]
+    fn parses_abstract_literal_wrapped_partition_with_non_constant_elements() {
+        // Conjure emits a partition literal under the bare `AbstractLiteral` wrapper (rather
+        // than `Constant`/`ConstantAbstract`) whenever one of its elements is not itself a
+        // constant, e.g. `partition({x,2},{y,4})` where x, y are decision variables. Captured
+        // verbatim (modulo whitespace) from `conjure pretty --output-format=astjson` on such a
+        // model.
+        let scope = SymbolTablePtr::new();
+        scope
+            .write()
+            .insert(DeclarationPtr::new_find(Name::user("x"), domain_int!(1..4)));
+        scope
+            .write()
+            .insert(DeclarationPtr::new_find(Name::user("y"), domain_int!(1..4)));
+
+        let value = json!({
+            "AbstractLiteral": {
+                "AbsLitPartition": [
+                    [
+                        { "Reference": [{ "Name": "x" }, null] },
+                        { "Constant": { "ConstantInt": [{ "TagInt": [] }, 2] } }
+                    ],
+                    [
+                        { "Reference": [{ "Name": "y" }, null] },
+                        { "Constant": { "ConstantInt": [{ "TagInt": [] }, 4] } }
+                    ]
+                ]
+            }
+        });
+
+        let expr = parse_expression(&value, &scope)
+            .expect("AbstractLiteral-wrapped partition should parse");
+        let Expression::AbstractLiteral(_, AbstractLiteral::Partition(parts)) = expr else {
+            panic!("expected a partition literal, got {expr:?}");
+        };
+        assert_eq!(parts.len(), 2);
+        assert_eq!(parts[0].len(), 2);
+        assert_eq!(parts[1].len(), 2);
     }
 }

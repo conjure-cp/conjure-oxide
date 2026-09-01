@@ -39,4 +39,3 @@ $$
 (A \neq B) \quad \equiv \quad \boxed{\neg(A = B)}
 \end{align}
 $$
-

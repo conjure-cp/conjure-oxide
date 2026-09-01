@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find m: int(-5..5)
+find mx: int(-5..5)
+
+such that
+
+m = min([ i | i : int(0..3) ]),
+mx = max([ i | i : int(-3..0), i != -3 ])
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#lia_1: int(-5..5)
+
+--
+
+mx
+   ~~> select_representation ([("ReprGeneral", 10000)])
+mx
+new variables:
+  find mx#lia_1: int(-5..5)
+
+--
+
+m
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#lia_1
+
+--
+
+mx
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+mx#lia_1
+
+--
+
+Final model:
+
+find m: int(-5..5)
+find mx: int(-5..5)
+find m#lia_1: int(-5..5)
+find mx#lia_1: int(-5..5)
+
+such that
+
+m#lia_1 = 0,
+mx#lia_1 = 0
+

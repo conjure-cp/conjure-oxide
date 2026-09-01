@@ -1,0 +1,90 @@
+Model before rewriting:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(t) <-> (z) = (x) <-> (y)
+
+--
+
+(t) <-> (z)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (¬t \/ ¬z \/ __0)
+  (t \/ z \/ __0)
+  (t \/ ¬z \/ ¬__0)
+  (¬t \/ z \/ ¬__0)
+
+--
+
+(x) <-> (y)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new clauses:
+  (¬x \/ ¬y \/ __1)
+  (x \/ y \/ __1)
+  (x \/ ¬y \/ ¬__1)
+  (¬x \/ y \/ ¬__1)
+
+--
+
+__0 = __1
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new clauses:
+  (¬__0 \/ ¬__1 \/ __2)
+  (__0 \/ __1 \/ __2)
+  (__0 \/ ¬__1 \/ ¬__2)
+  (¬__0 \/ __1 \/ ¬__2)
+
+--
+
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__2)
+
+--
+
+Final model:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+true
+
+clauses:
+
+(¬t \/ ¬z \/ __0),
+(t \/ z \/ __0),
+(t \/ ¬z \/ ¬__0),
+(¬t \/ z \/ ¬__0),
+(¬x \/ ¬y \/ __1),
+(x \/ y \/ __1),
+(x \/ ¬y \/ ¬__1),
+(¬x \/ y \/ ¬__1),
+(¬__0 \/ ¬__1 \/ __2),
+(__0 \/ __1 \/ __2),
+(__0 \/ ¬__1 \/ ¬__2),
+(¬__0 \/ __1 \/ ¬__2),
+(__2)
+

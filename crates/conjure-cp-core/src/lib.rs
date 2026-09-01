@@ -8,11 +8,12 @@ pub mod ast;
 
 // NOTE: this module defines the bug! macro, which is exported at the crate level, and has no other
 // contents.
-mod bug;
+pub mod bug;
 
 pub mod context;
 pub mod error;
 pub mod instantiate;
+pub mod objective;
 pub mod parse;
 pub mod representation;
 pub mod rule_engine;
@@ -21,7 +22,7 @@ pub mod solver;
 pub mod stats;
 
 // Various internal helper functions
-mod utils;
+pub mod utils;
 
 /// Creates a [`Domain::Int`](ast::Domain::Int).
 ///

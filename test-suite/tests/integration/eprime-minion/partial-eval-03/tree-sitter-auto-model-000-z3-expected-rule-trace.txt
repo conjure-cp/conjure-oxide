@@ -1,0 +1,380 @@
+Model before rewriting:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+find a: bool
+
+such that
+
+sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([sum([z,x;int(1..)]),5;int(1..)]),50;int(1..4)]);int(1..)]) <= 40,
+a = allDifferent([x,y,z;int(1..3)]),
+y <= z,
+x <= y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(1..5)
+
+--
+
+y <= z
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+y <= z
+new variables:
+  find z#bv_1: int(1..5)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1..5)
+
+--
+
+x <= y
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x <= y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+sum([sum([sum([sum([20,x#bv_1;int(1..)]),5;int(1..)]),y#bv_1;int(1..)]),min([sum([z#bv_1,y#bv_1;int(1..)]),sum([y#bv_1,x#bv_1;int(1..)]),sum([sum([z#bv_1,x#bv_1;int(1..)]),5;int(1..)]),50;int(1..4)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([20,x#bv_1,5,y#bv_1,min([sum([z#bv_1,y#bv_1;int(1..)]),sum([y#bv_1,x#bv_1;int(1..)]),sum([sum([z#bv_1,x#bv_1;int(1..)]),5;int(1..)]),50;int(1..4)]);int(1..)])
+
+--
+
+sum([sum([z#bv_1,x#bv_1;int(1..)]),5;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([z#bv_1,x#bv_1,5;int(1..)])
+
+--
+
+allDifferent([x#bv_1,y#bv_1,z#bv_1;int(1..3)])
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct([x#bv_1,y#bv_1,z#bv_1;int(1..3)])
+
+--
+
+smtDistinct([x#bv_1,y#bv_1,z#bv_1;int(1..3)])
+   ~~> matrix_to_list ([("Base", 2000)])
+smtDistinct([x#bv_1,y#bv_1,z#bv_1;int(1..)])
+
+--
+
+min([sum([z#bv_1,y#bv_1;int(1..)]),sum([y#bv_1,x#bv_1;int(1..)]),sum([z#bv_1,x#bv_1,5;int(1..)]),50;int(1..4)])
+   ~~> matrix_to_list ([("Base", 2000)])
+min([sum([z#bv_1,y#bv_1;int(1..)]),sum([y#bv_1,x#bv_1;int(1..)]),sum([z#bv_1,x#bv_1,5;int(1..)]),50;int(1..)])
+
+--
+
+min([sum([z#bv_1,y#bv_1;int(1..)]),sum([y#bv_1,x#bv_1;int(1..)]),sum([z#bv_1,x#bv_1,5;int(1..)]),50;int(1..)])
+   ~~> min_to_var ([("Base", 6000)])
+__0
+new variables:
+  findAux __0: int(2..10)
+new constraints:
+  __0 <= sum([z#bv_1,y#bv_1;int(1..)])
+  __0 <= sum([y#bv_1,x#bv_1;int(1..)])
+  __0 <= sum([z#bv_1,x#bv_1,5;int(1..)])
+  __0 <= 50
+  or([__0 = sum([z#bv_1,y#bv_1;int(1..)]),__0 = sum([y#bv_1,x#bv_1;int(1..)]),__0 = sum([z#bv_1,x#bv_1,5;int(1..)]),__0 = 50;int(1..)])
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+new variables:
+  findAux __0#bv_1: int(2..10)
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+Final model:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+find a: bool
+find y#bv_1: int(1..5)
+find z#bv_1: int(1..5)
+find x#bv_1: int(1..5)
+findAux __0: int(2..10)
+findAux __0#bv_1: int(2..10)
+
+such that
+
+sum([x#bv_1,y#bv_1,__0#bv_1,25;int(1..)]) <= 40,
+a = smtDistinct([x#bv_1,y#bv_1,z#bv_1;int(1..)]),
+y#bv_1 <= z#bv_1,
+x#bv_1 <= y#bv_1,
+__0#bv_1 <= sum([z#bv_1,y#bv_1;int(1..)]),
+__0#bv_1 <= sum([y#bv_1,x#bv_1;int(1..)]),
+__0#bv_1 <= sum([z#bv_1,x#bv_1,5;int(1..)]),
+__0#bv_1 <= 50,
+or([__0#bv_1 = sum([z#bv_1,y#bv_1;int(1..)]),__0#bv_1 = sum([y#bv_1,x#bv_1;int(1..)]),__0#bv_1 = sum([z#bv_1,x#bv_1,5;int(1..)]),__0#bv_1 = 50;int(1..)])
+

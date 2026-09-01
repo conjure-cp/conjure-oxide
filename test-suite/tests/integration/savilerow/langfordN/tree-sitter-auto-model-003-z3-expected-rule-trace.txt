@@ -1,0 +1,1270 @@
+Model before rewriting:
+
+letting k be 9
+letting l be 3
+letting positionDomain be domain int(1..(product([l,k;int(1..)])))
+find position: matrix indexed by [positionDomain] of positionDomain
+
+such that
+
+and([ and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | j : int(1..((l - 1))) ]) | i : int(1..k) ]),
+allDifferent(position)
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+new variables:
+  find position#array_1: matrix indexed by [int(1..27)] of int(1..27)
+
+--
+
+and([ and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | j : int(1..((l - 1))) ]) | i : int(1..k) ]),
+allDifferent(position)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | j : int(1..((l - 1))) ]) | i : int(1..k) ]),
+allDifferent(position)
+new variables:
+  find position#array_1#lia_1: matrix indexed by [int(1..27)] of int(1..27)
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+and([ and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | j : int(1..((l - 1))) ]) | i : int(1..k) ])
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | i : int(1..k), j : int(1..((l - 1))) ])
+
+--
+
+allDifferent(position#array_1#lia_1)
+   ~~> unwrap_alldiff ([("Smt", 4000)])
+and([sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 1),toInt(SafeIndex(position#array_1#lia_1,[2]) = 1),toInt(SafeIndex(position#array_1#lia_1,[3]) = 1),toInt(SafeIndex(position#array_1#lia_1,[4]) = 1),toInt(SafeIndex(position#array_1#lia_1,[5]) = 1),toInt(SafeIndex(position#array_1#lia_1,[6]) = 1),toInt(SafeIndex(position#array_1#lia_1,[7]) = 1),toInt(SafeIndex(position#array_1#lia_1,[8]) = 1),toInt(SafeIndex(position#array_1#lia_1,[9]) = 1),toInt(SafeIndex(position#array_1#lia_1,[10]) = 1),toInt(SafeIndex(position#array_1#lia_1,[11]) = 1),toInt(SafeIndex(position#array_1#lia_1,[12]) = 1),toInt(SafeIndex(position#array_1#lia_1,[13]) = 1),toInt(SafeIndex(position#array_1#lia_1,[14]) = 1),toInt(SafeIndex(position#array_1#lia_1,[15]) = 1),toInt(SafeIndex(position#array_1#lia_1,[16]) = 1),toInt(SafeIndex(position#array_1#lia_1,[17]) = 1),toInt(SafeIndex(position#array_1#lia_1,[18]) = 1),toInt(SafeIndex(position#array_1#lia_1,[19]) = 1),toInt(SafeIndex(position#array_1#lia_1,[20]) = 1),toInt(SafeIndex(position#array_1#lia_1,[21]) = 1),toInt(SafeIndex(position#array_1#lia_1,[22]) = 1),toInt(SafeIndex(position#array_1#lia_1,[23]) = 1),toInt(SafeIndex(position#array_1#lia_1,[24]) = 1),toInt(SafeIndex(position#array_1#lia_1,[25]) = 1),toInt(SafeIndex(position#array_1#lia_1,[26]) = 1),toInt(SafeIndex(position#array_1#lia_1,[27]) = 1);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 2),toInt(SafeIndex(position#array_1#lia_1,[2]) = 2),toInt(SafeIndex(position#array_1#lia_1,[3]) = 2),toInt(SafeIndex(position#array_1#lia_1,[4]) = 2),toInt(SafeIndex(position#array_1#lia_1,[5]) = 2),toInt(SafeIndex(position#array_1#lia_1,[6]) = 2),toInt(SafeIndex(position#array_1#lia_1,[7]) = 2),toInt(SafeIndex(position#array_1#lia_1,[8]) = 2),toInt(SafeIndex(position#array_1#lia_1,[9]) = 2),toInt(SafeIndex(position#array_1#lia_1,[10]) = 2),toInt(SafeIndex(position#array_1#lia_1,[11]) = 2),toInt(SafeIndex(position#array_1#lia_1,[12]) = 2),toInt(SafeIndex(position#array_1#lia_1,[13]) = 2),toInt(SafeIndex(position#array_1#lia_1,[14]) = 2),toInt(SafeIndex(position#array_1#lia_1,[15]) = 2),toInt(SafeIndex(position#array_1#lia_1,[16]) = 2),toInt(SafeIndex(position#array_1#lia_1,[17]) = 2),toInt(SafeIndex(position#array_1#lia_1,[18]) = 2),toInt(SafeIndex(position#array_1#lia_1,[19]) = 2),toInt(SafeIndex(position#array_1#lia_1,[20]) = 2),toInt(SafeIndex(position#array_1#lia_1,[21]) = 2),toInt(SafeIndex(position#array_1#lia_1,[22]) = 2),toInt(SafeIndex(position#array_1#lia_1,[23]) = 2),toInt(SafeIndex(position#array_1#lia_1,[24]) = 2),toInt(SafeIndex(position#array_1#lia_1,[25]) = 2),toInt(SafeIndex(position#array_1#lia_1,[26]) = 2),toInt(SafeIndex(position#array_1#lia_1,[27]) = 2);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 3),toInt(SafeIndex(position#array_1#lia_1,[2]) = 3),toInt(SafeIndex(position#array_1#lia_1,[3]) = 3),toInt(SafeIndex(position#array_1#lia_1,[4]) = 3),toInt(SafeIndex(position#array_1#lia_1,[5]) = 3),toInt(SafeIndex(position#array_1#lia_1,[6]) = 3),toInt(SafeIndex(position#array_1#lia_1,[7]) = 3),toInt(SafeIndex(position#array_1#lia_1,[8]) = 3),toInt(SafeIndex(position#array_1#lia_1,[9]) = 3),toInt(SafeIndex(position#array_1#lia_1,[10]) = 3),toInt(SafeIndex(position#array_1#lia_1,[11]) = 3),toInt(SafeIndex(position#array_1#lia_1,[12]) = 3),toInt(SafeIndex(position#array_1#lia_1,[13]) = 3),toInt(SafeIndex(position#array_1#lia_1,[14]) = 3),toInt(SafeIndex(position#array_1#lia_1,[15]) = 3),toInt(SafeIndex(position#array_1#lia_1,[16]) = 3),toInt(SafeIndex(position#array_1#lia_1,[17]) = 3),toInt(SafeIndex(position#array_1#lia_1,[18]) = 3),toInt(SafeIndex(position#array_1#lia_1,[19]) = 3),toInt(SafeIndex(position#array_1#lia_1,[20]) = 3),toInt(SafeIndex(position#array_1#lia_1,[21]) = 3),toInt(SafeIndex(position#array_1#lia_1,[22]) = 3),toInt(SafeIndex(position#array_1#lia_1,[23]) = 3),toInt(SafeIndex(position#array_1#lia_1,[24]) = 3),toInt(SafeIndex(position#array_1#lia_1,[25]) = 3),toInt(SafeIndex(position#array_1#lia_1,[26]) = 3),toInt(SafeIndex(position#array_1#lia_1,[27]) = 3);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 4),toInt(SafeIndex(position#array_1#lia_1,[2]) = 4),toInt(SafeIndex(position#array_1#lia_1,[3]) = 4),toInt(SafeIndex(position#array_1#lia_1,[4]) = 4),toInt(SafeIndex(position#array_1#lia_1,[5]) = 4),toInt(SafeIndex(position#array_1#lia_1,[6]) = 4),toInt(SafeIndex(position#array_1#lia_1,[7]) = 4),toInt(SafeIndex(position#array_1#lia_1,[8]) = 4),toInt(SafeIndex(position#array_1#lia_1,[9]) = 4),toInt(SafeIndex(position#array_1#lia_1,[10]) = 4),toInt(SafeIndex(position#array_1#lia_1,[11]) = 4),toInt(SafeIndex(position#array_1#lia_1,[12]) = 4),toInt(SafeIndex(position#array_1#lia_1,[13]) = 4),toInt(SafeIndex(position#array_1#lia_1,[14]) = 4),toInt(SafeIndex(position#array_1#lia_1,[15]) = 4),toInt(SafeIndex(position#array_1#lia_1,[16]) = 4),toInt(SafeIndex(position#array_1#lia_1,[17]) = 4),toInt(SafeIndex(position#array_1#lia_1,[18]) = 4),toInt(SafeIndex(position#array_1#lia_1,[19]) = 4),toInt(SafeIndex(position#array_1#lia_1,[20]) = 4),toInt(SafeIndex(position#array_1#lia_1,[21]) = 4),toInt(SafeIndex(position#array_1#lia_1,[22]) = 4),toInt(SafeIndex(position#array_1#lia_1,[23]) = 4),toInt(SafeIndex(position#array_1#lia_1,[24]) = 4),toInt(SafeIndex(position#array_1#lia_1,[25]) = 4),toInt(SafeIndex(position#array_1#lia_1,[26]) = 4),toInt(SafeIndex(position#array_1#lia_1,[27]) = 4);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 5),toInt(SafeIndex(position#array_1#lia_1,[2]) = 5),toInt(SafeIndex(position#array_1#lia_1,[3]) = 5),toInt(SafeIndex(position#array_1#lia_1,[4]) = 5),toInt(SafeIndex(position#array_1#lia_1,[5]) = 5),toInt(SafeIndex(position#array_1#lia_1,[6]) = 5),toInt(SafeIndex(position#array_1#lia_1,[7]) = 5),toInt(SafeIndex(position#array_1#lia_1,[8]) = 5),toInt(SafeIndex(position#array_1#lia_1,[9]) = 5),toInt(SafeIndex(position#array_1#lia_1,[10]) = 5),toInt(SafeIndex(position#array_1#lia_1,[11]) = 5),toInt(SafeIndex(position#array_1#lia_1,[12]) = 5),toInt(SafeIndex(position#array_1#lia_1,[13]) = 5),toInt(SafeIndex(position#array_1#lia_1,[14]) = 5),toInt(SafeIndex(position#array_1#lia_1,[15]) = 5),toInt(SafeIndex(position#array_1#lia_1,[16]) = 5),toInt(SafeIndex(position#array_1#lia_1,[17]) = 5),toInt(SafeIndex(position#array_1#lia_1,[18]) = 5),toInt(SafeIndex(position#array_1#lia_1,[19]) = 5),toInt(SafeIndex(position#array_1#lia_1,[20]) = 5),toInt(SafeIndex(position#array_1#lia_1,[21]) = 5),toInt(SafeIndex(position#array_1#lia_1,[22]) = 5),toInt(SafeIndex(position#array_1#lia_1,[23]) = 5),toInt(SafeIndex(position#array_1#lia_1,[24]) = 5),toInt(SafeIndex(position#array_1#lia_1,[25]) = 5),toInt(SafeIndex(position#array_1#lia_1,[26]) = 5),toInt(SafeIndex(position#array_1#lia_1,[27]) = 5);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 6),toInt(SafeIndex(position#array_1#lia_1,[2]) = 6),toInt(SafeIndex(position#array_1#lia_1,[3]) = 6),toInt(SafeIndex(position#array_1#lia_1,[4]) = 6),toInt(SafeIndex(position#array_1#lia_1,[5]) = 6),toInt(SafeIndex(position#array_1#lia_1,[6]) = 6),toInt(SafeIndex(position#array_1#lia_1,[7]) = 6),toInt(SafeIndex(position#array_1#lia_1,[8]) = 6),toInt(SafeIndex(position#array_1#lia_1,[9]) = 6),toInt(SafeIndex(position#array_1#lia_1,[10]) = 6),toInt(SafeIndex(position#array_1#lia_1,[11]) = 6),toInt(SafeIndex(position#array_1#lia_1,[12]) = 6),toInt(SafeIndex(position#array_1#lia_1,[13]) = 6),toInt(SafeIndex(position#array_1#lia_1,[14]) = 6),toInt(SafeIndex(position#array_1#lia_1,[15]) = 6),toInt(SafeIndex(position#array_1#lia_1,[16]) = 6),toInt(SafeIndex(position#array_1#lia_1,[17]) = 6),toInt(SafeIndex(position#array_1#lia_1,[18]) = 6),toInt(SafeIndex(position#array_1#lia_1,[19]) = 6),toInt(SafeIndex(position#array_1#lia_1,[20]) = 6),toInt(SafeIndex(position#array_1#lia_1,[21]) = 6),toInt(SafeIndex(position#array_1#lia_1,[22]) = 6),toInt(SafeIndex(position#array_1#lia_1,[23]) = 6),toInt(SafeIndex(position#array_1#lia_1,[24]) = 6),toInt(SafeIndex(position#array_1#lia_1,[25]) = 6),toInt(SafeIndex(position#array_1#lia_1,[26]) = 6),toInt(SafeIndex(position#array_1#lia_1,[27]) = 6);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 7),toInt(SafeIndex(position#array_1#lia_1,[2]) = 7),toInt(SafeIndex(position#array_1#lia_1,[3]) = 7),toInt(SafeIndex(position#array_1#lia_1,[4]) = 7),toInt(SafeIndex(position#array_1#lia_1,[5]) = 7),toInt(SafeIndex(position#array_1#lia_1,[6]) = 7),toInt(SafeIndex(position#array_1#lia_1,[7]) = 7),toInt(SafeIndex(position#array_1#lia_1,[8]) = 7),toInt(SafeIndex(position#array_1#lia_1,[9]) = 7),toInt(SafeIndex(position#array_1#lia_1,[10]) = 7),toInt(SafeIndex(position#array_1#lia_1,[11]) = 7),toInt(SafeIndex(position#array_1#lia_1,[12]) = 7),toInt(SafeIndex(position#array_1#lia_1,[13]) = 7),toInt(SafeIndex(position#array_1#lia_1,[14]) = 7),toInt(SafeIndex(position#array_1#lia_1,[15]) = 7),toInt(SafeIndex(position#array_1#lia_1,[16]) = 7),toInt(SafeIndex(position#array_1#lia_1,[17]) = 7),toInt(SafeIndex(position#array_1#lia_1,[18]) = 7),toInt(SafeIndex(position#array_1#lia_1,[19]) = 7),toInt(SafeIndex(position#array_1#lia_1,[20]) = 7),toInt(SafeIndex(position#array_1#lia_1,[21]) = 7),toInt(SafeIndex(position#array_1#lia_1,[22]) = 7),toInt(SafeIndex(position#array_1#lia_1,[23]) = 7),toInt(SafeIndex(position#array_1#lia_1,[24]) = 7),toInt(SafeIndex(position#array_1#lia_1,[25]) = 7),toInt(SafeIndex(position#array_1#lia_1,[26]) = 7),toInt(SafeIndex(position#array_1#lia_1,[27]) = 7);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 8),toInt(SafeIndex(position#array_1#lia_1,[2]) = 8),toInt(SafeIndex(position#array_1#lia_1,[3]) = 8),toInt(SafeIndex(position#array_1#lia_1,[4]) = 8),toInt(SafeIndex(position#array_1#lia_1,[5]) = 8),toInt(SafeIndex(position#array_1#lia_1,[6]) = 8),toInt(SafeIndex(position#array_1#lia_1,[7]) = 8),toInt(SafeIndex(position#array_1#lia_1,[8]) = 8),toInt(SafeIndex(position#array_1#lia_1,[9]) = 8),toInt(SafeIndex(position#array_1#lia_1,[10]) = 8),toInt(SafeIndex(position#array_1#lia_1,[11]) = 8),toInt(SafeIndex(position#array_1#lia_1,[12]) = 8),toInt(SafeIndex(position#array_1#lia_1,[13]) = 8),toInt(SafeIndex(position#array_1#lia_1,[14]) = 8),toInt(SafeIndex(position#array_1#lia_1,[15]) = 8),toInt(SafeIndex(position#array_1#lia_1,[16]) = 8),toInt(SafeIndex(position#array_1#lia_1,[17]) = 8),toInt(SafeIndex(position#array_1#lia_1,[18]) = 8),toInt(SafeIndex(position#array_1#lia_1,[19]) = 8),toInt(SafeIndex(position#array_1#lia_1,[20]) = 8),toInt(SafeIndex(position#array_1#lia_1,[21]) = 8),toInt(SafeIndex(position#array_1#lia_1,[22]) = 8),toInt(SafeIndex(position#array_1#lia_1,[23]) = 8),toInt(SafeIndex(position#array_1#lia_1,[24]) = 8),toInt(SafeIndex(position#array_1#lia_1,[25]) = 8),toInt(SafeIndex(position#array_1#lia_1,[26]) = 8),toInt(SafeIndex(position#array_1#lia_1,[27]) = 8);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 9),toInt(SafeIndex(position#array_1#lia_1,[2]) = 9),toInt(SafeIndex(position#array_1#lia_1,[3]) = 9),toInt(SafeIndex(position#array_1#lia_1,[4]) = 9),toInt(SafeIndex(position#array_1#lia_1,[5]) = 9),toInt(SafeIndex(position#array_1#lia_1,[6]) = 9),toInt(SafeIndex(position#array_1#lia_1,[7]) = 9),toInt(SafeIndex(position#array_1#lia_1,[8]) = 9),toInt(SafeIndex(position#array_1#lia_1,[9]) = 9),toInt(SafeIndex(position#array_1#lia_1,[10]) = 9),toInt(SafeIndex(position#array_1#lia_1,[11]) = 9),toInt(SafeIndex(position#array_1#lia_1,[12]) = 9),toInt(SafeIndex(position#array_1#lia_1,[13]) = 9),toInt(SafeIndex(position#array_1#lia_1,[14]) = 9),toInt(SafeIndex(position#array_1#lia_1,[15]) = 9),toInt(SafeIndex(position#array_1#lia_1,[16]) = 9),toInt(SafeIndex(position#array_1#lia_1,[17]) = 9),toInt(SafeIndex(position#array_1#lia_1,[18]) = 9),toInt(SafeIndex(position#array_1#lia_1,[19]) = 9),toInt(SafeIndex(position#array_1#lia_1,[20]) = 9),toInt(SafeIndex(position#array_1#lia_1,[21]) = 9),toInt(SafeIndex(position#array_1#lia_1,[22]) = 9),toInt(SafeIndex(position#array_1#lia_1,[23]) = 9),toInt(SafeIndex(position#array_1#lia_1,[24]) = 9),toInt(SafeIndex(position#array_1#lia_1,[25]) = 9),toInt(SafeIndex(position#array_1#lia_1,[26]) = 9),toInt(SafeIndex(position#array_1#lia_1,[27]) = 9);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 10),toInt(SafeIndex(position#array_1#lia_1,[2]) = 10),toInt(SafeIndex(position#array_1#lia_1,[3]) = 10),toInt(SafeIndex(position#array_1#lia_1,[4]) = 10),toInt(SafeIndex(position#array_1#lia_1,[5]) = 10),toInt(SafeIndex(position#array_1#lia_1,[6]) = 10),toInt(SafeIndex(position#array_1#lia_1,[7]) = 10),toInt(SafeIndex(position#array_1#lia_1,[8]) = 10),toInt(SafeIndex(position#array_1#lia_1,[9]) = 10),toInt(SafeIndex(position#array_1#lia_1,[10]) = 10),toInt(SafeIndex(position#array_1#lia_1,[11]) = 10),toInt(SafeIndex(position#array_1#lia_1,[12]) = 10),toInt(SafeIndex(position#array_1#lia_1,[13]) = 10),toInt(SafeIndex(position#array_1#lia_1,[14]) = 10),toInt(SafeIndex(position#array_1#lia_1,[15]) = 10),toInt(SafeIndex(position#array_1#lia_1,[16]) = 10),toInt(SafeIndex(position#array_1#lia_1,[17]) = 10),toInt(SafeIndex(position#array_1#lia_1,[18]) = 10),toInt(SafeIndex(position#array_1#lia_1,[19]) = 10),toInt(SafeIndex(position#array_1#lia_1,[20]) = 10),toInt(SafeIndex(position#array_1#lia_1,[21]) = 10),toInt(SafeIndex(position#array_1#lia_1,[22]) = 10),toInt(SafeIndex(position#array_1#lia_1,[23]) = 10),toInt(SafeIndex(position#array_1#lia_1,[24]) = 10),toInt(SafeIndex(position#array_1#lia_1,[25]) = 10),toInt(SafeIndex(position#array_1#lia_1,[26]) = 10),toInt(SafeIndex(position#array_1#lia_1,[27]) = 10);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 11),toInt(SafeIndex(position#array_1#lia_1,[2]) = 11),toInt(SafeIndex(position#array_1#lia_1,[3]) = 11),toInt(SafeIndex(position#array_1#lia_1,[4]) = 11),toInt(SafeIndex(position#array_1#lia_1,[5]) = 11),toInt(SafeIndex(position#array_1#lia_1,[6]) = 11),toInt(SafeIndex(position#array_1#lia_1,[7]) = 11),toInt(SafeIndex(position#array_1#lia_1,[8]) = 11),toInt(SafeIndex(position#array_1#lia_1,[9]) = 11),toInt(SafeIndex(position#array_1#lia_1,[10]) = 11),toInt(SafeIndex(position#array_1#lia_1,[11]) = 11),toInt(SafeIndex(position#array_1#lia_1,[12]) = 11),toInt(SafeIndex(position#array_1#lia_1,[13]) = 11),toInt(SafeIndex(position#array_1#lia_1,[14]) = 11),toInt(SafeIndex(position#array_1#lia_1,[15]) = 11),toInt(SafeIndex(position#array_1#lia_1,[16]) = 11),toInt(SafeIndex(position#array_1#lia_1,[17]) = 11),toInt(SafeIndex(position#array_1#lia_1,[18]) = 11),toInt(SafeIndex(position#array_1#lia_1,[19]) = 11),toInt(SafeIndex(position#array_1#lia_1,[20]) = 11),toInt(SafeIndex(position#array_1#lia_1,[21]) = 11),toInt(SafeIndex(position#array_1#lia_1,[22]) = 11),toInt(SafeIndex(position#array_1#lia_1,[23]) = 11),toInt(SafeIndex(position#array_1#lia_1,[24]) = 11),toInt(SafeIndex(position#array_1#lia_1,[25]) = 11),toInt(SafeIndex(position#array_1#lia_1,[26]) = 11),toInt(SafeIndex(position#array_1#lia_1,[27]) = 11);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 12),toInt(SafeIndex(position#array_1#lia_1,[2]) = 12),toInt(SafeIndex(position#array_1#lia_1,[3]) = 12),toInt(SafeIndex(position#array_1#lia_1,[4]) = 12),toInt(SafeIndex(position#array_1#lia_1,[5]) = 12),toInt(SafeIndex(position#array_1#lia_1,[6]) = 12),toInt(SafeIndex(position#array_1#lia_1,[7]) = 12),toInt(SafeIndex(position#array_1#lia_1,[8]) = 12),toInt(SafeIndex(position#array_1#lia_1,[9]) = 12),toInt(SafeIndex(position#array_1#lia_1,[10]) = 12),toInt(SafeIndex(position#array_1#lia_1,[11]) = 12),toInt(SafeIndex(position#array_1#lia_1,[12]) = 12),toInt(SafeIndex(position#array_1#lia_1,[13]) = 12),toInt(SafeIndex(position#array_1#lia_1,[14]) = 12),toInt(SafeIndex(position#array_1#lia_1,[15]) = 12),toInt(SafeIndex(position#array_1#lia_1,[16]) = 12),toInt(SafeIndex(position#array_1#lia_1,[17]) = 12),toInt(SafeIndex(position#array_1#lia_1,[18]) = 12),toInt(SafeIndex(position#array_1#lia_1,[19]) = 12),toInt(SafeIndex(position#array_1#lia_1,[20]) = 12),toInt(SafeIndex(position#array_1#lia_1,[21]) = 12),toInt(SafeIndex(position#array_1#lia_1,[22]) = 12),toInt(SafeIndex(position#array_1#lia_1,[23]) = 12),toInt(SafeIndex(position#array_1#lia_1,[24]) = 12),toInt(SafeIndex(position#array_1#lia_1,[25]) = 12),toInt(SafeIndex(position#array_1#lia_1,[26]) = 12),toInt(SafeIndex(position#array_1#lia_1,[27]) = 12);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 13),toInt(SafeIndex(position#array_1#lia_1,[2]) = 13),toInt(SafeIndex(position#array_1#lia_1,[3]) = 13),toInt(SafeIndex(position#array_1#lia_1,[4]) = 13),toInt(SafeIndex(position#array_1#lia_1,[5]) = 13),toInt(SafeIndex(position#array_1#lia_1,[6]) = 13),toInt(SafeIndex(position#array_1#lia_1,[7]) = 13),toInt(SafeIndex(position#array_1#lia_1,[8]) = 13),toInt(SafeIndex(position#array_1#lia_1,[9]) = 13),toInt(SafeIndex(position#array_1#lia_1,[10]) = 13),toInt(SafeIndex(position#array_1#lia_1,[11]) = 13),toInt(SafeIndex(position#array_1#lia_1,[12]) = 13),toInt(SafeIndex(position#array_1#lia_1,[13]) = 13),toInt(SafeIndex(position#array_1#lia_1,[14]) = 13),toInt(SafeIndex(position#array_1#lia_1,[15]) = 13),toInt(SafeIndex(position#array_1#lia_1,[16]) = 13),toInt(SafeIndex(position#array_1#lia_1,[17]) = 13),toInt(SafeIndex(position#array_1#lia_1,[18]) = 13),toInt(SafeIndex(position#array_1#lia_1,[19]) = 13),toInt(SafeIndex(position#array_1#lia_1,[20]) = 13),toInt(SafeIndex(position#array_1#lia_1,[21]) = 13),toInt(SafeIndex(position#array_1#lia_1,[22]) = 13),toInt(SafeIndex(position#array_1#lia_1,[23]) = 13),toInt(SafeIndex(position#array_1#lia_1,[24]) = 13),toInt(SafeIndex(position#array_1#lia_1,[25]) = 13),toInt(SafeIndex(position#array_1#lia_1,[26]) = 13),toInt(SafeIndex(position#array_1#lia_1,[27]) = 13);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 14),toInt(SafeIndex(position#array_1#lia_1,[2]) = 14),toInt(SafeIndex(position#array_1#lia_1,[3]) = 14),toInt(SafeIndex(position#array_1#lia_1,[4]) = 14),toInt(SafeIndex(position#array_1#lia_1,[5]) = 14),toInt(SafeIndex(position#array_1#lia_1,[6]) = 14),toInt(SafeIndex(position#array_1#lia_1,[7]) = 14),toInt(SafeIndex(position#array_1#lia_1,[8]) = 14),toInt(SafeIndex(position#array_1#lia_1,[9]) = 14),toInt(SafeIndex(position#array_1#lia_1,[10]) = 14),toInt(SafeIndex(position#array_1#lia_1,[11]) = 14),toInt(SafeIndex(position#array_1#lia_1,[12]) = 14),toInt(SafeIndex(position#array_1#lia_1,[13]) = 14),toInt(SafeIndex(position#array_1#lia_1,[14]) = 14),toInt(SafeIndex(position#array_1#lia_1,[15]) = 14),toInt(SafeIndex(position#array_1#lia_1,[16]) = 14),toInt(SafeIndex(position#array_1#lia_1,[17]) = 14),toInt(SafeIndex(position#array_1#lia_1,[18]) = 14),toInt(SafeIndex(position#array_1#lia_1,[19]) = 14),toInt(SafeIndex(position#array_1#lia_1,[20]) = 14),toInt(SafeIndex(position#array_1#lia_1,[21]) = 14),toInt(SafeIndex(position#array_1#lia_1,[22]) = 14),toInt(SafeIndex(position#array_1#lia_1,[23]) = 14),toInt(SafeIndex(position#array_1#lia_1,[24]) = 14),toInt(SafeIndex(position#array_1#lia_1,[25]) = 14),toInt(SafeIndex(position#array_1#lia_1,[26]) = 14),toInt(SafeIndex(position#array_1#lia_1,[27]) = 14);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 15),toInt(SafeIndex(position#array_1#lia_1,[2]) = 15),toInt(SafeIndex(position#array_1#lia_1,[3]) = 15),toInt(SafeIndex(position#array_1#lia_1,[4]) = 15),toInt(SafeIndex(position#array_1#lia_1,[5]) = 15),toInt(SafeIndex(position#array_1#lia_1,[6]) = 15),toInt(SafeIndex(position#array_1#lia_1,[7]) = 15),toInt(SafeIndex(position#array_1#lia_1,[8]) = 15),toInt(SafeIndex(position#array_1#lia_1,[9]) = 15),toInt(SafeIndex(position#array_1#lia_1,[10]) = 15),toInt(SafeIndex(position#array_1#lia_1,[11]) = 15),toInt(SafeIndex(position#array_1#lia_1,[12]) = 15),toInt(SafeIndex(position#array_1#lia_1,[13]) = 15),toInt(SafeIndex(position#array_1#lia_1,[14]) = 15),toInt(SafeIndex(position#array_1#lia_1,[15]) = 15),toInt(SafeIndex(position#array_1#lia_1,[16]) = 15),toInt(SafeIndex(position#array_1#lia_1,[17]) = 15),toInt(SafeIndex(position#array_1#lia_1,[18]) = 15),toInt(SafeIndex(position#array_1#lia_1,[19]) = 15),toInt(SafeIndex(position#array_1#lia_1,[20]) = 15),toInt(SafeIndex(position#array_1#lia_1,[21]) = 15),toInt(SafeIndex(position#array_1#lia_1,[22]) = 15),toInt(SafeIndex(position#array_1#lia_1,[23]) = 15),toInt(SafeIndex(position#array_1#lia_1,[24]) = 15),toInt(SafeIndex(position#array_1#lia_1,[25]) = 15),toInt(SafeIndex(position#array_1#lia_1,[26]) = 15),toInt(SafeIndex(position#array_1#lia_1,[27]) = 15);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 16),toInt(SafeIndex(position#array_1#lia_1,[2]) = 16),toInt(SafeIndex(position#array_1#lia_1,[3]) = 16),toInt(SafeIndex(position#array_1#lia_1,[4]) = 16),toInt(SafeIndex(position#array_1#lia_1,[5]) = 16),toInt(SafeIndex(position#array_1#lia_1,[6]) = 16),toInt(SafeIndex(position#array_1#lia_1,[7]) = 16),toInt(SafeIndex(position#array_1#lia_1,[8]) = 16),toInt(SafeIndex(position#array_1#lia_1,[9]) = 16),toInt(SafeIndex(position#array_1#lia_1,[10]) = 16),toInt(SafeIndex(position#array_1#lia_1,[11]) = 16),toInt(SafeIndex(position#array_1#lia_1,[12]) = 16),toInt(SafeIndex(position#array_1#lia_1,[13]) = 16),toInt(SafeIndex(position#array_1#lia_1,[14]) = 16),toInt(SafeIndex(position#array_1#lia_1,[15]) = 16),toInt(SafeIndex(position#array_1#lia_1,[16]) = 16),toInt(SafeIndex(position#array_1#lia_1,[17]) = 16),toInt(SafeIndex(position#array_1#lia_1,[18]) = 16),toInt(SafeIndex(position#array_1#lia_1,[19]) = 16),toInt(SafeIndex(position#array_1#lia_1,[20]) = 16),toInt(SafeIndex(position#array_1#lia_1,[21]) = 16),toInt(SafeIndex(position#array_1#lia_1,[22]) = 16),toInt(SafeIndex(position#array_1#lia_1,[23]) = 16),toInt(SafeIndex(position#array_1#lia_1,[24]) = 16),toInt(SafeIndex(position#array_1#lia_1,[25]) = 16),toInt(SafeIndex(position#array_1#lia_1,[26]) = 16),toInt(SafeIndex(position#array_1#lia_1,[27]) = 16);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 17),toInt(SafeIndex(position#array_1#lia_1,[2]) = 17),toInt(SafeIndex(position#array_1#lia_1,[3]) = 17),toInt(SafeIndex(position#array_1#lia_1,[4]) = 17),toInt(SafeIndex(position#array_1#lia_1,[5]) = 17),toInt(SafeIndex(position#array_1#lia_1,[6]) = 17),toInt(SafeIndex(position#array_1#lia_1,[7]) = 17),toInt(SafeIndex(position#array_1#lia_1,[8]) = 17),toInt(SafeIndex(position#array_1#lia_1,[9]) = 17),toInt(SafeIndex(position#array_1#lia_1,[10]) = 17),toInt(SafeIndex(position#array_1#lia_1,[11]) = 17),toInt(SafeIndex(position#array_1#lia_1,[12]) = 17),toInt(SafeIndex(position#array_1#lia_1,[13]) = 17),toInt(SafeIndex(position#array_1#lia_1,[14]) = 17),toInt(SafeIndex(position#array_1#lia_1,[15]) = 17),toInt(SafeIndex(position#array_1#lia_1,[16]) = 17),toInt(SafeIndex(position#array_1#lia_1,[17]) = 17),toInt(SafeIndex(position#array_1#lia_1,[18]) = 17),toInt(SafeIndex(position#array_1#lia_1,[19]) = 17),toInt(SafeIndex(position#array_1#lia_1,[20]) = 17),toInt(SafeIndex(position#array_1#lia_1,[21]) = 17),toInt(SafeIndex(position#array_1#lia_1,[22]) = 17),toInt(SafeIndex(position#array_1#lia_1,[23]) = 17),toInt(SafeIndex(position#array_1#lia_1,[24]) = 17),toInt(SafeIndex(position#array_1#lia_1,[25]) = 17),toInt(SafeIndex(position#array_1#lia_1,[26]) = 17),toInt(SafeIndex(position#array_1#lia_1,[27]) = 17);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 18),toInt(SafeIndex(position#array_1#lia_1,[2]) = 18),toInt(SafeIndex(position#array_1#lia_1,[3]) = 18),toInt(SafeIndex(position#array_1#lia_1,[4]) = 18),toInt(SafeIndex(position#array_1#lia_1,[5]) = 18),toInt(SafeIndex(position#array_1#lia_1,[6]) = 18),toInt(SafeIndex(position#array_1#lia_1,[7]) = 18),toInt(SafeIndex(position#array_1#lia_1,[8]) = 18),toInt(SafeIndex(position#array_1#lia_1,[9]) = 18),toInt(SafeIndex(position#array_1#lia_1,[10]) = 18),toInt(SafeIndex(position#array_1#lia_1,[11]) = 18),toInt(SafeIndex(position#array_1#lia_1,[12]) = 18),toInt(SafeIndex(position#array_1#lia_1,[13]) = 18),toInt(SafeIndex(position#array_1#lia_1,[14]) = 18),toInt(SafeIndex(position#array_1#lia_1,[15]) = 18),toInt(SafeIndex(position#array_1#lia_1,[16]) = 18),toInt(SafeIndex(position#array_1#lia_1,[17]) = 18),toInt(SafeIndex(position#array_1#lia_1,[18]) = 18),toInt(SafeIndex(position#array_1#lia_1,[19]) = 18),toInt(SafeIndex(position#array_1#lia_1,[20]) = 18),toInt(SafeIndex(position#array_1#lia_1,[21]) = 18),toInt(SafeIndex(position#array_1#lia_1,[22]) = 18),toInt(SafeIndex(position#array_1#lia_1,[23]) = 18),toInt(SafeIndex(position#array_1#lia_1,[24]) = 18),toInt(SafeIndex(position#array_1#lia_1,[25]) = 18),toInt(SafeIndex(position#array_1#lia_1,[26]) = 18),toInt(SafeIndex(position#array_1#lia_1,[27]) = 18);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 19),toInt(SafeIndex(position#array_1#lia_1,[2]) = 19),toInt(SafeIndex(position#array_1#lia_1,[3]) = 19),toInt(SafeIndex(position#array_1#lia_1,[4]) = 19),toInt(SafeIndex(position#array_1#lia_1,[5]) = 19),toInt(SafeIndex(position#array_1#lia_1,[6]) = 19),toInt(SafeIndex(position#array_1#lia_1,[7]) = 19),toInt(SafeIndex(position#array_1#lia_1,[8]) = 19),toInt(SafeIndex(position#array_1#lia_1,[9]) = 19),toInt(SafeIndex(position#array_1#lia_1,[10]) = 19),toInt(SafeIndex(position#array_1#lia_1,[11]) = 19),toInt(SafeIndex(position#array_1#lia_1,[12]) = 19),toInt(SafeIndex(position#array_1#lia_1,[13]) = 19),toInt(SafeIndex(position#array_1#lia_1,[14]) = 19),toInt(SafeIndex(position#array_1#lia_1,[15]) = 19),toInt(SafeIndex(position#array_1#lia_1,[16]) = 19),toInt(SafeIndex(position#array_1#lia_1,[17]) = 19),toInt(SafeIndex(position#array_1#lia_1,[18]) = 19),toInt(SafeIndex(position#array_1#lia_1,[19]) = 19),toInt(SafeIndex(position#array_1#lia_1,[20]) = 19),toInt(SafeIndex(position#array_1#lia_1,[21]) = 19),toInt(SafeIndex(position#array_1#lia_1,[22]) = 19),toInt(SafeIndex(position#array_1#lia_1,[23]) = 19),toInt(SafeIndex(position#array_1#lia_1,[24]) = 19),toInt(SafeIndex(position#array_1#lia_1,[25]) = 19),toInt(SafeIndex(position#array_1#lia_1,[26]) = 19),toInt(SafeIndex(position#array_1#lia_1,[27]) = 19);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 20),toInt(SafeIndex(position#array_1#lia_1,[2]) = 20),toInt(SafeIndex(position#array_1#lia_1,[3]) = 20),toInt(SafeIndex(position#array_1#lia_1,[4]) = 20),toInt(SafeIndex(position#array_1#lia_1,[5]) = 20),toInt(SafeIndex(position#array_1#lia_1,[6]) = 20),toInt(SafeIndex(position#array_1#lia_1,[7]) = 20),toInt(SafeIndex(position#array_1#lia_1,[8]) = 20),toInt(SafeIndex(position#array_1#lia_1,[9]) = 20),toInt(SafeIndex(position#array_1#lia_1,[10]) = 20),toInt(SafeIndex(position#array_1#lia_1,[11]) = 20),toInt(SafeIndex(position#array_1#lia_1,[12]) = 20),toInt(SafeIndex(position#array_1#lia_1,[13]) = 20),toInt(SafeIndex(position#array_1#lia_1,[14]) = 20),toInt(SafeIndex(position#array_1#lia_1,[15]) = 20),toInt(SafeIndex(position#array_1#lia_1,[16]) = 20),toInt(SafeIndex(position#array_1#lia_1,[17]) = 20),toInt(SafeIndex(position#array_1#lia_1,[18]) = 20),toInt(SafeIndex(position#array_1#lia_1,[19]) = 20),toInt(SafeIndex(position#array_1#lia_1,[20]) = 20),toInt(SafeIndex(position#array_1#lia_1,[21]) = 20),toInt(SafeIndex(position#array_1#lia_1,[22]) = 20),toInt(SafeIndex(position#array_1#lia_1,[23]) = 20),toInt(SafeIndex(position#array_1#lia_1,[24]) = 20),toInt(SafeIndex(position#array_1#lia_1,[25]) = 20),toInt(SafeIndex(position#array_1#lia_1,[26]) = 20),toInt(SafeIndex(position#array_1#lia_1,[27]) = 20);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 21),toInt(SafeIndex(position#array_1#lia_1,[2]) = 21),toInt(SafeIndex(position#array_1#lia_1,[3]) = 21),toInt(SafeIndex(position#array_1#lia_1,[4]) = 21),toInt(SafeIndex(position#array_1#lia_1,[5]) = 21),toInt(SafeIndex(position#array_1#lia_1,[6]) = 21),toInt(SafeIndex(position#array_1#lia_1,[7]) = 21),toInt(SafeIndex(position#array_1#lia_1,[8]) = 21),toInt(SafeIndex(position#array_1#lia_1,[9]) = 21),toInt(SafeIndex(position#array_1#lia_1,[10]) = 21),toInt(SafeIndex(position#array_1#lia_1,[11]) = 21),toInt(SafeIndex(position#array_1#lia_1,[12]) = 21),toInt(SafeIndex(position#array_1#lia_1,[13]) = 21),toInt(SafeIndex(position#array_1#lia_1,[14]) = 21),toInt(SafeIndex(position#array_1#lia_1,[15]) = 21),toInt(SafeIndex(position#array_1#lia_1,[16]) = 21),toInt(SafeIndex(position#array_1#lia_1,[17]) = 21),toInt(SafeIndex(position#array_1#lia_1,[18]) = 21),toInt(SafeIndex(position#array_1#lia_1,[19]) = 21),toInt(SafeIndex(position#array_1#lia_1,[20]) = 21),toInt(SafeIndex(position#array_1#lia_1,[21]) = 21),toInt(SafeIndex(position#array_1#lia_1,[22]) = 21),toInt(SafeIndex(position#array_1#lia_1,[23]) = 21),toInt(SafeIndex(position#array_1#lia_1,[24]) = 21),toInt(SafeIndex(position#array_1#lia_1,[25]) = 21),toInt(SafeIndex(position#array_1#lia_1,[26]) = 21),toInt(SafeIndex(position#array_1#lia_1,[27]) = 21);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 22),toInt(SafeIndex(position#array_1#lia_1,[2]) = 22),toInt(SafeIndex(position#array_1#lia_1,[3]) = 22),toInt(SafeIndex(position#array_1#lia_1,[4]) = 22),toInt(SafeIndex(position#array_1#lia_1,[5]) = 22),toInt(SafeIndex(position#array_1#lia_1,[6]) = 22),toInt(SafeIndex(position#array_1#lia_1,[7]) = 22),toInt(SafeIndex(position#array_1#lia_1,[8]) = 22),toInt(SafeIndex(position#array_1#lia_1,[9]) = 22),toInt(SafeIndex(position#array_1#lia_1,[10]) = 22),toInt(SafeIndex(position#array_1#lia_1,[11]) = 22),toInt(SafeIndex(position#array_1#lia_1,[12]) = 22),toInt(SafeIndex(position#array_1#lia_1,[13]) = 22),toInt(SafeIndex(position#array_1#lia_1,[14]) = 22),toInt(SafeIndex(position#array_1#lia_1,[15]) = 22),toInt(SafeIndex(position#array_1#lia_1,[16]) = 22),toInt(SafeIndex(position#array_1#lia_1,[17]) = 22),toInt(SafeIndex(position#array_1#lia_1,[18]) = 22),toInt(SafeIndex(position#array_1#lia_1,[19]) = 22),toInt(SafeIndex(position#array_1#lia_1,[20]) = 22),toInt(SafeIndex(position#array_1#lia_1,[21]) = 22),toInt(SafeIndex(position#array_1#lia_1,[22]) = 22),toInt(SafeIndex(position#array_1#lia_1,[23]) = 22),toInt(SafeIndex(position#array_1#lia_1,[24]) = 22),toInt(SafeIndex(position#array_1#lia_1,[25]) = 22),toInt(SafeIndex(position#array_1#lia_1,[26]) = 22),toInt(SafeIndex(position#array_1#lia_1,[27]) = 22);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 23),toInt(SafeIndex(position#array_1#lia_1,[2]) = 23),toInt(SafeIndex(position#array_1#lia_1,[3]) = 23),toInt(SafeIndex(position#array_1#lia_1,[4]) = 23),toInt(SafeIndex(position#array_1#lia_1,[5]) = 23),toInt(SafeIndex(position#array_1#lia_1,[6]) = 23),toInt(SafeIndex(position#array_1#lia_1,[7]) = 23),toInt(SafeIndex(position#array_1#lia_1,[8]) = 23),toInt(SafeIndex(position#array_1#lia_1,[9]) = 23),toInt(SafeIndex(position#array_1#lia_1,[10]) = 23),toInt(SafeIndex(position#array_1#lia_1,[11]) = 23),toInt(SafeIndex(position#array_1#lia_1,[12]) = 23),toInt(SafeIndex(position#array_1#lia_1,[13]) = 23),toInt(SafeIndex(position#array_1#lia_1,[14]) = 23),toInt(SafeIndex(position#array_1#lia_1,[15]) = 23),toInt(SafeIndex(position#array_1#lia_1,[16]) = 23),toInt(SafeIndex(position#array_1#lia_1,[17]) = 23),toInt(SafeIndex(position#array_1#lia_1,[18]) = 23),toInt(SafeIndex(position#array_1#lia_1,[19]) = 23),toInt(SafeIndex(position#array_1#lia_1,[20]) = 23),toInt(SafeIndex(position#array_1#lia_1,[21]) = 23),toInt(SafeIndex(position#array_1#lia_1,[22]) = 23),toInt(SafeIndex(position#array_1#lia_1,[23]) = 23),toInt(SafeIndex(position#array_1#lia_1,[24]) = 23),toInt(SafeIndex(position#array_1#lia_1,[25]) = 23),toInt(SafeIndex(position#array_1#lia_1,[26]) = 23),toInt(SafeIndex(position#array_1#lia_1,[27]) = 23);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 24),toInt(SafeIndex(position#array_1#lia_1,[2]) = 24),toInt(SafeIndex(position#array_1#lia_1,[3]) = 24),toInt(SafeIndex(position#array_1#lia_1,[4]) = 24),toInt(SafeIndex(position#array_1#lia_1,[5]) = 24),toInt(SafeIndex(position#array_1#lia_1,[6]) = 24),toInt(SafeIndex(position#array_1#lia_1,[7]) = 24),toInt(SafeIndex(position#array_1#lia_1,[8]) = 24),toInt(SafeIndex(position#array_1#lia_1,[9]) = 24),toInt(SafeIndex(position#array_1#lia_1,[10]) = 24),toInt(SafeIndex(position#array_1#lia_1,[11]) = 24),toInt(SafeIndex(position#array_1#lia_1,[12]) = 24),toInt(SafeIndex(position#array_1#lia_1,[13]) = 24),toInt(SafeIndex(position#array_1#lia_1,[14]) = 24),toInt(SafeIndex(position#array_1#lia_1,[15]) = 24),toInt(SafeIndex(position#array_1#lia_1,[16]) = 24),toInt(SafeIndex(position#array_1#lia_1,[17]) = 24),toInt(SafeIndex(position#array_1#lia_1,[18]) = 24),toInt(SafeIndex(position#array_1#lia_1,[19]) = 24),toInt(SafeIndex(position#array_1#lia_1,[20]) = 24),toInt(SafeIndex(position#array_1#lia_1,[21]) = 24),toInt(SafeIndex(position#array_1#lia_1,[22]) = 24),toInt(SafeIndex(position#array_1#lia_1,[23]) = 24),toInt(SafeIndex(position#array_1#lia_1,[24]) = 24),toInt(SafeIndex(position#array_1#lia_1,[25]) = 24),toInt(SafeIndex(position#array_1#lia_1,[26]) = 24),toInt(SafeIndex(position#array_1#lia_1,[27]) = 24);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 25),toInt(SafeIndex(position#array_1#lia_1,[2]) = 25),toInt(SafeIndex(position#array_1#lia_1,[3]) = 25),toInt(SafeIndex(position#array_1#lia_1,[4]) = 25),toInt(SafeIndex(position#array_1#lia_1,[5]) = 25),toInt(SafeIndex(position#array_1#lia_1,[6]) = 25),toInt(SafeIndex(position#array_1#lia_1,[7]) = 25),toInt(SafeIndex(position#array_1#lia_1,[8]) = 25),toInt(SafeIndex(position#array_1#lia_1,[9]) = 25),toInt(SafeIndex(position#array_1#lia_1,[10]) = 25),toInt(SafeIndex(position#array_1#lia_1,[11]) = 25),toInt(SafeIndex(position#array_1#lia_1,[12]) = 25),toInt(SafeIndex(position#array_1#lia_1,[13]) = 25),toInt(SafeIndex(position#array_1#lia_1,[14]) = 25),toInt(SafeIndex(position#array_1#lia_1,[15]) = 25),toInt(SafeIndex(position#array_1#lia_1,[16]) = 25),toInt(SafeIndex(position#array_1#lia_1,[17]) = 25),toInt(SafeIndex(position#array_1#lia_1,[18]) = 25),toInt(SafeIndex(position#array_1#lia_1,[19]) = 25),toInt(SafeIndex(position#array_1#lia_1,[20]) = 25),toInt(SafeIndex(position#array_1#lia_1,[21]) = 25),toInt(SafeIndex(position#array_1#lia_1,[22]) = 25),toInt(SafeIndex(position#array_1#lia_1,[23]) = 25),toInt(SafeIndex(position#array_1#lia_1,[24]) = 25),toInt(SafeIndex(position#array_1#lia_1,[25]) = 25),toInt(SafeIndex(position#array_1#lia_1,[26]) = 25),toInt(SafeIndex(position#array_1#lia_1,[27]) = 25);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 26),toInt(SafeIndex(position#array_1#lia_1,[2]) = 26),toInt(SafeIndex(position#array_1#lia_1,[3]) = 26),toInt(SafeIndex(position#array_1#lia_1,[4]) = 26),toInt(SafeIndex(position#array_1#lia_1,[5]) = 26),toInt(SafeIndex(position#array_1#lia_1,[6]) = 26),toInt(SafeIndex(position#array_1#lia_1,[7]) = 26),toInt(SafeIndex(position#array_1#lia_1,[8]) = 26),toInt(SafeIndex(position#array_1#lia_1,[9]) = 26),toInt(SafeIndex(position#array_1#lia_1,[10]) = 26),toInt(SafeIndex(position#array_1#lia_1,[11]) = 26),toInt(SafeIndex(position#array_1#lia_1,[12]) = 26),toInt(SafeIndex(position#array_1#lia_1,[13]) = 26),toInt(SafeIndex(position#array_1#lia_1,[14]) = 26),toInt(SafeIndex(position#array_1#lia_1,[15]) = 26),toInt(SafeIndex(position#array_1#lia_1,[16]) = 26),toInt(SafeIndex(position#array_1#lia_1,[17]) = 26),toInt(SafeIndex(position#array_1#lia_1,[18]) = 26),toInt(SafeIndex(position#array_1#lia_1,[19]) = 26),toInt(SafeIndex(position#array_1#lia_1,[20]) = 26),toInt(SafeIndex(position#array_1#lia_1,[21]) = 26),toInt(SafeIndex(position#array_1#lia_1,[22]) = 26),toInt(SafeIndex(position#array_1#lia_1,[23]) = 26),toInt(SafeIndex(position#array_1#lia_1,[24]) = 26),toInt(SafeIndex(position#array_1#lia_1,[25]) = 26),toInt(SafeIndex(position#array_1#lia_1,[26]) = 26),toInt(SafeIndex(position#array_1#lia_1,[27]) = 26);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 27),toInt(SafeIndex(position#array_1#lia_1,[2]) = 27),toInt(SafeIndex(position#array_1#lia_1,[3]) = 27),toInt(SafeIndex(position#array_1#lia_1,[4]) = 27),toInt(SafeIndex(position#array_1#lia_1,[5]) = 27),toInt(SafeIndex(position#array_1#lia_1,[6]) = 27),toInt(SafeIndex(position#array_1#lia_1,[7]) = 27),toInt(SafeIndex(position#array_1#lia_1,[8]) = 27),toInt(SafeIndex(position#array_1#lia_1,[9]) = 27),toInt(SafeIndex(position#array_1#lia_1,[10]) = 27),toInt(SafeIndex(position#array_1#lia_1,[11]) = 27),toInt(SafeIndex(position#array_1#lia_1,[12]) = 27),toInt(SafeIndex(position#array_1#lia_1,[13]) = 27),toInt(SafeIndex(position#array_1#lia_1,[14]) = 27),toInt(SafeIndex(position#array_1#lia_1,[15]) = 27),toInt(SafeIndex(position#array_1#lia_1,[16]) = 27),toInt(SafeIndex(position#array_1#lia_1,[17]) = 27),toInt(SafeIndex(position#array_1#lia_1,[18]) = 27),toInt(SafeIndex(position#array_1#lia_1,[19]) = 27),toInt(SafeIndex(position#array_1#lia_1,[20]) = 27),toInt(SafeIndex(position#array_1#lia_1,[21]) = 27),toInt(SafeIndex(position#array_1#lia_1,[22]) = 27),toInt(SafeIndex(position#array_1#lia_1,[23]) = 27),toInt(SafeIndex(position#array_1#lia_1,[24]) = 27),toInt(SafeIndex(position#array_1#lia_1,[25]) = 27),toInt(SafeIndex(position#array_1#lia_1,[26]) = 27),toInt(SafeIndex(position#array_1#lia_1,[27]) = 27);int(1..)]) <= 1;int(1..)])
+
+--
+
+[ position[sum([product([j,k;int(1..)]),i;int(1..)])] = sum([sum([position[sum([product([(j - 1),k;int(1..)]),i;int(1..)])],i;int(1..)]),1;int(1..)]) | i : int(1..k), j : int(1..((l - 1))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[position[10] = sum([sum([position[1],1;int(1..)]),1;int(1..)]),position[19] = sum([sum([position[10],1;int(1..)]),1;int(1..)]),position[11] = sum([sum([position[2],2;int(1..)]),1;int(1..)]),position[20] = sum([sum([position[11],2;int(1..)]),1;int(1..)]),position[12] = sum([sum([position[3],3;int(1..)]),1;int(1..)]),position[21] = sum([sum([position[12],3;int(1..)]),1;int(1..)]),position[13] = sum([sum([position[4],4;int(1..)]),1;int(1..)]),position[22] = sum([sum([position[13],4;int(1..)]),1;int(1..)]),position[14] = sum([sum([position[5],5;int(1..)]),1;int(1..)]),position[23] = sum([sum([position[14],5;int(1..)]),1;int(1..)]),position[15] = sum([sum([position[6],6;int(1..)]),1;int(1..)]),position[24] = sum([sum([position[15],6;int(1..)]),1;int(1..)]),position[16] = sum([sum([position[7],7;int(1..)]),1;int(1..)]),position[25] = sum([sum([position[16],7;int(1..)]),1;int(1..)]),position[17] = sum([sum([position[8],8;int(1..)]),1;int(1..)]),position[26] = sum([sum([position[17],8;int(1..)]),1;int(1..)]),position[18] = sum([sum([position[9],9;int(1..)]),1;int(1..)]),position[27] = sum([sum([position[18],9;int(1..)]),1;int(1..)]);int(1..)]
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+position#array_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+position#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+position#array_1#lia_1
+
+--
+
+sum([sum([position#array_1#lia_1[1],1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[1],1,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[10],1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[10],1,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[2],2;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[2],2,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[11],2;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[11],2,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[3],3;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[3],3,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[12],3;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[12],3,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[4],4;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[4],4,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[13],4;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[13],4,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[5],5;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[5],5,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[14],5;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[14],5,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[6],6;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[6],6,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[15],6;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[15],6,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[7],7;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[7],7,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[16],7;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[16],7,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[8],8;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[8],8,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[17],8;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[17],8,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[9],9;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[9],9,1;int(1..)])
+
+--
+
+sum([sum([position#array_1#lia_1[18],9;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([position#array_1#lia_1[18],9,1;int(1..)])
+
+--
+
+position#array_1#lia_1[10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[10])
+
+--
+
+position#array_1#lia_1[19]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[19])
+
+--
+
+position#array_1#lia_1[11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[11])
+
+--
+
+position#array_1#lia_1[20]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[20])
+
+--
+
+position#array_1#lia_1[12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[12])
+
+--
+
+position#array_1#lia_1[21]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[21])
+
+--
+
+position#array_1#lia_1[13]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[13])
+
+--
+
+position#array_1#lia_1[22]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[22])
+
+--
+
+position#array_1#lia_1[14]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[14])
+
+--
+
+position#array_1#lia_1[23]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[23])
+
+--
+
+position#array_1#lia_1[15]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[15])
+
+--
+
+position#array_1#lia_1[24]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[24])
+
+--
+
+position#array_1#lia_1[16]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[16])
+
+--
+
+position#array_1#lia_1[25]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[25])
+
+--
+
+position#array_1#lia_1[17]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[17])
+
+--
+
+position#array_1#lia_1[26]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[26])
+
+--
+
+position#array_1#lia_1[18]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[18])
+
+--
+
+position#array_1#lia_1[27]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[27])
+
+--
+
+position#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[1])
+
+--
+
+position#array_1#lia_1[10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[10])
+
+--
+
+position#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[2])
+
+--
+
+position#array_1#lia_1[11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[11])
+
+--
+
+position#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[3])
+
+--
+
+position#array_1#lia_1[12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[12])
+
+--
+
+position#array_1#lia_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[4])
+
+--
+
+position#array_1#lia_1[13]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[13])
+
+--
+
+position#array_1#lia_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[5])
+
+--
+
+position#array_1#lia_1[14]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[14])
+
+--
+
+position#array_1#lia_1[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[6])
+
+--
+
+position#array_1#lia_1[15]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[15])
+
+--
+
+position#array_1#lia_1[7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[7])
+
+--
+
+position#array_1#lia_1[16]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[16])
+
+--
+
+position#array_1#lia_1[8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[8])
+
+--
+
+position#array_1#lia_1[17]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[17])
+
+--
+
+position#array_1#lia_1[9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[9])
+
+--
+
+position#array_1#lia_1[18]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(position#array_1#lia_1,[18])
+
+--
+
+Final model:
+
+letting k be 9
+letting l be 3
+letting positionDomain be domain int(1..(product([l,k;int(1..)])))
+find position: matrix indexed by [positionDomain] of positionDomain
+find position#array_1: matrix indexed by [int(1..27)] of int(1..27)
+find position#array_1#lia_1: matrix indexed by [int(1..27)] of int(1..27)
+
+such that
+
+and([SafeIndex(position#array_1#lia_1,[10]) = sum([SafeIndex(position#array_1#lia_1,[1]),2;int(1..)]),SafeIndex(position#array_1#lia_1,[19]) = sum([SafeIndex(position#array_1#lia_1,[10]),2;int(1..)]),SafeIndex(position#array_1#lia_1,[11]) = sum([SafeIndex(position#array_1#lia_1,[2]),3;int(1..)]),SafeIndex(position#array_1#lia_1,[20]) = sum([SafeIndex(position#array_1#lia_1,[11]),3;int(1..)]),SafeIndex(position#array_1#lia_1,[12]) = sum([SafeIndex(position#array_1#lia_1,[3]),4;int(1..)]),SafeIndex(position#array_1#lia_1,[21]) = sum([SafeIndex(position#array_1#lia_1,[12]),4;int(1..)]),SafeIndex(position#array_1#lia_1,[13]) = sum([SafeIndex(position#array_1#lia_1,[4]),5;int(1..)]),SafeIndex(position#array_1#lia_1,[22]) = sum([SafeIndex(position#array_1#lia_1,[13]),5;int(1..)]),SafeIndex(position#array_1#lia_1,[14]) = sum([SafeIndex(position#array_1#lia_1,[5]),6;int(1..)]),SafeIndex(position#array_1#lia_1,[23]) = sum([SafeIndex(position#array_1#lia_1,[14]),6;int(1..)]),SafeIndex(position#array_1#lia_1,[15]) = sum([SafeIndex(position#array_1#lia_1,[6]),7;int(1..)]),SafeIndex(position#array_1#lia_1,[24]) = sum([SafeIndex(position#array_1#lia_1,[15]),7;int(1..)]),SafeIndex(position#array_1#lia_1,[16]) = sum([SafeIndex(position#array_1#lia_1,[7]),8;int(1..)]),SafeIndex(position#array_1#lia_1,[25]) = sum([SafeIndex(position#array_1#lia_1,[16]),8;int(1..)]),SafeIndex(position#array_1#lia_1,[17]) = sum([SafeIndex(position#array_1#lia_1,[8]),9;int(1..)]),SafeIndex(position#array_1#lia_1,[26]) = sum([SafeIndex(position#array_1#lia_1,[17]),9;int(1..)]),SafeIndex(position#array_1#lia_1,[18]) = sum([SafeIndex(position#array_1#lia_1,[9]),10;int(1..)]),SafeIndex(position#array_1#lia_1,[27]) = sum([SafeIndex(position#array_1#lia_1,[18]),10;int(1..)]);int(1..)]),
+and([sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 1),toInt(SafeIndex(position#array_1#lia_1,[2]) = 1),toInt(SafeIndex(position#array_1#lia_1,[3]) = 1),toInt(SafeIndex(position#array_1#lia_1,[4]) = 1),toInt(SafeIndex(position#array_1#lia_1,[5]) = 1),toInt(SafeIndex(position#array_1#lia_1,[6]) = 1),toInt(SafeIndex(position#array_1#lia_1,[7]) = 1),toInt(SafeIndex(position#array_1#lia_1,[8]) = 1),toInt(SafeIndex(position#array_1#lia_1,[9]) = 1),toInt(SafeIndex(position#array_1#lia_1,[10]) = 1),toInt(SafeIndex(position#array_1#lia_1,[11]) = 1),toInt(SafeIndex(position#array_1#lia_1,[12]) = 1),toInt(SafeIndex(position#array_1#lia_1,[13]) = 1),toInt(SafeIndex(position#array_1#lia_1,[14]) = 1),toInt(SafeIndex(position#array_1#lia_1,[15]) = 1),toInt(SafeIndex(position#array_1#lia_1,[16]) = 1),toInt(SafeIndex(position#array_1#lia_1,[17]) = 1),toInt(SafeIndex(position#array_1#lia_1,[18]) = 1),toInt(SafeIndex(position#array_1#lia_1,[19]) = 1),toInt(SafeIndex(position#array_1#lia_1,[20]) = 1),toInt(SafeIndex(position#array_1#lia_1,[21]) = 1),toInt(SafeIndex(position#array_1#lia_1,[22]) = 1),toInt(SafeIndex(position#array_1#lia_1,[23]) = 1),toInt(SafeIndex(position#array_1#lia_1,[24]) = 1),toInt(SafeIndex(position#array_1#lia_1,[25]) = 1),toInt(SafeIndex(position#array_1#lia_1,[26]) = 1),toInt(SafeIndex(position#array_1#lia_1,[27]) = 1);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 2),toInt(SafeIndex(position#array_1#lia_1,[2]) = 2),toInt(SafeIndex(position#array_1#lia_1,[3]) = 2),toInt(SafeIndex(position#array_1#lia_1,[4]) = 2),toInt(SafeIndex(position#array_1#lia_1,[5]) = 2),toInt(SafeIndex(position#array_1#lia_1,[6]) = 2),toInt(SafeIndex(position#array_1#lia_1,[7]) = 2),toInt(SafeIndex(position#array_1#lia_1,[8]) = 2),toInt(SafeIndex(position#array_1#lia_1,[9]) = 2),toInt(SafeIndex(position#array_1#lia_1,[10]) = 2),toInt(SafeIndex(position#array_1#lia_1,[11]) = 2),toInt(SafeIndex(position#array_1#lia_1,[12]) = 2),toInt(SafeIndex(position#array_1#lia_1,[13]) = 2),toInt(SafeIndex(position#array_1#lia_1,[14]) = 2),toInt(SafeIndex(position#array_1#lia_1,[15]) = 2),toInt(SafeIndex(position#array_1#lia_1,[16]) = 2),toInt(SafeIndex(position#array_1#lia_1,[17]) = 2),toInt(SafeIndex(position#array_1#lia_1,[18]) = 2),toInt(SafeIndex(position#array_1#lia_1,[19]) = 2),toInt(SafeIndex(position#array_1#lia_1,[20]) = 2),toInt(SafeIndex(position#array_1#lia_1,[21]) = 2),toInt(SafeIndex(position#array_1#lia_1,[22]) = 2),toInt(SafeIndex(position#array_1#lia_1,[23]) = 2),toInt(SafeIndex(position#array_1#lia_1,[24]) = 2),toInt(SafeIndex(position#array_1#lia_1,[25]) = 2),toInt(SafeIndex(position#array_1#lia_1,[26]) = 2),toInt(SafeIndex(position#array_1#lia_1,[27]) = 2);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 3),toInt(SafeIndex(position#array_1#lia_1,[2]) = 3),toInt(SafeIndex(position#array_1#lia_1,[3]) = 3),toInt(SafeIndex(position#array_1#lia_1,[4]) = 3),toInt(SafeIndex(position#array_1#lia_1,[5]) = 3),toInt(SafeIndex(position#array_1#lia_1,[6]) = 3),toInt(SafeIndex(position#array_1#lia_1,[7]) = 3),toInt(SafeIndex(position#array_1#lia_1,[8]) = 3),toInt(SafeIndex(position#array_1#lia_1,[9]) = 3),toInt(SafeIndex(position#array_1#lia_1,[10]) = 3),toInt(SafeIndex(position#array_1#lia_1,[11]) = 3),toInt(SafeIndex(position#array_1#lia_1,[12]) = 3),toInt(SafeIndex(position#array_1#lia_1,[13]) = 3),toInt(SafeIndex(position#array_1#lia_1,[14]) = 3),toInt(SafeIndex(position#array_1#lia_1,[15]) = 3),toInt(SafeIndex(position#array_1#lia_1,[16]) = 3),toInt(SafeIndex(position#array_1#lia_1,[17]) = 3),toInt(SafeIndex(position#array_1#lia_1,[18]) = 3),toInt(SafeIndex(position#array_1#lia_1,[19]) = 3),toInt(SafeIndex(position#array_1#lia_1,[20]) = 3),toInt(SafeIndex(position#array_1#lia_1,[21]) = 3),toInt(SafeIndex(position#array_1#lia_1,[22]) = 3),toInt(SafeIndex(position#array_1#lia_1,[23]) = 3),toInt(SafeIndex(position#array_1#lia_1,[24]) = 3),toInt(SafeIndex(position#array_1#lia_1,[25]) = 3),toInt(SafeIndex(position#array_1#lia_1,[26]) = 3),toInt(SafeIndex(position#array_1#lia_1,[27]) = 3);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 4),toInt(SafeIndex(position#array_1#lia_1,[2]) = 4),toInt(SafeIndex(position#array_1#lia_1,[3]) = 4),toInt(SafeIndex(position#array_1#lia_1,[4]) = 4),toInt(SafeIndex(position#array_1#lia_1,[5]) = 4),toInt(SafeIndex(position#array_1#lia_1,[6]) = 4),toInt(SafeIndex(position#array_1#lia_1,[7]) = 4),toInt(SafeIndex(position#array_1#lia_1,[8]) = 4),toInt(SafeIndex(position#array_1#lia_1,[9]) = 4),toInt(SafeIndex(position#array_1#lia_1,[10]) = 4),toInt(SafeIndex(position#array_1#lia_1,[11]) = 4),toInt(SafeIndex(position#array_1#lia_1,[12]) = 4),toInt(SafeIndex(position#array_1#lia_1,[13]) = 4),toInt(SafeIndex(position#array_1#lia_1,[14]) = 4),toInt(SafeIndex(position#array_1#lia_1,[15]) = 4),toInt(SafeIndex(position#array_1#lia_1,[16]) = 4),toInt(SafeIndex(position#array_1#lia_1,[17]) = 4),toInt(SafeIndex(position#array_1#lia_1,[18]) = 4),toInt(SafeIndex(position#array_1#lia_1,[19]) = 4),toInt(SafeIndex(position#array_1#lia_1,[20]) = 4),toInt(SafeIndex(position#array_1#lia_1,[21]) = 4),toInt(SafeIndex(position#array_1#lia_1,[22]) = 4),toInt(SafeIndex(position#array_1#lia_1,[23]) = 4),toInt(SafeIndex(position#array_1#lia_1,[24]) = 4),toInt(SafeIndex(position#array_1#lia_1,[25]) = 4),toInt(SafeIndex(position#array_1#lia_1,[26]) = 4),toInt(SafeIndex(position#array_1#lia_1,[27]) = 4);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 5),toInt(SafeIndex(position#array_1#lia_1,[2]) = 5),toInt(SafeIndex(position#array_1#lia_1,[3]) = 5),toInt(SafeIndex(position#array_1#lia_1,[4]) = 5),toInt(SafeIndex(position#array_1#lia_1,[5]) = 5),toInt(SafeIndex(position#array_1#lia_1,[6]) = 5),toInt(SafeIndex(position#array_1#lia_1,[7]) = 5),toInt(SafeIndex(position#array_1#lia_1,[8]) = 5),toInt(SafeIndex(position#array_1#lia_1,[9]) = 5),toInt(SafeIndex(position#array_1#lia_1,[10]) = 5),toInt(SafeIndex(position#array_1#lia_1,[11]) = 5),toInt(SafeIndex(position#array_1#lia_1,[12]) = 5),toInt(SafeIndex(position#array_1#lia_1,[13]) = 5),toInt(SafeIndex(position#array_1#lia_1,[14]) = 5),toInt(SafeIndex(position#array_1#lia_1,[15]) = 5),toInt(SafeIndex(position#array_1#lia_1,[16]) = 5),toInt(SafeIndex(position#array_1#lia_1,[17]) = 5),toInt(SafeIndex(position#array_1#lia_1,[18]) = 5),toInt(SafeIndex(position#array_1#lia_1,[19]) = 5),toInt(SafeIndex(position#array_1#lia_1,[20]) = 5),toInt(SafeIndex(position#array_1#lia_1,[21]) = 5),toInt(SafeIndex(position#array_1#lia_1,[22]) = 5),toInt(SafeIndex(position#array_1#lia_1,[23]) = 5),toInt(SafeIndex(position#array_1#lia_1,[24]) = 5),toInt(SafeIndex(position#array_1#lia_1,[25]) = 5),toInt(SafeIndex(position#array_1#lia_1,[26]) = 5),toInt(SafeIndex(position#array_1#lia_1,[27]) = 5);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 6),toInt(SafeIndex(position#array_1#lia_1,[2]) = 6),toInt(SafeIndex(position#array_1#lia_1,[3]) = 6),toInt(SafeIndex(position#array_1#lia_1,[4]) = 6),toInt(SafeIndex(position#array_1#lia_1,[5]) = 6),toInt(SafeIndex(position#array_1#lia_1,[6]) = 6),toInt(SafeIndex(position#array_1#lia_1,[7]) = 6),toInt(SafeIndex(position#array_1#lia_1,[8]) = 6),toInt(SafeIndex(position#array_1#lia_1,[9]) = 6),toInt(SafeIndex(position#array_1#lia_1,[10]) = 6),toInt(SafeIndex(position#array_1#lia_1,[11]) = 6),toInt(SafeIndex(position#array_1#lia_1,[12]) = 6),toInt(SafeIndex(position#array_1#lia_1,[13]) = 6),toInt(SafeIndex(position#array_1#lia_1,[14]) = 6),toInt(SafeIndex(position#array_1#lia_1,[15]) = 6),toInt(SafeIndex(position#array_1#lia_1,[16]) = 6),toInt(SafeIndex(position#array_1#lia_1,[17]) = 6),toInt(SafeIndex(position#array_1#lia_1,[18]) = 6),toInt(SafeIndex(position#array_1#lia_1,[19]) = 6),toInt(SafeIndex(position#array_1#lia_1,[20]) = 6),toInt(SafeIndex(position#array_1#lia_1,[21]) = 6),toInt(SafeIndex(position#array_1#lia_1,[22]) = 6),toInt(SafeIndex(position#array_1#lia_1,[23]) = 6),toInt(SafeIndex(position#array_1#lia_1,[24]) = 6),toInt(SafeIndex(position#array_1#lia_1,[25]) = 6),toInt(SafeIndex(position#array_1#lia_1,[26]) = 6),toInt(SafeIndex(position#array_1#lia_1,[27]) = 6);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 7),toInt(SafeIndex(position#array_1#lia_1,[2]) = 7),toInt(SafeIndex(position#array_1#lia_1,[3]) = 7),toInt(SafeIndex(position#array_1#lia_1,[4]) = 7),toInt(SafeIndex(position#array_1#lia_1,[5]) = 7),toInt(SafeIndex(position#array_1#lia_1,[6]) = 7),toInt(SafeIndex(position#array_1#lia_1,[7]) = 7),toInt(SafeIndex(position#array_1#lia_1,[8]) = 7),toInt(SafeIndex(position#array_1#lia_1,[9]) = 7),toInt(SafeIndex(position#array_1#lia_1,[10]) = 7),toInt(SafeIndex(position#array_1#lia_1,[11]) = 7),toInt(SafeIndex(position#array_1#lia_1,[12]) = 7),toInt(SafeIndex(position#array_1#lia_1,[13]) = 7),toInt(SafeIndex(position#array_1#lia_1,[14]) = 7),toInt(SafeIndex(position#array_1#lia_1,[15]) = 7),toInt(SafeIndex(position#array_1#lia_1,[16]) = 7),toInt(SafeIndex(position#array_1#lia_1,[17]) = 7),toInt(SafeIndex(position#array_1#lia_1,[18]) = 7),toInt(SafeIndex(position#array_1#lia_1,[19]) = 7),toInt(SafeIndex(position#array_1#lia_1,[20]) = 7),toInt(SafeIndex(position#array_1#lia_1,[21]) = 7),toInt(SafeIndex(position#array_1#lia_1,[22]) = 7),toInt(SafeIndex(position#array_1#lia_1,[23]) = 7),toInt(SafeIndex(position#array_1#lia_1,[24]) = 7),toInt(SafeIndex(position#array_1#lia_1,[25]) = 7),toInt(SafeIndex(position#array_1#lia_1,[26]) = 7),toInt(SafeIndex(position#array_1#lia_1,[27]) = 7);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 8),toInt(SafeIndex(position#array_1#lia_1,[2]) = 8),toInt(SafeIndex(position#array_1#lia_1,[3]) = 8),toInt(SafeIndex(position#array_1#lia_1,[4]) = 8),toInt(SafeIndex(position#array_1#lia_1,[5]) = 8),toInt(SafeIndex(position#array_1#lia_1,[6]) = 8),toInt(SafeIndex(position#array_1#lia_1,[7]) = 8),toInt(SafeIndex(position#array_1#lia_1,[8]) = 8),toInt(SafeIndex(position#array_1#lia_1,[9]) = 8),toInt(SafeIndex(position#array_1#lia_1,[10]) = 8),toInt(SafeIndex(position#array_1#lia_1,[11]) = 8),toInt(SafeIndex(position#array_1#lia_1,[12]) = 8),toInt(SafeIndex(position#array_1#lia_1,[13]) = 8),toInt(SafeIndex(position#array_1#lia_1,[14]) = 8),toInt(SafeIndex(position#array_1#lia_1,[15]) = 8),toInt(SafeIndex(position#array_1#lia_1,[16]) = 8),toInt(SafeIndex(position#array_1#lia_1,[17]) = 8),toInt(SafeIndex(position#array_1#lia_1,[18]) = 8),toInt(SafeIndex(position#array_1#lia_1,[19]) = 8),toInt(SafeIndex(position#array_1#lia_1,[20]) = 8),toInt(SafeIndex(position#array_1#lia_1,[21]) = 8),toInt(SafeIndex(position#array_1#lia_1,[22]) = 8),toInt(SafeIndex(position#array_1#lia_1,[23]) = 8),toInt(SafeIndex(position#array_1#lia_1,[24]) = 8),toInt(SafeIndex(position#array_1#lia_1,[25]) = 8),toInt(SafeIndex(position#array_1#lia_1,[26]) = 8),toInt(SafeIndex(position#array_1#lia_1,[27]) = 8);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 9),toInt(SafeIndex(position#array_1#lia_1,[2]) = 9),toInt(SafeIndex(position#array_1#lia_1,[3]) = 9),toInt(SafeIndex(position#array_1#lia_1,[4]) = 9),toInt(SafeIndex(position#array_1#lia_1,[5]) = 9),toInt(SafeIndex(position#array_1#lia_1,[6]) = 9),toInt(SafeIndex(position#array_1#lia_1,[7]) = 9),toInt(SafeIndex(position#array_1#lia_1,[8]) = 9),toInt(SafeIndex(position#array_1#lia_1,[9]) = 9),toInt(SafeIndex(position#array_1#lia_1,[10]) = 9),toInt(SafeIndex(position#array_1#lia_1,[11]) = 9),toInt(SafeIndex(position#array_1#lia_1,[12]) = 9),toInt(SafeIndex(position#array_1#lia_1,[13]) = 9),toInt(SafeIndex(position#array_1#lia_1,[14]) = 9),toInt(SafeIndex(position#array_1#lia_1,[15]) = 9),toInt(SafeIndex(position#array_1#lia_1,[16]) = 9),toInt(SafeIndex(position#array_1#lia_1,[17]) = 9),toInt(SafeIndex(position#array_1#lia_1,[18]) = 9),toInt(SafeIndex(position#array_1#lia_1,[19]) = 9),toInt(SafeIndex(position#array_1#lia_1,[20]) = 9),toInt(SafeIndex(position#array_1#lia_1,[21]) = 9),toInt(SafeIndex(position#array_1#lia_1,[22]) = 9),toInt(SafeIndex(position#array_1#lia_1,[23]) = 9),toInt(SafeIndex(position#array_1#lia_1,[24]) = 9),toInt(SafeIndex(position#array_1#lia_1,[25]) = 9),toInt(SafeIndex(position#array_1#lia_1,[26]) = 9),toInt(SafeIndex(position#array_1#lia_1,[27]) = 9);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 10),toInt(SafeIndex(position#array_1#lia_1,[2]) = 10),toInt(SafeIndex(position#array_1#lia_1,[3]) = 10),toInt(SafeIndex(position#array_1#lia_1,[4]) = 10),toInt(SafeIndex(position#array_1#lia_1,[5]) = 10),toInt(SafeIndex(position#array_1#lia_1,[6]) = 10),toInt(SafeIndex(position#array_1#lia_1,[7]) = 10),toInt(SafeIndex(position#array_1#lia_1,[8]) = 10),toInt(SafeIndex(position#array_1#lia_1,[9]) = 10),toInt(SafeIndex(position#array_1#lia_1,[10]) = 10),toInt(SafeIndex(position#array_1#lia_1,[11]) = 10),toInt(SafeIndex(position#array_1#lia_1,[12]) = 10),toInt(SafeIndex(position#array_1#lia_1,[13]) = 10),toInt(SafeIndex(position#array_1#lia_1,[14]) = 10),toInt(SafeIndex(position#array_1#lia_1,[15]) = 10),toInt(SafeIndex(position#array_1#lia_1,[16]) = 10),toInt(SafeIndex(position#array_1#lia_1,[17]) = 10),toInt(SafeIndex(position#array_1#lia_1,[18]) = 10),toInt(SafeIndex(position#array_1#lia_1,[19]) = 10),toInt(SafeIndex(position#array_1#lia_1,[20]) = 10),toInt(SafeIndex(position#array_1#lia_1,[21]) = 10),toInt(SafeIndex(position#array_1#lia_1,[22]) = 10),toInt(SafeIndex(position#array_1#lia_1,[23]) = 10),toInt(SafeIndex(position#array_1#lia_1,[24]) = 10),toInt(SafeIndex(position#array_1#lia_1,[25]) = 10),toInt(SafeIndex(position#array_1#lia_1,[26]) = 10),toInt(SafeIndex(position#array_1#lia_1,[27]) = 10);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 11),toInt(SafeIndex(position#array_1#lia_1,[2]) = 11),toInt(SafeIndex(position#array_1#lia_1,[3]) = 11),toInt(SafeIndex(position#array_1#lia_1,[4]) = 11),toInt(SafeIndex(position#array_1#lia_1,[5]) = 11),toInt(SafeIndex(position#array_1#lia_1,[6]) = 11),toInt(SafeIndex(position#array_1#lia_1,[7]) = 11),toInt(SafeIndex(position#array_1#lia_1,[8]) = 11),toInt(SafeIndex(position#array_1#lia_1,[9]) = 11),toInt(SafeIndex(position#array_1#lia_1,[10]) = 11),toInt(SafeIndex(position#array_1#lia_1,[11]) = 11),toInt(SafeIndex(position#array_1#lia_1,[12]) = 11),toInt(SafeIndex(position#array_1#lia_1,[13]) = 11),toInt(SafeIndex(position#array_1#lia_1,[14]) = 11),toInt(SafeIndex(position#array_1#lia_1,[15]) = 11),toInt(SafeIndex(position#array_1#lia_1,[16]) = 11),toInt(SafeIndex(position#array_1#lia_1,[17]) = 11),toInt(SafeIndex(position#array_1#lia_1,[18]) = 11),toInt(SafeIndex(position#array_1#lia_1,[19]) = 11),toInt(SafeIndex(position#array_1#lia_1,[20]) = 11),toInt(SafeIndex(position#array_1#lia_1,[21]) = 11),toInt(SafeIndex(position#array_1#lia_1,[22]) = 11),toInt(SafeIndex(position#array_1#lia_1,[23]) = 11),toInt(SafeIndex(position#array_1#lia_1,[24]) = 11),toInt(SafeIndex(position#array_1#lia_1,[25]) = 11),toInt(SafeIndex(position#array_1#lia_1,[26]) = 11),toInt(SafeIndex(position#array_1#lia_1,[27]) = 11);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 12),toInt(SafeIndex(position#array_1#lia_1,[2]) = 12),toInt(SafeIndex(position#array_1#lia_1,[3]) = 12),toInt(SafeIndex(position#array_1#lia_1,[4]) = 12),toInt(SafeIndex(position#array_1#lia_1,[5]) = 12),toInt(SafeIndex(position#array_1#lia_1,[6]) = 12),toInt(SafeIndex(position#array_1#lia_1,[7]) = 12),toInt(SafeIndex(position#array_1#lia_1,[8]) = 12),toInt(SafeIndex(position#array_1#lia_1,[9]) = 12),toInt(SafeIndex(position#array_1#lia_1,[10]) = 12),toInt(SafeIndex(position#array_1#lia_1,[11]) = 12),toInt(SafeIndex(position#array_1#lia_1,[12]) = 12),toInt(SafeIndex(position#array_1#lia_1,[13]) = 12),toInt(SafeIndex(position#array_1#lia_1,[14]) = 12),toInt(SafeIndex(position#array_1#lia_1,[15]) = 12),toInt(SafeIndex(position#array_1#lia_1,[16]) = 12),toInt(SafeIndex(position#array_1#lia_1,[17]) = 12),toInt(SafeIndex(position#array_1#lia_1,[18]) = 12),toInt(SafeIndex(position#array_1#lia_1,[19]) = 12),toInt(SafeIndex(position#array_1#lia_1,[20]) = 12),toInt(SafeIndex(position#array_1#lia_1,[21]) = 12),toInt(SafeIndex(position#array_1#lia_1,[22]) = 12),toInt(SafeIndex(position#array_1#lia_1,[23]) = 12),toInt(SafeIndex(position#array_1#lia_1,[24]) = 12),toInt(SafeIndex(position#array_1#lia_1,[25]) = 12),toInt(SafeIndex(position#array_1#lia_1,[26]) = 12),toInt(SafeIndex(position#array_1#lia_1,[27]) = 12);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 13),toInt(SafeIndex(position#array_1#lia_1,[2]) = 13),toInt(SafeIndex(position#array_1#lia_1,[3]) = 13),toInt(SafeIndex(position#array_1#lia_1,[4]) = 13),toInt(SafeIndex(position#array_1#lia_1,[5]) = 13),toInt(SafeIndex(position#array_1#lia_1,[6]) = 13),toInt(SafeIndex(position#array_1#lia_1,[7]) = 13),toInt(SafeIndex(position#array_1#lia_1,[8]) = 13),toInt(SafeIndex(position#array_1#lia_1,[9]) = 13),toInt(SafeIndex(position#array_1#lia_1,[10]) = 13),toInt(SafeIndex(position#array_1#lia_1,[11]) = 13),toInt(SafeIndex(position#array_1#lia_1,[12]) = 13),toInt(SafeIndex(position#array_1#lia_1,[13]) = 13),toInt(SafeIndex(position#array_1#lia_1,[14]) = 13),toInt(SafeIndex(position#array_1#lia_1,[15]) = 13),toInt(SafeIndex(position#array_1#lia_1,[16]) = 13),toInt(SafeIndex(position#array_1#lia_1,[17]) = 13),toInt(SafeIndex(position#array_1#lia_1,[18]) = 13),toInt(SafeIndex(position#array_1#lia_1,[19]) = 13),toInt(SafeIndex(position#array_1#lia_1,[20]) = 13),toInt(SafeIndex(position#array_1#lia_1,[21]) = 13),toInt(SafeIndex(position#array_1#lia_1,[22]) = 13),toInt(SafeIndex(position#array_1#lia_1,[23]) = 13),toInt(SafeIndex(position#array_1#lia_1,[24]) = 13),toInt(SafeIndex(position#array_1#lia_1,[25]) = 13),toInt(SafeIndex(position#array_1#lia_1,[26]) = 13),toInt(SafeIndex(position#array_1#lia_1,[27]) = 13);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 14),toInt(SafeIndex(position#array_1#lia_1,[2]) = 14),toInt(SafeIndex(position#array_1#lia_1,[3]) = 14),toInt(SafeIndex(position#array_1#lia_1,[4]) = 14),toInt(SafeIndex(position#array_1#lia_1,[5]) = 14),toInt(SafeIndex(position#array_1#lia_1,[6]) = 14),toInt(SafeIndex(position#array_1#lia_1,[7]) = 14),toInt(SafeIndex(position#array_1#lia_1,[8]) = 14),toInt(SafeIndex(position#array_1#lia_1,[9]) = 14),toInt(SafeIndex(position#array_1#lia_1,[10]) = 14),toInt(SafeIndex(position#array_1#lia_1,[11]) = 14),toInt(SafeIndex(position#array_1#lia_1,[12]) = 14),toInt(SafeIndex(position#array_1#lia_1,[13]) = 14),toInt(SafeIndex(position#array_1#lia_1,[14]) = 14),toInt(SafeIndex(position#array_1#lia_1,[15]) = 14),toInt(SafeIndex(position#array_1#lia_1,[16]) = 14),toInt(SafeIndex(position#array_1#lia_1,[17]) = 14),toInt(SafeIndex(position#array_1#lia_1,[18]) = 14),toInt(SafeIndex(position#array_1#lia_1,[19]) = 14),toInt(SafeIndex(position#array_1#lia_1,[20]) = 14),toInt(SafeIndex(position#array_1#lia_1,[21]) = 14),toInt(SafeIndex(position#array_1#lia_1,[22]) = 14),toInt(SafeIndex(position#array_1#lia_1,[23]) = 14),toInt(SafeIndex(position#array_1#lia_1,[24]) = 14),toInt(SafeIndex(position#array_1#lia_1,[25]) = 14),toInt(SafeIndex(position#array_1#lia_1,[26]) = 14),toInt(SafeIndex(position#array_1#lia_1,[27]) = 14);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 15),toInt(SafeIndex(position#array_1#lia_1,[2]) = 15),toInt(SafeIndex(position#array_1#lia_1,[3]) = 15),toInt(SafeIndex(position#array_1#lia_1,[4]) = 15),toInt(SafeIndex(position#array_1#lia_1,[5]) = 15),toInt(SafeIndex(position#array_1#lia_1,[6]) = 15),toInt(SafeIndex(position#array_1#lia_1,[7]) = 15),toInt(SafeIndex(position#array_1#lia_1,[8]) = 15),toInt(SafeIndex(position#array_1#lia_1,[9]) = 15),toInt(SafeIndex(position#array_1#lia_1,[10]) = 15),toInt(SafeIndex(position#array_1#lia_1,[11]) = 15),toInt(SafeIndex(position#array_1#lia_1,[12]) = 15),toInt(SafeIndex(position#array_1#lia_1,[13]) = 15),toInt(SafeIndex(position#array_1#lia_1,[14]) = 15),toInt(SafeIndex(position#array_1#lia_1,[15]) = 15),toInt(SafeIndex(position#array_1#lia_1,[16]) = 15),toInt(SafeIndex(position#array_1#lia_1,[17]) = 15),toInt(SafeIndex(position#array_1#lia_1,[18]) = 15),toInt(SafeIndex(position#array_1#lia_1,[19]) = 15),toInt(SafeIndex(position#array_1#lia_1,[20]) = 15),toInt(SafeIndex(position#array_1#lia_1,[21]) = 15),toInt(SafeIndex(position#array_1#lia_1,[22]) = 15),toInt(SafeIndex(position#array_1#lia_1,[23]) = 15),toInt(SafeIndex(position#array_1#lia_1,[24]) = 15),toInt(SafeIndex(position#array_1#lia_1,[25]) = 15),toInt(SafeIndex(position#array_1#lia_1,[26]) = 15),toInt(SafeIndex(position#array_1#lia_1,[27]) = 15);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 16),toInt(SafeIndex(position#array_1#lia_1,[2]) = 16),toInt(SafeIndex(position#array_1#lia_1,[3]) = 16),toInt(SafeIndex(position#array_1#lia_1,[4]) = 16),toInt(SafeIndex(position#array_1#lia_1,[5]) = 16),toInt(SafeIndex(position#array_1#lia_1,[6]) = 16),toInt(SafeIndex(position#array_1#lia_1,[7]) = 16),toInt(SafeIndex(position#array_1#lia_1,[8]) = 16),toInt(SafeIndex(position#array_1#lia_1,[9]) = 16),toInt(SafeIndex(position#array_1#lia_1,[10]) = 16),toInt(SafeIndex(position#array_1#lia_1,[11]) = 16),toInt(SafeIndex(position#array_1#lia_1,[12]) = 16),toInt(SafeIndex(position#array_1#lia_1,[13]) = 16),toInt(SafeIndex(position#array_1#lia_1,[14]) = 16),toInt(SafeIndex(position#array_1#lia_1,[15]) = 16),toInt(SafeIndex(position#array_1#lia_1,[16]) = 16),toInt(SafeIndex(position#array_1#lia_1,[17]) = 16),toInt(SafeIndex(position#array_1#lia_1,[18]) = 16),toInt(SafeIndex(position#array_1#lia_1,[19]) = 16),toInt(SafeIndex(position#array_1#lia_1,[20]) = 16),toInt(SafeIndex(position#array_1#lia_1,[21]) = 16),toInt(SafeIndex(position#array_1#lia_1,[22]) = 16),toInt(SafeIndex(position#array_1#lia_1,[23]) = 16),toInt(SafeIndex(position#array_1#lia_1,[24]) = 16),toInt(SafeIndex(position#array_1#lia_1,[25]) = 16),toInt(SafeIndex(position#array_1#lia_1,[26]) = 16),toInt(SafeIndex(position#array_1#lia_1,[27]) = 16);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 17),toInt(SafeIndex(position#array_1#lia_1,[2]) = 17),toInt(SafeIndex(position#array_1#lia_1,[3]) = 17),toInt(SafeIndex(position#array_1#lia_1,[4]) = 17),toInt(SafeIndex(position#array_1#lia_1,[5]) = 17),toInt(SafeIndex(position#array_1#lia_1,[6]) = 17),toInt(SafeIndex(position#array_1#lia_1,[7]) = 17),toInt(SafeIndex(position#array_1#lia_1,[8]) = 17),toInt(SafeIndex(position#array_1#lia_1,[9]) = 17),toInt(SafeIndex(position#array_1#lia_1,[10]) = 17),toInt(SafeIndex(position#array_1#lia_1,[11]) = 17),toInt(SafeIndex(position#array_1#lia_1,[12]) = 17),toInt(SafeIndex(position#array_1#lia_1,[13]) = 17),toInt(SafeIndex(position#array_1#lia_1,[14]) = 17),toInt(SafeIndex(position#array_1#lia_1,[15]) = 17),toInt(SafeIndex(position#array_1#lia_1,[16]) = 17),toInt(SafeIndex(position#array_1#lia_1,[17]) = 17),toInt(SafeIndex(position#array_1#lia_1,[18]) = 17),toInt(SafeIndex(position#array_1#lia_1,[19]) = 17),toInt(SafeIndex(position#array_1#lia_1,[20]) = 17),toInt(SafeIndex(position#array_1#lia_1,[21]) = 17),toInt(SafeIndex(position#array_1#lia_1,[22]) = 17),toInt(SafeIndex(position#array_1#lia_1,[23]) = 17),toInt(SafeIndex(position#array_1#lia_1,[24]) = 17),toInt(SafeIndex(position#array_1#lia_1,[25]) = 17),toInt(SafeIndex(position#array_1#lia_1,[26]) = 17),toInt(SafeIndex(position#array_1#lia_1,[27]) = 17);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 18),toInt(SafeIndex(position#array_1#lia_1,[2]) = 18),toInt(SafeIndex(position#array_1#lia_1,[3]) = 18),toInt(SafeIndex(position#array_1#lia_1,[4]) = 18),toInt(SafeIndex(position#array_1#lia_1,[5]) = 18),toInt(SafeIndex(position#array_1#lia_1,[6]) = 18),toInt(SafeIndex(position#array_1#lia_1,[7]) = 18),toInt(SafeIndex(position#array_1#lia_1,[8]) = 18),toInt(SafeIndex(position#array_1#lia_1,[9]) = 18),toInt(SafeIndex(position#array_1#lia_1,[10]) = 18),toInt(SafeIndex(position#array_1#lia_1,[11]) = 18),toInt(SafeIndex(position#array_1#lia_1,[12]) = 18),toInt(SafeIndex(position#array_1#lia_1,[13]) = 18),toInt(SafeIndex(position#array_1#lia_1,[14]) = 18),toInt(SafeIndex(position#array_1#lia_1,[15]) = 18),toInt(SafeIndex(position#array_1#lia_1,[16]) = 18),toInt(SafeIndex(position#array_1#lia_1,[17]) = 18),toInt(SafeIndex(position#array_1#lia_1,[18]) = 18),toInt(SafeIndex(position#array_1#lia_1,[19]) = 18),toInt(SafeIndex(position#array_1#lia_1,[20]) = 18),toInt(SafeIndex(position#array_1#lia_1,[21]) = 18),toInt(SafeIndex(position#array_1#lia_1,[22]) = 18),toInt(SafeIndex(position#array_1#lia_1,[23]) = 18),toInt(SafeIndex(position#array_1#lia_1,[24]) = 18),toInt(SafeIndex(position#array_1#lia_1,[25]) = 18),toInt(SafeIndex(position#array_1#lia_1,[26]) = 18),toInt(SafeIndex(position#array_1#lia_1,[27]) = 18);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 19),toInt(SafeIndex(position#array_1#lia_1,[2]) = 19),toInt(SafeIndex(position#array_1#lia_1,[3]) = 19),toInt(SafeIndex(position#array_1#lia_1,[4]) = 19),toInt(SafeIndex(position#array_1#lia_1,[5]) = 19),toInt(SafeIndex(position#array_1#lia_1,[6]) = 19),toInt(SafeIndex(position#array_1#lia_1,[7]) = 19),toInt(SafeIndex(position#array_1#lia_1,[8]) = 19),toInt(SafeIndex(position#array_1#lia_1,[9]) = 19),toInt(SafeIndex(position#array_1#lia_1,[10]) = 19),toInt(SafeIndex(position#array_1#lia_1,[11]) = 19),toInt(SafeIndex(position#array_1#lia_1,[12]) = 19),toInt(SafeIndex(position#array_1#lia_1,[13]) = 19),toInt(SafeIndex(position#array_1#lia_1,[14]) = 19),toInt(SafeIndex(position#array_1#lia_1,[15]) = 19),toInt(SafeIndex(position#array_1#lia_1,[16]) = 19),toInt(SafeIndex(position#array_1#lia_1,[17]) = 19),toInt(SafeIndex(position#array_1#lia_1,[18]) = 19),toInt(SafeIndex(position#array_1#lia_1,[19]) = 19),toInt(SafeIndex(position#array_1#lia_1,[20]) = 19),toInt(SafeIndex(position#array_1#lia_1,[21]) = 19),toInt(SafeIndex(position#array_1#lia_1,[22]) = 19),toInt(SafeIndex(position#array_1#lia_1,[23]) = 19),toInt(SafeIndex(position#array_1#lia_1,[24]) = 19),toInt(SafeIndex(position#array_1#lia_1,[25]) = 19),toInt(SafeIndex(position#array_1#lia_1,[26]) = 19),toInt(SafeIndex(position#array_1#lia_1,[27]) = 19);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 20),toInt(SafeIndex(position#array_1#lia_1,[2]) = 20),toInt(SafeIndex(position#array_1#lia_1,[3]) = 20),toInt(SafeIndex(position#array_1#lia_1,[4]) = 20),toInt(SafeIndex(position#array_1#lia_1,[5]) = 20),toInt(SafeIndex(position#array_1#lia_1,[6]) = 20),toInt(SafeIndex(position#array_1#lia_1,[7]) = 20),toInt(SafeIndex(position#array_1#lia_1,[8]) = 20),toInt(SafeIndex(position#array_1#lia_1,[9]) = 20),toInt(SafeIndex(position#array_1#lia_1,[10]) = 20),toInt(SafeIndex(position#array_1#lia_1,[11]) = 20),toInt(SafeIndex(position#array_1#lia_1,[12]) = 20),toInt(SafeIndex(position#array_1#lia_1,[13]) = 20),toInt(SafeIndex(position#array_1#lia_1,[14]) = 20),toInt(SafeIndex(position#array_1#lia_1,[15]) = 20),toInt(SafeIndex(position#array_1#lia_1,[16]) = 20),toInt(SafeIndex(position#array_1#lia_1,[17]) = 20),toInt(SafeIndex(position#array_1#lia_1,[18]) = 20),toInt(SafeIndex(position#array_1#lia_1,[19]) = 20),toInt(SafeIndex(position#array_1#lia_1,[20]) = 20),toInt(SafeIndex(position#array_1#lia_1,[21]) = 20),toInt(SafeIndex(position#array_1#lia_1,[22]) = 20),toInt(SafeIndex(position#array_1#lia_1,[23]) = 20),toInt(SafeIndex(position#array_1#lia_1,[24]) = 20),toInt(SafeIndex(position#array_1#lia_1,[25]) = 20),toInt(SafeIndex(position#array_1#lia_1,[26]) = 20),toInt(SafeIndex(position#array_1#lia_1,[27]) = 20);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 21),toInt(SafeIndex(position#array_1#lia_1,[2]) = 21),toInt(SafeIndex(position#array_1#lia_1,[3]) = 21),toInt(SafeIndex(position#array_1#lia_1,[4]) = 21),toInt(SafeIndex(position#array_1#lia_1,[5]) = 21),toInt(SafeIndex(position#array_1#lia_1,[6]) = 21),toInt(SafeIndex(position#array_1#lia_1,[7]) = 21),toInt(SafeIndex(position#array_1#lia_1,[8]) = 21),toInt(SafeIndex(position#array_1#lia_1,[9]) = 21),toInt(SafeIndex(position#array_1#lia_1,[10]) = 21),toInt(SafeIndex(position#array_1#lia_1,[11]) = 21),toInt(SafeIndex(position#array_1#lia_1,[12]) = 21),toInt(SafeIndex(position#array_1#lia_1,[13]) = 21),toInt(SafeIndex(position#array_1#lia_1,[14]) = 21),toInt(SafeIndex(position#array_1#lia_1,[15]) = 21),toInt(SafeIndex(position#array_1#lia_1,[16]) = 21),toInt(SafeIndex(position#array_1#lia_1,[17]) = 21),toInt(SafeIndex(position#array_1#lia_1,[18]) = 21),toInt(SafeIndex(position#array_1#lia_1,[19]) = 21),toInt(SafeIndex(position#array_1#lia_1,[20]) = 21),toInt(SafeIndex(position#array_1#lia_1,[21]) = 21),toInt(SafeIndex(position#array_1#lia_1,[22]) = 21),toInt(SafeIndex(position#array_1#lia_1,[23]) = 21),toInt(SafeIndex(position#array_1#lia_1,[24]) = 21),toInt(SafeIndex(position#array_1#lia_1,[25]) = 21),toInt(SafeIndex(position#array_1#lia_1,[26]) = 21),toInt(SafeIndex(position#array_1#lia_1,[27]) = 21);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 22),toInt(SafeIndex(position#array_1#lia_1,[2]) = 22),toInt(SafeIndex(position#array_1#lia_1,[3]) = 22),toInt(SafeIndex(position#array_1#lia_1,[4]) = 22),toInt(SafeIndex(position#array_1#lia_1,[5]) = 22),toInt(SafeIndex(position#array_1#lia_1,[6]) = 22),toInt(SafeIndex(position#array_1#lia_1,[7]) = 22),toInt(SafeIndex(position#array_1#lia_1,[8]) = 22),toInt(SafeIndex(position#array_1#lia_1,[9]) = 22),toInt(SafeIndex(position#array_1#lia_1,[10]) = 22),toInt(SafeIndex(position#array_1#lia_1,[11]) = 22),toInt(SafeIndex(position#array_1#lia_1,[12]) = 22),toInt(SafeIndex(position#array_1#lia_1,[13]) = 22),toInt(SafeIndex(position#array_1#lia_1,[14]) = 22),toInt(SafeIndex(position#array_1#lia_1,[15]) = 22),toInt(SafeIndex(position#array_1#lia_1,[16]) = 22),toInt(SafeIndex(position#array_1#lia_1,[17]) = 22),toInt(SafeIndex(position#array_1#lia_1,[18]) = 22),toInt(SafeIndex(position#array_1#lia_1,[19]) = 22),toInt(SafeIndex(position#array_1#lia_1,[20]) = 22),toInt(SafeIndex(position#array_1#lia_1,[21]) = 22),toInt(SafeIndex(position#array_1#lia_1,[22]) = 22),toInt(SafeIndex(position#array_1#lia_1,[23]) = 22),toInt(SafeIndex(position#array_1#lia_1,[24]) = 22),toInt(SafeIndex(position#array_1#lia_1,[25]) = 22),toInt(SafeIndex(position#array_1#lia_1,[26]) = 22),toInt(SafeIndex(position#array_1#lia_1,[27]) = 22);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 23),toInt(SafeIndex(position#array_1#lia_1,[2]) = 23),toInt(SafeIndex(position#array_1#lia_1,[3]) = 23),toInt(SafeIndex(position#array_1#lia_1,[4]) = 23),toInt(SafeIndex(position#array_1#lia_1,[5]) = 23),toInt(SafeIndex(position#array_1#lia_1,[6]) = 23),toInt(SafeIndex(position#array_1#lia_1,[7]) = 23),toInt(SafeIndex(position#array_1#lia_1,[8]) = 23),toInt(SafeIndex(position#array_1#lia_1,[9]) = 23),toInt(SafeIndex(position#array_1#lia_1,[10]) = 23),toInt(SafeIndex(position#array_1#lia_1,[11]) = 23),toInt(SafeIndex(position#array_1#lia_1,[12]) = 23),toInt(SafeIndex(position#array_1#lia_1,[13]) = 23),toInt(SafeIndex(position#array_1#lia_1,[14]) = 23),toInt(SafeIndex(position#array_1#lia_1,[15]) = 23),toInt(SafeIndex(position#array_1#lia_1,[16]) = 23),toInt(SafeIndex(position#array_1#lia_1,[17]) = 23),toInt(SafeIndex(position#array_1#lia_1,[18]) = 23),toInt(SafeIndex(position#array_1#lia_1,[19]) = 23),toInt(SafeIndex(position#array_1#lia_1,[20]) = 23),toInt(SafeIndex(position#array_1#lia_1,[21]) = 23),toInt(SafeIndex(position#array_1#lia_1,[22]) = 23),toInt(SafeIndex(position#array_1#lia_1,[23]) = 23),toInt(SafeIndex(position#array_1#lia_1,[24]) = 23),toInt(SafeIndex(position#array_1#lia_1,[25]) = 23),toInt(SafeIndex(position#array_1#lia_1,[26]) = 23),toInt(SafeIndex(position#array_1#lia_1,[27]) = 23);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 24),toInt(SafeIndex(position#array_1#lia_1,[2]) = 24),toInt(SafeIndex(position#array_1#lia_1,[3]) = 24),toInt(SafeIndex(position#array_1#lia_1,[4]) = 24),toInt(SafeIndex(position#array_1#lia_1,[5]) = 24),toInt(SafeIndex(position#array_1#lia_1,[6]) = 24),toInt(SafeIndex(position#array_1#lia_1,[7]) = 24),toInt(SafeIndex(position#array_1#lia_1,[8]) = 24),toInt(SafeIndex(position#array_1#lia_1,[9]) = 24),toInt(SafeIndex(position#array_1#lia_1,[10]) = 24),toInt(SafeIndex(position#array_1#lia_1,[11]) = 24),toInt(SafeIndex(position#array_1#lia_1,[12]) = 24),toInt(SafeIndex(position#array_1#lia_1,[13]) = 24),toInt(SafeIndex(position#array_1#lia_1,[14]) = 24),toInt(SafeIndex(position#array_1#lia_1,[15]) = 24),toInt(SafeIndex(position#array_1#lia_1,[16]) = 24),toInt(SafeIndex(position#array_1#lia_1,[17]) = 24),toInt(SafeIndex(position#array_1#lia_1,[18]) = 24),toInt(SafeIndex(position#array_1#lia_1,[19]) = 24),toInt(SafeIndex(position#array_1#lia_1,[20]) = 24),toInt(SafeIndex(position#array_1#lia_1,[21]) = 24),toInt(SafeIndex(position#array_1#lia_1,[22]) = 24),toInt(SafeIndex(position#array_1#lia_1,[23]) = 24),toInt(SafeIndex(position#array_1#lia_1,[24]) = 24),toInt(SafeIndex(position#array_1#lia_1,[25]) = 24),toInt(SafeIndex(position#array_1#lia_1,[26]) = 24),toInt(SafeIndex(position#array_1#lia_1,[27]) = 24);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 25),toInt(SafeIndex(position#array_1#lia_1,[2]) = 25),toInt(SafeIndex(position#array_1#lia_1,[3]) = 25),toInt(SafeIndex(position#array_1#lia_1,[4]) = 25),toInt(SafeIndex(position#array_1#lia_1,[5]) = 25),toInt(SafeIndex(position#array_1#lia_1,[6]) = 25),toInt(SafeIndex(position#array_1#lia_1,[7]) = 25),toInt(SafeIndex(position#array_1#lia_1,[8]) = 25),toInt(SafeIndex(position#array_1#lia_1,[9]) = 25),toInt(SafeIndex(position#array_1#lia_1,[10]) = 25),toInt(SafeIndex(position#array_1#lia_1,[11]) = 25),toInt(SafeIndex(position#array_1#lia_1,[12]) = 25),toInt(SafeIndex(position#array_1#lia_1,[13]) = 25),toInt(SafeIndex(position#array_1#lia_1,[14]) = 25),toInt(SafeIndex(position#array_1#lia_1,[15]) = 25),toInt(SafeIndex(position#array_1#lia_1,[16]) = 25),toInt(SafeIndex(position#array_1#lia_1,[17]) = 25),toInt(SafeIndex(position#array_1#lia_1,[18]) = 25),toInt(SafeIndex(position#array_1#lia_1,[19]) = 25),toInt(SafeIndex(position#array_1#lia_1,[20]) = 25),toInt(SafeIndex(position#array_1#lia_1,[21]) = 25),toInt(SafeIndex(position#array_1#lia_1,[22]) = 25),toInt(SafeIndex(position#array_1#lia_1,[23]) = 25),toInt(SafeIndex(position#array_1#lia_1,[24]) = 25),toInt(SafeIndex(position#array_1#lia_1,[25]) = 25),toInt(SafeIndex(position#array_1#lia_1,[26]) = 25),toInt(SafeIndex(position#array_1#lia_1,[27]) = 25);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 26),toInt(SafeIndex(position#array_1#lia_1,[2]) = 26),toInt(SafeIndex(position#array_1#lia_1,[3]) = 26),toInt(SafeIndex(position#array_1#lia_1,[4]) = 26),toInt(SafeIndex(position#array_1#lia_1,[5]) = 26),toInt(SafeIndex(position#array_1#lia_1,[6]) = 26),toInt(SafeIndex(position#array_1#lia_1,[7]) = 26),toInt(SafeIndex(position#array_1#lia_1,[8]) = 26),toInt(SafeIndex(position#array_1#lia_1,[9]) = 26),toInt(SafeIndex(position#array_1#lia_1,[10]) = 26),toInt(SafeIndex(position#array_1#lia_1,[11]) = 26),toInt(SafeIndex(position#array_1#lia_1,[12]) = 26),toInt(SafeIndex(position#array_1#lia_1,[13]) = 26),toInt(SafeIndex(position#array_1#lia_1,[14]) = 26),toInt(SafeIndex(position#array_1#lia_1,[15]) = 26),toInt(SafeIndex(position#array_1#lia_1,[16]) = 26),toInt(SafeIndex(position#array_1#lia_1,[17]) = 26),toInt(SafeIndex(position#array_1#lia_1,[18]) = 26),toInt(SafeIndex(position#array_1#lia_1,[19]) = 26),toInt(SafeIndex(position#array_1#lia_1,[20]) = 26),toInt(SafeIndex(position#array_1#lia_1,[21]) = 26),toInt(SafeIndex(position#array_1#lia_1,[22]) = 26),toInt(SafeIndex(position#array_1#lia_1,[23]) = 26),toInt(SafeIndex(position#array_1#lia_1,[24]) = 26),toInt(SafeIndex(position#array_1#lia_1,[25]) = 26),toInt(SafeIndex(position#array_1#lia_1,[26]) = 26),toInt(SafeIndex(position#array_1#lia_1,[27]) = 26);int(1..)]) <= 1,sum([toInt(SafeIndex(position#array_1#lia_1,[1]) = 27),toInt(SafeIndex(position#array_1#lia_1,[2]) = 27),toInt(SafeIndex(position#array_1#lia_1,[3]) = 27),toInt(SafeIndex(position#array_1#lia_1,[4]) = 27),toInt(SafeIndex(position#array_1#lia_1,[5]) = 27),toInt(SafeIndex(position#array_1#lia_1,[6]) = 27),toInt(SafeIndex(position#array_1#lia_1,[7]) = 27),toInt(SafeIndex(position#array_1#lia_1,[8]) = 27),toInt(SafeIndex(position#array_1#lia_1,[9]) = 27),toInt(SafeIndex(position#array_1#lia_1,[10]) = 27),toInt(SafeIndex(position#array_1#lia_1,[11]) = 27),toInt(SafeIndex(position#array_1#lia_1,[12]) = 27),toInt(SafeIndex(position#array_1#lia_1,[13]) = 27),toInt(SafeIndex(position#array_1#lia_1,[14]) = 27),toInt(SafeIndex(position#array_1#lia_1,[15]) = 27),toInt(SafeIndex(position#array_1#lia_1,[16]) = 27),toInt(SafeIndex(position#array_1#lia_1,[17]) = 27),toInt(SafeIndex(position#array_1#lia_1,[18]) = 27),toInt(SafeIndex(position#array_1#lia_1,[19]) = 27),toInt(SafeIndex(position#array_1#lia_1,[20]) = 27),toInt(SafeIndex(position#array_1#lia_1,[21]) = 27),toInt(SafeIndex(position#array_1#lia_1,[22]) = 27),toInt(SafeIndex(position#array_1#lia_1,[23]) = 27),toInt(SafeIndex(position#array_1#lia_1,[24]) = 27),toInt(SafeIndex(position#array_1#lia_1,[25]) = 27),toInt(SafeIndex(position#array_1#lia_1,[26]) = 27),toInt(SafeIndex(position#array_1#lia_1,[27]) = 27);int(1..)]) <= 1;int(1..)])
+

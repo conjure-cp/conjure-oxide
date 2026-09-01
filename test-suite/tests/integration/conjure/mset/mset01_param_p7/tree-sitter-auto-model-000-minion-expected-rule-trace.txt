@@ -1,0 +1,346 @@
+Model before rewriting:
+
+letting g be mset(2,2)
+find x: mset (maxSize 4, maxOccur(2)) of int(1..2)
+
+such that
+
+g = x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#counts_1: matrix indexed by [int(1..2)] of int(0..2)
+  find x#counts_2: matrix indexed by [int(1..2)] of int(1..2)
+new constraints:
+  and([sum([SafeIndex(x#counts_1,[1]),SafeIndex(x#counts_1,[2]);int(1..)]) >= 0,sum([SafeIndex(x#counts_1,[1]),SafeIndex(x#counts_1,[2]);int(1..)]) <= 4;int(1..)])
+  or([SafeIndex(x#counts_1,[1]) > 0,SafeIndex(x#counts_2,[1]) = 1;int(1..)])
+  or([SafeIndex(x#counts_1,[2]) > 0,SafeIndex(x#counts_2,[2]) = 1;int(1..)])
+  or([SafeIndex(x#counts_1,[2]) = 0,SafeIndex(x#counts_1,[1]) > 0;int(1..)])
+  or([SafeIndex(x#counts_1,[2]) = 0,([SafeIndex(x#counts_2,[1]);int(1..)] <lex [SafeIndex(x#counts_2,[2]);int(1..)]);int(1..)])
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+new variables:
+  find x#counts_1#components_1: int(0..2)
+  find x#counts_1#components_2: int(0..2)
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+new variables:
+  find x#counts_2#components_1: int(1..2)
+  find x#counts_2#components_2: int(1..2)
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+mset(2,2) = x
+   ~~> equality_counts_mset_literal ([("ReprGeneral", 9500)])
+and([SafeIndex(x#counts_1,[1]) = 2,SafeIndex(x#counts_2,[1]) = 2,SafeIndex(x#counts_1,[2]) = 0;int(1..)])
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+x#counts_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_2
+
+--
+
+x#counts_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#counts_1
+
+--
+
+SafeIndex(x#counts_1,[1]) > 0
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([SafeIndex(x#counts_1,[1]),-1;int(1..)]) >= 0
+
+--
+
+SafeIndex(x#counts_1,[2]) > 0
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([SafeIndex(x#counts_1,[2]),-1;int(1..)]) >= 0
+
+--
+
+SafeIndex(x#counts_1,[1]) > 0
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([SafeIndex(x#counts_1,[1]),-1;int(1..)]) >= 0
+
+--
+
+SafeIndex(x#counts_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_1
+
+--
+
+SafeIndex(x#counts_2,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_2#components_1
+
+--
+
+SafeIndex(x#counts_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_2
+
+--
+
+SafeIndex(x#counts_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_2
+
+--
+
+SafeIndex(x#counts_2,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_2#components_1
+
+--
+
+SafeIndex(x#counts_2,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_2#components_2
+
+--
+
+SafeIndex(x#counts_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_2
+
+--
+
+SafeIndex(x#counts_2,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_2#components_1
+
+--
+
+SafeIndex(x#counts_2,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_2#components_2
+
+--
+
+SafeIndex(x#counts_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_1
+
+--
+
+SafeIndex(x#counts_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_2
+
+--
+
+SafeIndex(x#counts_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_1
+
+--
+
+SafeIndex(x#counts_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_1
+
+--
+
+SafeIndex(x#counts_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_2
+
+--
+
+SafeIndex(x#counts_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_1
+
+--
+
+SafeIndex(x#counts_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#counts_1#components_2
+
+--
+
+sum([x#counts_1#components_1,-1;int(1..)]) >= 0
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(0, x#counts_1#components_1, -1)
+
+--
+
+sum([x#counts_1#components_2,-1;int(1..)]) >= 0
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(0, x#counts_1#components_2, -1)
+
+--
+
+sum([x#counts_1#components_1,-1;int(1..)]) >= 0
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(0, x#counts_1#components_1, -1)
+
+--
+
+sum([x#counts_1#components_1,x#counts_1#components_2;int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#counts_1#components_1, x#counts_1#components_2], 0)
+
+--
+
+sum([x#counts_1#components_1,x#counts_1#components_2;int(1..)]) <= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#counts_1#components_1, x#counts_1#components_2], 4)
+
+--
+
+x#counts_2#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#counts_2#components_1,1)
+
+--
+
+x#counts_2#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#counts_2#components_2,1)
+
+--
+
+x#counts_1#components_2 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#counts_1#components_2,0)
+
+--
+
+x#counts_1#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#counts_1#components_1,2)
+
+--
+
+x#counts_2#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#counts_2#components_1,2)
+
+--
+
+x#counts_1#components_2 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#counts_1#components_2,0)
+
+--
+
+x#counts_1#components_2 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#counts_1#components_2,0)
+
+--
+
+([x#counts_2#components_1;int(1..)] <lex [x#counts_2#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#counts_2#components_1], [x#counts_2#components_2])
+
+--
+
+Final model:
+
+letting g be mset(2,2)
+find x: mset (representation counts, maxSize 4, maxOccur(2)) of int(1..2)
+find x#counts_1: matrix indexed by [int(1..2)] of int(0..2)
+find x#counts_2: matrix indexed by [int(1..2)] of int(1..2)
+find x#counts_1#components_1: int(0..2)
+find x#counts_1#components_2: int(0..2)
+find x#counts_2#components_1: int(1..2)
+find x#counts_2#components_2: int(1..2)
+
+such that
+
+and([WatchedLiteral(x#counts_1#components_1,2),WatchedLiteral(x#counts_2#components_1,2),WatchedLiteral(x#counts_1#components_2,0);int(1..)]),
+and([SumGeq([x#counts_1#components_1, x#counts_1#components_2], 0),SumLeq([x#counts_1#components_1, x#counts_1#components_2], 4);int(1..)]),
+or([Ineq(0, x#counts_1#components_1, -1),WatchedLiteral(x#counts_2#components_1,1);int(1..)]),
+or([Ineq(0, x#counts_1#components_2, -1),WatchedLiteral(x#counts_2#components_2,1);int(1..)]),
+or([WatchedLiteral(x#counts_1#components_2,0),Ineq(0, x#counts_1#components_1, -1);int(1..)]),
+or([WatchedLiteral(x#counts_1#components_2,0),FlatLexLt([x#counts_2#components_1], [x#counts_2#components_2]);int(1..)])
+

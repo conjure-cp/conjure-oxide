@@ -1,0 +1,329 @@
+Model before rewriting:
+
+find s1: bool
+find s2: bool
+find s3: bool
+find s4: bool
+find s5: bool
+find s6: bool
+
+such that
+
+or([s1,s2;int(1..)]),
+or([s2,s3;int(1..)]),
+or([s3,s4;int(1..)]),
+or([s4,s5;int(1..)]),
+or([s5,s6;int(1..)]),
+!(and([s1,s4;int(1..)])),
+!(and([s2,s5;int(1..)])),
+!(and([s3,s6;int(1..)]))
+
+--
+
+or([s1,s2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (¬s1 \/ __0)
+  (¬s2 \/ __0)
+  (¬__0 \/ s1 \/ s2)
+
+--
+
+or([s2,s3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new clauses:
+  (¬s2 \/ __1)
+  (¬s3 \/ __1)
+  (¬__1 \/ s2 \/ s3)
+
+--
+
+or([s3,s4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new clauses:
+  (¬s3 \/ __2)
+  (¬s4 \/ __2)
+  (¬__2 \/ s3 \/ s4)
+
+--
+
+or([s4,s5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new clauses:
+  (¬s4 \/ __3)
+  (¬s5 \/ __3)
+  (¬__3 \/ s4 \/ s5)
+
+--
+
+or([s5,s6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new clauses:
+  (¬s5 \/ __4)
+  (¬s6 \/ __4)
+  (¬__4 \/ s5 \/ s6)
+
+--
+
+and([s1,s4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  findAux __5: bool
+new clauses:
+  (¬__5 \/ s1)
+  (¬__5 \/ s4)
+  (__5 \/ ¬s1 \/ ¬s4)
+
+--
+
+!(__5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__6
+new variables:
+  findAux __6: bool
+new clauses:
+  (¬__5 \/ ¬__6)
+  (__5 \/ __6)
+
+--
+
+and([s2,s5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new clauses:
+  (¬__7 \/ s2)
+  (¬__7 \/ s5)
+  (__7 \/ ¬s2 \/ ¬s5)
+
+--
+
+!(__7)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__8
+new variables:
+  findAux __8: bool
+new clauses:
+  (¬__7 \/ ¬__8)
+  (__7 \/ __8)
+
+--
+
+and([s3,s6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__9
+new variables:
+  findAux __9: bool
+new clauses:
+  (¬__9 \/ s3)
+  (¬__9 \/ s6)
+  (__9 \/ ¬s3 \/ ¬s6)
+
+--
+
+!(__9)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__10
+new variables:
+  findAux __10: bool
+new clauses:
+  (¬__9 \/ ¬__10)
+  (__9 \/ __10)
+
+--
+
+__0,
+__1,
+__2,
+__3,
+__4,
+__6,
+__8,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1,
+__2,
+__3,
+__4,
+__6,
+__8,
+__10
+new clauses:
+  (__0)
+
+--
+
+__1,
+__2,
+__3,
+__4,
+__6,
+__8,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__2,
+__3,
+__4,
+__6,
+__8,
+__10
+new clauses:
+  (__1)
+
+--
+
+__2,
+__3,
+__4,
+__6,
+__8,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__3,
+__4,
+__6,
+__8,
+__10
+new clauses:
+  (__2)
+
+--
+
+__3,
+__4,
+__6,
+__8,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__4,
+__6,
+__8,
+__10
+new clauses:
+  (__3)
+
+--
+
+__4,
+__6,
+__8,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__6,
+__8,
+__10
+new clauses:
+  (__4)
+
+--
+
+__6,
+__8,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__8,
+__10
+new clauses:
+  (__6)
+
+--
+
+__8,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__10
+new clauses:
+  (__8)
+
+--
+
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__10)
+
+--
+
+Final model:
+
+find s1: bool
+find s2: bool
+find s3: bool
+find s4: bool
+find s5: bool
+find s6: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+
+such that
+
+true
+
+clauses:
+
+(¬s1 \/ __0),
+(¬s2 \/ __0),
+(¬__0 \/ s1 \/ s2),
+(¬s2 \/ __1),
+(¬s3 \/ __1),
+(¬__1 \/ s2 \/ s3),
+(¬s3 \/ __2),
+(¬s4 \/ __2),
+(¬__2 \/ s3 \/ s4),
+(¬s4 \/ __3),
+(¬s5 \/ __3),
+(¬__3 \/ s4 \/ s5),
+(¬s5 \/ __4),
+(¬s6 \/ __4),
+(¬__4 \/ s5 \/ s6),
+(¬__5 \/ s1),
+(¬__5 \/ s4),
+(__5 \/ ¬s1 \/ ¬s4),
+(¬__5 \/ ¬__6),
+(__5 \/ __6),
+(¬__7 \/ s2),
+(¬__7 \/ s5),
+(__7 \/ ¬s2 \/ ¬s5),
+(¬__7 \/ ¬__8),
+(__7 \/ __8),
+(¬__9 \/ s3),
+(¬__9 \/ s6),
+(__9 \/ ¬s3 \/ ¬s6),
+(¬__9 \/ ¬__10),
+(__9 \/ __10),
+(__0),
+(__1),
+(__2),
+(__3),
+(__4),
+(__6),
+(__8),
+(__10)
+

@@ -1,0 +1,692 @@
+use crate::guard;
+use crate::shared::utils::as_cmp_or_lex_op;
+use conjure_cp::ast::pretty::pretty_find_with_representation;
+use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
+use conjure_cp::settings::{
+    Channelling, Heuristic, channelling, heuristic, next_heuristic_all_index,
+    next_heuristic_interactive_index, next_heuristic_random_index,
+};
+use conjure_cp::{
+    ast::{Atom, DeclarationPtr, Expression as Expr, GroundDomain, Moo, SymbolTable},
+    representation::{ReprRulePtr, get_applicable_repr_by_short_name, get_repr_rules},
+    rule_engine::{
+        ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect as Reduction,
+        register_rule, register_rule_set,
+    },
+};
+use itertools::any;
+use std::collections::VecDeque;
+use uniplate::Uniplate;
+
+// Representations of Essence abstract types down to Essence'
+// Applies for all solvers
+register_rule_set!("ReprGeneral", ("Base"), |_| true);
+
+/// Select a representation named in a `: domain` or `:: type` annotation.
+///
+/// Example: `1 in (x :: set (representation packed) of int)` selects the packed representation for this use of `x`.
+/// Using different representations at different call sites requires channelling (`--channelling yes`).
+#[register_rule("ReprGeneral", 10200, [In, TypeAnnotation, DomainAnnotation])]
+fn select_representation_from_annotation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::In(meta, left, right) => {
+            let Some((selected, symbols, constraints)) =
+                select_repr_from_annotated_expr(right.as_ref())?
+            else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(Reduction::new(
+                Expr::In(meta.clone(), left.clone(), Moo::new(selected)),
+                constraints,
+                symbols,
+            ))
+        }
+        Expr::TypeAnnotation(_, _, _) | Expr::DomainAnnotation(_, _, _) => {
+            let Some((selected, symbols, constraints)) = select_repr_from_annotated_expr(expr)?
+            else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(Reduction::new(selected, constraints, symbols))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
+
+/// If `expr` is a type/domain annotation that names a representation on a reference, select it.
+fn select_repr_from_annotated_expr(
+    expr: &Expr,
+) -> Result<Option<(Expr, SymbolTable, Vec<Expr>)>, conjure_cp::rule_engine::ApplicationError> {
+    let (inner, domain) = match expr {
+        Expr::TypeAnnotation(_, inner, domain) | Expr::DomainAnnotation(_, inner, domain) => {
+            (inner, domain)
+        }
+        _ => return Ok(None),
+    };
+
+    let Some(pref) = domain.representation_preference() else {
+        return Ok(None);
+    };
+
+    let Expr::Atomic(_, Atom::Reference(re)) = inner.as_ref() else {
+        return Ok(None);
+    };
+
+    if let Some(existing) = re.repr
+        && existing.short_name() == pref
+    {
+        return Ok(Some((re.clone().into(), SymbolTable::new(), Vec::new())));
+    }
+
+    let Some(rule) = get_applicable_repr_by_short_name(re.ptr(), pref) else {
+        return Ok(None);
+    };
+
+    let mut re = re.clone();
+    let (_, symbols, constraints) = re
+        .update_or_init_repr_via(rule)
+        .map_err(|_| RuleNotApplicable)?;
+    Ok(Some((re.into(), symbols, constraints)))
+}
+
+/// Select a representation for abstract domains
+#[register_rule("ReprGeneral", 10000, [Atomic / Reference])]
+fn select_representation(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expr::Atomic(_, Atom::Reference(re)) = expr &&
+        domain_needs_representation(&re.domain_of()) &&
+        re.repr.is_none()
+        else {
+            return Err(RuleNotApplicable)
+        }
+    );
+
+    let mut re = re.clone();
+    let Some(rule) = choose_representation_rule(re.ptr(), symtab) else {
+        return Err(RuleNotApplicable);
+    };
+    let (_, new_symbols, new_constraints) = re
+        .select_or_init_repr_via(rule)
+        .map_err(|_| RuleNotApplicable)?;
+    Ok(Reduction::new(re.into(), new_constraints, new_symbols))
+}
+
+/// Select the representation on an auxiliary declaration's result reference as well as on its
+/// declaration. Unlike ordinary references, this reference is stored outside the expression's
+/// child list and is therefore not visited by `select_representation` above.
+#[register_rule("ReprGeneral", 10000, [AuxDeclaration])]
+fn select_aux_declaration_representation(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    let Expr::AuxDeclaration(meta, reference, inner) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    guard!(
+        domain_needs_representation(&reference.domain_of()) && reference.repr.is_none()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    let mut reference = reference.clone();
+    let Some(rule) = choose_representation_rule(reference.ptr(), symtab) else {
+        return Err(RuleNotApplicable);
+    };
+    let (_, new_symbols, new_constraints) = reference
+        .select_or_init_repr_via(rule)
+        .map_err(|_| RuleNotApplicable)?;
+    Ok(Reduction::new(
+        Expr::AuxDeclaration(meta.clone(), reference, inner.clone()),
+        new_constraints,
+        new_symbols,
+    ))
+}
+
+/// Select a representation for unconstrained finds with abstract domains
+#[register_rule("ReprGeneral", 9900, [Root])]
+fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    let Expr::Root(..) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    // Copy the symbol table only once something is actually going to change: this rule is
+    // attempted every time the root is visited, and almost always declines, so cloning up front
+    // charged every visit the size of the whole table.
+    let mut symbols: Option<SymbolTable> = None;
+    let mut constraints = Vec::<Expr>::new();
+    for (_, decl) in symtab.iter_local() {
+        // We want unrepresented decision vars!
+        guard!(
+            decl.as_find().is_some()          &&
+            decl.reprs().is_empty()           &&
+            let Some(dom) = decl.domain()     &&
+            domain_needs_representation(&dom)
+            else {
+                continue;
+            }
+        );
+
+        let Some(rule) = choose_representation_rule(decl, symbols.as_ref().unwrap_or(symtab))
+        else {
+            continue;
+        };
+        let mut decl = decl.clone();
+        let Ok((new_symbols, new_constraints)) = rule.init_for(&mut decl) else {
+            continue;
+        };
+        let symbols = symbols.get_or_insert_with(|| symtab.clone());
+        symbols.update_insert(decl);
+        symbols.extend(new_symbols);
+        constraints.extend(new_constraints);
+    }
+
+    // Representation initialisation may introduce no constraints and DeclarationPtr clone-on-write
+    // updates are not reliably observable through SymbolTable equality. A copied symbol table
+    // records successful initialisation explicitly, so zero-constraint layouts (matrix
+    // components/packed) still dirty the root and expose their auxiliary declarations.
+    let Some(symbols) = symbols else {
+        return Err(RuleNotApplicable);
+    };
+    Ok(Reduction::new(expr.clone(), constraints, symbols))
+}
+
+/// Chooses one applicable representation without mutating the declaration.
+///
+/// With channelling disabled, declarations that share an identical abstract domain reuse the
+/// representation already chosen for that domain. This mirrors Conjure applying one nested
+/// representation to a whole matrix-of-sets, rather than letting each matrix component pick
+/// independently under the `x` heuristic.
+fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> Option<ReprRulePtr> {
+    // A declaration left holding the whole value of the one it represents has its shape settled
+    // already -- an SMT array is the solver's variable, not a step towards one. The only choice
+    // still open for it is how its integers are held, and once that is chosen there is nothing
+    // left to decide. This comes first because the shortcuts below would otherwise hand it the
+    // very layout that produced it, and it would be wrapped again, forever.
+    let settled_layout = holds_whole_value_of_source(decl);
+    if settled_layout && source_has_encoding_repr(decl) {
+        return None;
+    }
+
+    if channelling() == Channelling::No
+        && let Some(existing) = decl.reprs().iter().next().map(|(_, state)| state.rule())
+    {
+        return Some(existing);
+    }
+
+    if !settled_layout
+        && channelling() == Channelling::No
+        && let Some(dom) = decl.domain()
+        && let Some(rule) = representation_for_identical_domain(decl, &dom, symbols)
+    {
+        return Some(rule);
+    }
+
+    let mut candidates: Vec<_> = get_repr_rules()
+        .filter_map(|rule| rule.probe_for(decl).ok().map(|score| (rule, score)))
+        .collect();
+    candidates.sort_by_key(|(rule, _)| rule.name());
+
+    // A declaration left holding the whole value of the one it represents has its shape settled
+    // already -- an SMT array is the solver's variable, not a step towards one. The only choice
+    // still open for it is how its integers are held, and once that is chosen there is nothing
+    // left to decide. Without this a whole-value layout would be offered to itself forever.
+    if settled_layout {
+        candidates.retain(|(rule, _)| is_encoding_repr(*rule));
+    } else if decl.domain().is_some_and(|dom| is_matrix_domain(&dom)) {
+        // A matrix decides its layout first. Whether its integers are held as machine words or as
+        // mathematical integers is a question for whatever that layout leaves behind: one variable
+        // per entry under `components`, a single packed integer under `packed`, or the matrix
+        // itself under `array`. Offering both questions at once would make them look like one.
+        candidates.retain(|(rule, _)| !is_encoding_repr(*rule));
+    }
+
+    // User-specified representation preference on the domain (e.g. set (representation packed)) defaults the choice
+    // when that representation is applicable.
+    if let Some(dom) = decl.domain()
+        && let Some(pref) = dom.representation_preference()
+        && let Some((rule, _)) = candidates
+            .iter()
+            .find(|(rule, _)| rule.short_name() == pref)
+    {
+        return Some(*rule);
+    }
+
+    if candidates.len() == 1 {
+        return candidates.first().map(|(rule, _)| *rule);
+    }
+
+    match heuristic() {
+        Heuristic::First => candidates.first().map(|(rule, _)| *rule),
+        Heuristic::All if !candidates.is_empty() => {
+            let names: Vec<_> = candidates.iter().map(|(rule, _)| rule.name()).collect();
+            candidates
+                .get(next_heuristic_all_index(&names))
+                .map(|(rule, _)| *rule)
+        }
+        Heuristic::All => None,
+        Heuristic::Interactive if !candidates.is_empty() => {
+            let labels: Vec<_> = candidates
+                .iter()
+                .map(|(rule, _)| {
+                    pretty_find_with_representation(decl, rule.short_name())
+                        .unwrap_or_else(|| rule.name().to_string())
+                })
+                .collect();
+            let label_refs: Vec<_> = labels.iter().map(String::as_str).collect();
+            candidates
+                .get(next_heuristic_interactive_index(&label_refs))
+                .map(|(rule, _)| *rule)
+        }
+        Heuristic::Interactive => None,
+        Heuristic::Random if !candidates.is_empty() => candidates
+            .get(next_heuristic_random_index(candidates.len()))
+            .map(|(rule, _)| *rule),
+        Heuristic::Random => None,
+        Heuristic::Compact => compact_representation_choice(&candidates),
+    }
+}
+
+/// Choose the lowest-scoring representation, with semantic tie-breaking for SMT integers.
+///
+/// Representation compactness scores saturate at [`usize::MAX`].  Large matrix domains can
+/// therefore make both `SmtLia` and the deliberately more expensive `SmtBv` score saturate, even
+/// though compact should still prefer LIA.  Falling back to the representation name picked BV in
+/// that case.  Keep the ordinary name-based tie-break for every other representation, but preserve
+/// the intended LIA-before-BV ordering when their scores collide.
+fn compact_representation_choice(candidates: &[(ReprRulePtr, usize)]) -> Option<ReprRulePtr> {
+    candidates
+        .iter()
+        .min_by_key(|(rule, score)| {
+            let smt_integer_tie_break = match rule.name() {
+                "SmtLia" => 0,
+                "SmtBv" => 1,
+                _ => 0,
+            };
+            (*score, smt_integer_tie_break, rule.name())
+        })
+        .map(|(rule, _)| *rule)
+}
+
+/// Representations that record only how a declaration's integers are held, leaving its shape and
+/// domain untouched.
+///
+/// Every other representation lays a value out differently -- decomposing it, packing it, changing
+/// what the solver sees -- and so answers a different question. Keeping the two apart is what lets
+/// a matrix choose `array` and its integers choose `bv` as two independent decisions rather than
+/// one combined `bv-array`.
+fn is_encoding_repr(rule: ReprRulePtr) -> bool {
+    matches!(
+        rule.name(),
+        "SmtLia" | "SmtBv" | "IntLog" | "IntDirect" | "IntOrder"
+    )
+}
+
+/// True if `decl` was introduced by a representation that left it holding the whole value, rather
+/// than a piece of one -- recognisable because it kept the source's domain.
+pub(crate) fn holds_whole_value_of_source(decl: &DeclarationPtr) -> bool {
+    let source = decl.source().clone();
+    let Some(source) = source else {
+        return false;
+    };
+    // Compare resolved forms: a representation stores the domain it was initialised with, which
+    // has already been resolved, while the declaration it came from may still name a letting.
+    let resolved = |decl: &DeclarationPtr| {
+        decl.domain()
+            .and_then(|dom| dom.resolve().ok().map(DomainPtr::from).or(Some(dom)))
+    };
+    match (resolved(decl), resolved(&source)) {
+        (Some(mine), Some(theirs)) => mine == theirs,
+        _ => false,
+    }
+}
+
+/// True if the declaration `decl` represents has already had its integer encoding chosen.
+fn source_has_encoding_repr(decl: &DeclarationPtr) -> bool {
+    let source = decl.source().clone();
+    let Some(source) = source else {
+        return false;
+    };
+    source
+        .reprs()
+        .iter()
+        .any(|(_, state)| is_encoding_repr(state.rule()))
+}
+
+/// Find a representation already chosen for another declaration with the same domain.
+fn representation_for_identical_domain(
+    decl: &DeclarationPtr,
+    dom: &DomainPtr,
+    symbols: &SymbolTable,
+) -> Option<ReprRulePtr> {
+    for (name, other) in symbols.iter_local() {
+        if *name == *decl.name() {
+            continue;
+        }
+        let Some(other_dom) = other.domain() else {
+            continue;
+        };
+        if &other_dom != dom {
+            continue;
+        }
+        for (_, state) in other.reprs().iter() {
+            let rule = state.rule();
+            // MatrixComponents is a structural layout, not an abstract-domain representation.
+            if rule.name() == "components" {
+                continue;
+            }
+            if rule.probe_for(decl).is_ok() {
+                return Some(rule);
+            }
+        }
+    }
+    None
+}
+
+/// In a comparison operation, it is probably a good idea for the LHS and RHS to
+/// have the same representation, if applicable; E.g:
+/// ```plain
+/// x#MyRepr > y
+/// ~>
+/// x#MyRepr > y#MyRepr
+/// ```
+#[register_rule("ReprGeneral", 10100, [Eq, Neq, Lt, Gt, Leq, Geq, LexLt, LexLeq, LexGt, LexGeq])]
+fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    guard! {
+        let Some((lhs, rhs)) = as_cmp_or_lex_op(expr)               &&
+        let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
+        let Expr::Atomic(_, Atom::Reference(rhs_re)) = rhs.as_ref()
+        else {
+            return Err(RuleNotApplicable)
+        }
+    }
+
+    // A variable left holding the whole value of another has its representation settled by the
+    // rules above; propagating another one onto it would wrap it again, and again.
+    if holds_whole_value_of_source(lhs_re.ptr()) || holds_whole_value_of_source(rhs_re.ptr()) {
+        return Err(RuleNotApplicable);
+    }
+
+    match (lhs_re.get_repr(), rhs_re.get_repr()) {
+        (Some((lhs_rule, _)), None) => {
+            let mut new_rhs = rhs_re.clone();
+            let (_, symbols, constraints) = new_rhs
+                .select_or_init_repr_via(lhs_rule)
+                .map_err(|_| RuleNotApplicable)?;
+            let new_expr =
+                expr.with_children(VecDeque::from([lhs.as_ref().clone(), new_rhs.into()]));
+            Ok(Reduction::new(new_expr, constraints, symbols))
+        }
+        (None, Some((rhs_rule, _))) => {
+            let mut new_lhs = lhs_re.clone();
+            let (_, symbols, constraints) = new_lhs
+                .select_or_init_repr_via(rhs_rule)
+                .map_err(|_| RuleNotApplicable)?;
+            let new_expr =
+                expr.with_children(VecDeque::from([new_lhs.into(), rhs.as_ref().clone()]));
+            Ok(Reduction::new(new_expr, constraints, symbols))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
+
+/// True if integers are an abstract type for the solver being targeted.
+///
+/// SAT has no integers: an int variable is encoded as a vector of Booleans, and which encoding it
+/// gets is a modelling choice like any other representation. Solvers with native integers leave
+/// them alone.
+fn int_needs_representation() -> bool {
+    conjure_cp::settings::ints_need_representation()
+}
+
+/// True if a declaration with this domain needs a representation chosen for it.
+///
+/// Three separate reasons: the domain is abstract in Essence' terms (a set, a tuple, ...), it is a
+/// matrix and so has a layout to choose, or it is an integer and the solver has no integers of its
+/// own to hold it.
+///
+/// The integer reason deliberately does not look inside a matrix. How a matrix is laid out and how
+/// its integers are held are independent choices: pick `components` and each entry becomes its own
+/// integer declaration which then picks its own encoding, pick a whole-matrix layout and the
+/// encoding choice lands on the matrix that layout leaves behind. Folding the two together would
+/// mean one decision pretending to be two.
+pub(crate) fn domain_needs_representation(domain: &DomainPtr) -> bool {
+    is_abstract_domain(domain)
+        || is_matrix_domain(domain)
+        || (is_int_domain(domain) && int_needs_representation())
+}
+
+/// True if this domain is a matrix one, following domain lettings.
+///
+/// Every matrix has a layout to choose -- one variable per entry, the whole thing packed into a
+/// single integer, or for a solver with arrays, the whole thing as an array -- so matrices go
+/// through representation selection like any other type, and the heuristic weighs the options
+/// against each other.
+fn is_matrix_domain(domain: &DomainPtr) -> bool {
+    match domain.as_ref() {
+        Domain::Ground(gd) => matches!(gd.as_ref(), GroundDomain::Matrix(..)),
+        Domain::Unresolved(ud) => match ud.as_ref() {
+            UnresolvedDomain::Matrix(..) => true,
+            UnresolvedDomain::Reference(re) => is_matrix_domain(&re.domain_of()),
+            _ => false,
+        },
+    }
+}
+
+/// True if the domain is abstract w.r.t Essence', ignoring how the solver holds integers and how a
+/// matrix is laid out.
+///
+/// This is the narrower question of whether a *type* is compound -- a set, a tuple, a record. Ask
+/// it when what matters is the shape of the values themselves; ask
+/// [`domain_needs_representation`] when what matters is whether a declaration still has a choice
+/// to make.
+#[allow(clippy::match_like_matches_macro)]
+pub(crate) fn is_abstract_domain(domain: &DomainPtr) -> bool {
+    match domain.as_ref() {
+        Domain::Ground(gd) => match gd.as_ref() {
+            // These domains are concrete for all solvers
+            GroundDomain::Empty(..) | GroundDomain::Bool | GroundDomain::Int(_) => false,
+            // Represent matrices if they have abstract types inside them;
+            // Matrices of concrete types are handled separately by the
+            // `ReprMatrixComponents`rule set
+            GroundDomain::Matrix(inner_dom, idx_doms) => {
+                is_abstract_domain(&inner_dom.into())
+                    || any(idx_doms, |d| is_abstract_domain(&d.into()))
+            }
+            // All other domains are abstract
+            _ => true,
+        },
+        Domain::Unresolved(ud) => match ud.as_ref() {
+            UnresolvedDomain::Int(..) => false,
+            // Represent matrices if they have abstract types inside them;
+            // Matrices of concrete types are handled separately by the
+            // `ReprMatrixComponents`rule set
+            UnresolvedDomain::Matrix(inner_dom, idx_doms) => {
+                is_abstract_domain(inner_dom) || any(idx_doms, is_abstract_domain)
+            }
+            // Recurse into domain letting
+            UnresolvedDomain::Reference(re) => is_abstract_domain(&re.domain_of()),
+            // All other domains are abstract
+            _ => true,
+        },
+    }
+}
+
+/// True if this domain is an integer one, following domain lettings.
+fn is_int_domain(domain: &DomainPtr) -> bool {
+    match domain.as_ref() {
+        Domain::Ground(gd) => matches!(gd.as_ref(), GroundDomain::Int(_)),
+        Domain::Unresolved(ud) => match ud.as_ref() {
+            UnresolvedDomain::Int(..) => true,
+            UnresolvedDomain::Reference(re) => is_int_domain(&re.domain_of()),
+            _ => false,
+        },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{Domain, MSetAttr, SetAttr};
+    use conjure_cp::settings::set_heuristic;
+    use conjure_cp::{domain_int, range};
+
+    #[test]
+    fn compact_prefers_the_smallest_representation_domain() {
+        set_heuristic(Heuristic::Compact);
+        let mut symbols = SymbolTable::new();
+        let declaration = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(1, 2),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .name(),
+            "SetPacked"
+        );
+        set_heuristic(Heuristic::First);
+    }
+
+    #[test]
+    fn compact_prefers_lia_when_smt_integer_scores_saturate() {
+        let lia = get_repr_rules()
+            .find(|rule| rule.name() == "SmtLia")
+            .expect("SmtLia representation should be registered");
+        let bv = get_repr_rules()
+            .find(|rule| rule.name() == "SmtBv")
+            .expect("SmtBv representation should be registered");
+
+        assert_eq!(
+            compact_representation_choice(&[(bv, usize::MAX), (lia, usize::MAX)])
+                .unwrap()
+                .name(),
+            "SmtLia"
+        );
+    }
+
+    #[test]
+    fn domain_representation_preference_defaults_the_choice() {
+        use conjure_cp::representation::get_applicable_repr_by_short_name;
+
+        set_heuristic(Heuristic::First);
+        let mut symbols = SymbolTable::new();
+        let declaration = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(1, 2).with_representation("packed"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "packed"
+        );
+
+        let declaration = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(1, 2).with_representation("explicit"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "explicit"
+        );
+
+        let declaration = symbols.gen_find(&Domain::mset(
+            MSetAttr::new_max_size(3).with_representation("occurrence"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "occurrence"
+        );
+
+        let declaration = symbols.gen_find(&Domain::mset(
+            MSetAttr::new_max_size(3).with_representation("counts"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "counts"
+        );
+
+        let declaration = symbols.gen_find(&Domain::mset(
+            MSetAttr::new_max_size(3).with_representation("repetition"),
+            domain_int!(1..3),
+        ));
+
+        assert_eq!(
+            choose_representation_rule(&declaration, &symbols)
+                .unwrap()
+                .short_name(),
+            "repetition"
+        );
+
+        assert!(get_applicable_repr_by_short_name(&declaration, "explicit").is_none());
+    }
+
+    #[test]
+    fn auxiliary_declaration_reference_selects_the_initialised_representation() {
+        use conjure_cp::ast::{AbstractLiteral, Expression, Metadata, Moo, Reference};
+
+        let mut symbols = SymbolTable::new();
+        let declaration = symbols.gen_find_auxiliary(&Domain::mset(
+            MSetAttr::new_max_size(2).with_representation("counts"),
+            domain_int!(1..3),
+        ));
+        let auxiliary = Expression::AuxDeclaration(
+            Metadata::new(),
+            Reference::new(declaration),
+            Moo::new(Expression::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::MSet(vec![1.into(), 2.into()]),
+            )),
+        );
+
+        let rewritten = select_aux_declaration_representation(&auxiliary, &symbols)
+            .unwrap()
+            .new_expression;
+        let Expression::AuxDeclaration(_, selected, _) = rewritten else {
+            panic!("expected an auxiliary declaration, got {rewritten}");
+        };
+        assert_eq!(selected.get_repr().unwrap().0.short_name(), "counts");
+    }
+
+    #[test]
+    fn annotation_selects_packed_representation() {
+        use conjure_cp::ast::{Atom, Expression, Metadata, Moo, Reference};
+        use conjure_cp::representation::get_applicable_repr_by_short_name;
+
+        set_heuristic(Heuristic::First);
+        let mut symbols = SymbolTable::new();
+        let declaration =
+            symbols.gen_find(&Domain::set(SetAttr::new_max_size(3), domain_int!(1..4)));
+        let re = Reference::new(declaration.clone());
+        let annotated = Expression::TypeAnnotation(
+            Metadata::new(),
+            Moo::new(re.into()),
+            Domain::set(
+                SetAttr::<i32>::default().with_representation("packed"),
+                domain_int!(1..4),
+            ),
+        );
+
+        let result = select_representation_from_annotation(&annotated, &symbols).unwrap();
+        let Expression::Atomic(_, Atom::Reference(selected)) = result.new_expression else {
+            panic!("expected a reference, got {}", result.new_expression);
+        };
+        assert_eq!(selected.get_repr().unwrap().0.short_name(), "packed");
+        assert_eq!(
+            get_applicable_repr_by_short_name(&declaration, "packed")
+                .unwrap()
+                .name(),
+            "SetPacked"
+        );
+    }
+}

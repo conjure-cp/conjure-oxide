@@ -1,0 +1,47 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..2)] of bool
+
+such that
+
+x[1] = x[2]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#components_1: bool
+  find x#components_2: bool
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_1
+
+--
+
+x[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+x#components_2
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..2)] of bool
+find x#components_1: bool
+find x#components_2: bool
+
+such that
+
+x#components_1 = x#components_2
+

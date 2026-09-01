@@ -1,0 +1,34 @@
+Model before rewriting:
+
+find m: int(-5..5)
+find mx: int(-5..5)
+
+such that
+
+m = min([ i | i : int(0..3) ]),
+mx = max([ i | i : int(-3..0), i != -3 ])
+
+--
+
+m = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(m,0)
+
+--
+
+mx = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(mx,0)
+
+--
+
+Final model:
+
+find m: int(-5..5)
+find mx: int(-5..5)
+
+such that
+
+WatchedLiteral(m,0),
+WatchedLiteral(mx,0)
+

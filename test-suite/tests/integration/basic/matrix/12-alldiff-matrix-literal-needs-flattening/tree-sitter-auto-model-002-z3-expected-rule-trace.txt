@@ -1,0 +1,80 @@
+Model before rewriting:
+
+find i: int(1..2)
+find j: int(1..3)
+
+such that
+
+allDifferent([(product([j,2;int(1..)]) - 1),2,3,(i / 2),6;int(1..5)])
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#bv_1: int(1..2)
+
+--
+
+j
+   ~~> select_representation ([("ReprGeneral", 10000)])
+j
+new variables:
+  find j#lia_1: int(1..3)
+
+--
+
+i
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+i#bv_1
+
+--
+
+j
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+j#lia_1
+
+--
+
+product([j#lia_1,2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,j#lia_1;int(1..)])
+
+--
+
+(product([2,j#lia_1;int(1..)]) - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([product([2,j#lia_1;int(1..)]),-(1);int(1..)])
+
+--
+
+(i#bv_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(i#bv_1, 2) @ 2 != 0}
+
+--
+
+allDifferent([sum([product([2,j#lia_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#bv_1, 2),6;int(1..5)])
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct([sum([product([2,j#lia_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#bv_1, 2),6;int(1..5)])
+
+--
+
+smtDistinct([sum([product([2,j#lia_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#bv_1, 2),6;int(1..5)])
+   ~~> matrix_to_list ([("Base", 2000)])
+smtDistinct([sum([product([2,j#lia_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#bv_1, 2),6;int(1..)])
+
+--
+
+Final model:
+
+find i: int(1..2)
+find j: int(1..3)
+find i#bv_1: int(1..2)
+find j#lia_1: int(1..3)
+
+such that
+
+smtDistinct([sum([product([2,j#lia_1;int(1..)]),-1;int(1..)]),2,3,SafeDiv(i#bv_1, 2),6;int(1..)])
+

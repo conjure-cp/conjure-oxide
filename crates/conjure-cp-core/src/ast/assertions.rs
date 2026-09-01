@@ -80,6 +80,17 @@ pub fn debug_assert_all_names_resolved(model: &Model, origin: &str) {
         );
     }
 
+    if let Some(objective) = &model.objective {
+        referenced_names.extend(
+            Biplate::<Reference>::universe_bi(&objective.expression)
+                .into_iter()
+                .map(|reference| {
+                    let name = reference.name();
+                    canonical_resolution_name(&name).clone()
+                }),
+        );
+    }
+
     for clause in model.clauses() {
         for literal in clause.iter() {
             referenced_names.extend(Biplate::<Reference>::universe_bi(literal).into_iter().map(
@@ -158,6 +169,12 @@ fn collect_reachable_symbol_tables(model: &Model) -> Vec<SymbolTablePtr> {
 
     if let Some(dominance) = &model.dominance {
         pending_tables.extend(Biplate::<SymbolTablePtr>::universe_bi(dominance));
+    }
+
+    if let Some(objective) = &model.objective {
+        pending_tables.extend(Biplate::<SymbolTablePtr>::universe_bi(
+            &objective.expression,
+        ));
     }
 
     for clause in model.clauses() {

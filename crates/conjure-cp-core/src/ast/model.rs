@@ -16,8 +16,8 @@ use uniplate::{Biplate, Tree, Uniplate};
 
 use super::serde::{HasId, ObjId, PtrAsInner};
 use super::{
-    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, ReturnType,
-    SymbolTable, SymbolTablePtr, Typeable,
+    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, Objective,
+    ReturnType, SymbolTable, SymbolTablePtr, Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
@@ -32,12 +32,15 @@ use super::{
 #[derivative(PartialEq, Eq)]
 pub struct Model {
     constraints: Moo<Expression>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    instantiation_conditions: Vec<Expression>,
     #[serde_as(as = "PtrAsInner")]
     symbols: SymbolTablePtr,
     cnf_clauses: Vec<CnfClause>,
 
     pub search_order: Option<Vec<Name>>,
     pub dominance: Option<Expression>,
+    pub objective: Option<Objective>,
 
     #[serde(skip, default = "default_context")]
     #[derivative(PartialEq = "ignore")]
@@ -52,10 +55,12 @@ impl Model {
     fn new_empty(symbols: SymbolTablePtr, context: Arc<RwLock<Context<'static>>>) -> Model {
         Model {
             constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
+            instantiation_conditions: Vec::new(),
             symbols,
             cnf_clauses: Vec::new(),
             search_order: None,
             dominance: None,
+            objective: None,
             context,
         }
     }
@@ -164,6 +169,21 @@ impl Model {
         self.constraints_mut().extend(constraints);
     }
 
+    /// Conditions introduced by top-level `where` statements.
+    pub fn instantiation_conditions(&self) -> &[Expression] {
+        &self.instantiation_conditions
+    }
+
+    /// Adds a condition that must hold after parameter instantiation.
+    pub fn add_instantiation_condition(&mut self, condition: Expression) {
+        self.instantiation_conditions.push(condition);
+    }
+
+    /// Removes and returns all pending instantiation conditions.
+    pub fn take_instantiation_conditions(&mut self) -> Vec<Expression> {
+        std::mem::take(&mut self.instantiation_conditions)
+    }
+
     /// Adds cnf clauses.
     pub fn add_clauses(&mut self, clauses: Vec<CnfClause>) {
         self.clauses_mut().extend(clauses);
@@ -206,6 +226,9 @@ impl Model {
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
         }
+        if let Some(objective) = &self.objective {
+            exprs.push_back(objective.expression.clone());
+        }
 
         for symbol_table in Biplate::<SymbolTablePtr>::universe_bi(&exprs) {
             visit_symbol_table(symbol_table, &mut id_list);
@@ -245,10 +268,12 @@ impl Typeable for Model {
 impl Hash for Model {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.constraints.hash(state);
+        self.instantiation_conditions.hash(state);
         self.symbols.hash(state);
         self.cnf_clauses.hash(state);
         self.search_order.hash(state);
         self.dominance.hash(state);
+        self.objective.hash(state);
     }
 }
 
@@ -271,30 +296,55 @@ impl Biplate<Expression> for Model {
             None => Tree::Zero,
         };
 
+        let obj_tree = match &self.objective {
+            Some(objective) => Tree::One(objective.expression.clone()),
+            None => Tree::Zero,
+        };
+
+        let instantiation_tree = Tree::Many(
+            self.instantiation_conditions
+                .iter()
+                .cloned()
+                .map(Tree::One)
+                .collect(),
+        );
+
         let tree = Tree::Many(VecDeque::from([
             Tree::One(self.root().clone()),
+            instantiation_tree,
             symtab_tree,
             dom_tree,
+            obj_tree,
         ]));
+
+        let obj_direction = self.objective.as_ref().map(|objective| objective.direction);
 
         let self2 = self.clone();
         let ctx = Box::new(move |x| {
             let Tree::Many(xs) = x else {
-                panic!("Expected a tree with three children");
+                panic!("Expected a tree with five children");
             };
-            if xs.len() != 3 {
-                panic!("Expected a tree with three children");
+            if xs.len() != 5 {
+                panic!("Expected a tree with five children");
             }
 
             let Tree::One(root) = xs[0].clone() else {
                 panic!("Expected root expression tree");
             };
 
-            let symtab = symtab_ctx(xs[1].clone());
-            let dominance = match xs[2].clone() {
+            let Tree::Many(instantiation_conditions) = xs[1].clone() else {
+                panic!("Expected instantiation-condition expression tree");
+            };
+            let symtab = symtab_ctx(xs[2].clone());
+            let dominance = match xs[3].clone() {
                 Tree::One(expr) => Some(expr),
                 Tree::Zero => None,
                 _ => panic!("Expected dominance tree"),
+            };
+            let objective_expr = match xs[4].clone() {
+                Tree::One(expr) => Some(expr),
+                Tree::Zero => None,
+                _ => panic!("Expected objective tree"),
             };
 
             let mut self3 = self2.clone();
@@ -304,8 +354,22 @@ impl Biplate<Expression> for Model {
             };
 
             *self3.root_mut_unchecked() = root;
+            self3.instantiation_conditions = instantiation_conditions
+                .into_iter()
+                .map(|tree| match tree {
+                    Tree::One(expr) => expr,
+                    _ => panic!("Expected instantiation condition expression"),
+                })
+                .collect();
             *self3.symbols_mut() = symtab;
             self3.dominance = dominance;
+            self3.objective = match (obj_direction, objective_expr) {
+                (Some(direction), Some(expression)) => Some(Objective {
+                    direction,
+                    expression,
+                }),
+                _ => None,
+            };
 
             self3
         });
@@ -389,7 +453,7 @@ impl Display for Model {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (name, decl) in self.symbols().clone().into_iter_local() {
             match &decl.kind() as &DeclarationKind {
-                DeclarationKind::Find(_) => {
+                DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
                     writeln!(
                         f,
                         "{}",
@@ -427,6 +491,15 @@ impl Display for Model {
             writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
         }
 
+        if !self.instantiation_conditions.is_empty() {
+            writeln!(f, "\nwhere\n")?;
+            writeln!(
+                f,
+                "{}",
+                pretty_expressions_as_top_level(&self.instantiation_conditions)
+            )?;
+        }
+
         if !self.clauses().is_empty() {
             writeln!(f, "\nclauses:\n")?;
             writeln!(f, "{}", pretty_clauses(self.clauses()))?;
@@ -443,11 +516,14 @@ impl Display for Model {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SerdeModel {
     constraints: Moo<Expression>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    instantiation_conditions: Vec<Expression>,
     #[serde_as(as = "PtrAsInner")]
     symbols: SymbolTablePtr,
     cnf_clauses: Vec<CnfClause>,
     search_order: Option<Vec<Name>>,
     dominance: Option<Expression>,
+    objective: Option<Objective>,
 }
 
 impl SerdeModel {
@@ -459,8 +535,12 @@ impl SerdeModel {
         tables.insert(self.symbols.id(), self.symbols.clone());
 
         let mut exprs: VecDeque<Expression> = self.constraints.universe_bi();
+        exprs.extend(self.instantiation_conditions.clone());
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
+        }
+        if let Some(objective) = &self.objective {
+            exprs.push_back(objective.expression.clone());
         }
 
         // Some expressions (e.g. abstract comprehensions) contain additional symbol tables.
@@ -501,10 +581,12 @@ impl SerdeModel {
 
         Some(Model {
             constraints: self.constraints,
+            instantiation_conditions: self.instantiation_conditions,
             symbols: self.symbols,
             cnf_clauses: self.cnf_clauses,
             search_order: self.search_order,
             dominance: self.dominance,
+            objective: self.objective,
             context,
         })
     }
@@ -514,10 +596,12 @@ impl From<Model> for SerdeModel {
     fn from(val: Model) -> Self {
         SerdeModel {
             constraints: val.constraints,
+            instantiation_conditions: val.instantiation_conditions,
             symbols: val.symbols,
             cnf_clauses: val.cnf_clauses,
             search_order: val.search_order,
             dominance: val.dominance,
+            objective: val.objective,
         }
     }
 }
@@ -526,10 +610,12 @@ impl Display for SerdeModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let model = Model {
             constraints: self.constraints.clone(),
+            instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
             cnf_clauses: self.cnf_clauses.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
+            objective: self.objective.clone(),
             context: default_context(),
         };
         std::fmt::Display::fmt(&model, f)
@@ -541,10 +627,12 @@ impl SerdeModel {
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
         let model = Model {
             constraints: self.constraints.clone(),
+            instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
             cnf_clauses: self.cnf_clauses.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
+            objective: self.objective.clone(),
             context: default_context(),
         };
         model.collect_stable_id_mapping()

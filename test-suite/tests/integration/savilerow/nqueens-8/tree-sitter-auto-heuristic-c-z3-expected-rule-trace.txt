@@ -1,0 +1,1204 @@
+Model before rewriting:
+
+letting AMOUNT_QUEENS be domain int(0..7)
+find q1: matrix indexed by [AMOUNT_QUEENS] of int(0..7)
+find q2: matrix indexed by [AMOUNT_QUEENS] of int(-7..7)
+find q3: matrix indexed by [AMOUNT_QUEENS] of int(0..14)
+
+such that
+
+allDifferent(q1),
+allDifferent(q2),
+allDifferent(q3),
+and([ and([q2[i] = (q1[i] - i),q3[i] = sum([q1[i],i;int(1..)]);int(1..)]) | i : AMOUNT_QUEENS ])
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+new variables:
+  find q1#array_1: matrix indexed by [int(0..7)] of int(0..7)
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+new variables:
+  find q2#array_1: matrix indexed by [int(0..7)] of int(-7..7)
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+new variables:
+  find q3#array_1: matrix indexed by [int(0..7)] of int(0..14)
+
+--
+
+allDifferent(q1),
+allDifferent(q2),
+allDifferent(q3),
+and([ and([q2[i] = (q1[i] - i),q3[i] = sum([q1[i],i;int(1..)]);int(1..)]) | i : AMOUNT_QUEENS ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+allDifferent(q1),
+allDifferent(q2),
+allDifferent(q3),
+and([ and([q2[i] = (q1[i] - i),q3[i] = sum([q1[i],i;int(1..)]);int(1..)]) | i : AMOUNT_QUEENS ])
+new variables:
+  find q1#array_1#lia_1: matrix indexed by [int(0..7)] of int(0..7)
+  find q2#array_1#lia_1: matrix indexed by [int(0..7)] of int(-7..7)
+  find q3#array_1#lia_1: matrix indexed by [int(0..7)] of int(0..14)
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+allDifferent(q1#array_1#lia_1)
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(q1#array_1#lia_1)
+
+--
+
+allDifferent(q2#array_1#lia_1)
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(q2#array_1#lia_1)
+
+--
+
+allDifferent(q3#array_1#lia_1)
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(q3#array_1#lia_1)
+
+--
+
+[ and([q2[i] = (q1[i] - i),q3[i] = sum([q1[i],i;int(1..)]);int(1..)]) | i : AMOUNT_QUEENS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([q2[0] = (q1[0] - 0),q3[0] = sum([q1[0],0;int(1..)]);int(1..)]),and([q2[1] = (q1[1] - 1),q3[1] = sum([q1[1],1;int(1..)]);int(1..)]),and([q2[2] = (q1[2] - 2),q3[2] = sum([q1[2],2;int(1..)]);int(1..)]),and([q2[3] = (q1[3] - 3),q3[3] = sum([q1[3],3;int(1..)]);int(1..)]),and([q2[4] = (q1[4] - 4),q3[4] = sum([q1[4],4;int(1..)]);int(1..)]),and([q2[5] = (q1[5] - 5),q3[5] = sum([q1[5],5;int(1..)]);int(1..)]),and([q2[6] = (q1[6] - 6),q3[6] = sum([q1[6],6;int(1..)]);int(1..)]),and([q2[7] = (q1[7] - 7),q3[7] = sum([q1[7],7;int(1..)]);int(1..)]);int(1..)]
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+
+--
+
+q2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2
+
+--
+
+q3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q2#array_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
+
+--
+
+q3
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q3#array_1
+
+--
+
+q3#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q3#array_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
+
+--
+
+q3#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q3#array_1#lia_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q1#array_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+q1#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q1#array_1#lia_1
+
+--
+
+and([and([q2#array_1#lia_1[0] = (q1#array_1#lia_1[0] - 0),q3#array_1#lia_1[0] = sum([q1#array_1#lia_1[0],0;int(1..)]);int(1..)]),and([q2#array_1#lia_1[1] = (q1#array_1#lia_1[1] - 1),q3#array_1#lia_1[1] = sum([q1#array_1#lia_1[1],1;int(1..)]);int(1..)]),and([q2#array_1#lia_1[2] = (q1#array_1#lia_1[2] - 2),q3#array_1#lia_1[2] = sum([q1#array_1#lia_1[2],2;int(1..)]);int(1..)]),and([q2#array_1#lia_1[3] = (q1#array_1#lia_1[3] - 3),q3#array_1#lia_1[3] = sum([q1#array_1#lia_1[3],3;int(1..)]);int(1..)]),and([q2#array_1#lia_1[4] = (q1#array_1#lia_1[4] - 4),q3#array_1#lia_1[4] = sum([q1#array_1#lia_1[4],4;int(1..)]);int(1..)]),and([q2#array_1#lia_1[5] = (q1#array_1#lia_1[5] - 5),q3#array_1#lia_1[5] = sum([q1#array_1#lia_1[5],5;int(1..)]);int(1..)]),and([q2#array_1#lia_1[6] = (q1#array_1#lia_1[6] - 6),q3#array_1#lia_1[6] = sum([q1#array_1#lia_1[6],6;int(1..)]);int(1..)]),and([q2#array_1#lia_1[7] = (q1#array_1#lia_1[7] - 7),q3#array_1#lia_1[7] = sum([q1#array_1#lia_1[7],7;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([q2#array_1#lia_1[0] = (q1#array_1#lia_1[0] - 0),q3#array_1#lia_1[0] = sum([q1#array_1#lia_1[0],0;int(1..)]),q2#array_1#lia_1[1] = (q1#array_1#lia_1[1] - 1),q3#array_1#lia_1[1] = sum([q1#array_1#lia_1[1],1;int(1..)]),q2#array_1#lia_1[2] = (q1#array_1#lia_1[2] - 2),q3#array_1#lia_1[2] = sum([q1#array_1#lia_1[2],2;int(1..)]),q2#array_1#lia_1[3] = (q1#array_1#lia_1[3] - 3),q3#array_1#lia_1[3] = sum([q1#array_1#lia_1[3],3;int(1..)]),q2#array_1#lia_1[4] = (q1#array_1#lia_1[4] - 4),q3#array_1#lia_1[4] = sum([q1#array_1#lia_1[4],4;int(1..)]),q2#array_1#lia_1[5] = (q1#array_1#lia_1[5] - 5),q3#array_1#lia_1[5] = sum([q1#array_1#lia_1[5],5;int(1..)]),q2#array_1#lia_1[6] = (q1#array_1#lia_1[6] - 6),q3#array_1#lia_1[6] = sum([q1#array_1#lia_1[6],6;int(1..)]),q2#array_1#lia_1[7] = (q1#array_1#lia_1[7] - 7),q3#array_1#lia_1[7] = sum([q1#array_1#lia_1[7],7;int(1..)]);int(1..)])
+
+--
+
+(q1#array_1#lia_1[0] - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#array_1#lia_1[0],-(0);int(1..)])
+
+--
+
+(q1#array_1#lia_1[1] - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#array_1#lia_1[1],-(1);int(1..)])
+
+--
+
+(q1#array_1#lia_1[2] - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#array_1#lia_1[2],-(2);int(1..)])
+
+--
+
+(q1#array_1#lia_1[3] - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#array_1#lia_1[3],-(3);int(1..)])
+
+--
+
+(q1#array_1#lia_1[4] - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#array_1#lia_1[4],-(4);int(1..)])
+
+--
+
+(q1#array_1#lia_1[5] - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#array_1#lia_1[5],-(5);int(1..)])
+
+--
+
+(q1#array_1#lia_1[6] - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#array_1#lia_1[6],-(6);int(1..)])
+
+--
+
+(q1#array_1#lia_1[7] - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([q1#array_1#lia_1[7],-(7);int(1..)])
+
+--
+
+q2#array_1#lia_1[0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q2#array_1#lia_1,[0])
+
+--
+
+q3#array_1#lia_1[0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q3#array_1#lia_1,[0])
+
+--
+
+q2#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q2#array_1#lia_1,[1])
+
+--
+
+q3#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q3#array_1#lia_1,[1])
+
+--
+
+q2#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q2#array_1#lia_1,[2])
+
+--
+
+q3#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q3#array_1#lia_1,[2])
+
+--
+
+q2#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q2#array_1#lia_1,[3])
+
+--
+
+q3#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q3#array_1#lia_1,[3])
+
+--
+
+q2#array_1#lia_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q2#array_1#lia_1,[4])
+
+--
+
+q3#array_1#lia_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q3#array_1#lia_1,[4])
+
+--
+
+q2#array_1#lia_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q2#array_1#lia_1,[5])
+
+--
+
+q3#array_1#lia_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q3#array_1#lia_1,[5])
+
+--
+
+q2#array_1#lia_1[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q2#array_1#lia_1,[6])
+
+--
+
+q3#array_1#lia_1[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q3#array_1#lia_1,[6])
+
+--
+
+q2#array_1#lia_1[7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q2#array_1#lia_1,[7])
+
+--
+
+q3#array_1#lia_1[7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q3#array_1#lia_1,[7])
+
+--
+
+q1#array_1#lia_1[0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[0])
+
+--
+
+q1#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[1])
+
+--
+
+q1#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[2])
+
+--
+
+q1#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[3])
+
+--
+
+q1#array_1#lia_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[4])
+
+--
+
+q1#array_1#lia_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[5])
+
+--
+
+q1#array_1#lia_1[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[6])
+
+--
+
+q1#array_1#lia_1[7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[7])
+
+--
+
+q1#array_1#lia_1[0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[0])
+
+--
+
+q1#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[1])
+
+--
+
+q1#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[2])
+
+--
+
+q1#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[3])
+
+--
+
+q1#array_1#lia_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[4])
+
+--
+
+q1#array_1#lia_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[5])
+
+--
+
+q1#array_1#lia_1[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[6])
+
+--
+
+q1#array_1#lia_1[7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[7])
+
+--
+
+smtDistinct(q1#array_1#lia_1)
+   ~~> matrix_ref_to_slice ([("Smt", 999)])
+smtDistinct(SafeSlice(q1#array_1#lia_1,[..]))
+
+--
+
+SafeSlice(q1#array_1#lia_1,[..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(q1#array_1#lia_1,[0]),SafeIndex(q1#array_1#lia_1,[1]),SafeIndex(q1#array_1#lia_1,[2]),SafeIndex(q1#array_1#lia_1,[3]),SafeIndex(q1#array_1#lia_1,[4]),SafeIndex(q1#array_1#lia_1,[5]),SafeIndex(q1#array_1#lia_1,[6]),SafeIndex(q1#array_1#lia_1,[7]);int(1..)]
+
+--
+
+smtDistinct(q2#array_1#lia_1)
+   ~~> matrix_ref_to_slice ([("Smt", 999)])
+smtDistinct(SafeSlice(q2#array_1#lia_1,[..]))
+
+--
+
+SafeSlice(q2#array_1#lia_1,[..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(q2#array_1#lia_1,[0]),SafeIndex(q2#array_1#lia_1,[1]),SafeIndex(q2#array_1#lia_1,[2]),SafeIndex(q2#array_1#lia_1,[3]),SafeIndex(q2#array_1#lia_1,[4]),SafeIndex(q2#array_1#lia_1,[5]),SafeIndex(q2#array_1#lia_1,[6]),SafeIndex(q2#array_1#lia_1,[7]);int(1..)]
+
+--
+
+smtDistinct(q3#array_1#lia_1)
+   ~~> matrix_ref_to_slice ([("Smt", 999)])
+smtDistinct(SafeSlice(q3#array_1#lia_1,[..]))
+
+--
+
+SafeSlice(q3#array_1#lia_1,[..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(q3#array_1#lia_1,[0]),SafeIndex(q3#array_1#lia_1,[1]),SafeIndex(q3#array_1#lia_1,[2]),SafeIndex(q3#array_1#lia_1,[3]),SafeIndex(q3#array_1#lia_1,[4]),SafeIndex(q3#array_1#lia_1,[5]),SafeIndex(q3#array_1#lia_1,[6]),SafeIndex(q3#array_1#lia_1,[7]);int(1..)]
+
+--
+
+Final model:
+
+letting AMOUNT_QUEENS be domain int(0..7)
+find q1: matrix indexed by [AMOUNT_QUEENS] of int(0..7)
+find q2: matrix indexed by [AMOUNT_QUEENS] of int(-7..7)
+find q3: matrix indexed by [AMOUNT_QUEENS] of int(0..14)
+find q1#array_1: matrix indexed by [int(0..7)] of int(0..7)
+find q2#array_1: matrix indexed by [int(0..7)] of int(-7..7)
+find q3#array_1: matrix indexed by [int(0..7)] of int(0..14)
+find q1#array_1#lia_1: matrix indexed by [int(0..7)] of int(0..7)
+find q2#array_1#lia_1: matrix indexed by [int(0..7)] of int(-7..7)
+find q3#array_1#lia_1: matrix indexed by [int(0..7)] of int(0..14)
+
+such that
+
+smtDistinct([SafeIndex(q1#array_1#lia_1,[0]),SafeIndex(q1#array_1#lia_1,[1]),SafeIndex(q1#array_1#lia_1,[2]),SafeIndex(q1#array_1#lia_1,[3]),SafeIndex(q1#array_1#lia_1,[4]),SafeIndex(q1#array_1#lia_1,[5]),SafeIndex(q1#array_1#lia_1,[6]),SafeIndex(q1#array_1#lia_1,[7]);int(1..)]),
+smtDistinct([SafeIndex(q2#array_1#lia_1,[0]),SafeIndex(q2#array_1#lia_1,[1]),SafeIndex(q2#array_1#lia_1,[2]),SafeIndex(q2#array_1#lia_1,[3]),SafeIndex(q2#array_1#lia_1,[4]),SafeIndex(q2#array_1#lia_1,[5]),SafeIndex(q2#array_1#lia_1,[6]),SafeIndex(q2#array_1#lia_1,[7]);int(1..)]),
+smtDistinct([SafeIndex(q3#array_1#lia_1,[0]),SafeIndex(q3#array_1#lia_1,[1]),SafeIndex(q3#array_1#lia_1,[2]),SafeIndex(q3#array_1#lia_1,[3]),SafeIndex(q3#array_1#lia_1,[4]),SafeIndex(q3#array_1#lia_1,[5]),SafeIndex(q3#array_1#lia_1,[6]),SafeIndex(q3#array_1#lia_1,[7]);int(1..)]),
+and([SafeIndex(q2#array_1#lia_1,[0]) = sum([SafeIndex(q1#array_1#lia_1,[0]),0;int(1..)]),SafeIndex(q3#array_1#lia_1,[0]) = sum([SafeIndex(q1#array_1#lia_1,[0]),0;int(1..)]),SafeIndex(q2#array_1#lia_1,[1]) = sum([SafeIndex(q1#array_1#lia_1,[1]),-1;int(1..)]),SafeIndex(q3#array_1#lia_1,[1]) = sum([SafeIndex(q1#array_1#lia_1,[1]),1;int(1..)]),SafeIndex(q2#array_1#lia_1,[2]) = sum([SafeIndex(q1#array_1#lia_1,[2]),-2;int(1..)]),SafeIndex(q3#array_1#lia_1,[2]) = sum([SafeIndex(q1#array_1#lia_1,[2]),2;int(1..)]),SafeIndex(q2#array_1#lia_1,[3]) = sum([SafeIndex(q1#array_1#lia_1,[3]),-3;int(1..)]),SafeIndex(q3#array_1#lia_1,[3]) = sum([SafeIndex(q1#array_1#lia_1,[3]),3;int(1..)]),SafeIndex(q2#array_1#lia_1,[4]) = sum([SafeIndex(q1#array_1#lia_1,[4]),-4;int(1..)]),SafeIndex(q3#array_1#lia_1,[4]) = sum([SafeIndex(q1#array_1#lia_1,[4]),4;int(1..)]),SafeIndex(q2#array_1#lia_1,[5]) = sum([SafeIndex(q1#array_1#lia_1,[5]),-5;int(1..)]),SafeIndex(q3#array_1#lia_1,[5]) = sum([SafeIndex(q1#array_1#lia_1,[5]),5;int(1..)]),SafeIndex(q2#array_1#lia_1,[6]) = sum([SafeIndex(q1#array_1#lia_1,[6]),-6;int(1..)]),SafeIndex(q3#array_1#lia_1,[6]) = sum([SafeIndex(q1#array_1#lia_1,[6]),6;int(1..)]),SafeIndex(q2#array_1#lia_1,[7]) = sum([SafeIndex(q1#array_1#lia_1,[7]),-7;int(1..)]),SafeIndex(q3#array_1#lia_1,[7]) = sum([SafeIndex(q1#array_1#lia_1,[7]),7;int(1..)]);int(1..)])
+

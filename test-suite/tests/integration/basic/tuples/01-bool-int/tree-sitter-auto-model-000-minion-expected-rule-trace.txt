@@ -1,0 +1,73 @@
+Model before rewriting:
+
+find x: tuple (bool, int(1..4))
+
+such that
+
+x[1] = false,
+x[2] = 2
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#components_1: bool
+  find x#components_2: int(1..4)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x[1]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[1]) @ and([1 >= 1,1 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#components_1
+
+--
+
+x[2]
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{SafeIndex(x,[2]) @ and([2 >= 1,2 <= 2;int(1..)])}
+
+--
+
+SafeIndex(x,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+x#components_2
+
+--
+
+x#components_1 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_1,false)
+
+--
+
+x#components_2 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_2,2)
+
+--
+
+Final model:
+
+find x: tuple (bool, int(1..4))
+find x#components_1: bool
+find x#components_2: int(1..4)
+
+such that
+
+WatchedLiteral(x#components_1,false),
+WatchedLiteral(x#components_2,2)
+

@@ -1,0 +1,47 @@
+Model before rewriting:
+
+find x: tuple (int(1..2), int(1..5))
+
+such that
+
+x = (2,3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#components_1: int(1..2)
+  find x#components_2: int(1..5)
+
+--
+
+x = (2,3)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([x#components_1 = 2,x#components_2 = 3;int(1..)])
+
+--
+
+x#components_1 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_1,2)
+
+--
+
+x#components_2 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_2,3)
+
+--
+
+Final model:
+
+find x: tuple (int(1..2), int(1..5))
+find x#components_1: int(1..2)
+find x#components_2: int(1..5)
+
+such that
+
+and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_2,3);int(1..)])
+

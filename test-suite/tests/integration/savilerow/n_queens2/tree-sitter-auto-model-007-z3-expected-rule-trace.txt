@@ -1,0 +1,2950 @@
+Model before rewriting:
+
+letting n be 8
+letting AMOUNT_QUEENS be domain int(0..((n - 1)))
+find queens: matrix indexed by [AMOUNT_QUEENS] of AMOUNT_QUEENS
+
+such that
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0
+
+--
+
+queens
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens
+new variables:
+  find queens#components_1: int(0..7)
+  find queens#components_2: int(0..7)
+  find queens#components_3: int(0..7)
+  find queens#components_4: int(0..7)
+  find queens#components_5: int(0..7)
+  find queens#components_6: int(0..7)
+  find queens#components_7: int(0..7)
+  find queens#components_8: int(0..7)
+
+--
+
+queens
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens
+
+--
+
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+allDifferent(queens),
+and([ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]),
+queens[0] = 0
+new variables:
+  find queens#components_1#lia_1: int(0..7)
+  find queens#components_2#lia_1: int(0..7)
+  find queens#components_3#lia_1: int(0..7)
+  find queens#components_4#lia_1: int(0..7)
+  find queens#components_5#lia_1: int(0..7)
+  find queens#components_6#lia_1: int(0..7)
+  find queens#components_7#lia_1: int(0..7)
+  find queens#components_8#lia_1: int(0..7)
+
+--
+
+queens[0]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+allDifferent(queens)
+   ~~> unwrap_alldiff ([("Smt", 4000)])
+and([sum([toInt(SafeIndex(queens,[0]) = 0),toInt(SafeIndex(queens,[1]) = 0),toInt(SafeIndex(queens,[2]) = 0),toInt(SafeIndex(queens,[3]) = 0),toInt(SafeIndex(queens,[4]) = 0),toInt(SafeIndex(queens,[5]) = 0),toInt(SafeIndex(queens,[6]) = 0),toInt(SafeIndex(queens,[7]) = 0);int(1..)]) <= 1,sum([toInt(SafeIndex(queens,[0]) = 1),toInt(SafeIndex(queens,[1]) = 1),toInt(SafeIndex(queens,[2]) = 1),toInt(SafeIndex(queens,[3]) = 1),toInt(SafeIndex(queens,[4]) = 1),toInt(SafeIndex(queens,[5]) = 1),toInt(SafeIndex(queens,[6]) = 1),toInt(SafeIndex(queens,[7]) = 1);int(1..)]) <= 1,sum([toInt(SafeIndex(queens,[0]) = 2),toInt(SafeIndex(queens,[1]) = 2),toInt(SafeIndex(queens,[2]) = 2),toInt(SafeIndex(queens,[3]) = 2),toInt(SafeIndex(queens,[4]) = 2),toInt(SafeIndex(queens,[5]) = 2),toInt(SafeIndex(queens,[6]) = 2),toInt(SafeIndex(queens,[7]) = 2);int(1..)]) <= 1,sum([toInt(SafeIndex(queens,[0]) = 3),toInt(SafeIndex(queens,[1]) = 3),toInt(SafeIndex(queens,[2]) = 3),toInt(SafeIndex(queens,[3]) = 3),toInt(SafeIndex(queens,[4]) = 3),toInt(SafeIndex(queens,[5]) = 3),toInt(SafeIndex(queens,[6]) = 3),toInt(SafeIndex(queens,[7]) = 3);int(1..)]) <= 1,sum([toInt(SafeIndex(queens,[0]) = 4),toInt(SafeIndex(queens,[1]) = 4),toInt(SafeIndex(queens,[2]) = 4),toInt(SafeIndex(queens,[3]) = 4),toInt(SafeIndex(queens,[4]) = 4),toInt(SafeIndex(queens,[5]) = 4),toInt(SafeIndex(queens,[6]) = 4),toInt(SafeIndex(queens,[7]) = 4);int(1..)]) <= 1,sum([toInt(SafeIndex(queens,[0]) = 5),toInt(SafeIndex(queens,[1]) = 5),toInt(SafeIndex(queens,[2]) = 5),toInt(SafeIndex(queens,[3]) = 5),toInt(SafeIndex(queens,[4]) = 5),toInt(SafeIndex(queens,[5]) = 5),toInt(SafeIndex(queens,[6]) = 5),toInt(SafeIndex(queens,[7]) = 5);int(1..)]) <= 1,sum([toInt(SafeIndex(queens,[0]) = 6),toInt(SafeIndex(queens,[1]) = 6),toInt(SafeIndex(queens,[2]) = 6),toInt(SafeIndex(queens,[3]) = 6),toInt(SafeIndex(queens,[4]) = 6),toInt(SafeIndex(queens,[5]) = 6),toInt(SafeIndex(queens,[6]) = 6),toInt(SafeIndex(queens,[7]) = 6);int(1..)]) <= 1,sum([toInt(SafeIndex(queens,[0]) = 7),toInt(SafeIndex(queens,[1]) = 7),toInt(SafeIndex(queens,[2]) = 7),toInt(SafeIndex(queens,[3]) = 7),toInt(SafeIndex(queens,[4]) = 7),toInt(SafeIndex(queens,[5]) = 7),toInt(SafeIndex(queens,[6]) = 7),toInt(SafeIndex(queens,[7]) = 7);int(1..)]) <= 1;int(1..)])
+
+--
+
+SafeIndex(queens,[0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+SafeIndex(queens,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+SafeIndex(queens,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+SafeIndex(queens,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+SafeIndex(queens,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+SafeIndex(queens,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+SafeIndex(queens,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+SafeIndex(queens,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+SafeIndex(queens,[0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+SafeIndex(queens,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+SafeIndex(queens,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+SafeIndex(queens,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+SafeIndex(queens,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+SafeIndex(queens,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+SafeIndex(queens,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+SafeIndex(queens,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+SafeIndex(queens,[0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+SafeIndex(queens,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+SafeIndex(queens,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+SafeIndex(queens,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+SafeIndex(queens,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+SafeIndex(queens,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+SafeIndex(queens,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+SafeIndex(queens,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+SafeIndex(queens,[0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+SafeIndex(queens,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+SafeIndex(queens,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+SafeIndex(queens,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+SafeIndex(queens,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+SafeIndex(queens,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+SafeIndex(queens,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+SafeIndex(queens,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+SafeIndex(queens,[0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+SafeIndex(queens,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+SafeIndex(queens,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+SafeIndex(queens,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+SafeIndex(queens,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+SafeIndex(queens,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+SafeIndex(queens,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+SafeIndex(queens,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+SafeIndex(queens,[0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+SafeIndex(queens,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+SafeIndex(queens,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+SafeIndex(queens,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+SafeIndex(queens,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+SafeIndex(queens,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+SafeIndex(queens,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+SafeIndex(queens,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+SafeIndex(queens,[0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+SafeIndex(queens,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+SafeIndex(queens,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+SafeIndex(queens,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+SafeIndex(queens,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+SafeIndex(queens,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+SafeIndex(queens,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+SafeIndex(queens,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+SafeIndex(queens,[0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+SafeIndex(queens,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+SafeIndex(queens,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+SafeIndex(queens,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+SafeIndex(queens,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+SafeIndex(queens,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+SafeIndex(queens,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+SafeIndex(queens,[7])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+[ (i > j) -> (and([(queens[i] - i) != (queens[j] - j),sum([queens[i],i;int(1..)]) != sum([queens[j],j;int(1..)]);int(1..)])) | i : AMOUNT_QUEENS, j : AMOUNT_QUEENS ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([(queens#components_2 - 1) != (queens#components_1 - 0),sum([queens#components_2,1;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_3 - 2) != (queens#components_1 - 0),sum([queens#components_3,2;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_3 - 2) != (queens#components_2 - 1),sum([queens#components_3,2;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_4 - 3) != (queens#components_1 - 0),sum([queens#components_4,3;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_4 - 3) != (queens#components_2 - 1),sum([queens#components_4,3;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_4 - 3) != (queens#components_3 - 2),sum([queens#components_4,3;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_5 - 4) != (queens#components_1 - 0),sum([queens#components_5,4;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_5 - 4) != (queens#components_2 - 1),sum([queens#components_5,4;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_5 - 4) != (queens#components_3 - 2),sum([queens#components_5,4;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_5 - 4) != (queens#components_4 - 3),sum([queens#components_5,4;int(1..)]) != sum([queens#components_4,3;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_1 - 0),sum([queens#components_6,5;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_2 - 1),sum([queens#components_6,5;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_3 - 2),sum([queens#components_6,5;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_4 - 3),sum([queens#components_6,5;int(1..)]) != sum([queens#components_4,3;int(1..)]);int(1..)]),and([(queens#components_6 - 5) != (queens#components_5 - 4),sum([queens#components_6,5;int(1..)]) != sum([queens#components_5,4;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_1 - 0),sum([queens#components_7,6;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_2 - 1),sum([queens#components_7,6;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_3 - 2),sum([queens#components_7,6;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_4 - 3),sum([queens#components_7,6;int(1..)]) != sum([queens#components_4,3;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_5 - 4),sum([queens#components_7,6;int(1..)]) != sum([queens#components_5,4;int(1..)]);int(1..)]),and([(queens#components_7 - 6) != (queens#components_6 - 5),sum([queens#components_7,6;int(1..)]) != sum([queens#components_6,5;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_1 - 0),sum([queens#components_8,7;int(1..)]) != sum([queens#components_1,0;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_2 - 1),sum([queens#components_8,7;int(1..)]) != sum([queens#components_2,1;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_3 - 2),sum([queens#components_8,7;int(1..)]) != sum([queens#components_3,2;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_4 - 3),sum([queens#components_8,7;int(1..)]) != sum([queens#components_4,3;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_5 - 4),sum([queens#components_8,7;int(1..)]) != sum([queens#components_5,4;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_6 - 5),sum([queens#components_8,7;int(1..)]) != sum([queens#components_6,5;int(1..)]);int(1..)]),and([(queens#components_8 - 7) != (queens#components_7 - 6),sum([queens#components_8,7;int(1..)]) != sum([queens#components_7,6;int(1..)]);int(1..)]);int(1..)]
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_1
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_2
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_3
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_4
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_5
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_6
+
+--
+
+queens#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_8
+
+--
+
+queens#components_7
+   ~~> select_representation ([("ReprGeneral", 10000)])
+queens#components_7
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_1#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_2#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_3#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_4#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_5#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_6#lia_1
+
+--
+
+queens#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_8#lia_1
+
+--
+
+queens#components_7
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+queens#components_7#lia_1
+
+--
+
+and([and([(queens#components_2#lia_1 - 1) != (queens#components_1#lia_1 - 0),sum([queens#components_2#lia_1,1;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]);int(1..)]),and([(queens#components_3#lia_1 - 2) != (queens#components_1#lia_1 - 0),sum([queens#components_3#lia_1,2;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]);int(1..)]),and([(queens#components_3#lia_1 - 2) != (queens#components_2#lia_1 - 1),sum([queens#components_3#lia_1,2;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]);int(1..)]),and([(queens#components_4#lia_1 - 3) != (queens#components_1#lia_1 - 0),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]);int(1..)]),and([(queens#components_4#lia_1 - 3) != (queens#components_2#lia_1 - 1),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]);int(1..)]),and([(queens#components_4#lia_1 - 3) != (queens#components_3#lia_1 - 2),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]);int(1..)]),and([(queens#components_5#lia_1 - 4) != (queens#components_1#lia_1 - 0),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]);int(1..)]),and([(queens#components_5#lia_1 - 4) != (queens#components_2#lia_1 - 1),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]);int(1..)]),and([(queens#components_5#lia_1 - 4) != (queens#components_3#lia_1 - 2),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]);int(1..)]),and([(queens#components_5#lia_1 - 4) != (queens#components_4#lia_1 - 3),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]);int(1..)]),and([(queens#components_6#lia_1 - 5) != (queens#components_1#lia_1 - 0),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]);int(1..)]),and([(queens#components_6#lia_1 - 5) != (queens#components_2#lia_1 - 1),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]);int(1..)]),and([(queens#components_6#lia_1 - 5) != (queens#components_3#lia_1 - 2),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]);int(1..)]),and([(queens#components_6#lia_1 - 5) != (queens#components_4#lia_1 - 3),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]);int(1..)]),and([(queens#components_6#lia_1 - 5) != (queens#components_5#lia_1 - 4),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]);int(1..)]),and([(queens#components_7#lia_1 - 6) != (queens#components_1#lia_1 - 0),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]);int(1..)]),and([(queens#components_7#lia_1 - 6) != (queens#components_2#lia_1 - 1),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]);int(1..)]),and([(queens#components_7#lia_1 - 6) != (queens#components_3#lia_1 - 2),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]);int(1..)]),and([(queens#components_7#lia_1 - 6) != (queens#components_4#lia_1 - 3),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]);int(1..)]),and([(queens#components_7#lia_1 - 6) != (queens#components_5#lia_1 - 4),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]);int(1..)]),and([(queens#components_7#lia_1 - 6) != (queens#components_6#lia_1 - 5),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_6#lia_1,5;int(1..)]);int(1..)]),and([(queens#components_8#lia_1 - 7) != (queens#components_1#lia_1 - 0),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]);int(1..)]),and([(queens#components_8#lia_1 - 7) != (queens#components_2#lia_1 - 1),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]);int(1..)]),and([(queens#components_8#lia_1 - 7) != (queens#components_3#lia_1 - 2),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]);int(1..)]),and([(queens#components_8#lia_1 - 7) != (queens#components_4#lia_1 - 3),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]);int(1..)]),and([(queens#components_8#lia_1 - 7) != (queens#components_5#lia_1 - 4),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]);int(1..)]),and([(queens#components_8#lia_1 - 7) != (queens#components_6#lia_1 - 5),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_6#lia_1,5;int(1..)]);int(1..)]),and([(queens#components_8#lia_1 - 7) != (queens#components_7#lia_1 - 6),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_7#lia_1,6;int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([(queens#components_2#lia_1 - 1) != (queens#components_1#lia_1 - 0),sum([queens#components_2#lia_1,1;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),(queens#components_3#lia_1 - 2) != (queens#components_1#lia_1 - 0),sum([queens#components_3#lia_1,2;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),(queens#components_3#lia_1 - 2) != (queens#components_2#lia_1 - 1),sum([queens#components_3#lia_1,2;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),(queens#components_4#lia_1 - 3) != (queens#components_1#lia_1 - 0),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),(queens#components_4#lia_1 - 3) != (queens#components_2#lia_1 - 1),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),(queens#components_4#lia_1 - 3) != (queens#components_3#lia_1 - 2),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),(queens#components_5#lia_1 - 4) != (queens#components_1#lia_1 - 0),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),(queens#components_5#lia_1 - 4) != (queens#components_2#lia_1 - 1),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),(queens#components_5#lia_1 - 4) != (queens#components_3#lia_1 - 2),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),(queens#components_5#lia_1 - 4) != (queens#components_4#lia_1 - 3),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]),(queens#components_6#lia_1 - 5) != (queens#components_1#lia_1 - 0),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),(queens#components_6#lia_1 - 5) != (queens#components_2#lia_1 - 1),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),(queens#components_6#lia_1 - 5) != (queens#components_3#lia_1 - 2),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),(queens#components_6#lia_1 - 5) != (queens#components_4#lia_1 - 3),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]),(queens#components_6#lia_1 - 5) != (queens#components_5#lia_1 - 4),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]),(queens#components_7#lia_1 - 6) != (queens#components_1#lia_1 - 0),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),(queens#components_7#lia_1 - 6) != (queens#components_2#lia_1 - 1),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),(queens#components_7#lia_1 - 6) != (queens#components_3#lia_1 - 2),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),(queens#components_7#lia_1 - 6) != (queens#components_4#lia_1 - 3),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]),(queens#components_7#lia_1 - 6) != (queens#components_5#lia_1 - 4),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]),(queens#components_7#lia_1 - 6) != (queens#components_6#lia_1 - 5),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_6#lia_1,5;int(1..)]),(queens#components_8#lia_1 - 7) != (queens#components_1#lia_1 - 0),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),(queens#components_8#lia_1 - 7) != (queens#components_2#lia_1 - 1),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),(queens#components_8#lia_1 - 7) != (queens#components_3#lia_1 - 2),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),(queens#components_8#lia_1 - 7) != (queens#components_4#lia_1 - 3),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]),(queens#components_8#lia_1 - 7) != (queens#components_5#lia_1 - 4),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]),(queens#components_8#lia_1 - 7) != (queens#components_6#lia_1 - 5),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_6#lia_1,5;int(1..)]),(queens#components_8#lia_1 - 7) != (queens#components_7#lia_1 - 6),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_7#lia_1,6;int(1..)]);int(1..)])
+
+--
+
+(queens#components_2#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_2#lia_1,-(1);int(1..)])
+
+--
+
+(queens#components_1#lia_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_1#lia_1,-(0);int(1..)])
+
+--
+
+(queens#components_3#lia_1 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_3#lia_1,-(2);int(1..)])
+
+--
+
+(queens#components_1#lia_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_1#lia_1,-(0);int(1..)])
+
+--
+
+(queens#components_3#lia_1 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_3#lia_1,-(2);int(1..)])
+
+--
+
+(queens#components_2#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_2#lia_1,-(1);int(1..)])
+
+--
+
+(queens#components_4#lia_1 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_4#lia_1,-(3);int(1..)])
+
+--
+
+(queens#components_1#lia_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_1#lia_1,-(0);int(1..)])
+
+--
+
+(queens#components_4#lia_1 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_4#lia_1,-(3);int(1..)])
+
+--
+
+(queens#components_2#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_2#lia_1,-(1);int(1..)])
+
+--
+
+(queens#components_4#lia_1 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_4#lia_1,-(3);int(1..)])
+
+--
+
+(queens#components_3#lia_1 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_3#lia_1,-(2);int(1..)])
+
+--
+
+(queens#components_5#lia_1 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_5#lia_1,-(4);int(1..)])
+
+--
+
+(queens#components_1#lia_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_1#lia_1,-(0);int(1..)])
+
+--
+
+(queens#components_5#lia_1 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_5#lia_1,-(4);int(1..)])
+
+--
+
+(queens#components_2#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_2#lia_1,-(1);int(1..)])
+
+--
+
+(queens#components_5#lia_1 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_5#lia_1,-(4);int(1..)])
+
+--
+
+(queens#components_3#lia_1 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_3#lia_1,-(2);int(1..)])
+
+--
+
+(queens#components_5#lia_1 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_5#lia_1,-(4);int(1..)])
+
+--
+
+(queens#components_4#lia_1 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_4#lia_1,-(3);int(1..)])
+
+--
+
+(queens#components_6#lia_1 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_6#lia_1,-(5);int(1..)])
+
+--
+
+(queens#components_1#lia_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_1#lia_1,-(0);int(1..)])
+
+--
+
+(queens#components_6#lia_1 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_6#lia_1,-(5);int(1..)])
+
+--
+
+(queens#components_2#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_2#lia_1,-(1);int(1..)])
+
+--
+
+(queens#components_6#lia_1 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_6#lia_1,-(5);int(1..)])
+
+--
+
+(queens#components_3#lia_1 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_3#lia_1,-(2);int(1..)])
+
+--
+
+(queens#components_6#lia_1 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_6#lia_1,-(5);int(1..)])
+
+--
+
+(queens#components_4#lia_1 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_4#lia_1,-(3);int(1..)])
+
+--
+
+(queens#components_6#lia_1 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_6#lia_1,-(5);int(1..)])
+
+--
+
+(queens#components_5#lia_1 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_5#lia_1,-(4);int(1..)])
+
+--
+
+(queens#components_7#lia_1 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_7#lia_1,-(6);int(1..)])
+
+--
+
+(queens#components_1#lia_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_1#lia_1,-(0);int(1..)])
+
+--
+
+(queens#components_7#lia_1 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_7#lia_1,-(6);int(1..)])
+
+--
+
+(queens#components_2#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_2#lia_1,-(1);int(1..)])
+
+--
+
+(queens#components_7#lia_1 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_7#lia_1,-(6);int(1..)])
+
+--
+
+(queens#components_3#lia_1 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_3#lia_1,-(2);int(1..)])
+
+--
+
+(queens#components_7#lia_1 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_7#lia_1,-(6);int(1..)])
+
+--
+
+(queens#components_4#lia_1 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_4#lia_1,-(3);int(1..)])
+
+--
+
+(queens#components_7#lia_1 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_7#lia_1,-(6);int(1..)])
+
+--
+
+(queens#components_5#lia_1 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_5#lia_1,-(4);int(1..)])
+
+--
+
+(queens#components_7#lia_1 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_7#lia_1,-(6);int(1..)])
+
+--
+
+(queens#components_6#lia_1 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_6#lia_1,-(5);int(1..)])
+
+--
+
+(queens#components_8#lia_1 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_8#lia_1,-(7);int(1..)])
+
+--
+
+(queens#components_1#lia_1 - 0)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_1#lia_1,-(0);int(1..)])
+
+--
+
+(queens#components_8#lia_1 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_8#lia_1,-(7);int(1..)])
+
+--
+
+(queens#components_2#lia_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_2#lia_1,-(1);int(1..)])
+
+--
+
+(queens#components_8#lia_1 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_8#lia_1,-(7);int(1..)])
+
+--
+
+(queens#components_3#lia_1 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_3#lia_1,-(2);int(1..)])
+
+--
+
+(queens#components_8#lia_1 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_8#lia_1,-(7);int(1..)])
+
+--
+
+(queens#components_4#lia_1 - 3)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_4#lia_1,-(3);int(1..)])
+
+--
+
+(queens#components_8#lia_1 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_8#lia_1,-(7);int(1..)])
+
+--
+
+(queens#components_5#lia_1 - 4)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_5#lia_1,-(4);int(1..)])
+
+--
+
+(queens#components_8#lia_1 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_8#lia_1,-(7);int(1..)])
+
+--
+
+(queens#components_6#lia_1 - 5)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_6#lia_1,-(5);int(1..)])
+
+--
+
+(queens#components_8#lia_1 - 7)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_8#lia_1,-(7);int(1..)])
+
+--
+
+(queens#components_7#lia_1 - 6)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queens#components_7#lia_1,-(6);int(1..)])
+
+--
+
+Final model:
+
+letting n be 8
+letting AMOUNT_QUEENS be domain int(0..((n - 1)))
+find queens: matrix indexed by [AMOUNT_QUEENS] of AMOUNT_QUEENS
+find queens#components_1: int(0..7)
+find queens#components_2: int(0..7)
+find queens#components_3: int(0..7)
+find queens#components_4: int(0..7)
+find queens#components_5: int(0..7)
+find queens#components_6: int(0..7)
+find queens#components_7: int(0..7)
+find queens#components_8: int(0..7)
+find queens#components_1#lia_1: int(0..7)
+find queens#components_2#lia_1: int(0..7)
+find queens#components_3#lia_1: int(0..7)
+find queens#components_4#lia_1: int(0..7)
+find queens#components_5#lia_1: int(0..7)
+find queens#components_6#lia_1: int(0..7)
+find queens#components_7#lia_1: int(0..7)
+find queens#components_8#lia_1: int(0..7)
+
+such that
+
+and([sum([toInt(queens#components_1#lia_1 = 0),toInt(queens#components_2#lia_1 = 0),toInt(queens#components_3#lia_1 = 0),toInt(queens#components_4#lia_1 = 0),toInt(queens#components_5#lia_1 = 0),toInt(queens#components_6#lia_1 = 0),toInt(queens#components_7#lia_1 = 0),toInt(queens#components_8#lia_1 = 0);int(1..)]) <= 1,sum([toInt(queens#components_1#lia_1 = 1),toInt(queens#components_2#lia_1 = 1),toInt(queens#components_3#lia_1 = 1),toInt(queens#components_4#lia_1 = 1),toInt(queens#components_5#lia_1 = 1),toInt(queens#components_6#lia_1 = 1),toInt(queens#components_7#lia_1 = 1),toInt(queens#components_8#lia_1 = 1);int(1..)]) <= 1,sum([toInt(queens#components_1#lia_1 = 2),toInt(queens#components_2#lia_1 = 2),toInt(queens#components_3#lia_1 = 2),toInt(queens#components_4#lia_1 = 2),toInt(queens#components_5#lia_1 = 2),toInt(queens#components_6#lia_1 = 2),toInt(queens#components_7#lia_1 = 2),toInt(queens#components_8#lia_1 = 2);int(1..)]) <= 1,sum([toInt(queens#components_1#lia_1 = 3),toInt(queens#components_2#lia_1 = 3),toInt(queens#components_3#lia_1 = 3),toInt(queens#components_4#lia_1 = 3),toInt(queens#components_5#lia_1 = 3),toInt(queens#components_6#lia_1 = 3),toInt(queens#components_7#lia_1 = 3),toInt(queens#components_8#lia_1 = 3);int(1..)]) <= 1,sum([toInt(queens#components_1#lia_1 = 4),toInt(queens#components_2#lia_1 = 4),toInt(queens#components_3#lia_1 = 4),toInt(queens#components_4#lia_1 = 4),toInt(queens#components_5#lia_1 = 4),toInt(queens#components_6#lia_1 = 4),toInt(queens#components_7#lia_1 = 4),toInt(queens#components_8#lia_1 = 4);int(1..)]) <= 1,sum([toInt(queens#components_1#lia_1 = 5),toInt(queens#components_2#lia_1 = 5),toInt(queens#components_3#lia_1 = 5),toInt(queens#components_4#lia_1 = 5),toInt(queens#components_5#lia_1 = 5),toInt(queens#components_6#lia_1 = 5),toInt(queens#components_7#lia_1 = 5),toInt(queens#components_8#lia_1 = 5);int(1..)]) <= 1,sum([toInt(queens#components_1#lia_1 = 6),toInt(queens#components_2#lia_1 = 6),toInt(queens#components_3#lia_1 = 6),toInt(queens#components_4#lia_1 = 6),toInt(queens#components_5#lia_1 = 6),toInt(queens#components_6#lia_1 = 6),toInt(queens#components_7#lia_1 = 6),toInt(queens#components_8#lia_1 = 6);int(1..)]) <= 1,sum([toInt(queens#components_1#lia_1 = 7),toInt(queens#components_2#lia_1 = 7),toInt(queens#components_3#lia_1 = 7),toInt(queens#components_4#lia_1 = 7),toInt(queens#components_5#lia_1 = 7),toInt(queens#components_6#lia_1 = 7),toInt(queens#components_7#lia_1 = 7),toInt(queens#components_8#lia_1 = 7);int(1..)]) <= 1;int(1..)]),
+and([sum([queens#components_2#lia_1,-1;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_2#lia_1,1;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_3#lia_1,-2;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_3#lia_1,2;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_3#lia_1,-2;int(1..)]) != sum([queens#components_2#lia_1,-1;int(1..)]),sum([queens#components_3#lia_1,2;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),sum([queens#components_4#lia_1,-3;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_4#lia_1,-3;int(1..)]) != sum([queens#components_2#lia_1,-1;int(1..)]),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),sum([queens#components_4#lia_1,-3;int(1..)]) != sum([queens#components_3#lia_1,-2;int(1..)]),sum([queens#components_4#lia_1,3;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),sum([queens#components_5#lia_1,-4;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_5#lia_1,-4;int(1..)]) != sum([queens#components_2#lia_1,-1;int(1..)]),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),sum([queens#components_5#lia_1,-4;int(1..)]) != sum([queens#components_3#lia_1,-2;int(1..)]),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),sum([queens#components_5#lia_1,-4;int(1..)]) != sum([queens#components_4#lia_1,-3;int(1..)]),sum([queens#components_5#lia_1,4;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]),sum([queens#components_6#lia_1,-5;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_6#lia_1,-5;int(1..)]) != sum([queens#components_2#lia_1,-1;int(1..)]),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),sum([queens#components_6#lia_1,-5;int(1..)]) != sum([queens#components_3#lia_1,-2;int(1..)]),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),sum([queens#components_6#lia_1,-5;int(1..)]) != sum([queens#components_4#lia_1,-3;int(1..)]),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]),sum([queens#components_6#lia_1,-5;int(1..)]) != sum([queens#components_5#lia_1,-4;int(1..)]),sum([queens#components_6#lia_1,5;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]),sum([queens#components_7#lia_1,-6;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_7#lia_1,-6;int(1..)]) != sum([queens#components_2#lia_1,-1;int(1..)]),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),sum([queens#components_7#lia_1,-6;int(1..)]) != sum([queens#components_3#lia_1,-2;int(1..)]),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),sum([queens#components_7#lia_1,-6;int(1..)]) != sum([queens#components_4#lia_1,-3;int(1..)]),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]),sum([queens#components_7#lia_1,-6;int(1..)]) != sum([queens#components_5#lia_1,-4;int(1..)]),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]),sum([queens#components_7#lia_1,-6;int(1..)]) != sum([queens#components_6#lia_1,-5;int(1..)]),sum([queens#components_7#lia_1,6;int(1..)]) != sum([queens#components_6#lia_1,5;int(1..)]),sum([queens#components_8#lia_1,-7;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_1#lia_1,0;int(1..)]),sum([queens#components_8#lia_1,-7;int(1..)]) != sum([queens#components_2#lia_1,-1;int(1..)]),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_2#lia_1,1;int(1..)]),sum([queens#components_8#lia_1,-7;int(1..)]) != sum([queens#components_3#lia_1,-2;int(1..)]),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_3#lia_1,2;int(1..)]),sum([queens#components_8#lia_1,-7;int(1..)]) != sum([queens#components_4#lia_1,-3;int(1..)]),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_4#lia_1,3;int(1..)]),sum([queens#components_8#lia_1,-7;int(1..)]) != sum([queens#components_5#lia_1,-4;int(1..)]),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_5#lia_1,4;int(1..)]),sum([queens#components_8#lia_1,-7;int(1..)]) != sum([queens#components_6#lia_1,-5;int(1..)]),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_6#lia_1,5;int(1..)]),sum([queens#components_8#lia_1,-7;int(1..)]) != sum([queens#components_7#lia_1,-6;int(1..)]),sum([queens#components_8#lia_1,7;int(1..)]) != sum([queens#components_7#lia_1,6;int(1..)]);int(1..)]),
+queens#components_1#lia_1 = 0
+

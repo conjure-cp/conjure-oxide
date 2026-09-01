@@ -23,10 +23,10 @@ run_case() {
     fi
     first_case=0
 
-    conjure-oxide-debug solve \
+    conjure-oxide solve \
         --parser tree-sitter \
-        --rewriter morph-levelson-fixedpoint \
-        --solver smt-lia-arrays \
+        --rewriter optimised \
+        --solver z3 \
         --no-run-solver \
         --rule-trace-aggregates "$aggregate_path" \
         "$model_path" \

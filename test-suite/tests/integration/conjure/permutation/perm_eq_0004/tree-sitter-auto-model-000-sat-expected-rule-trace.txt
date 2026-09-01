@@ -1,0 +1,50 @@
+Model before rewriting:
+
+letting n be 4
+letting p be permutation(1,3,4)
+letting q be permutation(1,2,4)
+find b: bool
+
+such that
+
+b = q = p
+
+--
+
+b = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (b \/ __0)
+  (¬b \/ ¬__0)
+
+--
+
+__0
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+letting n be 4
+letting p be permutation(1,3,4)
+letting q be permutation(1,2,4)
+find b: bool
+findAux __0: bool
+
+such that
+
+true
+
+clauses:
+
+(b \/ __0),
+(¬b \/ ¬__0),
+(__0)
+

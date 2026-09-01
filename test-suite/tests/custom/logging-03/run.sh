@@ -1,9 +1,7 @@
-conjure-oxide --log --logfile conjure_oxide.log --logfile-json conjure_oxide_log.json solve --parser=tree-sitter model.eprime --number-of-solutions=all
+conjure-oxide --log-file conjure_oxide.log --log-detail attempts solve --parser=via-conjure model.eprime --number-of-solutions=all
 
 [ -f "./conjure_oxide.log" ] && echo "./conjure_oxide.log found" || echo "./conjure_oxide.log is missing"
-[ -f "./conjure_oxide_log.json" ] && echo "./conjure_oxide_log.json found" || echo "./conjure_oxide_log.json is missing"
-
 [ -s "./conjure_oxide.log" ] && echo "./conjure_oxide.log has been written" || echo "./conjure_oxide.log is empty"
-[ -s "./conjure_oxide_log.json" ] && echo "./conjure_oxide_log.json has been written" || echo "./conjure_oxide_log.json is empty"
+grep -q "attempted rule" conjure_oxide.log && echo "./conjure_oxide.log contains rule attempts" || echo "./conjure_oxide.log is missing rule attempts"
 
-rm conjure_oxide_log.json conjure_oxide.log
+rm conjure_oxide.log

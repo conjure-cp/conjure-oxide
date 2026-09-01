@@ -1,0 +1,68 @@
+Model before rewriting:
+
+find x: int(1..10)
+find y: int(2..4)
+
+such that
+
+x % y = 3
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(1..10)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(2..4)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+x#lia_1 % y#lia_1
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x#lia_1,y#lia_1) @ y#lia_1 != 0}
+
+--
+
+{SafeMod(x#lia_1,y#lia_1) @ y#lia_1 != 0} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeMod(x#lia_1,y#lia_1) = 3 @ y#lia_1 != 0}
+
+--
+
+{SafeMod(x#lia_1,y#lia_1) = 3 @ y#lia_1 != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeMod(x#lia_1,y#lia_1) = 3,y#lia_1 != 0;int(1..)])
+
+--
+
+Final model:
+
+find x: int(1..10)
+find y: int(2..4)
+find x#lia_1: int(1..10)
+find y#lia_1: int(2..4)
+
+such that
+
+and([SafeMod(x#lia_1,y#lia_1) = 3,y#lia_1 != 0;int(1..)])
+

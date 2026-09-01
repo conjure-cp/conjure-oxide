@@ -42,11 +42,13 @@
                               "ptr": {
                                 "object_id": 4,
                                 "type_name": "DeclarationPtrInner"
-                              }
+                              },
+                              "repr": null
                             }
                           }
                         ]
                       },
+                      "skip_operator": "Sum",
                       "symbols": {
                         "id": {
                           "object_id": 3,
@@ -83,7 +85,8 @@
                                             "ptr": {
                                               "object_id": 1,
                                               "type_name": "DeclarationPtrInner"
-                                            }
+                                            },
+                                            "repr": null
                                           }
                                         }
                                       ]
@@ -98,7 +101,8 @@
                                             "ptr": {
                                               "object_id": 2,
                                               "type_name": "DeclarationPtrInner"
-                                            }
+                                            },
+                                            "repr": null
                                           }
                                         }
                                       ]
@@ -136,6 +140,7 @@
     ]
   },
   "dominance": null,
+  "objective": null,
   "search_order": null,
   "symbols": {
     "id": {
@@ -160,6 +165,7 @@
                 "Ground": {
                   "Set": [
                     {
+                      "representation": null,
                       "size": "Unbounded"
                     },
                     {
@@ -197,6 +203,7 @@
                 "Ground": {
                   "Set": [
                     {
+                      "representation": null,
                       "size": "Unbounded"
                     },
                     {
@@ -224,56 +231,363 @@
 }
 
 
-find a: set  of int(1..4)
-find b: set  of int(1..4)
-find __0: matrix indexed by [int(1..)] of set  of int(1..4)
-find __1: matrix indexed by [int(1..)] of set  of int(1..4)
+find a: set (representation occurrence) of int(1..4)
+find b: set (representation occurrence) of int(1..4)
+find a#occurrence_1: bool
+find a#occurrence_2: bool
+find a#occurrence_3: bool
+find a#occurrence_4: bool
+find b#occurrence_1: bool
+find b#occurrence_2: bool
+find b#occurrence_3: bool
+find b#occurrence_4: bool
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
 
 such that
 
-(sum(flatten([__0,__1;int(1..)])) = 2),
-__0 =aux [ i | i <- a ],
-__1 =aux [ i | i <- b, !(i in a) ]
+FlatWeightedSumLeq([1, 2, 3, 4],[__0, __1, __2, __3],2),
+FlatWeightedSumGeq([1, 2, 3, 4],[__0, __1, __2, __3],2),
+SumGeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 0),
+SumLeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 4),
+SumGeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 0),
+SumLeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 4),
+__0 =aux toInt(__7),
+__1 =aux toInt(__4),
+__2 =aux toInt(__5),
+__3 =aux toInt(__6),
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __4),
+Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __5),
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __6),
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __7)
 
 Model before rewriting:
 
-find a: set  of int(1..4)
-find b: set  of int(1..4)
+find a: set of int(1..4)
+find b: set of int(1..4)
 
 such that
 
-(sum([ i | i <- (a union b) ]) = 2)
+sum([ i | i <- (a union b) ]) = 2
 
 --
 
-[ i | i <- (a union b) ], 
-   ~~> union_set ([("Base", 8700)])
-flatten([[ i | i <- a ],[ i | i <- b, !(i in a) ];int(1..)])
-
---
-
-flatten([[ i | i <- a ],[ i | i <- b, !(i in a) ];int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-flatten([__0,__1;int(1..)])
+sum([ i | i <- (a union b) ]) = 2
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([ i | i <- (a union b) ]) = 2
 new variables:
-  find __0: matrix indexed by [int(1..)] of set  of int(1..4)
-  find __1: matrix indexed by [int(1..)] of set  of int(1..4)
+  find a#occurrence_1: bool
+  find a#occurrence_2: bool
+  find a#occurrence_3: bool
+  find a#occurrence_4: bool
+  find b#occurrence_1: bool
+  find b#occurrence_2: bool
+  find b#occurrence_3: bool
+  find b#occurrence_4: bool
 new constraints:
-  __0 =aux [ i | i <- a ]
-  __1 =aux [ i | i <- b, !(i in a) ]
+  and([sum([toInt(a#occurrence_1),toInt(a#occurrence_2),toInt(a#occurrence_3),toInt(a#occurrence_4);int(1..)]) >= 0,sum([toInt(a#occurrence_1),toInt(a#occurrence_2),toInt(a#occurrence_3),toInt(a#occurrence_4);int(1..)]) <= 4;int(1..)])
+  and([sum([toInt(b#occurrence_1),toInt(b#occurrence_2),toInt(b#occurrence_3),toInt(b#occurrence_4);int(1..)]) >= 0,sum([toInt(b#occurrence_1),toInt(b#occurrence_2),toInt(b#occurrence_3),toInt(b#occurrence_4);int(1..)]) <= 4;int(1..)])
+
+--
+
+[ i | i <- (a union b) ]
+   ~~> lower_occurrence_union_expression_generator ([("ReprGeneral", 8750)])
+[ i | i : int(1..4), or([i in a,i in b;int(1..)]) ]
+
+--
+
+sum([toInt(a#occurrence_1),toInt(a#occurrence_2),toInt(a#occurrence_3),toInt(a#occurrence_4);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 0)
+
+--
+
+sum([toInt(a#occurrence_1),toInt(a#occurrence_2),toInt(a#occurrence_3),toInt(a#occurrence_4);int(1..)]) <= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 4)
+
+--
+
+sum([toInt(b#occurrence_1),toInt(b#occurrence_2),toInt(b#occurrence_3),toInt(b#occurrence_4);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 0)
+
+--
+
+sum([toInt(b#occurrence_1),toInt(b#occurrence_2),toInt(b#occurrence_3),toInt(b#occurrence_4);int(1..)]) <= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 4)
+
+--
+
+[ i | i : int(1..4), or([i in a,i in b;int(1..)]) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(or([1 in a,1 in b;int(1..)])),1;int(1..)]),product([toInt(or([2 in a,2 in b;int(1..)])),2;int(1..)]),product([toInt(or([3 in a,3 in b;int(1..)])),3;int(1..)]),product([toInt(or([4 in a,4 in b;int(1..)])),4;int(1..)]);int(1..)]
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+1 in a
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+a#occurrence_1
+
+--
+
+1 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+b#occurrence_1
+
+--
+
+2 in a
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+a#occurrence_2
+
+--
+
+2 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+b#occurrence_2
+
+--
+
+3 in a
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+a#occurrence_3
+
+--
+
+3 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+b#occurrence_3
+
+--
+
+4 in a
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+a#occurrence_4
+
+--
+
+4 in b
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+b#occurrence_4
+
+--
+
+product([toInt(or([a#occurrence_1,b#occurrence_1;int(1..)])),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]));int(1..)])
+
+--
+
+product([toInt(or([a#occurrence_2,b#occurrence_2;int(1..)])),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]));int(1..)])
+
+--
+
+product([toInt(or([a#occurrence_3,b#occurrence_3;int(1..)])),3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,toInt(or([a#occurrence_3,b#occurrence_3;int(1..)]));int(1..)])
+
+--
+
+product([toInt(or([a#occurrence_4,b#occurrence_4;int(1..)])),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]));int(1..)])
+
+--
+
+product([toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]));int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
+
+--
+
+sum([toInt(or([a#occurrence_1,b#occurrence_1;int(1..)])),product([2,toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]));int(1..)]),product([3,toInt(or([a#occurrence_3,b#occurrence_3;int(1..)]));int(1..)]),product([4,toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]));int(1..)]);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 2, 3, 4],[__0, __1, __2, __3],2),FlatWeightedSumGeq([1, 2, 3, 4],[__0, __1, __2, __3],2);int(1..)])
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+new constraints:
+  __0 =aux toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
+  __1 =aux product([toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]));int(1..)])
+  __2 =aux product([toInt(or([a#occurrence_3,b#occurrence_3;int(1..)]));int(1..)])
+  __3 =aux product([toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]));int(1..)])
+
+--
+
+product([toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]));int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]))
+
+--
+
+product([toInt(or([a#occurrence_3,b#occurrence_3;int(1..)]));int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(or([a#occurrence_3,b#occurrence_3;int(1..)]))
+
+--
+
+product([toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]));int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]))
+
+--
+
+toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__4)
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
+
+--
+
+__4 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __4)
+
+--
+
+toInt(or([a#occurrence_3,b#occurrence_3;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__5)
+new variables:
+  findAux __5: bool
+new constraints:
+  __5 =aux or([a#occurrence_3,b#occurrence_3;int(1..)])
+
+--
+
+__5 =aux or([a#occurrence_3,b#occurrence_3;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __5)
+
+--
+
+toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__6)
+new variables:
+  findAux __6: bool
+new constraints:
+  __6 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
+
+--
+
+__6 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __6)
+
+--
+
+toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__7)
+new variables:
+  findAux __7: bool
+new constraints:
+  __7 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
+
+--
+
+__7 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __7)
 
 --
 
 Final model:
 
-find a: set  of int(1..4)
-find b: set  of int(1..4)
-find __0: matrix indexed by [int(1..)] of set  of int(1..4)
-find __1: matrix indexed by [int(1..)] of set  of int(1..4)
+find a: set (representation occurrence) of int(1..4)
+find b: set (representation occurrence) of int(1..4)
+find a#occurrence_1: bool
+find a#occurrence_2: bool
+find a#occurrence_3: bool
+find a#occurrence_4: bool
+find b#occurrence_1: bool
+find b#occurrence_2: bool
+find b#occurrence_3: bool
+find b#occurrence_4: bool
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
 
 such that
 
-(sum(flatten([__0,__1;int(1..)])) = 2),
-__0 =aux [ i | i <- a ],
-__1 =aux [ i | i <- b, !(i in a) ]
+and([FlatWeightedSumLeq([1, 2, 3, 4],[__0, __1, __2, __3],2),FlatWeightedSumGeq([1, 2, 3, 4],[__0, __1, __2, __3],2);int(1..)]),
+and([SumGeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 0),SumLeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 4);int(1..)]),
+and([SumGeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 0),SumLeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 4);int(1..)]),
+__0 =aux toInt(__7),
+__1 =aux toInt(__4),
+__2 =aux toInt(__5),
+__3 =aux toInt(__6),
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __4),
+Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __5),
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __6),
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __7)
 

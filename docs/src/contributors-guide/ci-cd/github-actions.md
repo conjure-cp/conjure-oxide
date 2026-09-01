@@ -1,8 +1,8 @@
 <!-- TODO: Edit this -->
 
-# Github Actions Cookbook
+# GitHub Actions Cookbook
 
-* This document lists common patterns and issues we've had in our Github actions, and practical solutions to them. 
+* This document lists common patterns and issues we've had in our GitHub actions, and practical solutions to them. 
 * The first point of reference should be the official documentation, but if that is ever unclear, here would be a good place to look!
 
 Terminology used in this document: 
@@ -37,7 +37,7 @@ PR branches and their workflows typically live in on a branch on an external for
 
 ## I want to access the calling PR in a workflow_run workflow
 
-`workflow_run` jobs do not get access to the calling workflows detail. While one can access some things via the Github API such as head_sha, head_repo, this may not give any PR information. [Github](https://securitylab.github.com/research/github-actions-preventing-pwn-requests/) recommends saving the PR number to an artifact, and using this number to fetch the PR info through the API:
+`workflow_run` jobs do not get access to the calling workflows detail. While one can access some things via the GitHub API such as head_sha, head_repo, this may not give any PR information. [GitHub](https://securitylab.github.com/research/github-actions-preventing-pwn-requests/) recommends saving the PR number to an artifact, and using this number to fetch the PR info through the API:
 
 Example from [this github blog post](https://securitylab.github.com/research/github-actions-preventing-pwn-requests/) - see this for more explanation and details!
 
@@ -135,4 +135,4 @@ The default `github.sha` is a temporary commit representing the state of the rep
 
 ---
 
-*This section had been taken from the 'Github Actions' page of the conjure-oxide wiki*
+*This section had been taken from the 'GitHub Actions' page of the conjure-oxide wiki*

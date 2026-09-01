@@ -1,0 +1,237 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..3), int(1..2)] of int(1..5)
+find i: int(1..2)
+
+such that
+
+a[i, i] = i,
+a[1, 2] = 1,
+a[2, 1] = 1,
+a[3, 1] = 1,
+a[3, 2] = 1
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#bv_1: int(1..2)
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#array_1: matrix indexed by [int(1..3), int(1..2)] of int(1..5)
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a[i, i] = i,
+a[1, 2] = 1,
+a[2, 1] = 1,
+a[3, 1] = 1,
+a[3, 2] = 1
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+a[i, i] = i,
+a[1, 2] = 1,
+a[2, 1] = 1,
+a[3, 1] = 1,
+a[3, 2] = 1
+new variables:
+  find a#array_1#bv_1: matrix indexed by [int(1..3), int(1..2)] of int(1..5)
+
+--
+
+i
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+i#bv_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+i
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+i#bv_1
+
+--
+
+i
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+i#bv_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#array_1#bv_1
+
+--
+
+a#array_1#bv_1[i#bv_1, i#bv_1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[i#bv_1, i#bv_1])
+
+--
+
+a#array_1#bv_1[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[1, 2])
+
+--
+
+a#array_1#bv_1[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[2, 1])
+
+--
+
+a#array_1#bv_1[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[3, 1])
+
+--
+
+a#array_1#bv_1[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#bv_1,[3, 2])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..3), int(1..2)] of int(1..5)
+find i: int(1..2)
+find i#bv_1: int(1..2)
+find a#array_1: matrix indexed by [int(1..3), int(1..2)] of int(1..5)
+find a#array_1#bv_1: matrix indexed by [int(1..3), int(1..2)] of int(1..5)
+
+such that
+
+SafeIndex(a#array_1#bv_1,[i#bv_1, i#bv_1]) = i#bv_1,
+SafeIndex(a#array_1#bv_1,[1, 2]) = 1,
+SafeIndex(a#array_1#bv_1,[2, 1]) = 1,
+SafeIndex(a#array_1#bv_1,[3, 1]) = 1,
+SafeIndex(a#array_1#bv_1,[3, 2]) = 1
+

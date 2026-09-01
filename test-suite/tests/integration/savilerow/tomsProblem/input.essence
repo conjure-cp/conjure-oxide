@@ -1,0 +1,42 @@
+$ Tom's subgroup? problem
+
+
+language ESSENCE' 1.0
+given 	n : int
+given              abelian,rank3 : bool
+letting 	D be domain int(1..n)
+given 	diagonal : matrix indexed by [D] of D
+
+find 	M : matrix indexed by [D, D] of D
+find 	occurrences : matrix indexed by [D] of int(1..n*n)
+
+$ maximise the occurrences of the highest value
+maximising occurrences[n-1]
+
+such that
+
+$ Set the diagonal values
+forAll i : D .
+    M[i,i] = diagonal[i],
+
+$ (ab)c = a(bc)
+forAll a,b,c : D .
+     M[a,b] * c = a*M[b,c],
+
+$ the rank3 constraint
+rank3 ->
+  forAll a,b,c : D .
+      (M[a,b]*c = 0),
+
+$ abelian : symmetric over diagonale
+abelian ->
+   forAll a,b : D.
+      (a != b) ->
+         (M[a,b] = M[b,a])
+
+$ occurrences of each value 0..n-1 are stored in occurrence vector
+$forAll i : D .
+ $  (  atmost(M[..,..], [ occurrences[i] ], [ i ]) /\
+ $    atleast(M[..,..], [ occurrences[i] ], [ i ])   
+ $  )
+         

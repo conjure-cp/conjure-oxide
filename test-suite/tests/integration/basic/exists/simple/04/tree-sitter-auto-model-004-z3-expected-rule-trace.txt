@@ -1,0 +1,262 @@
+Model before rewriting:
+
+letting n be 3
+find S: matrix indexed by [int(1..2), int(1..n)] of int(0..1)
+
+such that
+
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
+
+--
+
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
+new variables:
+  find S#components_1: int(0..1)
+  find S#components_2: int(0..1)
+  find S#components_3: int(0..1)
+  find S#components_4: int(0..1)
+  find S#components_5: int(0..1)
+  find S#components_6: int(0..1)
+
+--
+
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
+new variables:
+  find S#components_1#bv_1: int(0..1)
+  find S#components_2#bv_1: int(0..1)
+  find S#components_3#bv_1: int(0..1)
+  find S#components_4#bv_1: int(0..1)
+  find S#components_5#bv_1: int(0..1)
+  find S#components_6#bv_1: int(0..1)
+
+--
+
+or([ S[1, k1] < S[2, k1] | k1 : int(1..n) ])
+   ~~> exists_quantified_to_finds ([("Base", 2003)])
+S[1, __0] < S[2, __0]
+new variables:
+  findAux __0: int(1..n)
+
+--
+
+S
+   ~~> select_representation ([("ReprGeneral", 10000)])
+S
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+new variables:
+  findAux __0#bv_1: int(1..3)
+
+--
+
+S
+   ~~> select_representation ([("ReprGeneral", 10000)])
+S
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+S[1, __0#bv_1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(S,[1, __0#bv_1])
+
+--
+
+S[2, __0#bv_1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(S,[2, __0#bv_1])
+
+--
+
+SafeIndex(S,[1, __0#bv_1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([S#components_1,S#components_2,S#components_3;int(1..)],[sum([product([1,(__0#bv_1 - 1);int(1..)]),1;int(1..)])])
+
+--
+
+S#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+S#components_1
+
+--
+
+S#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+S#components_2
+
+--
+
+S#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+S#components_3
+
+--
+
+S#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+S#components_1#bv_1
+
+--
+
+S#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+S#components_2#bv_1
+
+--
+
+S#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+S#components_3#bv_1
+
+--
+
+product([1,(__0#bv_1 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(__0#bv_1 - 1);int(1..)])
+
+--
+
+product([(__0#bv_1 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__0#bv_1 - 1)
+
+--
+
+(__0#bv_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__0#bv_1,-(1);int(1..)])
+
+--
+
+sum([sum([__0#bv_1,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__0#bv_1,-1,1;int(1..)])
+
+--
+
+sum([__0#bv_1;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__0#bv_1
+
+--
+
+SafeIndex(S,[2, __0#bv_1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([S#components_4,S#components_5,S#components_6;int(1..)],[sum([product([1,(__0#bv_1 - 1);int(1..)]),1;int(1..)])])
+
+--
+
+S#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+S#components_4
+
+--
+
+S#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+S#components_5
+
+--
+
+S#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+S#components_6
+
+--
+
+S#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+S#components_4#bv_1
+
+--
+
+S#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+S#components_5#bv_1
+
+--
+
+S#components_6
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+S#components_6#bv_1
+
+--
+
+product([1,(__0#bv_1 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(__0#bv_1 - 1);int(1..)])
+
+--
+
+product([(__0#bv_1 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__0#bv_1 - 1)
+
+--
+
+(__0#bv_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__0#bv_1,-(1);int(1..)])
+
+--
+
+sum([sum([__0#bv_1,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__0#bv_1,-1,1;int(1..)])
+
+--
+
+sum([__0#bv_1;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__0#bv_1
+
+--
+
+Final model:
+
+letting n be 3
+find S: matrix indexed by [int(1..2), int(1..n)] of int(0..1)
+find S#components_1: int(0..1)
+find S#components_2: int(0..1)
+find S#components_3: int(0..1)
+find S#components_4: int(0..1)
+find S#components_5: int(0..1)
+find S#components_6: int(0..1)
+find S#components_1#bv_1: int(0..1)
+find S#components_2#bv_1: int(0..1)
+find S#components_3#bv_1: int(0..1)
+find S#components_4#bv_1: int(0..1)
+find S#components_5#bv_1: int(0..1)
+find S#components_6#bv_1: int(0..1)
+findAux __0: int(1..n)
+findAux __0#bv_1: int(1..3)
+
+such that
+
+SafeIndex([S#components_1#bv_1,S#components_2#bv_1,S#components_3#bv_1;int(1..)],[__0#bv_1]) < SafeIndex([S#components_4#bv_1,S#components_5#bv_1,S#components_6#bv_1;int(1..)],[__0#bv_1])
+

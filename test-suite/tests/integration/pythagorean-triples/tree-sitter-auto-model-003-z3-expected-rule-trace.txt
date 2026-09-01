@@ -1,0 +1,427 @@
+Model before rewriting:
+
+letting n be 10
+find class: matrix indexed by [int(1..n)] of int(1..2)
+
+such that
+
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+
+--
+
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+new variables:
+  find class#components_1: int(1..2)
+  find class#components_10: int(1..2)
+  find class#components_2: int(1..2)
+  find class#components_3: int(1..2)
+  find class#components_4: int(1..2)
+  find class#components_5: int(1..2)
+  find class#components_6: int(1..2)
+  find class#components_7: int(1..2)
+  find class#components_8: int(1..2)
+  find class#components_9: int(1..2)
+
+--
+
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+new variables:
+  find class#components_1#lia_1: int(1..2)
+  find class#components_10#lia_1: int(1..2)
+  find class#components_2#lia_1: int(1..2)
+  find class#components_3#lia_1: int(1..2)
+  find class#components_4#lia_1: int(1..2)
+  find class#components_5#lia_1: int(1..2)
+  find class#components_6#lia_1: int(1..2)
+  find class#components_7#lia_1: int(1..2)
+  find class#components_8#lia_1: int(1..2)
+  find class#components_9#lia_1: int(1..2)
+
+--
+
+Model before rewriting:
+
+find a: int(1..n)
+find b: int(1..n)
+find c: int(1..n)
+findAux __0: matrix indexed by [int(1..n)] of int(1..2)
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+true != (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+
+--
+
+true != (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true != (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+new variables:
+  findAux __0#components_1: int(1..2)
+  findAux __0#components_10: int(1..2)
+  findAux __0#components_2: int(1..2)
+  findAux __0#components_3: int(1..2)
+  findAux __0#components_4: int(1..2)
+  findAux __0#components_5: int(1..2)
+  findAux __0#components_6: int(1..2)
+  findAux __0#components_7: int(1..2)
+  findAux __0#components_8: int(1..2)
+  findAux __0#components_9: int(1..2)
+
+--
+
+and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b,b <= c;int(1..)])
+
+--
+
+(c ** 2)
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(c, 2) @ and([or([c != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])}
+
+--
+
+(a ** 2)
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(a, 2) @ and([or([a != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])}
+
+--
+
+(b ** 2)
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(b, 2) @ and([or([b != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])}
+
+--
+
+true != (and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+true != __4
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux (and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+
+--
+
+__4 =aux (and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)])), __4)
+
+--
+
+(and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__5) -> (or([__1,__2,__3;int(1..3)]))
+new variables:
+  findAux __5: bool
+new constraints:
+  __5 =aux and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])
+
+--
+
+__5 =aux and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)]), __5)
+
+--
+
+(__5) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([__1,__2,__3;int(1..3)]), __5)
+
+--
+
+sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)
+   ~~> flatten_eq ([("Minion", 4200)])
+__6 = __7
+new variables:
+  findAux __6: int(2..200)
+  findAux __7: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+new constraints:
+  __6 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..)])
+  __7 =aux SafePow(c, 2)
+
+--
+
+__6 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__8, __9], __6),SumGeq([__8, __9], __6);int(1..)])
+new variables:
+  findAux __8: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+  findAux __9: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+new constraints:
+  __8 =aux SafePow(a, 2)
+  __9 =aux SafePow(b, 2)
+
+--
+
+__7 =aux SafePow(c, 2)
+   ~~> introduce_poweq ([("Minion", 4200)])
+MinionPow(c,2,__7)
+
+--
+
+__8 =aux SafePow(a, 2)
+   ~~> introduce_poweq ([("Minion", 4200)])
+MinionPow(a,2,__8)
+
+--
+
+__9 =aux SafePow(b, 2)
+   ~~> introduce_poweq ([("Minion", 4200)])
+MinionPow(b,2,__9)
+
+--
+
+a <= b
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(a, b, 0)
+
+--
+
+b <= c
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(b, c, 0)
+
+--
+
+or([__1,__2,__3;int(1..3)])
+   ~~> matrix_to_list ([("Base", 2000)])
+or([__1,__2,__3;int(1..)])
+
+--
+
+Final model:
+
+find a: int(1..n)
+find b: int(1..n)
+find c: int(1..n)
+findAux __0: matrix indexed by [int(1..n)] of int(1..2)
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __0#components_1: int(1..2)
+findAux __0#components_2: int(1..2)
+findAux __0#components_3: int(1..2)
+findAux __0#components_4: int(1..2)
+findAux __0#components_5: int(1..2)
+findAux __0#components_6: int(1..2)
+findAux __0#components_7: int(1..2)
+findAux __0#components_8: int(1..2)
+findAux __0#components_9: int(1..2)
+findAux __0#components_10: int(1..2)
+findAux __4: bool
+findAux __5: bool
+findAux __6: int(2..200)
+findAux __7: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+findAux __8: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+findAux __9: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+
+such that
+
+true != __4,
+Reify(ReifyImply(or([__1,__2,__3;int(1..)]), __5), __4),
+Reify(and([__6 = __7,Ineq(a, b, 0),Ineq(b, c, 0);int(1..)]), __5),
+and([SumLeq([__8, __9], __6),SumGeq([__8, __9], __6);int(1..)]),
+MinionPow(c,2,__7),
+MinionPow(a,2,__8),
+MinionPow(b,2,__9)
+
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+and([or([class#components_3 != class#components_4,class#components_4 != class#components_5,class#components_5 != class#components_3;int(1..3)]),or([class#components_6 != class#components_8,class#components_8 != class#components_10,class#components_10 != class#components_6;int(1..3)]);int(1..)])
+
+--
+
+class#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_3
+
+--
+
+class#components_3 != class#components_4
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+class#components_3 != class#components_4
+
+--
+
+class#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_4
+
+--
+
+class#components_4 != class#components_5
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+class#components_4 != class#components_5
+
+--
+
+class#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_5
+
+--
+
+class#components_5 != class#components_3
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+class#components_5 != class#components_3
+
+--
+
+class#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_6
+
+--
+
+class#components_6 != class#components_8
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+class#components_6 != class#components_8
+
+--
+
+class#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_8
+
+--
+
+class#components_8 != class#components_10
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+class#components_8 != class#components_10
+
+--
+
+class#components_10
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_10
+
+--
+
+class#components_10 != class#components_6
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+class#components_10 != class#components_6
+
+--
+
+class#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_3#lia_1
+
+--
+
+class#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_4#lia_1
+
+--
+
+class#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_4#lia_1
+
+--
+
+class#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_5#lia_1
+
+--
+
+class#components_5
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_5#lia_1
+
+--
+
+class#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_3#lia_1
+
+--
+
+class#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_6#lia_1
+
+--
+
+class#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_8#lia_1
+
+--
+
+class#components_8
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_8#lia_1
+
+--
+
+class#components_10
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_10#lia_1
+
+--
+
+class#components_10
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_10#lia_1
+
+--
+
+class#components_6
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+class#components_6#lia_1
+
+--
+
+or([class#components_3#lia_1 != class#components_4#lia_1,class#components_4#lia_1 != class#components_5#lia_1,class#components_5#lia_1 != class#components_3#lia_1;int(1..3)])
+   ~~> matrix_to_list ([("Base", 2000)])
+or([class#components_3#lia_1 != class#components_4#lia_1,class#components_4#lia_1 != class#components_5#lia_1,class#components_5#lia_1 != class#components_3#lia_1;int(1..)])
+
+--
+
+or([class#components_6#lia_1 != class#components_8#lia_1,class#components_8#lia_1 != class#components_10#lia_1,class#components_10#lia_1 != class#components_6#lia_1;int(1..3)])
+   ~~> matrix_to_list ([("Base", 2000)])
+or([class#components_6#lia_1 != class#components_8#lia_1,class#components_8#lia_1 != class#components_10#lia_1,class#components_10#lia_1 != class#components_6#lia_1;int(1..)])
+
+--
+
+Final model:
+
+letting n be 10
+find class: matrix indexed by [int(1..n)] of int(1..2)
+find class#components_1: int(1..2)
+find class#components_2: int(1..2)
+find class#components_3: int(1..2)
+find class#components_4: int(1..2)
+find class#components_5: int(1..2)
+find class#components_6: int(1..2)
+find class#components_7: int(1..2)
+find class#components_8: int(1..2)
+find class#components_9: int(1..2)
+find class#components_10: int(1..2)
+find class#components_1#lia_1: int(1..2)
+find class#components_2#lia_1: int(1..2)
+find class#components_3#lia_1: int(1..2)
+find class#components_4#lia_1: int(1..2)
+find class#components_5#lia_1: int(1..2)
+find class#components_6#lia_1: int(1..2)
+find class#components_7#lia_1: int(1..2)
+find class#components_8#lia_1: int(1..2)
+find class#components_9#lia_1: int(1..2)
+find class#components_10#lia_1: int(1..2)
+
+such that
+
+and([or([class#components_3#lia_1 != class#components_4#lia_1,class#components_4#lia_1 != class#components_5#lia_1,class#components_5#lia_1 != class#components_3#lia_1;int(1..)]),or([class#components_6#lia_1 != class#components_8#lia_1,class#components_8#lia_1 != class#components_10#lia_1,class#components_10#lia_1 != class#components_6#lia_1;int(1..)]);int(1..)])
+

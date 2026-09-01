@@ -1,0 +1,135 @@
+Model before rewriting:
+
+find a: int(1..3)
+find b: int(1..3)
+
+such that
+
+min([a,b;int(1..2)]) <= 2
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#bv_1: int(1..3)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(1..3)
+
+--
+
+a
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+a#bv_1
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+min([a#bv_1,b#bv_1;int(1..2)])
+   ~~> matrix_to_list ([("Base", 2000)])
+min([a#bv_1,b#bv_1;int(1..)])
+
+--
+
+min([a#bv_1,b#bv_1;int(1..)])
+   ~~> min_to_var ([("Base", 6000)])
+__0
+new variables:
+  findAux __0: int(1..3)
+new constraints:
+  __0 <= a#bv_1
+  __0 <= b#bv_1
+  or([__0 = a#bv_1,__0 = b#bv_1;int(1..)])
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+new variables:
+  findAux __0#bv_1: int(1..3)
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+__0
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+__0#bv_1
+
+--
+
+Final model:
+
+find a: int(1..3)
+find b: int(1..3)
+find a#bv_1: int(1..3)
+find b#bv_1: int(1..3)
+findAux __0: int(1..3)
+findAux __0#bv_1: int(1..3)
+
+such that
+
+__0#bv_1 <= 2,
+__0#bv_1 <= a#bv_1,
+__0#bv_1 <= b#bv_1,
+or([__0#bv_1 = a#bv_1,__0#bv_1 = b#bv_1;int(1..)])
+

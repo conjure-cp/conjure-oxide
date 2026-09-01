@@ -109,12 +109,12 @@ jobs:
       if: ${{ matrix.os == 'macos-latest' }}
       run: brew install z3
 
-    - name: Install coreutils (macOS)
+    - name: Install test utilities (macOS)
       if: ${{ matrix.os == 'macos-latest' }}
-      run: brew install coreutils
+      run: brew install coreutils parallel
 
     - name: Run tests
-      run: make test
+      run: make test CARGO_FEATURES="--features z3-bundled"
 
     - name: Save cache
       if: ${{ always() && github.event_name == 'push' && matrix.os == 'ubuntu-latest' && steps.restore_cache.outputs.cache-hit != 'true' }}

@@ -1,0 +1,35 @@
+Model before rewriting:
+
+letting A be true
+find b: int(1..20)
+
+such that
+
+(A) -> (b < 3)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#bv_1: int(1..20)
+
+--
+
+b
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+b#bv_1
+
+--
+
+Final model:
+
+letting A be true
+find b: int(1..20)
+find b#bv_1: int(1..20)
+
+such that
+
+b#bv_1 < 3
+

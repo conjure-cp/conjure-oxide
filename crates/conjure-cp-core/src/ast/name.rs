@@ -42,6 +42,11 @@ impl Name {
     pub fn user(name: &str) -> Self {
         Name::User(Ustr::from(name))
     }
+
+    /// Creates a name for an auxiliary variable introduced by a representation.
+    pub fn repr(src: Name, rule_name: &str, suffix: &str) -> Self {
+        Name::Represented(Box::new((src, Ustr::from(rule_name), Ustr::from(suffix))))
+    }
 }
 
 impl Default for Name {

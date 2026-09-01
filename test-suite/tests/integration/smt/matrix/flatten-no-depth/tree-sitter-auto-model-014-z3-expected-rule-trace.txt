@@ -1,0 +1,347 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
+
+such that
+
+allDifferent(flatten(a)),
+flatten(a)[1] = b[1],
+flatten(a)[2] = b[2],
+flatten(a)[3] = b[3],
+flatten(a)[4] = b[4]
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#array_1: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#components_1: int(1..4)
+  find b#components_2: int(1..4)
+  find b#components_3: int(1..4)
+  find b#components_4: int(1..4)
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+allDifferent(flatten(a)),
+flatten(a)[1] = b[1],
+flatten(a)[2] = b[2],
+flatten(a)[3] = b[3],
+flatten(a)[4] = b[4]
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+allDifferent(flatten(a)),
+flatten(a)[1] = b[1],
+flatten(a)[2] = b[2],
+flatten(a)[3] = b[3],
+flatten(a)[4] = b[4]
+new variables:
+  find a#array_1#lia_1: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+  find b#components_1#lia_1: int(1..4)
+  find b#components_2#lia_1: int(1..4)
+  find b#components_3#lia_1: int(1..4)
+  find b#components_4#lia_1: int(1..4)
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a#array_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+a#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#array_1#lia_1
+
+--
+
+flatten(a#array_1#lia_1)[1]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#array_1#lia_1[1, 1]
+
+--
+
+flatten(a#array_1#lia_1)[2]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#array_1#lia_1[1, 2]
+
+--
+
+flatten(a#array_1#lia_1)[3]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#array_1#lia_1[2, 1]
+
+--
+
+flatten(a#array_1#lia_1)[4]
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#array_1#lia_1[2, 2]
+
+--
+
+b[1]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+b#components_1
+
+--
+
+b#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_1
+
+--
+
+b#components_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+b#components_1#lia_1
+
+--
+
+b[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+b#components_2
+
+--
+
+b#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_2
+
+--
+
+b#components_2
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+b#components_2#lia_1
+
+--
+
+b[3]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+b#components_3
+
+--
+
+b#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_3
+
+--
+
+b#components_3
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+b#components_3#lia_1
+
+--
+
+b[4]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+b#components_4
+
+--
+
+b#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b#components_4
+
+--
+
+b#components_4
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+b#components_4#lia_1
+
+--
+
+a#array_1#lia_1[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#lia_1,[1, 1])
+
+--
+
+a#array_1#lia_1[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#lia_1,[1, 2])
+
+--
+
+a#array_1#lia_1[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#lia_1,[2, 1])
+
+--
+
+a#array_1#lia_1[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1#lia_1,[2, 2])
+
+--
+
+allDifferent(flatten(a#array_1#lia_1))
+   ~~> alldiff_as_smt_distinct ([("Smt", 4000)])
+smtDistinct(flatten(a#array_1#lia_1))
+
+--
+
+flatten(a#array_1#lia_1)
+   ~~> unwrap_flatten_matrix_nonatomic ([("Smt", 999)])
+[SafeIndex(a#array_1#lia_1,[1, 1]),SafeIndex(a#array_1#lia_1,[1, 2]),SafeIndex(a#array_1#lia_1,[2, 1]),SafeIndex(a#array_1#lia_1,[2, 2]);int(1..4)]
+
+--
+
+smtDistinct([SafeIndex(a#array_1#lia_1,[1, 1]),SafeIndex(a#array_1#lia_1,[1, 2]),SafeIndex(a#array_1#lia_1,[2, 1]),SafeIndex(a#array_1#lia_1,[2, 2]);int(1..4)])
+   ~~> matrix_to_list ([("Base", 2000)])
+smtDistinct([SafeIndex(a#array_1#lia_1,[1, 1]),SafeIndex(a#array_1#lia_1,[1, 2]),SafeIndex(a#array_1#lia_1,[2, 1]),SafeIndex(a#array_1#lia_1,[2, 2]);int(1..)])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
+find a#array_1: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b#components_1: int(1..4)
+find b#components_2: int(1..4)
+find b#components_3: int(1..4)
+find b#components_4: int(1..4)
+find a#array_1#lia_1: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b#components_1#lia_1: int(1..4)
+find b#components_2#lia_1: int(1..4)
+find b#components_3#lia_1: int(1..4)
+find b#components_4#lia_1: int(1..4)
+
+such that
+
+smtDistinct([SafeIndex(a#array_1#lia_1,[1, 1]),SafeIndex(a#array_1#lia_1,[1, 2]),SafeIndex(a#array_1#lia_1,[2, 1]),SafeIndex(a#array_1#lia_1,[2, 2]);int(1..)]),
+SafeIndex(a#array_1#lia_1,[1, 1]) = b#components_1#lia_1,
+SafeIndex(a#array_1#lia_1,[1, 2]) = b#components_2#lia_1,
+SafeIndex(a#array_1#lia_1,[2, 1]) = b#components_3#lia_1,
+SafeIndex(a#array_1#lia_1,[2, 2]) = b#components_4#lia_1
+

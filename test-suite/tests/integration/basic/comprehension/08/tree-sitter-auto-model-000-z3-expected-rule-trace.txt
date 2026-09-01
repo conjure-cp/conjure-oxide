@@ -1,0 +1,215 @@
+Model before rewriting:
+
+letting m be 6
+find x: int(0..6)
+
+such that
+
+and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ])
+
+--
+
+and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ])
+new variables:
+  find x#bv_1: int(0..6)
+
+--
+
+[ (j - i) <= x | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..)]))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[-1 <= x,0 <= x,1 <= x,-1 <= x,0 <= x,1 <= x,-1 <= x,0 <= x,1 <= x,-1 <= x,0 <= x,1 <= x,-1 <= x,0 <= x,1 <= x;int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+Final model:
+
+letting m be 6
+find x: int(0..6)
+find x#bv_1: int(0..6)
+
+such that
+
+and([-1 <= x#bv_1,0 <= x#bv_1,1 <= x#bv_1,-1 <= x#bv_1,0 <= x#bv_1,1 <= x#bv_1,-1 <= x#bv_1,0 <= x#bv_1,1 <= x#bv_1,-1 <= x#bv_1,0 <= x#bv_1,1 <= x#bv_1,-1 <= x#bv_1,0 <= x#bv_1,1 <= x#bv_1;int(1..)])
+

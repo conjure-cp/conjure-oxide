@@ -1,0 +1,39 @@
+Model before rewriting:
+
+find x: tuple (int(1..2), int(1..5))
+
+such that
+
+x = (2,3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..9)
+
+--
+
+x = (2,3)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#packed_1 = 7
+
+--
+
+x#packed_1 = 7
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#packed_1,7)
+
+--
+
+Final model:
+
+find x: tuple (int(1..2), int(1..5))
+find x#packed_1: int(0..9)
+
+such that
+
+WatchedLiteral(x#packed_1,7)
+

@@ -15,6 +15,12 @@ Regardless of which encoding type is being used, a SAT transformation rule shoul
 5. **Domain propagation (Integers only)** - Update the range of the returned `SATInt` to reflect the new interval. The bit-width of the `SATInt` should also be updated for the new range.
 6. **Return the result** - Use `Reduction::cnf(..)` to return the created expression along with the new CNF clauses and symbol table.
 
+> All three integer encodings share the one `SAT` rule set, because which encoding a variable gets
+> is chosen per declaration and a single model can hold more than one. A rule must therefore decline
+> when its operands are not in its own encoding -- which is what the `validate_*_int_operands`
+> helpers do. An operation whose operands disagree, or whose shared encoding has no rule for it, is
+> re-encoded into the log form by the channelling fallback before it reaches here.
+
 ## Example - negation of log integers
 
 ```rust
@@ -24,7 +30,7 @@ Regardless of which encoding type is being used, a SAT transformation rule shoul
 /// -SATInt(a) ~> SATInt(b)
 ///
 /// ```
-#[register_rule("SAT_Log", 4100, [Neg])]
+#[register_rule("SAT", 4100, [Neg])]
 fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, expr) = expr else {
         return Err(RuleNotApplicable);

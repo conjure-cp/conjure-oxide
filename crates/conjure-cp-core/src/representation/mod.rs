@@ -1,0 +1,46 @@
+pub mod default_impls;
+pub mod errors;
+mod legacy;
+pub mod registry;
+mod serde;
+mod store;
+pub mod stored;
+pub mod types;
+pub mod util;
+
+pub use conjure_cp_rule_macros::register_representation;
+pub use errors::*;
+pub use legacy::*;
+pub use registry::{
+    ReprRulePtr, get_applicable_repr_by_short_name, get_repr_by_name, get_repr_by_short_name,
+    get_repr_rules,
+};
+pub use store::ReprStore;
+pub use stored::{ReprRuleStored, ReprStateStored};
+pub use types::{ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprResult, ReprRule};
+
+/// Re-exports for use by the `define_repr!` proc macro. Not part of the public API.
+#[doc(hidden)]
+pub mod _dependencies {
+    pub use super::default_impls;
+    pub use super::errors::*;
+    pub use super::registry::REPR_RULES_DISTRIBUTED_SLICE;
+    pub use super::serde::ReprStateSerde;
+    pub use super::stored::{ReprRuleStored, ReprStateStored};
+    pub use super::types::{
+        LookupFn, ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprInstantiateResult,
+        ReprResult, ReprRule,
+    };
+    pub use super::util::try_up_via;
+    pub use crate::ast::eval_constant;
+    pub use crate::rule_engine::_dependencies::*;
+    pub use elsa::sync::FrozenMap;
+    pub use funcmap;
+    pub use funcmap::{FuncMap, TryFuncMap};
+    pub use serde;
+    pub use serde::{Deserialize, Serialize};
+    pub use serde_json;
+    pub use serde_with;
+    pub use serde_with::{DeserializeAs, SerializeAs, serde_as};
+    pub use uniplate;
+}

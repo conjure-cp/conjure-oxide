@@ -1,11 +1,13 @@
 use std::collections::{BTreeMap, HashMap};
 use std::iter::FusedIterator;
+use std::time::Duration;
 
 use itertools::Itertools;
 use uniplate::Uniplate;
 use versions::Versioning;
 use z3::{
-    Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate, with_z3_config,
+    Config, Params, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate,
+    with_z3_config,
 };
 
 use super::convert_model::*;
@@ -13,8 +15,10 @@ use super::store::*;
 use super::theories::*;
 
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
-use crate::rule_engine::rewrite_model_with_configured_rewriter;
-use crate::settings::{Rewriter, current_rewriter, set_current_rewriter};
+use crate::representation::util::try_up;
+use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
+use crate::settings::{RewriteConfig, Rewriter, current_rewriter, set_current_rewriter};
+use crate::solver::adaptors::SolveTimeBudget;
 use crate::{Model, solver::*};
 
 const MINIMUM_Z3_VERSION: &str = "4.8.12";
@@ -32,7 +36,9 @@ pub struct Smt {
 
     solver_cfg: Config,
 
-    theory_config: TheoryConfig,
+    timeout: Option<Duration>,
+
+    solver_seed: u32,
 
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<Model>,
@@ -44,10 +50,11 @@ impl Default for Smt {
     fn default() -> Self {
         Smt {
             __non_constructable: private::Internal,
-            store: SymbolStore::new(TheoryConfig::default()),
+            store: SymbolStore::new(),
             solver_inst: Solver::new(),
             solver_cfg: Config::new(),
-            theory_config: TheoryConfig::default(),
+            timeout: None,
+            solver_seed: 0,
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -55,17 +62,21 @@ impl Default for Smt {
 }
 
 impl Smt {
-    /// Constructs a new adaptor using the given theories for representing the relevant constructs.
-    pub fn new(timeout_msec: Option<u64>, theory_config: TheoryConfig) -> Self {
-        let mut solver_cfg = Config::new();
-        timeout_msec.inspect(|ms| solver_cfg.set_timeout_msec(*ms));
-
+    /// Constructs a new adaptor.
+    ///
+    /// Which Z3 theory each integer variable lands in is not set here: it is a representation
+    /// choice made per declaration during rewriting, which the adaptor reads back off the model.
+    pub fn new(timeout: Option<Duration>) -> Self {
         Smt {
-            theory_config,
-            solver_cfg,
-            store: SymbolStore::new(theory_config),
+            timeout,
             ..Default::default()
         }
+    }
+
+    /// Sets the seed used by Z3's random search behaviour.
+    pub fn with_solver_seed(mut self, solver_seed: u32) -> Self {
+        self.solver_seed = solver_seed;
+        self
     }
 }
 
@@ -161,10 +172,6 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         })
         .collect_vec();
 
-    if representations.is_empty() {
-        return;
-    }
-
     let mut solution_btree = solution
         .clone()
         .into_iter()
@@ -175,6 +182,15 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         };
         solution.insert(name.clone(), value.clone());
         solution_btree.insert(name, value);
+    }
+
+    for (_, declaration) in symbols.iter_local() {
+        if declaration.reprs().is_empty() {
+            continue;
+        }
+        if let Ok(value) = try_up(declaration.clone(), solution) {
+            solution.insert(declaration.name().clone(), value);
+        }
     }
 }
 
@@ -219,7 +235,6 @@ impl Smt {
         dominance_model_template: Option<&Model>,
         solver: &mut Solver,
         store: &mut SymbolStore,
-        theory_config: TheoryConfig,
         solution: &HashMap<Name, Literal>,
     ) -> Result<(), SolverError> {
         let Some(dominance_expression) = dominance_expression else {
@@ -247,7 +262,19 @@ impl Smt {
         dominance_model.dominance = None;
         dominance_model.add_constraint(rewritten_dominance);
 
-        let rule_sets = dominance_model.context.read().unwrap().rule_sets.clone();
+        // Prefer the rule sets the model was built with, but fall back to resolving them for this
+        // adaptor's own family: an embedder is not obliged to populate the context, and rewriting
+        // a dominance constraint with no rules at all silently produces a model referring to
+        // variables that representations have since replaced. The Minion adaptor resolves for its
+        // family unconditionally for the same reason.
+        let rule_sets = {
+            let from_context = dominance_model.context.read().unwrap().rule_sets.clone();
+            if from_context.is_empty() {
+                get_rule_sets_for_solver_family(SolverFamily::Z3)
+            } else {
+                from_context
+            }
+        };
         let rewritten =
             rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
                 .map_err(|e| {
@@ -259,7 +286,6 @@ impl Smt {
         load_model_impl(
             store,
             solver,
-            &theory_config,
             &rewritten.symbols(),
             rewritten.constraints().as_slice(),
         )
@@ -276,19 +302,24 @@ impl SolverAdaptor for Smt {
         let store_send = self.store.synchronized();
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
-        let theory_config = self.theory_config;
+        let solver_seed = self.solver_seed;
+        let budget = SolveTimeBudget::new(self.timeout);
         let mut stats: SolverStats = Default::default();
 
         // Apply config when getting solutions
-        let (search_complete, final_z3_time) =
+        let (search_status, final_z3_time) =
             with_z3_config(&self.solver_cfg, move || -> Result<_, SolverError> {
                 let solver = solver_send.recover();
+                let mut solver_params = Params::new();
+                solver_params.set_u32("random_seed", solver_seed);
+                solver.set_params(&solver_params);
                 let mut final_z3_time: Option<f64> = None;
                 let mut found_solution = false;
                 let mut hook_error: Option<SolverError> = None;
                 let mut solutions = solver.into_solutions_with_statistics(
                     store_send.recover(),
                     true,
+                    budget,
                     |solver, store, instance| {
                         let mut dominance_solution = match instance.as_literals_map() {
                             Ok(solution) => solution,
@@ -309,7 +340,6 @@ impl SolverAdaptor for Smt {
                             dominance_model_template.as_ref(),
                             solver,
                             store,
-                            theory_config,
                             &dominance_solution,
                         ) {
                             Ok(()) => true,
@@ -335,17 +365,19 @@ impl SolverAdaptor for Smt {
                     })
                     .count();
 
+                let terminal_result = solutions.terminal_result.take();
+                let unknown_reason = solutions.unknown_reason.take();
                 drop(solutions);
                 if let Some(err) = hook_error {
                     return Err(err);
                 }
 
-                let search_complete = if found_solution {
-                    SearchComplete::HasSolutions
-                } else {
-                    SearchComplete::NoSolutions
-                };
-                Ok((search_complete, final_z3_time))
+                let search_status = search_status_from_terminal_result(
+                    found_solution,
+                    terminal_result,
+                    unknown_reason,
+                )?;
+                Ok((search_status, final_z3_time))
             })?;
 
         if let Some(time) = final_z3_time {
@@ -354,7 +386,7 @@ impl SolverAdaptor for Smt {
 
         Ok(SolveSuccess {
             stats,
-            status: SearchStatus::Complete(search_complete),
+            status: search_status,
         })
     }
 
@@ -377,7 +409,6 @@ impl SolverAdaptor for Smt {
         load_model_impl(
             &mut self.store,
             &mut self.solver_inst,
-            &self.theory_config,
             &model.symbols(),
             model.constraints().as_slice(),
         )?;
@@ -385,7 +416,7 @@ impl SolverAdaptor for Smt {
     }
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Smt(self.theory_config)
+        SolverFamily::Z3
     }
 
     fn get_name(&self) -> &'static str {
@@ -406,6 +437,7 @@ trait IntoSolutionsWithStatistics {
         self,
         t: T,
         model_completion: bool,
+        budget: SolveTimeBudget,
         on_solution: F,
     ) -> SolverStatsIterator<T, F>
     where
@@ -418,6 +450,7 @@ impl IntoSolutionsWithStatistics for Solver {
         self,
         t: T,
         model_completion: bool,
+        budget: SolveTimeBudget,
         on_solution: F,
     ) -> SolverStatsIterator<T, F>
     where
@@ -428,8 +461,11 @@ impl IntoSolutionsWithStatistics for Solver {
             solver: self,
             ast: t,
             model_completion,
+            budget,
             on_solution,
             done: false,
+            terminal_result: None,
+            unknown_reason: None,
         }
     }
 }
@@ -438,8 +474,11 @@ struct SolverStatsIterator<T, F> {
     solver: Solver,
     ast: T,
     model_completion: bool,
+    budget: SolveTimeBudget,
     on_solution: F,
     done: bool,
+    terminal_result: Option<SatResult>,
+    unknown_reason: Option<String>,
 }
 
 impl<T, F> FusedIterator for SolverStatsIterator<T, F>
@@ -461,6 +500,23 @@ where
             return None;
         }
 
+        if let Some(remaining) = self.budget.remaining() {
+            if remaining.is_zero() {
+                self.done = true;
+                self.terminal_result = Some(SatResult::Unknown);
+                self.unknown_reason = Some(String::from("cumulative solver timeout"));
+                return None;
+            }
+
+            let timeout_millis = remaining
+                .as_millis()
+                .saturating_add(u128::from(remaining.subsec_nanos() % 1_000_000 != 0));
+            let timeout_millis = u32::try_from(timeout_millis).unwrap_or(u32::MAX).max(1);
+            let mut timeout_params = Params::new();
+            timeout_params.set_u32("timeout", timeout_millis);
+            self.solver.set_params(&timeout_params);
+        }
+
         match self.solver.check() {
             SatResult::Sat => {
                 let stats = self.solver.get_statistics();
@@ -476,11 +532,53 @@ where
                 self.solver.assert(counterexample);
                 Some((instance, stats))
             }
-            _ => {
+            SatResult::Unsat => {
                 self.done = true;
+                self.terminal_result = Some(SatResult::Unsat);
+                None
+            }
+            SatResult::Unknown => {
+                self.done = true;
+                self.terminal_result = Some(SatResult::Unknown);
+                self.unknown_reason = self.solver.get_reason_unknown();
                 None
             }
         }
+    }
+}
+
+/// Converts the result that ended Z3's solution iterator into a search status.
+///
+/// `unknown` is not evidence that the model is unsatisfiable. In particular, Z3 returns it when a
+/// configured timeout expires or an in-progress check is interrupted. Treating iterator exhaustion
+/// as `NoSolutions` in that case lets an interrupted integration test pass with an empty solution
+/// file.
+fn search_status_from_terminal_result(
+    found_solution: bool,
+    terminal_result: Option<SatResult>,
+    unknown_reason: Option<String>,
+) -> Result<SearchStatus, SolverError> {
+    match terminal_result {
+        Some(SatResult::Unknown) => {
+            let reason = unknown_reason.unwrap_or_else(|| String::from("no reason given"));
+            let incomplete = if reason.to_ascii_lowercase().contains("timeout") {
+                SearchIncomplete::Timeout
+            } else {
+                SearchIncomplete::UserTerminated
+            };
+            Ok(SearchStatus::Incomplete(incomplete))
+        }
+        Some(SatResult::Unsat) => Ok(SearchStatus::Complete(if found_solution {
+            SearchComplete::HasSolutions
+        } else {
+            SearchComplete::NoSolutions
+        })),
+        // The consumer stopped requesting models, normally because its callback reached a finite
+        // solution limit. It has not established that there are no further solutions.
+        None => Ok(SearchStatus::Incomplete(SearchIncomplete::UserTerminated)),
+        Some(SatResult::Sat) => Err(SolverError::Runtime(String::from(
+            "Z3 solution iteration stopped after a satisfiable check without yielding its model",
+        ))),
     }
 }
 
@@ -489,6 +587,39 @@ mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
     use crate::context::Context;
+
+    #[test]
+    fn zero_timeout_stops_before_first_z3_check() {
+        let mut solutions = Solver::new().into_solutions_with_statistics(
+            SymbolStore::new(),
+            true,
+            SolveTimeBudget::new(Some(Duration::ZERO)),
+            |_, _, _| true,
+        );
+
+        assert!(solutions.next().is_none());
+        assert_eq!(solutions.terminal_result, Some(SatResult::Unknown));
+        assert!(
+            solutions
+                .unknown_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("timeout"))
+        );
+    }
+
+    #[test]
+    fn unknown_is_not_reported_as_no_solutions() {
+        let result = search_status_from_terminal_result(
+            false,
+            Some(SatResult::Unknown),
+            Some(String::from("timeout")),
+        )
+        .expect("unknown is a non-crashing incomplete search");
+        assert!(matches!(
+            result,
+            SearchStatus::Incomplete(SearchIncomplete::Timeout)
+        ));
+    }
 
     #[test]
     fn from_solution_substitution_replaces_reference_with_literal() {
@@ -552,9 +683,8 @@ mod tests {
 
     #[test]
     fn adding_dominance_constraint_rules_out_solution_dominated_by_prior_solution() {
-        let theory_config = TheoryConfig::default();
-        let context = Context::new_ptr_empty(SolverFamily::Smt(theory_config));
-        set_current_rewriter(Rewriter::Naive);
+        let context = Context::new_ptr_empty(SolverFamily::Z3);
+        set_current_rewriter(Rewriter::Rewrite(RewriteConfig::baseline()));
 
         let x = Name::User("x".into());
         let y = Name::User("y".into());
@@ -632,7 +762,7 @@ mod tests {
                 )),
             ));
 
-        let mut smt = Smt::new(None, theory_config);
+        let mut smt = Smt::new(None);
         smt.load_model(model, private::Internal)
             .expect("SMT model should load");
 
@@ -645,7 +775,6 @@ mod tests {
             smt.dominance_model_template.as_ref(),
             &mut smt.solver_inst,
             &mut smt.store,
-            theory_config,
             &prior_solution,
         )
         .expect("dominance constraint should be assertable");

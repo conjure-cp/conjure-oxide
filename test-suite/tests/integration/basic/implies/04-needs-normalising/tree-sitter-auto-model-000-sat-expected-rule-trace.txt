@@ -1,0 +1,265 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find g: bool
+find h: bool
+find x: bool
+find y: bool
+
+such that
+
+!((!(x)) -> (!(y))),
+(!(a)) -> (!(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g))
+
+--
+
+!(a)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (¬a \/ ¬__0)
+  (a \/ __0)
+
+--
+
+!(b)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new clauses:
+  (¬b \/ ¬__1)
+  (b \/ __1)
+
+--
+
+!(x)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  findAux __2: bool
+new clauses:
+  (¬x \/ ¬__2)
+  (x \/ __2)
+
+--
+
+!(y)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__3
+new variables:
+  findAux __3: bool
+new clauses:
+  (¬y \/ ¬__3)
+  (y \/ __3)
+
+--
+
+!((__2) -> (__3))
+   ~~> normalise_implies_negation ([("Base", 8800)])
+and([__2,!(__3);int(1..)])
+
+--
+
+!(__3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__4
+new variables:
+  findAux __4: bool
+new clauses:
+  (¬__3 \/ ¬__4)
+  (__3 \/ __4)
+
+--
+
+((h) -> (f)) -> ((h) -> (g))
+   ~~> normalise_implies_left_distributivity ([("Base", 8800)])
+(h) -> ((f) -> (g))
+
+--
+
+and([__2,__4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  findAux __5: bool
+new clauses:
+  (¬__5 \/ __2)
+  (¬__5 \/ __4)
+  (__5 \/ ¬__2 \/ ¬__4)
+
+--
+
+(__0) -> (__1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__6
+new variables:
+  findAux __6: bool
+new clauses:
+  (¬__6 \/ ¬__0 \/ __1)
+  (__6 \/ __0)
+  (__6 \/ ¬__1)
+
+--
+
+(f) -> (g)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new clauses:
+  (¬__7 \/ ¬f \/ g)
+  (__7 \/ f)
+  (__7 \/ ¬g)
+
+--
+
+(h) -> (__7)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__8
+new variables:
+  findAux __8: bool
+new clauses:
+  (¬__8 \/ ¬h \/ __7)
+  (__8 \/ h)
+  (__8 \/ ¬__7)
+
+--
+
+(d) -> (e)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__9
+new variables:
+  findAux __9: bool
+new clauses:
+  (¬__9 \/ ¬d \/ e)
+  (__9 \/ d)
+  (__9 \/ ¬e)
+
+--
+
+(c) -> (__9)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__10
+new variables:
+  findAux __10: bool
+new clauses:
+  (¬__10 \/ ¬c \/ __9)
+  (__10 \/ c)
+  (__10 \/ ¬__9)
+
+--
+
+__5,
+__6,
+__10,
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+__6,
+__10,
+__8
+new clauses:
+  (__5)
+
+--
+
+__6,
+__10,
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+__10,
+__8
+new clauses:
+  (__6)
+
+--
+
+__10,
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+__8
+new clauses:
+  (__10)
+
+--
+
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__8)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find g: bool
+find h: bool
+find x: bool
+find y: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a \/ ¬__0),
+(a \/ __0),
+(¬b \/ ¬__1),
+(b \/ __1),
+(¬x \/ ¬__2),
+(x \/ __2),
+(¬y \/ ¬__3),
+(y \/ __3),
+(¬__3 \/ ¬__4),
+(__3 \/ __4),
+(¬__5 \/ __2),
+(¬__5 \/ __4),
+(__5 \/ ¬__2 \/ ¬__4),
+(¬__6 \/ ¬__0 \/ __1),
+(__6 \/ __0),
+(__6 \/ ¬__1),
+(¬__7 \/ ¬f \/ g),
+(__7 \/ f),
+(__7 \/ ¬g),
+(¬__8 \/ ¬h \/ __7),
+(__8 \/ h),
+(__8 \/ ¬__7),
+(¬__9 \/ ¬d \/ e),
+(__9 \/ d),
+(__9 \/ ¬e),
+(¬__10 \/ ¬c \/ __9),
+(__10 \/ c),
+(__10 \/ ¬__9),
+(__5),
+(__6),
+(__10),
+(__8)
+

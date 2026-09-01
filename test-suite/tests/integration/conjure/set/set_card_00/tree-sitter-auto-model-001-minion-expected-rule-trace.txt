@@ -1,0 +1,86 @@
+Model before rewriting:
+
+find s: set of int(1..2)
+
+such that
+
+|s| in s
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+new variables:
+  find s#occurrence_1: bool
+  find s#occurrence_2: bool
+new constraints:
+  and([sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 0,sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2;int(1..)])
+
+--
+
+s
+   ~~> select_representation ([("ReprGeneral", 10000)])
+s
+
+--
+
+|s| in s
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+SafeIndex([s#occurrence_1,s#occurrence_2;int(1..)],[|s|])
+
+--
+
+|s|
+   ~~> cardinality_occurrence ([("ReprGeneral", 9500)])
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([s#occurrence_1, s#occurrence_2], 0)
+
+--
+
+sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([s#occurrence_1, s#occurrence_2], 2)
+
+--
+
+SafeIndex([s#occurrence_1,s#occurrence_2;int(1..)],[sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])])
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeIndex([s#occurrence_1,s#occurrence_2;int(1..)],[__0])
+new variables:
+  findAux __0: int(0..2)
+new constraints:
+  __0 =aux sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+
+--
+
+__0 =aux sum([toInt(s#occurrence_1),toInt(s#occurrence_2);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([s#occurrence_1, s#occurrence_2], __0),SumGeq([s#occurrence_1, s#occurrence_2], __0);int(1..)])
+
+--
+
+SafeIndex([s#occurrence_1,s#occurrence_2;int(1..)],[__0])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([s#occurrence_1,s#occurrence_2],__0,true)
+
+--
+
+Final model:
+
+find s: set (representation occurrence) of int(1..2)
+find s#occurrence_1: bool
+find s#occurrence_2: bool
+findAux __0: int(0..2)
+
+such that
+
+__minion_element_one([s#occurrence_1,s#occurrence_2],__0,true),
+and([SumGeq([s#occurrence_1, s#occurrence_2], 0),SumLeq([s#occurrence_1, s#occurrence_2], 2);int(1..)]),
+and([SumLeq([s#occurrence_1, s#occurrence_2], __0),SumGeq([s#occurrence_1, s#occurrence_2], __0);int(1..)])
+

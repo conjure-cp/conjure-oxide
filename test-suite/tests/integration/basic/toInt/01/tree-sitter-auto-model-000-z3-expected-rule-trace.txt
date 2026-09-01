@@ -1,0 +1,35 @@
+Model before rewriting:
+
+find x: int(1..5)
+find z: bool
+
+such that
+
+x = toInt(z)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(1..5)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+Final model:
+
+find x: int(1..5)
+find z: bool
+find x#bv_1: int(1..5)
+
+such that
+
+x#bv_1 = toInt(z)
+

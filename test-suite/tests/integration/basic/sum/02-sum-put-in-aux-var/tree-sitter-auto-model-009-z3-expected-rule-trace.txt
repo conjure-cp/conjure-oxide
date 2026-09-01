@@ -1,0 +1,108 @@
+Model before rewriting:
+
+find x: int(3..4)
+find y: int(1..5)
+find z: int(2..5)
+find a: int(3..5)
+
+such that
+
+(sum([sum([x,y;int(1..)]),z;int(1..)]) / a) = 3
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#lia_1: int(3..5)
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#bv_1: int(2..5)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(3..4)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(1..5)
+
+--
+
+a
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+a#lia_1
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+sum([sum([x#bv_1,y#lia_1;int(1..)]),z#bv_1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([x#bv_1,y#lia_1,z#bv_1;int(1..)])
+
+--
+
+(sum([x#bv_1,y#lia_1,z#bv_1;int(1..)]) / a#lia_1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(sum([x#bv_1,y#lia_1,z#bv_1;int(1..)]), a#lia_1) @ a#lia_1 != 0}
+
+--
+
+{SafeDiv(sum([x#bv_1,y#lia_1,z#bv_1;int(1..)]), a#lia_1) @ a#lia_1 != 0} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeDiv(sum([x#bv_1,y#lia_1,z#bv_1;int(1..)]), a#lia_1) = 3 @ a#lia_1 != 0}
+
+--
+
+{SafeDiv(sum([x#bv_1,y#lia_1,z#bv_1;int(1..)]), a#lia_1) = 3 @ a#lia_1 != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeDiv(sum([x#bv_1,y#lia_1,z#bv_1;int(1..)]), a#lia_1) = 3,a#lia_1 != 0;int(1..)])
+
+--
+
+Final model:
+
+find x: int(3..4)
+find y: int(1..5)
+find z: int(2..5)
+find a: int(3..5)
+find a#lia_1: int(3..5)
+find z#bv_1: int(2..5)
+find x#bv_1: int(3..4)
+find y#lia_1: int(1..5)
+
+such that
+
+and([SafeDiv(sum([x#bv_1,y#lia_1,z#bv_1;int(1..)]), a#lia_1) = 3,a#lia_1 != 0;int(1..)])
+

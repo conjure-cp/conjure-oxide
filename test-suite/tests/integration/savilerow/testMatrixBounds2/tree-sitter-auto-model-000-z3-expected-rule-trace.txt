@@ -1,0 +1,79 @@
+Model before rewriting:
+
+find i: int(1..1)
+find j: int(1..1)
+find m: matrix indexed by [int(0..1)] of bool
+
+such that
+
+!(m[sum([i,j;int(1..)])])
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#array_1: matrix indexed by [int(0..1)] of bool
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#bv_1: int(1..1)
+
+--
+
+j
+   ~~> select_representation ([("ReprGeneral", 10000)])
+j
+new variables:
+  find j#bv_1: int(1..1)
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+i
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+i#bv_1
+
+--
+
+j
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+j#bv_1
+
+--
+
+m#array_1[sum([i#bv_1,j#bv_1;int(1..)])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m#array_1,[sum([i#bv_1,j#bv_1;int(1..)])]) @ false}
+
+--
+
+{SafeIndex(m#array_1,[sum([i#bv_1,j#bv_1;int(1..)])]) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m#array_1,[sum([i#bv_1,j#bv_1;int(1..)])]),false;int(1..)])
+
+--
+
+Final model:
+
+find i: int(1..1)
+find j: int(1..1)
+find m: matrix indexed by [int(0..1)] of bool
+find m#array_1: matrix indexed by [int(0..1)] of bool
+find i#bv_1: int(1..1)
+find j#bv_1: int(1..1)
+
+such that
+
+true
+

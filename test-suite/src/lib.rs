@@ -1,6 +1,11 @@
 pub mod accept;
+pub mod diagnostics;
 pub mod golden_files;
 pub mod test_config;
 
+#[cfg(test)]
+mod test_discovery;
+
 pub use accept::AcceptMode;
+pub use diagnostics::DIAGNOSTICS_DIR;
 pub use test_config::TestConfig;

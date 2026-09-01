@@ -1,0 +1,72 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..3)] of int(0..1)
+
+such that
+
+!(m[4] = 0)
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#array_1: matrix indexed by [int(1..3)] of int(0..1)
+
+--
+
+!(m[4] = 0)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+!(m[4] = 0)
+new variables:
+  find m#array_1#lia_1: matrix indexed by [int(1..3)] of int(0..1)
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+m#array_1#lia_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m#array_1#lia_1,[4]) @ false}
+
+--
+
+{SafeIndex(m#array_1#lia_1,[4]) @ false} = 0
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(m#array_1#lia_1,[4]) = 0 @ false}
+
+--
+
+{SafeIndex(m#array_1#lia_1,[4]) = 0 @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m#array_1#lia_1,[4]) = 0,false;int(1..)])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..3)] of int(0..1)
+find m#array_1: matrix indexed by [int(1..3)] of int(0..1)
+find m#array_1#lia_1: matrix indexed by [int(1..3)] of int(0..1)
+
+such that
+
+true
+

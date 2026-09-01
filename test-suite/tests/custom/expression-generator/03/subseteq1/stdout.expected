@@ -21,7 +21,8 @@
                     "ptr": {
                       "object_id": 1,
                       "type_name": "DeclarationPtrInner"
-                    }
+                    },
+                    "repr": null
                   }
                 }
               ]
@@ -78,7 +79,8 @@
                     "ptr": {
                       "object_id": 1,
                       "type_name": "DeclarationPtrInner"
-                    }
+                    },
+                    "repr": null
                   }
                 }
               ]
@@ -93,7 +95,8 @@
                     "ptr": {
                       "object_id": 2,
                       "type_name": "DeclarationPtrInner"
-                    }
+                    },
+                    "repr": null
                   }
                 }
               ]
@@ -138,7 +141,8 @@
                     "ptr": {
                       "object_id": 1,
                       "type_name": "DeclarationPtrInner"
-                    }
+                    },
+                    "repr": null
                   }
                 }
               ]
@@ -149,6 +153,7 @@
     ]
   },
   "dominance": null,
+  "objective": null,
   "search_order": null,
   "symbols": {
     "id": {
@@ -173,6 +178,7 @@
                 "Ground": {
                   "Set": [
                     {
+                      "representation": null,
                       "size": "Unbounded"
                     },
                     {
@@ -210,6 +216,7 @@
                 "Ground": {
                   "Set": [
                     {
+                      "representation": null,
                       "size": "Unbounded"
                     },
                     {
@@ -237,19 +244,41 @@
 }
 
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set (representation occurrence) of int(1..5)
+find y: set (representation occurrence) of int(1..6)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find x#occurrence_5: bool
+find y#occurrence_1: bool
+find y#occurrence_2: bool
+find y#occurrence_3: bool
+find y#occurrence_4: bool
+find y#occurrence_5: bool
+find y#occurrence_6: bool
+findAux __0: int(1)
 
 such that
 
-and([ __0 in {1,2} | __0 <- x ]),
-and([ __0 in y | __0 <- x ]),
-and([ __0 in x | __0 <- {1} ])
+WatchedLiteral(x#occurrence_3,false),
+WatchedLiteral(x#occurrence_4,false),
+WatchedLiteral(x#occurrence_5,false),
+or([WatchedLiteral(x#occurrence_1,false),y#occurrence_1;int(1..)]),
+or([WatchedLiteral(x#occurrence_2,false),y#occurrence_2;int(1..)]),
+or([WatchedLiteral(x#occurrence_3,false),y#occurrence_3;int(1..)]),
+or([WatchedLiteral(x#occurrence_4,false),y#occurrence_4;int(1..)]),
+or([WatchedLiteral(x#occurrence_5,false),y#occurrence_5;int(1..)]),
+x#occurrence_1,
+SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0),
+SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 5),
+SumGeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 0),
+SumLeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 6)
 
 Model before rewriting:
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set of int(1..5)
+find y: set of int(1..6)
 
 such that
 
@@ -259,42 +288,233 @@ such that
 
 --
 
-(x subsetEq {1,2}),
-(x subsetEq y),
-({1} subsetEq x), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(x subsetEq {1,2}),
-(x subsetEq y),
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+  find x#occurrence_5: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) <= 5;int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#occurrence_1: bool
+  find y#occurrence_2: bool
+  find y#occurrence_3: bool
+  find y#occurrence_4: bool
+  find y#occurrence_5: bool
+  find y#occurrence_6: bool
+new constraints:
+  and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4),toInt(y#occurrence_5),toInt(y#occurrence_6);int(1..)]) >= 0,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4),toInt(y#occurrence_5),toInt(y#occurrence_6);int(1..)]) <= 6;int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+(x subsetEq {1,2})
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(x#occurrence_1),1 in {1,2};int(1..)]),or([!(x#occurrence_2),2 in {1,2};int(1..)]),or([!(x#occurrence_3),3 in {1,2};int(1..)]),or([!(x#occurrence_4),4 in {1,2};int(1..)]),or([!(x#occurrence_5),5 in {1,2};int(1..)]);int(1..)])
+
+--
+
+(x subsetEq y)
+   ~~> subseteq_occurrence ([("ReprGeneral", 9500)])
+and([or([!(x#occurrence_1),1 in y;int(1..)]),or([!(x#occurrence_2),2 in y;int(1..)]),or([!(x#occurrence_3),3 in y;int(1..)]),or([!(x#occurrence_4),4 in y;int(1..)]),or([!(x#occurrence_5),5 in y;int(1..)]);int(1..)])
+
+--
+
+1 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_1
+
+--
+
+2 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_2
+
+--
+
+3 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_3
+
+--
+
+4 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_4
+
+--
+
+5 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_5
+
+--
+
+or([!(x#occurrence_3);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+!(x#occurrence_3)
+
+--
+
+or([!(x#occurrence_4);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+!(x#occurrence_4)
+
+--
+
+or([!(x#occurrence_5);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+!(x#occurrence_5)
+
+--
+
 ({1} subsetEq x)
-
---
-
-(x subsetEq {1,2}), 
-   ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in {1,2} | __0 <- x ])
-
---
-
-(x subsetEq y), 
-   ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in y | __0 <- x ])
-
---
-
-({1} subsetEq x), 
    ~~> subseteq_set ([("Base", 8700)])
 and([ __0 in x | __0 <- {1} ])
+
+--
+
+[ __0 in x | __0 <- {1} ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ __0 in x | __0 : int(1), __0 in {1} ]
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0)
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) <= 5
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 5)
+
+--
+
+sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4),toInt(y#occurrence_5),toInt(y#occurrence_6);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 0)
+
+--
+
+sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4),toInt(y#occurrence_5),toInt(y#occurrence_6);int(1..)]) <= 6
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 6)
+
+--
+
+!(x#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_3,false)
+
+--
+
+!(x#occurrence_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_4,false)
+
+--
+
+!(x#occurrence_5)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_5,false)
+
+--
+
+!(x#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_1,false)
+
+--
+
+!(x#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_2,false)
+
+--
+
+!(x#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_3,false)
+
+--
+
+!(x#occurrence_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_4,false)
+
+--
+
+!(x#occurrence_5)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(x#occurrence_5,false)
+
+--
+
+[ __0 in x | __0 : int(1), __0 in {1} ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1 in x;int(1..)]
+new variables:
+  findAux __0: int(1)
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+and([x#occurrence_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#occurrence_1
 
 --
 
 Final model:
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set (representation occurrence) of int(1..5)
+find y: set (representation occurrence) of int(1..6)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find x#occurrence_5: bool
+find y#occurrence_1: bool
+find y#occurrence_2: bool
+find y#occurrence_3: bool
+find y#occurrence_4: bool
+find y#occurrence_5: bool
+find y#occurrence_6: bool
+findAux __0: int(1)
 
 such that
 
-and([ __0 in {1,2} | __0 <- x ]),
-and([ __0 in y | __0 <- x ]),
-and([ __0 in x | __0 <- {1} ])
+and([WatchedLiteral(x#occurrence_3,false),WatchedLiteral(x#occurrence_4,false),WatchedLiteral(x#occurrence_5,false);int(1..)]),
+and([or([WatchedLiteral(x#occurrence_1,false),y#occurrence_1;int(1..)]),or([WatchedLiteral(x#occurrence_2,false),y#occurrence_2;int(1..)]),or([WatchedLiteral(x#occurrence_3,false),y#occurrence_3;int(1..)]),or([WatchedLiteral(x#occurrence_4,false),y#occurrence_4;int(1..)]),or([WatchedLiteral(x#occurrence_5,false),y#occurrence_5;int(1..)]);int(1..)]),
+x#occurrence_1,
+and([SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0),SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 5);int(1..)]),
+and([SumGeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 0),SumLeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 6);int(1..)])
 

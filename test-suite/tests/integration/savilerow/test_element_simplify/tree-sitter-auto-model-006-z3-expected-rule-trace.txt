@@ -1,0 +1,165 @@
+Model before rewriting:
+
+find M: matrix indexed by [int(2..6)] of int(5..6)
+find i: int(3..5)
+
+such that
+
+M[i] = 5
+
+--
+
+M
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M
+new variables:
+  find M#components_1: int(5..6)
+  find M#components_2: int(5..6)
+  find M#components_3: int(5..6)
+  find M#components_4: int(5..6)
+  find M#components_5: int(5..6)
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#lia_1: int(3..5)
+
+--
+
+M[i] = 5
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+M[i] = 5
+new variables:
+  find M#components_1#bv_1: int(5..6)
+  find M#components_2#bv_1: int(5..6)
+  find M#components_3#bv_1: int(5..6)
+  find M#components_4#bv_1: int(5..6)
+  find M#components_5#bv_1: int(5..6)
+
+--
+
+i
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+i#lia_1
+
+--
+
+M[i#lia_1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M,[i#lia_1])
+
+--
+
+SafeIndex(M,[i#lia_1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([M#components_1,M#components_2,M#components_3,M#components_4,M#components_5;int(1..)],[sum([product([1,(i#lia_1 - 2);int(1..)]),1;int(1..)])])
+
+--
+
+M#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_1
+
+--
+
+M#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_2
+
+--
+
+M#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_3
+
+--
+
+M#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_4
+
+--
+
+M#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+M#components_5
+
+--
+
+M#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_1#bv_1
+
+--
+
+M#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_2#bv_1
+
+--
+
+M#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_3#bv_1
+
+--
+
+M#components_4
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_4#bv_1
+
+--
+
+M#components_5
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+M#components_5#bv_1
+
+--
+
+product([1,(i#lia_1 - 2);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(i#lia_1 - 2);int(1..)])
+
+--
+
+product([(i#lia_1 - 2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(i#lia_1 - 2)
+
+--
+
+(i#lia_1 - 2)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([i#lia_1,-(2);int(1..)])
+
+--
+
+sum([sum([i#lia_1,-2;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([i#lia_1,-2,1;int(1..)])
+
+--
+
+Final model:
+
+find M: matrix indexed by [int(2..6)] of int(5..6)
+find i: int(3..5)
+find M#components_1: int(5..6)
+find M#components_2: int(5..6)
+find M#components_3: int(5..6)
+find M#components_4: int(5..6)
+find M#components_5: int(5..6)
+find i#lia_1: int(3..5)
+find M#components_1#bv_1: int(5..6)
+find M#components_2#bv_1: int(5..6)
+find M#components_3#bv_1: int(5..6)
+find M#components_4#bv_1: int(5..6)
+find M#components_5#bv_1: int(5..6)
+
+such that
+
+SafeIndex([M#components_1#bv_1,M#components_2#bv_1,M#components_3#bv_1,M#components_4#bv_1,M#components_5#bv_1;int(1..)],[sum([i#lia_1,-1;int(1..)])]) = 5
+

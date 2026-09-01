@@ -1,6 +1,6 @@
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo, PartitionAttr,
-    Reference, RelAttr, ReturnType, SequenceAttr, Typeable,
+    PermutationAttr, Reference, RelAttr, ReturnType, SequenceAttr, Typeable,
     domains::{Int, MSetAttr, Range, SetAttr},
     eval_constant,
 };
@@ -111,10 +111,12 @@ impl IntVal {
                 Some(ReturnType::Int) => Ok(IntVal::Reference(re.clone())),
                 _ => Err(DomainOpError::WrongType),
             },
-            DeclarationKind::Find(var) => match var.return_type() {
-                ReturnType::Int => Ok(IntVal::Reference(re.clone())),
-                _ => Err(DomainOpError::WrongType),
-            },
+            DeclarationKind::Find(var) | DeclarationKind::FindAuxiliary(var) => {
+                match var.return_type() {
+                    ReturnType::Int => Ok(IntVal::Reference(re.clone())),
+                    _ => Err(DomainOpError::WrongType),
+                }
+            }
             DeclarationKind::DomainLetting(_) => Err(DomainOpError::WrongType),
         }
     }
@@ -147,7 +149,9 @@ impl IntVal {
                     }
                 }
                 // Decision variables inside domains are unresolved until solving.
-                DeclarationKind::Find(_) => Err(DomainOpError::NotGround),
+                DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
+                    Err(DomainOpError::NotGround)
+                }
                 DeclarationKind::DomainLetting(_) | DeclarationKind::QuantifiedExpr(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
@@ -277,5 +281,6 @@ impl_int_conversions_for!(
     FuncAttr,
     SequenceAttr,
     PartitionAttr,
+    PermutationAttr,
     RelAttr
 );

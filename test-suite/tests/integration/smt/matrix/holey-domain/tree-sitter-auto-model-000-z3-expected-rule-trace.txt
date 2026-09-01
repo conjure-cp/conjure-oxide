@@ -1,0 +1,81 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2, 4)] of bool
+
+such that
+
+and([a[1],a[2],a[4];int(1..3)])
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#array_1: matrix indexed by [int(1..2, 4)] of bool
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+a#array_1
+
+--
+
+a#array_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[1])
+
+--
+
+a#array_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[2])
+
+--
+
+a#array_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#array_1,[4])
+
+--
+
+and([SafeIndex(a#array_1,[1]),SafeIndex(a#array_1,[2]),SafeIndex(a#array_1,[4]);int(1..3)])
+   ~~> matrix_to_list ([("Base", 2000)])
+and([SafeIndex(a#array_1,[1]),SafeIndex(a#array_1,[2]),SafeIndex(a#array_1,[4]);int(1..)])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2, 4)] of bool
+find a#array_1: matrix indexed by [int(1..2, 4)] of bool
+
+such that
+
+and([SafeIndex(a#array_1,[1]),SafeIndex(a#array_1,[2]),SafeIndex(a#array_1,[4]);int(1..)])
+

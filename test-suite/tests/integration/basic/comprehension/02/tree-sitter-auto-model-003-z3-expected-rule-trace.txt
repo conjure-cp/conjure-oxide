@@ -1,0 +1,408 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find n: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+and([ n[i] = (6 - i) | i : int(1..5) ]),
+and([ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ])
+
+--
+
+and([ n[i] = (6 - i) | i : int(1..5) ]),
+and([ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ n[i] = (6 - i) | i : int(1..5) ]),
+and([ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ])
+new variables:
+  find m#array_1: matrix indexed by [int(1..5)] of int(1..5)
+  find n#array_1: matrix indexed by [int(1..5)] of int(1..5)
+
+--
+
+and([ n[i] = (6 - i) | i : int(1..5) ]),
+and([ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ n[i] = (6 - i) | i : int(1..5) ]),
+and([ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ])
+new variables:
+  find m#array_1#lia_1: matrix indexed by [int(1..5)] of int(1..5)
+  find n#array_1#lia_1: matrix indexed by [int(1..5)] of int(1..5)
+
+--
+
+[ n[i] = (6 - i) | i : int(1..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[n[1] = 5,n[2] = 4,n[3] = 3,n[4] = 2,n[5] = 1;int(1..)]
+
+--
+
+n
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n
+
+--
+
+n
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n
+
+--
+
+n
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n
+
+--
+
+n
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n
+
+--
+
+n
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n
+
+--
+
+n
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n#array_1
+
+--
+
+n
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n#array_1
+
+--
+
+n
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n#array_1
+
+--
+
+n
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n#array_1
+
+--
+
+n
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+n#array_1#lia_1
+
+--
+
+n#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+n#array_1#lia_1
+
+--
+
+n#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+n#array_1#lia_1
+
+--
+
+n#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+n#array_1#lia_1
+
+--
+
+n#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+n#array_1#lia_1
+
+--
+
+n#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n#array_1#lia_1,[1])
+
+--
+
+n#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n#array_1#lia_1,[2])
+
+--
+
+n#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n#array_1#lia_1,[3])
+
+--
+
+n#array_1#lia_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n#array_1#lia_1,[4])
+
+--
+
+n#array_1#lia_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n#array_1#lia_1,[5])
+
+--
+
+[ m[i] = i | i : int(1..5), n[i] < 5, i < 4 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(n[1] < 5) -> (and([m[1] = 1;int(1..)])),(n[2] < 5) -> (and([m[2] = 2;int(1..)])),(n[3] < 5) -> (and([m[3] = 3;int(1..)]));int(1..)]
+
+--
+
+n
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n
+
+--
+
+n
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n
+
+--
+
+n
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+
+--
+
+n
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n#array_1
+
+--
+
+n
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n#array_1
+
+--
+
+n
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+n#array_1
+
+--
+
+n#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+n#array_1#lia_1
+
+--
+
+n#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+n#array_1#lia_1
+
+--
+
+n#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+n#array_1#lia_1
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#array_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+m#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+m#array_1#lia_1
+
+--
+
+and([m#array_1#lia_1[1] = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#array_1#lia_1[1] = 1
+
+--
+
+and([m#array_1#lia_1[2] = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#array_1#lia_1[2] = 2
+
+--
+
+and([m#array_1#lia_1[3] = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+m#array_1#lia_1[3] = 3
+
+--
+
+m#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#array_1#lia_1,[1])
+
+--
+
+m#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#array_1#lia_1,[2])
+
+--
+
+m#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#array_1#lia_1,[3])
+
+--
+
+n#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n#array_1#lia_1,[1])
+
+--
+
+n#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n#array_1#lia_1,[2])
+
+--
+
+n#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(n#array_1#lia_1,[3])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find n: matrix indexed by [int(1..5)] of int(1..5)
+find m#array_1: matrix indexed by [int(1..5)] of int(1..5)
+find n#array_1: matrix indexed by [int(1..5)] of int(1..5)
+find m#array_1#lia_1: matrix indexed by [int(1..5)] of int(1..5)
+find n#array_1#lia_1: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+and([SafeIndex(n#array_1#lia_1,[1]) = 5,SafeIndex(n#array_1#lia_1,[2]) = 4,SafeIndex(n#array_1#lia_1,[3]) = 3,SafeIndex(n#array_1#lia_1,[4]) = 2,SafeIndex(n#array_1#lia_1,[5]) = 1;int(1..)]),
+and([(SafeIndex(n#array_1#lia_1,[1]) < 5) -> (SafeIndex(m#array_1#lia_1,[1]) = 1),(SafeIndex(n#array_1#lia_1,[2]) < 5) -> (SafeIndex(m#array_1#lia_1,[2]) = 2),(SafeIndex(n#array_1#lia_1,[3]) < 5) -> (SafeIndex(m#array_1#lia_1,[3]) = 3);int(1..)])
+

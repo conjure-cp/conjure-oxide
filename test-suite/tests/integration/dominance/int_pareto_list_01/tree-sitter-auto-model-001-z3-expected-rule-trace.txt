@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find x: int(0..3)
+find y: int(0..3)
+
+such that
+
+sum([x,y;int(1..)]) >= 2
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(0..3)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(0..3)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+Final model:
+
+find x: int(0..3)
+find y: int(0..3)
+find x#lia_1: int(0..3)
+find y#lia_1: int(0..3)
+
+such that
+
+sum([x#lia_1,y#lia_1;int(1..)]) >= 2
+

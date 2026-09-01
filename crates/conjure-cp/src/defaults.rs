@@ -1,1 +1,1 @@
-pub static DEFAULT_RULE_SETS: &[&str] = &["Base", "Constant", "Bubble"];
+pub static DEFAULT_RULE_SETS: &[&str] = &["Base", "Bubble"];

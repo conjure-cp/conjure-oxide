@@ -9,10 +9,11 @@ use std::vec;
 use clap::error;
 use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
-use rustsat::solvers::{Solve, SolverResult};
+use rustsat::solvers::{ControlSignal, Solve, SolverResult, Terminate};
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
+use std::time::Duration;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
@@ -20,9 +21,12 @@ use rustsat_cadical::CaDiCaL;
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
-use crate::rule_engine::rewrite_model_with_configured_rewriter;
+use crate::bug_assert;
+use crate::representation::util::try_up;
+use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
+use crate::solver::adaptors::SolveTimeBudget;
 use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
 use crate::solver::{
     self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
@@ -41,6 +45,8 @@ use itertools::Itertools;
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
 pub struct Sat {
     __non_constructable: private::Internal,
+    solver_seed: u32,
+    timeout: Option<Duration>,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
     solver_inst: CaDiCaL<'static, 'static>,
@@ -55,6 +61,8 @@ impl Default for Sat {
     fn default() -> Self {
         Sat {
             __non_constructable: private::Internal,
+            solver_seed: 0,
+            timeout: None,
             solver_inst: CaDiCaL::default(),
             var_map: None,
             model_inst: None,
@@ -62,6 +70,20 @@ impl Default for Sat {
             dominance_expression: None,
             dominance_model_template: None,
         }
+    }
+}
+
+impl Sat {
+    /// Sets the seed used by the SAT solver's random search behaviour.
+    pub fn with_solver_seed(mut self, solver_seed: u32) -> Self {
+        self.solver_seed = solver_seed;
+        self
+    }
+
+    /// Sets one wall-clock budget shared by every SAT call made while enumerating solutions.
+    pub fn with_timeout(mut self, timeout: Option<Duration>) -> Self {
+        self.timeout = timeout;
+        self
     }
 }
 
@@ -171,10 +193,6 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         })
         .collect_vec();
 
-    if representations.is_empty() {
-        return;
-    }
-
     let mut solution_btree = solution
         .clone()
         .into_iter()
@@ -185,6 +203,15 @@ fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model:
         };
         solution.insert(name.clone(), value.clone());
         solution_btree.insert(name, value);
+    }
+
+    for (_, declaration) in symbols.iter_local() {
+        if declaration.reprs().is_empty() {
+            continue;
+        }
+        if let Ok(value) = try_up(declaration.clone(), solution) {
+            solution.insert(declaration.name().clone(), value);
+        }
     }
 }
 
@@ -280,7 +307,18 @@ impl Sat {
         dominance_model.dominance = None;
         dominance_model.add_constraint(rewritten_dominance);
 
-        let rule_sets = dominance_model.context.read().unwrap().rule_sets.clone();
+        // Prefer the rule sets the model was built with, but fall back to resolving them for this
+        // adaptor's own family: an embedder is not obliged to populate the context, and rewriting
+        // a dominance constraint with no rules at all silently produces a model referring to
+        // variables that representations have since replaced.
+        let rule_sets = {
+            let from_context = dominance_model.context.read().unwrap().rule_sets.clone();
+            if from_context.is_empty() {
+                get_rule_sets_for_solver_family(SolverFamily::Sat)
+            } else {
+                from_context
+            }
+        };
         let rewritten =
             rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
                 .map_err(|e| {
@@ -366,9 +404,21 @@ impl SolverAdaptor for Sat {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
+        let budget = SolveTimeBudget::new(self.timeout);
+        let timeout_enabled = self.timeout.is_some();
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
         let mut solver = &mut self.solver_inst;
+        let solver_seed = i32::try_from(self.solver_seed).map_err(|_| {
+            SolverError::Runtime(format!(
+                "solver seed {} exceeds CaDiCaL's maximum supported value ({})",
+                self.solver_seed,
+                i32::MAX
+            ))
+        })?;
+        solver.set_option("seed", solver_seed).map_err(|err| {
+            SolverError::Runtime(format!("Failed setting CaDiCaL solver seed: {err}"))
+        })?;
         let mut var_map = self.var_map.clone().ok_or_else(|| {
             SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
         })?;
@@ -383,8 +433,26 @@ impl SolverAdaptor for Sat {
             SolverError::Runtime(format!("Failed adding CNF to SAT solver before solve: {e}"))
         })?;
 
+        if timeout_enabled {
+            let terminator_budget = budget;
+            solver.attach_terminator(move || {
+                if terminator_budget.expired() {
+                    ControlSignal::Terminate
+                } else {
+                    ControlSignal::Continue
+                }
+            });
+        }
+
         let mut has_sol = false;
         loop {
+            if budget.expired() {
+                return Ok(SolveSuccess {
+                    stats: SolverStats::default(),
+                    status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
+                });
+            }
+
             let res = match solver.solve() {
                 Ok(r) => r,
                 Err(e) => {
@@ -413,7 +481,15 @@ impl SolverAdaptor for Sat {
                     });
                 }
                 SolverResult::Interrupted => {
-                    return Err(SolverError::Runtime("!!Interrupted Solution!!".to_string()));
+                    if timeout_enabled {
+                        return Ok(SolveSuccess {
+                            stats: SolverStats::default(),
+                            status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
+                        });
+                    }
+                    return Err(SolverError::Runtime(
+                        "SAT solver was interrupted".to_string(),
+                    ));
                 }
             };
 
@@ -454,6 +530,12 @@ impl SolverAdaptor for Sat {
             tracing::info!("{:#?}", solutions);
 
             for solution in solutions {
+                if budget.expired() {
+                    return Ok(SolveSuccess {
+                        stats: SolverStats::default(),
+                        status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
+                    });
+                }
                 if !callback(solution.clone()) {
                     // callback false
                     return Ok(SolveSuccess {
@@ -512,8 +594,12 @@ impl SolverAdaptor for Sat {
         let mut finds: Vec<Name> = Vec::new();
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
-        for (name, decl) in sym_tab.clone().into_iter_local() {
+        for (name, decl) in sym_tab.into_iter_local() {
             if decl.as_find().is_none() {
+                continue;
+            }
+
+            if !decl.reprs().is_empty() {
                 continue;
             }
 
@@ -522,21 +608,12 @@ impl SolverAdaptor for Sat {
                 .expect("Decision variable should have a domain");
             let domain = domain.as_ground().expect("Domain should be ground");
 
-            // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (domain != &GroundDomain::Bool
-                && sym_tab
-                    .get_representation(&name, &["sat_log_int"])
-                    .is_none()
-                && sym_tab
-                    .get_representation(&name, &["sat_direct_int"])
-                    .is_none()
-                && sym_tab
-                    .get_representation(&name, &["sat_order_int"])
-                    .is_none())
-            {
-                Err(SolverError::ModelInvalid(
-                    "Only Boolean Decision Variables supported".to_string(),
-                ))?;
+            // Everything reaching the solver must be Boolean by now. Integers are encoded into
+            // Booleans by their representation, and a declaration that has one was skipped above.
+            if domain != &GroundDomain::Bool {
+                Err(SolverError::ModelInvalid(format!(
+                    "Only Boolean Decision Variables supported, but '{name}' has domain {domain}"
+                )))?;
             }
             // Only expose non-internal boolean variables in solver solutions. Machine names are
             // auxiliaries introduced during rewriting and can create huge powersets of don't-care
@@ -553,7 +630,7 @@ impl SolverAdaptor for Sat {
         // all constraints should be encoded as clauses
         // the remaining constraint (if it exists) should just be a true/false expression
         let constraints = m_clone.constraints();
-        assert!(
+        bug_assert!(
             constraints.is_empty()
                 || (constraints.len() == 1
                     && (constraints[0] == true.into() || constraints[0] == false.into())),
@@ -576,7 +653,7 @@ impl SolverAdaptor for Sat {
     fn init_solver(&mut self, _: private::Internal) {}
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Sat(crate::settings::SatEncoding::Log)
+        SolverFamily::Sat
     }
 
     fn get_name(&self) -> &'static str {
@@ -683,6 +760,23 @@ mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
     use rustsat::types::Var as SatVar;
+
+    #[test]
+    fn zero_timeout_stops_before_first_sat_call() {
+        let mut sat = Sat::default().with_timeout(Some(Duration::ZERO));
+        sat.model_inst = Some(SatInstance::default());
+        sat.var_map = Some(HashMap::new());
+        sat.decision_refs = Some(Vec::new());
+
+        let result = sat
+            .solve(Box::new(|_| true), private::Internal)
+            .expect("a timeout is a non-crashing incomplete search");
+
+        assert_eq!(
+            result.status,
+            SearchStatus::Incomplete(solver::SearchIncomplete::Timeout)
+        );
+    }
 
     #[test]
     fn from_solution_substitution_replaces_reference_with_literal() {

@@ -1,0 +1,48 @@
+Model before rewriting:
+
+letting a be 4
+letting b be 3
+letting c be 7
+find x: int(1..20)
+
+such that
+
+and([ (i[c] < i[a]) -> (x > (i[a] - i[c])) | i : matrix indexed by [int(a, b..c)] of int(0..9) ])
+
+--
+
+[ (i[c] < i[a]) -> (x > (i[a] - i[c])) | i : matrix indexed by [int(a, b..c)] of int(0..9) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[x > 9;int(1..)]
+
+--
+
+and([x > 9;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x > 9
+
+--
+
+x > 9
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([x,-1;int(1..)]) >= 9
+
+--
+
+sum([x,-1;int(1..)]) >= 9
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(9, x, -1)
+
+--
+
+Final model:
+
+letting a be 4
+letting b be 3
+letting c be 7
+find x: int(1..20)
+
+such that
+
+Ineq(9, x, -1)
+

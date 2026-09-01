@@ -1,0 +1,86 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+x = partition({-1}) = partition({-2}),
+y = partition({1}) = partition({2}),
+z = partition({1}) = partition({1})
+
+--
+
+x = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (x \/ __0)
+  (¬x \/ ¬__0)
+
+--
+
+y = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new clauses:
+  (y \/ __1)
+  (¬y \/ ¬__1)
+
+--
+
+__0,
+__1,
+z
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1,
+z
+new clauses:
+  (__0)
+
+--
+
+__1,
+z
+   ~~> remove_single_atom ([("SAT", 8400)])
+z
+new clauses:
+  (__1)
+
+--
+
+z
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (z)
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+true
+
+clauses:
+
+(x \/ __0),
+(¬x \/ ¬__0),
+(y \/ __1),
+(¬y \/ ¬__1),
+(__0),
+(__1),
+(z)
+

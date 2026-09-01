@@ -1,0 +1,67 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(-1..1)
+find z: int(-1..1)
+
+such that
+
+x = sum([-(y),z;int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(1..3)
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#bv_1: int(-1..1)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#bv_1: int(-1..1)
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+y
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+y#bv_1
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(-1..1)
+find z: int(-1..1)
+find x#lia_1: int(1..3)
+find z#bv_1: int(-1..1)
+find y#bv_1: int(-1..1)
+
+such that
+
+x#lia_1 = sum([-(y#bv_1),z#bv_1;int(1..)])
+

@@ -1,6 +1,6 @@
 use crate::{
     Model,
-    ast::{DeclarationKind, DeclarationPtr, declaration::Declaration, eval_constant},
+    ast::{DeclarationKind, DeclarationPtr, Literal, declaration::Declaration, eval_constant},
 };
 use anyhow::anyhow;
 
@@ -9,7 +9,7 @@ use anyhow::anyhow;
 /// For each `given` declaration in `problem_model`, this looks for a corresponding value `letting`
 /// in `param_model`, checks it is a constant and within the given domain, and replaces the `given`
 /// with a value-letting in the returned model.
-pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+pub fn instantiate_model(mut problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
     let symbol_table = problem_model.symbols_ptr_unchecked().write();
     let param_table = param_model.symbols_ptr_unchecked().write();
     let mut pending_givens = symbol_table
@@ -54,9 +54,14 @@ pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Re
                 ));
             }
 
+            // The given domain is a validity check, but after instantiation the parameter is a
+            // constant. Keep the tighter domain inferred from its value when possible so bounds
+            // derived from instantiated parameters (for example optimisation auxiliaries) stay
+            // finite.
+            let instantiated_domain = expr.domain_of().unwrap_or_else(|| domain.clone());
             let new_decl = Declaration::new(
                 name.clone(),
-                DeclarationKind::ValueLetting(expr.clone(), Some(domain.clone())),
+                DeclarationKind::ValueLetting(expr.clone(), Some(instantiated_domain)),
             );
             drop(domain);
             decl.replace(new_decl);
@@ -80,5 +85,68 @@ pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Re
     }
 
     drop(symbol_table);
+    validate_instantiation_conditions(&mut problem_model)?;
     Ok(problem_model)
+}
+
+/// Evaluate and remove all top-level `where` conditions after parameter instantiation.
+pub fn validate_instantiation_conditions(model: &mut Model) -> anyhow::Result<()> {
+    for condition in model.take_instantiation_conditions() {
+        match eval_constant(&condition) {
+            Some(Literal::Bool(true)) => {}
+            Some(Literal::Bool(false)) => {
+                return Err(anyhow!(
+                    "invalid instance: where condition `{condition}` evaluated to false"
+                ));
+            }
+            Some(value) => {
+                return Err(anyhow!(
+                    "where condition `{condition}` evaluated to non-boolean value `{value}`"
+                ));
+            }
+            None => {
+                return Err(anyhow!(
+                    "could not evaluate where condition `{condition}` after parameter instantiation"
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Atom, Domain, GroundDomain, Metadata, Name, Range};
+
+    #[test]
+    fn instantiated_given_uses_the_tighter_value_domain() {
+        let name = Name::user("n");
+        let mut problem = Model::default();
+        problem
+            .add_symbol(DeclarationPtr::new_given(
+                name.clone(),
+                Domain::int(vec![Range::UnboundedR(1)]),
+            ))
+            .unwrap();
+
+        let mut parameters = Model::default();
+        parameters
+            .add_symbol(DeclarationPtr::new_value_letting(
+                name.clone(),
+                crate::ast::Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(7))),
+            ))
+            .unwrap();
+
+        let instantiated = instantiate_model(problem, parameters).unwrap();
+        let declaration = instantiated
+            .symbols()
+            .lookup(&name)
+            .expect("instantiated parameter should exist");
+
+        assert_eq!(
+            declaration.domain().unwrap().resolve().unwrap().as_ref(),
+            &GroundDomain::Int(vec![Range::Single(7)])
+        );
+    }
 }

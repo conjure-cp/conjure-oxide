@@ -1,12 +1,12 @@
-use crate::ast::{Atom, DeclarationKind, Domain, Literal, Moo, Name, Range};
+use crate::ast::{AbstractLiteral, Atom, DeclarationKind, Domain, Literal, Moo, Name, Range};
 use crate::bug;
 use crate::solver::{SolverError, SolverResult};
 use conjure_cp_core::ast::GroundDomain;
 use std::ops::Deref;
 use z3::{Sort, Symbol, ast::*};
 
+use super::IntTheory;
 use super::store::SymbolStore;
-use super::{IntTheory, TheoryConfig};
 
 /// Use 32-bit 2's complement signed bit-vectors
 pub const BV_SIZE: u32 = 32;
@@ -17,13 +17,10 @@ type RestrictFn = Box<dyn Fn(&Dynamic) -> Bool>;
 
 /// Returns the Oxide domain as a Z3 sort, along with a function to restrict a variable of that sort
 /// to the original domain's restrictions.
-pub fn domain_to_sort(
-    domain: &GroundDomain,
-    theories: &TheoryConfig,
-) -> SolverResult<(Sort, RestrictFn)> {
+pub fn domain_to_sort(domain: &GroundDomain, ints: IntTheory) -> SolverResult<(Sort, RestrictFn)> {
     use IntTheory::{Bv, Lia};
 
-    match (theories.ints, domain) {
+    match (ints, domain) {
         // Booleans of course have the same domain in SMT, so no restriction required
         (_, GroundDomain::Bool) => Ok((Sort::bool(), Box::new(|_| Bool::from_bool(true)))),
 
@@ -59,11 +56,11 @@ pub fn domain_to_sort(
             // I.e. every way to index the array must give a value in the correct domain
 
             let (range_sort, restrict_val) = match idx_domains.as_slice() {
-                [_] => domain_to_sort(val_domain, theories),
+                [_] => domain_to_sort(val_domain, ints),
                 [_, tail @ ..] => {
                     // Treat as a matrix containing (n-1)-dimensional matrices
                     let inner_domain = GroundDomain::Matrix(val_domain.clone(), tail.to_vec());
-                    domain_to_sort(&inner_domain, theories)
+                    domain_to_sort(&inner_domain, ints)
                 }
                 [] => Err(SolverError::ModelInvalid(
                     "empty matrix index domain".into(),
@@ -71,11 +68,15 @@ pub fn domain_to_sort(
             }?;
 
             // No need to constrain the indices themselves, that's done through SafeIndex/InDomain
+            //
+            // An index is a position in the matrix, not a value the model ever reasons about, so it
+            // always uses the integer theory whatever the elements are. Otherwise indexing a
+            // bit-vector array would need every index expression converted to a machine word first.
             let idx_domain = &idx_domains[0];
-            let (domain_sort, _) = domain_to_sort(idx_domain.as_ref(), theories)?;
+            let (domain_sort, _) = domain_to_sort(idx_domain.as_ref(), IntTheory::Lia)?;
 
             // Use the lower dimension's restricting fn to restrict all indexes in this dimension
-            let idx_asts = domain_to_ast_vec(theories, idx_domain.as_ref())?;
+            let idx_asts = domain_to_ast_vec(IntTheory::Lia, idx_domain.as_ref())?;
             let restrict_fn = move |ast: &Dynamic| {
                 let arr = ast.as_array().unwrap();
                 let restrictions: Vec<_> = idx_asts
@@ -91,10 +92,10 @@ pub fn domain_to_sort(
         }
 
         (_, GroundDomain::Set(attr, elem_domain)) => {
-            let (val_sort, _) = domain_to_sort(elem_domain, theories)?;
+            let (val_sort, _) = domain_to_sort(elem_domain, ints)?;
 
             // Restrict the size of the set
-            let member_asts = domain_to_ast_vec(theories, elem_domain)?;
+            let member_asts = domain_to_ast_vec(ints, elem_domain)?;
             let attr_size = attr.size.clone();
             let restrict_fn = move |ast: &Dynamic| {
                 let set = ast.as_set().unwrap();
@@ -124,15 +125,11 @@ pub fn domain_to_sort(
 }
 
 /// Returns a domain as a vector of Z3 AST literals.
-pub fn domain_to_ast_vec(
-    theory_config: &TheoryConfig,
-    domain: &GroundDomain,
-) -> SolverResult<Vec<Dynamic>> {
+pub fn domain_to_ast_vec(ints: IntTheory, domain: &GroundDomain) -> SolverResult<Vec<Dynamic>> {
     let lits = domain
         .values()
         .map_err(|err| SolverError::Runtime(err.to_string()))?;
-    lits.map(|lit| literal_to_ast(theory_config, &lit))
-        .collect()
+    lits.map(|lit| literal_to_ast(ints, &lit)).collect()
 }
 
 /// Returns a boolean expression restricting the given integer variable to the given range.
@@ -175,11 +172,7 @@ pub fn name_to_symbol(name: &Name) -> SolverResult<Symbol> {
 }
 
 /// Converts an atom (literal or reference) into an AST node.
-pub fn atom_to_ast(
-    theory_config: &TheoryConfig,
-    store: &SymbolStore,
-    atom: &Atom,
-) -> SolverResult<Dynamic> {
+pub fn atom_to_ast(store: &SymbolStore, atom: &Atom) -> SolverResult<Dynamic> {
     match atom {
         Atom::Reference(reference) => {
             if let Some((_, ast, _)) = store.get(&reference.name()) {
@@ -187,11 +180,11 @@ pub fn atom_to_ast(
             }
 
             if let Some(lit) = reference.resolve_constant() {
-                return literal_to_ast(theory_config, &lit);
+                return literal_to_ast(IntTheory::default(), &lit);
             }
 
             if let Some(inner_atom) = reference.resolve_atomic() {
-                return atom_to_ast(theory_config, store, &inner_atom);
+                return atom_to_ast(store, &inner_atom);
             }
 
             let decl_kind = reference.ptr().kind();
@@ -208,7 +201,7 @@ pub fn atom_to_ast(
                 ))),
             }
         }
-        Atom::Literal(lit) => literal_to_ast(theory_config, lit),
+        Atom::Literal(lit) => literal_to_ast(IntTheory::default(), lit),
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "atom sort not implemented: {atom}"
         ))),
@@ -216,13 +209,51 @@ pub fn atom_to_ast(
 }
 
 /// Converts a CO literal (expression containing no variables) into an AST node.
-pub fn literal_to_ast(theory_config: &TheoryConfig, lit: &Literal) -> SolverResult<Dynamic> {
+///
+/// A constant has no representation of its own to read a theory off, so it is built in whichever
+/// theory the caller is working in; operations mixing theories coerce their operands afterwards.
+pub fn literal_to_ast(ints: IntTheory, lit: &Literal) -> SolverResult<Dynamic> {
     match lit {
         Literal::Bool(b) => Ok(Bool::from_bool(*b).into()),
-        Literal::Int(n) => Ok(match theory_config.ints {
+        Literal::Int(n) => Ok(match ints {
             IntTheory::Lia => Int::from(*n).into(),
             IntTheory::Bv => BV::from_i64(*n as i64, BV_SIZE).into(),
         }),
+        // A constant matrix becomes a Z3 array, so that indexing one by a variable works. The
+        // packed matrix layout decodes through exactly this: a table of the element domain's
+        // values, indexed by a digit computed from the packed integer.
+        Literal::AbstractLiteral(AbstractLiteral::Matrix(elements, index_domain)) => {
+            let values: Vec<Dynamic> = elements
+                .iter()
+                .map(|element| literal_to_ast(ints, element))
+                .collect::<SolverResult<_>>()?;
+            let Some(first) = values.first() else {
+                return Err(SolverError::ModelFeatureNotImplemented(
+                    "cannot build an array from an empty matrix literal".to_owned(),
+                ));
+            };
+
+            // A plain list is written with an implied, unbounded index domain that cannot be
+            // enumerated; its positions are simply one per element.
+            let indices = domain_to_ast_vec(IntTheory::Lia, index_domain)
+                .ok()
+                .filter(|indices| indices.len() == values.len())
+                .unwrap_or_else(|| {
+                    (1..=values.len())
+                        .map(|position| Int::from(position as i64).into())
+                        .collect()
+                });
+            let index_sort = indices
+                .first()
+                .map(|index| index.get_sort())
+                .unwrap_or_else(Sort::int);
+
+            let mut array = Array::const_array(&index_sort, first);
+            for (index, value) in indices.iter().zip(values.iter()) {
+                array = array.store(index, value);
+            }
+            Ok(array.into())
+        }
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "literal type not implemented: {lit}"
         ))),

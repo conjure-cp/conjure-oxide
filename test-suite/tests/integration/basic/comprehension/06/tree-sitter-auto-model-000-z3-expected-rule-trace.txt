@@ -1,0 +1,93 @@
+Model before rewriting:
+
+find x: int(0..6)
+
+such that
+
+and([ i <= x | i : int(1..5) ])
+
+--
+
+and([ i <= x | i : int(1..5) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ i <= x | i : int(1..5) ])
+new variables:
+  find x#bv_1: int(0..6)
+
+--
+
+[ i <= x | i : int(1..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1 <= x,2 <= x,3 <= x,4 <= x,5 <= x;int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+Final model:
+
+find x: int(0..6)
+find x#bv_1: int(0..6)
+
+such that
+
+and([1 <= x#bv_1,2 <= x#bv_1,3 <= x#bv_1,4 <= x#bv_1,5 <= x#bv_1;int(1..)])
+

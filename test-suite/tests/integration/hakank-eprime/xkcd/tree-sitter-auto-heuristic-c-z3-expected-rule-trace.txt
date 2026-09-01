@@ -1,0 +1,240 @@
+Model before rewriting:
+
+letting n be 6
+letting price be [215,275,335,355,420,580;int(1..6)]
+letting total_ be 1505
+find x: matrix indexed by [int(1..n)] of int(0..100000)
+
+such that
+
+total_ = sum([ product([price[i],x[i];int(1..)]) | i : int(1..n) ])
+
+--
+
+1505 = sum([ product([price[i],x[i];int(1..)]) | i : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+1505 = sum([ product([price[i],x[i];int(1..)]) | i : int(1..n) ])
+new variables:
+  find x#array_1: matrix indexed by [int(1..6)] of int(0..100000)
+
+--
+
+1505 = sum([ product([price[i],x[i];int(1..)]) | i : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+1505 = sum([ product([price[i],x[i];int(1..)]) | i : int(1..n) ])
+new variables:
+  find x#array_1#lia_1: matrix indexed by [int(1..6)] of int(0..100000)
+
+--
+
+1505 = sum([ product([price[i],x[i];int(1..)]) | i : int(1..n) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+1505 = sum([ product([price[i],x[i];int(1..)]) | i : int(1..n) ])
+
+--
+
+[ product([price[i],x[i];int(1..)]) | i : int(1..n) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([215,x[1];int(1..)]),product([275,x[2];int(1..)]),product([335,x[3];int(1..)]),product([355,x[4];int(1..)]),product([420,x[5];int(1..)]),product([580,x[6];int(1..)]);int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#array_1
+
+--
+
+x#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#array_1#lia_1
+
+--
+
+x#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#array_1#lia_1
+
+--
+
+x#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#array_1#lia_1
+
+--
+
+x#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#array_1#lia_1
+
+--
+
+x#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#array_1#lia_1
+
+--
+
+x#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#array_1#lia_1
+
+--
+
+x#array_1#lia_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1#lia_1,[1])
+
+--
+
+x#array_1#lia_1[2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1#lia_1,[2])
+
+--
+
+x#array_1#lia_1[3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1#lia_1,[3])
+
+--
+
+x#array_1#lia_1[4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1#lia_1,[4])
+
+--
+
+x#array_1#lia_1[5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1#lia_1,[5])
+
+--
+
+x#array_1#lia_1[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1#lia_1,[6])
+
+--
+
+Final model:
+
+letting n be 6
+letting price be [215,275,335,355,420,580;int(1..6)]
+letting total_ be 1505
+find x: matrix indexed by [int(1..n)] of int(0..100000)
+find x#array_1: matrix indexed by [int(1..6)] of int(0..100000)
+find x#array_1#lia_1: matrix indexed by [int(1..6)] of int(0..100000)
+letting price#components_1 be 215
+letting price#components_2 be 275
+letting price#components_3 be 335
+letting price#components_4 be 355
+letting price#components_5 be 420
+letting price#components_6 be 580
+
+such that
+
+1505 = sum([product([215,SafeIndex(x#array_1#lia_1,[1]);int(1..)]),product([275,SafeIndex(x#array_1#lia_1,[2]);int(1..)]),product([335,SafeIndex(x#array_1#lia_1,[3]);int(1..)]),product([355,SafeIndex(x#array_1#lia_1,[4]);int(1..)]),product([420,SafeIndex(x#array_1#lia_1,[5]);int(1..)]),product([580,SafeIndex(x#array_1#lia_1,[6]);int(1..)]);int(1..)])
+

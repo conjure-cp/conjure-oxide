@@ -5,21 +5,21 @@ use std::{io, mem, vec};
 
 use conjure_cp::ast::records::Field;
 use conjure_cp::ast::serde::ObjId;
-use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::hash::Hash;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
+use conjure_cp::ast::pretty::pretty_expression_domain_annotation;
 use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
 use conjure_cp::error::Error;
 
-use crate::utils::conjure::solutions_to_json;
+use crate::utils::conjure::solutions_to_essence;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use conjure_cp::Model as ConjureModel;
@@ -29,6 +29,9 @@ use conjure_cp::settings::SolverFamily;
 
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
+
+/// Limit how many characters we persist/compare for large text snapshots.
+pub const DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT: usize = 1_000_000;
 
 /// Converts a SerdeModel to JSON with stable IDs.
 ///
@@ -129,7 +132,8 @@ fn serialize_domains_expr(expr: &Expression, depth: usize, output: &mut String) 
         .map(|domain| domain.to_string())
         .unwrap_or_else(|| "<unknown>".to_owned());
     output.push_str(&" ".repeat(depth));
-    output.push_str(&format!("{expr} :: {domain}\n"));
+    output.push_str(&pretty_expression_domain_annotation(expr, domain));
+    output.push('\n');
 
     for child in expr.children() {
         serialize_domains_expr(&child, depth + 1, output);
@@ -148,7 +152,7 @@ pub fn save_model_json(
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{test_name}-{marker}.generated-{test_stage}.serialised.json");
     println!("saving: {filename}");
-    File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
+    std::fs::write(filename, format!("{generated_json_str}\n"))?;
     Ok(())
 }
 
@@ -167,8 +171,10 @@ pub fn save_stats_json(
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
 
-    File::create(format!("{path}/{test_name}-{solver_name}-stats.json"))?
-        .write_all(generated_json_str.as_bytes())?;
+    std::fs::write(
+        format!("{path}/{test_name}-{solver_name}-stats.json"),
+        format!("{generated_json_str}\n"),
+    )?;
 
     Ok(())
 }
@@ -248,37 +254,30 @@ pub fn minion_solutions_from_json(
     Ok(solutions)
 }
 
-/// Writes the minion solutions to a generated JSON file, and returns the JSON structure.
-pub fn save_solutions_json(
-    solutions: &Vec<BTreeMap<Name, Literal>>,
+/// Writes solutions in Conjure's multi-solution Essence format.
+pub fn save_solutions_essence(
+    solutions: &[BTreeMap<Name, Literal>],
     path: &str,
     test_name: &str,
     solver: SolverFamily,
-) -> Result<JsonValue, std::io::Error> {
-    let json_solutions = solutions_to_json(solutions);
-    let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
-
+) -> Result<String, std::io::Error> {
+    let rendered = solutions_to_essence(solutions);
     let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
-    File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
+    let filename = format!("{path}/{test_name}-{solver_name}.generated.solutions");
+    std::fs::write(filename, &rendered)?;
 
-    Ok(json_solutions)
+    Ok(rendered)
 }
 
-pub fn read_solutions_json(
+pub fn read_solutions_essence(
     path: &str,
     test_name: &str,
     prefix: &str,
     solver: SolverFamily,
-) -> Result<JsonValue, anyhow::Error> {
+) -> Result<String, anyhow::Error> {
     let solver_name = solver.as_str();
-    let filename = format!("{path}/{test_name}-{solver_name}.{prefix}-solutions.json");
-    let expected_json_str = read_with_path(filename)?;
-
-    let expected_solutions: JsonValue =
-        sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
-
-    Ok(expected_solutions)
+    let filename = format!("{path}/{test_name}-{solver_name}.{prefix}.solutions");
+    Ok(read_with_path(filename)?)
 }
 
 /// Reads a default rule trace text file.
@@ -287,15 +286,13 @@ pub fn read_default_rule_trace(
     test_name: &str,
     prefix: &str,
     solver: &SolverFamily,
-) -> Result<Vec<String>, std::io::Error> {
+) -> Result<String, std::io::Error> {
     let solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}-{solver_name}-{prefix}-rule-trace.txt");
-    let rules_trace: Vec<String> = read_with_path(filename)?
-        .lines()
-        .map(String::from)
-        .collect();
-
-    Ok(rules_trace)
+    Ok(truncate_to_first_chars(
+        &read_with_path(filename)?,
+        DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
+    ))
 }
 
 #[doc(hidden)]
@@ -395,6 +392,22 @@ pub fn normalize_solutions_for_comparison(
                         });
                         updates.push((k, Literal::AbstractLiteral(record)));
                     }
+                    Literal::AbstractLiteral(AbstractLiteral::Variant(entry)) => {
+                        let mut variant = AbstractLiteral::Variant(entry);
+                        variant = variant.transform(&move |x| match x {
+                            AbstractLiteral::Variant(entry) => {
+                                let Field { name, value } = Moo::unwrap_or_clone(entry);
+                                let value = match value {
+                                    Literal::Bool(false) => Literal::Int(0),
+                                    Literal::Bool(true) => Literal::Int(1),
+                                    value => value,
+                                };
+                                AbstractLiteral::Variant(Moo::new(Field { name, value }))
+                            }
+                            value => value,
+                        });
+                        updates.push((k, Literal::AbstractLiteral(variant)));
+                    }
                     Literal::AbstractLiteral(AbstractLiteral::Set(members)) => {
                         let set = AbstractLiteral::Set(members).transform(&move |x| match x {
                             AbstractLiteral::Set(members) => {
@@ -413,19 +426,208 @@ pub fn normalize_solutions_for_comparison(
                         });
                         updates.push((k, Literal::AbstractLiteral(set)));
                     }
-                    e => bug!("unexpected literal type: {e:?}"),
+                    Literal::AbstractLiteral(AbstractLiteral::MSet(members)) => {
+                        let mset = AbstractLiteral::MSet(members).transform(&move |x| match x {
+                            AbstractLiteral::MSet(members) => {
+                                let members = members
+                                    .into_iter()
+                                    .map(|x| match x {
+                                        Literal::Bool(false) => Literal::Int(0),
+                                        Literal::Bool(true) => Literal::Int(1),
+                                        x => x,
+                                    })
+                                    .collect_vec();
+                                AbstractLiteral::MSet(members)
+                            }
+                            x => x,
+                        });
+                        updates.push((k, Literal::AbstractLiteral(mset)));
+                    }
+                    Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) => {
+                        let sequence =
+                            AbstractLiteral::Sequence(elems).transform(&move |x| match x {
+                                AbstractLiteral::Sequence(elems) => {
+                                    let elems = elems
+                                        .into_iter()
+                                        .map(|x| match x {
+                                            Literal::Bool(false) => Literal::Int(0),
+                                            Literal::Bool(true) => Literal::Int(1),
+                                            x => x,
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Sequence(elems)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(sequence)));
+                    }
+                    Literal::AbstractLiteral(AbstractLiteral::Function(pairs)) => {
+                        let function =
+                            AbstractLiteral::Function(pairs).transform(&move |x| match x {
+                                AbstractLiteral::Function(pairs) => {
+                                    let pairs = pairs
+                                        .into_iter()
+                                        .map(|(key, value)| {
+                                            let normalize = |x| match x {
+                                                Literal::Bool(false) => Literal::Int(0),
+                                                Literal::Bool(true) => Literal::Int(1),
+                                                x => x,
+                                            };
+                                            (normalize(key), normalize(value))
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Function(pairs)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(function)));
+                    }
+                    Literal::AbstractLiteral(AbstractLiteral::Relation(tuples)) => {
+                        let relation =
+                            AbstractLiteral::Relation(tuples).transform(&move |x| match x {
+                                AbstractLiteral::Relation(tuples) => {
+                                    let tuples = tuples
+                                        .into_iter()
+                                        .map(|fields| {
+                                            fields
+                                                .into_iter()
+                                                .map(|x| match x {
+                                                    Literal::Bool(false) => Literal::Int(0),
+                                                    Literal::Bool(true) => Literal::Int(1),
+                                                    x => x,
+                                                })
+                                                .collect_vec()
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Relation(tuples)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(relation)));
+                    }
+                    Literal::AbstractLiteral(AbstractLiteral::Partition(parts)) => {
+                        let partition =
+                            AbstractLiteral::Partition(parts).transform(&move |x| match x {
+                                AbstractLiteral::Partition(parts) => {
+                                    let parts = parts
+                                        .into_iter()
+                                        .map(|part| {
+                                            part.into_iter()
+                                                .map(|x| match x {
+                                                    Literal::Bool(false) => Literal::Int(0),
+                                                    Literal::Bool(true) => Literal::Int(1),
+                                                    x => x,
+                                                })
+                                                .collect_vec()
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Partition(parts)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(partition)));
+                    }
+                    Literal::AbstractLiteral(AbstractLiteral::Permutation(cycles)) => {
+                        let permutation =
+                            AbstractLiteral::Permutation(cycles).transform(&move |x| match x {
+                                AbstractLiteral::Permutation(cycles) => {
+                                    let cycles = cycles
+                                        .into_iter()
+                                        .map(|cycle| {
+                                            cycle
+                                                .into_iter()
+                                                .map(|x| match x {
+                                                    Literal::Bool(false) => Literal::Int(0),
+                                                    Literal::Bool(true) => Literal::Int(1),
+                                                    x => x,
+                                                })
+                                                .collect_vec()
+                                        })
+                                        .collect_vec();
+                                    AbstractLiteral::Permutation(cycles)
+                                }
+                                x => x,
+                            });
+                        updates.push((k, Literal::AbstractLiteral(permutation)));
+                    }
                 }
             }
         }
 
         for (k, v) in updates {
+            let v = match v {
+                Literal::AbstractLiteral(value) => {
+                    Literal::AbstractLiteral(normalize_set_literal_order(value))
+                }
+                value => value,
+            };
             solset.insert(k, v);
         }
     }
 
-    // Remove duplicates
+    // Remove duplicates and put solutions in a stable order for set-equality compares.
     normalized = normalized.into_iter().unique().collect();
+    normalized.sort_by(solution_essence_cmp);
     normalized
+}
+
+fn solution_essence_cmp(
+    lhs: &BTreeMap<Name, Literal>,
+    rhs: &BTreeMap<Name, Literal>,
+) -> std::cmp::Ordering {
+    lhs.iter()
+        .zip(rhs)
+        .find_map(|((lhs_name, lhs_value), (rhs_name, rhs_value))| {
+            let ordering = lhs_name.cmp(rhs_name);
+            (ordering != std::cmp::Ordering::Equal)
+                .then_some(ordering)
+                .or_else(|| {
+                    let ordering = lhs_value.essence_cmp(rhs_value);
+                    (ordering != std::cmp::Ordering::Equal).then_some(ordering)
+                })
+        })
+        .unwrap_or_else(|| lhs.len().cmp(&rhs.len()))
+}
+
+fn normalize_set_literal_order(value: AbstractLiteral<Literal>) -> AbstractLiteral<Literal> {
+    value.transform(&|value| match value {
+        AbstractLiteral::Set(mut members) => {
+            members.sort_by(Literal::essence_cmp);
+            AbstractLiteral::Set(members)
+        }
+        AbstractLiteral::MSet(mut members) => {
+            members.sort_by(Literal::essence_cmp);
+            AbstractLiteral::MSet(members)
+        }
+        AbstractLiteral::Function(mut pairs) => {
+            pairs.sort_by(|(k1, _), (k2, _)| Literal::essence_cmp(k1, k2));
+            AbstractLiteral::Function(pairs)
+        }
+        AbstractLiteral::Relation(mut tuples) => {
+            tuples.sort_by(|a, b| {
+                a.iter()
+                    .zip(b.iter())
+                    .map(|(x, y)| Literal::essence_cmp(x, y))
+                    .find(|ord| *ord != std::cmp::Ordering::Equal)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
+            AbstractLiteral::Relation(tuples)
+        }
+        AbstractLiteral::Partition(mut parts) => {
+            for part in parts.iter_mut() {
+                part.sort_by(Literal::essence_cmp);
+            }
+            parts.sort_by(|a, b| {
+                a.iter()
+                    .zip(b.iter())
+                    .map(|(x, y)| Literal::essence_cmp(x, y))
+                    .find(|ord| *ord != std::cmp::Ordering::Equal)
+                    .unwrap_or_else(|| a.len().cmp(&b.len()))
+            });
+            AbstractLiteral::Partition(parts)
+        }
+        value => value,
+    })
 }
 
 fn maybe_truncate_serialised_json(serialised: String, test_stage: &str) -> String {
@@ -440,6 +642,13 @@ fn truncate_to_first_lines(content: &str, max_lines: usize) -> String {
     content.lines().take(max_lines).join("\n")
 }
 
+pub fn truncate_to_first_chars(content: &str, max_chars: usize) -> String {
+    match content.char_indices().nth(max_chars) {
+        Some((idx, _)) => content[..idx].to_owned(),
+        None => content.to_owned(),
+    }
+}
+
 fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<String> {
     let reader = BufReader::new(File::open(&filename)?);
     let lines = reader
@@ -450,4 +659,39 @@ fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<Strin
         .unwrap()
         .collect::<Result<Vec<_>, _>>()?;
     Ok(lines.join("\n"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn set(members: Vec<Literal>) -> Literal {
+        Literal::AbstractLiteral(AbstractLiteral::Set(members))
+    }
+
+    #[test]
+    fn solution_normalization_sorts_nested_set_members_by_essence_order() {
+        let inner_one_two = set(vec![Literal::Int(2), Literal::Int(1)]);
+        let inner_two = set(vec![Literal::Int(2)]);
+        let mut oxide_solution = BTreeMap::new();
+        oxide_solution.insert(
+            Name::User("x".into()),
+            set(vec![inner_two.clone(), inner_one_two.clone()]),
+        );
+        let mut conjure_solution = BTreeMap::new();
+        conjure_solution.insert(
+            Name::User("x".into()),
+            set(vec![inner_one_two, inner_two.clone()]),
+        );
+
+        let normalized_oxide = normalize_solutions_for_comparison(&[oxide_solution]);
+        let normalized_conjure = normalize_solutions_for_comparison(&[conjure_solution]);
+        let expected = set(vec![inner_two, set(vec![Literal::Int(1), Literal::Int(2)])]);
+
+        assert_eq!(normalized_oxide, normalized_conjure);
+        assert_eq!(
+            normalized_oxide[0].get(&Name::User("x".into())),
+            Some(&expected)
+        );
+    }
 }

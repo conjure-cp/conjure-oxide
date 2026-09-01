@@ -1,0 +1,38 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+x = partition({-1}) = partition({-2}),
+y = partition({1}) = partition({2}),
+z = partition({1}) = partition({1})
+
+--
+
+x = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x,false)
+
+--
+
+y = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,false)
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+WatchedLiteral(x,false),
+WatchedLiteral(y,false),
+z
+

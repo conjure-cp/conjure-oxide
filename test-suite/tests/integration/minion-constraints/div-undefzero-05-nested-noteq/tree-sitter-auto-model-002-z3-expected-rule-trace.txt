@@ -1,0 +1,139 @@
+Model before rewriting:
+
+find x: int(5..20)
+find y: int(0..5)
+find z: int(0..6)
+
+such that
+
+!((x / (y / z)) = 10)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(5..20)
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#lia_1: int(0..5)
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#bv_1: int(0..6)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+z
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+z#bv_1
+
+--
+
+(y#lia_1 / z#bv_1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(y#lia_1, z#bv_1) @ z#bv_1 != 0}
+
+--
+
+(x#bv_1 / {SafeDiv(y#lia_1, z#bv_1) @ z#bv_1 != 0})
+   ~~> bubble_up ([("Bubble", 8800)])
+{(x#bv_1 / SafeDiv(y#lia_1, z#bv_1)) @ z#bv_1 != 0}
+
+--
+
+{(x#bv_1 / SafeDiv(y#lia_1, z#bv_1)) @ z#bv_1 != 0} = 10
+   ~~> bubble_up ([("Bubble", 8800)])
+{(x#bv_1 / SafeDiv(y#lia_1, z#bv_1)) = 10 @ z#bv_1 != 0}
+
+--
+
+{(x#bv_1 / SafeDiv(y#lia_1, z#bv_1)) = 10 @ z#bv_1 != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(x#bv_1 / SafeDiv(y#lia_1, z#bv_1)) = 10,z#bv_1 != 0;int(1..)])
+
+--
+
+(x#bv_1 / SafeDiv(y#lia_1, z#bv_1))
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) @ SafeDiv(y#lia_1, z#bv_1) != 0}
+
+--
+
+{SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) @ SafeDiv(y#lia_1, z#bv_1) != 0} = 10
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) = 10 @ SafeDiv(y#lia_1, z#bv_1) != 0}
+
+--
+
+{SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) = 10 @ SafeDiv(y#lia_1, z#bv_1) != 0}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) = 10,SafeDiv(y#lia_1, z#bv_1) != 0;int(1..)])
+
+--
+
+and([and([SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) = 10,SafeDiv(y#lia_1, z#bv_1) != 0;int(1..)]),z#bv_1 != 0;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) = 10,SafeDiv(y#lia_1, z#bv_1) != 0,z#bv_1 != 0;int(1..)])
+
+--
+
+!(and([SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) = 10,SafeDiv(y#lia_1, z#bv_1) != 0,z#bv_1 != 0;int(1..)]))
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) = 10),!(SafeDiv(y#lia_1, z#bv_1) != 0),!(z#bv_1 != 0);int(1..)])
+
+--
+
+!(SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) = 10)
+   ~~> negated_eq_to_neq ([("Base", 8800)])
+SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) != 10
+
+--
+
+!(SafeDiv(y#lia_1, z#bv_1) != 0)
+   ~~> negated_neq_to_eq ([("Base", 8800)])
+SafeDiv(y#lia_1, z#bv_1) = 0
+
+--
+
+!(z#bv_1 != 0)
+   ~~> negated_neq_to_eq ([("Base", 8800)])
+z#bv_1 = 0
+
+--
+
+Final model:
+
+find x: int(5..20)
+find y: int(0..5)
+find z: int(0..6)
+find x#bv_1: int(5..20)
+find y#lia_1: int(0..5)
+find z#bv_1: int(0..6)
+
+such that
+
+or([SafeDiv(x#bv_1, SafeDiv(y#lia_1, z#bv_1)) != 10,SafeDiv(y#lia_1, z#bv_1) = 0,z#bv_1 = 0;int(1..)])
+

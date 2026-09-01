@@ -1,0 +1,4834 @@
+Model before rewriting:
+
+letting r be 11
+letting c be 12
+letting row_sums be [0,0,8,2,6,4,5,3,7,0,0;int(1..11)]
+letting col_sums be [0,0,7,1,6,3,4,5,2,7,0,0;int(1..12)]
+find x: matrix indexed by [int(1..r), int(1..c)] of bool
+
+such that
+
+and([ row_sums[i] = sum([ toInt(x[i, j]) | j : int(1..c) ]) | i : int(1..r) ]),
+and([ col_sums[j] = sum([ toInt(x[i, j]) | i : int(1..r) ]) | j : int(1..c) ])
+
+--
+
+and([ row_sums[i] = sum([ toInt(x[i, j]) | j : int(1..c) ]) | i : int(1..r) ]),
+and([ col_sums[j] = sum([ toInt(x[i, j]) | i : int(1..r) ]) | j : int(1..c) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ row_sums[i] = sum([ toInt(x[i, j]) | j : int(1..c) ]) | i : int(1..r) ]),
+and([ col_sums[j] = sum([ toInt(x[i, j]) | i : int(1..r) ]) | j : int(1..c) ])
+new variables:
+  find x#array_1: matrix indexed by [int(1..11), int(1..12)] of bool
+
+--
+
+and([ row_sums[i] = sum([ toInt(x[i, j]) | j : int(1..c) ]) | i : int(1..r) ]),
+and([ col_sums[j] = sum([ toInt(x[i, j]) | i : int(1..r) ]) | j : int(1..c) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ row_sums[i] = sum([ toInt(x[i, j]) | j : int(1..c) ]) | i : int(1..r) ]),
+and([ col_sums[j] = sum([ toInt(x[i, j]) | i : int(1..r) ]) | j : int(1..c) ])
+
+--
+
+[ row_sums[i] = sum([ toInt(x[i, j]) | j : int(1..c) ]) | i : int(1..r) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[0 = sum([toInt(x[1, 1]),toInt(x[1, 2]),toInt(x[1, 3]),toInt(x[1, 4]),toInt(x[1, 5]),toInt(x[1, 6]),toInt(x[1, 7]),toInt(x[1, 8]),toInt(x[1, 9]),toInt(x[1, 10]),toInt(x[1, 11]),toInt(x[1, 12]);int(1..)]),0 = sum([toInt(x[2, 1]),toInt(x[2, 2]),toInt(x[2, 3]),toInt(x[2, 4]),toInt(x[2, 5]),toInt(x[2, 6]),toInt(x[2, 7]),toInt(x[2, 8]),toInt(x[2, 9]),toInt(x[2, 10]),toInt(x[2, 11]),toInt(x[2, 12]);int(1..)]),8 = sum([toInt(x[3, 1]),toInt(x[3, 2]),toInt(x[3, 3]),toInt(x[3, 4]),toInt(x[3, 5]),toInt(x[3, 6]),toInt(x[3, 7]),toInt(x[3, 8]),toInt(x[3, 9]),toInt(x[3, 10]),toInt(x[3, 11]),toInt(x[3, 12]);int(1..)]),2 = sum([toInt(x[4, 1]),toInt(x[4, 2]),toInt(x[4, 3]),toInt(x[4, 4]),toInt(x[4, 5]),toInt(x[4, 6]),toInt(x[4, 7]),toInt(x[4, 8]),toInt(x[4, 9]),toInt(x[4, 10]),toInt(x[4, 11]),toInt(x[4, 12]);int(1..)]),6 = sum([toInt(x[5, 1]),toInt(x[5, 2]),toInt(x[5, 3]),toInt(x[5, 4]),toInt(x[5, 5]),toInt(x[5, 6]),toInt(x[5, 7]),toInt(x[5, 8]),toInt(x[5, 9]),toInt(x[5, 10]),toInt(x[5, 11]),toInt(x[5, 12]);int(1..)]),4 = sum([toInt(x[6, 1]),toInt(x[6, 2]),toInt(x[6, 3]),toInt(x[6, 4]),toInt(x[6, 5]),toInt(x[6, 6]),toInt(x[6, 7]),toInt(x[6, 8]),toInt(x[6, 9]),toInt(x[6, 10]),toInt(x[6, 11]),toInt(x[6, 12]);int(1..)]),5 = sum([toInt(x[7, 1]),toInt(x[7, 2]),toInt(x[7, 3]),toInt(x[7, 4]),toInt(x[7, 5]),toInt(x[7, 6]),toInt(x[7, 7]),toInt(x[7, 8]),toInt(x[7, 9]),toInt(x[7, 10]),toInt(x[7, 11]),toInt(x[7, 12]);int(1..)]),3 = sum([toInt(x[8, 1]),toInt(x[8, 2]),toInt(x[8, 3]),toInt(x[8, 4]),toInt(x[8, 5]),toInt(x[8, 6]),toInt(x[8, 7]),toInt(x[8, 8]),toInt(x[8, 9]),toInt(x[8, 10]),toInt(x[8, 11]),toInt(x[8, 12]);int(1..)]),7 = sum([toInt(x[9, 1]),toInt(x[9, 2]),toInt(x[9, 3]),toInt(x[9, 4]),toInt(x[9, 5]),toInt(x[9, 6]),toInt(x[9, 7]),toInt(x[9, 8]),toInt(x[9, 9]),toInt(x[9, 10]),toInt(x[9, 11]),toInt(x[9, 12]);int(1..)]),0 = sum([toInt(x[10, 1]),toInt(x[10, 2]),toInt(x[10, 3]),toInt(x[10, 4]),toInt(x[10, 5]),toInt(x[10, 6]),toInt(x[10, 7]),toInt(x[10, 8]),toInt(x[10, 9]),toInt(x[10, 10]),toInt(x[10, 11]),toInt(x[10, 12]);int(1..)]),0 = sum([toInt(x[11, 1]),toInt(x[11, 2]),toInt(x[11, 3]),toInt(x[11, 4]),toInt(x[11, 5]),toInt(x[11, 6]),toInt(x[11, 7]),toInt(x[11, 8]),toInt(x[11, 9]),toInt(x[11, 10]),toInt(x[11, 11]),toInt(x[11, 12]);int(1..)]);int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x#array_1[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 1])
+
+--
+
+x#array_1[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 2])
+
+--
+
+x#array_1[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 3])
+
+--
+
+x#array_1[1, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 4])
+
+--
+
+x#array_1[1, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 5])
+
+--
+
+x#array_1[1, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 6])
+
+--
+
+x#array_1[1, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 7])
+
+--
+
+x#array_1[1, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 8])
+
+--
+
+x#array_1[1, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 9])
+
+--
+
+x#array_1[1, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 10])
+
+--
+
+x#array_1[1, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 11])
+
+--
+
+x#array_1[1, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 12])
+
+--
+
+x#array_1[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 1])
+
+--
+
+x#array_1[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 2])
+
+--
+
+x#array_1[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 3])
+
+--
+
+x#array_1[2, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 4])
+
+--
+
+x#array_1[2, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 5])
+
+--
+
+x#array_1[2, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 6])
+
+--
+
+x#array_1[2, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 7])
+
+--
+
+x#array_1[2, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 8])
+
+--
+
+x#array_1[2, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 9])
+
+--
+
+x#array_1[2, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 10])
+
+--
+
+x#array_1[2, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 11])
+
+--
+
+x#array_1[2, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 12])
+
+--
+
+x#array_1[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 1])
+
+--
+
+x#array_1[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 2])
+
+--
+
+x#array_1[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 3])
+
+--
+
+x#array_1[3, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 4])
+
+--
+
+x#array_1[3, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 5])
+
+--
+
+x#array_1[3, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 6])
+
+--
+
+x#array_1[3, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 7])
+
+--
+
+x#array_1[3, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 8])
+
+--
+
+x#array_1[3, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 9])
+
+--
+
+x#array_1[3, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 10])
+
+--
+
+x#array_1[3, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 11])
+
+--
+
+x#array_1[3, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 12])
+
+--
+
+x#array_1[4, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 1])
+
+--
+
+x#array_1[4, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 2])
+
+--
+
+x#array_1[4, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 3])
+
+--
+
+x#array_1[4, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 4])
+
+--
+
+x#array_1[4, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 5])
+
+--
+
+x#array_1[4, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 6])
+
+--
+
+x#array_1[4, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 7])
+
+--
+
+x#array_1[4, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 8])
+
+--
+
+x#array_1[4, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 9])
+
+--
+
+x#array_1[4, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 10])
+
+--
+
+x#array_1[4, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 11])
+
+--
+
+x#array_1[4, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 12])
+
+--
+
+x#array_1[5, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 1])
+
+--
+
+x#array_1[5, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 2])
+
+--
+
+x#array_1[5, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 3])
+
+--
+
+x#array_1[5, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 4])
+
+--
+
+x#array_1[5, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 5])
+
+--
+
+x#array_1[5, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 6])
+
+--
+
+x#array_1[5, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 7])
+
+--
+
+x#array_1[5, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 8])
+
+--
+
+x#array_1[5, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 9])
+
+--
+
+x#array_1[5, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 10])
+
+--
+
+x#array_1[5, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 11])
+
+--
+
+x#array_1[5, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 12])
+
+--
+
+x#array_1[6, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 1])
+
+--
+
+x#array_1[6, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 2])
+
+--
+
+x#array_1[6, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 3])
+
+--
+
+x#array_1[6, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 4])
+
+--
+
+x#array_1[6, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 5])
+
+--
+
+x#array_1[6, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 6])
+
+--
+
+x#array_1[6, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 7])
+
+--
+
+x#array_1[6, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 8])
+
+--
+
+x#array_1[6, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 9])
+
+--
+
+x#array_1[6, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 10])
+
+--
+
+x#array_1[6, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 11])
+
+--
+
+x#array_1[6, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 12])
+
+--
+
+x#array_1[7, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 1])
+
+--
+
+x#array_1[7, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 2])
+
+--
+
+x#array_1[7, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 3])
+
+--
+
+x#array_1[7, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 4])
+
+--
+
+x#array_1[7, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 5])
+
+--
+
+x#array_1[7, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 6])
+
+--
+
+x#array_1[7, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 7])
+
+--
+
+x#array_1[7, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 8])
+
+--
+
+x#array_1[7, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 9])
+
+--
+
+x#array_1[7, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 10])
+
+--
+
+x#array_1[7, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 11])
+
+--
+
+x#array_1[7, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 12])
+
+--
+
+x#array_1[8, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 1])
+
+--
+
+x#array_1[8, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 2])
+
+--
+
+x#array_1[8, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 3])
+
+--
+
+x#array_1[8, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 4])
+
+--
+
+x#array_1[8, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 5])
+
+--
+
+x#array_1[8, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 6])
+
+--
+
+x#array_1[8, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 7])
+
+--
+
+x#array_1[8, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 8])
+
+--
+
+x#array_1[8, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 9])
+
+--
+
+x#array_1[8, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 10])
+
+--
+
+x#array_1[8, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 11])
+
+--
+
+x#array_1[8, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 12])
+
+--
+
+x#array_1[9, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 1])
+
+--
+
+x#array_1[9, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 2])
+
+--
+
+x#array_1[9, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 3])
+
+--
+
+x#array_1[9, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 4])
+
+--
+
+x#array_1[9, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 5])
+
+--
+
+x#array_1[9, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 6])
+
+--
+
+x#array_1[9, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 7])
+
+--
+
+x#array_1[9, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 8])
+
+--
+
+x#array_1[9, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 9])
+
+--
+
+x#array_1[9, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 10])
+
+--
+
+x#array_1[9, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 11])
+
+--
+
+x#array_1[9, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 12])
+
+--
+
+x#array_1[10, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 1])
+
+--
+
+x#array_1[10, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 2])
+
+--
+
+x#array_1[10, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 3])
+
+--
+
+x#array_1[10, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 4])
+
+--
+
+x#array_1[10, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 5])
+
+--
+
+x#array_1[10, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 6])
+
+--
+
+x#array_1[10, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 7])
+
+--
+
+x#array_1[10, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 8])
+
+--
+
+x#array_1[10, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 9])
+
+--
+
+x#array_1[10, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 10])
+
+--
+
+x#array_1[10, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 11])
+
+--
+
+x#array_1[10, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 12])
+
+--
+
+x#array_1[11, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 1])
+
+--
+
+x#array_1[11, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 2])
+
+--
+
+x#array_1[11, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 3])
+
+--
+
+x#array_1[11, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 4])
+
+--
+
+x#array_1[11, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 5])
+
+--
+
+x#array_1[11, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 6])
+
+--
+
+x#array_1[11, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 7])
+
+--
+
+x#array_1[11, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 8])
+
+--
+
+x#array_1[11, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 9])
+
+--
+
+x#array_1[11, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 10])
+
+--
+
+x#array_1[11, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 11])
+
+--
+
+x#array_1[11, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 12])
+
+--
+
+[ col_sums[j] = sum([ toInt(x[i, j]) | i : int(1..r) ]) | j : int(1..c) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[0 = sum([toInt(x[1, 1]),toInt(x[2, 1]),toInt(x[3, 1]),toInt(x[4, 1]),toInt(x[5, 1]),toInt(x[6, 1]),toInt(x[7, 1]),toInt(x[8, 1]),toInt(x[9, 1]),toInt(x[10, 1]),toInt(x[11, 1]);int(1..)]),0 = sum([toInt(x[1, 2]),toInt(x[2, 2]),toInt(x[3, 2]),toInt(x[4, 2]),toInt(x[5, 2]),toInt(x[6, 2]),toInt(x[7, 2]),toInt(x[8, 2]),toInt(x[9, 2]),toInt(x[10, 2]),toInt(x[11, 2]);int(1..)]),7 = sum([toInt(x[1, 3]),toInt(x[2, 3]),toInt(x[3, 3]),toInt(x[4, 3]),toInt(x[5, 3]),toInt(x[6, 3]),toInt(x[7, 3]),toInt(x[8, 3]),toInt(x[9, 3]),toInt(x[10, 3]),toInt(x[11, 3]);int(1..)]),1 = sum([toInt(x[1, 4]),toInt(x[2, 4]),toInt(x[3, 4]),toInt(x[4, 4]),toInt(x[5, 4]),toInt(x[6, 4]),toInt(x[7, 4]),toInt(x[8, 4]),toInt(x[9, 4]),toInt(x[10, 4]),toInt(x[11, 4]);int(1..)]),6 = sum([toInt(x[1, 5]),toInt(x[2, 5]),toInt(x[3, 5]),toInt(x[4, 5]),toInt(x[5, 5]),toInt(x[6, 5]),toInt(x[7, 5]),toInt(x[8, 5]),toInt(x[9, 5]),toInt(x[10, 5]),toInt(x[11, 5]);int(1..)]),3 = sum([toInt(x[1, 6]),toInt(x[2, 6]),toInt(x[3, 6]),toInt(x[4, 6]),toInt(x[5, 6]),toInt(x[6, 6]),toInt(x[7, 6]),toInt(x[8, 6]),toInt(x[9, 6]),toInt(x[10, 6]),toInt(x[11, 6]);int(1..)]),4 = sum([toInt(x[1, 7]),toInt(x[2, 7]),toInt(x[3, 7]),toInt(x[4, 7]),toInt(x[5, 7]),toInt(x[6, 7]),toInt(x[7, 7]),toInt(x[8, 7]),toInt(x[9, 7]),toInt(x[10, 7]),toInt(x[11, 7]);int(1..)]),5 = sum([toInt(x[1, 8]),toInt(x[2, 8]),toInt(x[3, 8]),toInt(x[4, 8]),toInt(x[5, 8]),toInt(x[6, 8]),toInt(x[7, 8]),toInt(x[8, 8]),toInt(x[9, 8]),toInt(x[10, 8]),toInt(x[11, 8]);int(1..)]),2 = sum([toInt(x[1, 9]),toInt(x[2, 9]),toInt(x[3, 9]),toInt(x[4, 9]),toInt(x[5, 9]),toInt(x[6, 9]),toInt(x[7, 9]),toInt(x[8, 9]),toInt(x[9, 9]),toInt(x[10, 9]),toInt(x[11, 9]);int(1..)]),7 = sum([toInt(x[1, 10]),toInt(x[2, 10]),toInt(x[3, 10]),toInt(x[4, 10]),toInt(x[5, 10]),toInt(x[6, 10]),toInt(x[7, 10]),toInt(x[8, 10]),toInt(x[9, 10]),toInt(x[10, 10]),toInt(x[11, 10]);int(1..)]),0 = sum([toInt(x[1, 11]),toInt(x[2, 11]),toInt(x[3, 11]),toInt(x[4, 11]),toInt(x[5, 11]),toInt(x[6, 11]),toInt(x[7, 11]),toInt(x[8, 11]),toInt(x[9, 11]),toInt(x[10, 11]),toInt(x[11, 11]);int(1..)]),0 = sum([toInt(x[1, 12]),toInt(x[2, 12]),toInt(x[3, 12]),toInt(x[4, 12]),toInt(x[5, 12]),toInt(x[6, 12]),toInt(x[7, 12]),toInt(x[8, 12]),toInt(x[9, 12]),toInt(x[10, 12]),toInt(x[11, 12]);int(1..)]);int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+x#array_1
+
+--
+
+x#array_1[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 1])
+
+--
+
+x#array_1[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 1])
+
+--
+
+x#array_1[3, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 1])
+
+--
+
+x#array_1[4, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 1])
+
+--
+
+x#array_1[5, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 1])
+
+--
+
+x#array_1[6, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 1])
+
+--
+
+x#array_1[7, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 1])
+
+--
+
+x#array_1[8, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 1])
+
+--
+
+x#array_1[9, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 1])
+
+--
+
+x#array_1[10, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 1])
+
+--
+
+x#array_1[11, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 1])
+
+--
+
+x#array_1[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 2])
+
+--
+
+x#array_1[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 2])
+
+--
+
+x#array_1[3, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 2])
+
+--
+
+x#array_1[4, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 2])
+
+--
+
+x#array_1[5, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 2])
+
+--
+
+x#array_1[6, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 2])
+
+--
+
+x#array_1[7, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 2])
+
+--
+
+x#array_1[8, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 2])
+
+--
+
+x#array_1[9, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 2])
+
+--
+
+x#array_1[10, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 2])
+
+--
+
+x#array_1[11, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 2])
+
+--
+
+x#array_1[1, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 3])
+
+--
+
+x#array_1[2, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 3])
+
+--
+
+x#array_1[3, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 3])
+
+--
+
+x#array_1[4, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 3])
+
+--
+
+x#array_1[5, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 3])
+
+--
+
+x#array_1[6, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 3])
+
+--
+
+x#array_1[7, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 3])
+
+--
+
+x#array_1[8, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 3])
+
+--
+
+x#array_1[9, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 3])
+
+--
+
+x#array_1[10, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 3])
+
+--
+
+x#array_1[11, 3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 3])
+
+--
+
+x#array_1[1, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 4])
+
+--
+
+x#array_1[2, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 4])
+
+--
+
+x#array_1[3, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 4])
+
+--
+
+x#array_1[4, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 4])
+
+--
+
+x#array_1[5, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 4])
+
+--
+
+x#array_1[6, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 4])
+
+--
+
+x#array_1[7, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 4])
+
+--
+
+x#array_1[8, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 4])
+
+--
+
+x#array_1[9, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 4])
+
+--
+
+x#array_1[10, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 4])
+
+--
+
+x#array_1[11, 4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 4])
+
+--
+
+x#array_1[1, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 5])
+
+--
+
+x#array_1[2, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 5])
+
+--
+
+x#array_1[3, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 5])
+
+--
+
+x#array_1[4, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 5])
+
+--
+
+x#array_1[5, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 5])
+
+--
+
+x#array_1[6, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 5])
+
+--
+
+x#array_1[7, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 5])
+
+--
+
+x#array_1[8, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 5])
+
+--
+
+x#array_1[9, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 5])
+
+--
+
+x#array_1[10, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 5])
+
+--
+
+x#array_1[11, 5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 5])
+
+--
+
+x#array_1[1, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 6])
+
+--
+
+x#array_1[2, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 6])
+
+--
+
+x#array_1[3, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 6])
+
+--
+
+x#array_1[4, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 6])
+
+--
+
+x#array_1[5, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 6])
+
+--
+
+x#array_1[6, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 6])
+
+--
+
+x#array_1[7, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 6])
+
+--
+
+x#array_1[8, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 6])
+
+--
+
+x#array_1[9, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 6])
+
+--
+
+x#array_1[10, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 6])
+
+--
+
+x#array_1[11, 6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 6])
+
+--
+
+x#array_1[1, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 7])
+
+--
+
+x#array_1[2, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 7])
+
+--
+
+x#array_1[3, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 7])
+
+--
+
+x#array_1[4, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 7])
+
+--
+
+x#array_1[5, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 7])
+
+--
+
+x#array_1[6, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 7])
+
+--
+
+x#array_1[7, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 7])
+
+--
+
+x#array_1[8, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 7])
+
+--
+
+x#array_1[9, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 7])
+
+--
+
+x#array_1[10, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 7])
+
+--
+
+x#array_1[11, 7]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 7])
+
+--
+
+x#array_1[1, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 8])
+
+--
+
+x#array_1[2, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 8])
+
+--
+
+x#array_1[3, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 8])
+
+--
+
+x#array_1[4, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 8])
+
+--
+
+x#array_1[5, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 8])
+
+--
+
+x#array_1[6, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 8])
+
+--
+
+x#array_1[7, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 8])
+
+--
+
+x#array_1[8, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 8])
+
+--
+
+x#array_1[9, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 8])
+
+--
+
+x#array_1[10, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 8])
+
+--
+
+x#array_1[11, 8]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 8])
+
+--
+
+x#array_1[1, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 9])
+
+--
+
+x#array_1[2, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 9])
+
+--
+
+x#array_1[3, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 9])
+
+--
+
+x#array_1[4, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 9])
+
+--
+
+x#array_1[5, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 9])
+
+--
+
+x#array_1[6, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 9])
+
+--
+
+x#array_1[7, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 9])
+
+--
+
+x#array_1[8, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 9])
+
+--
+
+x#array_1[9, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 9])
+
+--
+
+x#array_1[10, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 9])
+
+--
+
+x#array_1[11, 9]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 9])
+
+--
+
+x#array_1[1, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 10])
+
+--
+
+x#array_1[2, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 10])
+
+--
+
+x#array_1[3, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 10])
+
+--
+
+x#array_1[4, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 10])
+
+--
+
+x#array_1[5, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 10])
+
+--
+
+x#array_1[6, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 10])
+
+--
+
+x#array_1[7, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 10])
+
+--
+
+x#array_1[8, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 10])
+
+--
+
+x#array_1[9, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 10])
+
+--
+
+x#array_1[10, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 10])
+
+--
+
+x#array_1[11, 10]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 10])
+
+--
+
+x#array_1[1, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 11])
+
+--
+
+x#array_1[2, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 11])
+
+--
+
+x#array_1[3, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 11])
+
+--
+
+x#array_1[4, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 11])
+
+--
+
+x#array_1[5, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 11])
+
+--
+
+x#array_1[6, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 11])
+
+--
+
+x#array_1[7, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 11])
+
+--
+
+x#array_1[8, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 11])
+
+--
+
+x#array_1[9, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 11])
+
+--
+
+x#array_1[10, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 11])
+
+--
+
+x#array_1[11, 11]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 11])
+
+--
+
+x#array_1[1, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[1, 12])
+
+--
+
+x#array_1[2, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[2, 12])
+
+--
+
+x#array_1[3, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[3, 12])
+
+--
+
+x#array_1[4, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[4, 12])
+
+--
+
+x#array_1[5, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[5, 12])
+
+--
+
+x#array_1[6, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[6, 12])
+
+--
+
+x#array_1[7, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[7, 12])
+
+--
+
+x#array_1[8, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[8, 12])
+
+--
+
+x#array_1[9, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[9, 12])
+
+--
+
+x#array_1[10, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[10, 12])
+
+--
+
+x#array_1[11, 12]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(x#array_1,[11, 12])
+
+--
+
+Final model:
+
+letting r be 11
+letting c be 12
+letting row_sums be [0,0,8,2,6,4,5,3,7,0,0;int(1..11)]
+letting col_sums be [0,0,7,1,6,3,4,5,2,7,0,0;int(1..12)]
+find x: matrix indexed by [int(1..r), int(1..c)] of bool
+find x#array_1: matrix indexed by [int(1..11), int(1..12)] of bool
+letting row_sums#components_1 be 0
+letting row_sums#components_2 be 0
+letting row_sums#components_3 be 8
+letting row_sums#components_4 be 2
+letting row_sums#components_5 be 6
+letting row_sums#components_6 be 4
+letting row_sums#components_7 be 5
+letting row_sums#components_8 be 3
+letting row_sums#components_9 be 7
+letting row_sums#components_10 be 0
+letting row_sums#components_11 be 0
+letting col_sums#components_1 be 0
+letting col_sums#components_2 be 0
+letting col_sums#components_3 be 7
+letting col_sums#components_4 be 1
+letting col_sums#components_5 be 6
+letting col_sums#components_6 be 3
+letting col_sums#components_7 be 4
+letting col_sums#components_8 be 5
+letting col_sums#components_9 be 2
+letting col_sums#components_10 be 7
+letting col_sums#components_11 be 0
+letting col_sums#components_12 be 0
+
+such that
+
+and([0 = sum([toInt(SafeIndex(x#array_1,[1, 1])),toInt(SafeIndex(x#array_1,[1, 2])),toInt(SafeIndex(x#array_1,[1, 3])),toInt(SafeIndex(x#array_1,[1, 4])),toInt(SafeIndex(x#array_1,[1, 5])),toInt(SafeIndex(x#array_1,[1, 6])),toInt(SafeIndex(x#array_1,[1, 7])),toInt(SafeIndex(x#array_1,[1, 8])),toInt(SafeIndex(x#array_1,[1, 9])),toInt(SafeIndex(x#array_1,[1, 10])),toInt(SafeIndex(x#array_1,[1, 11])),toInt(SafeIndex(x#array_1,[1, 12]));int(1..)]),0 = sum([toInt(SafeIndex(x#array_1,[2, 1])),toInt(SafeIndex(x#array_1,[2, 2])),toInt(SafeIndex(x#array_1,[2, 3])),toInt(SafeIndex(x#array_1,[2, 4])),toInt(SafeIndex(x#array_1,[2, 5])),toInt(SafeIndex(x#array_1,[2, 6])),toInt(SafeIndex(x#array_1,[2, 7])),toInt(SafeIndex(x#array_1,[2, 8])),toInt(SafeIndex(x#array_1,[2, 9])),toInt(SafeIndex(x#array_1,[2, 10])),toInt(SafeIndex(x#array_1,[2, 11])),toInt(SafeIndex(x#array_1,[2, 12]));int(1..)]),8 = sum([toInt(SafeIndex(x#array_1,[3, 1])),toInt(SafeIndex(x#array_1,[3, 2])),toInt(SafeIndex(x#array_1,[3, 3])),toInt(SafeIndex(x#array_1,[3, 4])),toInt(SafeIndex(x#array_1,[3, 5])),toInt(SafeIndex(x#array_1,[3, 6])),toInt(SafeIndex(x#array_1,[3, 7])),toInt(SafeIndex(x#array_1,[3, 8])),toInt(SafeIndex(x#array_1,[3, 9])),toInt(SafeIndex(x#array_1,[3, 10])),toInt(SafeIndex(x#array_1,[3, 11])),toInt(SafeIndex(x#array_1,[3, 12]));int(1..)]),2 = sum([toInt(SafeIndex(x#array_1,[4, 1])),toInt(SafeIndex(x#array_1,[4, 2])),toInt(SafeIndex(x#array_1,[4, 3])),toInt(SafeIndex(x#array_1,[4, 4])),toInt(SafeIndex(x#array_1,[4, 5])),toInt(SafeIndex(x#array_1,[4, 6])),toInt(SafeIndex(x#array_1,[4, 7])),toInt(SafeIndex(x#array_1,[4, 8])),toInt(SafeIndex(x#array_1,[4, 9])),toInt(SafeIndex(x#array_1,[4, 10])),toInt(SafeIndex(x#array_1,[4, 11])),toInt(SafeIndex(x#array_1,[4, 12]));int(1..)]),6 = sum([toInt(SafeIndex(x#array_1,[5, 1])),toInt(SafeIndex(x#array_1,[5, 2])),toInt(SafeIndex(x#array_1,[5, 3])),toInt(SafeIndex(x#array_1,[5, 4])),toInt(SafeIndex(x#array_1,[5, 5])),toInt(SafeIndex(x#array_1,[5, 6])),toInt(SafeIndex(x#array_1,[5, 7])),toInt(SafeIndex(x#array_1,[5, 8])),toInt(SafeIndex(x#array_1,[5, 9])),toInt(SafeIndex(x#array_1,[5, 10])),toInt(SafeIndex(x#array_1,[5, 11])),toInt(SafeIndex(x#array_1,[5, 12]));int(1..)]),4 = sum([toInt(SafeIndex(x#array_1,[6, 1])),toInt(SafeIndex(x#array_1,[6, 2])),toInt(SafeIndex(x#array_1,[6, 3])),toInt(SafeIndex(x#array_1,[6, 4])),toInt(SafeIndex(x#array_1,[6, 5])),toInt(SafeIndex(x#array_1,[6, 6])),toInt(SafeIndex(x#array_1,[6, 7])),toInt(SafeIndex(x#array_1,[6, 8])),toInt(SafeIndex(x#array_1,[6, 9])),toInt(SafeIndex(x#array_1,[6, 10])),toInt(SafeIndex(x#array_1,[6, 11])),toInt(SafeIndex(x#array_1,[6, 12]));int(1..)]),5 = sum([toInt(SafeIndex(x#array_1,[7, 1])),toInt(SafeIndex(x#array_1,[7, 2])),toInt(SafeIndex(x#array_1,[7, 3])),toInt(SafeIndex(x#array_1,[7, 4])),toInt(SafeIndex(x#array_1,[7, 5])),toInt(SafeIndex(x#array_1,[7, 6])),toInt(SafeIndex(x#array_1,[7, 7])),toInt(SafeIndex(x#array_1,[7, 8])),toInt(SafeIndex(x#array_1,[7, 9])),toInt(SafeIndex(x#array_1,[7, 10])),toInt(SafeIndex(x#array_1,[7, 11])),toInt(SafeIndex(x#array_1,[7, 12]));int(1..)]),3 = sum([toInt(SafeIndex(x#array_1,[8, 1])),toInt(SafeIndex(x#array_1,[8, 2])),toInt(SafeIndex(x#array_1,[8, 3])),toInt(SafeIndex(x#array_1,[8, 4])),toInt(SafeIndex(x#array_1,[8, 5])),toInt(SafeIndex(x#array_1,[8, 6])),toInt(SafeIndex(x#array_1,[8, 7])),toInt(SafeIndex(x#array_1,[8, 8])),toInt(SafeIndex(x#array_1,[8, 9])),toInt(SafeIndex(x#array_1,[8, 10])),toInt(SafeIndex(x#array_1,[8, 11])),toInt(SafeIndex(x#array_1,[8, 12]));int(1..)]),7 = sum([toInt(SafeIndex(x#array_1,[9, 1])),toInt(SafeIndex(x#array_1,[9, 2])),toInt(SafeIndex(x#array_1,[9, 3])),toInt(SafeIndex(x#array_1,[9, 4])),toInt(SafeIndex(x#array_1,[9, 5])),toInt(SafeIndex(x#array_1,[9, 6])),toInt(SafeIndex(x#array_1,[9, 7])),toInt(SafeIndex(x#array_1,[9, 8])),toInt(SafeIndex(x#array_1,[9, 9])),toInt(SafeIndex(x#array_1,[9, 10])),toInt(SafeIndex(x#array_1,[9, 11])),toInt(SafeIndex(x#array_1,[9, 12]));int(1..)]),0 = sum([toInt(SafeIndex(x#array_1,[10, 1])),toInt(SafeIndex(x#array_1,[10, 2])),toInt(SafeIndex(x#array_1,[10, 3])),toInt(SafeIndex(x#array_1,[10, 4])),toInt(SafeIndex(x#array_1,[10, 5])),toInt(SafeIndex(x#array_1,[10, 6])),toInt(SafeIndex(x#array_1,[10, 7])),toInt(SafeIndex(x#array_1,[10, 8])),toInt(SafeIndex(x#array_1,[10, 9])),toInt(SafeIndex(x#array_1,[10, 10])),toInt(SafeIndex(x#array_1,[10, 11])),toInt(SafeIndex(x#array_1,[10, 12]));int(1..)]),0 = sum([toInt(SafeIndex(x#array_1,[11, 1])),toInt(SafeIndex(x#array_1,[11, 2])),toInt(SafeIndex(x#array_1,[11, 3])),toInt(SafeIndex(x#array_1,[11, 4])),toInt(SafeIndex(x#array_1,[11, 5])),toInt(SafeIndex(x#array_1,[11, 6])),toInt(SafeIndex(x#array_1,[11, 7])),toInt(SafeIndex(x#array_1,[11, 8])),toInt(SafeIndex(x#array_1,[11, 9])),toInt(SafeIndex(x#array_1,[11, 10])),toInt(SafeIndex(x#array_1,[11, 11])),toInt(SafeIndex(x#array_1,[11, 12]));int(1..)]);int(1..)]),
+and([0 = sum([toInt(SafeIndex(x#array_1,[1, 1])),toInt(SafeIndex(x#array_1,[2, 1])),toInt(SafeIndex(x#array_1,[3, 1])),toInt(SafeIndex(x#array_1,[4, 1])),toInt(SafeIndex(x#array_1,[5, 1])),toInt(SafeIndex(x#array_1,[6, 1])),toInt(SafeIndex(x#array_1,[7, 1])),toInt(SafeIndex(x#array_1,[8, 1])),toInt(SafeIndex(x#array_1,[9, 1])),toInt(SafeIndex(x#array_1,[10, 1])),toInt(SafeIndex(x#array_1,[11, 1]));int(1..)]),0 = sum([toInt(SafeIndex(x#array_1,[1, 2])),toInt(SafeIndex(x#array_1,[2, 2])),toInt(SafeIndex(x#array_1,[3, 2])),toInt(SafeIndex(x#array_1,[4, 2])),toInt(SafeIndex(x#array_1,[5, 2])),toInt(SafeIndex(x#array_1,[6, 2])),toInt(SafeIndex(x#array_1,[7, 2])),toInt(SafeIndex(x#array_1,[8, 2])),toInt(SafeIndex(x#array_1,[9, 2])),toInt(SafeIndex(x#array_1,[10, 2])),toInt(SafeIndex(x#array_1,[11, 2]));int(1..)]),7 = sum([toInt(SafeIndex(x#array_1,[1, 3])),toInt(SafeIndex(x#array_1,[2, 3])),toInt(SafeIndex(x#array_1,[3, 3])),toInt(SafeIndex(x#array_1,[4, 3])),toInt(SafeIndex(x#array_1,[5, 3])),toInt(SafeIndex(x#array_1,[6, 3])),toInt(SafeIndex(x#array_1,[7, 3])),toInt(SafeIndex(x#array_1,[8, 3])),toInt(SafeIndex(x#array_1,[9, 3])),toInt(SafeIndex(x#array_1,[10, 3])),toInt(SafeIndex(x#array_1,[11, 3]));int(1..)]),1 = sum([toInt(SafeIndex(x#array_1,[1, 4])),toInt(SafeIndex(x#array_1,[2, 4])),toInt(SafeIndex(x#array_1,[3, 4])),toInt(SafeIndex(x#array_1,[4, 4])),toInt(SafeIndex(x#array_1,[5, 4])),toInt(SafeIndex(x#array_1,[6, 4])),toInt(SafeIndex(x#array_1,[7, 4])),toInt(SafeIndex(x#array_1,[8, 4])),toInt(SafeIndex(x#array_1,[9, 4])),toInt(SafeIndex(x#array_1,[10, 4])),toInt(SafeIndex(x#array_1,[11, 4]));int(1..)]),6 = sum([toInt(SafeIndex(x#array_1,[1, 5])),toInt(SafeIndex(x#array_1,[2, 5])),toInt(SafeIndex(x#array_1,[3, 5])),toInt(SafeIndex(x#array_1,[4, 5])),toInt(SafeIndex(x#array_1,[5, 5])),toInt(SafeIndex(x#array_1,[6, 5])),toInt(SafeIndex(x#array_1,[7, 5])),toInt(SafeIndex(x#array_1,[8, 5])),toInt(SafeIndex(x#array_1,[9, 5])),toInt(SafeIndex(x#array_1,[10, 5])),toInt(SafeIndex(x#array_1,[11, 5]));int(1..)]),3 = sum([toInt(SafeIndex(x#array_1,[1, 6])),toInt(SafeIndex(x#array_1,[2, 6])),toInt(SafeIndex(x#array_1,[3, 6])),toInt(SafeIndex(x#array_1,[4, 6])),toInt(SafeIndex(x#array_1,[5, 6])),toInt(SafeIndex(x#array_1,[6, 6])),toInt(SafeIndex(x#array_1,[7, 6])),toInt(SafeIndex(x#array_1,[8, 6])),toInt(SafeIndex(x#array_1,[9, 6])),toInt(SafeIndex(x#array_1,[10, 6])),toInt(SafeIndex(x#array_1,[11, 6]));int(1..)]),4 = sum([toInt(SafeIndex(x#array_1,[1, 7])),toInt(SafeIndex(x#array_1,[2, 7])),toInt(SafeIndex(x#array_1,[3, 7])),toInt(SafeIndex(x#array_1,[4, 7])),toInt(SafeIndex(x#array_1,[5, 7])),toInt(SafeIndex(x#array_1,[6, 7])),toInt(SafeIndex(x#array_1,[7, 7])),toInt(SafeIndex(x#array_1,[8, 7])),toInt(SafeIndex(x#array_1,[9, 7])),toInt(SafeIndex(x#array_1,[10, 7])),toInt(SafeIndex(x#array_1,[11, 7]));int(1..)]),5 = sum([toInt(SafeIndex(x#array_1,[1, 8])),toInt(SafeIndex(x#array_1,[2, 8])),toInt(SafeIndex(x#array_1,[3, 8])),toInt(SafeIndex(x#array_1,[4, 8])),toInt(SafeIndex(x#array_1,[5, 8])),toInt(SafeIndex(x#array_1,[6, 8])),toInt(SafeIndex(x#array_1,[7, 8])),toInt(SafeIndex(x#array_1,[8, 8])),toInt(SafeIndex(x#array_1,[9, 8])),toInt(SafeIndex(x#array_1,[10, 8])),toInt(SafeIndex(x#array_1,[11, 8]));int(1..)]),2 = sum([toInt(SafeIndex(x#array_1,[1, 9])),toInt(SafeIndex(x#array_1,[2, 9])),toInt(SafeIndex(x#array_1,[3, 9])),toInt(SafeIndex(x#array_1,[4, 9])),toInt(SafeIndex(x#array_1,[5, 9])),toInt(SafeIndex(x#array_1,[6, 9])),toInt(SafeIndex(x#array_1,[7, 9])),toInt(SafeIndex(x#array_1,[8, 9])),toInt(SafeIndex(x#array_1,[9, 9])),toInt(SafeIndex(x#array_1,[10, 9])),toInt(SafeIndex(x#array_1,[11, 9]));int(1..)]),7 = sum([toInt(SafeIndex(x#array_1,[1, 10])),toInt(SafeIndex(x#array_1,[2, 10])),toInt(SafeIndex(x#array_1,[3, 10])),toInt(SafeIndex(x#array_1,[4, 10])),toInt(SafeIndex(x#array_1,[5, 10])),toInt(SafeIndex(x#array_1,[6, 10])),toInt(SafeIndex(x#array_1,[7, 10])),toInt(SafeIndex(x#array_1,[8, 10])),toInt(SafeIndex(x#array_1,[9, 10])),toInt(SafeIndex(x#array_1,[10, 10])),toInt(SafeIndex(x#array_1,[11, 10]));int(1..)]),0 = sum([toInt(SafeIndex(x#array_1,[1, 11])),toInt(SafeIndex(x#array_1,[2, 11])),toInt(SafeIndex(x#array_1,[3, 11])),toInt(SafeIndex(x#array_1,[4, 11])),toInt(SafeIndex(x#array_1,[5, 11])),toInt(SafeIndex(x#array_1,[6, 11])),toInt(SafeIndex(x#array_1,[7, 11])),toInt(SafeIndex(x#array_1,[8, 11])),toInt(SafeIndex(x#array_1,[9, 11])),toInt(SafeIndex(x#array_1,[10, 11])),toInt(SafeIndex(x#array_1,[11, 11]));int(1..)]),0 = sum([toInt(SafeIndex(x#array_1,[1, 12])),toInt(SafeIndex(x#array_1,[2, 12])),toInt(SafeIndex(x#array_1,[3, 12])),toInt(SafeIndex(x#array_1,[4, 12])),toInt(SafeIndex(x#array_1,[5, 12])),toInt(SafeIndex(x#array_1,[6, 12])),toInt(SafeIndex(x#array_1,[7, 12])),toInt(SafeIndex(x#array_1,[8, 12])),toInt(SafeIndex(x#array_1,[9, 12])),toInt(SafeIndex(x#array_1,[10, 12])),toInt(SafeIndex(x#array_1,[11, 12]));int(1..)]);int(1..)])
+

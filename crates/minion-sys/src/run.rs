@@ -10,6 +10,7 @@ use std::{
         LazyLock, Mutex,
         atomic::{AtomicPtr, Ordering},
     },
+    time::Duration,
 };
 
 use anyhow::anyhow;
@@ -112,14 +113,83 @@ pub enum ValueOrder {
     Random,
 }
 
+/// Variable-order override for Minion search.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VariableOrder {
+    Static,
+    SmallestDomainFirst,
+    SmallestRatioFirst,
+    LargestDomainFirst,
+    Random,
+    Conflict,
+    WeightedDegree,
+    DomainOverWeightedDegree,
+}
+
+impl VariableOrder {
+    fn ffi_order(self) -> ffi::VarOrderEnum {
+        match self {
+            VariableOrder::Static | VariableOrder::Random => ffi::VarOrderEnum_ORDER_STATIC,
+            VariableOrder::SmallestDomainFirst => ffi::VarOrderEnum_ORDER_SDF,
+            VariableOrder::SmallestRatioFirst => ffi::VarOrderEnum_ORDER_SRF,
+            VariableOrder::LargestDomainFirst => ffi::VarOrderEnum_ORDER_LDF,
+            VariableOrder::Conflict => ffi::VarOrderEnum_ORDER_CONFLICT,
+            VariableOrder::WeightedDegree => ffi::VarOrderEnum_ORDER_WDEG,
+            VariableOrder::DomainOverWeightedDegree => ffi::VarOrderEnum_ORDER_DOMOVERWDEG,
+        }
+    }
+}
+
+/// Minion preprocess strength applied before search.
+///
+/// Matches the `-preprocess` levels accepted by the Minion CLI. SavileRow's
+/// default is [`PreprocessLevel::SacBoundsLimit`], which is substantially
+/// stronger than Minion's own default of GAC.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum PreprocessLevel {
+    None,
+    Gac,
+    SacBounds,
+    /// Restricted SACBounds (`SACBounds_limit`). SavileRow's default.
+    #[default]
+    SacBoundsLimit,
+    Sac,
+    SsacBounds,
+    Ssac,
+}
+
 /// Optional runtime controls for [`run_minion_with_options`].
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 pub struct RunOptions {
+    /// Seed for Minion's random search behaviour.
+    pub seed: u32,
+    /// Override Minion variable ordering.
+    pub variable_order: Option<VariableOrder>,
     /// Override Minion value ordering.
     ///
     /// When unset, Minion keeps its default behaviour (or whatever was encoded
     /// in the input model).
     pub value_order: Option<ValueOrder>,
+    /// Wall-clock limit for the complete Minion run, including preprocessing.
+    ///
+    /// Minion's native timer has one-second resolution, so non-whole seconds are rounded up.
+    pub wall_time_limit: Option<Duration>,
+    /// Preprocess level applied before search.
+    ///
+    /// Defaults to [`PreprocessLevel::SacBoundsLimit`] to match SavileRow.
+    pub preprocess: PreprocessLevel,
+}
+
+impl Default for RunOptions {
+    fn default() -> Self {
+        Self {
+            seed: 0,
+            variable_order: None,
+            value_order: None,
+            wall_time_limit: None,
+            preprocess: PreprocessLevel::SacBoundsLimit,
+        }
+    }
 }
 
 /// State passed through the C callback's `void* userdata` pointer.
@@ -225,6 +295,17 @@ pub fn run_minion_with_options(
     callback: Callback<'_>,
     options: RunOptions,
 ) -> Result<SolverContext, MinionError> {
+    let wall_time_limit_seconds = options
+        .wall_time_limit
+        .map(|limit| {
+            let seconds = limit
+                .as_secs()
+                .checked_add(u64::from(limit.subsec_nanos() != 0))
+                .ok_or_else(|| anyhow!("Minion wall-time limit is too large"))?;
+            i64::try_from(seconds).map_err(|_| anyhow!("Minion wall-time limit is too large"))
+        })
+        .transpose()?;
+
     let _run_guard = MINION_RUN_LOCK.lock().unwrap();
     let mut state = CallbackState {
         callback,
@@ -244,6 +325,16 @@ pub fn run_minion_with_options(
         // themselves instead of going through this wrapper.
         (*search_opts).silent = true;
         (*search_opts).print_solution = false;
+        if let Some(seconds) = wall_time_limit_seconds {
+            (*search_opts).timeoutActive = true;
+            (*search_opts).time_limit = seconds as _;
+            (*search_opts).time_limit_is_CPUTime = false;
+        }
+        (*search_method).randomSeed = options.seed;
+        if let Some(variable_order) = options.variable_order {
+            (*search_method).order = variable_order.ffi_order();
+            (*search_opts).randomiseValvarorder = matches!(variable_order, VariableOrder::Random);
+        }
         if let Some(value_order) = options.value_order {
             let value_order = match value_order {
                 ValueOrder::Ascend => ffi::ValOrderEnum_VALORDER_ASCEND,
@@ -255,6 +346,36 @@ pub fn run_minion_with_options(
                 bias: 0,
             };
         }
+        (*search_method).preprocess = match options.preprocess {
+            PreprocessLevel::None => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_None,
+                limit: false,
+            },
+            PreprocessLevel::Gac => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_GAC,
+                limit: false,
+            },
+            PreprocessLevel::SacBounds => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SACBounds,
+                limit: false,
+            },
+            PreprocessLevel::SacBoundsLimit => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SACBounds,
+                limit: true,
+            },
+            PreprocessLevel::Sac => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SAC,
+                limit: false,
+            },
+            PreprocessLevel::SsacBounds => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SSACBounds,
+                limit: false,
+            },
+            PreprocessLevel::Ssac => ffi::PropagationLevel {
+                type_: ffi::PropagationType_PropLevel_SSAC,
+                limit: false,
+            },
+        };
 
         convert_model_to_raw(search_instance, &model, &mut state.print_vars)?;
 
@@ -410,8 +531,10 @@ unsafe fn convert_model_to_raw(
         print_vars.push(var_name.clone());
     }
 
-    // only add search variables to search order
-    for search_var_name in model.named_variables.get_search_variable_order() {
+    let primary_search_var_names = model.named_variables.get_search_variable_order();
+
+    // Branch on declared search variables first.
+    for search_var_name in &primary_search_var_names {
         let c_str = CString::new(search_var_name.clone()).map_err(|_| {
             anyhow!(
                 "Variable name {:?} contains a null character.",
@@ -430,6 +553,38 @@ unsafe fn convert_model_to_raw(
 
     ffi::instance_addSearchOrder(instance, search_order.ptr);
 
+    // The text parser automatically appends every variable omitted from VARORDER as a
+    // find-one-assignment auxiliary search block. Models constructed through the library bypass
+    // that finalisation step, so reproduce it here. Without this block Minion can report a
+    // solution while auxiliary variables remain unassigned, and the callback observes their
+    // lower bounds even when those values violate constraints.
+    let auxiliary_search_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
+    let mut has_auxiliary_search_vars = false;
+    for auxiliary_name in model
+        .named_variables
+        .get_variable_order()
+        .into_iter()
+        .filter(|name| !primary_search_var_names.contains(name))
+    {
+        let c_str = CString::new(auxiliary_name.clone())
+            .map_err(|_| anyhow!("Variable name {auxiliary_name:?} contains a null character"))?;
+        let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+        check_minion_result(var_result.result)?;
+        ffi::vec_var_push_back(auxiliary_search_vars.ptr, var_result.var);
+        has_auxiliary_search_vars = true;
+    }
+    if has_auxiliary_search_vars {
+        let auxiliary_search_order = Scoped::new(
+            ffi::searchOrder_new(
+                auxiliary_search_vars.ptr,
+                ffi::VarOrderEnum_ORDER_STATIC,
+                true,
+            ),
+            |x| ffi::searchOrder_free(x as _),
+        );
+        ffi::instance_addSearchOrder(instance, auxiliary_search_order.ptr);
+    }
+
     /*********************************/
     /*        Add constraints        */
     /*********************************/
@@ -446,6 +601,19 @@ unsafe fn convert_model_to_raw(
 
         constraint_add_args(instance, raw_constraint.ptr, constraint)?;
         ffi::instance_addConstraint(instance, raw_constraint.ptr);
+    }
+
+    if let Some(optimisation) = &model.optimisation {
+        let c_str = CString::new(optimisation.var.clone()).map_err(|_| {
+            anyhow!(
+                "Optimisation variable name {:?} contains a null character.",
+                optimisation.var
+            )
+        })?;
+        let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+        check_minion_result(var_result.result)?;
+        let mut optimise_var = var_result.var;
+        ffi::instance_setOptimise(instance, optimisation.minimising, &mut optimise_var);
     }
 
     Ok(())
@@ -706,8 +874,12 @@ unsafe fn constraint_add_args(
             Ok(())
         }
         //Constraint::LitSumGeq(_, _, _) => todo!(),
-        //Constraint::Gcc(_, _, _) => todo!(),
-        //Constraint::GccWeak(_, _, _) => todo!(),
+        Constraint::Gcc(vars, values, counts) | Constraint::GccWeak(vars, values, counts) => {
+            read_list(i, r_constr, vars)?;
+            read_constant_list(r_constr, values)?;
+            read_list(i, r_constr, counts)?;
+            Ok(())
+        }
         //Constraint::LexLeqRv(_, _) => todo!(),
         //Constraint::LexLeqQuick(_, _) => todo!(),
         //Constraint::LexLessQuick(_, _) => todo!(),
@@ -726,7 +898,11 @@ unsafe fn constraint_add_args(
         //Constraint::NegativeMddc(_, _) => todo!(),
         //Constraint::Str2Plus(_, _) => todo!(),
         //Constraint::Max(_, _) => todo!(),
-        //Constraint::Min(_, _) => todo!(),
+        Constraint::Min(vars, result) => {
+            read_list(i, r_constr, vars)?;
+            read_var(i, r_constr, result)?;
+            Ok(())
+        }
         //Constraint::NvalueGeq(_, _) => todo!(),
         //Constraint::NvalueLeq(_, _) => todo!(),
         //Constraint::Element(_, _, _) => todo!(),

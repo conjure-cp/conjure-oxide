@@ -1,0 +1,35 @@
+Model before rewriting:
+
+letting a be relation((1,4),(2,7),(3,2))
+find x: int(0..100)
+
+such that
+
+x = |a|
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#bv_1: int(0..100)
+
+--
+
+x
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
+
+--
+
+Final model:
+
+letting a be relation((1,4),(2,7),(3,2))
+find x: int(0..100)
+find x#bv_1: int(0..100)
+
+such that
+
+x#bv_1 = 3
+

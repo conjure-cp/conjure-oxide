@@ -1,0 +1,180 @@
+Model before rewriting:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+
+such that
+
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0)
+new variables:
+  find x#packed_1#lia_1: int(0..3)
+
+--
+
+x[a] = true
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([x#packed_1 = 0,true = false;int(1..)]),and([x#packed_1 = 1,true = true;int(1..)]);int(1..)])
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x[b] = 0
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([x#packed_1 = 2,0 = 0;int(1..)]),and([x#packed_1 = 3,0 = 4;int(1..)]);int(1..)])
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+active(x, a)
+   ~~> variant_packed_active ([("ReprVariantPacked", 9800)])
+and([x#packed_1 >= 0,x#packed_1 < 2;int(1..)])
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+active(x, b)
+   ~~> variant_packed_active ([("ReprVariantPacked", 9800)])
+and([x#packed_1 >= 2,x#packed_1 < 4;int(1..)])
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x#packed_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#packed_1#lia_1
+
+--
+
+x#packed_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#packed_1#lia_1
+
+--
+
+x#packed_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#packed_1#lia_1
+
+--
+
+x#packed_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#packed_1#lia_1
+
+--
+
+x#packed_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#packed_1#lia_1
+
+--
+
+x#packed_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#packed_1#lia_1
+
+--
+
+or([and([x#packed_1#lia_1 = 1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#packed_1#lia_1 = 1;int(1..)])
+
+--
+
+or([and([x#packed_1#lia_1 = 2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([x#packed_1#lia_1 = 2;int(1..)])
+
+--
+
+and([x#packed_1#lia_1 = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#packed_1#lia_1 = 1
+
+--
+
+and([x#packed_1#lia_1 = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#packed_1#lia_1 = 2
+
+--
+
+Final model:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find x#packed_1: int(0..3)
+find x#packed_1#lia_1: int(0..3)
+
+such that
+
+(and([x#packed_1#lia_1 >= 0,x#packed_1#lia_1 < 2;int(1..)])) -> (x#packed_1#lia_1 = 1),
+(and([x#packed_1#lia_1 >= 2,x#packed_1#lia_1 < 4;int(1..)])) -> (x#packed_1#lia_1 = 2)
+

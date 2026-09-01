@@ -1,0 +1,74 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1)] of bool
+find m2: matrix indexed by [int(1)] of bool
+
+such that
+
+m != m2
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#array_1: matrix indexed by [int(1)] of bool
+
+--
+
+m != m2
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+m != m2
+new variables:
+  find m2#array_1: matrix indexed by [int(1)] of bool
+
+--
+
+m
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m#array_1
+
+--
+
+m2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
+m2#array_1
+
+--
+
+m#array_1 != m2#array_1
+   ~~> flatten_matrix_eq_neq ([("Base", 3000)])
+or([m#array_1[1] != m2#array_1[1];int(1..)])
+
+--
+
+or([m#array_1[1] != m2#array_1[1];int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+m#array_1[1] != m2#array_1[1]
+
+--
+
+m#array_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m#array_1,[1])
+
+--
+
+m2#array_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(m2#array_1,[1])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1)] of bool
+find m2: matrix indexed by [int(1)] of bool
+find m#array_1: matrix indexed by [int(1)] of bool
+find m2#array_1: matrix indexed by [int(1)] of bool
+
+such that
+
+SafeIndex(m#array_1,[1]) != SafeIndex(m2#array_1,[1])
+

@@ -1,0 +1,78 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+and([or([x,x;int(1..)]),or([x,x;int(1..)]);int(1..)])
+
+--
+
+or([x,x;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new clauses:
+  (¬x \/ __0)
+  (¬x \/ __0)
+  (¬__0 \/ x \/ x)
+
+--
+
+or([x,x;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new clauses:
+  (¬x \/ __1)
+  (¬x \/ __1)
+  (¬__1 \/ x \/ x)
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new clauses:
+  (¬__2 \/ __0)
+  (¬__2 \/ __1)
+  (__2 \/ ¬__0 \/ ¬__1)
+
+--
+
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__2)
+
+--
+
+Final model:
+
+find x: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+true
+
+clauses:
+
+(¬x \/ __0),
+(¬x \/ __0),
+(¬__0 \/ x \/ x),
+(¬x \/ __1),
+(¬x \/ __1),
+(¬__1 \/ x \/ x),
+(¬__2 \/ __0),
+(¬__2 \/ __1),
+(__2 \/ ¬__0 \/ ¬__1),
+(__2)
+

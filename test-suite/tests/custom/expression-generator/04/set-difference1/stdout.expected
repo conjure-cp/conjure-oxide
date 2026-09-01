@@ -42,11 +42,13 @@
                               "ptr": {
                                 "object_id": 4,
                                 "type_name": "DeclarationPtrInner"
-                              }
+                              },
+                              "repr": null
                             }
                           }
                         ]
                       },
+                      "skip_operator": "Sum",
                       "symbols": {
                         "id": {
                           "object_id": 3,
@@ -83,7 +85,8 @@
                                             "ptr": {
                                               "object_id": 1,
                                               "type_name": "DeclarationPtrInner"
-                                            }
+                                            },
+                                            "repr": null
                                           }
                                         }
                                       ]
@@ -98,7 +101,8 @@
                                             "ptr": {
                                               "object_id": 2,
                                               "type_name": "DeclarationPtrInner"
-                                            }
+                                            },
+                                            "repr": null
                                           }
                                         }
                                       ]
@@ -136,6 +140,7 @@
     ]
   },
   "dominance": null,
+  "objective": null,
   "search_order": null,
   "symbols": {
     "id": {
@@ -160,6 +165,7 @@
                 "Ground": {
                   "Set": [
                     {
+                      "representation": null,
                       "size": "Unbounded"
                     },
                     {
@@ -197,6 +203,7 @@
                 "Ground": {
                   "Set": [
                     {
+                      "representation": null,
                       "size": "Unbounded"
                     },
                     {
@@ -224,36 +231,586 @@
 }
 
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set (representation occurrence) of int(1..5)
+find y: set (representation occurrence) of int(1..6)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find x#occurrence_5: bool
+find y#occurrence_1: bool
+find y#occurrence_2: bool
+find y#occurrence_3: bool
+find y#occurrence_4: bool
+find y#occurrence_5: bool
+find y#occurrence_6: bool
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: int(0..1)
+findAux __5: int(0..1)
+findAux __6: bool
+findAux __7: int(0..1)
+findAux __8: int(0..1)
+findAux __9: int(0..1)
+findAux __10: int(0..1)
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
 
 such that
 
-(sum([ i | i <- x, !(i in y) ]) = 2)
+FlatWeightedSumLeq([1, 2, 3, 4, 5],[__1, __2, __3, __4, __5],2),
+FlatWeightedSumGeq([1, 2, 3, 4, 5],[__1, __2, __3, __4, __5],2),
+SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0),
+SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 5),
+SumGeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 0),
+SumLeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 6),
+__0 =aux toInt(__6),
+FlatProductEq(x#occurrence_1,__0,__1),
+FlatProductEq(x#occurrence_2,__7,__2),
+FlatProductEq(x#occurrence_3,__8,__3),
+FlatProductEq(x#occurrence_4,__9,__4),
+FlatProductEq(x#occurrence_5,__10,__5),
+Reify(WatchedLiteral(y#occurrence_1,false), __6),
+__7 =aux toInt(__11),
+__8 =aux toInt(__12),
+__9 =aux toInt(__13),
+__10 =aux toInt(__14),
+Reify(WatchedLiteral(y#occurrence_2,false), __11),
+Reify(WatchedLiteral(y#occurrence_3,false), __12),
+Reify(WatchedLiteral(y#occurrence_4,false), __13),
+Reify(WatchedLiteral(y#occurrence_5,false), __14)
 
 Model before rewriting:
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set of int(1..5)
+find y: set of int(1..6)
 
 such that
 
-(sum([ i | i <- (x - y) ]) = 2)
+sum([ i | i <- (x - y) ]) = 2
 
 --
 
-[ i | i <- (x - y) ], 
+sum([ i | i <- (x - y) ]) = 2
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+sum([ i | i <- (x - y) ]) = 2
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+  find x#occurrence_5: bool
+  find y#occurrence_1: bool
+  find y#occurrence_2: bool
+  find y#occurrence_3: bool
+  find y#occurrence_4: bool
+  find y#occurrence_5: bool
+  find y#occurrence_6: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) <= 5;int(1..)])
+  and([sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4),toInt(y#occurrence_5),toInt(y#occurrence_6);int(1..)]) >= 0,sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4),toInt(y#occurrence_5),toInt(y#occurrence_6);int(1..)]) <= 6;int(1..)])
+
+--
+
+[ i | i <- (x - y) ]
    ~~> difference_set ([("Base", 8700)])
 [ i | i <- x, !(i in y) ]
 
 --
 
+[ i | i <- x, !(i in y) ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ i | i : int(1..5), i in x, !(i in y) ]
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0)
+
+--
+
+sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4),toInt(x#occurrence_5);int(1..)]) <= 5
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 5)
+
+--
+
+sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4),toInt(y#occurrence_5),toInt(y#occurrence_6);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 0)
+
+--
+
+sum([toInt(y#occurrence_1),toInt(y#occurrence_2),toInt(y#occurrence_3),toInt(y#occurrence_4),toInt(y#occurrence_5),toInt(y#occurrence_6);int(1..)]) <= 6
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 6)
+
+--
+
+[ i | i : int(1..5), i in x, !(i in y) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([toInt(1 in x),sum([product([toInt(!(1 in y)),1;int(1..)]);int(1..)]);int(1..)]),product([toInt(2 in x),sum([product([toInt(!(2 in y)),2;int(1..)]);int(1..)]);int(1..)]),product([toInt(3 in x),sum([product([toInt(!(3 in y)),3;int(1..)]);int(1..)]);int(1..)]),product([toInt(4 in x),sum([product([toInt(!(4 in y)),4;int(1..)]);int(1..)]);int(1..)]),product([toInt(5 in x),sum([product([toInt(!(5 in y)),5;int(1..)]);int(1..)]);int(1..)]);int(1..)]
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+1 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_1
+
+--
+
+2 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_2
+
+--
+
+3 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_3
+
+--
+
+4 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_4
+
+--
+
+5 in x
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+x#occurrence_5
+
+--
+
+1 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_1
+
+--
+
+2 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_2
+
+--
+
+3 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_3
+
+--
+
+4 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_4
+
+--
+
+5 in y
+   ~~> membership_occurrence ([("ReprGeneral", 9500)])
+y#occurrence_5
+
+--
+
+sum([product([toInt(!(y#occurrence_1)),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+product([toInt(!(y#occurrence_1)),1;int(1..)])
+
+--
+
+product([toInt(x#occurrence_1),product([toInt(!(y#occurrence_1)),1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([toInt(x#occurrence_1),toInt(!(y#occurrence_1)),1;int(1..)])
+
+--
+
+product([toInt(x#occurrence_1),toInt(!(y#occurrence_1)),1;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(x#occurrence_1),toInt(!(y#occurrence_1));int(1..)])
+
+--
+
+sum([product([toInt(!(y#occurrence_2)),2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+product([toInt(!(y#occurrence_2)),2;int(1..)])
+
+--
+
+product([toInt(x#occurrence_2),product([toInt(!(y#occurrence_2)),2;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([toInt(x#occurrence_2),toInt(!(y#occurrence_2)),2;int(1..)])
+
+--
+
+product([toInt(x#occurrence_2),toInt(!(y#occurrence_2)),2;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(x#occurrence_2),toInt(!(y#occurrence_2));int(1..)])
+
+--
+
+sum([product([toInt(!(y#occurrence_3)),3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+product([toInt(!(y#occurrence_3)),3;int(1..)])
+
+--
+
+product([toInt(x#occurrence_3),product([toInt(!(y#occurrence_3)),3;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([toInt(x#occurrence_3),toInt(!(y#occurrence_3)),3;int(1..)])
+
+--
+
+product([toInt(x#occurrence_3),toInt(!(y#occurrence_3)),3;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([3,toInt(x#occurrence_3),toInt(!(y#occurrence_3));int(1..)])
+
+--
+
+sum([product([toInt(!(y#occurrence_4)),4;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+product([toInt(!(y#occurrence_4)),4;int(1..)])
+
+--
+
+product([toInt(x#occurrence_4),product([toInt(!(y#occurrence_4)),4;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([toInt(x#occurrence_4),toInt(!(y#occurrence_4)),4;int(1..)])
+
+--
+
+product([toInt(x#occurrence_4),toInt(!(y#occurrence_4)),4;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([4,toInt(x#occurrence_4),toInt(!(y#occurrence_4));int(1..)])
+
+--
+
+sum([product([toInt(!(y#occurrence_5)),5;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+product([toInt(!(y#occurrence_5)),5;int(1..)])
+
+--
+
+product([toInt(x#occurrence_5),product([toInt(!(y#occurrence_5)),5;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([toInt(x#occurrence_5),toInt(!(y#occurrence_5)),5;int(1..)])
+
+--
+
+product([toInt(x#occurrence_5),toInt(!(y#occurrence_5)),5;int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([5,toInt(x#occurrence_5),toInt(!(y#occurrence_5));int(1..)])
+
+--
+
+sum([product([toInt(x#occurrence_1),toInt(!(y#occurrence_1));int(1..)]),product([2,toInt(x#occurrence_2),toInt(!(y#occurrence_2));int(1..)]),product([3,toInt(x#occurrence_3),toInt(!(y#occurrence_3));int(1..)]),product([4,toInt(x#occurrence_4),toInt(!(y#occurrence_4));int(1..)]),product([5,toInt(x#occurrence_5),toInt(!(y#occurrence_5));int(1..)]);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 2, 3, 4, 5],[__1, __2, __3, __4, __5],2),FlatWeightedSumGeq([1, 2, 3, 4, 5],[__1, __2, __3, __4, __5],2);int(1..)])
+new variables:
+  findAux __0: int(0..1)
+  findAux __1: int(0..1)
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+  findAux __4: int(0..1)
+  findAux __5: int(0..1)
+new constraints:
+  __0 =aux toInt(!(y#occurrence_1))
+  FlatProductEq(x#occurrence_1,__0,__1)
+  __2 =aux product([toInt(!(y#occurrence_2)),toInt(x#occurrence_2);int(1..)])
+  __3 =aux product([toInt(!(y#occurrence_3)),toInt(x#occurrence_3);int(1..)])
+  __4 =aux product([toInt(!(y#occurrence_4)),toInt(x#occurrence_4);int(1..)])
+  __5 =aux product([toInt(!(y#occurrence_5)),toInt(x#occurrence_5);int(1..)])
+
+--
+
+toInt(!(y#occurrence_1))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__6)
+new variables:
+  findAux __6: bool
+new constraints:
+  __6 =aux !(y#occurrence_1)
+
+--
+
+__6 =aux !(y#occurrence_1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(y#occurrence_1), __6)
+
+--
+
+product([toInt(!(y#occurrence_2)),toInt(x#occurrence_2);int(1..)])
+   ~~> flatten_product ([("Minion", 4200)])
+product([__7,x#occurrence_2;int(1..)])
+new variables:
+  findAux __7: int(0..1)
+new constraints:
+  __7 =aux toInt(!(y#occurrence_2))
+
+--
+
+__2 =aux product([__7,x#occurrence_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(x#occurrence_2,__7,__2)
+
+--
+
+product([toInt(!(y#occurrence_3)),toInt(x#occurrence_3);int(1..)])
+   ~~> flatten_product ([("Minion", 4200)])
+product([__8,x#occurrence_3;int(1..)])
+new variables:
+  findAux __8: int(0..1)
+new constraints:
+  __8 =aux toInt(!(y#occurrence_3))
+
+--
+
+__3 =aux product([__8,x#occurrence_3;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(x#occurrence_3,__8,__3)
+
+--
+
+product([toInt(!(y#occurrence_4)),toInt(x#occurrence_4);int(1..)])
+   ~~> flatten_product ([("Minion", 4200)])
+product([__9,x#occurrence_4;int(1..)])
+new variables:
+  findAux __9: int(0..1)
+new constraints:
+  __9 =aux toInt(!(y#occurrence_4))
+
+--
+
+__4 =aux product([__9,x#occurrence_4;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(x#occurrence_4,__9,__4)
+
+--
+
+product([toInt(!(y#occurrence_5)),toInt(x#occurrence_5);int(1..)])
+   ~~> flatten_product ([("Minion", 4200)])
+product([__10,x#occurrence_5;int(1..)])
+new variables:
+  findAux __10: int(0..1)
+new constraints:
+  __10 =aux toInt(!(y#occurrence_5))
+
+--
+
+__5 =aux product([__10,x#occurrence_5;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(x#occurrence_5,__10,__5)
+
+--
+
+toInt(!(y#occurrence_2))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__11)
+new variables:
+  findAux __11: bool
+new constraints:
+  __11 =aux !(y#occurrence_2)
+
+--
+
+__11 =aux !(y#occurrence_2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(y#occurrence_2), __11)
+
+--
+
+toInt(!(y#occurrence_3))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__12)
+new variables:
+  findAux __12: bool
+new constraints:
+  __12 =aux !(y#occurrence_3)
+
+--
+
+__12 =aux !(y#occurrence_3)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(y#occurrence_3), __12)
+
+--
+
+toInt(!(y#occurrence_4))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__13)
+new variables:
+  findAux __13: bool
+new constraints:
+  __13 =aux !(y#occurrence_4)
+
+--
+
+__13 =aux !(y#occurrence_4)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(y#occurrence_4), __13)
+
+--
+
+toInt(!(y#occurrence_5))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__14)
+new variables:
+  findAux __14: bool
+new constraints:
+  __14 =aux !(y#occurrence_5)
+
+--
+
+__14 =aux !(y#occurrence_5)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(!(y#occurrence_5), __14)
+
+--
+
+!(y#occurrence_1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(y#occurrence_1,false)
+
+--
+
+!(y#occurrence_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(y#occurrence_2,false)
+
+--
+
+!(y#occurrence_3)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(y#occurrence_3,false)
+
+--
+
+!(y#occurrence_4)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(y#occurrence_4,false)
+
+--
+
+!(y#occurrence_5)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(y#occurrence_5,false)
+
+--
+
 Final model:
 
-find x: set  of int(1..5)
-find y: set  of int(1..6)
+find x: set (representation occurrence) of int(1..5)
+find y: set (representation occurrence) of int(1..6)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+find x#occurrence_5: bool
+find y#occurrence_1: bool
+find y#occurrence_2: bool
+find y#occurrence_3: bool
+find y#occurrence_4: bool
+find y#occurrence_5: bool
+find y#occurrence_6: bool
+findAux __0: int(0..1)
+findAux __1: int(0..1)
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: int(0..1)
+findAux __5: int(0..1)
+findAux __6: bool
+findAux __7: int(0..1)
+findAux __8: int(0..1)
+findAux __9: int(0..1)
+findAux __10: int(0..1)
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
 
 such that
 
-(sum([ i | i <- x, !(i in y) ]) = 2)
+and([FlatWeightedSumLeq([1, 2, 3, 4, 5],[__1, __2, __3, __4, __5],2),FlatWeightedSumGeq([1, 2, 3, 4, 5],[__1, __2, __3, __4, __5],2);int(1..)]),
+and([SumGeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 0),SumLeq([x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4, x#occurrence_5], 5);int(1..)]),
+and([SumGeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 0),SumLeq([y#occurrence_1, y#occurrence_2, y#occurrence_3, y#occurrence_4, y#occurrence_5, y#occurrence_6], 6);int(1..)]),
+__0 =aux toInt(__6),
+FlatProductEq(x#occurrence_1,__0,__1),
+FlatProductEq(x#occurrence_2,__7,__2),
+FlatProductEq(x#occurrence_3,__8,__3),
+FlatProductEq(x#occurrence_4,__9,__4),
+FlatProductEq(x#occurrence_5,__10,__5),
+Reify(WatchedLiteral(y#occurrence_1,false), __6),
+__7 =aux toInt(__11),
+__8 =aux toInt(__12),
+__9 =aux toInt(__13),
+__10 =aux toInt(__14),
+Reify(WatchedLiteral(y#occurrence_2,false), __11),
+Reify(WatchedLiteral(y#occurrence_3,false), __12),
+Reify(WatchedLiteral(y#occurrence_4,false), __13),
+Reify(WatchedLiteral(y#occurrence_5,false), __14)
 

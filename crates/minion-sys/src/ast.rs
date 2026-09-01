@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, fmt::Display};
 
-use crate::print::{print_const_array, print_constraint_array, print_var_array};
+use crate::print::{print_const_array, print_constraint_array, print_tuple_array, print_var_array};
 
 pub type VarName = String;
 pub type Tuple = Vec<Constant>;
@@ -14,6 +14,14 @@ pub type TwoVars = (Var, Var);
 pub struct Model {
     pub named_variables: SymbolTable,
     pub constraints: Vec<Constraint>,
+    pub optimisation: Option<Optimisation>,
+}
+
+/// A single-variable optimisation goal for Minion.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Optimisation {
+    pub minimising: bool,
+    pub var: VarName,
 }
 
 impl Model {
@@ -22,6 +30,7 @@ impl Model {
         Model {
             named_variables: SymbolTable::new(),
             constraints: Vec::new(),
+            optimisation: None,
         }
     }
 }
@@ -121,13 +130,15 @@ pub enum Constraint {
 impl Display for Constraint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Constraint::Difference(_, var) => write!(f, "difference({var}"),
-            Constraint::Div(_, var) => write!(f, "div({var}"),
-            Constraint::DivUndefZero(_, var) => write!(f, "div_undefzero({var})"),
-            Constraint::Modulo(_, var) => write!(f, "modulo({var})"),
-            Constraint::ModuloUndefZero(_, var) => write!(f, "mod_undefzero({var})"),
-            Constraint::Pow(_, var) => write!(f, "pow({var})"),
-            Constraint::Product(_, var) => write!(f, "product({var})"),
+            Constraint::Difference((a, b), var) => write!(f, "difference({a},{b},{var})"),
+            Constraint::Div((a, b), var) => write!(f, "div({a},{b},{var})"),
+            Constraint::DivUndefZero((a, b), var) => write!(f, "div_undefzero({a},{b},{var})"),
+            Constraint::Modulo((a, b), var) => write!(f, "modulo({a},{b},{var})"),
+            Constraint::ModuloUndefZero((a, b), var) => {
+                write!(f, "mod_undefzero({a},{b},{var})")
+            }
+            Constraint::Pow((a, b), var) => write!(f, "pow({a},{b},{var})"),
+            Constraint::Product((a, b), var) => write!(f, "product({a},{b},{var})"),
             Constraint::WeightedSumGeq(constants, vars, var) => {
                 write!(
                     f,
@@ -259,10 +270,25 @@ impl Display for Constraint {
             Constraint::FrameUpdate(vars, vars1, vars2, vars3, constant) => {
                 todo!("don't know how to print frame update...")
             }
-            Constraint::NegativeTable(_, _)
-            | Constraint::Table(_, _)
-            | Constraint::GacSchema(_, _)
-            | Constraint::LightTable(_, _)
+            Constraint::Table(vars, tuples) => write!(
+                f,
+                "table({},{})",
+                print_var_array(vars),
+                print_tuple_array(tuples)
+            ),
+            Constraint::NegativeTable(vars, tuples) => write!(
+                f,
+                "negativetable({},{})",
+                print_var_array(vars),
+                print_tuple_array(tuples)
+            ),
+            Constraint::LightTable(vars, tuples) => write!(
+                f,
+                "lighttable({},{})",
+                print_var_array(vars),
+                print_tuple_array(tuples)
+            ),
+            Constraint::GacSchema(_, _)
             | Constraint::Mddc(_, _)
             | Constraint::Str2Plus(_, _)
             | Constraint::NegativeMddc(_, _) => {
@@ -433,7 +459,8 @@ impl SymbolTable {
 
     /// Creates a new auxiliary variable and adds it to the symbol table.
     ///
-    /// This variable will excluded from Minions search and printing order.
+    /// This variable is excluded from Minion's primary search order. The runner places auxiliary
+    /// variables in a trailing find-one-assignment search block and includes them in solutions.
     ///
     /// # Returns
     ///
