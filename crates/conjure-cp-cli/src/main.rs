@@ -172,17 +172,14 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
         LogDetail::Applications => LevelFilter::DEBUG,
         LogDetail::Attempts => LevelFilter::TRACE,
     };
-    let text_file_layer = match text_file {
-        Some(file) => Some(
-            tracing_subscriber::fmt::layer()
-                .compact()
-                .with_ansi(false)
-                .with_writer(Arc::new(file))
-                .with_filter(file_level)
-                .with_filter(general_log_filter()),
-        ),
-        _ => None,
-    };
+    let text_file_layer = text_file.map(|file| {
+        tracing_subscriber::fmt::layer()
+            .compact()
+            .with_ansi(false)
+            .with_writer(Arc::new(file))
+            .with_filter(file_level)
+            .with_filter(general_log_filter())
+    });
     let json_file = match (log_format, global_args.log_file.as_ref()) {
         (LogFormat::Json, Some(path)) => Some(
             File::options()
