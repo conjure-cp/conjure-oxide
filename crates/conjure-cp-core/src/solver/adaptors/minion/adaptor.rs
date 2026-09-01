@@ -1,10 +1,12 @@
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
+use std::time::Duration;
 use ustr::Ustr;
 
 use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
+use minion_sys::error::{MinionError, RuntimeError};
 use minion_sys::{RunOptions, ValueOrder, VariableOrder, run_minion_with_options};
 
 use crate::Model as ConjureModel;
@@ -15,7 +17,7 @@ use crate::solver::SolverMutCallback;
 use crate::stats::SolverStats;
 
 use crate::solver::SearchComplete::{HasSolutions, NoSolutions};
-use crate::solver::SearchIncomplete::UserTerminated;
+use crate::solver::SearchIncomplete::{Timeout, UserTerminated};
 use crate::solver::SearchStatus::{Complete, Incomplete};
 use crate::solver::SolveSuccess;
 use crate::solver::SolverAdaptor;
@@ -36,6 +38,7 @@ pub struct Minion {
     __non_constructable: private::Internal,
     model: Option<MinionModel>,
     solver_seed: u32,
+    timeout: Option<Duration>,
     variable_order: Option<MinionVariableOrder>,
     value_order: Option<MinionValueOrder>,
     dominance_expression: Option<Expression>,
@@ -158,6 +161,7 @@ impl Minion {
             __non_constructable: private::Internal,
             model: None,
             solver_seed: 0,
+            timeout: None,
             variable_order: None,
             value_order: None,
             dominance_expression: None,
@@ -179,6 +183,7 @@ impl Minion {
             __non_constructable: private::Internal,
             model: None,
             solver_seed: 0,
+            timeout: None,
             variable_order,
             value_order,
             dominance_expression: None,
@@ -189,6 +194,12 @@ impl Minion {
     /// Sets the seed used by Minion's random search behaviour.
     pub fn with_solver_seed(mut self, solver_seed: u32) -> Minion {
         self.solver_seed = solver_seed;
+        self
+    }
+
+    /// Sets a wall-clock limit for the complete solver run.
+    pub fn with_timeout(mut self, timeout: Option<Duration>) -> Minion {
+        self.timeout = timeout;
         self
     }
 }
@@ -222,7 +233,7 @@ impl SolverAdaptor for Minion {
         let mut next_midsearch_aux_var_id = 0usize;
         let mut solution_ordinal = 0usize;
 
-        let solver_ctx = run_minion_with_options(
+        let solver_ctx = match run_minion_with_options(
             self.model.clone().expect("STATE MACHINE ERR"),
             Box::new(|solutions| {
                 any_solutions = true;
@@ -254,10 +265,19 @@ impl SolverAdaptor for Minion {
                 seed: self.solver_seed,
                 variable_order: self.variable_order.map(Into::into),
                 value_order: self.value_order.map(Into::into),
+                wall_time_limit: self.timeout,
                 ..Default::default()
             },
-        )
-        .map_err(minion_error_to_solver_error)?;
+        ) {
+            Ok(solver_ctx) => solver_ctx,
+            Err(MinionError::RuntimeError(RuntimeError::Timeout)) => {
+                return Ok(SolveSuccess {
+                    stats: SolverStats::default(),
+                    status: Incomplete(Timeout),
+                });
+            }
+            Err(err) => return Err(minion_error_to_solver_error(err)),
+        };
 
         if let Some(err) = midsearch_error {
             return Err(err);
@@ -327,5 +347,22 @@ fn get_solver_stats(solver_ctx: &minion_sys::SolverContext) -> SolverStats {
             .get_from_table("Nodes".into())
             .map(|x| x.parse::<u64>().unwrap()),
         ..Default::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zero_timeout_is_reported_as_incomplete_search() {
+        let mut minion = Minion::new().with_timeout(Some(Duration::ZERO));
+        minion.model = Some(MinionModel::new());
+
+        let result = minion
+            .solve(Box::new(|_| true), private::Internal)
+            .expect("a timeout is a non-crashing incomplete search");
+
+        assert_eq!(result.status, Incomplete(Timeout));
     }
 }

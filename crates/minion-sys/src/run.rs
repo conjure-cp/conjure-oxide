@@ -10,6 +10,7 @@ use std::{
         LazyLock, Mutex,
         atomic::{AtomicPtr, Ordering},
     },
+    time::Duration,
 };
 
 use anyhow::anyhow;
@@ -169,6 +170,10 @@ pub struct RunOptions {
     /// When unset, Minion keeps its default behaviour (or whatever was encoded
     /// in the input model).
     pub value_order: Option<ValueOrder>,
+    /// Wall-clock limit for the complete Minion run, including preprocessing.
+    ///
+    /// Minion's native timer has one-second resolution, so non-whole seconds are rounded up.
+    pub wall_time_limit: Option<Duration>,
     /// Preprocess level applied before search.
     ///
     /// Defaults to [`PreprocessLevel::SacBoundsLimit`] to match SavileRow.
@@ -181,6 +186,7 @@ impl Default for RunOptions {
             seed: 0,
             variable_order: None,
             value_order: None,
+            wall_time_limit: None,
             preprocess: PreprocessLevel::SacBoundsLimit,
         }
     }
@@ -289,6 +295,17 @@ pub fn run_minion_with_options(
     callback: Callback<'_>,
     options: RunOptions,
 ) -> Result<SolverContext, MinionError> {
+    let wall_time_limit_seconds = options
+        .wall_time_limit
+        .map(|limit| {
+            let seconds = limit
+                .as_secs()
+                .checked_add(u64::from(limit.subsec_nanos() != 0))
+                .ok_or_else(|| anyhow!("Minion wall-time limit is too large"))?;
+            i64::try_from(seconds).map_err(|_| anyhow!("Minion wall-time limit is too large"))
+        })
+        .transpose()?;
+
     let _run_guard = MINION_RUN_LOCK.lock().unwrap();
     let mut state = CallbackState {
         callback,
@@ -308,6 +325,11 @@ pub fn run_minion_with_options(
         // themselves instead of going through this wrapper.
         (*search_opts).silent = true;
         (*search_opts).print_solution = false;
+        if let Some(seconds) = wall_time_limit_seconds {
+            (*search_opts).timeoutActive = true;
+            (*search_opts).time_limit = seconds as _;
+            (*search_opts).time_limit_is_CPUTime = false;
+        }
         (*search_method).randomSeed = options.seed;
         if let Some(variable_order) = options.variable_order {
             (*search_method).order = variable_order.ffi_order();

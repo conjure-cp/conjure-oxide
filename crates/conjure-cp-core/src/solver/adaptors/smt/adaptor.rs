@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 use std::iter::FusedIterator;
+use std::time::Duration;
 
 use itertools::Itertools;
 use uniplate::Uniplate;
@@ -17,6 +18,7 @@ use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::representation::util::try_up;
 use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
 use crate::settings::{RewriteConfig, Rewriter, current_rewriter, set_current_rewriter};
+use crate::solver::adaptors::SolveTimeBudget;
 use crate::{Model, solver::*};
 
 const MINIMUM_Z3_VERSION: &str = "4.8.12";
@@ -34,6 +36,8 @@ pub struct Smt {
 
     solver_cfg: Config,
 
+    timeout: Option<Duration>,
+
     solver_seed: u32,
 
     dominance_expression: Option<Expression>,
@@ -49,6 +53,7 @@ impl Default for Smt {
             store: SymbolStore::new(),
             solver_inst: Solver::new(),
             solver_cfg: Config::new(),
+            timeout: None,
             solver_seed: 0,
             dominance_expression: None,
             dominance_model_template: None,
@@ -61,12 +66,9 @@ impl Smt {
     ///
     /// Which Z3 theory each integer variable lands in is not set here: it is a representation
     /// choice made per declaration during rewriting, which the adaptor reads back off the model.
-    pub fn new(timeout_msec: Option<u64>) -> Self {
-        let mut solver_cfg = Config::new();
-        timeout_msec.inspect(|ms| solver_cfg.set_timeout_msec(*ms));
-
+    pub fn new(timeout: Option<Duration>) -> Self {
         Smt {
-            solver_cfg,
+            timeout,
             ..Default::default()
         }
     }
@@ -301,6 +303,7 @@ impl SolverAdaptor for Smt {
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
         let solver_seed = self.solver_seed;
+        let budget = SolveTimeBudget::new(self.timeout);
         let mut stats: SolverStats = Default::default();
 
         // Apply config when getting solutions
@@ -316,6 +319,7 @@ impl SolverAdaptor for Smt {
                 let mut solutions = solver.into_solutions_with_statistics(
                     store_send.recover(),
                     true,
+                    budget,
                     |solver, store, instance| {
                         let mut dominance_solution = match instance.as_literals_map() {
                             Ok(solution) => solution,
@@ -433,6 +437,7 @@ trait IntoSolutionsWithStatistics {
         self,
         t: T,
         model_completion: bool,
+        budget: SolveTimeBudget,
         on_solution: F,
     ) -> SolverStatsIterator<T, F>
     where
@@ -445,6 +450,7 @@ impl IntoSolutionsWithStatistics for Solver {
         self,
         t: T,
         model_completion: bool,
+        budget: SolveTimeBudget,
         on_solution: F,
     ) -> SolverStatsIterator<T, F>
     where
@@ -455,6 +461,7 @@ impl IntoSolutionsWithStatistics for Solver {
             solver: self,
             ast: t,
             model_completion,
+            budget,
             on_solution,
             done: false,
             terminal_result: None,
@@ -467,6 +474,7 @@ struct SolverStatsIterator<T, F> {
     solver: Solver,
     ast: T,
     model_completion: bool,
+    budget: SolveTimeBudget,
     on_solution: F,
     done: bool,
     terminal_result: Option<SatResult>,
@@ -490,6 +498,23 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         if self.done {
             return None;
+        }
+
+        if let Some(remaining) = self.budget.remaining() {
+            if remaining.is_zero() {
+                self.done = true;
+                self.terminal_result = Some(SatResult::Unknown);
+                self.unknown_reason = Some(String::from("cumulative solver timeout"));
+                return None;
+            }
+
+            let timeout_millis = remaining
+                .as_millis()
+                .saturating_add(u128::from(remaining.subsec_nanos() % 1_000_000 != 0));
+            let timeout_millis = u32::try_from(timeout_millis).unwrap_or(u32::MAX).max(1);
+            let mut timeout_params = Params::new();
+            timeout_params.set_u32("timeout", timeout_millis);
+            self.solver.set_params(&timeout_params);
         }
 
         match self.solver.check() {
@@ -562,6 +587,25 @@ mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
     use crate::context::Context;
+
+    #[test]
+    fn zero_timeout_stops_before_first_z3_check() {
+        let mut solutions = Solver::new().into_solutions_with_statistics(
+            SymbolStore::new(),
+            true,
+            SolveTimeBudget::new(Some(Duration::ZERO)),
+            |_, _, _| true,
+        );
+
+        assert!(solutions.next().is_none());
+        assert_eq!(solutions.terminal_result, Some(SatResult::Unknown));
+        assert!(
+            solutions
+                .unknown_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("timeout"))
+        );
+    }
 
     #[test]
     fn unknown_is_not_reported_as_no_solutions() {

@@ -275,7 +275,7 @@ pub struct GlobalArgs {
     #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
 
-    /// Stop the solver after the given timeout.
+    /// Stop the solver after the given cumulative wall-clock timeout.
     ///
     /// Minion has one-second timeout resolution, so finer durations are rounded up.
     #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]

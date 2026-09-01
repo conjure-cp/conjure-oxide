@@ -9,10 +9,11 @@ use std::vec;
 use clap::error;
 use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
-use rustsat::solvers::{Solve, SolverResult};
+use rustsat::solvers::{ControlSignal, Solve, SolverResult, Terminate};
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
+use std::time::Duration;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
@@ -25,6 +26,7 @@ use crate::representation::util::try_up;
 use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
+use crate::solver::adaptors::SolveTimeBudget;
 use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
 use crate::solver::{
     self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
@@ -44,6 +46,7 @@ use itertools::Itertools;
 pub struct Sat {
     __non_constructable: private::Internal,
     solver_seed: u32,
+    timeout: Option<Duration>,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
     solver_inst: CaDiCaL<'static, 'static>,
@@ -59,6 +62,7 @@ impl Default for Sat {
         Sat {
             __non_constructable: private::Internal,
             solver_seed: 0,
+            timeout: None,
             solver_inst: CaDiCaL::default(),
             var_map: None,
             model_inst: None,
@@ -73,6 +77,12 @@ impl Sat {
     /// Sets the seed used by the SAT solver's random search behaviour.
     pub fn with_solver_seed(mut self, solver_seed: u32) -> Self {
         self.solver_seed = solver_seed;
+        self
+    }
+
+    /// Sets one wall-clock budget shared by every SAT call made while enumerating solutions.
+    pub fn with_timeout(mut self, timeout: Option<Duration>) -> Self {
+        self.timeout = timeout;
         self
     }
 }
@@ -394,6 +404,8 @@ impl SolverAdaptor for Sat {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
+        let budget = SolveTimeBudget::new(self.timeout);
+        let timeout_enabled = self.timeout.is_some();
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
         let mut solver = &mut self.solver_inst;
@@ -421,8 +433,26 @@ impl SolverAdaptor for Sat {
             SolverError::Runtime(format!("Failed adding CNF to SAT solver before solve: {e}"))
         })?;
 
+        if timeout_enabled {
+            let terminator_budget = budget;
+            solver.attach_terminator(move || {
+                if terminator_budget.expired() {
+                    ControlSignal::Terminate
+                } else {
+                    ControlSignal::Continue
+                }
+            });
+        }
+
         let mut has_sol = false;
         loop {
+            if budget.expired() {
+                return Ok(SolveSuccess {
+                    stats: SolverStats::default(),
+                    status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
+                });
+            }
+
             let res = match solver.solve() {
                 Ok(r) => r,
                 Err(e) => {
@@ -451,7 +481,15 @@ impl SolverAdaptor for Sat {
                     });
                 }
                 SolverResult::Interrupted => {
-                    return Err(SolverError::Runtime("!!Interrupted Solution!!".to_string()));
+                    if timeout_enabled {
+                        return Ok(SolveSuccess {
+                            stats: SolverStats::default(),
+                            status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
+                        });
+                    }
+                    return Err(SolverError::Runtime(
+                        "SAT solver was interrupted".to_string(),
+                    ));
                 }
             };
 
@@ -492,6 +530,12 @@ impl SolverAdaptor for Sat {
             tracing::info!("{:#?}", solutions);
 
             for solution in solutions {
+                if budget.expired() {
+                    return Ok(SolveSuccess {
+                        stats: SolverStats::default(),
+                        status: SearchStatus::Incomplete(solver::SearchIncomplete::Timeout),
+                    });
+                }
                 if !callback(solution.clone()) {
                     // callback false
                     return Ok(SolveSuccess {
@@ -716,6 +760,23 @@ mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
     use rustsat::types::Var as SatVar;
+
+    #[test]
+    fn zero_timeout_stops_before_first_sat_call() {
+        let mut sat = Sat::default().with_timeout(Some(Duration::ZERO));
+        sat.model_inst = Some(SatInstance::default());
+        sat.var_map = Some(HashMap::new());
+        sat.decision_refs = Some(Vec::new());
+
+        let result = sat
+            .solve(Box::new(|_| true), private::Internal)
+            .expect("a timeout is a non-crashing incomplete search");
+
+        assert_eq!(
+            result.status,
+            SearchStatus::Incomplete(solver::SearchIncomplete::Timeout)
+        );
+    }
 
     #[test]
     fn from_solution_substitution_replaces_reference_with_literal() {

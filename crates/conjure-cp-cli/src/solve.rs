@@ -280,19 +280,21 @@ pub(crate) fn init_context(
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     let family = global_args.solver;
-    let timeout_ms = global_args
-        .solver_timeout
-        .map(|dur| Duration::from(dur).as_millis())
-        .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
+    let timeout = global_args.solver_timeout.map(Duration::from);
 
     match family {
         SolverFamily::Minion => Solver::new(
             Minion::with_search_orders(global_args.minion_varorder, global_args.minion_valorder)
-                .with_solver_seed(global_args.solver_seed),
+                .with_solver_seed(global_args.solver_seed)
+                .with_timeout(timeout),
         ),
-        SolverFamily::Sat => Solver::new(Sat::default().with_solver_seed(global_args.solver_seed)),
+        SolverFamily::Sat => Solver::new(
+            Sat::default()
+                .with_solver_seed(global_args.solver_seed)
+                .with_timeout(timeout),
+        ),
         SolverFamily::Z3 => {
-            Solver::new(Smt::new(timeout_ms).with_solver_seed(global_args.solver_seed))
+            Solver::new(Smt::new(timeout).with_solver_seed(global_args.solver_seed))
         }
     }
 }

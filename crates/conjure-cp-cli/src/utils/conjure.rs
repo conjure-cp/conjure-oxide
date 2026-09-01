@@ -251,7 +251,7 @@ pub fn get_solutions(
     let sols = &mut *sols_guard;
 
     // Stopping after a requested finite number of satisfaction solutions is intentional. Every
-    // other incomplete search -- notably an SMT timeout or interrupt while proving UNSAT -- must
+    // other incomplete search -- notably a solver timeout or interrupt while proving UNSAT -- must
     // not be accepted as a complete (possibly empty) solution set.
     let requested_limit_reached = !is_optimisation
         && num_sols > 0
