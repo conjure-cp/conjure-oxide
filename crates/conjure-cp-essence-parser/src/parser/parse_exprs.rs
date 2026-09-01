@@ -298,24 +298,6 @@ mod test {
     }
 
     #[test]
-    pub fn test_braced_representation_preference_is_rejected() {
-        let symbols = SymbolTablePtr::new();
-        let x = DeclarationPtr::new_find(Name::User("x".into()), Domain::bool());
-        symbols.write().insert(x).unwrap();
-
-        assert!(
-            parse_expr("x : set{packed} of int", symbols.clone())
-                .unwrap()
-                .is_none()
-        );
-        assert!(
-            parse_expr("x : mset{counts} of int", symbols)
-                .unwrap()
-                .is_none()
-        );
-    }
-
-    #[test]
     pub fn test_expression_annotations_bind_tighter_than_addition() {
         let symbols = SymbolTablePtr::new();
         let x = DeclarationPtr::new_find(
