@@ -402,6 +402,12 @@ pub fn get_solutions_from_conjure_with_stats(
 
     let output_dir = match &capture_options.artifact_dir {
         Some(path) => {
+            // A failed run leaves its diagnostics behind. Conjure may reuse files in an existing
+            // output directory, and the glob below would also read stale solution files, so each
+            // invocation must start with an empty artifact directory.
+            if path.exists() {
+                fs::remove_dir_all(path)?;
+            }
             fs::create_dir_all(path)?;
             ConjureOutputDir::Fixed(path.clone())
         }
