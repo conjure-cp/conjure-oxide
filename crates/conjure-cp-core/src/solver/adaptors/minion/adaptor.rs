@@ -7,7 +7,10 @@ use ustr::Ustr;
 use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
 use minion_sys::error::{MinionError, RuntimeError};
-use minion_sys::{RunOptions, ValueOrder, VariableOrder, run_minion_with_options};
+use minion_sys::{
+    PropLevel, Propagation, RunOptions, TimeLimit, ValOrder, VarOrder,
+    run_minion_midsearch_with_options,
+};
 
 use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, Expression, Name};
@@ -26,7 +29,7 @@ use crate::solver::SolverError::OpNotImplemented;
 use crate::solver::private;
 
 use super::dominance_injection::{
-    add_dominance_constraints_for_solution, add_represented_decision_values,
+    MIDSEARCH_AUX_PREFIX, add_dominance_constraints_for_solution, add_represented_decision_values,
     minion_error_to_solver_error,
 };
 use super::parse_model::model_to_minion;
@@ -66,30 +69,44 @@ pub enum MinionVariableOrder {
     DomainOverWeightedDegree,
 }
 
-impl From<MinionVariableOrder> for VariableOrder {
-    fn from(value: MinionVariableOrder) -> Self {
-        match value {
-            MinionVariableOrder::Static => VariableOrder::Static,
-            MinionVariableOrder::SmallestDomainFirst => VariableOrder::SmallestDomainFirst,
-            MinionVariableOrder::SmallestRatioFirst => VariableOrder::SmallestRatioFirst,
-            MinionVariableOrder::LargestDomainFirst => VariableOrder::LargestDomainFirst,
-            MinionVariableOrder::Random => VariableOrder::Random,
-            MinionVariableOrder::Conflict => VariableOrder::Conflict,
-            MinionVariableOrder::WeightedDegree => VariableOrder::WeightedDegree,
-            MinionVariableOrder::DomainOverWeightedDegree => {
-                VariableOrder::DomainOverWeightedDegree
-            }
+impl MinionVariableOrder {
+    /// The Minion heuristic, and whether to also shuffle the search order.
+    ///
+    /// `Random` is Minion's `-varorder random`: not a heuristic of its own, but
+    /// the `-randomiseorder` flag applied on top of the default static order.
+    fn to_minion(self) -> (VarOrder, bool) {
+        match self {
+            MinionVariableOrder::Static => (VarOrder::Static, false),
+            MinionVariableOrder::SmallestDomainFirst => (VarOrder::Sdf, false),
+            MinionVariableOrder::SmallestRatioFirst => (VarOrder::Srf, false),
+            MinionVariableOrder::LargestDomainFirst => (VarOrder::Ldf, false),
+            MinionVariableOrder::Random => (VarOrder::Static, true),
+            MinionVariableOrder::Conflict => (VarOrder::Conflict, false),
+            MinionVariableOrder::WeightedDegree => (VarOrder::Wdeg, false),
+            MinionVariableOrder::DomainOverWeightedDegree => (VarOrder::DomOverWdeg, false),
         }
     }
 }
 
-impl From<MinionValueOrder> for ValueOrder {
+impl From<MinionValueOrder> for ValOrder {
     fn from(value: MinionValueOrder) -> Self {
         match value {
-            MinionValueOrder::Ascend => ValueOrder::Ascend,
-            MinionValueOrder::Descend => ValueOrder::Descend,
-            MinionValueOrder::Random => ValueOrder::Random,
+            MinionValueOrder::Ascend => ValOrder::Ascend,
+            MinionValueOrder::Descend => ValOrder::Descend,
+            MinionValueOrder::Random => ValOrder::Random,
         }
+    }
+}
+
+/// Converts a timeout to Minion's wall-clock limit.
+///
+/// Minion's timer has one-second resolution, so a sub-second remainder rounds
+/// up rather than truncating to an immediate timeout.
+fn wall_time_limit(timeout: Duration) -> TimeLimit {
+    let seconds = timeout.as_secs() + u64::from(timeout.subsec_nanos() != 0);
+    TimeLimit {
+        seconds: u32::try_from(seconds).expect("Minion timeout does not fit in u32 seconds"),
+        is_cpu_time: false,
     }
 }
 
@@ -140,6 +157,13 @@ fn translate_and_add_represented_values(
     solutions: HashMap<minion_ast::VarName, minion_ast::Constant>,
     model_template: Option<&ConjureModel>,
 ) -> HashMap<conjure_ast::Name, conjure_ast::Literal> {
+    // Variables added mid-search are reported in every subsequent solution.
+    // The dominance aux variables are internal to the injection machinery and
+    // have no Essence counterpart, so drop them before translating.
+    let solutions = solutions
+        .into_iter()
+        .filter(|(name, _)| !name.starts_with(MIDSEARCH_AUX_PREFIX))
+        .collect();
     let mut conjure_solutions = translate_solution(solutions);
     if let Some(model_template) = model_template {
         add_represented_decision_values(&mut conjure_solutions, model_template);
@@ -233,9 +257,28 @@ impl SolverAdaptor for Minion {
         let mut next_midsearch_aux_var_id = 0usize;
         let mut solution_ordinal = 0usize;
 
-        let solver_ctx = match run_minion_with_options(
+        let (var_order, randomise_order) = match self.variable_order {
+            Some(order) => order.to_minion(),
+            None => (VarOrder::default(), false),
+        };
+
+        let solver_ctx = match run_minion_midsearch_with_options(
             self.model.clone().expect("STATE MACHINE ERR"),
-            Box::new(|solutions| {
+            RunOptions {
+                seed: Some(self.solver_seed),
+                var_order,
+                randomise_order,
+                val_order: self.value_order.map_or_else(ValOrder::default, Into::into),
+                // SavileRow's default. Minion's own default is no
+                // preprocessing at all, which is much weaker.
+                preprocess: Propagation {
+                    level: PropLevel::SacBounds,
+                    limit: true,
+                },
+                time_limit: self.timeout.map(wall_time_limit),
+                ..Default::default()
+            },
+            Box::new(|midctx, solutions| {
                 any_solutions = true;
                 solution_ordinal += 1;
                 let conjure_solutions =
@@ -248,6 +291,7 @@ impl SolverAdaptor for Minion {
                 }
 
                 if let Err(err) = add_dominance_constraints_for_solution(
+                    midctx,
                     dominance_expression.as_ref(),
                     dominance_model_template.as_ref(),
                     &conjure_solutions,
@@ -261,13 +305,6 @@ impl SolverAdaptor for Minion {
 
                 true
             }),
-            RunOptions {
-                seed: self.solver_seed,
-                variable_order: self.variable_order.map(Into::into),
-                value_order: self.value_order.map(Into::into),
-                wall_time_limit: self.timeout,
-                ..Default::default()
-            },
         ) {
             Ok(solver_ctx) => solver_ctx,
             Err(MinionError::RuntimeError(RuntimeError::Timeout)) => {
