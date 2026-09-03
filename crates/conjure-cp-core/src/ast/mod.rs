@@ -24,6 +24,7 @@ pub mod serde;
 mod symbol_table;
 mod types;
 mod variables;
+mod versioned_cache;
 
 mod moo;
 mod partial_eval;
