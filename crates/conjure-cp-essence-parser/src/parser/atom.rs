@@ -692,13 +692,50 @@ fn parse_index_or_slice(
     }
 
     // Parse the rest of the indices as normal
+    let first_index_range = idx_nodes.front().map(|idx| idx.range());
     let mut indices = Vec::new();
     for idx_node in idx_nodes {
         indices.push(parse_index(ctx, &idx_node)?);
     }
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
-    // TODO: We could check whether the slice/index is safe here
+    if let Some((_, index_domains)) = collection.domain_of().and_then(|domain| domain.as_matrix())
+        && index_domains.len() != indices.len()
+    {
+        let operation = if has_null_idx { "slice" } else { "index" };
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Invalid matrix {operation}: expected {} indices (one per dimension), but got {}",
+                index_domains.len(),
+                indices.len()
+            ),
+            Some(indices_field.range()),
+        ));
+        return Ok(None);
+    }
+
+    if !has_null_idx
+        && let ReturnType::Tuple(fields) = collection.return_type()
+        && let Some(Some(Expression::Atomic(_, Atom::Literal(Literal::Int(index))))) =
+            indices.first()
+    {
+        let valid_index = index
+            .checked_sub(1)
+            .and_then(|index| usize::try_from(index).ok())
+            .is_some_and(|index| index < fields.len());
+
+        if !valid_index {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Tuple index {index} is out of bounds; valid indices are 1..{}",
+                    fields.len()
+                ),
+                Some(first_index_range.unwrap_or(indices_field.range())),
+            ));
+            return Ok(None);
+        }
+    }
+
     if has_null_idx {
         // It's a slice
         Ok(Some(Expression::UnsafeSlice(
