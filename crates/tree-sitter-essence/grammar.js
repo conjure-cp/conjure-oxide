@@ -58,9 +58,9 @@ module.exports = grammar ({
 
     integer: $ => /[0-9]+/,
 
-    TRUE: $ => choice("true", "TRUE"),
+    TRUE: $ => "true",
 
-    FALSE: $ => choice("false", "FALSE"),
+    FALSE: $ => "false",
 
     identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 

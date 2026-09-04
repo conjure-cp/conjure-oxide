@@ -656,6 +656,7 @@ fn parse_index_or_slice(
 
     // Save current context and temporarily set to Unknown for the collection
     let saved_context = ctx.typechecking_context;
+    let saved_inner_context = ctx.inner_typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
     let mut collection: Expression;
     match parse_atom(ctx, &field!(node, "collection"))? {
@@ -687,7 +688,13 @@ fn parse_index_or_slice(
 
         // If there are no more indices, return the record field directly
         if idx_nodes.is_empty() {
-            return Ok(Some(collection));
+            return Ok(typecheck_index_or_slice(
+                ctx,
+                node,
+                collection,
+                saved_context,
+                saved_inner_context,
+            ));
         }
     }
 
@@ -736,21 +743,66 @@ fn parse_index_or_slice(
         }
     }
 
-    if has_null_idx {
+    let expression = if has_null_idx {
         // It's a slice
-        Ok(Some(Expression::UnsafeSlice(
-            Metadata::new(),
-            Moo::new(collection),
-            indices,
-        )))
+        Expression::UnsafeSlice(Metadata::new(), Moo::new(collection), indices)
     } else {
         // It's an index
         let idx_exprs: Vec<Expression> = indices.into_iter().map(|idx| idx.unwrap()).collect();
-        Ok(Some(Expression::UnsafeIndex(
-            Metadata::new(),
-            Moo::new(collection),
-            idx_exprs,
-        )))
+        Expression::UnsafeIndex(Metadata::new(), Moo::new(collection), idx_exprs)
+    };
+
+    Ok(typecheck_index_or_slice(
+        ctx,
+        node,
+        expression,
+        saved_context,
+        saved_inner_context,
+    ))
+}
+
+fn typecheck_index_or_slice(
+    ctx: &mut ParseContext,
+    node: &Node,
+    expression: Expression,
+    context: TypecheckingContext,
+    inner_context: TypecheckingContext,
+) -> Option<Expression> {
+    let return_type = expression.return_type();
+    let mismatch = if let Some(expected) = expected_scalar_type(context)
+        && return_type != expected
+        && return_type != ReturnType::Unknown
+    {
+        Some((expected, return_type))
+    } else if let Some(expected) = expected_scalar_type(inner_context)
+        && let Some(element_type) = return_type.elem_type()
+        && element_type != expected
+        && element_type != ReturnType::Unknown
+    {
+        Some((expected, element_type))
+    } else {
+        None
+    };
+
+    if let Some((expected, actual)) = mismatch {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: {expected}\n\tGot: {actual}",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        None
+    } else {
+        Some(expression)
+    }
+}
+
+fn expected_scalar_type(context: TypecheckingContext) -> Option<ReturnType> {
+    match context {
+        TypecheckingContext::Boolean => Some(ReturnType::Bool),
+        TypecheckingContext::Arithmetic => Some(ReturnType::Int),
+        _ => None,
     }
 }
 
