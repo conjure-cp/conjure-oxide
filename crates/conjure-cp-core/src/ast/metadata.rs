@@ -1,11 +1,11 @@
-use crate::ast::{DomainPtr, ReturnType};
+use crate::ast::versioned_cache::VersionedCache;
+use crate::ast::{DomainPtr, ReturnType, declaration::declaration_content_generation};
 use polyquine::Quine;
 use proc_macro2::TokenStream;
 use quote::quote;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 use uniplate::derive_unplateable;
 
@@ -25,15 +25,16 @@ pub struct Metadata {
     /// Cached expression content hash used by semantic hashing.
     #[serde(default, skip_serializing)]
     pub cached_content_hash: AtomicU64,
-    /// Cached result of `Expression::domain_of()` for this node. The outer `Option` is `None`
-    /// when not yet computed; `Some(None)` means "computed, and this expression has no domain".
+    /// Cached result of `Expression::domain_of()` for this node, stamped internally with the
+    /// declaration generation used to compute it.
     ///
-    /// `domain_of()` recomputes recursively from scratch on every call with no memoisation of
-    /// its own, so repeatedly calling it on the same subtree (as rules that check "is this
-    /// operand scalar/abstract" tend to, once per rule attempt) is quadratic in the worst case.
-    /// Cleared when this expression or a descendant changes.
+    /// The generation records the declaration state used to compute the domain. `domain_of()`
+    /// recomputes recursively from scratch on every cache miss, so repeatedly calling it on the
+    /// same subtree (as rules that check "is this operand scalar/abstract" tend to, once per rule
+    /// attempt) is quadratic in the worst case. Cleared when this expression or a descendant
+    /// changes, and ignored after a referenced declaration changes.
     #[serde(skip)]
-    pub domain: Mutex<Option<Option<DomainPtr>>>,
+    domain: VersionedCache<Option<DomainPtr>>,
 }
 
 impl Metadata {
@@ -43,7 +44,7 @@ impl Metadata {
             etype: None,
             span_id: None,
             cached_content_hash: AtomicU64::new(NO_HASH),
-            domain: Mutex::new(None),
+            domain: VersionedCache::new(),
         }
     }
 
@@ -53,25 +54,23 @@ impl Metadata {
             etype: None,
             span_id: Some(span_id),
             cached_content_hash: AtomicU64::new(NO_HASH),
-            domain: Mutex::new(None),
+            domain: VersionedCache::new(),
         }
     }
 
     /// Clears the cached domain after this expression or a descendant changes.
     pub fn clear_cached_domain(&self) {
-        *self.domain.lock().unwrap_or_else(|e| e.into_inner()) = None;
+        self.domain.clear();
     }
 
     /// Returns the cached domain for this expression, computing and caching it via `compute` on
     /// first access.
-    pub fn domain_or_init(&self, compute: impl FnOnce() -> Option<DomainPtr>) -> Option<DomainPtr> {
-        let mut cached = self.domain.lock().unwrap_or_else(|e| e.into_inner());
-        if let Some(domain) = cached.as_ref() {
-            return domain.clone();
-        }
-        let computed = compute();
-        *cached = Some(computed.clone());
-        computed
+    pub fn domain_or_init(
+        &self,
+        mut compute: impl FnMut() -> Option<DomainPtr>,
+    ) -> Option<DomainPtr> {
+        self.domain
+            .get_or_init(declaration_content_generation, |_| compute())
     }
 }
 
@@ -104,7 +103,7 @@ impl Clone for Metadata {
             // comprehension-body substitution), bypassing the rewriter's zipper-based
             // cached-domain invalidation entirely. A clone always starts uncached so
             // that path can never observe a stale domain.
-            domain: Mutex::new(None),
+            domain: VersionedCache::new(),
         }
     }
 }
@@ -121,13 +120,11 @@ impl Quine for Metadata {
     fn ctor_tokens(&self) -> TokenStream {
         let etype = self.etype.ctor_tokens();
         let span_id = self.span_id.ctor_tokens();
-        quote! {
-            conjure_cp::ast::Metadata {
-                etype: #etype,
-                span_id: #span_id,
-                cached_content_hash: std::sync::atomic::AtomicU64::new(0),
-                domain: std::sync::Mutex::new(None),
-            }
-        }
+        quote! {{
+            let mut metadata = conjure_cp::ast::Metadata::new();
+            metadata.etype = #etype;
+            metadata.span_id = #span_id;
+            metadata
+        }}
     }
 }

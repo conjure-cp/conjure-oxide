@@ -117,7 +117,10 @@ pub fn validate_instantiation_conditions(model: &mut Model) -> anyhow::Result<()
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{Atom, Domain, GroundDomain, Metadata, Name, Range};
+    use crate::ast::{
+        Atom, Domain, Expression, GroundDomain, IntVal, Metadata, Name, Objective,
+        OptimiseDirection, Range, Reference,
+    };
 
     #[test]
     fn instantiated_given_uses_the_tighter_value_domain() {
@@ -147,6 +150,62 @@ mod tests {
         assert_eq!(
             declaration.domain().unwrap().resolve().unwrap().as_ref(),
             &GroundDomain::Int(vec![Range::Single(7)])
+        );
+    }
+
+    #[test]
+    fn instantiation_invalidates_cached_expression_domains() {
+        let parameter_name = Name::user("n");
+        let parameter = DeclarationPtr::new_given(
+            parameter_name.clone(),
+            Domain::int(vec![Range::UnboundedR(1)]),
+        );
+        let variable = DeclarationPtr::new_find(
+            Name::user("x"),
+            Domain::int(vec![Range::Bounded(
+                IntVal::Const(1),
+                IntVal::Reference(Reference::new(parameter.clone())),
+            )]),
+        );
+        let reference = Expression::Atomic(Metadata::new(), Atom::new_ref(variable.clone()));
+
+        let mut problem = Model::default();
+        problem.add_symbol(parameter).unwrap();
+        problem.add_symbol(variable).unwrap();
+        problem.objective = Some(Objective {
+            direction: OptimiseDirection::Minimising,
+            expression: reference,
+        });
+
+        let cached_domain = problem
+            .objective
+            .as_ref()
+            .unwrap()
+            .expression
+            .domain_of()
+            .unwrap();
+        assert!(cached_domain.resolve().is_err());
+
+        let mut parameters = Model::default();
+        parameters
+            .add_symbol(DeclarationPtr::new_value_letting(
+                parameter_name,
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(7))),
+            ))
+            .unwrap();
+
+        let instantiated = instantiate_model(problem, parameters).unwrap();
+        let objective_domain = instantiated
+            .objective
+            .as_ref()
+            .unwrap()
+            .expression
+            .domain_of()
+            .unwrap();
+
+        assert_eq!(
+            objective_domain.resolve().unwrap().as_ref(),
+            &GroundDomain::Int(vec![Range::Bounded(1, 7)])
         );
     }
 }

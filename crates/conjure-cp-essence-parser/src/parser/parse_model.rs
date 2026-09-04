@@ -26,8 +26,12 @@ pub fn parse_essence_file_native(
     path: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, Box<ParseErrorCollection>> {
-    let source_code = fs::read_to_string(path)
-        .unwrap_or_else(|_| panic!("Failed to read the source code file {path}"));
+    let source_code = fs::read_to_string(path).map_err(|source| {
+        Box::new(ParseErrorCollection::fatal(FatalParseError::FileRead {
+            path: path.to_string(),
+            source,
+        }))
+    })?;
 
     let mut errors = vec![];
     let model = parse_essence_with_context(&source_code, context, &mut errors);
