@@ -14,14 +14,9 @@ CARGO_TEST_WORKSPACE = cargo nextest run --release $(CARGO_LOCKED) $(CARGO_FEATU
 CARGO_DOC_TEST_WORKSPACE = cargo test --release $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --doc
 export PATH := $(CARGO_BIN_DIR):$(PATH)
 
-.PHONY: submodules
-## Initialises git submodules needed for builds
-submodules:
-	git submodule update --init --recursive -- crates/minion-sys/vendor
-
 .PHONY: check
 ## Runs all hygiene checks. These are the same checks that occur in CI for PRs.
-check: submodules
+check:
 	RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --all-targets
 	cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
 	cargo fmt --check
@@ -33,12 +28,12 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 
 .PHONY: build-release
 ## Builds the release conjure-oxide executable
-build-release: submodules
+build-release:
 	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide --release
 
 .PHONY: build-debug
 ## Builds the debug conjure-oxide executable
-build-debug: submodules
+build-debug:
 	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide
 
 .PHONY: build
@@ -54,7 +49,7 @@ install: build
 
 .PHONY: test
 ## Runs all tests
-test: submodules install .installed-cargo-nextest.checkpoint
+test: install .installed-cargo-nextest.checkpoint
 	$(CARGO_DOC_TEST_WORKSPACE)
 	$(CARGO_TEST_WORKSPACE)
 
