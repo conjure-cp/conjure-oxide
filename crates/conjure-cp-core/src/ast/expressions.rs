@@ -2857,9 +2857,16 @@ impl Typeable for Expression {
                                 .cloned()
                                 .unwrap_or(ReturnType::Unknown)
                         }
-                        // Matrix return types do not encode dimensionality: one or more indices
-                        // select the declared element type.
-                        ReturnType::Matrix(element_type) => return *element_type,
+                        // Declared matrix types are flat, whereas matrix literals can have one
+                        // nested Matrix return type per dimension. Continue through nested
+                        // matrices, but stop once the declared element type is reached.
+                        ReturnType::Matrix(element_type) => {
+                            let element_type = *element_type;
+                            if !matches!(element_type, ReturnType::Matrix(_)) {
+                                return element_type;
+                            }
+                            element_type
+                        }
                         // Record and variant indices need their field-name context to determine a
                         // result type. Unknown can likewise be resolved by later typechecking.
                         ReturnType::Record(_) | ReturnType::Variant(_) | ReturnType::Unknown => {
@@ -2873,7 +2880,11 @@ impl Typeable for Expression {
                 indexed_ty
             }
             Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
-                ReturnType::Matrix(Box::new(subject.return_type()))
+                let mut element_type = subject.return_type();
+                while let ReturnType::Matrix(inner) = element_type {
+                    element_type = *inner;
+                }
+                ReturnType::Matrix(Box::new(element_type))
             }
             Expression::InDomain(_, _, _) => ReturnType::Bool,
             Expression::Comprehension(_, comp) => comp.return_type(),
