@@ -374,8 +374,8 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
         let index_has_element_id = indices
             .iter()
             .any(|index| matches!(index, Expr::ElementId(..)));
-        let can_lower_via_element = subject.clone().unwrap_list().is_some()
-            && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
+        let can_lower_via_element =
+            subject.is_list() && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
 
         if !can_lower_via_element && !index_has_element_id {
             if cfg!(debug_assertions) {

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::{BTreeSet, HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use std::hash::{DefaultHasher, Hash, Hasher};
@@ -1341,13 +1342,9 @@ impl Expression {
                 };
                 if let [idx_dom] = idx_doms.as_slice() {
                     let index_domain = Domain::Ground(idx_dom.clone());
-                    if matrix.as_ref().unwrap_list().is_some() {
-                        if let Some((elems, _)) = matrix.as_ref().clone().unwrap_matrix_unchecked()
-                        {
-                            let n = elems.len();
-                            if n > 0 {
-                                return Some(Domain::int(vec![Range::Bounded(1, n as i32)]));
-                            }
+                    if let Some(n) = matrix.list_len() {
+                        if n > 0 {
+                            return Some(Domain::int(vec![Range::Bounded(1, n as i32)]));
                         }
                         Some(Moo::new(index_domain))
                     } else {
@@ -2168,22 +2165,86 @@ impl Expression {
     ///
     /// Unlike [`Expression::unwrap_list`], a matrix held as an [`Atom::Literal`] is not unwrapped,
     /// since its elements are literals with no `Expression` to borrow.
-    pub fn unwrap_list_ref(&self) -> Option<&Vec<Expression>> {
+    pub fn unwrap_list_ref(&self) -> Option<&[Expression]> {
         match self {
             Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
                 expr.unwrap_list_ref()
             }
             Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
-                matrix.unwrap_list()
+                matrix.unwrap_list().map(Vec::as_slice)
             }
             _ => None,
         }
+    }
+
+    /// If the expression is a list, borrows the inner expressions where it can.
+    ///
+    /// This accepts exactly the same expressions as [`Expression::unwrap_list`], but avoids the
+    /// copy in the common case. Only a matrix held as an [`Atom::Literal`] allocates, because its
+    /// elements are literals that have to be materialised as `Expression`s; every other list
+    /// borrows.
+    ///
+    /// Prefer this over [`Expression::unwrap_list`] when the elements are usually only inspected,
+    /// and over [`Expression::unwrap_list_ref`] when the narrower set of accepted expressions
+    /// would change behaviour.
+    pub fn unwrap_list_cow(&self) -> Option<Cow<'_, [Expression]>> {
+        match self {
+            Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
+                expr.unwrap_list_cow()
+            }
+            Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => matrix
+                .unwrap_list()
+                .map(|elems| Cow::Borrowed(elems.as_slice())),
+            Expression::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(matrix @ AbstractLiteral::Matrix(_, _))),
+            ) => matrix.unwrap_list().map(|elems| {
+                Cow::Owned(
+                    elems
+                        .iter()
+                        .cloned()
+                        .map(|literal| Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
+                        .collect(),
+                )
+            }),
+            _ => None,
+        }
+    }
+
+    /// Returns the number of elements when this expression is a list, without cloning them.
+    ///
+    /// Unlike [`Expression::unwrap_list`], this never converts literal elements into expressions.
+    /// Use it for length, emptiness, and list-shape checks.
+    pub fn list_len(&self) -> Option<usize> {
+        match self {
+            Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
+                expr.list_len()
+            }
+            Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
+                matrix.unwrap_list().map(Vec::len)
+            }
+            Expression::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(matrix @ AbstractLiteral::Matrix(_, _))),
+            ) => matrix.unwrap_list().map(Vec::len),
+            _ => None,
+        }
+    }
+
+    /// Whether this expression is a list, without cloning or materialising its elements.
+    pub fn is_list(&self) -> bool {
+        self.list_len().is_some()
     }
 
     /// If the expression is a list, returns a *copied* vector of the inner expressions.
     ///
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
+    ///
+    /// The vector is owned: a matrix stored inside [`Atom::Literal`] holds [`Literal`]s that have
+    /// to be materialised as [`Expression`]s, and callers that rewrite the elements need them by
+    /// value. For inspection use [`Expression::unwrap_list_cow`]; for shape checks use
+    /// [`Expression::list_len`] or [`Expression::is_list`].
     pub fn unwrap_list(&self) -> Option<Vec<Expression>> {
         match self {
             Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
@@ -3834,5 +3895,47 @@ mod tests {
             inner.as_ref(),
             &GroundDomain::Int(vec![Range::Bounded(1, 999)])
         );
+    }
+
+    #[test]
+    fn list_inspection_borrows_expression_elements_without_cloning_the_list() {
+        let list = matrix_expr![
+            Expression::from(Literal::Int(1)),
+            Expression::from(Literal::Int(2))
+        ];
+
+        assert_eq!(list.list_len(), Some(2));
+        assert!(list.is_list());
+        assert!(matches!(list.unwrap_list_cow(), Some(Cow::Borrowed(_))));
+    }
+
+    #[test]
+    fn list_inspection_materialises_literal_elements_only_when_they_are_requested() {
+        let list = Expression::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::AbstractLiteral(
+                AbstractLiteral::matrix_implied_indices(vec![Literal::Int(1), Literal::Int(2)]),
+            )),
+        );
+
+        assert_eq!(list.list_len(), Some(2));
+        assert!(list.is_list());
+        assert!(matches!(list.unwrap_list_cow(), Some(Cow::Owned(_))));
+        assert_eq!(
+            list.unwrap_list_cow().map(Cow::into_owned),
+            list.unwrap_list()
+        );
+    }
+
+    #[test]
+    fn list_length_looks_through_annotations() {
+        let list = Expression::DomainAnnotation(
+            Metadata::new(),
+            Moo::new(matrix_expr![Expression::from(Literal::Int(1))]),
+            Domain::int(vec![Range::Bounded(0, 1)]),
+        );
+
+        assert_eq!(list.list_len(), Some(1));
+        assert!(matches!(list.unwrap_list_cow(), Some(Cow::Borrowed(_))));
     }
 }

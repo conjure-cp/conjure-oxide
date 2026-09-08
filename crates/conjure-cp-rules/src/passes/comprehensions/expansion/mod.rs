@@ -380,7 +380,7 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
     };
     let expanded = into_matrix_expr!(results);
     let expanded = match comprehension_domain {
-        Some(domain) if expanded.unwrap_list().is_some_and(|elems| elems.is_empty()) => {
+        Some(domain) if expanded.list_len() == Some(0) => {
             Expr::DomainAnnotation(Metadata::new(), Moo::new(expanded), domain)
         }
         _ => expanded,
@@ -492,7 +492,7 @@ fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
 
     // Borrow the elements: this runs on every `Or` the rewriter visits, and copying the list
     // first made the test cost the whole matrix on a wide disjunction.
-    let [Expr::Comprehension(_, comprehension)] = expr.unwrap_list_ref()?.as_slice() else {
+    let [Expr::Comprehension(_, comprehension)] = expr.unwrap_list_ref()? else {
         return None;
     };
 

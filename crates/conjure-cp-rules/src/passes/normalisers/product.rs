@@ -169,11 +169,14 @@ fn order_by_complexity(factors: Vec<Expr>) -> (i32, Vec<Expr>) {
 fn remove_unit_vector_products(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Product(_, mat) => {
-            let list = (**mat).clone().unwrap_list().ok_or(RuleNotApplicable)?;
-            if list.len() == 1 {
-                return Ok(RuleEffect::pure(list[0].clone()));
+            // The failure path is only a shape check and must stay O(1) on a wide product.
+            if mat.list_len() != Some(1) {
+                return Err(RuleNotApplicable);
             }
-            Err(RuleNotApplicable)
+            let mut list = mat.unwrap_list().ok_or(RuleNotApplicable)?;
+            Ok(RuleEffect::pure(
+                list.pop().expect("singleton length checked above"),
+            ))
         }
         _ => Err(RuleNotApplicable),
     }

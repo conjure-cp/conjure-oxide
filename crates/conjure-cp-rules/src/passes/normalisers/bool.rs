@@ -48,13 +48,15 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     match expr {
         Expr::Or(_, e) => {
-            let Some(exprs) = e.as_ref().clone().unwrap_list() else {
+            // Look for the `and` by reference. A wide disjunction containing no `and` is the
+            // common case, and it costs a walk of the disjuncts rather than a copy of them.
+            let Some(exprs) = e.unwrap_list_cow() else {
                 return Err(RuleNotApplicable);
             };
 
             match find_and(&exprs) {
                 Some(idx) => {
-                    let mut rest = exprs.clone();
+                    let mut rest = exprs.to_vec();
                     let and_expr = rest.remove(idx);
 
                     match and_expr {
@@ -197,15 +199,14 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::And(_, e) => {
-            let Some(exprs) = e.as_ref().clone().unwrap_list() else {
+            // The failure path is only a shape check and must stay O(1) on a wide conjunction.
+            if e.list_len() != Some(1) {
                 return Err(RuleNotApplicable);
-            };
-
-            if exprs.len() == 1 {
-                return Ok(RuleEffect::pure(exprs[0].clone()));
             }
-
-            Err(ApplicationError::RuleNotApplicable)
+            let mut exprs = e.unwrap_list().ok_or(RuleNotApplicable)?;
+            Ok(RuleEffect::pure(
+                exprs.pop().expect("singleton length checked above"),
+            ))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -222,16 +223,19 @@ fn remove_unit_vector_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Some(exprs) = e.as_ref().clone().unwrap_list() else {
+    // The failure path is only a shape check and must stay O(1) on a wide disjunction.
+    if e.list_len() != Some(1) {
         return Err(RuleNotApplicable);
-    };
+    }
+    let mut exprs = e.unwrap_list().ok_or(RuleNotApplicable)?;
+    let single = exprs.pop().expect("singleton length checked above");
 
     // do not conflict with unwrap_nested_or rule.
-    if exprs.len() != 1 || matches!(exprs[0], Expr::Or(_, _)) {
+    if matches!(&single, Expr::Or(_, _)) {
         return Err(RuleNotApplicable);
     }
 
-    Ok(RuleEffect::pure(exprs[0].clone()))
+    Ok(RuleEffect::pure(single))
 }
 
 /// Applies the contrapositive of implication.
