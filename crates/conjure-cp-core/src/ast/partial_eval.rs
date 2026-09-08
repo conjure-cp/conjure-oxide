@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use indexmap::IndexMap;
+
 use crate::ast::Typeable;
 use crate::{
     ast::{
@@ -9,7 +11,6 @@ use crate::{
     into_matrix_expr,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
-use itertools::iproduct;
 use uniplate::Uniplate;
 
 /// Constant comparison shape used when dominating bounds under `And`.
@@ -445,20 +446,25 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
             _ => Err(RuleNotApplicable),
         },
         Expr::Sum(m, vec) => {
-            let vec = Moo::unwrap_or_clone(vec.clone())
-                .unwrap_list()
-                .ok_or(RuleNotApplicable)?;
+            let vec = vec.unwrap_list_cow().ok_or(RuleNotApplicable)?;
             let mut acc = 0;
             let mut n_consts = 0;
-            let mut new_vec: Vec<Expr> = Vec::new();
-            for expr in vec {
+            for expr in vec.iter() {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
-                    acc += x;
+                    acc += *x;
                     n_consts += 1;
-                } else {
-                    new_vec.push(expr);
                 }
             }
+
+            if n_consts <= 1 {
+                return Err(RuleNotApplicable);
+            }
+
+            let mut new_vec: Vec<Expr> = vec
+                .iter()
+                .filter(|expr| !matches!(expr, Expr::Atomic(_, Atom::Literal(Lit::Int(_)))))
+                .cloned()
+                .collect();
             if acc != 0 {
                 new_vec.push(Expr::Atomic(
                     Default::default(),
@@ -466,35 +472,36 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 ));
             }
 
-            if n_consts <= 1 {
-                Err(RuleNotApplicable)
-            } else {
-                Ok(RuleEffect::pure(Expr::Sum(
-                    m.clone(),
-                    Moo::new(into_matrix_expr![new_vec]),
-                )))
-            }
+            Ok(RuleEffect::pure(Expr::Sum(
+                m.clone(),
+                Moo::new(into_matrix_expr![new_vec]),
+            )))
         }
 
         Expr::Product(m, vec) => {
             let mut acc = 1;
             let mut n_consts = 0;
-            let mut new_vec: Vec<Expr> = Vec::new();
-            let vec = Moo::unwrap_or_clone(vec.clone())
-                .unwrap_list()
-                .ok_or(RuleNotApplicable)?;
-            for expr in vec {
+            let vec = vec.unwrap_list_cow().ok_or(RuleNotApplicable)?;
+            for expr in vec.iter() {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
-                    acc *= x;
+                    acc *= *x;
                     n_consts += 1;
-                } else {
-                    new_vec.push(expr);
                 }
             }
 
             if n_consts == 0 {
                 return Err(RuleNotApplicable);
             }
+
+            if acc != 0 && n_consts == 1 {
+                return Err(RuleNotApplicable);
+            }
+
+            let mut new_vec: Vec<Expr> = vec
+                .iter()
+                .filter(|expr| !matches!(expr, Expr::Atomic(_, Atom::Literal(Lit::Int(_)))))
+                .cloned()
+                .collect();
 
             new_vec.push(Expr::Atomic(
                 Default::default(),
@@ -514,9 +521,6 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 } else {
                     Err(RuleNotApplicable)
                 }
-            } else if n_consts == 1 {
-                // acc !=0, only one constant
-                Err(RuleNotApplicable)
             } else {
                 // acc !=0, multiple constants found
                 Ok(RuleEffect::pure(new_product))
@@ -524,82 +528,86 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         }
 
         Expr::Min(m, e) => {
-            let Some(vec) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
+            let Some(vec) = e.unwrap_list_cow() else {
                 return Err(RuleNotApplicable);
             };
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
-            let mut new_vec: Vec<Expr> = Vec::new();
-            for expr in vec {
+            for expr in vec.iter() {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     n_consts += 1;
                     acc = match acc {
                         Some(i) => {
-                            if i > x {
-                                Some(x)
+                            if i > *x {
+                                Some(*x)
                             } else {
                                 Some(i)
                             }
                         }
-                        None => Some(x),
+                        None => Some(*x),
                     };
-                } else {
-                    new_vec.push(expr);
                 }
             }
 
+            if n_consts <= 1 {
+                return Err(RuleNotApplicable);
+            }
+
+            let mut new_vec: Vec<Expr> = vec
+                .iter()
+                .filter(|expr| !matches!(expr, Expr::Atomic(_, Atom::Literal(Lit::Int(_)))))
+                .cloned()
+                .collect();
             if let Some(i) = acc {
                 new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Lit::Int(i))));
             }
 
-            if n_consts <= 1 {
-                Err(RuleNotApplicable)
-            } else {
-                Ok(RuleEffect::pure(Expr::Min(
-                    m.clone(),
-                    Moo::new(into_matrix_expr![new_vec]),
-                )))
-            }
+            Ok(RuleEffect::pure(Expr::Min(
+                m.clone(),
+                Moo::new(into_matrix_expr![new_vec]),
+            )))
         }
 
         Expr::Max(m, e) => {
-            let Some(vec) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
+            let Some(vec) = e.unwrap_list_cow() else {
                 return Err(RuleNotApplicable);
             };
 
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
-            let mut new_vec: Vec<Expr> = Vec::new();
-            for expr in vec {
+            for expr in vec.iter() {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     n_consts += 1;
                     acc = match acc {
                         Some(i) => {
-                            if i < x {
-                                Some(x)
+                            if i < *x {
+                                Some(*x)
                             } else {
                                 Some(i)
                             }
                         }
-                        None => Some(x),
+                        None => Some(*x),
                     };
-                } else {
-                    new_vec.push(expr);
                 }
             }
 
+            if n_consts <= 1 {
+                return Err(RuleNotApplicable);
+            }
+
+            let mut new_vec: Vec<Expr> = vec
+                .iter()
+                .filter(|expr| !matches!(expr, Expr::Atomic(_, Atom::Literal(Lit::Int(_)))))
+                .cloned()
+                .collect();
             if let Some(i) = acc {
                 new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Lit::Int(i))));
             }
 
-            if n_consts <= 1 {
-                Err(RuleNotApplicable)
-            } else {
-                Ok(RuleEffect::pure(Expr::Max(
-                    m.clone(),
-                    Moo::new(into_matrix_expr![new_vec]),
-                )))
-            }
+            Ok(RuleEffect::pure(Expr::Max(
+                m.clone(),
+                Moo::new(into_matrix_expr![new_vec]),
+            )))
         }
         Expr::Not(_, e1) => {
             let Expr::Imply(_, p, q) = e1.as_ref() else {
@@ -627,35 +635,36 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
             }
         }
         Expr::Or(m, e) => {
-            let Some(terms) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
+            let Some(terms) = e.unwrap_list_cow() else {
                 return Err(RuleNotApplicable);
             };
 
             let mut has_changed = false;
+            let mut non_literal_terms = 0;
 
-            // 2. boolean literals
-            let mut new_terms = vec![];
-            for expr in terms {
+            // Inspection pass: decide applicability from borrowed terms, so a disjunction that
+            // does not fold costs a walk rather than a copy.
+            for expr in terms.iter() {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = expr {
                     has_changed = true;
 
                     // true ~~> entire or is true
                     // false ~~> remove false from the or
-                    if x {
+                    if *x {
                         return Ok(RuleEffect::pure(true.into()));
                     }
                 } else {
-                    new_terms.push(expr);
+                    non_literal_terms += 1;
                 }
             }
 
-            // 2. check pairwise tautologies.
-            if check_pairwise_or_tautologies(&new_terms) {
+            // The two supported implication tautologies, in expected O(n).
+            if check_pairwise_or_tautologies(&terms) {
                 return Ok(RuleEffect::pure(true.into()));
             }
 
             // 3. empty or ~~> false
-            if new_terms.is_empty() {
+            if non_literal_terms == 0 {
                 return Ok(RuleEffect::pure(false.into()));
             }
 
@@ -663,51 +672,77 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 return Err(RuleNotApplicable);
             }
 
+            let new_terms = terms
+                .iter()
+                .filter(|expr| !matches!(expr, Expr::Atomic(_, Atom::Literal(Lit::Bool(_)))))
+                .cloned()
+                .collect::<Vec<_>>();
+
             Ok(RuleEffect::pure(Expr::Or(
                 m.clone(),
                 Moo::new(into_matrix_expr![new_terms]),
             )))
         }
         Expr::And(_, e) => {
-            let Some(vec) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
+            // The evaluator revisits a conjunction after each rewrite elsewhere in the model, so
+            // establish applicability from borrowed conjuncts and only build a replacement once
+            // the rule is known to apply. A wide `and` -- what unrolling `forAll i : D. ...`
+            // produces -- is then walked per visit rather than copied, keeping repeated visits
+            // linear rather than quadratic in the number of conjuncts.
+            let Some(vec) = e.unwrap_list_cow() else {
                 return Err(RuleNotApplicable);
             };
             // Empty conjunction is the And-identity.
             if vec.is_empty() {
                 return Ok(RuleEffect::pure(Expr::from(true)));
             }
-            let mut new_vec: Vec<Expr> = Vec::new();
+
             let mut has_changed: bool = false;
-            // Strongest constant bound per (atomic LHS, comparison operator), first-seen order.
-            let mut constant_bounds: Vec<(Atom, ConstantBoundOp, i32)> = Vec::new();
+            // `Atom` is only interior-mutable through `DeclarationPtr`, whose `Hash`/`Eq` use the
+            // immutable declaration id, so it is stable as a key.
+            #[allow(clippy::mutable_key_type)]
+            let mut distinct_bounds: HashSet<(&Atom, ConstantBoundOp)> = HashSet::new();
             let mut constant_bound_terms: usize = 0;
-            for expr in vec {
+            for expr in vec.iter() {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = expr {
-                    has_changed = true;
                     if !x {
                         return Ok(RuleEffect::pure(Expr::Atomic(
                             Default::default(),
                             Atom::Literal(Lit::Bool(false)),
                         )));
                     }
-                } else if let Some((lhs, op, rhs)) = as_constant_bound_comparison(&expr) {
+                    has_changed = true;
+                } else if let Some((lhs, op, _)) = as_constant_bound_comparison_ref(expr) {
                     constant_bound_terms += 1;
-                    merge_constant_bound(&mut constant_bounds, lhs, op, rhs);
-                } else {
-                    new_vec.push(expr);
+                    distinct_bounds.insert((lhs, op));
                 }
             }
 
             // Only treat bound aggregation as a change when at least one conjunct was dominated.
-            if constant_bound_terms > constant_bounds.len() {
+            if constant_bound_terms > distinct_bounds.len() {
                 has_changed = true;
             }
 
             if !has_changed {
                 return Err(RuleNotApplicable);
             }
+            drop(distinct_bounds);
 
-            for (lhs, op, rhs) in constant_bounds {
+            // The rule applies: now build the replacement.
+            let mut new_vec: Vec<Expr> = Vec::new();
+            // Strongest constant bound per (atomic LHS, comparison operator), first-seen order.
+            let mut constant_bounds: IndexMap<(Atom, ConstantBoundOp), i32> = IndexMap::new();
+            for expr in vec.iter() {
+                if matches!(expr, Expr::Atomic(_, Atom::Literal(Lit::Bool(_)))) {
+                    continue;
+                } else if let Some((lhs, op, rhs)) = as_constant_bound_comparison(expr) {
+                    merge_constant_bound(&mut constant_bounds, lhs, op, rhs);
+                } else {
+                    new_vec.push(expr.clone());
+                }
+            }
+
+            for ((lhs, op), rhs) in constant_bounds {
                 new_vec.push(make_constant_bound_comparison(lhs, op, rhs));
             }
 
@@ -1031,6 +1066,11 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
 
 /// Extracts `lhs ▷ k` where `lhs` is atomic and `k` is an integer literal.
 fn as_constant_bound_comparison(expr: &Expr) -> Option<(Atom, ConstantBoundOp, i32)> {
+    as_constant_bound_comparison_ref(expr).map(|(lhs, op, rhs)| (lhs.clone(), op, rhs))
+}
+
+/// Borrowing variant of [`as_constant_bound_comparison`], for the inspection pass.
+fn as_constant_bound_comparison_ref(expr: &Expr) -> Option<(&Atom, ConstantBoundOp, i32)> {
     let (lhs, rhs, op) = match expr {
         Expr::Gt(_, lhs, rhs) => (lhs, rhs, ConstantBoundOp::Gt),
         Expr::Geq(_, lhs, rhs) => (lhs, rhs, ConstantBoundOp::Geq),
@@ -1045,7 +1085,7 @@ fn as_constant_bound_comparison(expr: &Expr) -> Option<(Atom, ConstantBoundOp, i
     let Expr::Atomic(_, lhs_atom) = lhs.as_ref() else {
         return None;
     };
-    Some((lhs_atom.clone(), op, *rhs_value))
+    Some((lhs_atom, op, *rhs_value))
 }
 
 /// Rebuilds a constant bound comparison from its dominated components.
@@ -1061,25 +1101,30 @@ fn make_constant_bound_comparison(lhs: Atom, op: ConstantBoundOp, rhs: i32) -> E
 }
 
 /// Keeps the strongest RHS for `(lhs, op)` under conjunction, preserving first-seen order.
+///
+/// Bounds are keyed rather than searched, so merging `n` bounds over distinct atoms -- the shape
+/// unrolling `forAll i : D. x[i] >= k` produces -- is linear in `n` rather than quadratic.
+/// `IndexMap` gives the lookup while keeping first-seen order.
 fn merge_constant_bound(
-    bounds: &mut Vec<(Atom, ConstantBoundOp, i32)>,
+    bounds: &mut IndexMap<(Atom, ConstantBoundOp), i32>,
     lhs: Atom,
     op: ConstantBoundOp,
     rhs: i32,
 ) {
-    if let Some((_, _, existing)) = bounds
-        .iter_mut()
-        .find(|(existing_lhs, existing_op, _)| existing_lhs == &lhs && *existing_op == op)
-    {
-        if op.prefers_larger_rhs() {
-            if rhs > *existing {
+    match bounds.entry((lhs, op)) {
+        indexmap::map::Entry::Occupied(mut entry) => {
+            let existing = entry.get_mut();
+            if op.prefers_larger_rhs() {
+                if rhs > *existing {
+                    *existing = rhs;
+                }
+            } else if rhs < *existing {
                 *existing = rhs;
             }
-        } else if rhs < *existing {
-            *existing = rhs;
         }
-    } else {
-        bounds.push((lhs, op, rhs));
+        indexmap::map::Entry::Vacant(entry) => {
+            entry.insert(rhs);
+        }
     }
 }
 
@@ -1093,43 +1138,36 @@ fn merge_constant_bound(
 /// ```
 ///
 fn check_pairwise_or_tautologies(or_terms: &[Expr]) -> bool {
-    // Collect terms that are structurally identical to the rule input.
-    // Then, try the rules on these terms, also checking the other conditions of the rules.
+    // `identical_atom_to` can only succeed when both sides are atomic, so index the atomic pairs
+    // and look each candidate up. This is expected O(n), not the O(n^2) of comparing every pair.
+    #[allow(clippy::mutable_key_type)]
+    let mut p_implies_q: HashSet<(&Atom, &Atom)> = HashSet::new();
+    #[allow(clippy::mutable_key_type)]
+    let mut p_implies_not_q: HashSet<(&Atom, &Atom)> = HashSet::new();
 
-    // stores (p,q) in p -> q
-    let mut p_implies_q: Vec<(&Expr, &Expr)> = vec![];
-
-    // stores (p,q) in p -> !q
-    let mut p_implies_not_q: Vec<(&Expr, &Expr)> = vec![];
-
-    for term in or_terms.iter() {
+    for term in or_terms {
         if let Expr::Imply(_, p, q) = term {
-            // we use identical_atom_to for equality later on, so these sets are mutually exclusive.
-            //
-            // in general however, p -> !q would be in p_implies_q as (p,!q)
             if let Expr::Not(_, q_1) = q.as_ref() {
-                p_implies_not_q.push((p.as_ref(), q_1.as_ref()));
-            } else {
-                p_implies_q.push((p.as_ref(), q.as_ref()));
+                if let (Expr::Atomic(_, p), Expr::Atomic(_, q)) = (p.as_ref(), q_1.as_ref()) {
+                    p_implies_not_q.insert((p, q));
+                }
+            } else if let (Expr::Atomic(_, p), Expr::Atomic(_, q)) = (p.as_ref(), q.as_ref()) {
+                p_implies_q.insert((p, q));
             }
         }
     }
 
     // `(p->q) \/ (q->p) ~> true    [totality of implication]`
-    for ((p1, q1), (q2, p2)) in iproduct!(p_implies_q.iter(), p_implies_q.iter()) {
-        if p1.identical_atom_to(p2) && q1.identical_atom_to(q2) {
+    for &(p, q) in &p_implies_q {
+        if p_implies_q.contains(&(q, p)) {
             return true;
         }
     }
 
     // `(p->q) \/ (p-> !q) ~> true`    [conditional excluded middle]
-    for ((p1, q1), (p2, q2)) in iproduct!(p_implies_q.iter(), p_implies_not_q.iter()) {
-        if p1.identical_atom_to(p2) && q1.identical_atom_to(q2) {
-            return true;
-        }
-    }
-
-    false
+    p_implies_not_q
+        .iter()
+        .any(|pair| p_implies_q.contains(pair))
 }
 
 #[cfg(test)]
