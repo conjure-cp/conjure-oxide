@@ -528,6 +528,12 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 return Err(RuleNotApplicable);
             }
 
+            // Only deep evaluation folds a zero product, so stop here rather than building a
+            // replacement the `acc == 0` arm below discards.
+            if acc == 0 && mode == PartialEvalMode::Local {
+                return Err(RuleNotApplicable);
+            }
+
             if acc != 0 && n_consts == 1 {
                 return Err(RuleNotApplicable);
             }
