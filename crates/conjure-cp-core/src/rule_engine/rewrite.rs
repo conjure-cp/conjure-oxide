@@ -565,6 +565,7 @@ enum CandidateRules<'group, 'rules> {
     Filtered {
         iter: std::slice::Iter<'group, RuleData<'rules>>,
         expr: &'group Expr,
+        arena_node: Option<(&'group ExpressionArena, ExpressionNodeId)>,
         include_universal: bool,
     },
 }
@@ -578,10 +579,11 @@ impl<'group, 'rules> Iterator for CandidateRules<'group, 'rules> {
             CandidateRules::Filtered {
                 iter,
                 expr,
+                arena_node,
                 include_universal,
             } => loop {
                 let rule_data = iter.next()?;
-                if rule_matches_specific_prefilter(rule_data, expr)
+                if rule_matches_specific_prefilter(rule_data, expr, *arena_node)
                     || (*include_universal && rule_is_universal(rule_data))
                 {
                     return Some(rule_data);
@@ -650,6 +652,24 @@ impl<'a> RuleGroup<'a> {
         config: RewriteConfig,
         expr: &'group Expr,
     ) -> CandidateRules<'group, 'a> {
+        self.candidates_with_arena(config, expr, None)
+    }
+
+    fn candidates_at_node<'group>(
+        &'group self,
+        config: RewriteConfig,
+        arena: &'group ExpressionArena,
+        node_id: ExpressionNodeId,
+    ) -> CandidateRules<'group, 'a> {
+        self.candidates_with_arena(config, arena.expression(node_id), Some((arena, node_id)))
+    }
+
+    fn candidates_with_arena<'group>(
+        &'group self,
+        config: RewriteConfig,
+        expr: &'group Expr,
+        arena_node: Option<(&'group ExpressionArena, ExpressionNodeId)>,
+    ) -> CandidateRules<'group, 'a> {
         if !config.prefilter {
             return CandidateRules::Slice(self.rules.iter());
         }
@@ -663,6 +683,7 @@ impl<'a> RuleGroup<'a> {
             return CandidateRules::Filtered {
                 iter: self.rules.iter(),
                 expr,
+                arena_node,
                 include_universal: true,
             };
         }
@@ -677,7 +698,26 @@ impl<'a> RuleGroup<'a> {
         )
     }
 
+    #[cfg(test)]
     fn has_candidates(&self, config: RewriteConfig, expr: &Expr) -> bool {
+        self.has_candidates_with_arena(config, expr, None)
+    }
+
+    fn has_candidates_at_node(
+        &self,
+        config: RewriteConfig,
+        arena: &ExpressionArena,
+        node_id: ExpressionNodeId,
+    ) -> bool {
+        self.has_candidates_with_arena(config, arena.expression(node_id), Some((arena, node_id)))
+    }
+
+    fn has_candidates_with_arena(
+        &self,
+        config: RewriteConfig,
+        expr: &Expr,
+        arena_node: Option<(&ExpressionArena, ExpressionNodeId)>,
+    ) -> bool {
         if !config.prefilter {
             return !self.rules.is_empty();
         }
@@ -687,7 +727,7 @@ impl<'a> RuleGroup<'a> {
                 || self
                     .rules
                     .iter()
-                    .any(|rule_data| rule_matches_specific_prefilter(rule_data, expr));
+                    .any(|rule_data| rule_matches_specific_prefilter(rule_data, expr, arena_node));
         }
 
         let discriminant = discriminant_from_value(expr);
@@ -1233,7 +1273,7 @@ impl WorklistScheduler {
         }
 
         let rule_group = &rule_groups[level];
-        let has_candidates = rule_group.has_candidates(config, arena.expression(node_id))
+        let has_candidates = rule_group.has_candidates_at_node(config, arena, node_id)
             || (!matches!(arena.expression(node_id), Expr::Comprehension(_, _))
                 && arena.children(node_id).iter().any(|&child_id| {
                     self.subtree_has_candidates_at_level(
@@ -1262,12 +1302,15 @@ fn next_worklist_candidate_level(
         return rule_groups.len();
     }
 
-    let expr = arena.expression(node_id);
     rule_groups
         .iter()
         .enumerate()
         .skip(start_level)
-        .find_map(|(level, rule_group)| rule_group.has_candidates(config, expr).then_some(level))
+        .find_map(|(level, rule_group)| {
+            rule_group
+                .has_candidates_at_node(config, arena, node_id)
+                .then_some(level)
+        })
         .unwrap_or(rule_groups.len())
 }
 
@@ -1778,10 +1821,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         ctx.dirty_trace.expression_visits += 1;
 
         let rule_group = &ctx.bucketed_rules[level];
-        if !rule_group.has_candidates(
-            ctx.config,
-            surfaces[surface_index].arena.expression(node_id),
-        ) {
+        if !rule_group.has_candidates_at_node(ctx.config, &surfaces[surface_index].arena, node_id) {
             ctx.dirty_trace
                 .record_worklist_no_candidate_pop(scheduled_mode);
             scheduler.enqueue_after_no_rewrite(
@@ -1803,8 +1843,9 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
         let mut attempted_rule = false;
         {
-            let expr = surfaces[surface_index].arena.expression(node_id);
-            for rd in rule_group.candidates(ctx.config, expr) {
+            let arena = &surfaces[surface_index].arena;
+            let expr = arena.expression(node_id);
+            for rd in rule_group.candidates_at_node(ctx.config, arena, node_id) {
                 if !scheduler.should_attempt_rule(surface_index, node_id, rd) {
                     continue;
                 }
@@ -2441,7 +2482,11 @@ fn rule_matches_self_discriminant(rule_data: &RuleData<'_>, expr_discriminant: u
         })
 }
 
-fn rule_matches_specific_prefilter(rule_data: &RuleData<'_>, expr: &Expr) -> bool {
+fn rule_matches_specific_prefilter(
+    rule_data: &RuleData<'_>,
+    expr: &Expr,
+    arena_node: Option<(&ExpressionArena, ExpressionNodeId)>,
+) -> bool {
     if rule_is_universal(rule_data) {
         return false;
     }
@@ -2450,13 +2495,28 @@ fn rule_matches_specific_prefilter(rule_data: &RuleData<'_>, expr: &Expr) -> boo
     rule_data.rule.prefilters.is_some_and(|prefilters| {
         prefilters.iter().any(|prefilter| match prefilter {
             RulePrefilter::Variant(discriminant) => *discriminant == expr_discriminant,
-            RulePrefilter::Child { child } => expr_has_direct_child_discriminant(expr, &[*child]),
+            RulePrefilter::Child { child } => {
+                has_direct_child_discriminant(expr, arena_node, *child)
+            }
             RulePrefilter::VariantChild { variant, child } => {
-                *variant == expr_discriminant && expr_has_direct_child_discriminant(expr, &[*child])
+                *variant == expr_discriminant
+                    && has_direct_child_discriminant(expr, arena_node, *child)
             }
             RulePrefilter::Atom(atom_kind) => expr_atom_kind(expr) == Some(*atom_kind),
         })
     })
+}
+
+fn has_direct_child_discriminant(
+    expr: &Expr,
+    arena_node: Option<(&ExpressionArena, ExpressionNodeId)>,
+    target_discriminant: usize,
+) -> bool {
+    if let Some((arena, node_id)) = arena_node {
+        arena.has_direct_child_discriminant(node_id, target_discriminant)
+    } else {
+        expr_has_direct_child_discriminant(expr, &[target_discriminant])
+    }
 }
 
 fn expr_atom_kind(expr: &Expr) -> Option<AtomKind> {
