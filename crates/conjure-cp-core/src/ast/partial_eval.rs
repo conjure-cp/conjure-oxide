@@ -635,6 +635,11 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
             }
         }
         Expr::Or(m, e) => {
+            // Empty disjunction is the Or-identity, whatever index domain the matrix carries.
+            if is_empty_matrix_operand(e) {
+                return Ok(RuleEffect::pure(Expr::from(false)));
+            }
+
             let Some(terms) = e.unwrap_list_cow() else {
                 return Err(RuleNotApplicable);
             };
@@ -689,13 +694,14 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
             // the rule is known to apply. A wide `and` -- what unrolling `forAll i : D. ...`
             // produces -- is then walked per visit rather than copied, keeping repeated visits
             // linear rather than quadratic in the number of conjuncts.
+            // Empty conjunction is the And-identity, whatever index domain the matrix carries.
+            if is_empty_matrix_operand(e) {
+                return Ok(RuleEffect::pure(Expr::from(true)));
+            }
+
             let Some(vec) = e.unwrap_list_cow() else {
                 return Err(RuleNotApplicable);
             };
-            // Empty conjunction is the And-identity.
-            if vec.is_empty() {
-                return Ok(RuleEffect::pure(Expr::from(true)));
-            }
 
             let mut has_changed: bool = false;
             // `Atom` is only interior-mutable through `DeclarationPtr`, whose `Hash`/`Eq` use the
@@ -1064,6 +1070,25 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
     }
 }
 
+/// Whether an `and`/`or` operand is a matrix literal holding no elements.
+///
+/// This deliberately ignores the index domain: `unwrap_list*` only recognise the normalised
+/// `int(1..)`, and an empty `[]` parses to `[;int(1..0)]`. Matching the elements directly folds
+/// `and([])` / `or([])` before `matrix_to_list` normalises the domain, and so before any
+/// solver-family rule can fire on an expression that is already known to be constant.
+fn is_empty_matrix_operand(operand: &Expr) -> bool {
+    match operand {
+        Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
+            is_empty_matrix_operand(inner)
+        }
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) => elems.is_empty(),
+        Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) => {
+            elems.is_empty()
+        }
+        _ => false,
+    }
+}
+
 /// Extracts `lhs ▷ k` where `lhs` is atomic and `k` is an integer literal.
 fn as_constant_bound_comparison(expr: &Expr) -> Option<(Atom, ConstantBoundOp, i32)> {
     as_constant_bound_comparison_ref(expr).map(|(lhs, op, rhs)| (lhs.clone(), op, rhs))
@@ -1195,6 +1220,83 @@ mod tests {
 
     fn and(exprs: Vec<Expr>) -> Expr {
         Expr::And(Metadata::new(), Moo::new(into_matrix_expr![exprs]))
+    }
+
+    fn or(exprs: Vec<Expr>) -> Expr {
+        Expr::Or(Metadata::new(), Moo::new(into_matrix_expr![exprs]))
+    }
+
+    /// An empty conjunction is the identity of `and`.
+    ///
+    /// The partial evaluator is the only thing that implements this: its hook runs after every
+    /// rewrite, so it reaches an empty `and`/`or` before any rule can.
+    #[test]
+    fn empty_and_is_true() {
+        let reduced = run_partial_evaluator_local(&and(vec![]))
+            .expect("evaluates")
+            .new_expression;
+        assert_eq!(reduced, bool_lit(true));
+    }
+
+    /// An empty disjunction is the identity of `or`. See [`empty_and_is_true`].
+    #[test]
+    fn empty_or_is_false() {
+        let reduced = run_partial_evaluator_local(&or(vec![]))
+            .expect("evaluates")
+            .new_expression;
+        assert_eq!(reduced, bool_lit(false));
+    }
+
+    /// An empty matrix written as `[]` parses with the *empty* index domain `int(1..0)`, not the
+    /// normalised `int(1..)` that `unwrap_list` looks for. The evaluator must fold it regardless,
+    /// so that no solver-family rule sees an expression that is already known to be constant.
+    fn empty_matrix_with_empty_index_domain() -> Expr {
+        Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Matrix(
+                vec![],
+                DomainPtr::from(Domain::int(vec![Range::Bounded(1, 0)])),
+            ),
+        )
+    }
+
+    #[test]
+    fn empty_and_with_empty_index_domain_is_true() {
+        let expr = Expr::And(
+            Metadata::new(),
+            Moo::new(empty_matrix_with_empty_index_domain()),
+        );
+        let reduced = run_partial_evaluator_local(&expr)
+            .expect("evaluates")
+            .new_expression;
+        assert_eq!(reduced, bool_lit(true));
+    }
+
+    #[test]
+    fn empty_or_with_empty_index_domain_is_false() {
+        let expr = Expr::Or(
+            Metadata::new(),
+            Moo::new(empty_matrix_with_empty_index_domain()),
+        );
+        let reduced = run_partial_evaluator_local(&expr)
+            .expect("evaluates")
+            .new_expression;
+        assert_eq!(reduced, bool_lit(false));
+    }
+
+    #[test]
+    fn non_empty_and_is_not_collapsed_to_a_boolean() {
+        let x = atom_ref("x");
+        let expr = and(vec![Expr::Gt(
+            Metadata::new(),
+            Moo::new(x),
+            Moo::new(int_lit(3)),
+        )]);
+        // Either it does not apply, or it rewrites to something that is not a bare boolean.
+        if let Ok(reduced) = run_partial_evaluator_local(&expr) {
+            assert_ne!(reduced.new_expression, bool_lit(true));
+            assert_ne!(reduced.new_expression, bool_lit(false));
+        }
     }
 
     #[test]

@@ -7,78 +7,10 @@ use conjure_cp::{
         ApplicationError, ApplicationResult, RuleEffect, register_rule, register_rule_set,
     },
 };
-use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;
 
 register_rule_set!("Base", ());
-
-/// This rule simplifies expressions where the operator is applied to an empty set of sub-expressions.
-///
-/// For example:
-/// - `or([])` simplifies to `false` since no disjunction exists.
-/// - `and([])` simplifies to `true` since no conjunction exists.
-///
-/// **Applicable examples:**
-/// ```text
-/// or([])  ~> false
-/// X([]) ~> Nothing
-/// ```
-#[register_rule("Base", 8800, [Or, And])]
-fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // excluded expressions
-    if matches!(
-        expr,
-        Expr::Atomic(_, _)
-            | Expr::Root(_, _)
-            | Expr::Comprehension(_, _)
-            | Expr::FlatIneq(_, _, _, _)
-            | Expr::FlatMinusEq(_, _, _)
-            | Expr::FlatSumGeq(_, _, _)
-            | Expr::FlatSumLeq(_, _, _)
-            | Expr::FlatProductEq(_, _, _, _)
-            | Expr::FlatWatchedLiteral(_, _, _)
-            | Expr::FlatWeightedSumGeq(_, _, _, _)
-            | Expr::FlatWeightedSumLeq(_, _, _, _)
-            | Expr::MinionDivEqUndefZero(_, _, _, _)
-            | Expr::MinionModuloEqUndefZero(_, _, _, _)
-            | Expr::MinionWInIntervalSet(_, _, _)
-            | Expr::MinionWInSet(_, _, _)
-            | Expr::MinionElementOne(_, _, _, _)
-            | Expr::MinionPow(_, _, _, _)
-            | Expr::MinionReify(_, _, _)
-            | Expr::MinionReifyImply(_, _, _)
-            | Expr::FlatAbsEq(_, _, _)
-            | Expr::FlatMinEq(_, _, _)
-            | Expr::Min(_, _)
-            | Expr::Max(_, _)
-            | Expr::AllDiff(_, _)
-            | Expr::AllDifferentExcept(_, _, _)
-            | Expr::ElementId(_, _, _)
-            | Expr::AtLeast(_, _, _, _)
-            | Expr::AtMost(_, _, _, _)
-            | Expr::Gcc(_, _, _, _)
-            | Expr::GccWeak(_, _, _, _)
-            | Expr::FlatAllDiff(_, _)
-            | Expr::AbstractLiteral(_, _)
-    ) {
-        return Err(ApplicationError::RuleNotApplicable);
-    }
-
-    if !expr.children().is_empty() {
-        return Err(ApplicationError::RuleNotApplicable);
-    }
-
-    let new_expr = match expr {
-        Expr::Or(_, _) => essence_expr!(false),
-        Expr::And(_, _) => essence_expr!(true),
-        _ => {
-            return Err(ApplicationError::RuleNotApplicable);
-        } // _ => And(Metadata::new(), Box::new(matrix_expr![])),
-    };
-
-    Ok(RuleEffect::pure(new_expr))
-}
 
 /**
  * Turn a Min into a new variable and post a top-level constraint to ensure the new variable is the minimum.
