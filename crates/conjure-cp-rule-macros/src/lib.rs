@@ -23,6 +23,7 @@ use util::{build_serde_as_type, rename_fn, rename_ident_in_fn, type_contains_ide
 /// #[register_rule("RuleSet", priority)]
 /// #[register_rule(["RuleSetA", "RuleSetB"], priority)]
 /// #[register_rule("RuleSet", priority, [prefilter, ...])]
+/// #[register_rule("RuleSet", priority, [prefilter, ...], symbols_only)]
 /// ```
 ///
 /// The optional prefilter list narrows where the scheduler attempts the rule:
@@ -60,6 +61,8 @@ struct RegisterRuleArgs {
     priority: LitInt,
     /// Complete prefilter alternatives. Empty means the rule is universal.
     prefilters: Vec<ParsedPrefilter>,
+    /// Whether a failed application can only be invalidated by a symbol-table change.
+    symbols_only: bool,
 }
 
 impl Parse for RegisterRuleArgs {
@@ -69,6 +72,7 @@ impl Parse for RegisterRuleArgs {
                 rule_sets: Vec::new(),
                 priority: LitInt::new("0", Span::call_site()),
                 prefilters: Vec::new(),
+                symbols_only: false,
             });
         }
 
@@ -139,10 +143,25 @@ impl Parse for RegisterRuleArgs {
             }
         }
 
+        let symbols_only = if input.peek(Comma) {
+            let _: Comma = input.parse()?;
+            let dependency: Ident = input.parse()?;
+            if dependency != "symbols_only" {
+                return Err(syn::Error::new(
+                    dependency.span(),
+                    "expected `symbols_only`",
+                ));
+            }
+            true
+        } else {
+            false
+        };
+
         Ok(RegisterRuleArgs {
             rule_sets,
             priority,
             prefilters,
+            symbols_only,
         })
     }
 }
@@ -203,6 +222,11 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             Some(&[#(#prefilter_tokens),*])
         }
     };
+    let failure_invalidation = if args.symbols_only {
+        quote! { ::conjure_cp::rule_engine::RuleFailureInvalidation::SymbolsOnly }
+    } else {
+        quote! { ::conjure_cp::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols }
+    };
 
     let expanded = quote! {
         #func
@@ -215,6 +239,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             application: #rule_ident,
             rule_sets: #rule_sets_token,
             prefilters: #prefilters,
+            failure_invalidation: #failure_invalidation,
         };
     };
 

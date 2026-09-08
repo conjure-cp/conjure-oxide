@@ -319,6 +319,22 @@ pub enum RulePrefilter {
     Atom(AtomKind),
 }
 
+/// State changes that can invalidate a failed rule application.
+///
+/// Most rules may become applicable when either their focused expression or the symbol table
+/// changes. A small number of Root rules use the expression only as an entry point and decide
+/// applicability entirely from declarations. Remembering their failed applications until the
+/// symbol table changes avoids repeatedly scanning every declaration after unrelated expression
+/// rewrites.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum RuleFailureInvalidation {
+    /// Reconsider a failed application after any relevant expression or symbol-table change.
+    #[default]
+    ExpressionOrSymbols,
+    /// Reconsider a failed application only after the symbol table changes.
+    SymbolsOnly,
+}
+
 /**
  * A rule with a name, application function, and rule sets.
  *
@@ -334,6 +350,8 @@ pub struct Rule<'a> {
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
     /// Complete prefilter alternatives this rule applies to, or `None` for universal rules.
     pub prefilters: Option<&'static [RulePrefilter]>,
+    /// Which state changes can make a failed application become applicable.
+    pub failure_invalidation: RuleFailureInvalidation,
 }
 
 impl<'a> Rule<'a> {
@@ -347,6 +365,7 @@ impl<'a> Rule<'a> {
             application,
             rule_sets,
             prefilters: None,
+            failure_invalidation: RuleFailureInvalidation::ExpressionOrSymbols,
         }
     }
 

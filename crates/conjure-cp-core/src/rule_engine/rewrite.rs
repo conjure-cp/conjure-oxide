@@ -1,4 +1,7 @@
-use super::{AtomKind, RewriteError, RulePrefilter, RuleSet, resolve_rules::RuleData};
+use super::{
+    AtomKind, RewriteError, RuleFailureInvalidation, RulePrefilter, RuleSet,
+    resolve_rules::RuleData,
+};
 use crate::{
     Model,
     ast::{
@@ -776,6 +779,16 @@ struct SubtreeCandidateKey {
     generation: u32,
 }
 
+/// Identifies one failed application of a rule whose applicability depends only on symbols.
+///
+/// `rule` is the address of the `&'static Rule` that failed, which identifies it exactly.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct FailedSymbolRuleKey {
+    surface: usize,
+    node_id: ExpressionNodeId,
+    rule: usize,
+}
+
 #[derive(Clone, Copy)]
 struct WorklistSchedulingContext<'arena, 'groups, 'rules> {
     arena: &'arena ExpressionArena,
@@ -808,6 +821,10 @@ struct WorklistScheduler {
     queues_by_level: Vec<BinaryHeap<ScheduledNode>>,
     scheduled: HashMap<ScheduledKey, ScheduledMode>,
     subtree_candidate_cache: HashMap<SubtreeCandidateKey, bool>,
+    /// Failed applications whose applicability depends only on the symbol table, keyed by the
+    /// symbol-table revision at which they were attempted.
+    failed_symbol_rules: HashMap<FailedSymbolRuleKey, u64>,
+    symbol_revision: u64,
     next_sequence: u64,
 }
 
@@ -817,6 +834,8 @@ impl WorklistScheduler {
             queues_by_level: vec![BinaryHeap::new(); rule_groups.len()],
             scheduled: HashMap::new(),
             subtree_candidate_cache: HashMap::new(),
+            failed_symbol_rules: HashMap::new(),
+            symbol_revision: 0,
             next_sequence: 0,
         }
     }
@@ -854,6 +873,49 @@ impl WorklistScheduler {
             rewrite_surface.arena.root(),
             dirty_trace,
         );
+    }
+
+    fn should_attempt_rule(
+        &self,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        rule_data: &RuleData<'_>,
+    ) -> bool {
+        if rule_data.rule.failure_invalidation != RuleFailureInvalidation::SymbolsOnly {
+            return true;
+        }
+
+        self.failed_symbol_rules.get(&FailedSymbolRuleKey {
+            surface,
+            node_id,
+            rule: rule_data.rule as *const _ as usize,
+        }) != Some(&self.symbol_revision)
+    }
+
+    fn record_rule_failure(
+        &mut self,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        rule_data: &RuleData<'_>,
+    ) {
+        if rule_data.rule.failure_invalidation == RuleFailureInvalidation::SymbolsOnly {
+            self.failed_symbol_rules.insert(
+                FailedSymbolRuleKey {
+                    surface,
+                    node_id,
+                    rule: rule_data.rule as *const _ as usize,
+                },
+                self.symbol_revision,
+            );
+        }
+    }
+
+    fn invalidate_symbol_rule_failures(&mut self) {
+        let (next_revision, overflowed) = self.symbol_revision.overflowing_add(1);
+        self.symbol_revision = next_revision;
+        if overflowed {
+            self.failed_symbol_rules.clear();
+        }
     }
 
     fn enqueue_subtree(
@@ -1240,10 +1302,11 @@ impl RuleEffectImpact {
     }
 
     fn has_model_side_effects(&self) -> bool {
-        self.has_new_top
-            || self.has_new_clauses
-            || !self.added_names.is_empty()
-            || !self.changed_names.is_empty()
+        self.has_new_top || self.has_new_clauses || self.has_symbol_changes()
+    }
+
+    fn has_symbol_changes(&self) -> bool {
+        !self.added_names.is_empty() || !self.changed_names.is_empty()
     }
 }
 
@@ -1742,6 +1805,9 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         {
             let expr = surfaces[surface_index].arena.expression(node_id);
             for rd in rule_group.candidates(ctx.config, expr) {
+                if !scheduler.should_attempt_rule(surface_index, node_id, rd) {
+                    continue;
+                }
                 attempted_rule = true;
                 ctx.dirty_trace
                     .record_rule_attempt(rule_group.priority, rd.rule.name);
@@ -1771,12 +1837,15 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
                             root_variable_snapshot_for_default_trace(expr, &submodel.symbols()),
                         ));
                     }
-                    Err(_) => ctx.attempt_observer.attempted(
-                        rule_group.priority,
-                        rd,
-                        expr,
-                        RuleAttemptStatus::Failure,
-                    ),
+                    Err(_) => {
+                        scheduler.record_rule_failure(surface_index, node_id, rd);
+                        ctx.attempt_observer.attempted(
+                            rule_group.priority,
+                            rd,
+                            expr,
+                            RuleAttemptStatus::Failure,
+                        );
+                    }
                 }
             }
         }
@@ -1838,6 +1907,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         let has_model_side_effects = effect_impact.has_model_side_effects();
         let rewritten_value_letting_name =
             value_letting_surface_name(&surfaces[surface_index].kind).cloned();
+        let invalidates_symbol_rules =
+            effect_impact.has_symbol_changes() || rewritten_value_letting_name.is_some();
         let rule_name = result.rule_data.rule.name;
         let RuleResult { effect, .. } = result;
         let crate::rule_engine::rule::RuleEffect {
@@ -1903,6 +1974,17 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         {
             if has_model_side_effects {
                 ctx.dirty_trace.record_side_effect_kept_in_arena();
+            }
+            if invalidates_symbol_rules {
+                scheduler.invalidate_symbol_rule_failures();
+                scheduler.enqueue_node_at_level(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    surfaces[root_surface].arena.root(),
+                    0,
+                    ScheduledMode::CheckNode,
+                    Some(ctx.dirty_trace),
+                );
             }
             enqueue_worklist_rewrite_impact(
                 &mut scheduler,
@@ -2497,6 +2579,14 @@ mod tests {
         application: never_apply_test_rule,
         rule_sets: &[("test-rule-set", 1)],
         prefilters: Some(&[]),
+        failure_invalidation: crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
+    };
+    static TEST_SYMBOLS_ONLY_RULE: crate::rule_engine::Rule<'static> = crate::rule_engine::Rule {
+        name: "symbols-only-test-rule",
+        application: never_apply_test_rule,
+        rule_sets: &[("test-rule-set", 1)],
+        prefilters: None,
+        failure_invalidation: crate::rule_engine::RuleFailureInvalidation::SymbolsOnly,
     };
     fn test_rule_groups_at_priorities(priorities: &[u16]) -> Vec<RuleGroup<'static>> {
         priorities
@@ -2593,6 +2683,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: Some(child_prefilters),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -2635,6 +2727,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: Some(&[RulePrefilter::Atom(AtomKind::Reference)]),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -2676,6 +2770,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: Some(lex_prefilters),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let universal_rule: &'static crate::rule_engine::Rule<'static> =
             Box::leak(Box::new(crate::rule_engine::Rule {
@@ -2683,6 +2779,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: None,
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -2744,6 +2842,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: Some(paired_prefilters),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -3299,5 +3399,28 @@ mod tests {
             affected_nodes.into_iter().rev().collect_vec(),
             vec![root_id, eq_id, reference_id]
         );
+    }
+    #[test]
+    fn worklist_caches_symbols_only_failures_until_symbols_change() {
+        let tree = root(vec![int_lit(1)]);
+        let surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
+        let node_id = surfaces[0].arena.root();
+        let rule_groups = vec![RuleGroup::new(
+            1,
+            vec![crate::rule_engine::RuleData {
+                rule: &TEST_SYMBOLS_ONLY_RULE,
+                priority: 1,
+                rule_set: &TEST_RULE_SET,
+            }],
+        )];
+        let rule_data = &rule_groups[0].rules[0];
+        let mut scheduler = WorklistScheduler::empty(&rule_groups);
+
+        assert!(scheduler.should_attempt_rule(0, node_id, rule_data));
+        scheduler.record_rule_failure(0, node_id, rule_data);
+        assert!(!scheduler.should_attempt_rule(0, node_id, rule_data));
+
+        scheduler.invalidate_symbol_rule_failures();
+        assert!(scheduler.should_attempt_rule(0, node_id, rule_data));
     }
 }
