@@ -181,13 +181,37 @@ fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundD
     }
 }
 
+/// Whether `expr` is an undefined value whose domain is empty.
+///
+/// `min`/`max` of an empty collection is the only unsafe shape that carries an empty domain, so it
+/// is the only one for which [`simplify_comparison_with_literal`] derives a domain despite the
+/// expression not being semantically safe.
+fn is_empty_min_max(expr: &Expr) -> bool {
+    matches!(expr, Expr::Min(_, values) | Expr::Max(_, values) if is_empty_matrix_operand(values))
+}
+
 /// Tries to decide `expr = lit` and `expr != lit` from the resolved domain of `expr`.
 fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, bool)> {
-    if !is_semantically_safe(expr) {
+    // Deriving the domain of a compound expression enumerates its value set, and combining
+    // operands takes the Cartesian product of those sets -- packed set representations reach tens
+    // of thousands of values. Nothing below this point can decide the comparison for an
+    // unsafe expression other than the empty `min`/`max` case, so bail out before paying for it.
+    let is_safe = is_semantically_safe(expr);
+    if !is_safe && !is_empty_min_max(expr) {
         return None;
     }
 
     let expr_domain = resolved_ground_domain_of_for_partial_eval(expr)?;
+
+    // An empty domain represents an undefined value. Under relational semantics the closest
+    // containing Boolean expression is false, for both equality and disequality.
+    if matches!(expr_domain.as_ref(), GroundDomain::Empty(_)) {
+        return Some((false, false));
+    }
+
+    if !is_safe {
+        return None;
+    }
 
     if !expr_domain.contains(lit).ok()? {
         // A representation rewrite can temporarily leave one side in its source shape and the
@@ -219,6 +243,17 @@ fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, boo
         }
         _ => None,
     }
+}
+
+/// Whether deciding a comparison against `expr` is worth a domain lookup in this mode.
+///
+/// The local evaluator runs on every dirty ancestor after every rewrite, so it only derives a
+/// domain when that is a constant-size lookup: a declaration's own domain, or the empty domain of
+/// an empty `min`/`max`. Deep evaluation runs once per expansion and can afford the general case.
+fn comparison_domain_lookup_is_cheap(expr: &Expr, mode: PartialEvalMode) -> bool {
+    mode == PartialEvalMode::Deep
+        || matches!(expr, Expr::Atomic(_, Atom::Reference(_)))
+        || is_empty_min_max(expr)
 }
 
 /// Tries to decide reflexive equality and inequality when both sides are semantically safe.
@@ -904,16 +939,16 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(eq_result)),
                 )))
-            } else if mode == PartialEvalMode::Deep
-                && let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+                && comparison_domain_lookup_is_cheap(y, mode)
                 && let Some((eq_result, _)) = simplify_comparison_with_literal(y, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(eq_result)),
                 )))
-            } else if mode == PartialEvalMode::Deep
-                && let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+                && comparison_domain_lookup_is_cheap(x, mode)
                 && let Some((eq_result, _)) = simplify_comparison_with_literal(x, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
@@ -932,16 +967,16 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(neq_result)),
                 )))
-            } else if mode == PartialEvalMode::Deep
-                && let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+                && comparison_domain_lookup_is_cheap(y, mode)
                 && let Some((_, neq_result)) = simplify_comparison_with_literal(y, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
                     Atom::Literal(Lit::Bool(neq_result)),
                 )))
-            } else if mode == PartialEvalMode::Deep
-                && let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+                && comparison_domain_lookup_is_cheap(x, mode)
                 && let Some((_, neq_result)) = simplify_comparison_with_literal(x, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
