@@ -1,0 +1,209 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(2..3)] of int(2..3)
+
+such that
+
+and([ [4,3,2,1;int(1..4)][elementId(x, k)] = [4,2,3,1;int(1..4)][k] | k : int(1..4) ])
+
+--
+
+and([ [4,3,2,1;int(1..4)][elementId(x, k)] = [4,2,3,1;int(1..4)][k] | k : int(1..4) ])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([ [4,3,2,1;int(1..4)][elementId(x, k)] = [4,2,3,1;int(1..4)][k] | k : int(1..4) ])
+new variables:
+  find x#matrix_to_atom_2: int(2..3)
+  find x#matrix_to_atom_3: int(2..3)
+
+--
+
+[ [4,3,2,1;int(1..4)][elementId(x, k)] = [4,2,3,1;int(1..4)][k] | k : int(1..4) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[[4,3,2,1;int(1..4)][elementId(x, 1)] = 4,[4,3,2,1;int(1..4)][elementId(x, 2)] = 2,[4,3,2,1;int(1..4)][elementId(x, 3)] = 3,[4,3,2,1;int(1..4)][elementId(x, 4)] = 1;int(1..)]
+
+--
+
+and([[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 1)] = 4,[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 2)] = 2,[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 3)] = 3,[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 4)] = 1;int(1..)])
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 1)] = 4,[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 2)] = 2,[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 3)] = 3,[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 4)] = 1;int(1..)])
+
+--
+
+[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 1)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 1)])
+
+--
+
+[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 2)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 2)])
+
+--
+
+[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 3)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 3)])
+
+--
+
+[4,3,2,1;int(1..4)][elementId(x#matrix_to_atom, 4)]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 4)])
+
+--
+
+and([SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 1)]) = 4,SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 2)]) = 2,SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 3)]) = 3,SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 4)]) = 1;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1,__2,__3;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+new constraints:
+  __0 =aux SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 1)]) = 4
+  __1 =aux SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 2)]) = 2
+  __2 =aux SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 3)]) = 3
+  __3 =aux SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 4)]) = 1
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 1)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+SafeIndex([4,3,2,1;int(1..4)],[__4])
+new variables:
+  find __4: int(1..3)
+new constraints:
+  __4 =aux elementId(x#matrix_to_atom, 1)
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 2)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+SafeIndex([4,3,2,1;int(1..4)],[__5])
+new variables:
+  find __5: int(2..3)
+new constraints:
+  __5 =aux elementId(x#matrix_to_atom, 2)
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 3)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+SafeIndex([4,3,2,1;int(1..4)],[__6])
+new variables:
+  find __6: int(2..3)
+new constraints:
+  __6 =aux elementId(x#matrix_to_atom, 3)
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[elementId(x#matrix_to_atom, 4)])
+   ~~> flatten_generic ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+SafeIndex([4,3,2,1;int(1..4)],[__7])
+new variables:
+  find __7: int(2..4)
+new constraints:
+  __7 =aux elementId(x#matrix_to_atom, 4)
+
+--
+
+elementId(x#matrix_to_atom, 1)
+   ~~> matrix_ref_to_atom ([("Base", 2000)])
+elementId([x#matrix_to_atom_2,x#matrix_to_atom_3;int(1..)], 1)
+
+--
+
+elementId(x#matrix_to_atom, 2)
+   ~~> matrix_ref_to_atom ([("Base", 2000)])
+elementId([x#matrix_to_atom_2,x#matrix_to_atom_3;int(1..)], 2)
+
+--
+
+elementId(x#matrix_to_atom, 3)
+   ~~> matrix_ref_to_atom ([("Base", 2000)])
+elementId([x#matrix_to_atom_2,x#matrix_to_atom_3;int(1..)], 3)
+
+--
+
+elementId(x#matrix_to_atom, 4)
+   ~~> matrix_ref_to_atom ([("Base", 2000)])
+elementId([x#matrix_to_atom_2,x#matrix_to_atom_3;int(1..)], 4)
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[__4])
+   ~~> matrix_to_list ([("Base", 2000)])
+SafeIndex([4,3,2,1;int(1..)],[__4])
+
+--
+
+SafeIndex([4,3,2,1;int(1..)],[__4]) = 4
+   ~~> introduce_element_from_index ([("Minion", 4400), ("OrToolsCpSat", 4400)])
+__minion_element_one([4,3,2,1],__4,4)
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[__5])
+   ~~> matrix_to_list ([("Base", 2000)])
+SafeIndex([4,3,2,1;int(1..)],[__5])
+
+--
+
+SafeIndex([4,3,2,1;int(1..)],[__5]) = 2
+   ~~> introduce_element_from_index ([("Minion", 4400), ("OrToolsCpSat", 4400)])
+__minion_element_one([4,3,2,1],__5,2)
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[__6])
+   ~~> matrix_to_list ([("Base", 2000)])
+SafeIndex([4,3,2,1;int(1..)],[__6])
+
+--
+
+SafeIndex([4,3,2,1;int(1..)],[__6]) = 3
+   ~~> introduce_element_from_index ([("Minion", 4400), ("OrToolsCpSat", 4400)])
+__minion_element_one([4,3,2,1],__6,3)
+
+--
+
+SafeIndex([4,3,2,1;int(1..4)],[__7])
+   ~~> matrix_to_list ([("Base", 2000)])
+SafeIndex([4,3,2,1;int(1..)],[__7])
+
+--
+
+SafeIndex([4,3,2,1;int(1..)],[__7]) = 1
+   ~~> introduce_element_from_index ([("Minion", 4400), ("OrToolsCpSat", 4400)])
+__minion_element_one([4,3,2,1],__7,1)
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(2..3)] of int(2..3)
+find x#matrix_to_atom_2: int(2..3)
+find x#matrix_to_atom_3: int(2..3)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: int(1..3)
+find __5: int(2..3)
+find __6: int(2..3)
+find __7: int(2..4)
+
+such that
+
+and([__0,__1,__2,__3;int(1..)]),
+__0 =aux __minion_element_one([4,3,2,1],__4,4),
+__1 =aux __minion_element_one([4,3,2,1],__5,2),
+__2 =aux __minion_element_one([4,3,2,1],__6,3),
+__3 =aux __minion_element_one([4,3,2,1],__7,1),
+__4 =aux elementId([x#matrix_to_atom_2,x#matrix_to_atom_3;int(1..)], 1),
+__5 =aux elementId([x#matrix_to_atom_2,x#matrix_to_atom_3;int(1..)], 2),
+__6 =aux elementId([x#matrix_to_atom_2,x#matrix_to_atom_3;int(1..)], 3),
+__7 =aux elementId([x#matrix_to_atom_2,x#matrix_to_atom_3;int(1..)], 4)
+

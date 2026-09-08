@@ -22,6 +22,12 @@ sum([item1,item2,item3,item4;int(1..)])
 
 --
 
+product([product([product([item1,item2;int(1..)]),item3;int(1..)]),item4;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([item1,item2,item3,item4;int(1..)])
+
+--
+
 sum([item1,item2,item3,item4;int(1..)]) = 711
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
 and([SumLeq([item1, item2, item3, item4], 711),SumGeq([item1, item2, item3, item4], 711);int(1..)])
@@ -40,6 +46,18 @@ new constraints:
 
 --
 
+product([item1,item2,item3,item4;int(1..)]) = 711000000
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(item4,__3,711000000)
+new variables:
+  find __2: int(0..505521)
+  find __3: int(0..359425431)
+new constraints:
+  FlatProductEq(item3,item2,__2)
+  FlatProductEq(__2,item1,__3)
+
+--
+
 Final model:
 
 letting RANGE be domain int(0..711)
@@ -49,14 +67,18 @@ find item3: RANGE
 find item4: RANGE
 find __0: bool
 find __1: bool
+find __2: int(0..505521)
+find __3: int(0..359425431)
 
 such that
 
 and([__0,__1;int(1..)]),
-false,
+FlatProductEq(item4,__3,711000000),
 item1 >= item2,
 item2 >= item3,
 item3 >= item4,
 __0 =aux SumLeq([item1, item2, item3, item4], 711),
-__1 =aux SumGeq([item1, item2, item3, item4], 711)
+__1 =aux SumGeq([item1, item2, item3, item4], 711),
+FlatProductEq(item3,item2,__2),
+FlatProductEq(__2,item1,__3)
 

@@ -1,0 +1,752 @@
+Model before rewriting:
+
+find x: int(1..20)
+
+such that
+
+and([ (i[1] < i[2]) -> (x > (i[2] - i[1])) | i : matrix indexed by [int(1..2)] of int(0..9) ])
+
+--
+
+[ (i[1] < i[2]) -> (x > (i[2] - i[1])) | i : matrix indexed by [int(1..2)] of int(0..9) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true,x > 1,x > 2,x > 3,x > 4,x > 5,x > 6,x > 7,x > 8,x > 9,true,true,x > 1,x > 2,x > 3,x > 4,x > 5,x > 6,x > 7,x > 8,true,true,true,x > 1,x > 2,x > 3,x > 4,x > 5,x > 6,x > 7,true,true,true,true,x > 1,x > 2,x > 3,x > 4,x > 5,x > 6,true,true,true,true,true,x > 1,x > 2,x > 3,x > 4,x > 5,true,true,true,true,true,true,x > 1,x > 2,x > 3,x > 4,true,true,true,true,true,true,true,x > 1,x > 2,x > 3,true,true,true,true,true,true,true,true,x > 1,x > 2,true,true,true,true,true,true,true,true,true,x > 1,true,true,true,true,true,true,true,true,true,true;int(1..)]
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+x > 2
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 2
+
+--
+
+x > 3
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 3
+
+--
+
+x > 4
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 4
+
+--
+
+x > 5
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 5
+
+--
+
+x > 6
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 6
+
+--
+
+x > 7
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 7
+
+--
+
+x > 8
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 8
+
+--
+
+x > 9
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 9
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+x > 2
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 2
+
+--
+
+x > 3
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 3
+
+--
+
+x > 4
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 4
+
+--
+
+x > 5
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 5
+
+--
+
+x > 6
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 6
+
+--
+
+x > 7
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 7
+
+--
+
+x > 8
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 8
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+x > 2
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 2
+
+--
+
+x > 3
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 3
+
+--
+
+x > 4
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 4
+
+--
+
+x > 5
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 5
+
+--
+
+x > 6
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 6
+
+--
+
+x > 7
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 7
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+x > 2
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 2
+
+--
+
+x > 3
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 3
+
+--
+
+x > 4
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 4
+
+--
+
+x > 5
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 5
+
+--
+
+x > 6
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 6
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+x > 2
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 2
+
+--
+
+x > 3
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 3
+
+--
+
+x > 4
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 4
+
+--
+
+x > 5
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 5
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+x > 2
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 2
+
+--
+
+x > 3
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 3
+
+--
+
+x > 4
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 4
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+x > 2
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 2
+
+--
+
+x > 3
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 3
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+x > 2
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 2
+
+--
+
+x > 1
+   ~~> gt_to_geq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+sum([x,-1;int(1..)]) >= 1
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+sum([x,-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 2)
+
+--
+
+sum([x,-1;int(1..)]) >= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 3)
+
+--
+
+sum([x,-1;int(1..)]) >= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 4)
+
+--
+
+sum([x,-1;int(1..)]) >= 5
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 5)
+
+--
+
+sum([x,-1;int(1..)]) >= 6
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 6)
+
+--
+
+sum([x,-1;int(1..)]) >= 7
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 7)
+
+--
+
+sum([x,-1;int(1..)]) >= 8
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 8)
+
+--
+
+sum([x,-1;int(1..)]) >= 9
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 9)
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+sum([x,-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 2)
+
+--
+
+sum([x,-1;int(1..)]) >= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 3)
+
+--
+
+sum([x,-1;int(1..)]) >= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 4)
+
+--
+
+sum([x,-1;int(1..)]) >= 5
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 5)
+
+--
+
+sum([x,-1;int(1..)]) >= 6
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 6)
+
+--
+
+sum([x,-1;int(1..)]) >= 7
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 7)
+
+--
+
+sum([x,-1;int(1..)]) >= 8
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 8)
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+sum([x,-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 2)
+
+--
+
+sum([x,-1;int(1..)]) >= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 3)
+
+--
+
+sum([x,-1;int(1..)]) >= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 4)
+
+--
+
+sum([x,-1;int(1..)]) >= 5
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 5)
+
+--
+
+sum([x,-1;int(1..)]) >= 6
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 6)
+
+--
+
+sum([x,-1;int(1..)]) >= 7
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 7)
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+sum([x,-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 2)
+
+--
+
+sum([x,-1;int(1..)]) >= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 3)
+
+--
+
+sum([x,-1;int(1..)]) >= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 4)
+
+--
+
+sum([x,-1;int(1..)]) >= 5
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 5)
+
+--
+
+sum([x,-1;int(1..)]) >= 6
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 6)
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+sum([x,-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 2)
+
+--
+
+sum([x,-1;int(1..)]) >= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 3)
+
+--
+
+sum([x,-1;int(1..)]) >= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 4)
+
+--
+
+sum([x,-1;int(1..)]) >= 5
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 5)
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+sum([x,-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 2)
+
+--
+
+sum([x,-1;int(1..)]) >= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 3)
+
+--
+
+sum([x,-1;int(1..)]) >= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 4)
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+sum([x,-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 2)
+
+--
+
+sum([x,-1;int(1..)]) >= 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 3)
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+sum([x,-1;int(1..)]) >= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 2)
+
+--
+
+sum([x,-1;int(1..)]) >= 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, x], 1)
+
+--
+
+and([SumGeq([-1, x], 1),SumGeq([-1, x], 2),SumGeq([-1, x], 3),SumGeq([-1, x], 4),SumGeq([-1, x], 5),SumGeq([-1, x], 6),SumGeq([-1, x], 7),SumGeq([-1, x], 8),SumGeq([-1, x], 9),SumGeq([-1, x], 1),SumGeq([-1, x], 2),SumGeq([-1, x], 3),SumGeq([-1, x], 4),SumGeq([-1, x], 5),SumGeq([-1, x], 6),SumGeq([-1, x], 7),SumGeq([-1, x], 8),SumGeq([-1, x], 1),SumGeq([-1, x], 2),SumGeq([-1, x], 3),SumGeq([-1, x], 4),SumGeq([-1, x], 5),SumGeq([-1, x], 6),SumGeq([-1, x], 7),SumGeq([-1, x], 1),SumGeq([-1, x], 2),SumGeq([-1, x], 3),SumGeq([-1, x], 4),SumGeq([-1, x], 5),SumGeq([-1, x], 6),SumGeq([-1, x], 1),SumGeq([-1, x], 2),SumGeq([-1, x], 3),SumGeq([-1, x], 4),SumGeq([-1, x], 5),SumGeq([-1, x], 1),SumGeq([-1, x], 2),SumGeq([-1, x], 3),SumGeq([-1, x], 4),SumGeq([-1, x], 1),SumGeq([-1, x], 2),SumGeq([-1, x], 3),SumGeq([-1, x], 1),SumGeq([-1, x], 2),SumGeq([-1, x], 1);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30,__31,__32,__33,__34,__35,__36,__37,__38,__39,__40,__41,__42,__43,__44;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+  find __8: bool
+  find __9: bool
+  find __10: bool
+  find __11: bool
+  find __12: bool
+  find __13: bool
+  find __14: bool
+  find __15: bool
+  find __16: bool
+  find __17: bool
+  find __18: bool
+  find __19: bool
+  find __20: bool
+  find __21: bool
+  find __22: bool
+  find __23: bool
+  find __24: bool
+  find __25: bool
+  find __26: bool
+  find __27: bool
+  find __28: bool
+  find __29: bool
+  find __30: bool
+  find __31: bool
+  find __32: bool
+  find __33: bool
+  find __34: bool
+  find __35: bool
+  find __36: bool
+  find __37: bool
+  find __38: bool
+  find __39: bool
+  find __40: bool
+  find __41: bool
+  find __42: bool
+  find __43: bool
+  find __44: bool
+new constraints:
+  __0 =aux SumGeq([-1, x], 1)
+  __1 =aux SumGeq([-1, x], 2)
+  __2 =aux SumGeq([-1, x], 3)
+  __3 =aux SumGeq([-1, x], 4)
+  __4 =aux SumGeq([-1, x], 5)
+  __5 =aux SumGeq([-1, x], 6)
+  __6 =aux SumGeq([-1, x], 7)
+  __7 =aux SumGeq([-1, x], 8)
+  __8 =aux SumGeq([-1, x], 9)
+  __9 =aux SumGeq([-1, x], 1)
+  __10 =aux SumGeq([-1, x], 2)
+  __11 =aux SumGeq([-1, x], 3)
+  __12 =aux SumGeq([-1, x], 4)
+  __13 =aux SumGeq([-1, x], 5)
+  __14 =aux SumGeq([-1, x], 6)
+  __15 =aux SumGeq([-1, x], 7)
+  __16 =aux SumGeq([-1, x], 8)
+  __17 =aux SumGeq([-1, x], 1)
+  __18 =aux SumGeq([-1, x], 2)
+  __19 =aux SumGeq([-1, x], 3)
+  __20 =aux SumGeq([-1, x], 4)
+  __21 =aux SumGeq([-1, x], 5)
+  __22 =aux SumGeq([-1, x], 6)
+  __23 =aux SumGeq([-1, x], 7)
+  __24 =aux SumGeq([-1, x], 1)
+  __25 =aux SumGeq([-1, x], 2)
+  __26 =aux SumGeq([-1, x], 3)
+  __27 =aux SumGeq([-1, x], 4)
+  __28 =aux SumGeq([-1, x], 5)
+  __29 =aux SumGeq([-1, x], 6)
+  __30 =aux SumGeq([-1, x], 1)
+  __31 =aux SumGeq([-1, x], 2)
+  __32 =aux SumGeq([-1, x], 3)
+  __33 =aux SumGeq([-1, x], 4)
+  __34 =aux SumGeq([-1, x], 5)
+  __35 =aux SumGeq([-1, x], 1)
+  __36 =aux SumGeq([-1, x], 2)
+  __37 =aux SumGeq([-1, x], 3)
+  __38 =aux SumGeq([-1, x], 4)
+  __39 =aux SumGeq([-1, x], 1)
+  __40 =aux SumGeq([-1, x], 2)
+  __41 =aux SumGeq([-1, x], 3)
+  __42 =aux SumGeq([-1, x], 1)
+  __43 =aux SumGeq([-1, x], 2)
+  __44 =aux SumGeq([-1, x], 1)
+
+--
+
+Final model:
+
+find x: int(1..20)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find __26: bool
+find __27: bool
+find __28: bool
+find __29: bool
+find __30: bool
+find __31: bool
+find __32: bool
+find __33: bool
+find __34: bool
+find __35: bool
+find __36: bool
+find __37: bool
+find __38: bool
+find __39: bool
+find __40: bool
+find __41: bool
+find __42: bool
+find __43: bool
+find __44: bool
+
+such that
+
+and([__0,__1,__2,__3,__4,__5,__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30,__31,__32,__33,__34,__35,__36,__37,__38,__39,__40,__41,__42,__43,__44;int(1..)]),
+__0 =aux SumGeq([-1, x], 1),
+__1 =aux SumGeq([-1, x], 2),
+__2 =aux SumGeq([-1, x], 3),
+__3 =aux SumGeq([-1, x], 4),
+__4 =aux SumGeq([-1, x], 5),
+__5 =aux SumGeq([-1, x], 6),
+__6 =aux SumGeq([-1, x], 7),
+__7 =aux SumGeq([-1, x], 8),
+__8 =aux SumGeq([-1, x], 9),
+__9 =aux SumGeq([-1, x], 1),
+__10 =aux SumGeq([-1, x], 2),
+__11 =aux SumGeq([-1, x], 3),
+__12 =aux SumGeq([-1, x], 4),
+__13 =aux SumGeq([-1, x], 5),
+__14 =aux SumGeq([-1, x], 6),
+__15 =aux SumGeq([-1, x], 7),
+__16 =aux SumGeq([-1, x], 8),
+__17 =aux SumGeq([-1, x], 1),
+__18 =aux SumGeq([-1, x], 2),
+__19 =aux SumGeq([-1, x], 3),
+__20 =aux SumGeq([-1, x], 4),
+__21 =aux SumGeq([-1, x], 5),
+__22 =aux SumGeq([-1, x], 6),
+__23 =aux SumGeq([-1, x], 7),
+__24 =aux SumGeq([-1, x], 1),
+__25 =aux SumGeq([-1, x], 2),
+__26 =aux SumGeq([-1, x], 3),
+__27 =aux SumGeq([-1, x], 4),
+__28 =aux SumGeq([-1, x], 5),
+__29 =aux SumGeq([-1, x], 6),
+__30 =aux SumGeq([-1, x], 1),
+__31 =aux SumGeq([-1, x], 2),
+__32 =aux SumGeq([-1, x], 3),
+__33 =aux SumGeq([-1, x], 4),
+__34 =aux SumGeq([-1, x], 5),
+__35 =aux SumGeq([-1, x], 1),
+__36 =aux SumGeq([-1, x], 2),
+__37 =aux SumGeq([-1, x], 3),
+__38 =aux SumGeq([-1, x], 4),
+__39 =aux SumGeq([-1, x], 1),
+__40 =aux SumGeq([-1, x], 2),
+__41 =aux SumGeq([-1, x], 3),
+__42 =aux SumGeq([-1, x], 1),
+__43 =aux SumGeq([-1, x], 2),
+__44 =aux SumGeq([-1, x], 1)
+

@@ -1,0 +1,167 @@
+Model before rewriting:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+
+such that
+
+x[a] = true,
+x[b] = 3,
+y = record {a = false,b = 4},
+y = z
+
+--
+
+y
+   ~~> select_representation ([("Representations", 8000)])
+y#record_to_atom
+new variables:
+  find y#record_to_atom_1: bool
+  find y#record_to_atom_2: int(0..9)
+
+--
+
+y
+   ~~> select_representation ([("Representations", 8000)])
+y#record_to_atom
+
+--
+
+z
+   ~~> select_representation ([("Representations", 8000)])
+z#record_to_atom
+new variables:
+  find z#record_to_atom_1: bool
+  find z#record_to_atom_2: int(0..9)
+
+--
+
+x
+   ~~> select_representation ([("Representations", 8000)])
+x#record_to_atom
+new variables:
+  find x#record_to_atom_1: bool
+  find x#record_to_atom_2: int(0..9)
+
+--
+
+x
+   ~~> select_representation ([("Representations", 8000)])
+x#record_to_atom
+
+--
+
+y#record_to_atom = record {a = false,b = 4}
+   ~~> record_to_const ([("Base", 2000)])
+and([y#record_to_atom[a] = record {a = false,b = 4}[a],y#record_to_atom[b] = record {a = false,b = 4}[b];int(1..)])
+
+--
+
+and([y#record_to_atom[a] = false,y#record_to_atom[b] = 4;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux y#record_to_atom[a] = false
+  __1 =aux y#record_to_atom[b] = 4
+
+--
+
+y#record_to_atom = z#record_to_atom
+   ~~> record_equality ([("Base", 2000)])
+and([y#record_to_atom[a] = z#record_to_atom[a],y#record_to_atom[b] = z#record_to_atom[b];int(1..)])
+
+--
+
+and([y#record_to_atom[a] = z#record_to_atom[a],y#record_to_atom[b] = z#record_to_atom[b];int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__2,__3;int(1..)])
+new variables:
+  find __2: bool
+  find __3: bool
+new constraints:
+  __2 =aux y#record_to_atom[a] = z#record_to_atom[a]
+  __3 =aux y#record_to_atom[b] = z#record_to_atom[b]
+
+--
+
+x#record_to_atom[a]
+   ~~> index_record_to_atom ([("Base", 2000)])
+x#record_to_atom_1
+
+--
+
+x#record_to_atom[b]
+   ~~> index_record_to_atom ([("Base", 2000)])
+x#record_to_atom_2
+
+--
+
+y#record_to_atom[a]
+   ~~> index_record_to_atom ([("Base", 2000)])
+y#record_to_atom_1
+
+--
+
+y#record_to_atom[b]
+   ~~> index_record_to_atom ([("Base", 2000)])
+y#record_to_atom_2
+
+--
+
+y#record_to_atom[a]
+   ~~> index_record_to_atom ([("Base", 2000)])
+y#record_to_atom_1
+
+--
+
+z#record_to_atom[a]
+   ~~> index_record_to_atom ([("Base", 2000)])
+z#record_to_atom_1
+
+--
+
+y#record_to_atom[b]
+   ~~> index_record_to_atom ([("Base", 2000)])
+y#record_to_atom_2
+
+--
+
+z#record_to_atom[b]
+   ~~> index_record_to_atom ([("Base", 2000)])
+z#record_to_atom_2
+
+--
+
+Final model:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+find y#record_to_atom_1: bool
+find y#record_to_atom_2: int(0..9)
+find z#record_to_atom_1: bool
+find z#record_to_atom_2: int(0..9)
+find x#record_to_atom_1: bool
+find x#record_to_atom_2: int(0..9)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+
+such that
+
+x#record_to_atom_1 = true,
+x#record_to_atom_2 = 3,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+__0 =aux y#record_to_atom_1 = false,
+__1 =aux y#record_to_atom_2 = 4,
+__2 =aux y#record_to_atom_1 = z#record_to_atom_1,
+__3 =aux y#record_to_atom_2 = z#record_to_atom_2
+

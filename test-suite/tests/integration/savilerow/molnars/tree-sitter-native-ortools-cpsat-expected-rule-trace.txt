@@ -1,0 +1,3345 @@
+Model before rewriting:
+
+letting k be 3
+letting dommax be 4
+letting RANGE be domain int(0..((k - 1)))
+find M: matrix indexed by [RANGE, RANGE] of int((-(dommax))..-2, 0, 2..dommax)
+find det: int(-1, 1)
+find squaredet: int(-1, 1)
+
+such that
+
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
+and([ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]),
+and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
+true
+
+--
+
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
+and([ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]),
+and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
+true
+   ~~> select_representation_matrix ([("Representations", 8001)])
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M[j, perm[j]],M[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
+and([ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]),
+and([ (M[..,i] <=lex M[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
+true
+new variables:
+  find M#matrix_to_atom_0_0: int(-4..-2, 0, 2..4)
+  find M#matrix_to_atom_0_1: int(-4..-2, 0, 2..4)
+  find M#matrix_to_atom_0_2: int(-4..-2, 0, 2..4)
+  find M#matrix_to_atom_1_0: int(-4..-2, 0, 2..4)
+  find M#matrix_to_atom_1_1: int(-4..-2, 0, 2..4)
+  find M#matrix_to_atom_1_2: int(-4..-2, 0, 2..4)
+  find M#matrix_to_atom_2_0: int(-4..-2, 0, 2..4)
+  find M#matrix_to_atom_2_1: int(-4..-2, 0, 2..4)
+  find M#matrix_to_atom_2_2: int(-4..-2, 0, 2..4)
+
+--
+
+[ (M[i,..] <=lex M[sum([i,1;int(1..)]),..]) | i : int(0..((k - 2))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(M[0,..] <=lex M[1,..]),(M[1,..] <=lex M[2,..]);int(1..)]
+
+--
+
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M#matrix_to_atom[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M#matrix_to_atom[j, perm[j]],M#matrix_to_atom[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
+and([(M#matrix_to_atom[0,..] <=lex M#matrix_to_atom[1,..]),(M#matrix_to_atom[1,..] <=lex M#matrix_to_atom[2,..]);int(1..)]),
+and([ (M#matrix_to_atom[..,i] <=lex M#matrix_to_atom[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
+true
+   ~~> select_representation_matrix ([("Representations", 8001)])
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M#matrix_to_atom[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = det,
+sum([ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M#matrix_to_atom[j, perm[j]],M#matrix_to_atom[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]) = squaredet,
+and([(M#matrix_to_atom[0,..] <=lex M#matrix_to_atom[1,..]),(M#matrix_to_atom[1,..] <=lex M#matrix_to_atom[2,..]);int(1..)]),
+and([ (M#matrix_to_atom[..,i] <=lex M#matrix_to_atom[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]),
+true
+
+--
+
+M#matrix_to_atom[0,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M#matrix_to_atom,[0,..])
+
+--
+
+M#matrix_to_atom[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M#matrix_to_atom,[1,..])
+
+--
+
+M#matrix_to_atom[1,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M#matrix_to_atom,[1,..])
+
+--
+
+M#matrix_to_atom[2,..]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M#matrix_to_atom,[2,..])
+
+--
+
+and([(SafeSlice(M#matrix_to_atom,[0,..]) <=lex SafeSlice(M#matrix_to_atom,[1,..])),(SafeSlice(M#matrix_to_atom,[1,..]) <=lex SafeSlice(M#matrix_to_atom,[2,..]));int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__0,__1;int(1..)])
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux (SafeSlice(M#matrix_to_atom,[0,..]) <=lex SafeSlice(M#matrix_to_atom,[1,..]))
+  __1 =aux (SafeSlice(M#matrix_to_atom,[1,..]) <=lex SafeSlice(M#matrix_to_atom,[2,..]))
+
+--
+
+[ (M#matrix_to_atom[..,i] <=lex M#matrix_to_atom[..,sum([i,1;int(1..)])]) | i : int(0..((k - 2))) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(M#matrix_to_atom[..,0] <=lex M#matrix_to_atom[..,1]),(M#matrix_to_atom[..,1] <=lex M#matrix_to_atom[..,2]);int(1..)]
+
+--
+
+M#matrix_to_atom[..,0]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M#matrix_to_atom,[..,0])
+
+--
+
+M#matrix_to_atom[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M#matrix_to_atom,[..,1])
+
+--
+
+M#matrix_to_atom[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M#matrix_to_atom,[..,1])
+
+--
+
+M#matrix_to_atom[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(M#matrix_to_atom,[..,2])
+
+--
+
+and([(SafeSlice(M#matrix_to_atom,[..,0]) <=lex SafeSlice(M#matrix_to_atom,[..,1])),(SafeSlice(M#matrix_to_atom,[..,1]) <=lex SafeSlice(M#matrix_to_atom,[..,2]));int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__2,__3;int(1..)])
+new variables:
+  find __2: bool
+  find __3: bool
+new constraints:
+  __2 =aux (SafeSlice(M#matrix_to_atom,[..,0]) <=lex SafeSlice(M#matrix_to_atom,[..,1]))
+  __3 =aux (SafeSlice(M#matrix_to_atom,[..,1]) <=lex SafeSlice(M#matrix_to_atom,[..,2]))
+
+--
+
+SafeSlice(M#matrix_to_atom,[0,..])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[M#matrix_to_atom_0_0,M#matrix_to_atom_0_1,M#matrix_to_atom_0_2;int(1..)]
+
+--
+
+SafeSlice(M#matrix_to_atom,[1,..])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[M#matrix_to_atom_1_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_2;int(1..)]
+
+--
+
+([M#matrix_to_atom_0_0,M#matrix_to_atom_0_1,M#matrix_to_atom_0_2;int(1..)] <=lex [M#matrix_to_atom_1_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_2;int(1..)])
+   ~~> expand_lex_lt_leq ([("Smt", 2001), ("OrToolsCpSat", 2001)])
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,and([M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,or([M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,and([M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2
+
+--
+
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,and([M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,or([M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,or([M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,or([M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0;int(1..)]),and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,or([M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0,M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1,M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2,M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)])
+
+--
+
+M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_1_0,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_1_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_2 < M#matrix_to_atom_1_2
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_2 <= sum([M#matrix_to_atom_1_2,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_1_0,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_0 < M#matrix_to_atom_1_0
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_1_0,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_1 < M#matrix_to_atom_1_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_1_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_1_0,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0)
+
+--
+
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_1_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1)
+
+--
+
+M#matrix_to_atom_0_2 <= sum([M#matrix_to_atom_1_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2)
+
+--
+
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_1_0,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0)
+
+--
+
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_1_0,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0)
+
+--
+
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_1_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1)
+
+--
+
+and([or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0;int(1..)]),or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1;int(1..)]),or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)]);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__4,__5,__6;int(1..)])
+new variables:
+  find __4: bool
+  find __5: bool
+  find __6: bool
+new constraints:
+  __4 =aux or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0;int(1..)])
+  __5 =aux or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1;int(1..)])
+  __6 =aux or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)])
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__7,__8;int(1..)])
+new variables:
+  find __7: bool
+  find __8: bool
+new constraints:
+  __7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0)
+  __8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__9,__10,__11;int(1..)])
+new variables:
+  find __9: bool
+  find __10: bool
+  find __11: bool
+new constraints:
+  __9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0)
+  __10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1)
+  __11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__12,__13,__14,__15;int(1..)])
+new variables:
+  find __12: bool
+  find __13: bool
+  find __14: bool
+  find __15: bool
+new constraints:
+  __12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0)
+  __13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1)
+  __14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2)
+  __15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2
+
+--
+
+SafeSlice(M#matrix_to_atom,[1,..])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[M#matrix_to_atom_1_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_2;int(1..)]
+
+--
+
+SafeSlice(M#matrix_to_atom,[2,..])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[M#matrix_to_atom_2_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_2;int(1..)]
+
+--
+
+([M#matrix_to_atom_1_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_2;int(1..)] <=lex [M#matrix_to_atom_2_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_2;int(1..)])
+   ~~> expand_lex_lt_leq ([("Smt", 2001), ("OrToolsCpSat", 2001)])
+or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,and([M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,or([M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,and([M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2
+
+--
+
+or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,and([M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,or([M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0;int(1..)]),or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,or([M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,or([M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1;int(1..)]),or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0;int(1..)]),and([or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1;int(1..)]),or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0;int(1..)]),or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1;int(1..)]),or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,or([M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0,M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1,M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2,M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)])
+
+--
+
+M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_2_0,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_1 <= sum([M#matrix_to_atom_2_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_2 < M#matrix_to_atom_2_2
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_2 <= sum([M#matrix_to_atom_2_2,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_2_0,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_0 < M#matrix_to_atom_2_0
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_2_0,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_1 < M#matrix_to_atom_2_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_1 <= sum([M#matrix_to_atom_2_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_2_0,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0)
+
+--
+
+M#matrix_to_atom_1_1 <= sum([M#matrix_to_atom_2_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1)
+
+--
+
+M#matrix_to_atom_1_2 <= sum([M#matrix_to_atom_2_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2)
+
+--
+
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_2_0,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0)
+
+--
+
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_2_0,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0)
+
+--
+
+M#matrix_to_atom_1_1 <= sum([M#matrix_to_atom_2_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1)
+
+--
+
+and([or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0;int(1..)]),or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1;int(1..)]),or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)]);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__16,__17,__18;int(1..)])
+new variables:
+  find __16: bool
+  find __17: bool
+  find __18: bool
+new constraints:
+  __16 =aux or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0;int(1..)])
+  __17 =aux or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1;int(1..)])
+  __18 =aux or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)])
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__19,__20;int(1..)])
+new variables:
+  find __19: bool
+  find __20: bool
+new constraints:
+  __19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0)
+  __20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__21,__22,__23;int(1..)])
+new variables:
+  find __21: bool
+  find __22: bool
+  find __23: bool
+new constraints:
+  __21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0)
+  __22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1)
+  __23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__24,__25,__26,__27;int(1..)])
+new variables:
+  find __24: bool
+  find __25: bool
+  find __26: bool
+  find __27: bool
+new constraints:
+  __24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0)
+  __25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1)
+  __26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2)
+  __27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2
+
+--
+
+[ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ M#matrix_to_atom[j, perm[j]] | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([1,product([ M#matrix_to_atom[j, [0,1,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([1,product([ M#matrix_to_atom[j, [1,2,0;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([1,product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]
+
+--
+
+product([1,product([ M#matrix_to_atom[j, [0,1,2;int(0..2)][j]] | j : RANGE ]);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([product([ M#matrix_to_atom[j, [0,1,2;int(0..2)][j]] | j : RANGE ]);int(1..)])
+
+--
+
+product([1,product([ M#matrix_to_atom[j, [1,2,0;int(0..2)][j]] | j : RANGE ]);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([product([ M#matrix_to_atom[j, [1,2,0;int(0..2)][j]] | j : RANGE ]);int(1..)])
+
+--
+
+product([1,product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]);int(1..)])
+
+--
+
+product([product([ M#matrix_to_atom[j, [0,1,2;int(0..2)][j]] | j : RANGE ]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+product([ M#matrix_to_atom[j, [0,1,2;int(0..2)][j]] | j : RANGE ])
+
+--
+
+product([product([ M#matrix_to_atom[j, [1,2,0;int(0..2)][j]] | j : RANGE ]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+product([ M#matrix_to_atom[j, [1,2,0;int(0..2)][j]] | j : RANGE ])
+
+--
+
+product([product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ])
+
+--
+
+[ product([(-1 ** sum([ toInt(perm[idx1] > perm[idx2]) | idx1 : RANGE, idx2 : RANGE, idx1 < idx2 ])),product([ product([M#matrix_to_atom[j, perm[j]],M#matrix_to_atom[j, perm[j]];int(1..)]) | j : RANGE ]);int(1..)]) | perm : matrix indexed by [RANGE] of RANGE, allDifferent(perm) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([1,product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([1,product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([1,product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]
+
+--
+
+product([1,product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+
+--
+
+product([1,product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+
+--
+
+product([1,product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+
+--
+
+product([product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ])
+
+--
+
+product([product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ])
+
+--
+
+product([product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ])
+
+--
+
+SafeSlice(M#matrix_to_atom,[..,0])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[M#matrix_to_atom_0_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_0;int(1..)]
+
+--
+
+SafeSlice(M#matrix_to_atom,[..,1])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[M#matrix_to_atom_0_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_1;int(1..)]
+
+--
+
+([M#matrix_to_atom_0_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_0;int(1..)] <=lex [M#matrix_to_atom_0_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_1;int(1..)])
+   ~~> expand_lex_lt_leq ([("Smt", 2001), ("OrToolsCpSat", 2001)])
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,and([M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,or([M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,and([M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1
+
+--
+
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,and([M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,or([M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,or([M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,or([M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,and([M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1;int(1..)]),and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1;int(1..)]),or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,or([M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1,M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1,M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1,M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_0_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_1_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_2_0 < M#matrix_to_atom_2_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_2_0 <= sum([M#matrix_to_atom_2_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_0_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_0 < M#matrix_to_atom_0_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_0_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_0 < M#matrix_to_atom_1_1
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_1_1,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_0_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0)
+
+--
+
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_1_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0)
+
+--
+
+M#matrix_to_atom_2_0 <= sum([M#matrix_to_atom_2_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0)
+
+--
+
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_0_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0)
+
+--
+
+M#matrix_to_atom_0_0 <= sum([M#matrix_to_atom_0_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0)
+
+--
+
+M#matrix_to_atom_1_0 <= sum([M#matrix_to_atom_1_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0)
+
+--
+
+and([or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1;int(1..)]),or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1;int(1..)]),or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)]);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__28,__29,__30;int(1..)])
+new variables:
+  find __28: bool
+  find __29: bool
+  find __30: bool
+new constraints:
+  __28 =aux or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1;int(1..)])
+  __29 =aux or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1;int(1..)])
+  __30 =aux or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)])
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__31,__32;int(1..)])
+new variables:
+  find __31: bool
+  find __32: bool
+new constraints:
+  __31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0)
+  __32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__33,__34,__35;int(1..)])
+new variables:
+  find __33: bool
+  find __34: bool
+  find __35: bool
+new constraints:
+  __33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0)
+  __34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0)
+  __35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__36,__37,__38,__39;int(1..)])
+new variables:
+  find __36: bool
+  find __37: bool
+  find __38: bool
+  find __39: bool
+new constraints:
+  __36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0)
+  __37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0)
+  __38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0)
+  __39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1
+
+--
+
+SafeSlice(M#matrix_to_atom,[..,1])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[M#matrix_to_atom_0_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_1;int(1..)]
+
+--
+
+SafeSlice(M#matrix_to_atom,[..,2])
+   ~~> slice_matrix_to_atom ([("Base", 2000)])
+[M#matrix_to_atom_0_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_2;int(1..)]
+
+--
+
+([M#matrix_to_atom_0_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_1;int(1..)] <=lex [M#matrix_to_atom_0_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_2;int(1..)])
+   ~~> expand_lex_lt_leq ([("Smt", 2001), ("OrToolsCpSat", 2001)])
+or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,and([M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,or([M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,and([M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2,true;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,and([M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,or([M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2;int(1..)]),or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,or([M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,or([M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,and([M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2;int(1..)]),or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2;int(1..)]),and([or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2;int(1..)]),or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2;int(1..)]),or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2;int(1..)]),or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,or([M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2,M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2,M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2,M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)])
+
+--
+
+M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_0_2,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_1 <= sum([M#matrix_to_atom_1_2,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_2_1 < M#matrix_to_atom_2_2
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_2_1 <= sum([M#matrix_to_atom_2_2,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_0_2,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_1 < M#matrix_to_atom_0_2
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_0_2,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_1_1 < M#matrix_to_atom_1_2
+   ~~> lt_to_leq ([("Minion", 8400), ("OrToolsCpSat", 8400)])
+M#matrix_to_atom_1_1 <= sum([M#matrix_to_atom_1_2,-1;int(1..)])
+
+--
+
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_0_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1)
+
+--
+
+M#matrix_to_atom_1_1 <= sum([M#matrix_to_atom_1_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1)
+
+--
+
+M#matrix_to_atom_2_1 <= sum([M#matrix_to_atom_2_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1)
+
+--
+
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_0_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1)
+
+--
+
+M#matrix_to_atom_0_1 <= sum([M#matrix_to_atom_0_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1)
+
+--
+
+M#matrix_to_atom_1_1 <= sum([M#matrix_to_atom_1_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1)
+
+--
+
+and([or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2;int(1..)]),or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2;int(1..)]),or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)]);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__40,__41,__42;int(1..)])
+new variables:
+  find __40: bool
+  find __41: bool
+  find __42: bool
+new constraints:
+  __40 =aux or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2;int(1..)])
+  __41 =aux or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2;int(1..)])
+  __42 =aux or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)])
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__43,__44;int(1..)])
+new variables:
+  find __43: bool
+  find __44: bool
+new constraints:
+  __43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1)
+  __44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__45,__46,__47;int(1..)])
+new variables:
+  find __45: bool
+  find __46: bool
+  find __47: bool
+new constraints:
+  __45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1)
+  __46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1)
+  __47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2
+
+--
+
+or([SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2;int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([__48,__49,__50,__51;int(1..)])
+new variables:
+  find __48: bool
+  find __49: bool
+  find __50: bool
+  find __51: bool
+new constraints:
+  __48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1)
+  __49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1)
+  __50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1)
+  __51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ M#matrix_to_atom[j, [0,1,2;int(0..2)][j]] | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#matrix_to_atom[0, 0],M#matrix_to_atom[1, 1],M#matrix_to_atom[2, 2];int(1..)]
+
+--
+
+M#matrix_to_atom[0, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 0])
+
+--
+
+M#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 1])
+
+--
+
+M#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 2])
+
+--
+
+sum([product([SafeIndex(M#matrix_to_atom,[0, 0]),SafeIndex(M#matrix_to_atom,[1, 1]),SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([ M#matrix_to_atom[j, [1,2,0;int(0..2)][j]] | j : RANGE ]),product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([ M#matrix_to_atom[j, [1,2,0;int(0..2)][j]] | j : RANGE ]),product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ M#matrix_to_atom[j, [1,2,0;int(0..2)][j]] | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#matrix_to_atom[0, 1],M#matrix_to_atom[1, 2],M#matrix_to_atom[2, 0];int(1..)]
+
+--
+
+M#matrix_to_atom[0, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 1])
+
+--
+
+M#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 2])
+
+--
+
+M#matrix_to_atom[2, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 0])
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([SafeIndex(M#matrix_to_atom,[0, 1]),SafeIndex(M#matrix_to_atom,[1, 2]),SafeIndex(M#matrix_to_atom,[2, 0]);int(1..)]),product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ M#matrix_to_atom[j, [2,0,1;int(0..2)][j]] | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#matrix_to_atom[0, 2],M#matrix_to_atom[1, 0],M#matrix_to_atom[2, 1];int(1..)]
+
+--
+
+M#matrix_to_atom[0, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 2])
+
+--
+
+M#matrix_to_atom[1, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 0])
+
+--
+
+M#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 1])
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([SafeIndex(M#matrix_to_atom,[0, 2]),SafeIndex(M#matrix_to_atom,[1, 0]),SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ product([M#matrix_to_atom[j, [0,1,2;int(0..2)][j]],M#matrix_to_atom[j, [0,1,2;int(0..2)][j]];int(1..)]) | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#matrix_to_atom[0, 0],M#matrix_to_atom[0, 0];int(1..)]),product([M#matrix_to_atom[1, 1],M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[2, 2],M#matrix_to_atom[2, 2];int(1..)]);int(1..)]
+
+--
+
+product([product([M#matrix_to_atom[0, 0],M#matrix_to_atom[0, 0];int(1..)]),product([M#matrix_to_atom[1, 1],M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[2, 2],M#matrix_to_atom[2, 2];int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([M#matrix_to_atom[0, 0],M#matrix_to_atom[0, 0],M#matrix_to_atom[1, 1],M#matrix_to_atom[1, 1],M#matrix_to_atom[2, 2],M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 0])
+
+--
+
+M#matrix_to_atom[0, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 0])
+
+--
+
+M#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 1])
+
+--
+
+M#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 1])
+
+--
+
+M#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 2])
+
+--
+
+M#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 2])
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([SafeIndex(M#matrix_to_atom,[0, 0]),SafeIndex(M#matrix_to_atom,[0, 0]),SafeIndex(M#matrix_to_atom,[1, 1]),SafeIndex(M#matrix_to_atom,[1, 1]),SafeIndex(M#matrix_to_atom,[2, 2]),SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ product([M#matrix_to_atom[j, [1,2,0;int(0..2)][j]],M#matrix_to_atom[j, [1,2,0;int(0..2)][j]];int(1..)]) | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#matrix_to_atom[0, 1],M#matrix_to_atom[0, 1];int(1..)]),product([M#matrix_to_atom[1, 2],M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[2, 0],M#matrix_to_atom[2, 0];int(1..)]);int(1..)]
+
+--
+
+product([product([M#matrix_to_atom[0, 1],M#matrix_to_atom[0, 1];int(1..)]),product([M#matrix_to_atom[1, 2],M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[2, 0],M#matrix_to_atom[2, 0];int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([M#matrix_to_atom[0, 1],M#matrix_to_atom[0, 1],M#matrix_to_atom[1, 2],M#matrix_to_atom[1, 2],M#matrix_to_atom[2, 0],M#matrix_to_atom[2, 0];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 1])
+
+--
+
+M#matrix_to_atom[0, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 1])
+
+--
+
+M#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 2])
+
+--
+
+M#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 2])
+
+--
+
+M#matrix_to_atom[2, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 0])
+
+--
+
+M#matrix_to_atom[2, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 0])
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([SafeIndex(M#matrix_to_atom,[0, 1]),SafeIndex(M#matrix_to_atom,[0, 1]),SafeIndex(M#matrix_to_atom,[1, 2]),SafeIndex(M#matrix_to_atom,[1, 2]),SafeIndex(M#matrix_to_atom,[2, 0]),SafeIndex(M#matrix_to_atom,[2, 0]);int(1..)]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ product([M#matrix_to_atom[j, [2,0,1;int(0..2)][j]],M#matrix_to_atom[j, [2,0,1;int(0..2)][j]];int(1..)]) | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#matrix_to_atom[0, 2],M#matrix_to_atom[0, 2];int(1..)]),product([M#matrix_to_atom[1, 0],M#matrix_to_atom[1, 0];int(1..)]),product([M#matrix_to_atom[2, 1],M#matrix_to_atom[2, 1];int(1..)]);int(1..)]
+
+--
+
+product([product([M#matrix_to_atom[0, 2],M#matrix_to_atom[0, 2];int(1..)]),product([M#matrix_to_atom[1, 0],M#matrix_to_atom[1, 0];int(1..)]),product([M#matrix_to_atom[2, 1],M#matrix_to_atom[2, 1];int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([M#matrix_to_atom[0, 2],M#matrix_to_atom[0, 2],M#matrix_to_atom[1, 0],M#matrix_to_atom[1, 0],M#matrix_to_atom[2, 1],M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 2])
+
+--
+
+M#matrix_to_atom[0, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 2])
+
+--
+
+M#matrix_to_atom[1, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 0])
+
+--
+
+M#matrix_to_atom[1, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 0])
+
+--
+
+M#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 1])
+
+--
+
+M#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 1])
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([SafeIndex(M#matrix_to_atom,[0, 2]),SafeIndex(M#matrix_to_atom,[0, 2]),SafeIndex(M#matrix_to_atom,[1, 0]),SafeIndex(M#matrix_to_atom,[1, 0]),SafeIndex(M#matrix_to_atom,[2, 1]),SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ M#matrix_to_atom[j, [0,2,1;int(0..2)][j]] | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#matrix_to_atom[0, 0],M#matrix_to_atom[1, 2],M#matrix_to_atom[2, 1];int(1..)]
+
+--
+
+product([-1,product([M#matrix_to_atom[0, 0],M#matrix_to_atom[1, 2],M#matrix_to_atom[2, 1];int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#matrix_to_atom[0, 0],M#matrix_to_atom[1, 2],M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 0])
+
+--
+
+M#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 2])
+
+--
+
+M#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 1])
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,SafeIndex(M#matrix_to_atom,[0, 0]),SafeIndex(M#matrix_to_atom,[1, 2]),SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ M#matrix_to_atom[j, [1,0,2;int(0..2)][j]] | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#matrix_to_atom[0, 1],M#matrix_to_atom[1, 0],M#matrix_to_atom[2, 2];int(1..)]
+
+--
+
+product([-1,product([M#matrix_to_atom[0, 1],M#matrix_to_atom[1, 0],M#matrix_to_atom[2, 2];int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#matrix_to_atom[0, 1],M#matrix_to_atom[1, 0],M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 1])
+
+--
+
+M#matrix_to_atom[1, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 0])
+
+--
+
+M#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 2])
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1;int(1..)]),product([-1,SafeIndex(M#matrix_to_atom,[0, 1]),SafeIndex(M#matrix_to_atom,[1, 0]),SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2;int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+[ M#matrix_to_atom[j, [2,1,0;int(0..2)][j]] | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#matrix_to_atom[0, 2],M#matrix_to_atom[1, 1],M#matrix_to_atom[2, 0];int(1..)]
+
+--
+
+product([-1,product([M#matrix_to_atom[0, 2],M#matrix_to_atom[1, 1],M#matrix_to_atom[2, 0];int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#matrix_to_atom[0, 2],M#matrix_to_atom[1, 1],M#matrix_to_atom[2, 0];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 2])
+
+--
+
+M#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 1])
+
+--
+
+M#matrix_to_atom[2, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 0])
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2;int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,SafeIndex(M#matrix_to_atom,[0, 2]),SafeIndex(M#matrix_to_atom,[1, 1]),SafeIndex(M#matrix_to_atom,[2, 0]);int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2;int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_2,M#matrix_to_atom_1_1,M#matrix_to_atom_2_0;int(1..)]);int(1..)]) = det,
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2;int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_2,M#matrix_to_atom_1_1,M#matrix_to_atom_2_0;int(1..)]);int(1..)]) = det
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det);int(1..)])
+new variables:
+  find __52: int(-64..64)
+  find __53: int(-64..64)
+  find __54: int(-64..64)
+  find __55: int(-64..64)
+  find __56: int(-64..64)
+  find __57: int(-64..64)
+new constraints:
+  __52 =aux product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)])
+  __53 =aux product([M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_0_0;int(1..)])
+  __54 =aux product([M#matrix_to_atom_1_0,M#matrix_to_atom_2_2,M#matrix_to_atom_0_1;int(1..)])
+  __55 =aux product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)])
+  __56 =aux product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)])
+  __57 =aux product([M#matrix_to_atom_1_1,M#matrix_to_atom_2_0,M#matrix_to_atom_0_2;int(1..)])
+
+--
+
+and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__58,__59;int(1..)])
+new variables:
+  find __58: bool
+  find __59: bool
+new constraints:
+  __58 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det)
+  __59 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det)
+
+--
+
+__52 =aux product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_2_2,__60,__52)
+new variables:
+  find __60: int(-16..16)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_1_1,M#matrix_to_atom_0_0,__60)
+
+--
+
+__53 =aux product([M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_0_0;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_0_0,__61,__53)
+new variables:
+  find __61: int(-16..16)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_2,__61)
+
+--
+
+__54 =aux product([M#matrix_to_atom_1_0,M#matrix_to_atom_2_2,M#matrix_to_atom_0_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_0_1,__62,__54)
+new variables:
+  find __62: int(-16..16)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_0,__62)
+
+--
+
+__55 =aux product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_2_0,__63,__55)
+new variables:
+  find __63: int(-16..16)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_1_2,M#matrix_to_atom_0_1,__63)
+
+--
+
+__56 =aux product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_2_1,__64,__56)
+new variables:
+  find __64: int(-16..16)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_1_0,M#matrix_to_atom_0_2,__64)
+
+--
+
+__57 =aux product([M#matrix_to_atom_1_1,M#matrix_to_atom_2_0,M#matrix_to_atom_0_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_0_2,__65,__57)
+new variables:
+  find __65: int(-16..16)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_1,__65)
+
+--
+
+[ product([M#matrix_to_atom[j, [0,2,1;int(0..2)][j]],M#matrix_to_atom[j, [0,2,1;int(0..2)][j]];int(1..)]) | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#matrix_to_atom[0, 0],M#matrix_to_atom[0, 0];int(1..)]),product([M#matrix_to_atom[1, 2],M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[2, 1],M#matrix_to_atom[2, 1];int(1..)]);int(1..)]
+
+--
+
+product([-1,product([product([M#matrix_to_atom[0, 0],M#matrix_to_atom[0, 0];int(1..)]),product([M#matrix_to_atom[1, 2],M#matrix_to_atom[1, 2];int(1..)]),product([M#matrix_to_atom[2, 1],M#matrix_to_atom[2, 1];int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#matrix_to_atom[0, 0],M#matrix_to_atom[0, 0],M#matrix_to_atom[1, 2],M#matrix_to_atom[1, 2],M#matrix_to_atom[2, 1],M#matrix_to_atom[2, 1];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 0])
+
+--
+
+M#matrix_to_atom[0, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 0])
+
+--
+
+M#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 2])
+
+--
+
+M#matrix_to_atom[1, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 2])
+
+--
+
+M#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 1])
+
+--
+
+M#matrix_to_atom[2, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 1])
+
+--
+
+and([__58,__59;int(1..)]),
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,SafeIndex(M#matrix_to_atom,[0, 0]),SafeIndex(M#matrix_to_atom,[0, 0]),SafeIndex(M#matrix_to_atom,[1, 2]),SafeIndex(M#matrix_to_atom,[1, 2]),SafeIndex(M#matrix_to_atom,[2, 1]),SafeIndex(M#matrix_to_atom,[2, 1]);int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2,
+FlatProductEq(M#matrix_to_atom_2_2,__60,__52),
+FlatProductEq(M#matrix_to_atom_0_0,__61,__53),
+FlatProductEq(M#matrix_to_atom_0_1,__62,__54),
+FlatProductEq(M#matrix_to_atom_2_0,__63,__55),
+FlatProductEq(M#matrix_to_atom_2_1,__64,__56),
+FlatProductEq(M#matrix_to_atom_0_2,__65,__57),
+__58 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+__59 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+FlatProductEq(M#matrix_to_atom_1_1,M#matrix_to_atom_0_0,__60),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_2,__61),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_0,__62),
+FlatProductEq(M#matrix_to_atom_1_2,M#matrix_to_atom_0_1,__63),
+FlatProductEq(M#matrix_to_atom_1_0,M#matrix_to_atom_0_2,__64),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_1,__65)
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+and([__58,__59;int(1..)]),
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2,
+FlatProductEq(M#matrix_to_atom_2_2,__60,__52),
+FlatProductEq(M#matrix_to_atom_0_0,__61,__53),
+FlatProductEq(M#matrix_to_atom_0_1,__62,__54),
+FlatProductEq(M#matrix_to_atom_2_0,__63,__55),
+FlatProductEq(M#matrix_to_atom_2_1,__64,__56),
+FlatProductEq(M#matrix_to_atom_0_2,__65,__57),
+__58 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+__59 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+FlatProductEq(M#matrix_to_atom_1_1,M#matrix_to_atom_0_0,__60),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_2,__61),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_0,__62),
+FlatProductEq(M#matrix_to_atom_1_2,M#matrix_to_atom_0_1,__63),
+FlatProductEq(M#matrix_to_atom_1_0,M#matrix_to_atom_0_2,__64),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_1,__65)
+
+--
+
+[ product([M#matrix_to_atom[j, [1,0,2;int(0..2)][j]],M#matrix_to_atom[j, [1,0,2;int(0..2)][j]];int(1..)]) | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#matrix_to_atom[0, 1],M#matrix_to_atom[0, 1];int(1..)]),product([M#matrix_to_atom[1, 0],M#matrix_to_atom[1, 0];int(1..)]),product([M#matrix_to_atom[2, 2],M#matrix_to_atom[2, 2];int(1..)]);int(1..)]
+
+--
+
+product([-1,product([product([M#matrix_to_atom[0, 1],M#matrix_to_atom[0, 1];int(1..)]),product([M#matrix_to_atom[1, 0],M#matrix_to_atom[1, 0];int(1..)]),product([M#matrix_to_atom[2, 2],M#matrix_to_atom[2, 2];int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#matrix_to_atom[0, 1],M#matrix_to_atom[0, 1],M#matrix_to_atom[1, 0],M#matrix_to_atom[1, 0],M#matrix_to_atom[2, 2],M#matrix_to_atom[2, 2];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 1])
+
+--
+
+M#matrix_to_atom[0, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 1])
+
+--
+
+M#matrix_to_atom[1, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 0])
+
+--
+
+M#matrix_to_atom[1, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 0])
+
+--
+
+M#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 2])
+
+--
+
+M#matrix_to_atom[2, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 2])
+
+--
+
+and([__58,__59;int(1..)]),
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,SafeIndex(M#matrix_to_atom,[0, 1]),SafeIndex(M#matrix_to_atom,[0, 1]),SafeIndex(M#matrix_to_atom,[1, 0]),SafeIndex(M#matrix_to_atom,[1, 0]),SafeIndex(M#matrix_to_atom,[2, 2]),SafeIndex(M#matrix_to_atom,[2, 2]);int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2,
+FlatProductEq(M#matrix_to_atom_2_2,__60,__52),
+FlatProductEq(M#matrix_to_atom_0_0,__61,__53),
+FlatProductEq(M#matrix_to_atom_0_1,__62,__54),
+FlatProductEq(M#matrix_to_atom_2_0,__63,__55),
+FlatProductEq(M#matrix_to_atom_2_1,__64,__56),
+FlatProductEq(M#matrix_to_atom_0_2,__65,__57),
+__58 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+__59 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+FlatProductEq(M#matrix_to_atom_1_1,M#matrix_to_atom_0_0,__60),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_2,__61),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_0,__62),
+FlatProductEq(M#matrix_to_atom_1_2,M#matrix_to_atom_0_1,__63),
+FlatProductEq(M#matrix_to_atom_1_0,M#matrix_to_atom_0_2,__64),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_1,__65)
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+and([__58,__59;int(1..)]),
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,product([ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2,
+FlatProductEq(M#matrix_to_atom_2_2,__60,__52),
+FlatProductEq(M#matrix_to_atom_0_0,__61,__53),
+FlatProductEq(M#matrix_to_atom_0_1,__62,__54),
+FlatProductEq(M#matrix_to_atom_2_0,__63,__55),
+FlatProductEq(M#matrix_to_atom_2_1,__64,__56),
+FlatProductEq(M#matrix_to_atom_0_2,__65,__57),
+__58 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+__59 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+FlatProductEq(M#matrix_to_atom_1_1,M#matrix_to_atom_0_0,__60),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_2,__61),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_0,__62),
+FlatProductEq(M#matrix_to_atom_1_2,M#matrix_to_atom_0_1,__63),
+FlatProductEq(M#matrix_to_atom_1_0,M#matrix_to_atom_0_2,__64),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_1,__65)
+
+--
+
+[ product([M#matrix_to_atom[j, [2,1,0;int(0..2)][j]],M#matrix_to_atom[j, [2,1,0;int(0..2)][j]];int(1..)]) | j : RANGE ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([M#matrix_to_atom[0, 2],M#matrix_to_atom[0, 2];int(1..)]),product([M#matrix_to_atom[1, 1],M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[2, 0],M#matrix_to_atom[2, 0];int(1..)]);int(1..)]
+
+--
+
+product([-1,product([product([M#matrix_to_atom[0, 2],M#matrix_to_atom[0, 2];int(1..)]),product([M#matrix_to_atom[1, 1],M#matrix_to_atom[1, 1];int(1..)]),product([M#matrix_to_atom[2, 0],M#matrix_to_atom[2, 0];int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+product([-1,M#matrix_to_atom[0, 2],M#matrix_to_atom[0, 2],M#matrix_to_atom[1, 1],M#matrix_to_atom[1, 1],M#matrix_to_atom[2, 0],M#matrix_to_atom[2, 0];int(1..)])
+
+--
+
+M#matrix_to_atom[0, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 2])
+
+--
+
+M#matrix_to_atom[0, 2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[0, 2])
+
+--
+
+M#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 1])
+
+--
+
+M#matrix_to_atom[1, 1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[1, 1])
+
+--
+
+M#matrix_to_atom[2, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 0])
+
+--
+
+M#matrix_to_atom[2, 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(M#matrix_to_atom,[2, 0])
+
+--
+
+and([__58,__59;int(1..)]),
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,SafeIndex(M#matrix_to_atom,[0, 2]),SafeIndex(M#matrix_to_atom,[0, 2]),SafeIndex(M#matrix_to_atom,[1, 1]),SafeIndex(M#matrix_to_atom,[1, 1]),SafeIndex(M#matrix_to_atom,[2, 0]),SafeIndex(M#matrix_to_atom,[2, 0]);int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2,
+FlatProductEq(M#matrix_to_atom_2_2,__60,__52),
+FlatProductEq(M#matrix_to_atom_0_0,__61,__53),
+FlatProductEq(M#matrix_to_atom_0_1,__62,__54),
+FlatProductEq(M#matrix_to_atom_2_0,__63,__55),
+FlatProductEq(M#matrix_to_atom_2_1,__64,__56),
+FlatProductEq(M#matrix_to_atom_0_2,__65,__57),
+__58 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+__59 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+FlatProductEq(M#matrix_to_atom_1_1,M#matrix_to_atom_0_0,__60),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_2,__61),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_0,__62),
+FlatProductEq(M#matrix_to_atom_1_2,M#matrix_to_atom_0_1,__63),
+FlatProductEq(M#matrix_to_atom_1_0,M#matrix_to_atom_0_2,__64),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_1,__65)
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+and([__58,__59;int(1..)]),
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]);int(1..)]) = squaredet,
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2,
+FlatProductEq(M#matrix_to_atom_2_2,__60,__52),
+FlatProductEq(M#matrix_to_atom_0_0,__61,__53),
+FlatProductEq(M#matrix_to_atom_0_1,__62,__54),
+FlatProductEq(M#matrix_to_atom_2_0,__63,__55),
+FlatProductEq(M#matrix_to_atom_2_1,__64,__56),
+FlatProductEq(M#matrix_to_atom_0_2,__65,__57),
+__58 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+__59 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+FlatProductEq(M#matrix_to_atom_1_1,M#matrix_to_atom_0_0,__60),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_2,__61),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_0,__62),
+FlatProductEq(M#matrix_to_atom_1_2,M#matrix_to_atom_0_1,__63),
+FlatProductEq(M#matrix_to_atom_1_0,M#matrix_to_atom_0_2,__64),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_1,__65)
+
+--
+
+sum([product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([-1,M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)]),product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]),product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)]),product([-1,M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)]);int(1..)]) = squaredet
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__66, __67, __68, __69, __70, __71],squaredet),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__66, __67, __68, __69, __70, __71],squaredet);int(1..)])
+new variables:
+  find __66: int(-4096..4096)
+  find __67: int(-4096..4096)
+  find __68: int(-4096..4096)
+  find __69: int(-4096..4096)
+  find __70: int(-4096..4096)
+  find __71: int(-4096..4096)
+new constraints:
+  __66 =aux product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)])
+  __67 =aux product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1,M#matrix_to_atom_0_0;int(1..)])
+  __68 =aux product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2,M#matrix_to_atom_0_1;int(1..)])
+  __69 =aux product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)])
+  __70 =aux product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)])
+  __71 =aux product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0,M#matrix_to_atom_0_2;int(1..)])
+
+--
+
+and([FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__66, __67, __68, __69, __70, __71],squaredet),FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__66, __67, __68, __69, __70, __71],squaredet);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([__72,__73;int(1..)])
+new variables:
+  find __72: bool
+  find __73: bool
+new constraints:
+  __72 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__66, __67, __68, __69, __70, __71],squaredet)
+  __73 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__66, __67, __68, __69, __70, __71],squaredet)
+
+--
+
+__66 =aux product([M#matrix_to_atom_0_0,M#matrix_to_atom_0_0,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_2_2,__77,__66)
+new variables:
+  find __74: int(-16..16)
+  find __75: int(-64..64)
+  find __76: int(-256..256)
+  find __77: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_1,__74)
+  FlatProductEq(__74,M#matrix_to_atom_1_1,__75)
+  FlatProductEq(__75,M#matrix_to_atom_0_0,__76)
+  FlatProductEq(__76,M#matrix_to_atom_0_0,__77)
+
+--
+
+__67 =aux product([M#matrix_to_atom_0_0,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1,M#matrix_to_atom_0_0;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_0_0,__81,__67)
+new variables:
+  find __78: int(-16..16)
+  find __79: int(-64..64)
+  find __80: int(-256..256)
+  find __81: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_2_1,__78)
+  FlatProductEq(__78,M#matrix_to_atom_1_2,__79)
+  FlatProductEq(__79,M#matrix_to_atom_1_2,__80)
+  FlatProductEq(__80,M#matrix_to_atom_0_0,__81)
+
+--
+
+__68 =aux product([M#matrix_to_atom_0_1,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_2,M#matrix_to_atom_2_2,M#matrix_to_atom_0_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_0_1,__85,__68)
+new variables:
+  find __82: int(-16..16)
+  find __83: int(-64..64)
+  find __84: int(-256..256)
+  find __85: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_2_2,__82)
+  FlatProductEq(__82,M#matrix_to_atom_1_0,__83)
+  FlatProductEq(__83,M#matrix_to_atom_1_0,__84)
+  FlatProductEq(__84,M#matrix_to_atom_0_1,__85)
+
+--
+
+__69 =aux product([M#matrix_to_atom_0_1,M#matrix_to_atom_0_1,M#matrix_to_atom_1_2,M#matrix_to_atom_1_2,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_2_0,__89,__69)
+new variables:
+  find __86: int(-16..16)
+  find __87: int(-64..64)
+  find __88: int(-256..256)
+  find __89: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_2,__86)
+  FlatProductEq(__86,M#matrix_to_atom_1_2,__87)
+  FlatProductEq(__87,M#matrix_to_atom_0_1,__88)
+  FlatProductEq(__88,M#matrix_to_atom_0_1,__89)
+
+--
+
+__70 =aux product([M#matrix_to_atom_0_2,M#matrix_to_atom_0_2,M#matrix_to_atom_1_0,M#matrix_to_atom_1_0,M#matrix_to_atom_2_1,M#matrix_to_atom_2_1;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_2_1,__93,__70)
+new variables:
+  find __90: int(-16..16)
+  find __91: int(-64..64)
+  find __92: int(-256..256)
+  find __93: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_0,__90)
+  FlatProductEq(__90,M#matrix_to_atom_1_0,__91)
+  FlatProductEq(__91,M#matrix_to_atom_0_2,__92)
+  FlatProductEq(__92,M#matrix_to_atom_0_2,__93)
+
+--
+
+__71 =aux product([M#matrix_to_atom_0_2,M#matrix_to_atom_1_1,M#matrix_to_atom_1_1,M#matrix_to_atom_2_0,M#matrix_to_atom_2_0,M#matrix_to_atom_0_2;int(1..)])
+   ~~> introduce_producteq ([("Minion", 4200), ("OrToolsCpSat", 4200)])
+FlatProductEq(M#matrix_to_atom_0_2,__97,__71)
+new variables:
+  find __94: int(-16..16)
+  find __95: int(-64..64)
+  find __96: int(-256..256)
+  find __97: int(-1024..1024)
+new constraints:
+  FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_2_0,__94)
+  FlatProductEq(__94,M#matrix_to_atom_1_1,__95)
+  FlatProductEq(__95,M#matrix_to_atom_1_1,__96)
+  FlatProductEq(__96,M#matrix_to_atom_0_2,__97)
+
+--
+
+Final model:
+
+letting k be 3
+letting dommax be 4
+letting RANGE be domain int(0..((k - 1)))
+find M: matrix indexed by [RANGE, RANGE] of int((-(dommax))..-2, 0, 2..dommax)
+find det: int(-1, 1)
+find squaredet: int(-1, 1)
+find M#matrix_to_atom_0_0: int(-4..-2, 0, 2..4)
+find M#matrix_to_atom_0_1: int(-4..-2, 0, 2..4)
+find M#matrix_to_atom_0_2: int(-4..-2, 0, 2..4)
+find M#matrix_to_atom_1_0: int(-4..-2, 0, 2..4)
+find M#matrix_to_atom_1_1: int(-4..-2, 0, 2..4)
+find M#matrix_to_atom_1_2: int(-4..-2, 0, 2..4)
+find M#matrix_to_atom_2_0: int(-4..-2, 0, 2..4)
+find M#matrix_to_atom_2_1: int(-4..-2, 0, 2..4)
+find M#matrix_to_atom_2_2: int(-4..-2, 0, 2..4)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find __26: bool
+find __27: bool
+find __28: bool
+find __29: bool
+find __30: bool
+find __31: bool
+find __32: bool
+find __33: bool
+find __34: bool
+find __35: bool
+find __36: bool
+find __37: bool
+find __38: bool
+find __39: bool
+find __40: bool
+find __41: bool
+find __42: bool
+find __43: bool
+find __44: bool
+find __45: bool
+find __46: bool
+find __47: bool
+find __48: bool
+find __49: bool
+find __50: bool
+find __51: bool
+find __52: int(-64..64)
+find __53: int(-64..64)
+find __54: int(-64..64)
+find __55: int(-64..64)
+find __56: int(-64..64)
+find __57: int(-64..64)
+find __58: bool
+find __59: bool
+find __60: int(-16..16)
+find __61: int(-16..16)
+find __62: int(-16..16)
+find __63: int(-16..16)
+find __64: int(-16..16)
+find __65: int(-16..16)
+find __66: int(-4096..4096)
+find __67: int(-4096..4096)
+find __68: int(-4096..4096)
+find __69: int(-4096..4096)
+find __70: int(-4096..4096)
+find __71: int(-4096..4096)
+find __72: bool
+find __73: bool
+find __74: int(-16..16)
+find __75: int(-64..64)
+find __76: int(-256..256)
+find __77: int(-1024..1024)
+find __78: int(-16..16)
+find __79: int(-64..64)
+find __80: int(-256..256)
+find __81: int(-1024..1024)
+find __82: int(-16..16)
+find __83: int(-64..64)
+find __84: int(-256..256)
+find __85: int(-1024..1024)
+find __86: int(-16..16)
+find __87: int(-64..64)
+find __88: int(-256..256)
+find __89: int(-1024..1024)
+find __90: int(-16..16)
+find __91: int(-64..64)
+find __92: int(-256..256)
+find __93: int(-1024..1024)
+find __94: int(-16..16)
+find __95: int(-64..64)
+find __96: int(-256..256)
+find __97: int(-1024..1024)
+
+such that
+
+and([__58,__59;int(1..)]),
+and([__72,__73;int(1..)]),
+and([__0,__1;int(1..)]),
+and([__2,__3;int(1..)]),
+true,
+__0 =aux and([__4,__5,__6;int(1..)]),
+__1 =aux and([__16,__17,__18;int(1..)]),
+__2 =aux and([__28,__29,__30;int(1..)]),
+__3 =aux and([__40,__41,__42;int(1..)]),
+__4 =aux or([__7,__8;int(1..)]),
+__5 =aux or([__9,__10,__11;int(1..)]),
+__6 =aux or([__12,__13,__14,__15;int(1..)]),
+__7 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__8 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_1_0,
+__9 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__10 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__11 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_1_1,
+__12 =aux SumGeq([-1, M#matrix_to_atom_1_0], M#matrix_to_atom_0_0),
+__13 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_0_1),
+__14 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_0_2),
+__15 =aux M#matrix_to_atom_0_2 = M#matrix_to_atom_1_2,
+__16 =aux or([__19,__20;int(1..)]),
+__17 =aux or([__21,__22,__23;int(1..)]),
+__18 =aux or([__24,__25,__26,__27;int(1..)]),
+__19 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__20 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_2_0,
+__21 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__22 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__23 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_2_1,
+__24 =aux SumGeq([-1, M#matrix_to_atom_2_0], M#matrix_to_atom_1_0),
+__25 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_1_1),
+__26 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_1_2),
+__27 =aux M#matrix_to_atom_1_2 = M#matrix_to_atom_2_2,
+__28 =aux or([__31,__32;int(1..)]),
+__29 =aux or([__33,__34,__35;int(1..)]),
+__30 =aux or([__36,__37,__38,__39;int(1..)]),
+__31 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__32 =aux M#matrix_to_atom_0_0 = M#matrix_to_atom_0_1,
+__33 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__34 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__35 =aux M#matrix_to_atom_1_0 = M#matrix_to_atom_1_1,
+__36 =aux SumGeq([-1, M#matrix_to_atom_0_1], M#matrix_to_atom_0_0),
+__37 =aux SumGeq([-1, M#matrix_to_atom_1_1], M#matrix_to_atom_1_0),
+__38 =aux SumGeq([-1, M#matrix_to_atom_2_1], M#matrix_to_atom_2_0),
+__39 =aux M#matrix_to_atom_2_0 = M#matrix_to_atom_2_1,
+__40 =aux or([__43,__44;int(1..)]),
+__41 =aux or([__45,__46,__47;int(1..)]),
+__42 =aux or([__48,__49,__50,__51;int(1..)]),
+__43 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__44 =aux M#matrix_to_atom_0_1 = M#matrix_to_atom_0_2,
+__45 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__46 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__47 =aux M#matrix_to_atom_1_1 = M#matrix_to_atom_1_2,
+__48 =aux SumGeq([-1, M#matrix_to_atom_0_2], M#matrix_to_atom_0_1),
+__49 =aux SumGeq([-1, M#matrix_to_atom_1_2], M#matrix_to_atom_1_1),
+__50 =aux SumGeq([-1, M#matrix_to_atom_2_2], M#matrix_to_atom_2_1),
+__51 =aux M#matrix_to_atom_2_1 = M#matrix_to_atom_2_2,
+FlatProductEq(M#matrix_to_atom_2_2,__60,__52),
+FlatProductEq(M#matrix_to_atom_0_0,__61,__53),
+FlatProductEq(M#matrix_to_atom_0_1,__62,__54),
+FlatProductEq(M#matrix_to_atom_2_0,__63,__55),
+FlatProductEq(M#matrix_to_atom_2_1,__64,__56),
+FlatProductEq(M#matrix_to_atom_0_2,__65,__57),
+__58 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+__59 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__52, __53, __54, __55, __56, __57],det),
+FlatProductEq(M#matrix_to_atom_1_1,M#matrix_to_atom_0_0,__60),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_2,__61),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_0,__62),
+FlatProductEq(M#matrix_to_atom_1_2,M#matrix_to_atom_0_1,__63),
+FlatProductEq(M#matrix_to_atom_1_0,M#matrix_to_atom_0_2,__64),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_1,__65),
+FlatProductEq(M#matrix_to_atom_2_2,__77,__66),
+FlatProductEq(M#matrix_to_atom_0_0,__81,__67),
+FlatProductEq(M#matrix_to_atom_0_1,__85,__68),
+FlatProductEq(M#matrix_to_atom_2_0,__89,__69),
+FlatProductEq(M#matrix_to_atom_2_1,__93,__70),
+FlatProductEq(M#matrix_to_atom_0_2,__97,__71),
+__72 =aux FlatWeightedSumLeq([1, -1, -1, 1, 1, -1],[__66, __67, __68, __69, __70, __71],squaredet),
+__73 =aux FlatWeightedSumGeq([1, -1, -1, 1, 1, -1],[__66, __67, __68, __69, __70, __71],squaredet),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_1_1,__74),
+FlatProductEq(__74,M#matrix_to_atom_1_1,__75),
+FlatProductEq(__75,M#matrix_to_atom_0_0,__76),
+FlatProductEq(__76,M#matrix_to_atom_0_0,__77),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_2_1,__78),
+FlatProductEq(__78,M#matrix_to_atom_1_2,__79),
+FlatProductEq(__79,M#matrix_to_atom_1_2,__80),
+FlatProductEq(__80,M#matrix_to_atom_0_0,__81),
+FlatProductEq(M#matrix_to_atom_2_2,M#matrix_to_atom_2_2,__82),
+FlatProductEq(__82,M#matrix_to_atom_1_0,__83),
+FlatProductEq(__83,M#matrix_to_atom_1_0,__84),
+FlatProductEq(__84,M#matrix_to_atom_0_1,__85),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_1_2,__86),
+FlatProductEq(__86,M#matrix_to_atom_1_2,__87),
+FlatProductEq(__87,M#matrix_to_atom_0_1,__88),
+FlatProductEq(__88,M#matrix_to_atom_0_1,__89),
+FlatProductEq(M#matrix_to_atom_2_1,M#matrix_to_atom_1_0,__90),
+FlatProductEq(__90,M#matrix_to_atom_1_0,__91),
+FlatProductEq(__91,M#matrix_to_atom_0_2,__92),
+FlatProductEq(__92,M#matrix_to_atom_0_2,__93),
+FlatProductEq(M#matrix_to_atom_2_0,M#matrix_to_atom_2_0,__94),
+FlatProductEq(__94,M#matrix_to_atom_1_1,__95),
+FlatProductEq(__95,M#matrix_to_atom_1_1,__96),
+FlatProductEq(__96,M#matrix_to_atom_0_2,__97)
+

@@ -216,9 +216,12 @@ pub fn get_solutions(
 
         solver
             .solve(Box::new(move |sols| {
+                let mut sols_left = sols_left.lock().unwrap();
+                if *sols_left <= 0 {
+                    return false;
+                }
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
                 all_solutions.push(sols.into_iter().collect());
-                let mut sols_left = sols_left.lock().unwrap();
                 *sols_left -= 1;
 
                 *sols_left > 0
@@ -294,6 +297,13 @@ pub fn get_solutions(
     }
 
     sols.retain(|x| !x.is_empty());
+    let mut unique_sols = Vec::new();
+    for sol in sols.drain(..) {
+        if !unique_sols.contains(&sol) {
+            unique_sols.push(sol);
+        }
+    }
+    *sols = unique_sols;
     if let Some(dominance_expression) = dominance_expression.as_ref() {
         let pre_prune_len = sols.len();
         let pruned = retroactively_prune_dominated(sols.clone(), dominance_expression);
@@ -313,6 +323,8 @@ pub struct ConjureSolveCaptureOptions {
     pub artifact_dir: Option<PathBuf>,
     /// Passed to `conjure solve --savilerow-options` (e.g. `-O0`).
     pub savilerow_options: Option<String>,
+    /// Passed to `conjure solve --solver` (e.g. `or-tools`, `minion`).
+    pub solver: Option<String>,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -370,12 +382,15 @@ pub fn get_solutions_from_conjure_with_stats(
 
     cmd.arg("solve")
         .arg(format!("--number-of-solutions={number_of_solutions_arg}"))
-        .arg("--copy-solutions=no")
         .arg("-o")
         .arg(output_dir.path());
 
     if let Some(options) = &capture_options.savilerow_options {
         cmd.arg(format!("--savilerow-options={options}"));
+    }
+
+    if let Some(solver) = &capture_options.solver {
+        cmd.arg(format!("--solver={solver}"));
     }
 
     cmd.arg(essence_file);
@@ -428,11 +443,15 @@ pub fn get_solutions_from_conjure_with_stats(
 
     let timings = read_conjure_timings(output_dir.path(), conjure_solve_wall_time_s)?;
 
+    let mut unique_solutions: Vec<BTreeMap<Name, Literal>> = Vec::new();
+    for sol in solutions_set {
+        if !sol.is_empty() && !unique_solutions.contains(&sol) {
+            unique_solutions.push(sol);
+        }
+    }
+
     Ok(ConjureSolutions {
-        solutions: solutions_set
-            .into_iter()
-            .filter(|x| !x.is_empty())
-            .collect(),
+        solutions: unique_solutions,
         timings,
     })
 }

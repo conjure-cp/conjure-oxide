@@ -11,7 +11,7 @@ use conjure_cp_cli::utils::testing::{
     read_default_rule_trace, truncate_to_first_chars,
 };
 use serde_json::Value as JsonValue;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::error::Error;
 use std::fs;
 use std::fs::File;
@@ -39,7 +39,8 @@ use conjure_cp::settings::{
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{
-    ConjureSolveCaptureOptions, get_solutions, get_solutions_from_conjure_with_stats,
+    ConjureRunTimings, ConjureSolveCaptureOptions, get_solutions,
+    get_solutions_from_conjure_with_stats,
 };
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
@@ -362,57 +363,16 @@ fn integration_test_inner_with_status(
         .map(|s| s.parse().unwrap())
         .collect();
 
-    // Conjure output depends only on the input model, so cache it once per test case.
+    // Conjure output depends on the input model and target solver. Cache per solver family.
     let model_path = format!("{path}/{essence_base}.{extension}");
     let param_file = param_file_in_test_dir(path);
     let stats_path = stats_path(Path::new(path));
     let mut conjure_captured = false;
-    let conjure_solutions = if accept
-        && !skip_conjure_validation
-        && let Some(solver_solution_limit) = solver_solution_limit
-    {
-        let conjure_run = match get_solutions_from_conjure_with_stats(
-            &model_path,
-            param_file.as_deref(),
-            Default::default(),
-            solver_solution_limit,
-            ConjureSolveCaptureOptions {
-                artifact_dir: Some(conjure_artifacts_dir(Path::new(path))),
-                savilerow_options: Some("-O0".to_string()),
-            },
-        ) {
-            Ok(conjure_run) => {
-                conjure_captured = true;
-                upsert_tool_status_stats(&stats_path, "conjure", "ok")?;
-                conjure_run
-            }
-            Err(err) => {
-                upsert_tool_status_stats(&stats_path, "conjure", "fail")?;
-                record_integration_failure(
-                    path,
-                    FailureRecord {
-                        stage: "conjure".to_string(),
-                        message: err.to_string(),
-                        run_label: None,
-                    },
-                    number_of_solutions,
-                    false,
-                );
-                return Err(std::io::Error::other(format!(
-                    "failed to fetch Conjure reference solutions for {model_path}: {err}"
-                ))
-                .into());
-            }
-        };
+    let mut conjure_solutions_cache: HashMap<
+        SolverFamily,
+        Option<(Arc<Vec<BTreeMap<Name, Literal>>>, Option<ConjureRunTimings>)>,
+    > = HashMap::new();
 
-        Some((Arc::new(conjure_run.solutions), conjure_run.timings))
-    } else {
-        None
-    };
-    let conjure_solution_values = conjure_solutions
-        .as_ref()
-        .map(|(solutions, _)| Arc::clone(solutions));
-    let conjure_timings = conjure_solutions.and_then(|(_, timings)| timings);
     let mut allowed_expected_files = BTreeSet::new();
     let mut oxide_timings = RunTimings::default();
     let rule_trace_snapshots_enabled = !test_tracing_disabled();
@@ -422,6 +382,67 @@ fn integration_test_inner_with_status(
             for rewriter in rewriters.clone() {
                 for comprehension_expander in comprehension_expanders.clone() {
                     for solver in solvers.clone() {
+                        let conjure_solutions_for_run = if accept
+                            && !skip_conjure_validation
+                            && let Some(solver_solution_limit) = solver_solution_limit
+                        {
+                            if let Some(res) = conjure_solutions_cache.get(&solver) {
+                                res.clone()
+                            } else {
+                                let conjure_solver_flag = match solver {
+                                    SolverFamily::Minion => Some("minion".to_string()),
+                                    SolverFamily::OrToolsCpSat => Some("or-tools".to_string()),
+                                    _ => None,
+                                };
+                                let savilerow_options = match solver {
+                                    SolverFamily::OrToolsCpSat => None,
+                                    _ => Some("-O0".to_string()),
+                                };
+                                let conjure_run = match get_solutions_from_conjure_with_stats(
+                                    &model_path,
+                                    param_file.as_deref(),
+                                    Default::default(),
+                                    solver_solution_limit,
+                                    ConjureSolveCaptureOptions {
+                                        artifact_dir: Some(conjure_artifacts_dir(Path::new(path))),
+                                        savilerow_options,
+                                        solver: conjure_solver_flag,
+                                    },
+                                ) {
+                                    Ok(conjure_run) => {
+                                        conjure_captured = true;
+                                        upsert_tool_status_stats(&stats_path, "conjure", "ok")?;
+                                        conjure_run
+                                    }
+                                    Err(err) => {
+                                        upsert_tool_status_stats(&stats_path, "conjure", "fail")?;
+                                        record_integration_failure(
+                                            path,
+                                            FailureRecord {
+                                                stage: "conjure".to_string(),
+                                                message: err.to_string(),
+                                                run_label: None,
+                                            },
+                                            number_of_solutions,
+                                            false,
+                                        );
+                                        return Err(std::io::Error::other(format!(
+                                            "failed to fetch Conjure reference solutions for {model_path}: {err}"
+                                        ))
+                                        .into());
+                                    }
+                                };
+                                let res = Some((Arc::new(conjure_run.solutions), conjure_run.timings));
+                                conjure_solutions_cache.insert(solver, res.clone());
+                                res
+                            }
+                        } else {
+                            None
+                        };
+                        let conjure_solution_values = conjure_solutions_for_run
+                            .as_ref()
+                            .map(|(solutions, _)| Arc::clone(solutions));
+
                         let case_name = run_case_name(parser, comprehension_expander);
                         let run_case = RunCase {
                             parser,
@@ -541,6 +562,9 @@ fn integration_test_inner_with_status(
     }
 
     if accept && !skip_conjure_validation {
+        let conjure_timings = conjure_solutions_cache
+            .values()
+            .find_map(|opt| opt.as_ref().and_then(|(_, timings)| timings.clone()));
         if let Some(conjure_timings) = conjure_timings {
             upsert_recorded_run_stats(
                 &stats_path,
@@ -698,9 +722,16 @@ fn integration_test_inner(
 
         let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
         let mut username_solutions_json = solutions_to_json(&username_solutions);
-
         conjure_solutions_json.sort_all_objects();
         username_solutions_json.sort_all_objects();
+
+        if let serde_json::Value::Array(arr) = &mut conjure_solutions_json {
+            arr.sort_by_key(|v| serde_json::to_string(v).unwrap());
+        }
+        if let serde_json::Value::Array(arr) = &mut username_solutions_json {
+            arr.sort_by_key(|v| serde_json::to_string(v).unwrap());
+        }
+
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
@@ -936,6 +967,7 @@ fn capture_conjure_reference(
         ConjureSolveCaptureOptions {
             artifact_dir: Some(out_dir),
             savilerow_options: Some("-O0".to_string()),
+            solver: None,
         },
     )?;
     Ok(())

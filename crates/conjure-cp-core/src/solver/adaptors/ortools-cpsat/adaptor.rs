@@ -70,6 +70,9 @@ impl SolverAdaptor for OrToolsCpSat {
         let user_terminated = std::sync::atomic::AtomicBool::new(false);
         let num_solutions = std::sync::atomic::AtomicUsize::new(0);
 
+        let seen_solutions = std::sync::Mutex::new(Vec::new());
+        let consecutive_duplicates = std::sync::atomic::AtomicUsize::new(0);
+
         let cb = |response_proto: &[u8]| -> bool {
             if user_terminated.load(std::sync::atomic::Ordering::Relaxed) {
                 return false;
@@ -94,6 +97,14 @@ impl SolverAdaptor for OrToolsCpSat {
                 }
             };
 
+            if self.enumerate_all {
+                let mut seen = seen_solutions.lock().unwrap();
+                if seen.contains(&solution) {
+                    return true;
+                }
+                seen.push(solution.clone());
+            }
+
             num_solutions.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             let continue_search = callback(solution);
             if !continue_search {
@@ -105,20 +116,22 @@ impl SolverAdaptor for OrToolsCpSat {
         let cb_dyn: &dyn Fn(&[u8]) -> bool = &cb;
         let callback_ptr = &cb_dyn as *const &dyn Fn(&[u8]) -> bool as usize;
 
-        let max_var_idx = self
+
+
+        let mut decision_vars: Vec<usize> = self
             .solution_vars
             .iter()
             .map(|v| v.var_index)
-            .max()
-            .map(|m| m + 1)
-            .unwrap_or(0);
+            .collect();
+        decision_vars.sort_unstable();
+        decision_vars.dedup();
 
         let response_bytes = unsafe {
             ffi::solve_wrapper(
                 &model_bytes,
                 callback_ptr,
                 self.enumerate_all,
-                max_var_idx,
+                &decision_vars,
             )
         };
         drop(model_bytes);

@@ -21,7 +21,7 @@ mod ffi {
             model_proto: &[u8],
             callback_ptr: usize,
             enumerate_all: bool,
-            num_decision_vars: usize,
+            decision_vars: &[usize],
         ) -> Vec<u8>;
     }
     extern "Rust" {

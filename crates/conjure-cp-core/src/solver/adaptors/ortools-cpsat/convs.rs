@@ -2012,6 +2012,19 @@ fn translate_reified_constraint(
                 }
             }
         }
+        Expression::FlatLexLt(_, a, b) | Expression::FlatLexLeq(_, a, b) => {
+            let op = if matches!(inner_expr, Expression::FlatLexLt(..)) { "<" } else { "<=" };
+            let mut elems_l = Vec::new();
+            for atom in a {
+                elems_l.push(expr_to_linear(&Expression::Atomic(Metadata::default(), atom.clone()), ctx)?);
+            }
+            let mut elems_r = Vec::new();
+            for atom in b {
+                elems_r.push(expr_to_linear(&Expression::Atomic(Metadata::default(), atom.clone()), ctx)?);
+            }
+            let lex_proto = translate_lex_comparison(op, elems_l, elems_r, cp_model, ctx)?;
+            return bind_reified_constraint(ref_var, lex_proto, cp_model);
+        }
         Expression::Leq(_, lhs, rhs) | Expression::LexLeq(_, lhs, rhs) => {
             if let (Some(elems_l), Some(elems_r)) = (
                 expr_to_linear_list(lhs.as_ref(), ctx),
@@ -2217,6 +2230,41 @@ fn translate_reified_constraint(
                 constraint: Some(constraint_proto::Constraint::BoolOr(BoolArgumentProto {
                     literals: vec![-rhs_lit - 1],
                 })),
+            });
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
+        }
+        Expression::Iff(_, lhs, rhs) => {
+            let lhs_lit = get_or_create_literal(lhs.as_ref(), cp_model, ctx)?;
+            let rhs_lit = get_or_create_literal(rhs.as_ref(), cp_model, ctx)?;
+
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![ref_var],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![lhs_lit, rhs_lit],
+                        coeffs: vec![1, -1],
+                        domain: vec![0, 0],
+                    },
+                )),
+            });
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-ref_var - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![lhs_lit, rhs_lit],
+                        coeffs: vec![1, 1],
+                        domain: vec![1, 1],
+                    },
+                )),
             });
             return Ok(exact_linear_constraint(
                 LinearExpr {
@@ -3427,6 +3475,14 @@ fn translate_aux_declaration(
                 ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
                 return translate_element_id_aux(var_idx, matrix, value, cp_model, ctx);
             }
+        } else if let Expression::MinionElementOne(..) = inner_expr {
+            let int_var = cp_model.variables.len() as i32;
+            cp_model.variables.push(IntegerVariableProto {
+                name: reference.name().to_string(),
+                domain: vec![i32::MIN as i64, i32::MAX as i64],
+            });
+            ctx.var_mapping.borrow_mut().insert(reference.name().clone(), int_var);
+            return translate_constraint(inner_expr, cp_model, ctx);
         } else if let Expression::FlatProductEq(..) = inner_expr {
             return translate_constraint(inner_expr, cp_model, ctx);
         }
@@ -4410,6 +4466,18 @@ fn translate_constraint(
             let constraint =
                 translate_div_mod_undef_zero(false, &a_expr, &b_expr, &target_expr, cp_model)?;
             return Ok(constraint);
+        }
+        Expression::FlatLexLt(_, a, b) | Expression::FlatLexLeq(_, a, b) => {
+            let op = if matches!(expr, Expression::FlatLexLt(..)) { "<" } else { "<=" };
+            let mut elems_l = Vec::new();
+            for atom in a {
+                elems_l.push(expr_to_linear(&Expression::Atomic(Metadata::default(), atom.clone()), ctx)?);
+            }
+            let mut elems_r = Vec::new();
+            for atom in b {
+                elems_r.push(expr_to_linear(&Expression::Atomic(Metadata::default(), atom.clone()), ctx)?);
+            }
+            return translate_lex_comparison(op, elems_l, elems_r, cp_model, ctx);
         }
         Expression::FlatProductEq(_, a, b, target) => {
             use super::proto::{LinearArgumentProto, LinearExpressionProto};

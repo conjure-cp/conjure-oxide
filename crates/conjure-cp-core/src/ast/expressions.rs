@@ -985,9 +985,9 @@ impl Expression {
             Expression::TypeAnnotation(_, expr, _) => expr.domain_of(),
             Expression::DomainAnnotation(_, _, domain) => Some(domain.clone()),
             Expression::Sum(_, e) => sum_domain_of_child(e)
-                .or_else(|| bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))),
+                .or_else(|| bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| x.checked_add(y))),
             Expression::Product(_, e) => {
-                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y))
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| x.checked_mul(y))
             }
             Expression::Min(_, e) => {
                 if empty_matrix_integer_element_domain(e).is_some() {
