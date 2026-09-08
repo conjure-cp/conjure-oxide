@@ -127,6 +127,32 @@ fn singleton_int_value(expr: &Expr) -> Option<i32> {
     if low == high { Some(*low) } else { None }
 }
 
+/// Extracts a singleton integer without deriving the domain of a compound expression.
+///
+/// Local partial evaluation runs on every dirty ancestor. Calling `domain_of` for arithmetic
+/// expressions here can enumerate the Cartesian product of both operand domains, turning a cheap
+/// node-local check into the dominant translation cost. Literal and declaration-domain lookup are
+/// the constant-size cases needed to fold operations such as `x ** 2` for `x : int(2..2)`.
+fn cheap_singleton_int_value(expr: &Expr) -> Option<i32> {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(Lit::Int(value))) => Some(*value),
+        Expr::Atomic(_, Atom::Reference(reference)) => {
+            let domain = reference.domain()?.resolve().ok()?;
+            let GroundDomain::Int(ranges) = domain.as_ref() else {
+                return None;
+            };
+            let [range] = ranges.as_slice() else {
+                return None;
+            };
+            let (Some(low), Some(high)) = (range.low(), range.high()) else {
+                return None;
+            };
+            (low == high).then_some(*low)
+        }
+        _ => None,
+    }
+}
+
 /// Resolves a matrix literal subject, including constant references to matrix literals.
 fn resolve_matrix_subject(subject: &Expr) -> Option<(Vec<Expr>, DomainPtr)> {
     subject.clone().unwrap_matrix_unchecked().or_else(|| {
@@ -528,8 +554,6 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 return Err(RuleNotApplicable);
             }
 
-            // Only deep evaluation folds a zero product, so stop here rather than building a
-            // replacement the `acc == 0` arm below discards.
             if acc == 0 && mode == PartialEvalMode::Local {
                 return Err(RuleNotApplicable);
             }
@@ -1031,7 +1055,15 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::UnsafeMod(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeMod(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafePow(_, _, _) => Err(RuleNotApplicable),
-        Expr::SafePow(_, _, _) => Err(RuleNotApplicable),
+        Expr::SafePow(_, base, exponent) => {
+            let base = cheap_singleton_int_value(base).ok_or(RuleNotApplicable)?;
+            let exponent = cheap_singleton_int_value(exponent).ok_or(RuleNotApplicable)?;
+            if exponent < 0 || (base == 0 && exponent == 0) {
+                return Err(RuleNotApplicable);
+            }
+            let value = base.checked_pow(exponent as u32).ok_or(RuleNotApplicable)?;
+            Ok(RuleEffect::pure(Expr::from(value)))
+        }
         Expr::Minus(_, _, _) => Err(RuleNotApplicable),
         Expr::Card(_, _) => Err(RuleNotApplicable),
 
@@ -1257,6 +1289,48 @@ mod tests {
                 Domain::int(vec![Range::Bounded(1, 20)]),
             ))),
         )
+    }
+
+    fn singleton_ref(name: &str, value: i32) -> Expr {
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(crate::ast::Reference::new(DeclarationPtr::new_find(
+                Name::user(name),
+                Domain::int(vec![Range::Bounded(value, value)]),
+            ))),
+        )
+    }
+
+    fn safe_pow(base: Expr, exponent: Expr) -> Expr {
+        Expr::SafePow(Metadata::new(), Moo::new(base), Moo::new(exponent))
+    }
+
+    /// A power folds when both operands are singletons, taking the base from a declaration domain.
+    #[test]
+    fn safe_pow_folds_singleton_operands() {
+        let reduced = run_partial_evaluator_local(&safe_pow(singleton_ref("x", 2), int_lit(3)))
+            .expect("evaluates")
+            .new_expression;
+        assert_eq!(reduced, int_lit(8));
+    }
+
+    /// A non-singleton operand leaves the power alone: its value is not yet known.
+    #[test]
+    fn safe_pow_keeps_non_singleton_operands() {
+        assert!(run_partial_evaluator_local(&safe_pow(atom_ref("x"), int_lit(3))).is_err());
+    }
+
+    /// `0 ** 0` is undefined, and a negative exponent has no integer result.
+    #[test]
+    fn safe_pow_leaves_undefined_powers_alone() {
+        assert!(run_partial_evaluator_local(&safe_pow(int_lit(0), int_lit(0))).is_err());
+        assert!(run_partial_evaluator_local(&safe_pow(int_lit(2), int_lit(-1))).is_err());
+    }
+
+    /// Overflow is not folded: the model keeps the power rather than wrapping.
+    #[test]
+    fn safe_pow_leaves_overflowing_powers_alone() {
+        assert!(run_partial_evaluator_local(&safe_pow(int_lit(i32::MAX), int_lit(2))).is_err());
     }
 
     fn and(exprs: Vec<Expr>) -> Expr {
