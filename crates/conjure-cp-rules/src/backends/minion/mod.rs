@@ -12,7 +12,9 @@ use std::{
 };
 
 use crate::extra_check;
-use crate::shared::utils::{defer_aux_var, is_flat, rewrite_children, to_aux_var};
+use crate::shared::utils::{
+    defer_aux_var, flatten_children_to_aux_vars, is_flat, rewrite_children, to_aux_var,
+};
 use crate::types::matrix::try_index_matrix_components;
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{Domain, DomainPtr, GroundDomain, HasDomain, Moo, eval_constant};
@@ -2198,22 +2200,12 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let mut symbols = symbols.clone();
-    let mut new_tops: Vec<Expr> = vec![];
-
-    let (expr, num_changed) = rewrite_children(expr, |child| {
-        if let Some(aux_var_info) = to_aux_var(&child, &symbols) {
-            symbols = aux_var_info.symbols();
-            new_tops.push(aux_var_info.top_level_expr());
-            (aux_var_info.as_expr(), true)
-        } else {
-            (child, false)
-        }
-    });
-
-    if num_changed == 0 {
-        return Err(RuleNotApplicable);
-    }
+    // Cloning the model-wide symbol table costs a clone per declaration, and most calls reach
+    // this rule with already-atomic children. Decide applicability from the child domains
+    // first, and hand those domains to the rewrite so they are only derived once.
+    let (expr, new_tops, symbols) =
+        flatten_children_to_aux_vars(expr, symbols, |needs_aux, _| needs_aux > 0)
+            .ok_or(RuleNotApplicable)?;
 
     Ok(RuleEffect::new(expr, new_tops, symbols))
 }
@@ -2224,23 +2216,13 @@ fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let mut symbols = symbols.clone();
-    let mut new_tops: Vec<Expr> = vec![];
-
-    let (expr, num_changed) = rewrite_children(expr, |child| {
-        if let Some(aux_var_info) = to_aux_var(&child, &symbols) {
-            symbols = aux_var_info.symbols();
-            new_tops.push(aux_var_info.top_level_expr());
-            (aux_var_info.as_expr(), true)
-        } else {
-            (child, false)
-        }
-    });
-
-    // eq: both sides have to be non flat for the rule to be applicable!
-    if num_changed != 2 {
-        return Err(RuleNotApplicable);
-    }
+    // eq: both sides have to be non flat for the rule to be applicable. Deciding that from the
+    // child domains keeps the symbol-table clone off the failure path.
+    let (expr, new_tops, symbols) =
+        flatten_children_to_aux_vars(expr, symbols, |needs_aux, num_children| {
+            num_children == 2 && needs_aux == 2
+        })
+        .ok_or(RuleNotApplicable)?;
 
     Ok(RuleEffect::new(expr, new_tops, symbols))
 }

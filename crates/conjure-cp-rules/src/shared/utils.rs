@@ -274,6 +274,49 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
     Some(atoms)
 }
 
+/// Replaces every direct child of `expr` that needs one with a fresh auxiliary variable.
+///
+/// `applies` decides whether the rewrite goes ahead, given the number of children that need an
+/// auxiliary and the total number of children. It is consulted before the model-wide symbol table
+/// is cloned, so a rule that does not apply pays neither for the clone nor for the rebuild.
+///
+/// Child domains are derived once and reused for the rewrite. Deriving the domain of an expression
+/// can enumerate its whole value set, and expression clones start with an empty domain cache, so
+/// each domain is worth deriving exactly once per call.
+pub fn flatten_children_to_aux_vars(
+    expr: &Expr,
+    symbols: &SymbolTable,
+    applies: impl FnOnce(usize, usize) -> bool,
+) -> Option<(Expr, Vec<Expr>, SymbolTable)> {
+    let children = expr.children();
+    let child_domains: Vec<Option<DomainPtr>> = children.iter().map(to_aux_var_domain).collect();
+
+    let needs_aux = child_domains
+        .iter()
+        .filter(|domain| domain.is_some())
+        .count();
+    if !applies(needs_aux, children.len()) {
+        return None;
+    }
+
+    let mut symbols = symbols.clone();
+    let mut new_tops: Vec<Expr> = vec![];
+    let mut new_children: VecDeque<Expr> = VecDeque::with_capacity(children.len());
+    for (child, domain) in children.into_iter().zip(child_domains) {
+        match domain {
+            Some(domain) => {
+                let aux_var_info = materialise_aux_var(&child, &symbols, &domain);
+                symbols = aux_var_info.symbols();
+                new_tops.push(aux_var_info.top_level_expr());
+                new_children.push_back(aux_var_info.as_expr());
+            }
+            None => new_children.push_back(child),
+        }
+    }
+
+    Some((expr.with_children(new_children), new_tops, symbols))
+}
+
 /// Creates a new auxiliary variable using the given expression.
 ///
 /// # Returns
