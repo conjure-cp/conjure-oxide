@@ -1040,17 +1040,8 @@ impl DeferredAncestorRuleWork {
         deferred_evaluators: &mut DeferredEvaluatorWork,
         dirty_trace: &mut DirtyTrace,
     ) {
-        let mut nodes: Vec<_> = std::mem::take(&mut self.nodes).into_iter().collect();
+        let nodes = deferred_nodes_in_bottom_up_order(std::mem::take(&mut self.nodes), surfaces);
         let postponed = std::mem::take(&mut self.postponed);
-        nodes.sort_by(|(left_surface, left_node), (right_surface, right_node)| {
-            let left_path = surfaces[*left_surface].arena.preorder_path(*left_node);
-            let right_path = surfaces[*right_surface].arena.preorder_path(*right_node);
-            right_path
-                .len()
-                .cmp(&left_path.len())
-                .then_with(|| left_surface.cmp(right_surface))
-                .then_with(|| left_path.cmp(right_path))
-        });
         self.flush_after_level = None;
 
         // Expressions above a changed child are left alone while the priority finishes, so
@@ -1059,7 +1050,7 @@ impl DeferredAncestorRuleWork {
         // evaluator here, so a parent sees an already-normalised child and the path above a
         // rewrite is copied once per batch instead of once per rewrite.
         let mut evaluator_changed = HashSet::new();
-        for &(surface, node_id) in &nodes {
+        for &(surface, node_id, _) in &nodes {
             let Some(rewrite_surface) = surfaces.get_mut(surface) else {
                 continue;
             };
@@ -1082,7 +1073,7 @@ impl DeferredAncestorRuleWork {
             }
         }
 
-        for (surface, node_id) in nodes {
+        for (surface, node_id, _) in nodes {
             let Some(rewrite_surface) = surfaces.get(surface) else {
                 continue;
             };
@@ -1345,7 +1336,7 @@ impl WorklistScheduler {
             node_id,
             generation: arena.generation(node_id),
             mode,
-            depth: arena.preorder_path(node_id).len(),
+            depth: arena.depth(node_id),
             sequence: self.next_sequence,
         };
         self.next_sequence += 1;
@@ -2044,7 +2035,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
 
         match results.into_iter().next() {
             None => {
-                submodel.replace_root(arena.into_root_expression());
+                submodel.replace_root(arena.into_synced_root_expression());
                 break;
             }
             Some((result, _level, expr, node_id, variable_snapshot_before)) => {
@@ -2104,7 +2095,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                 {
                     // Check well-formedness without rebuilding the live arena: a rebuild would
                     // renumber nodes and can change subsequent full-scan order vs release builds.
-                    submodel.replace_root(arena.clone().into_root_expression());
+                    submodel.replace_root(arena.expression(arena.root()).clone());
                     let assertion_context = format!("rewriter after applying rule '{rule_name}'");
                     debug_assert_model_well_formed(submodel, &assertion_context);
                 }
@@ -2462,7 +2453,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         did_rewrite = true;
     }
 
-    write_worklist_surfaces_to_model(submodel, &surfaces);
+    move_worklist_surfaces_to_model(submodel, surfaces);
     #[cfg(debug_assertions)]
     debug_assert_model_well_formed(submodel, "rewriter after a settled worklist pass");
     did_rewrite.then_some(())
@@ -2497,39 +2488,11 @@ fn normalise_deferred_evaluators(
         return false;
     }
 
-    let mut nodes: Vec<_> = std::mem::take(&mut work.nodes).into_iter().collect();
-    nodes.sort_by(|(left_surface, left_node), (right_surface, right_node)| {
-        let depth = |surface: usize, node_id: ExpressionNodeId| {
-            surfaces
-                .get(surface)
-                .filter(|rewrite_surface| rewrite_surface.active)
-                .filter(|rewrite_surface| rewrite_surface.arena.is_reachable(node_id))
-                .map_or(0, |rewrite_surface| {
-                    rewrite_surface.arena.preorder_path(node_id).len()
-                })
-        };
-
-        depth(*right_surface, *right_node)
-            .cmp(&depth(*left_surface, *left_node))
-            .then_with(|| left_surface.cmp(right_surface))
-            .then_with(|| {
-                if left_surface == right_surface
-                    && let Some(surface) = surfaces.get(*left_surface)
-                    && surface.arena.is_reachable(*left_node)
-                    && surface.arena.is_reachable(*right_node)
-                {
-                    return surface
-                        .arena
-                        .preorder_path(*left_node)
-                        .cmp(surface.arena.preorder_path(*right_node));
-                }
-                left_node.cmp(right_node)
-            })
-    });
+    let nodes = deferred_nodes_in_bottom_up_order(std::mem::take(&mut work.nodes), surfaces);
 
     let mut affected_surfaces = HashSet::new();
     let mut changed_value_lettings = HashSet::new();
-    for (surface, node_id) in nodes {
+    for (surface, node_id, _) in nodes {
         let Some(rewrite_surface) = surfaces.get_mut(surface) else {
             continue;
         };
@@ -2593,6 +2556,39 @@ fn normalise_deferred_evaluators(
     }
 
     !affected_surfaces.is_empty()
+}
+
+fn deferred_nodes_in_bottom_up_order(
+    nodes: impl IntoIterator<Item = (usize, ExpressionNodeId)>,
+    surfaces: &[RewriteSurface],
+) -> Vec<(usize, ExpressionNodeId, Option<Vec<usize>>)> {
+    // Cache each rarely needed path once. Reconstructing paths inside the comparison closure would
+    // turn sorting into O(n log n) parent-chain walks.
+    let mut nodes: Vec<_> = nodes
+        .into_iter()
+        .map(|(surface, node_id)| {
+            let path = surfaces
+                .get(surface)
+                .filter(|rewrite_surface| rewrite_surface.active)
+                .filter(|rewrite_surface| rewrite_surface.arena.is_reachable(node_id))
+                .map(|rewrite_surface| rewrite_surface.arena.preorder_path(node_id));
+            (surface, node_id, path)
+        })
+        .collect();
+    nodes.sort_by(
+        |(left_surface, left_node, left_path), (right_surface, right_node, right_path)| {
+            right_path
+                .as_ref()
+                .map_or(0, Vec::len)
+                .cmp(&left_path.as_ref().map_or(0, Vec::len))
+                .then_with(|| left_surface.cmp(right_surface))
+                .then_with(|| match (left_path, right_path) {
+                    (Some(left_path), Some(right_path)) => left_path.cmp(right_path),
+                    _ => left_node.cmp(right_node),
+                })
+        },
+    );
+    nodes
 }
 
 /// Applies evaluator normalisation throughout an existing arena surface.
@@ -2814,7 +2810,10 @@ fn sync_value_letting_surfaces(
 }
 
 fn write_worklist_surfaces_to_model(submodel: &mut Model, surfaces: &[RewriteSurface]) {
-    let root = surfaces[0].arena.expression_from(surfaces[0].arena.root());
+    let root = surfaces[0]
+        .arena
+        .expression(surfaces[0].arena.root())
+        .clone();
     submodel.replace_root(root);
 
     let mut wrote_value_letting = false;
@@ -2825,8 +2824,33 @@ fn write_worklist_surfaces_to_model(submodel: &mut Model, surfaces: &[RewriteSur
         let Some(name) = value_letting_surface_name(&surface.kind) else {
             continue;
         };
+        let expression = surface.arena.expression(surface.arena.root()).clone();
         wrote_value_letting |=
-            write_value_letting_surface_to_model_without_refresh(submodel, name, &surface.arena);
+            write_value_letting_expression_to_model_without_refresh(submodel, name, expression);
+    }
+    if wrote_value_letting {
+        submodel.symbols_mut().refresh_local_binding_hashes();
+    }
+}
+
+fn move_worklist_surfaces_to_model(submodel: &mut Model, surfaces: Vec<RewriteSurface>) {
+    let mut surfaces = surfaces.into_iter();
+    let root = surfaces.next().expect("worklist must have a root surface");
+    submodel.replace_root(root.arena.into_synced_root_expression());
+
+    let mut wrote_value_letting = false;
+    for surface in surfaces {
+        if !surface.active {
+            continue;
+        }
+        let RewriteSurfaceKind::ValueLetting { name } = surface.kind else {
+            continue;
+        };
+        wrote_value_letting |= write_value_letting_expression_to_model_without_refresh(
+            submodel,
+            &name,
+            surface.arena.into_synced_root_expression(),
+        );
     }
     if wrote_value_letting {
         submodel.symbols_mut().refresh_local_binding_hashes();
@@ -2850,6 +2874,18 @@ fn write_value_letting_surface_to_model_without_refresh(
     name: &Name,
     arena: &ExpressionArena,
 ) -> bool {
+    write_value_letting_expression_to_model_without_refresh(
+        submodel,
+        name,
+        arena.expression_from(arena.root()),
+    )
+}
+
+fn write_value_letting_expression_to_model_without_refresh(
+    submodel: &mut Model,
+    name: &Name,
+    expression: Expr,
+) -> bool {
     let declaration = {
         let symbols = submodel.symbols();
         symbols.lookup_local(name)
@@ -2862,7 +2898,7 @@ fn write_value_letting_surface_to_model_without_refresh(
             return false;
         };
 
-        *letting = arena.expression_from(arena.root());
+        *letting = expression;
     }
     true
 }

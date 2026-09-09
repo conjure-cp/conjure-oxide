@@ -27,7 +27,8 @@ pub struct ExpressionArena {
 
 #[derive(Clone, Debug)]
 struct ExpressionArenaNode {
-    expr: Expression,
+    /// The expression payload, released when this node becomes unreachable.
+    expr: Option<Expression>,
     parent: Option<ExpressionNodeId>,
     children: Vec<ExpressionNodeId>,
     /// Counts of direct child expression variants.
@@ -36,7 +37,10 @@ struct ExpressionArenaNode {
     /// variants here avoids rescanning every element of wide matrix literals after each rewrite.
     direct_child_discriminants: Vec<(usize, usize)>,
     reachable: bool,
-    preorder_path: Vec<usize>,
+    /// Position in the parent's expression-child sequence. `None` only for the root.
+    child_slot: Option<usize>,
+    /// Distance from the root, cached because the scheduler reads it frequently.
+    depth: usize,
     /// Incremented when this node's rewrite-relevant content changes.
     generation: u32,
 }
@@ -48,7 +52,7 @@ impl ExpressionArena {
             nodes: Vec::new(),
             root: ExpressionNodeId(0),
         };
-        arena.root = arena.push_subtree(root, None, Vec::new());
+        arena.root = arena.push_subtree(root, None, None, 0);
         arena
     }
 
@@ -59,7 +63,10 @@ impl ExpressionArena {
 
     /// Returns the expression payload stored at `id`.
     pub fn expression(&self, id: ExpressionNodeId) -> &Expression {
-        &self.node(id).expr
+        self.node(id)
+            .expr
+            .as_ref()
+            .unwrap_or_else(|| panic!("expression node is no longer reachable: {id:?}"))
     }
 
     /// Returns the parent of `id`, or `None` for the root.
@@ -89,11 +96,29 @@ impl ExpressionArena {
         self.node(id).reachable
     }
 
-    /// Returns the current preorder path of `id`.
+    /// Returns the depth of `id` below the root.
+    pub fn depth(&self, id: ExpressionNodeId) -> usize {
+        self.node(id).depth
+    }
+
+    /// Builds the current preorder path of `id`.
     ///
-    /// Lexicographic ordering of these paths is the model preorder used by the rewriter.
-    pub fn preorder_path(&self, id: ExpressionNodeId) -> &[usize] {
-        &self.node(id).preorder_path
+    /// Lexicographic ordering of these paths is the model preorder used by the rewriter. Paths
+    /// are only materialised for the relatively rare ordering operations; storing one on every
+    /// node makes building a deep arena quadratic in the tree depth.
+    pub fn preorder_path(&self, id: ExpressionNodeId) -> Vec<usize> {
+        let mut path = Vec::with_capacity(self.depth(id));
+        let mut current = id;
+        while let Some(parent) = self.parent(current) {
+            path.push(
+                self.node(current)
+                    .child_slot
+                    .expect("non-root expression node must have a child slot"),
+            );
+            current = parent;
+        }
+        path.reverse();
+        path
     }
 
     /// Returns the generation counter for `id`.
@@ -124,15 +149,13 @@ impl ExpressionArena {
             self.mark_subtree_unreachable(old_child);
         }
 
-        let parent_path = self.preorder_path(id).to_vec();
+        let child_depth = self.depth(id) + 1;
         let children = replacement
             .children()
             .into_iter()
             .enumerate()
             .map(|(child_index, child)| {
-                let mut child_path = parent_path.clone();
-                child_path.push(child_index);
-                self.push_subtree(child, Some(id), child_path)
+                self.push_subtree(child, Some(id), Some(child_index), child_depth)
             })
             .collect::<Vec<_>>();
         let mut direct_child_discriminants = Vec::new();
@@ -149,7 +172,7 @@ impl ExpressionArena {
         }
 
         let node = self.node_mut(id);
-        node.expr = replacement;
+        node.expr = Some(replacement);
         node.children = children;
         node.direct_child_discriminants = direct_child_discriminants;
         node.generation = node.generation.wrapping_add(1);
@@ -174,7 +197,7 @@ impl ExpressionArena {
             .into_iter()
             .enumerate()
             .map(|(offset, child)| {
-                self.push_subtree(child, Some(root), vec![first_new_child_index + offset])
+                self.push_subtree(child, Some(root), Some(first_new_child_index + offset), 1)
             })
             .collect::<Vec<_>>();
         self.node_mut(root)
@@ -192,7 +215,7 @@ impl ExpressionArena {
             .collect();
         let root_expr = Expression::Root(metadata, rebuilt_children);
         let root_node = self.node_mut(root);
-        root_node.expr = root_expr;
+        root_node.expr = Some(root_expr);
         root_node.generation = root_node.generation.wrapping_add(1);
         self.invalidate_expression_hashes_to_root(root);
         new_children
@@ -208,22 +231,22 @@ impl ExpressionArena {
             .iter()
             .map(|&child_id| self.direct_child_expression(child_id))
             .collect();
-        let rebuilt = self.node(id).expr.with_children(child_exprs);
+        let rebuilt = self.expression(id).with_children(child_exprs);
         rebuilt.meta_ref().clear_cached_domain();
         // `with_children` carries the old metadata onto the rebuilt expression, cached content
         // hash included, but the children it now holds are different ones.
         rebuilt.invalidate_cached_content_hash();
         let node = self.node_mut(id);
-        node.expr = rebuilt;
+        node.expr = Some(rebuilt);
         node.generation = node.generation.wrapping_add(1);
     }
 
     /// Syncs the parent payload after a direct child changed.
     ///
     /// Uses [`Uniplate::try_replace_child_at`](uniplate::Uniplate::try_replace_child_at) so
-    /// same-arity updates avoid cloning siblings. The child's final preorder-path component gives
-    /// its position in the parent in O(1). Falls back to a full rebuild if the child is missing or
-    /// in-place replace fails (e.g. arity mismatch).
+    /// same-arity updates avoid cloning siblings. The child's stored slot gives its position in
+    /// the parent in O(1). Falls back to a full rebuild if the child is missing or in-place replace
+    /// fails (e.g. arity mismatch).
     pub fn sync_payload_for_changed_child(
         &mut self,
         parent_id: ExpressionNodeId,
@@ -238,6 +261,8 @@ impl ExpressionArena {
         let replaced = self
             .node_mut(parent_id)
             .expr
+            .as_mut()
+            .expect("reachable parent must retain its expression payload")
             .try_replace_child_at(index, child_expr);
         if !replaced {
             self.rebuild_payload_from_children(parent_id);
@@ -245,16 +270,19 @@ impl ExpressionArena {
         }
 
         let node = self.node_mut(parent_id);
-        node.expr.meta_ref().clear_cached_domain();
-        node.expr.invalidate_cached_content_hash();
+        let expr = node
+            .expr
+            .as_ref()
+            .expect("reachable parent must retain its expression payload");
+        expr.meta_ref().clear_cached_domain();
+        expr.invalidate_cached_content_hash();
         node.generation = node.generation.wrapping_add(1);
     }
 
     /// Returns `child_id`'s position among `parent_id`'s direct children.
     ///
-    /// Direct-child positions are encoded in preorder paths as the final path component. Checking
-    /// the stored parent and child slot keeps this lookup safe for unreachable nodes whose paths
-    /// are retained after subtree replacement.
+    /// Checking the stored parent and child slot keeps this lookup safe for unreachable nodes
+    /// whose relationship metadata is retained after subtree replacement.
     fn direct_child_index(
         &self,
         parent_id: ExpressionNodeId,
@@ -265,7 +293,7 @@ impl ExpressionArena {
             return None;
         }
 
-        let index = child.preorder_path.last().copied()?;
+        let index = child.child_slot?;
         (self.children(parent_id).get(index).copied() == Some(child_id)).then_some(index)
     }
 
@@ -322,6 +350,18 @@ impl ExpressionArena {
         self.expression_from(self.root)
     }
 
+    /// Moves out the root payload when callers have kept ancestor payloads synchronized.
+    ///
+    /// Unlike [`Self::into_root_expression`], this does not recursively rebuild the tree. It is
+    /// intended for the rewriter's settled arena, where every changed child has already been
+    /// propagated to the root.
+    pub(crate) fn into_synced_root_expression(mut self) -> Expression {
+        self.nodes[self.root.0]
+            .expr
+            .take()
+            .expect("arena root must retain its expression payload")
+    }
+
     fn direct_child_expression(&self, id: ExpressionNodeId) -> Expression {
         self.expression(id).clone()
     }
@@ -335,7 +375,11 @@ impl ExpressionArena {
             .map(|child| self.expression_from(*child))
             .collect::<VecDeque<_>>();
 
-        let rebuilt = node.expr.with_children(children);
+        let rebuilt = node
+            .expr
+            .as_ref()
+            .expect("reachable node must retain its expression payload")
+            .with_children(children);
         rebuilt.invalidate_cached_content_hash();
         rebuilt
     }
@@ -377,19 +421,21 @@ impl ExpressionArena {
         &mut self,
         expr: Expression,
         parent: Option<ExpressionNodeId>,
-        preorder_path: Vec<usize>,
+        child_slot: Option<usize>,
+        depth: usize,
     ) -> ExpressionNodeId {
         expr.invalidate_cached_content_hash();
         expr.meta_ref().clear_cached_domain();
         let id = ExpressionNodeId(self.nodes.len());
         let child_exprs = expr.children();
         self.nodes.push(ExpressionArenaNode {
-            expr,
+            expr: Some(expr),
             parent,
             children: Vec::new(),
             direct_child_discriminants: Vec::new(),
             reachable: true,
-            preorder_path: preorder_path.clone(),
+            child_slot,
+            depth,
             generation: 0,
         });
 
@@ -397,9 +443,7 @@ impl ExpressionArena {
             .into_iter()
             .enumerate()
             .map(|(child_index, child)| {
-                let mut child_path = preorder_path.clone();
-                child_path.push(child_index);
-                self.push_subtree(child, Some(id), child_path)
+                self.push_subtree(child, Some(id), Some(child_index), depth + 1)
             })
             .collect();
         self.nodes[id.0].children = children;
@@ -420,8 +464,10 @@ impl ExpressionArena {
             return;
         }
 
-        let children = self.children(id).to_vec();
+        let children = std::mem::take(&mut self.node_mut(id).children);
         let node = self.node_mut(id);
+        node.expr = None;
+        node.direct_child_discriminants.clear();
         node.reachable = false;
         node.generation = node.generation.wrapping_add(1);
 
