@@ -50,6 +50,18 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
         return Err(RuleNotApplicable);
     };
 
+    // When all but the leading index are fixed, project those dimensions while the value letting
+    // is still borrowed. The generic matrix rules would otherwise clone the complete matrix and
+    // build one SafeIndex per outer element, only to evaluate every one of them independently.
+    if let Some(projected) = reference
+        .with_resolved_expression(|resolved| {
+            specialise_literal_matrix_index(resolved, indices.as_slice())
+        })
+        .flatten()
+    {
+        return Ok(RuleEffect::pure(projected));
+    }
+
     let constant = reference.resolve_constant().ok_or(RuleNotApplicable)?;
     let Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _)) = &constant else {
         return Err(RuleNotApplicable);
@@ -60,6 +72,69 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
         Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(constant))),
         indices.clone(),
     )))
+}
+
+fn literal_matrix_offset(domain: &GroundDomain, index: i32) -> Option<usize> {
+    let GroundDomain::Int(ranges) = domain else {
+        return None;
+    };
+    let [range] = ranges.as_slice() else {
+        return None;
+    };
+    usize::try_from(index.checked_sub(*range.low()?)?).ok()
+}
+
+fn literal_at_matrix_indices<'a>(mut value: &'a Lit, indices: &[i32]) -> Option<&'a Lit> {
+    for &index in indices {
+        let Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, domain)) = value else {
+            return None;
+        };
+        value = elems.get(literal_matrix_offset(domain, index)?)?;
+    }
+    Some(value)
+}
+
+/// Projects fixed trailing dimensions from a directly stored literal matrix.
+///
+/// For example, `m[i, 2]` becomes `[m[1,2], ..., m[n,2]][i]` in one rewrite, without cloning `m`
+/// or constructing `n` intermediate SafeIndex expressions.
+fn specialise_literal_matrix_index(resolved: &Expr, indices: &[Expr]) -> Option<Expr> {
+    if indices.len() < 2 {
+        return None;
+    }
+
+    let Expr::Atomic(
+        _,
+        Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(outer_elems, outer_domain))),
+    ) = resolved
+    else {
+        return None;
+    };
+
+    let trailing_indices = indices[1..]
+        .iter()
+        .map(|index| match eval_constant(index)? {
+            Lit::Int(value) => Some(value),
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>()?;
+
+    let projected = outer_elems
+        .iter()
+        .map(|row| literal_at_matrix_indices(row, &trailing_indices).cloned())
+        .collect::<Option<Vec<_>>>()?;
+
+    Some(Expr::SafeIndex(
+        Metadata::new(),
+        Moo::new(Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(
+                projected,
+                outer_domain.clone(),
+            ))),
+        )),
+        vec![indices[0].clone()],
+    ))
 }
 
 fn materialise_matrix_operand(expr: &Expr) -> Option<Expr> {

@@ -153,27 +153,63 @@ fn cheap_singleton_int_value(expr: &Expr) -> Option<i32> {
     }
 }
 
-/// Resolves a matrix literal subject, including constant references to matrix literals.
-fn resolve_matrix_subject(subject: &Expr) -> Option<(Vec<Expr>, DomainPtr)> {
-    subject.clone().unwrap_matrix_unchecked().or_else(|| {
-        let Expr::Atomic(_, Atom::Reference(reference)) = subject else {
-            return None;
-        };
+fn matrix_index_offset(index_domain: &DomainPtr, index: i32) -> Option<usize> {
+    let ranges = index_domain.as_int_ground()?;
+    let [range] = ranges.as_slice() else {
+        return None;
+    };
+    let from = *range.low()?;
+    usize::try_from(index.checked_sub(from)?).ok()
+}
 
-        let Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, index_domain)) =
-            reference.resolve_constant()?
-        else {
-            return None;
-        };
+fn ground_matrix_index_offset(index_domain: &GroundDomain, index: i32) -> Option<usize> {
+    let GroundDomain::Int(ranges) = index_domain else {
+        return None;
+    };
+    let [range] = ranges.as_slice() else {
+        return None;
+    };
+    let from = *range.low()?;
+    usize::try_from(index.checked_sub(from)?).ok()
+}
 
-        Some((
-            elems
-                .into_iter()
-                .map(|elem| Expr::Atomic(Metadata::new(), Atom::Literal(elem)))
-                .collect(),
-            index_domain.into(),
-        ))
-    })
+/// Selects one element from a matrix literal, including a referenced constant matrix.
+///
+/// This deliberately clones only the selected element. Resolving the complete matrix into an
+/// owned `Vec` for every index makes N selections from an N-element matrix quadratic.
+fn resolve_matrix_element(subject: &Expr, index: i32) -> Option<Expr> {
+    match subject {
+        Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
+            resolve_matrix_element(inner, index)
+        }
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elems, index_domain)) => elems
+            .get(matrix_index_offset(index_domain, index)?)
+            .cloned(),
+        Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, index_domain))),
+        ) => elems
+            .get(ground_matrix_index_offset(index_domain, index)?)
+            .cloned()
+            .map(|literal| Expr::Atomic(Metadata::new(), Atom::Literal(literal))),
+        Expr::Atomic(_, Atom::Reference(reference)) => reference
+            .with_resolved_expression(|resolved| resolve_matrix_element(resolved, index))
+            .flatten()
+            .or_else(|| {
+                // Computed constant lettings are uncommon, but retain support for them. This
+                // fallback may materialise the value; direct matrix lettings above do not.
+                let Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, index_domain)) =
+                    reference.resolve_constant()?
+                else {
+                    return None;
+                };
+                elems
+                    .get(ground_matrix_index_offset(&index_domain, index)?)
+                    .cloned()
+                    .map(|literal| Expr::Atomic(Metadata::new(), Atom::Literal(literal)))
+            }),
+        _ => None,
+    }
 }
 
 /// Resolves domains for partial evaluation while avoiding malformed indexing panics.
@@ -390,10 +426,6 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::AttributeAsConstraint(_, _, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {
             // partially evaluate matrix literals indexed by a constant.
-
-            // subject must be a matrix literal
-            let (es, index_domain) = resolve_matrix_subject(subject).ok_or(RuleNotApplicable)?;
-
             if indices.is_empty() {
                 return Err(RuleNotApplicable);
             }
@@ -401,28 +433,15 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
             // the leading index must be fixed to a single value
             let index = singleton_int_value(&indices[0]).ok_or(RuleNotApplicable)?;
 
-            // index domain must be a single integer range with a lower bound
-            if let Some(ranges) = index_domain.as_int_ground()
-                && ranges.len() == 1
-                && let Some(from) = ranges[0].low()
-            {
-                let zero_indexed_index = index - from;
-                let selected = es
-                    .get(zero_indexed_index as usize)
-                    .ok_or(RuleNotApplicable)?
-                    .clone();
-
-                if indices.len() == 1 {
-                    Ok(RuleEffect::pure(selected))
-                } else {
-                    Ok(RuleEffect::pure(Expr::SafeIndex(
-                        Metadata::new(),
-                        Moo::new(selected),
-                        indices[1..].to_vec(),
-                    )))
-                }
+            let selected = resolve_matrix_element(subject, index).ok_or(RuleNotApplicable)?;
+            if indices.len() == 1 {
+                Ok(RuleEffect::pure(selected))
             } else {
-                Err(RuleNotApplicable)
+                Ok(RuleEffect::pure(Expr::SafeIndex(
+                    Metadata::new(),
+                    Moo::new(selected),
+                    indices[1..].to_vec(),
+                )))
             }
         }
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
