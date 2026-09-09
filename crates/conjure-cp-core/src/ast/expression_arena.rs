@@ -230,18 +230,15 @@ impl ExpressionArena {
     /// Syncs the parent payload after a direct child changed.
     ///
     /// Uses [`Uniplate::try_replace_child_at`](uniplate::Uniplate::try_replace_child_at) so
-    /// same-arity updates avoid cloning siblings. Falls back to a full rebuild if the child is
-    /// missing or in-place replace fails (e.g. arity mismatch).
+    /// same-arity updates avoid cloning siblings. The child's final preorder-path component gives
+    /// its position in the parent in O(1). Falls back to a full rebuild if the child is missing or
+    /// in-place replace fails (e.g. arity mismatch).
     pub fn sync_payload_for_changed_child(
         &mut self,
         parent_id: ExpressionNodeId,
         child_id: ExpressionNodeId,
     ) {
-        let Some(index) = self
-            .children(parent_id)
-            .iter()
-            .position(|&id| id == child_id)
-        else {
+        let Some(index) = self.direct_child_index(parent_id, child_id) else {
             self.rebuild_payload_from_children(parent_id);
             return;
         };
@@ -260,6 +257,25 @@ impl ExpressionArena {
         node.expr.meta_ref().clear_cached_domain();
         node.expr.invalidate_cached_content_hash();
         node.generation = node.generation.wrapping_add(1);
+    }
+
+    /// Returns `child_id`'s position among `parent_id`'s direct children.
+    ///
+    /// Direct-child positions are encoded in preorder paths as the final path component. Checking
+    /// the stored parent and child slot keeps this lookup safe for unreachable nodes whose paths
+    /// are retained after subtree replacement.
+    fn direct_child_index(
+        &self,
+        parent_id: ExpressionNodeId,
+        child_id: ExpressionNodeId,
+    ) -> Option<usize> {
+        let child = self.node(child_id);
+        if child.parent != Some(parent_id) {
+            return None;
+        }
+
+        let index = child.preorder_path.last().copied()?;
+        (self.children(parent_id).get(index).copied() == Some(child_id)).then_some(index)
     }
 
     fn increment_direct_child_discriminant(&mut self, id: ExpressionNodeId, discriminant: usize) {
@@ -531,6 +547,40 @@ mod tests {
         assert_eq!(arena.preorder_path(added[1]), &[2]);
         assert_eq!(arena.parent(added[0]), Some(arena.root()));
         assert_eq!(arena.parent(added[1]), Some(arena.root()));
+    }
+
+    #[test]
+    fn obtains_direct_child_indices_from_preorder_paths() {
+        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2)), int(3)]));
+        let root_id = arena.root();
+        let eq_id = arena.children(root_id)[0];
+        let eq_children = arena.children(eq_id).to_vec();
+
+        assert_eq!(arena.direct_child_index(root_id, eq_id), Some(0));
+        assert_eq!(arena.direct_child_index(eq_id, eq_children[0]), Some(0));
+        assert_eq!(arena.direct_child_index(eq_id, eq_children[1]), Some(1));
+        assert_eq!(arena.direct_child_index(root_id, eq_children[0]), None);
+        assert_eq!(arena.direct_child_index(eq_id, root_id), None);
+
+        let added = arena.add_root_children(vec![int(4)]);
+        assert_eq!(arena.direct_child_index(root_id, added[0]), Some(2));
+    }
+
+    #[test]
+    fn direct_child_index_rejects_unreachable_replaced_children() {
+        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2))]));
+        let root_id = arena.root();
+        let eq_id = arena.children(root_id)[0];
+        let old_left = arena.children(eq_id)[0];
+
+        arena.replace_subtree(eq_id, eq(int(3), int(4)));
+
+        assert!(!arena.is_reachable(old_left));
+        assert_eq!(arena.direct_child_index(eq_id, old_left), None);
+        assert_eq!(
+            arena.direct_child_index(eq_id, arena.children(eq_id)[0]),
+            Some(0)
+        );
     }
 
     #[test]
