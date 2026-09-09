@@ -27,8 +27,9 @@ pub struct ExpressionArena {
 
 #[derive(Clone, Debug)]
 struct ExpressionArenaNode {
-    /// The expression payload, released when this node becomes unreachable.
-    expr: Option<Expression>,
+    /// The expression payload, replaced with an empty tombstone when this node becomes
+    /// unreachable.
+    expr: Expression,
     parent: Option<ExpressionNodeId>,
     children: Vec<ExpressionNodeId>,
     /// Counts of direct child expression variants.
@@ -63,10 +64,7 @@ impl ExpressionArena {
 
     /// Returns the expression payload stored at `id`.
     pub fn expression(&self, id: ExpressionNodeId) -> &Expression {
-        self.node(id)
-            .expr
-            .as_ref()
-            .unwrap_or_else(|| panic!("expression node is no longer reachable: {id:?}"))
+        &self.node(id).expr
     }
 
     /// Returns the parent of `id`, or `None` for the root.
@@ -172,7 +170,7 @@ impl ExpressionArena {
         }
 
         let node = self.node_mut(id);
-        node.expr = Some(replacement);
+        node.expr = replacement;
         node.children = children;
         node.direct_child_discriminants = direct_child_discriminants;
         node.generation = node.generation.wrapping_add(1);
@@ -215,7 +213,7 @@ impl ExpressionArena {
             .collect();
         let root_expr = Expression::Root(metadata, rebuilt_children);
         let root_node = self.node_mut(root);
-        root_node.expr = Some(root_expr);
+        root_node.expr = root_expr;
         root_node.generation = root_node.generation.wrapping_add(1);
         self.invalidate_expression_hashes_to_root(root);
         new_children
@@ -237,7 +235,7 @@ impl ExpressionArena {
         // hash included, but the children it now holds are different ones.
         rebuilt.invalidate_cached_content_hash();
         let node = self.node_mut(id);
-        node.expr = Some(rebuilt);
+        node.expr = rebuilt;
         node.generation = node.generation.wrapping_add(1);
     }
 
@@ -261,8 +259,6 @@ impl ExpressionArena {
         let replaced = self
             .node_mut(parent_id)
             .expr
-            .as_mut()
-            .expect("reachable parent must retain its expression payload")
             .try_replace_child_at(index, child_expr);
         if !replaced {
             self.rebuild_payload_from_children(parent_id);
@@ -270,12 +266,8 @@ impl ExpressionArena {
         }
 
         let node = self.node_mut(parent_id);
-        let expr = node
-            .expr
-            .as_ref()
-            .expect("reachable parent must retain its expression payload");
-        expr.meta_ref().clear_cached_domain();
-        expr.invalidate_cached_content_hash();
+        node.expr.meta_ref().clear_cached_domain();
+        node.expr.invalidate_cached_content_hash();
         node.generation = node.generation.wrapping_add(1);
     }
 
@@ -355,11 +347,12 @@ impl ExpressionArena {
     /// Unlike [`Self::into_root_expression`], this does not recursively rebuild the tree. It is
     /// intended for the rewriter's settled arena, where every changed child has already been
     /// propagated to the root.
-    pub(crate) fn into_synced_root_expression(mut self) -> Expression {
-        self.nodes[self.root.0]
+    pub(crate) fn into_synced_root_expression(self) -> Expression {
+        self.nodes
+            .into_iter()
+            .nth(self.root.0)
+            .expect("arena must contain its root node")
             .expr
-            .take()
-            .expect("arena root must retain its expression payload")
     }
 
     fn direct_child_expression(&self, id: ExpressionNodeId) -> Expression {
@@ -375,11 +368,7 @@ impl ExpressionArena {
             .map(|child| self.expression_from(*child))
             .collect::<VecDeque<_>>();
 
-        let rebuilt = node
-            .expr
-            .as_ref()
-            .expect("reachable node must retain its expression payload")
-            .with_children(children);
+        let rebuilt = node.expr.with_children(children);
         rebuilt.invalidate_cached_content_hash();
         rebuilt
     }
@@ -429,7 +418,7 @@ impl ExpressionArena {
         let id = ExpressionNodeId(self.nodes.len());
         let child_exprs = expr.children();
         self.nodes.push(ExpressionArenaNode {
-            expr: Some(expr),
+            expr,
             parent,
             children: Vec::new(),
             direct_child_discriminants: Vec::new(),
@@ -466,7 +455,7 @@ impl ExpressionArena {
 
         let children = std::mem::take(&mut self.node_mut(id).children);
         let node = self.node_mut(id);
-        node.expr = None;
+        node.expr = Expression::Root(super::Metadata::new(), Vec::new());
         node.direct_child_discriminants.clear();
         node.reachable = false;
         node.generation = node.generation.wrapping_add(1);
