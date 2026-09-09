@@ -305,10 +305,9 @@ pub fn flatten_children_to_aux_vars(
     for (child, domain) in children.into_iter().zip(child_domains) {
         match domain {
             Some(domain) => {
-                let aux_var_info = materialise_aux_var(&child, &symbols, &domain);
-                symbols = aux_var_info.symbols();
-                new_tops.push(aux_var_info.top_level_expr());
-                new_children.push_back(aux_var_info.as_expr());
+                let (reference, top) = materialise_aux_var_in(&child, &mut symbols, &domain);
+                new_tops.push(top);
+                new_children.push_back(Expr::Atomic(Metadata::new(), Atom::Reference(reference)));
             }
             None => new_children.push_back(child),
         }
@@ -329,10 +328,14 @@ pub fn flatten_children_to_aux_vars(
 ///     + A new top level expression, containing the declaration of the auxiliary variable.
 ///     + A reference to the auxiliary variable to replace the existing expression with.
 ///
+/// Adds an auxiliary for `expr` directly to an existing speculative symbol table.
+///
+/// Use this when constructing one or more auxiliaries inside an effect. It avoids cloning the
+/// complete, growing symbol table for each auxiliary.
 #[instrument(skip_all, fields(expr = %expr))]
-pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> {
+pub fn to_aux_var_in(expr: &Expr, symbols: &mut SymbolTable) -> Option<(Reference, Expr)> {
     let domain = to_aux_var_domain(expr)?;
-    Some(materialise_aux_var(expr, symbols, &domain))
+    Some(materialise_aux_var_in(expr, symbols, &domain))
 }
 
 fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
@@ -440,6 +443,21 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
 
 fn materialise_aux_var(expr: &Expr, symbols: &SymbolTable, domain: &DomainPtr) -> ToAuxVarOutput {
     let mut symbols = symbols.clone();
+    let (reference, aux_expression) = materialise_aux_var_in(expr, &mut symbols, domain);
+
+    ToAuxVarOutput {
+        aux_reference: reference,
+        aux_expression,
+        symbols,
+        _unconstructable: (),
+    }
+}
+
+fn materialise_aux_var_in(
+    expr: &Expr,
+    symbols: &mut SymbolTable,
+    domain: &DomainPtr,
+) -> (Reference, Expr) {
     let decl = symbols.gen_find_auxiliary(domain);
     let mut reference = Reference::new(decl);
     let mut representation_constraints = Vec::new();
@@ -483,12 +501,7 @@ fn materialise_aux_var(expr: &Expr, symbols: &SymbolTable, domain: &DomainPtr) -
         Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(expressions)))
     };
 
-    ToAuxVarOutput {
-        aux_reference: reference,
-        aux_expression,
-        symbols,
-        _unconstructable: (),
-    }
+    (reference, aux_expression)
 }
 
 /// Defers auxiliary variable allocation until a selected rule is materialised.
@@ -505,7 +518,7 @@ pub fn defer_aux_var(
     }))
 }
 
-/// Output data of `to_aux_var`.
+/// Output passed to deferred auxiliary-effect builders.
 pub struct ToAuxVarOutput {
     aux_reference: Reference,
     aux_expression: Expr,

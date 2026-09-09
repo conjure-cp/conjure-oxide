@@ -201,12 +201,17 @@ impl RuleEffect {
     }
 
     /// Returns the concrete effect for the current symbol table.
-    pub fn materialise(&self, symbols: &SymbolTable) -> Self {
-        let Some(materialise) = &self.materialise else {
-            return self.clone();
-        };
+    ///
+    /// This consumes the selected effect: cloning a concrete effect can duplicate its expression,
+    /// top-level constraints, clauses, and speculative symbol table. Before returning, the symbol
+    /// snapshot is reduced to the bindings that the effect actually changes.
+    pub fn materialise(mut self, symbols: &SymbolTable) -> Self {
+        if let Some(materialise) = self.materialise.take() {
+            return materialise(symbols).materialise(symbols);
+        }
 
-        materialise(symbols).materialise(symbols)
+        self.symbols.retain_local_changes_from(symbols);
+        self
     }
 
     pub(crate) fn is_deferred(&self) -> bool {
@@ -248,7 +253,7 @@ impl RuleEffect {
             update.apply();
         }
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
-        model.add_constraints(self.new_top.clone());
+        model.add_constraints(self.new_top);
         model.add_clauses(self.new_clauses);
     }
 

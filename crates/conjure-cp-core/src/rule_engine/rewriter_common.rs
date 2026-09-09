@@ -369,21 +369,20 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
         return None;
     }
     let selected = choose_rule_result_index(results.iter().map(|(result, ..)| result));
-    results.swap(0, selected);
-    let (result, _, expr, decl, ctx) = &results[0];
+    let (result, _, expr, decl, ctx) = results.swap_remove(selected);
 
     let effect = result.effect.materialise(&symbols);
     let result = RuleResult {
-        rule_data: result.rule_data.clone(),
+        rule_data: result.rule_data,
         effect,
     };
 
-    log_rule_application(&result, expr, &symbols, None);
+    log_rule_application(&result, &expr, &symbols, None);
 
     let rewritten_expr = ctx(result.effect.new_expression.clone());
     result.effect.apply(model);
 
-    let mut decl = decl.clone();
+    let mut decl = decl;
     *decl
         .as_value_letting_mut()
         .expect("declaration should still be a value letting") = rewritten_expr;

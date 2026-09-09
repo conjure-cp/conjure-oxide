@@ -2051,29 +2051,26 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
             results.swap(0, selected);
         }
 
-        match results.as_slice() {
-            [] => {
+        match results.into_iter().next() {
+            None => {
                 submodel.replace_root(arena.into_root_expression());
                 break;
             }
-            [
-                (result, _level, expr, node_id, variable_snapshot_before),
-                ..,
-            ] => {
+            Some((result, _level, expr, node_id, variable_snapshot_before)) => {
                 let effect = result.effect.materialise(&submodel.symbols());
-                let variable_snapshots = variable_snapshot_before.clone().map(|before| {
+                let variable_snapshots = variable_snapshot_before.map(|before| {
                     let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect);
                     (before, after)
                 });
                 let result = RuleResult {
-                    rule_data: result.rule_data.clone(),
+                    rule_data: result.rule_data,
                     effect,
                 };
 
                 // Extract the single applicable rule and apply it
                 log_rule_application(
                     &result,
-                    expr,
+                    &expr,
                     &submodel.symbols(),
                     variable_snapshots
                         .as_ref()
@@ -2093,7 +2090,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                     ..
                 } = effect;
                 // Replace expr with new_expression
-                replace_focus_and_sync_ancestors(&mut arena, *node_id, new_expression);
+                replace_focus_and_sync_ancestors(&mut arena, node_id, new_expression);
 
                 // Apply new symbols and top level
                 ctx.dirty_trace
@@ -2107,7 +2104,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                 }
                 submodel.add_clauses(new_clauses);
                 let _ =
-                    normalise_evaluators_from_node_to_root(&mut arena, *node_id, ctx.dirty_trace);
+                    normalise_evaluators_from_node_to_root(&mut arena, node_id, ctx.dirty_trace);
                 if has_model_side_effects {
                     ctx.dirty_trace.record_side_effect_kept_in_arena();
                 }
@@ -2295,29 +2292,22 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         }
 
         let selected = choose_rule_result_index(results.iter().map(|(result, _, _, _, _)| result));
-        results.swap(0, selected);
-
-        let [
-            (result, _level, expr, node_id, variable_snapshot_before),
-            ..,
-        ] = results.as_slice()
-        else {
-            unreachable!("checked non-empty results above")
-        };
+        let (result, _level, expr, node_id, variable_snapshot_before) =
+            results.swap_remove(selected);
 
         let effect = result.effect.materialise(&submodel.symbols());
-        let variable_snapshots = variable_snapshot_before.clone().map(|before| {
+        let variable_snapshots = variable_snapshot_before.map(|before| {
             let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect);
             (before, after)
         });
         let result = RuleResult {
-            rule_data: result.rule_data.clone(),
+            rule_data: result.rule_data,
             effect,
         };
 
         log_rule_application(
             &result,
-            expr,
+            &expr,
             &submodel.symbols(),
             variable_snapshots
                 .as_ref()
@@ -2342,7 +2332,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         } = effect;
         {
             let arena = &mut surfaces[surface_index].arena;
-            arena.replace_subtree(*node_id, new_expression);
+            arena.replace_subtree(node_id, new_expression);
         }
 
         ctx.dirty_trace
@@ -2359,10 +2349,10 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         submodel.add_clauses(new_clauses);
         let rewrite_impact_node_id = {
             let arena = &mut surfaces[surface_index].arena;
-            normalise_evaluators_subtree_bottom_up(arena, *node_id, ctx.dirty_trace);
-            deferred_evaluators.defer_ancestors(arena, surface_index, *node_id);
-            deferred_ancestor_rules.defer_ancestors(arena, surface_index, *node_id, level);
-            *node_id
+            normalise_evaluators_subtree_bottom_up(arena, node_id, ctx.dirty_trace);
+            deferred_evaluators.defer_ancestors(arena, surface_index, node_id);
+            deferred_ancestor_rules.defer_ancestors(arena, surface_index, node_id, level);
+            node_id
         };
         scheduler.index_subtree_references(
             &surfaces[surface_index].arena,

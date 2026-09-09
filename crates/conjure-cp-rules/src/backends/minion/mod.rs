@@ -13,7 +13,7 @@ use std::{
 
 use crate::extra_check;
 use crate::shared::utils::{
-    defer_aux_var, flatten_children_to_aux_vars, is_flat, rewrite_children, to_aux_var,
+    defer_aux_var, flatten_children_to_aux_vars, is_flat, rewrite_children, to_aux_var_in,
 };
 use crate::types::matrix::try_index_matrix_components;
 use conjure_cp::ast::categories::{Category, CategoryOf};
@@ -784,10 +784,10 @@ fn flatten_weighted_sum_term(
 ///  + Returns [`ApplicationError::RuleNotApplicable`] if the expression cannot be placed into an
 ///    auxiliary variable. For example, expressions that do not have domains.
 ///
-///    This function supports the same expressions as [`to_aux_var`], except that this functions
+///    This function supports the same expressions as [`to_aux_var_in`], except that this function
 ///    succeeds when the expression given is atomic.
 ///
-///    See [`to_aux_var`] for more information.
+///    See [`to_aux_var_in`] for more information.
 ///
 fn flatten_expression_to_atom(
     expr: Expr,
@@ -808,11 +808,10 @@ fn flatten_expression_to_atom(
         return Ok(atom.clone());
     }
 
-    let aux_var_info = to_aux_var(&expr, symtab).ok_or(RuleNotApplicable)?;
-    *symtab = aux_var_info.symbols();
-    top_level_exprs.push(aux_var_info.top_level_expr());
+    let (reference, top) = to_aux_var_in(&expr, symtab).ok_or(RuleNotApplicable)?;
+    top_level_exprs.push(top);
 
-    Ok(aux_var_info.as_atom())
+    Ok(Atom::Reference(reference))
 }
 
 #[register_rule("Minion", 4200, [Eq / SafeDiv, AuxDeclaration / SafeDiv])]
@@ -2411,10 +2410,9 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
 
         // flatten expressions
         for e in es.iter_mut() {
-            if let Some(aux_info) = to_aux_var(e, &symbols) {
-                *e = aux_info.as_expr();
-                top_level_exprs.push(aux_info.top_level_expr());
-                symbols = aux_info.symbols();
+            if let Some((reference, top)) = to_aux_var_in(e, &mut symbols) {
+                *e = Expr::Atomic(Metadata::new(), Atom::Reference(reference));
+                top_level_exprs.push(top);
                 child_changed = true;
             } else if let Expr::SafeIndex(_, subject, indices) = e {
                 let index_has_element_id = indices

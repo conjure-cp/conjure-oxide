@@ -1,7 +1,7 @@
 use super::MatrixComponents;
 use crate::guard;
 use crate::shared::representation_prelude::matrix::{flatten, unflatten_matrix};
-use crate::shared::utils::{as_eq_or_neq, collect_eq_or_neq, eval_to_usize, to_aux_var};
+use crate::shared::utils::{as_eq_or_neq, collect_eq_or_neq, eval_to_usize, to_aux_var_in};
 use conjure_cp::ast::{
     AbstractLiteral, Atom, DeclarationKind, DomainPtr, Expression, GroundDomain, Literal, Metadata,
     Moo, Range, Reference, SymbolTable, eval_constant,
@@ -363,10 +363,9 @@ fn index_matrix_components_impl(expr: &Expression, symbols: &SymbolTable) -> App
 
         // if indexing expr is compound, extract it into an auxvar
         // for the stuff that comes below...
-        if let Some(res) = to_aux_var(&idx_expr, &idx_auxvars) {
-            idx_auxvar_constraints.push(res.top_level_expr());
-            idx_auxvars = res.symbols();
-            idx_expr = res.as_expr();
+        if let Some((reference, top)) = to_aux_var_in(&idx_expr, &mut idx_auxvars) {
+            idx_auxvar_constraints.push(top);
+            idx_expr = Expression::Atomic(Metadata::new(), Atom::Reference(reference));
         }
 
         // remap "weird" indices to 1..dim_sz
