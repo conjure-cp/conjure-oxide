@@ -62,15 +62,6 @@ impl ExpressionArena {
         &self.node(id).expr
     }
 
-    /// Returns the mutable expression payload stored at `id`.
-    ///
-    /// Callers that change the number or order of direct expression children should use
-    /// [`ExpressionArena::replace_subtree`] instead so the arena links stay consistent.
-    pub fn expression_mut(&mut self, id: ExpressionNodeId) -> &mut Expression {
-        self.invalidate_expression_hashes_to_root(id);
-        &mut self.node_mut(id).expr
-    }
-
     /// Returns the parent of `id`, or `None` for the root.
     pub fn parent(&self, id: ExpressionNodeId) -> Option<ExpressionNodeId> {
         self.node(id).parent
