@@ -209,12 +209,26 @@ pub trait AbstractLiteralValue:
         + Quine
         + From<GroundDomain>
         + Into<DomainPtr>;
+
+    /// Returns whether `domain` is the implicit one-based list index domain.
+    fn has_implied_list_domain(domain: &Self::Dom) -> bool;
 }
 impl AbstractLiteralValue for Expression {
     type Dom = DomainPtr;
+
+    fn has_implied_list_domain(domain: &Self::Dom) -> bool {
+        let Domain::Ground(domain) = domain.as_ref() else {
+            return false;
+        };
+        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+    }
 }
 impl AbstractLiteralValue for Literal {
     type Dom = Moo<GroundDomain>;
+
+    fn has_implied_list_domain(domain: &Self::Dom) -> bool {
+        matches!(domain.as_ref(), GroundDomain::Int(ranges) if ranges.as_slice() == [Range::UnboundedR(1)])
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
@@ -592,16 +606,16 @@ where
             return None;
         };
 
-        let domain: DomainPtr = domain.clone().into();
-        let Some(GroundDomain::Int(ranges)) = domain.as_ground() else {
+        T::has_implied_list_domain(domain).then_some(elems)
+    }
+
+    /// If this abstract literal is a list, consumes it and returns its elements.
+    pub fn into_list(self) -> Option<Vec<T>> {
+        let AbstractLiteral::Matrix(elems, domain) = self else {
             return None;
         };
 
-        let [Range::UnboundedR(1)] = ranges[..] else {
-            return None;
-        };
-
-        Some(elems)
+        T::has_implied_list_domain(&domain).then_some(elems)
     }
 }
 

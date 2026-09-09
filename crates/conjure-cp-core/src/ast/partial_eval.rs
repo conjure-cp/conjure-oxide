@@ -880,7 +880,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                     }
 
                     // flatten ands in root, applying the same true/false rules to conjuncts
-                    Expr::And(_, vecs) => match Moo::unwrap_or_clone(vecs.clone()).unwrap_list() {
+                    Expr::And(_, vecs) => match Moo::unwrap_or_clone(vecs.clone()).into_list() {
                         Some(list) => {
                             has_changed = true;
                             for conjunct in list {

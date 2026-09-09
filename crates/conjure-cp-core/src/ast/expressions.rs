@@ -2264,6 +2264,48 @@ impl Expression {
         }
     }
 
+    /// If the expression is a list, consumes it and returns its elements.
+    ///
+    /// Prefer this over [`Expression::unwrap_list`] when the expression is already owned: it moves
+    /// expression elements out of the matrix rather than cloning the complete list.
+    pub fn into_list(self) -> Option<Vec<Expression>> {
+        match self {
+            Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
+                Moo::unwrap_or_clone(expr).into_list()
+            }
+            Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
+                matrix.into_list()
+            }
+            Expression::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(matrix @ AbstractLiteral::Matrix(_, _))),
+            ) => matrix.into_list().map(|elems| {
+                elems
+                    .into_iter()
+                    .map(|literal| Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
+                    .collect()
+            }),
+            _ => None,
+        }
+    }
+
+    /// If the expression is an expression-valued matrix, borrows its elements and index domain.
+    ///
+    /// As with [`Expression::unwrap_matrix_unchecked`], callers must preserve the relationship
+    /// between the domain and element count. Literal-valued matrices are excluded because their
+    /// elements cannot be borrowed as [`Expression`]s.
+    pub fn unwrap_matrix_unchecked_ref(&self) -> Option<(&[Expression], &DomainPtr)> {
+        match self {
+            Expression::TypeAnnotation(_, expr, _) | Expression::DomainAnnotation(_, expr, _) => {
+                expr.unwrap_matrix_unchecked_ref()
+            }
+            Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain)) => {
+                Some((elems, domain))
+            }
+            _ => None,
+        }
+    }
+
     /// If the expression is a matrix, gets it elements and index domain.
     ///
     /// **Consider using the safer [`Expression::unwrap_list`] instead.**

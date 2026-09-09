@@ -36,7 +36,7 @@ pub fn validate_order_int_operands(
                 return Err(RuleNotApplicable);
             };
 
-            let Some(v) = inner.as_ref().clone().unwrap_list() else {
+            let Some(v) = inner.as_ref().clone().into_list() else {
                 return Err(RuleNotApplicable);
             };
 

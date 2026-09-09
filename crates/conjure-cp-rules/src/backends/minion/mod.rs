@@ -225,7 +225,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    let mut factors_vec = (**factors).clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let mut factors_vec = (**factors).clone().into_list().ok_or(RuleNotApplicable)?;
     if factors_vec.len() < 2 {
         return Err(RuleNotApplicable);
     }
@@ -407,37 +407,37 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
         ) {
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Leq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Leq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Geq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Geq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Eq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Eq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
@@ -453,7 +453,7 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
             let total: Atom = Atom::Reference(reference);
             if let Expr::Sum(_, sum_terms) = Moo::unwrap_or_clone(a) {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             } else {
@@ -697,7 +697,7 @@ fn flatten_weighted_sum_term(
             // we already check for the first case above, so this should only error when we have a
             // non-list matrix literal.
             let factors = Moo::unwrap_or_clone(factors)
-                .unwrap_list()
+                .into_list()
                 .ok_or(RuleNotApplicable)?;
 
             match factors.as_slice() {
@@ -1019,13 +1019,14 @@ fn match_lee_complement(complement: &Expr, expected_inner: &Expr) -> Option<i32>
             (inner.as_ref() == expected_inner).then_some(alphabet_size)
         }
         Expr::Sum(_, matrix) => {
-            let terms = matrix.as_ref().clone().unwrap_list().or_else(|| {
+            let matrix = matrix.as_ref().clone();
+            let terms = if matrix.is_list() {
+                matrix.into_list()
+            } else {
                 matrix
-                    .as_ref()
-                    .clone()
                     .unwrap_matrix_unchecked()
-                    .map(|(elems, _)| elems)
-            })?;
+                    .map(|(elements, _)| elements)
+            }?;
             if terms.len() != 2 {
                 return None;
             }
@@ -1097,7 +1098,7 @@ fn introduce_mineq_from_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationRe
         return Err(RuleNotApplicable);
     };
 
-    let Some(exprs) = inside_min_expr.as_ref().clone().unwrap_list() else {
+    let Some(exprs) = inside_min_expr.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
     if exprs.is_empty() {
@@ -1154,7 +1155,7 @@ fn introduce_mineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Min(_, inside_min_expr) = min_expr else {
         return Err(RuleNotApplicable);
     };
-    let Some(exprs) = inside_min_expr.as_ref().clone().unwrap_list() else {
+    let Some(exprs) = inside_min_expr.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
     if exprs.is_empty() {
@@ -1268,15 +1269,14 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => Moo::unwrap_or_clone(es.clone()),
     };
 
-    let es = matrix_expr
-        .clone()
-        .unwrap_list()
-        .or_else(|| {
-            matrix_expr
-                .unwrap_matrix_unchecked()
-                .map(|(elements, _)| elements)
-        })
-        .ok_or(RuleNotApplicable)?;
+    let es = if matrix_expr.is_list() {
+        matrix_expr.into_list()
+    } else {
+        matrix_expr
+            .unwrap_matrix_unchecked()
+            .map(|(elements, _)| elements)
+    }
+    .ok_or(RuleNotApplicable)?;
 
     let atoms = es
         .into_iter()
@@ -1355,7 +1355,7 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
         return Err(RuleNotApplicable);
     };
 
-    let es = (**matrix).clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let es = (**matrix).clone().into_list().ok_or(RuleNotApplicable)?;
     if es.is_empty() {
         return Err(RuleNotApplicable);
     }
@@ -1419,16 +1419,13 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         return Err(RuleNotApplicable);
     };
 
-    let matrix_expr = Moo::unwrap_or_clone(matrix.clone());
     let value_expr = (**value).clone();
     let value_atom: Atom = value_expr.clone().try_into().or(Err(RuleNotApplicable))?;
 
-    let matrix_elems = matrix_expr.unwrap_list().or_else(|| {
-        matrix_expr
-            .clone()
-            .unwrap_matrix_unchecked()
-            .map(|(elems, _)| elems)
-    });
+    let matrix_elems = (**matrix)
+        .clone()
+        .unwrap_matrix_unchecked()
+        .map(|(elements, _)| elements);
 
     if let Some(elems) = matrix_elems {
         let mut atom_list = vec![];
@@ -1457,7 +1454,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         if let Some(search_values) = literal_matrix_int_values(&atom_list)
             && element_id_value_may_be_outside_matrix(&value_expr, &search_values)
         {
-            if let Ok(atom_list) = indexed_element_id_inverse_lookup(&matrix_expr, &value_expr) {
+            if let Ok(atom_list) = indexed_element_id_inverse_lookup(matrix.as_ref(), &value_expr) {
                 return Ok(RuleEffect::pure(Expr::MinionElementOne(
                     Metadata::new(),
                     atom_list,
@@ -1479,7 +1476,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
             )));
         }
 
-        let atom_list = pad_indexed_element_id_list(&matrix_expr, atom_list.clone(), reference)
+        let atom_list = pad_indexed_element_id_list(matrix.as_ref(), atom_list.clone(), reference)
             .or_else(|| pad_represented_element_id_list(atom_list.clone(), reference))
             .unwrap_or(atom_list);
 
@@ -1491,7 +1488,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         )));
     }
 
-    let atom_list = indexed_element_id_inverse_lookup(&matrix_expr, &value_expr)?;
+    let atom_list = indexed_element_id_inverse_lookup(matrix.as_ref(), &value_expr)?;
 
     Ok(RuleEffect::pure(Expr::MinionElementOne(
         Metadata::new(),
@@ -2185,7 +2182,7 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         return Err(RuleNotApplicable);
     }
 
-    let Some(list) = Moo::unwrap_or_clone(subject).unwrap_list() else {
+    let Some(list) = Moo::unwrap_or_clone(subject).into_list() else {
         return Err(RuleNotApplicable);
     };
 
@@ -2337,7 +2334,7 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let factors = (**factors).clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let factors = (**factors).clone().into_list().ok_or(RuleNotApplicable)?;
 
     let mut new_factors = vec![];
     let mut top_level_exprs = vec![];
@@ -2546,10 +2543,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let sum_exprs = (*sum_exprs)
-        .clone()
-        .unwrap_list()
-        .ok_or(RuleNotApplicable)?;
+    let sum_exprs = (*sum_exprs).clone().into_list().ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
         [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
@@ -2585,7 +2579,7 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     let sum_exprs = Moo::unwrap_or_clone(sum_exprs)
-        .unwrap_list()
+        .into_list()
         .ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),

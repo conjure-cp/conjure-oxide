@@ -277,8 +277,7 @@ fn comparison_reference(expr: &Expr) -> Option<Reference> {
     if let Expr::Atomic(_, Atom::Reference(reference)) = expr {
         return Some(reference.clone());
     }
-    let values = expr.unwrap_list()?;
-    let [Expr::Atomic(_, Atom::Reference(reference))] = values.as_slice() else {
+    let [Expr::Atomic(_, Atom::Reference(reference))] = expr.unwrap_list_ref()? else {
         return None;
     };
     Some(reference.clone())

@@ -126,7 +126,7 @@ fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
         return Some(comprehension.as_ref().clone());
     }
 
-    let exprs = expr.clone().unwrap_list()?;
+    let exprs = expr.clone().into_list()?;
     let [Expr::Comprehension(_, comprehension)] = exprs.as_slice() else {
         return None;
     };
@@ -137,8 +137,9 @@ fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
 fn merge_symbols(parent_scope: SymbolTablePtr, levels: &[Comprehension]) -> SymbolTablePtr {
     let symbols = SymbolTablePtr::with_parent(parent_scope);
     for level in levels {
-        for (_, decl) in level.symbols().clone().into_iter_local() {
-            symbols.write().update_insert(decl);
+        let level_symbols = level.symbols();
+        for (_, decl) in level_symbols.iter_local() {
+            symbols.write().update_insert(decl.clone());
         }
     }
     symbols

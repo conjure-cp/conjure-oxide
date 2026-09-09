@@ -322,11 +322,11 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     observer: &mut O,
 ) -> Option<Name> {
-    let symbols = model.symbols().clone();
+    let symbols = model.symbols();
     let mut results: Vec<ApplicableLettingRule<'_>> = vec![];
 
     'top: for (priority, rules) in rules_grouped.iter() {
-        for (_, decl) in symbols.clone().into_iter_local() {
+        for (_, decl) in symbols.iter_local() {
             let Some(letting_expr) = decl.as_value_letting().map(|expr| expr.clone()) else {
                 continue;
             };
@@ -378,6 +378,7 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
     log_rule_application(&result, &expr, &symbols, None);
 
     let rewritten_expr = ctx(result.effect.new_expression.clone());
+    drop(symbols);
     result.effect.apply(model);
 
     let mut decl = decl;

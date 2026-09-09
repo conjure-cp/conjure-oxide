@@ -60,7 +60,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                     match and_expr {
                         Expr::And(metadata, e) => {
-                            let Some(and_exprs) = e.as_ref().clone().unwrap_list() else {
+                            let Some(and_exprs) = e.as_ref().clone().into_list() else {
                                 return Err(RuleNotApplicable);
                             };
 
@@ -128,7 +128,7 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
             Expr::And(metadata, e) => {
-                let Some(exprs) = e.as_ref().clone().unwrap_list() else {
+                let Some(exprs) = e.as_ref().clone().into_list() else {
                     return Err(RuleNotApplicable);
                 };
 
@@ -162,7 +162,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
             Expr::Or(metadata, e) => {
-                let Some(exprs) = e.as_ref().clone().unwrap_list() else {
+                let Some(exprs) = e.as_ref().clone().into_list() else {
                     return Err(RuleNotApplicable);
                 };
 

@@ -32,7 +32,7 @@ pub fn load_model_impl(
     symbols: &SymbolTable,
     model: &[Expression],
 ) -> SolverResult<()> {
-    for (name, decl) in symbols.clone().into_iter_local() {
+    for (name, decl) in symbols.iter_local() {
         let Some(var) = decl.as_find() else {
             // Ignore lettings, etc
             continue;
@@ -42,14 +42,14 @@ pub fn load_model_impl(
             continue;
         }
         if !symbols
-            .representations_for(&name)
+            .representations_for(name)
             .is_none_or(|reps| reps.is_empty())
         {
             // This variable has representations; ignore it
             continue;
         }
-        let (sym, ast, restriction) = var_to_ast(&name, &var, int_theory_for(&decl))?;
-        store.insert(name, (decl.resolved_domain().unwrap(), ast, sym));
+        let (sym, ast, restriction) = var_to_ast(name, &var, int_theory_for(decl))?;
+        store.insert(name.clone(), (decl.resolved_domain().unwrap(), ast, sym));
         solver.assert(restriction);
     }
     for expr in model.iter() {
@@ -542,7 +542,7 @@ where
 /// by expanding them to explicit indexing expressions.
 /// TODO: Consider moving this out of the smt solver adaptor, it'll be more generally useful.
 fn list_elements(expr: &Expression) -> SolverResult<Vec<Expression>> {
-    if let Some(exprs) = expr.clone().unwrap_list() {
+    if let Some(exprs) = expr.clone().into_list() {
         return Ok(exprs);
     }
 

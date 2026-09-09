@@ -24,7 +24,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Some(exprs) = inside_min_expr.as_ref().clone().unwrap_list() else {
+    let Some(exprs) = inside_min_expr.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
 
@@ -67,7 +67,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Some(exprs) = inside_max_expr.as_ref().clone().unwrap_list() else {
+    let Some(exprs) = inside_max_expr.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
 

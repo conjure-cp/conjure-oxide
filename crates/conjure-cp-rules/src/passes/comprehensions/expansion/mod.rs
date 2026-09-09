@@ -244,8 +244,9 @@ fn simplify_expanded_ac_results(results: Vec<Expr>, ac_operator: ACOperatorKind)
         | (ACOperatorKind::Sum, Expr::Sum(_, matrix))
         | (ACOperatorKind::Product, Expr::Product(_, matrix))
         | (ACOperatorKind::Min, Expr::Min(_, matrix))
-        | (ACOperatorKind::Max, Expr::Max(_, matrix)) => Moo::unwrap_or_clone(matrix.clone())
-            .unwrap_list()
+        | (ACOperatorKind::Max, Expr::Max(_, matrix)) => matrix
+            .unwrap_list_cow()
+            .map(std::borrow::Cow::into_owned)
             .unwrap_or_else(|| vec![simplified]),
         _ => vec![simplified],
     }

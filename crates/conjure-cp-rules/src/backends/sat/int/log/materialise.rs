@@ -14,11 +14,9 @@ pub(super) fn validate_log_int_operands(
     let mut out: Vec<Vec<Expr>> = exprs
         .into_iter()
         .map(|expr| match expr {
-            Expr::SATInt(_, SATIntEncoding::Log, inner, _) => inner
-                .as_ref()
-                .clone()
-                .unwrap_list()
-                .ok_or(RuleNotApplicable),
+            Expr::SATInt(_, SATIntEncoding::Log, inner, _) => {
+                inner.as_ref().clone().into_list().ok_or(RuleNotApplicable)
+            }
             _ => Err(RuleNotApplicable),
         })
         .collect::<Result<_, _>>()?;

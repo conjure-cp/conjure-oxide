@@ -451,27 +451,28 @@ impl Biplate<Comprehension> for Model {
 impl Display for Model {
     #[allow(clippy::unwrap_used)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (name, decl) in self.symbols().clone().into_iter_local() {
+        let symbols = self.symbols();
+        for (name, decl) in symbols.iter_local() {
             match &decl.kind() as &DeclarationKind {
                 DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
                     writeln!(
                         f,
                         "{}",
-                        pretty_variable_declaration(&self.symbols(), &name).unwrap()
+                        pretty_variable_declaration(&symbols, name).unwrap()
                     )?;
                 }
                 DeclarationKind::ValueLetting(_, _) | DeclarationKind::TemporaryValueLetting(_) => {
                     writeln!(
                         f,
                         "{}",
-                        pretty_value_letting_declaration(&self.symbols(), &name).unwrap()
+                        pretty_value_letting_declaration(&symbols, name).unwrap()
                     )?;
                 }
                 DeclarationKind::DomainLetting(_) => {
                     writeln!(
                         f,
                         "{}",
-                        pretty_domain_letting_declaration(&self.symbols(), &name).unwrap()
+                        pretty_domain_letting_declaration(&symbols, name).unwrap()
                     )?;
                 }
                 DeclarationKind::Given(d) => {

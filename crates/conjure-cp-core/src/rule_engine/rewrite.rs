@@ -2748,12 +2748,13 @@ fn build_worklist_surfaces(
     let mut surfaces = vec![RewriteSurface::root(root_arena)];
     let mut value_letting_surfaces = HashMap::new();
 
-    for (name, decl) in submodel.symbols().clone().into_iter_local() {
+    let symbols = submodel.symbols();
+    for (name, decl) in symbols.iter_local() {
         let letting_expr = decl.as_value_letting().map(|expr| expr.clone());
         if let Some(expr) = letting_expr {
             let surface = surfaces.len();
             surfaces.push(RewriteSurface::value_letting(name.clone(), expr));
-            value_letting_surfaces.insert(name, surface);
+            value_letting_surfaces.insert(name.clone(), surface);
         }
     }
 

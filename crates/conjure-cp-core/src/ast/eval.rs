@@ -677,7 +677,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead
-            for e in (**es).clone().unwrap_list()? {
+            for e in es.unwrap_list_cow()?.iter() {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Bool(true))) = e {
                     return Some(Lit::Bool(true));
                 };
@@ -905,15 +905,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         // Constant folding treats the SMT-native form exactly like the one it came from.
         Expr::AllDiff(_, e) | Expr::SmtDistinct(_, e) => {
-            let es = (**e).clone().unwrap_list()?;
+            let es = e.unwrap_list_cow()?;
             let mut lits: HashSet<Lit> = HashSet::new();
-            for expr in es {
+            for expr in es.iter() {
                 let Expr::Atomic(_, Atom::Literal(x)) = expr else {
                     return None;
                 };
                 match x {
                     Lit::Int(_) | Lit::Bool(_) => {
-                        if lits.contains(&x) {
+                        if lits.contains(x) {
                             return Some(Lit::Bool(false));
                         } else {
                             lits.insert(x.clone());
@@ -1320,11 +1320,7 @@ fn eval_list_items<T>(expr: &Expr) -> Option<Vec<T>>
 where
     T: TryFrom<Lit>,
 {
-    if let Some(items) = expr
-        .clone()
-        .unwrap_matrix_unchecked()
-        .map(|(items, _)| items)
-    {
+    if let Some((items, _)) = expr.unwrap_matrix_unchecked_ref() {
         return items.iter().map(unwrap_expr).collect();
     }
 
