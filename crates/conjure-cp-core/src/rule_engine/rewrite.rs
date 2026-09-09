@@ -30,7 +30,7 @@ use crate::{
 use itertools::Itertools;
 use std::{
     cmp::Ordering,
-    collections::{BTreeMap, BinaryHeap, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet},
     fmt::Write as FmtWrite,
     fs::{self, OpenOptions},
     io::Write as IoWrite,
@@ -873,6 +873,12 @@ struct WorklistScheduler {
     /// Failed applications whose applicability depends only on the symbol table, keyed by the
     /// symbol-table revision at which they were attempted.
     failed_symbol_rules: HashMap<FailedSymbolRuleKey, u64>,
+    /// Arena nodes containing direct references, indexed by declaration name.
+    ///
+    /// Replacement appends fresh arena slots, so old entries can remain and are validated lazily
+    /// at invalidation time. This avoids rescanning every expression surface after each
+    /// representation effect.
+    reference_nodes_by_name: HashMap<Name, HashSet<(usize, ExpressionNodeId)>>,
     symbol_revision: u64,
     next_sequence: u64,
 }
@@ -884,6 +890,7 @@ impl WorklistScheduler {
             scheduled: HashMap::new(),
             subtree_candidate_cache: Vec::new(),
             failed_symbol_rules: HashMap::new(),
+            reference_nodes_by_name: HashMap::new(),
             symbol_revision: 0,
             next_sequence: 0,
         }
@@ -916,12 +923,34 @@ impl WorklistScheduler {
             return;
         }
 
+        self.index_subtree_references(
+            &rewrite_surface.arena,
+            surface,
+            rewrite_surface.arena.root(),
+        );
         self.enqueue_subtree(
             &rewrite_surface.arena,
             surface,
             rewrite_surface.arena.root(),
             dirty_trace,
         );
+    }
+
+    fn index_subtree_references(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        subtree_root: ExpressionNodeId,
+    ) {
+        for node_id in rewriter_reachable_subtree_ids(arena, subtree_root) {
+            let Expr::Atomic(_, Atom::Reference(reference)) = arena.expression(node_id) else {
+                continue;
+            };
+            self.reference_nodes_by_name
+                .entry(reference.name().clone())
+                .or_default()
+                .insert((surface, node_id));
+        }
     }
 
     fn should_attempt_rule(
@@ -1346,6 +1375,7 @@ fn next_worklist_candidate_level(
 struct RuleEffectImpact {
     added_names: Vec<Name>,
     changed_names: Vec<Name>,
+    invalidated_reference_names: Vec<Name>,
     has_new_top: bool,
     has_new_clauses: bool,
 }
@@ -1365,9 +1395,32 @@ impl RuleEffectImpact {
                 changed_names.push(name);
             }
         }
+        let added_names: Vec<_> = effect.added_symbols(symbols).into_iter().collect();
+        // A new auxiliary stands in for the declaration it was derived from, so expressions
+        // referencing that source have to be reconsidered alongside the ones that changed.
+        let mut invalidated_reference_names = changed_names.clone();
+        for added_name in &added_names {
+            let Some(declaration) = effect.symbols.lookup_local(added_name) else {
+                continue;
+            };
+            let mut seen_sources = HashSet::new();
+            let mut source = declaration.source().clone();
+            while let Some(source_declaration) = source.take() {
+                let source_name = source_declaration.name().clone();
+                if !seen_sources.insert(source_name.clone()) {
+                    break;
+                }
+                if !invalidated_reference_names.contains(&source_name) {
+                    invalidated_reference_names.push(source_name);
+                }
+                source.clone_from(&source_declaration.source());
+            }
+        }
+
         Self {
-            added_names: effect.added_symbols(symbols).into_iter().collect(),
+            added_names,
             changed_names,
+            invalidated_reference_names,
             has_new_top: !effect.new_top.is_empty(),
             has_new_clauses: !effect.new_clauses.is_empty(),
         }
@@ -2010,12 +2063,22 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             let arena = &mut surfaces[surface_index].arena;
             normalise_evaluators_from_node_to_root(arena, *node_id, ctx.dirty_trace)
         };
+        scheduler.index_subtree_references(
+            &surfaces[surface_index].arena,
+            surface_index,
+            rewrite_impact_node_id,
+        );
         for &new_top_node_id in &new_top_node_ids {
             if surfaces[root_surface].arena.is_reachable(new_top_node_id) {
                 normalise_evaluators_from_node_to_root(
                     &mut surfaces[root_surface].arena,
                     new_top_node_id,
                     ctx.dirty_trace,
+                );
+                scheduler.index_subtree_references(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    new_top_node_id,
                 );
             }
         }
@@ -2024,7 +2087,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             ctx.dirty_trace.value_letting_rewrites += 1;
             increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
         }
-        let mut affected_names = effect_impact.changed_names.clone();
+        let mut affected_names = effect_impact.invalidated_reference_names.clone();
         if let Some(name) = rewritten_value_letting_name.as_ref()
             && !affected_names.contains(name)
         {
@@ -2374,31 +2437,49 @@ fn enqueue_worklist_nodes_referencing_names(
         return;
     }
 
-    for (surface_index, surface) in surfaces.iter().enumerate() {
-        if !surface.active {
+    // A `BTreeSet` rather than a hash set: the scheduler breaks depth ties by enqueue order, so
+    // the order these are inserted in has to be the same on every run.
+    let mut affected_nodes = BTreeSet::new();
+    for name in names {
+        let Some(reference_nodes) = scheduler.reference_nodes_by_name.get(name) else {
             continue;
-        }
+        };
+        for &(surface_index, reference_node) in reference_nodes {
+            let Some(surface) = surfaces.get(surface_index) else {
+                continue;
+            };
+            if !surface.active
+                || !surface.arena.is_reachable(reference_node)
+                || !expression_directly_references_any(
+                    surface.arena.expression(reference_node),
+                    std::slice::from_ref(name),
+                )
+            {
+                continue;
+            }
 
-        let mut affected_nodes = Vec::new();
-        collect_worklist_nodes_referencing_names(
-            &surface.arena,
-            surface.arena.root(),
-            names,
-            &mut affected_nodes,
-        );
-        for node_id in affected_nodes.into_iter().rev() {
-            scheduler.enqueue_node_at_level(
-                &surface.arena,
-                surface_index,
-                node_id,
-                0,
-                ScheduledMode::CheckNode,
-                Some(dirty_trace),
-            );
+            let mut current = Some(reference_node);
+            while let Some(node_id) = current {
+                affected_nodes.insert((surface_index, node_id));
+                current = surface.arena.parent(node_id);
+            }
         }
+    }
+
+    for (surface_index, node_id) in affected_nodes {
+        let surface = &surfaces[surface_index];
+        scheduler.enqueue_node_at_level(
+            &surface.arena,
+            surface_index,
+            node_id,
+            0,
+            ScheduledMode::CheckNode,
+            Some(dirty_trace),
+        );
     }
 }
 
+#[cfg(test)]
 fn collect_worklist_nodes_referencing_names(
     arena: &ExpressionArena,
     node_id: ExpressionNodeId,
