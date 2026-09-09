@@ -1474,12 +1474,6 @@ or([and([SafeIndex(p#function_2#as_relation_3,[6]) = (1,1),p#function_2#as_relat
 
 --
 
-[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- p#function_1#as_relation_1#as_set_1, j <- p#function_1#as_relation_1#as_set_1 ]
-   ~~> lower_set_expression_generator ([("Base", 8600)])
-[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_1#as_relation_1#as_set_1, j <- p#function_1#as_relation_1#as_set_1 ]
-
---
-
 [ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i <- p#function_1#as_relation_1#as_set_1, j <- p#function_1#as_relation_1#as_set_1 ]
    ~~> lower_set_expression_generator ([("Base", 8600)])
 [ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_1#as_relation_1#as_set_1, j <- p#function_1#as_relation_1#as_set_1 ]
@@ -1498,9 +1492,9 @@ or([and([SafeIndex(p#function_2#as_relation_3,[6]) = (1,1),p#function_2#as_relat
 
 --
 
-[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_1#as_relation_1#as_set_1, j <- p#function_1#as_relation_1#as_set_1 ]
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- p#function_1#as_relation_1#as_set_1, j <- p#function_1#as_relation_1#as_set_1 ]
    ~~> lower_set_expression_generator ([("Base", 8600)])
-[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_1#as_relation_1#as_set_1, j : tuple (int(1..6), int(1..6)), j in p#function_1#as_relation_1#as_set_1 ]
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_1#as_relation_1#as_set_1, j <- p#function_1#as_relation_1#as_set_1 ]
 
 --
 
@@ -1519,6 +1513,12 @@ or([and([SafeIndex(p#function_2#as_relation_3,[6]) = (1,1),p#function_2#as_relat
 [ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_2#as_relation_1#as_set_1, j <- p#function_2#as_relation_1#as_set_1 ]
    ~~> lower_set_expression_generator ([("Base", 8600)])
 [ (SafeIndex(i,[1]) != SafeIndex(j,[1])) -> (SafeIndex(i,[2]) != SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_2#as_relation_1#as_set_1, j : tuple (int(1..6), int(1..6)), j in p#function_2#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_1#as_relation_1#as_set_1, j <- p#function_1#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..6), int(1..6)), i in p#function_1#as_relation_1#as_set_1, j : tuple (int(1..6), int(1..6)), j in p#function_1#as_relation_1#as_set_1 ]
 
 --
 
@@ -1636,24 +1636,6 @@ p#function_1#as_relation_2#components_2#components_2
 
 --
 
-SafeIndex(p#function_1#as_relation_2,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_2#components_3
-
---
-
-p#function_1#as_relation_2#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_2#components_3
-
---
-
-SafeIndex(p#function_1#as_relation_2#components_3,[2])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_1#as_relation_2#components_3#components_2
-
---
-
 SafeIndex(p#function_1#as_relation_2,[4])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 p#function_1#as_relation_2#components_4
@@ -1669,24 +1651,6 @@ p#function_1#as_relation_2#components_4
 SafeIndex(p#function_1#as_relation_2#components_4,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 p#function_1#as_relation_2#components_4#components_2
-
---
-
-SafeIndex(p#function_1#as_relation_2,[5])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_2#components_5
-
---
-
-p#function_1#as_relation_2#components_5
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_2#components_5
-
---
-
-SafeIndex(p#function_1#as_relation_2#components_5,[2])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_1#as_relation_2#components_5#components_2
 
 --
 
@@ -1720,45 +1684,9 @@ p#function_1#as_relation_3#components_1
 
 --
 
-SafeIndex(p#function_1#as_relation_3#components_1,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_1#as_relation_3#components_1#components_1
-
---
-
-SafeIndex(p#function_1#as_relation_3,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_3#components_1
-
---
-
-p#function_1#as_relation_3#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_3#components_1
-
---
-
 SafeIndex(p#function_1#as_relation_3#components_1,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 p#function_1#as_relation_3#components_1#components_2
-
---
-
-SafeIndex(p#function_1#as_relation_3,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_3#components_2
-
---
-
-p#function_1#as_relation_3#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_3#components_2
-
---
-
-SafeIndex(p#function_1#as_relation_3#components_2,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_1#as_relation_3#components_2#components_1
 
 --
 
@@ -1792,45 +1720,9 @@ p#function_1#as_relation_3#components_3
 
 --
 
-SafeIndex(p#function_1#as_relation_3#components_3,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_1#as_relation_3#components_3#components_1
-
---
-
-SafeIndex(p#function_1#as_relation_3,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_3#components_3
-
---
-
-p#function_1#as_relation_3#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_3#components_3
-
---
-
 SafeIndex(p#function_1#as_relation_3#components_3,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 p#function_1#as_relation_3#components_3#components_2
-
---
-
-SafeIndex(p#function_1#as_relation_3,[4])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_3#components_4
-
---
-
-p#function_1#as_relation_3#components_4
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_3#components_4
-
---
-
-SafeIndex(p#function_1#as_relation_3#components_4,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_1#as_relation_3#components_4#components_1
 
 --
 
@@ -1864,45 +1756,9 @@ p#function_1#as_relation_3#components_5
 
 --
 
-SafeIndex(p#function_1#as_relation_3#components_5,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_1#as_relation_3#components_5#components_1
-
---
-
-SafeIndex(p#function_1#as_relation_3,[5])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_3#components_5
-
---
-
-p#function_1#as_relation_3#components_5
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_3#components_5
-
---
-
 SafeIndex(p#function_1#as_relation_3#components_5,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 p#function_1#as_relation_3#components_5#components_2
-
---
-
-SafeIndex(p#function_1#as_relation_3,[6])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_3#components_6
-
---
-
-p#function_1#as_relation_3#components_6
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_3#components_6
-
---
-
-SafeIndex(p#function_1#as_relation_3#components_6,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_1#as_relation_3#components_6#components_1
 
 --
 
@@ -1924,24 +1780,6 @@ p#function_1#as_relation_3#components_6#components_2
 
 --
 
-SafeIndex(p#function_2#as_relation_2,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_2#components_1
-
---
-
-p#function_2#as_relation_2#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_2#components_1
-
---
-
-SafeIndex(p#function_2#as_relation_2#components_1,[2])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_2#components_1#components_2
-
---
-
 SafeIndex(p#function_2#as_relation_2,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 p#function_2#as_relation_2#components_2
@@ -1960,24 +1798,6 @@ p#function_2#as_relation_2#components_2#components_2
 
 --
 
-SafeIndex(p#function_2#as_relation_2,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_2#components_3
-
---
-
-p#function_2#as_relation_2#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_2#components_3
-
---
-
-SafeIndex(p#function_2#as_relation_2#components_3,[2])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_2#components_3#components_2
-
---
-
 SafeIndex(p#function_2#as_relation_2,[4])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 p#function_2#as_relation_2#components_4
@@ -1993,24 +1813,6 @@ p#function_2#as_relation_2#components_4
 SafeIndex(p#function_2#as_relation_2#components_4,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 p#function_2#as_relation_2#components_4#components_2
-
---
-
-SafeIndex(p#function_2#as_relation_2,[5])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_2#components_5
-
---
-
-p#function_2#as_relation_2#components_5
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_2#components_5
-
---
-
-SafeIndex(p#function_2#as_relation_2#components_5,[2])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_2#components_5#components_2
 
 --
 
@@ -2044,45 +1846,9 @@ p#function_2#as_relation_3#components_1
 
 --
 
-SafeIndex(p#function_2#as_relation_3#components_1,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_3#components_1#components_1
-
---
-
-SafeIndex(p#function_2#as_relation_3,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_3#components_1
-
---
-
-p#function_2#as_relation_3#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_3#components_1
-
---
-
 SafeIndex(p#function_2#as_relation_3#components_1,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 p#function_2#as_relation_3#components_1#components_2
-
---
-
-SafeIndex(p#function_2#as_relation_3,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_3#components_2
-
---
-
-p#function_2#as_relation_3#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_3#components_2
-
---
-
-SafeIndex(p#function_2#as_relation_3#components_2,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_3#components_2#components_1
 
 --
 
@@ -2116,45 +1882,9 @@ p#function_2#as_relation_3#components_3
 
 --
 
-SafeIndex(p#function_2#as_relation_3#components_3,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_3#components_3#components_1
-
---
-
-SafeIndex(p#function_2#as_relation_3,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_3#components_3
-
---
-
-p#function_2#as_relation_3#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_3#components_3
-
---
-
 SafeIndex(p#function_2#as_relation_3#components_3,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 p#function_2#as_relation_3#components_3#components_2
-
---
-
-SafeIndex(p#function_2#as_relation_3,[4])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_3#components_4
-
---
-
-p#function_2#as_relation_3#components_4
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_3#components_4
-
---
-
-SafeIndex(p#function_2#as_relation_3#components_4,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_3#components_4#components_1
 
 --
 
@@ -2188,45 +1918,9 @@ p#function_2#as_relation_3#components_5
 
 --
 
-SafeIndex(p#function_2#as_relation_3#components_5,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_3#components_5#components_1
-
---
-
-SafeIndex(p#function_2#as_relation_3,[5])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_3#components_5
-
---
-
-p#function_2#as_relation_3#components_5
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_3#components_5
-
---
-
 SafeIndex(p#function_2#as_relation_3#components_5,[2])
    ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
 p#function_2#as_relation_3#components_5#components_2
-
---
-
-SafeIndex(p#function_2#as_relation_3,[6])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_2#as_relation_3#components_6
-
---
-
-p#function_2#as_relation_3#components_6
-   ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_2#as_relation_3#components_6
-
---
-
-SafeIndex(p#function_2#as_relation_3#components_6,[1])
-   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
-p#function_2#as_relation_3#components_6#components_1
 
 --
 
@@ -2248,27 +1942,309 @@ p#function_2#as_relation_3#components_6#components_2
 
 --
 
-SafeIndex(p#function_1#as_relation_2,[1])
+SafeIndex(p#function_1#as_relation_2,[5])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#as_relation_2#components_1
+p#function_1#as_relation_2#components_5
 
 --
 
-p#function_1#as_relation_2#components_1
+p#function_1#as_relation_2#components_5
    ~~> select_representation ([("ReprGeneral", 10000)])
-p#function_1#as_relation_2#components_1
+p#function_1#as_relation_2#components_5
 
 --
 
-p#function_1#as_relation_2#components_1 = (1,1)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-and([p#function_1#as_relation_2#components_1#components_1 = 1,p#function_1#as_relation_2#components_1#components_2 = 1;int(1..)])
+SafeIndex(p#function_1#as_relation_2#components_5,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_1#as_relation_2#components_5#components_2
 
 --
 
-and([and([p#function_1#as_relation_2#components_1#components_1 = 1,p#function_1#as_relation_2#components_1#components_2 = 1;int(1..)]),p#function_1#as_relation_1#as_set_1#occurrence_1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([p#function_1#as_relation_2#components_1#components_1 = 1,p#function_1#as_relation_2#components_1#components_2 = 1,p#function_1#as_relation_1#as_set_1#occurrence_1;int(1..)])
+SafeIndex(p#function_1#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_1#as_relation_3#components_2
+
+--
+
+p#function_1#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1#as_relation_3#components_2
+
+--
+
+SafeIndex(p#function_1#as_relation_3#components_2,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_1#as_relation_3#components_2#components_1
+
+--
+
+SafeIndex(p#function_1#as_relation_3,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_1#as_relation_3#components_4
+
+--
+
+p#function_1#as_relation_3#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1#as_relation_3#components_4
+
+--
+
+SafeIndex(p#function_1#as_relation_3#components_4,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_1#as_relation_3#components_4#components_1
+
+--
+
+SafeIndex(p#function_1#as_relation_3,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_1#as_relation_3#components_6
+
+--
+
+p#function_1#as_relation_3#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1#as_relation_3#components_6
+
+--
+
+SafeIndex(p#function_1#as_relation_3#components_6,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_1#as_relation_3#components_6#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_2,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_2#components_3
+
+--
+
+p#function_2#as_relation_2#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_2#components_3
+
+--
+
+SafeIndex(p#function_2#as_relation_2#components_3,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_2#components_3#components_2
+
+--
+
+SafeIndex(p#function_2#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_3#components_1
+
+--
+
+p#function_2#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_3#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_3#components_1,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_3#components_1#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_3,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_3#components_3
+
+--
+
+p#function_2#as_relation_3#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_3#components_3
+
+--
+
+SafeIndex(p#function_2#as_relation_3#components_3,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_3#components_3#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_3,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_3#components_5
+
+--
+
+p#function_2#as_relation_3#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_3#components_5
+
+--
+
+SafeIndex(p#function_2#as_relation_3#components_5,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_3#components_5#components_1
+
+--
+
+SafeIndex(p#function_1#as_relation_2,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_1#as_relation_2#components_3
+
+--
+
+p#function_1#as_relation_2#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1#as_relation_2#components_3
+
+--
+
+SafeIndex(p#function_1#as_relation_2#components_3,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_1#as_relation_2#components_3#components_2
+
+--
+
+SafeIndex(p#function_1#as_relation_3,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_1#as_relation_3#components_3
+
+--
+
+p#function_1#as_relation_3#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1#as_relation_3#components_3
+
+--
+
+SafeIndex(p#function_1#as_relation_3#components_3,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_1#as_relation_3#components_3#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_2,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_2#components_1
+
+--
+
+p#function_2#as_relation_2#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_2#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_2#components_1,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_2#components_1#components_2
+
+--
+
+SafeIndex(p#function_2#as_relation_3,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_3#components_2
+
+--
+
+p#function_2#as_relation_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_3#components_2
+
+--
+
+SafeIndex(p#function_2#as_relation_3#components_2,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_3#components_2#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_3,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_3#components_6
+
+--
+
+p#function_2#as_relation_3#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_3#components_6
+
+--
+
+SafeIndex(p#function_2#as_relation_3#components_6,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_3#components_6#components_1
+
+--
+
+SafeIndex(p#function_1#as_relation_3,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_1#as_relation_3#components_5
+
+--
+
+p#function_1#as_relation_3#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1#as_relation_3#components_5
+
+--
+
+SafeIndex(p#function_1#as_relation_3#components_5,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_1#as_relation_3#components_5#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_3,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_3#components_4
+
+--
+
+p#function_2#as_relation_3#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_3#components_4
+
+--
+
+SafeIndex(p#function_2#as_relation_3#components_4,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_3#components_4#components_1
+
+--
+
+SafeIndex(p#function_2#as_relation_2,[5])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_2#components_5
+
+--
+
+p#function_2#as_relation_2#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_2#components_5
+
+--
+
+SafeIndex(p#function_2#as_relation_2#components_5,[2])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_2#as_relation_2#components_5#components_2
+
+--
+
+SafeIndex(p#function_1#as_relation_3,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_1#as_relation_3#components_1
+
+--
+
+p#function_1#as_relation_3#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1#as_relation_3#components_1
+
+--
+
+SafeIndex(p#function_1#as_relation_3#components_1,[1])
+   ~~> tuple_components_index_lit ([("ReprGeneral", 9500)])
+p#function_1#as_relation_3#components_1#components_1
 
 --
 
@@ -22559,4 +22535,28 @@ p#function_2#as_relation_3#components_6
 --
 
 p#function_2#as_relation_3#components_6
-   ~~> se
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2#as_relation_3#components_6
+
+--
+
+p#function_2#as_relation_3#components_6 = (4,1)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([p#function_2#as_relation_3#components_6#components_1 = 4,p#function_2#as_relation_3#components_6#components_2 = 1;int(1..)])
+
+--
+
+and([and([p#function_2#as_relation_3#components_6#components_1 = 4,p#function_2#as_relation_3#components_6#components_2 = 1;int(1..)]),p#function_2#as_relation_1#as_set_1#occurrence_19;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([p#function_2#as_relation_3#components_6#components_1 = 4,p#function_2#as_relation_3#components_6#components_2 = 1,p#function_2#as_relation_1#as_set_1#occurrence_19;int(1..)])
+
+--
+
+SafeIndex(p#function_2#as_relation_3,[6])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_2#as_relation_3#components_6
+
+--
+
+p#function_2#as_relation_3#components_6
+   ~~> 

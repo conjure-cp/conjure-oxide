@@ -111,12 +111,6 @@ x#repetition_1
 
 --
 
-or([([SafeIndex(x#repetition_1,[1]);int(1..)] <=lex [SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-([SafeIndex(x#repetition_1,[1]);int(1..)] <=lex [SafeIndex(x#repetition_1,[2]);int(1..)])
-
---
-
 or([([SafeIndex(x#repetition_1,[2]);int(1..)] <=lex [SafeIndex(x#repetition_1,[3]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 ([SafeIndex(x#repetition_1,[2]);int(1..)] <=lex [SafeIndex(x#repetition_1,[3]);int(1..)])
@@ -126,6 +120,12 @@ or([([SafeIndex(x#repetition_1,[2]);int(1..)] <=lex [SafeIndex(x#repetition_1,[3
 or([([SafeIndex(x#repetition_1,[3]);int(1..)] <=lex [SafeIndex(x#repetition_1,[4]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 ([SafeIndex(x#repetition_1,[3]);int(1..)] <=lex [SafeIndex(x#repetition_1,[4]);int(1..)])
+
+--
+
+or([([SafeIndex(x#repetition_1,[1]);int(1..)] <=lex [SafeIndex(x#repetition_1,[2]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+([SafeIndex(x#repetition_1,[1]);int(1..)] <=lex [SafeIndex(x#repetition_1,[2]);int(1..)])
 
 --
 
@@ -177,6 +177,18 @@ SafeIndex(x#repetition_1,[4]) = 2
 
 --
 
+SafeIndex(x#repetition_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_3
+
+--
+
+SafeIndex(x#repetition_1,[4])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_4
+
+--
+
 SafeIndex(x#repetition_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#repetition_1#components_1
@@ -198,18 +210,6 @@ x#repetition_1#components_2
 SafeIndex(x#repetition_1,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#repetition_1#components_3
-
---
-
-SafeIndex(x#repetition_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_3
-
---
-
-SafeIndex(x#repetition_1,[4])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_4
 
 --
 
@@ -293,12 +293,6 @@ new constraints:
 
 --
 
-x#repetition_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#repetition_1#components_1,1)
-
---
-
 x#repetition_1#components_2 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#repetition_1#components_2,1)
@@ -341,99 +335,105 @@ WatchedLiteral(x#repetition_1#components_4,2)
 
 --
 
-toInt(WatchedLiteral(x#repetition_1#components_1,1))
-   ~~> flatten_generic ([("Minion", 4200)])
-toInt(__8)
-new variables:
-  findAux __8: bool
-new constraints:
-  __8 =aux WatchedLiteral(x#repetition_1#components_1,1)
-
---
-
-__8 =aux WatchedLiteral(x#repetition_1#components_1,1)
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#repetition_1#components_1,1), __8)
+x#repetition_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,1)
 
 --
 
 toInt(WatchedLiteral(x#repetition_1#components_2,1))
    ~~> flatten_generic ([("Minion", 4200)])
-toInt(__9)
+toInt(__8)
 new variables:
-  findAux __9: bool
+  findAux __8: bool
 new constraints:
-  __9 =aux WatchedLiteral(x#repetition_1#components_2,1)
+  __8 =aux WatchedLiteral(x#repetition_1#components_2,1)
 
 --
 
-__9 =aux WatchedLiteral(x#repetition_1#components_2,1)
+__8 =aux WatchedLiteral(x#repetition_1#components_2,1)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#repetition_1#components_2,1), __9)
-
---
-
-toInt(WatchedLiteral(x#repetition_1#components_3,1))
-   ~~> flatten_generic ([("Minion", 4200)])
-toInt(__10)
-new variables:
-  findAux __10: bool
-new constraints:
-  __10 =aux WatchedLiteral(x#repetition_1#components_3,1)
-
---
-
-__10 =aux WatchedLiteral(x#repetition_1#components_3,1)
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#repetition_1#components_3,1), __10)
+Reify(WatchedLiteral(x#repetition_1#components_2,1), __8)
 
 --
 
 toInt(WatchedLiteral(x#repetition_1#components_4,1))
    ~~> flatten_generic ([("Minion", 4200)])
-toInt(__11)
+toInt(__9)
 new variables:
-  findAux __11: bool
+  findAux __9: bool
 new constraints:
-  __11 =aux WatchedLiteral(x#repetition_1#components_4,1)
+  __9 =aux WatchedLiteral(x#repetition_1#components_4,1)
 
 --
 
-__11 =aux WatchedLiteral(x#repetition_1#components_4,1)
+__9 =aux WatchedLiteral(x#repetition_1#components_4,1)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#repetition_1#components_4,1), __11)
-
---
-
-toInt(WatchedLiteral(x#repetition_1#components_1,2))
-   ~~> flatten_generic ([("Minion", 4200)])
-toInt(__12)
-new variables:
-  findAux __12: bool
-new constraints:
-  __12 =aux WatchedLiteral(x#repetition_1#components_1,2)
-
---
-
-__12 =aux WatchedLiteral(x#repetition_1#components_1,2)
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#repetition_1#components_1,2), __12)
+Reify(WatchedLiteral(x#repetition_1#components_4,1), __9)
 
 --
 
 toInt(WatchedLiteral(x#repetition_1#components_2,2))
    ~~> flatten_generic ([("Minion", 4200)])
+toInt(__10)
+new variables:
+  findAux __10: bool
+new constraints:
+  __10 =aux WatchedLiteral(x#repetition_1#components_2,2)
+
+--
+
+__10 =aux WatchedLiteral(x#repetition_1#components_2,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(x#repetition_1#components_2,2), __10)
+
+--
+
+toInt(WatchedLiteral(x#repetition_1#components_4,2))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__11)
+new variables:
+  findAux __11: bool
+new constraints:
+  __11 =aux WatchedLiteral(x#repetition_1#components_4,2)
+
+--
+
+__11 =aux WatchedLiteral(x#repetition_1#components_4,2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(x#repetition_1#components_4,2), __11)
+
+--
+
+toInt(WatchedLiteral(x#repetition_1#components_3,1))
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__12)
+new variables:
+  findAux __12: bool
+new constraints:
+  __12 =aux WatchedLiteral(x#repetition_1#components_3,1)
+
+--
+
+__12 =aux WatchedLiteral(x#repetition_1#components_3,1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(x#repetition_1#components_3,1), __12)
+
+--
+
+toInt(WatchedLiteral(x#repetition_1#components_1,2))
+   ~~> flatten_generic ([("Minion", 4200)])
 toInt(__13)
 new variables:
   findAux __13: bool
 new constraints:
-  __13 =aux WatchedLiteral(x#repetition_1#components_2,2)
+  __13 =aux WatchedLiteral(x#repetition_1#components_1,2)
 
 --
 
-__13 =aux WatchedLiteral(x#repetition_1#components_2,2)
+__13 =aux WatchedLiteral(x#repetition_1#components_1,2)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#repetition_1#components_2,2), __13)
+Reify(WatchedLiteral(x#repetition_1#components_1,2), __13)
 
 --
 
@@ -453,19 +453,19 @@ Reify(WatchedLiteral(x#repetition_1#components_3,2), __14)
 
 --
 
-toInt(WatchedLiteral(x#repetition_1#components_4,2))
+toInt(WatchedLiteral(x#repetition_1#components_1,1))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__15)
 new variables:
   findAux __15: bool
 new constraints:
-  __15 =aux WatchedLiteral(x#repetition_1#components_4,2)
+  __15 =aux WatchedLiteral(x#repetition_1#components_1,1)
 
 --
 
-__15 =aux WatchedLiteral(x#repetition_1#components_4,2)
+__15 =aux WatchedLiteral(x#repetition_1#components_1,1)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#repetition_1#components_4,2), __15)
+Reify(WatchedLiteral(x#repetition_1#components_1,1), __15)
 
 --
 
@@ -524,20 +524,20 @@ true,
 true,
 SumLeq([__0, __1, __2, __3], 2),
 SumLeq([__4, __5, __6, __7], 2),
-__0 =aux toInt(__8),
-__1 =aux toInt(__9),
-__2 =aux toInt(__10),
-__3 =aux toInt(__11),
-__4 =aux toInt(__12),
-__5 =aux toInt(__13),
+__0 =aux toInt(__15),
+__1 =aux toInt(__8),
+__2 =aux toInt(__12),
+__3 =aux toInt(__9),
+__4 =aux toInt(__13),
+__5 =aux toInt(__10),
 __6 =aux toInt(__14),
-__7 =aux toInt(__15),
-Reify(WatchedLiteral(x#repetition_1#components_1,1), __8),
-Reify(WatchedLiteral(x#repetition_1#components_2,1), __9),
-Reify(WatchedLiteral(x#repetition_1#components_3,1), __10),
-Reify(WatchedLiteral(x#repetition_1#components_4,1), __11),
-Reify(WatchedLiteral(x#repetition_1#components_1,2), __12),
-Reify(WatchedLiteral(x#repetition_1#components_2,2), __13),
+__7 =aux toInt(__11),
+Reify(WatchedLiteral(x#repetition_1#components_2,1), __8),
+Reify(WatchedLiteral(x#repetition_1#components_4,1), __9),
+Reify(WatchedLiteral(x#repetition_1#components_2,2), __10),
+Reify(WatchedLiteral(x#repetition_1#components_4,2), __11),
+Reify(WatchedLiteral(x#repetition_1#components_3,1), __12),
+Reify(WatchedLiteral(x#repetition_1#components_1,2), __13),
 Reify(WatchedLiteral(x#repetition_1#components_3,2), __14),
-Reify(WatchedLiteral(x#repetition_1#components_4,2), __15)
+Reify(WatchedLiteral(x#repetition_1#components_1,1), __15)
 

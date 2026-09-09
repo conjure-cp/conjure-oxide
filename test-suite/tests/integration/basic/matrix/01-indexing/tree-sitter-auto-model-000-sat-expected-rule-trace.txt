@@ -60,37 +60,9 @@ a#components_1
 
 --
 
-a#components_1,
-a[2] = true,
-a[3] = true,
-a[4] = true,
-a[5] = !(a[4])
-   ~~> remove_single_atom ([("SAT", 8400)])
-a[2] = true,
-a[3] = true,
-a[4] = true,
-a[5] = !(a[4])
-new clauses:
-  (a#components_1)
-
---
-
 a[2]
    ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
 a#components_2
-
---
-
-a#components_2,
-a[3] = true,
-a[4] = true,
-a[5] = !(a[4])
-   ~~> remove_single_atom ([("SAT", 8400)])
-a[3] = true,
-a[4] = true,
-a[5] = !(a[4])
-new clauses:
-  (a#components_2)
 
 --
 
@@ -100,29 +72,9 @@ a#components_3
 
 --
 
-a#components_3,
-a[4] = true,
-a[5] = !(a[4])
-   ~~> remove_single_atom ([("SAT", 8400)])
-a[4] = true,
-a[5] = !(a[4])
-new clauses:
-  (a#components_3)
-
---
-
 a[4]
    ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
 a#components_4
-
---
-
-a#components_4,
-a[5] = !(a[4])
-   ~~> remove_single_atom ([("SAT", 8400)])
-a[5] = !(a[4])
-new clauses:
-  (a#components_4)
 
 --
 
@@ -162,6 +114,54 @@ new clauses:
 
 --
 
+a#components_1,
+a#components_2,
+a#components_3,
+a#components_4,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+a#components_2,
+a#components_3,
+a#components_4,
+__1
+new clauses:
+  (a#components_1)
+
+--
+
+a#components_2,
+a#components_3,
+a#components_4,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+a#components_3,
+a#components_4,
+__1
+new clauses:
+  (a#components_2)
+
+--
+
+a#components_3,
+a#components_4,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+a#components_4,
+__1
+new clauses:
+  (a#components_3)
+
+--
+
+a#components_4,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1
+new clauses:
+  (a#components_4)
+
+--
+
 __1
    ~~> remove_single_atom ([("SAT", 8400)])
 true
@@ -187,15 +187,15 @@ true
 
 clauses:
 
-(a#components_1),
-(a#components_2),
-(a#components_3),
-(a#components_4),
 (¬a#components_4 \/ ¬__0),
 (a#components_4 \/ __0),
 (¬a#components_5 \/ ¬__0 \/ __1),
 (a#components_5 \/ __0 \/ __1),
 (a#components_5 \/ ¬__0 \/ ¬__1),
 (¬a#components_5 \/ __0 \/ ¬__1),
+(a#components_1),
+(a#components_2),
+(a#components_3),
+(a#components_4),
 (__1)
 

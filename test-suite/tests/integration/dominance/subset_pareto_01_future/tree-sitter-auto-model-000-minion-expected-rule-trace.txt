@@ -46,12 +46,6 @@ total_carbon = sum([ carbon[i] | i : int(1..n), selected[i] ])
 
 --
 
-sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4);int(1..)]) = 1
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([selected#components_1, selected#components_2, selected#components_3, selected#components_4], 1),SumGeq([selected#components_1, selected#components_2, selected#components_3, selected#components_4], 1);int(1..)])
-
---
-
 [ cost[i] | i : int(1..n), selected[i] ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([toInt(selected#components_1),3;int(1..)]),product([toInt(selected#components_2),2;int(1..)]),product([toInt(selected#components_3),4;int(1..)]),product([toInt(selected#components_4),6;int(1..)]);int(1..)]
@@ -79,6 +73,12 @@ product([4,toInt(selected#components_3);int(1..)])
 product([toInt(selected#components_4),6;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([6,toInt(selected#components_4);int(1..)])
+
+--
+
+sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([selected#components_1, selected#components_2, selected#components_3, selected#components_4], 1),SumGeq([selected#components_1, selected#components_2, selected#components_3, selected#components_4], 1);int(1..)])
 
 --
 

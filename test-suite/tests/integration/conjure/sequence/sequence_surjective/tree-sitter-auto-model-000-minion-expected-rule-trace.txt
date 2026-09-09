@@ -76,6 +76,12 @@ x#explicit_2#components_2
 
 --
 
+SafeIndex(x#explicit_2,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_2#components_2
+
+--
+
 SafeIndex(x#explicit_2,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_2#components_1
@@ -118,12 +124,6 @@ x#explicit_2#components_1
 
 --
 
-SafeIndex(x#explicit_2,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_2#components_2
-
---
-
 SafeIndex(x#explicit_1,[x#explicit_2#components_2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 SafeIndex([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3;int(1..)],[sum([product([1,(x#explicit_2#components_2 - 1);int(1..)]),1;int(1..)])])
@@ -160,27 +160,27 @@ x#explicit_2#components_2
 
 --
 
-SafeIndex([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3;int(1..)],[x#explicit_2#components_1]) = 1
-   ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3],x#explicit_2#components_1,1)
-
---
-
 SafeIndex([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3;int(1..)],[x#explicit_2#components_2]) = 2
    ~~> introduce_element_from_index ([("Minion", 4400)])
 __minion_element_one([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3],x#explicit_2#components_2,2)
 
 --
 
-x#explicit_2#components_1 <= 3
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(x#explicit_2#components_1, 3, 0)
+SafeIndex([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3;int(1..)],[x#explicit_2#components_1]) = 1
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([x#explicit_1#components_1,x#explicit_1#components_2,x#explicit_1#components_3],x#explicit_2#components_1,1)
 
 --
 
 x#explicit_2#components_2 <= 3
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(x#explicit_2#components_2, 3, 0)
+
+--
+
+x#explicit_2#components_1 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2#components_1, 3, 0)
 
 --
 

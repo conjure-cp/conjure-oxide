@@ -51,12 +51,6 @@ total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
 
 --
 
-sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4),toInt(selected#components_5),toInt(selected#components_6),toInt(selected#components_7),toInt(selected#components_8),toInt(selected#components_9),toInt(selected#components_10);int(1..)]) = 2
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], 2),SumGeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], 2);int(1..)])
-
---
-
 [ cost[i] | i : int(1..10), selected[i] ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([toInt(selected#components_1),9;int(1..)]),product([toInt(selected#components_2),4;int(1..)]),product([toInt(selected#components_3),7;int(1..)]),product([toInt(selected#components_4),6;int(1..)]),product([toInt(selected#components_5),3;int(1..)]),product([toInt(selected#components_6),8;int(1..)]),product([toInt(selected#components_7),5;int(1..)]),product([toInt(selected#components_8),2;int(1..)]),product([toInt(selected#components_9),10;int(1..)]),product([toInt(selected#components_10),1;int(1..)]);int(1..)]
@@ -126,6 +120,12 @@ product([toInt(selected#components_10);int(1..)])
 product([toInt(selected#components_10);int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
 toInt(selected#components_10)
+
+--
+
+sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4),toInt(selected#components_5),toInt(selected#components_6),toInt(selected#components_7),toInt(selected#components_8),toInt(selected#components_9),toInt(selected#components_10);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], 2),SumGeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], 2);int(1..)])
 
 --
 

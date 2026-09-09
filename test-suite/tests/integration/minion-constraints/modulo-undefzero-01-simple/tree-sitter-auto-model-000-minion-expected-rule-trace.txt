@@ -15,18 +15,6 @@ x % y
 
 --
 
-{SafeMod(x,y) @ y != 0} = 3
-   ~~> bubble_up ([("Bubble", 8800)])
-{SafeMod(x,y) = 3 @ y != 0}
-
---
-
-{SafeMod(x,y) = 3 @ y != 0}
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeMod(x,y) = 3,y != 0;int(1..)])
-
---
-
 SafeMod(x,y) = 3
    ~~> introduce_modeq ([("Minion", 4200)])
 ModEq(x, y, 3)
@@ -40,5 +28,5 @@ find y: int(2..4)
 
 such that
 
-and([ModEq(x, y, 3),y != 0;int(1..)])
+ModEq(x, y, 3)
 

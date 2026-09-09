@@ -218,18 +218,6 @@ x#explicit_1#components_1#components_1 <= sum([x#explicit_1#components_2#compone
 
 --
 
-SafeIndex(x#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2
-
---
-
 SafeIndex(x#explicit_1,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_3
@@ -239,54 +227,6 @@ x#explicit_1#components_3
 x#explicit_1#components_3
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#explicit_1#components_3
-
---
-
-([x#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_3;int(1..)])
-   ~~> tuple_var_cmp_var ([("ReprGeneral", 9400)])
-or([and([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1;int(1..)]),and([x#explicit_1#components_2#components_1 = x#explicit_1#components_3#components_1,([x#explicit_1#components_2#components_2;int(1..)] <lex [x#explicit_1#components_3#components_2;int(1..)]);int(1..)]);int(1..)])
-
---
-
-x#explicit_1#components_2#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2#components_2
-
---
-
-x#explicit_1#components_3#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_3#components_2
-
---
-
-([x#explicit_1#components_2#components_2;int(1..)] <lex [x#explicit_1#components_3#components_2;int(1..)])
-   ~~> lex_occurrence_sets ([("ReprGeneral", 9500)])
-([-(toInt(x#explicit_1#components_2#components_2#occurrence_1)),-(toInt(x#explicit_1#components_2#components_2#occurrence_2)),-(toInt(x#explicit_1#components_2#components_2#occurrence_3));int(1..)] <lex [-(toInt(x#explicit_1#components_3#components_2#occurrence_1)),-(toInt(x#explicit_1#components_3#components_2#occurrence_2)),-(toInt(x#explicit_1#components_3#components_2#occurrence_3));int(1..)])
-
---
-
-and([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1
-
---
-
-or([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1,and([x#explicit_1#components_2#components_1 = x#explicit_1#components_3#components_1,([-(toInt(x#explicit_1#components_2#components_2#occurrence_1)),-(toInt(x#explicit_1#components_2#components_2#occurrence_2)),-(toInt(x#explicit_1#components_2#components_2#occurrence_3));int(1..)] <lex [-(toInt(x#explicit_1#components_3#components_2#occurrence_1)),-(toInt(x#explicit_1#components_3#components_2#occurrence_2)),-(toInt(x#explicit_1#components_3#components_2#occurrence_3));int(1..)]);int(1..)]);int(1..)])
-   ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1,x#explicit_1#components_2#components_1 = x#explicit_1#components_3#components_1;int(1..)]),or([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1,([-(toInt(x#explicit_1#components_2#components_2#occurrence_1)),-(toInt(x#explicit_1#components_2#components_2#occurrence_2)),-(toInt(x#explicit_1#components_2#components_2#occurrence_3));int(1..)] <lex [-(toInt(x#explicit_1#components_3#components_2#occurrence_1)),-(toInt(x#explicit_1#components_3#components_2#occurrence_2)),-(toInt(x#explicit_1#components_3#components_2#occurrence_3));int(1..)]);int(1..)]);int(1..)])
-
---
-
-x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1
-   ~~> lt_to_leq ([("Minion", 8400)])
-x#explicit_1#components_2#components_1 <= sum([x#explicit_1#components_3#components_1,-1;int(1..)])
-
---
-
-x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1
-   ~~> lt_to_leq ([("Minion", 8400)])
-x#explicit_1#components_2#components_1 <= sum([x#explicit_1#components_3#components_1,-1;int(1..)])
 
 --
 
@@ -362,6 +302,72 @@ x#explicit_1#components_3#components_1 <= sum([x#explicit_1#components_4#compone
 
 --
 
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+([x#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_3;int(1..)])
+   ~~> tuple_var_cmp_var ([("ReprGeneral", 9400)])
+or([and([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1;int(1..)]),and([x#explicit_1#components_2#components_1 = x#explicit_1#components_3#components_1,([x#explicit_1#components_2#components_2;int(1..)] <lex [x#explicit_1#components_3#components_2;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+x#explicit_1#components_2#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2#components_2
+
+--
+
+x#explicit_1#components_3#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_3#components_2
+
+--
+
+([x#explicit_1#components_2#components_2;int(1..)] <lex [x#explicit_1#components_3#components_2;int(1..)])
+   ~~> lex_occurrence_sets ([("ReprGeneral", 9500)])
+([-(toInt(x#explicit_1#components_2#components_2#occurrence_1)),-(toInt(x#explicit_1#components_2#components_2#occurrence_2)),-(toInt(x#explicit_1#components_2#components_2#occurrence_3));int(1..)] <lex [-(toInt(x#explicit_1#components_3#components_2#occurrence_1)),-(toInt(x#explicit_1#components_3#components_2#occurrence_2)),-(toInt(x#explicit_1#components_3#components_2#occurrence_3));int(1..)])
+
+--
+
+and([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1
+
+--
+
+or([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1,and([x#explicit_1#components_2#components_1 = x#explicit_1#components_3#components_1,([-(toInt(x#explicit_1#components_2#components_2#occurrence_1)),-(toInt(x#explicit_1#components_2#components_2#occurrence_2)),-(toInt(x#explicit_1#components_2#components_2#occurrence_3));int(1..)] <lex [-(toInt(x#explicit_1#components_3#components_2#occurrence_1)),-(toInt(x#explicit_1#components_3#components_2#occurrence_2)),-(toInt(x#explicit_1#components_3#components_2#occurrence_3));int(1..)]);int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1,x#explicit_1#components_2#components_1 = x#explicit_1#components_3#components_1;int(1..)]),or([x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1,([-(toInt(x#explicit_1#components_2#components_2#occurrence_1)),-(toInt(x#explicit_1#components_2#components_2#occurrence_2)),-(toInt(x#explicit_1#components_2#components_2#occurrence_3));int(1..)] <lex [-(toInt(x#explicit_1#components_3#components_2#occurrence_1)),-(toInt(x#explicit_1#components_3#components_2#occurrence_2)),-(toInt(x#explicit_1#components_3#components_2#occurrence_3));int(1..)]);int(1..)]);int(1..)])
+
+--
+
+x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_1#components_2#components_1 <= sum([x#explicit_1#components_3#components_1,-1;int(1..)])
+
+--
+
+x#explicit_1#components_2#components_1 < x#explicit_1#components_3#components_1
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_1#components_2#components_1 <= sum([x#explicit_1#components_3#components_1,-1;int(1..)])
+
+--
+
+sum([toInt(x#explicit_1#components_4#components_2#occurrence_1),toInt(x#explicit_1#components_4#components_2#occurrence_2),toInt(x#explicit_1#components_4#components_2#occurrence_3);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x#explicit_1#components_4#components_2#occurrence_1, x#explicit_1#components_4#components_2#occurrence_2, x#explicit_1#components_4#components_2#occurrence_3], 2),SumGeq([x#explicit_1#components_4#components_2#occurrence_1, x#explicit_1#components_4#components_2#occurrence_2, x#explicit_1#components_4#components_2#occurrence_3], 2);int(1..)])
+
+--
+
 sum([toInt(x#explicit_1#components_1#components_2#occurrence_1),toInt(x#explicit_1#components_1#components_2#occurrence_2),toInt(x#explicit_1#components_1#components_2#occurrence_3);int(1..)]) = 2
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([x#explicit_1#components_1#components_2#occurrence_1, x#explicit_1#components_1#components_2#occurrence_2, x#explicit_1#components_1#components_2#occurrence_3], 2),SumGeq([x#explicit_1#components_1#components_2#occurrence_1, x#explicit_1#components_1#components_2#occurrence_2, x#explicit_1#components_1#components_2#occurrence_3], 2);int(1..)])
@@ -380,12 +386,6 @@ and([SumLeq([x#explicit_1#components_3#components_2#occurrence_1, x#explicit_1#c
 
 --
 
-sum([toInt(x#explicit_1#components_4#components_2#occurrence_1),toInt(x#explicit_1#components_4#components_2#occurrence_2),toInt(x#explicit_1#components_4#components_2#occurrence_3);int(1..)]) = 2
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([x#explicit_1#components_4#components_2#occurrence_1, x#explicit_1#components_4#components_2#occurrence_2, x#explicit_1#components_4#components_2#occurrence_3], 2),SumGeq([x#explicit_1#components_4#components_2#occurrence_1, x#explicit_1#components_4#components_2#occurrence_2, x#explicit_1#components_4#components_2#occurrence_3], 2);int(1..)])
-
---
-
 x#explicit_1#components_1#components_1 <= sum([x#explicit_1#components_2#components_1,-1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([-1, x#explicit_1#components_2#components_1], x#explicit_1#components_1#components_1)
@@ -398,18 +398,6 @@ SumGeq([-1, x#explicit_1#components_2#components_1], x#explicit_1#components_1#c
 
 --
 
-x#explicit_1#components_2#components_1 <= sum([x#explicit_1#components_3#components_1,-1;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([-1, x#explicit_1#components_3#components_1], x#explicit_1#components_2#components_1)
-
---
-
-x#explicit_1#components_2#components_1 <= sum([x#explicit_1#components_3#components_1,-1;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([-1, x#explicit_1#components_3#components_1], x#explicit_1#components_2#components_1)
-
---
-
 x#explicit_1#components_3#components_1 <= sum([x#explicit_1#components_4#components_1,-1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([-1, x#explicit_1#components_4#components_1], x#explicit_1#components_3#components_1)
@@ -419,6 +407,18 @@ SumGeq([-1, x#explicit_1#components_4#components_1], x#explicit_1#components_3#c
 x#explicit_1#components_3#components_1 <= sum([x#explicit_1#components_4#components_1,-1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([-1, x#explicit_1#components_4#components_1], x#explicit_1#components_3#components_1)
+
+--
+
+x#explicit_1#components_2#components_1 <= sum([x#explicit_1#components_3#components_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, x#explicit_1#components_3#components_1], x#explicit_1#components_2#components_1)
+
+--
+
+x#explicit_1#components_2#components_1 <= sum([x#explicit_1#components_3#components_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, x#explicit_1#components_3#components_1], x#explicit_1#components_2#components_1)
 
 --
 
@@ -602,7 +602,7 @@ new constraints:
 
 --
 
-([-(__0),-(__1),-(__2);int(1..)] <lex [-(__3),-(__4),-(__5);int(1..)])
+([-(__6),-(__7),-(__8);int(1..)] <lex [-(__9),-(__10),-(__11);int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([__18, __19, __20], [__21, __22, __23])
 new variables:
@@ -613,52 +613,52 @@ new variables:
   findAux __22: int(-1..0)
   findAux __23: int(-1..0)
 new constraints:
-  __18 =aux -(__0)
-  __19 =aux -(__1)
-  __20 =aux -(__2)
-  __21 =aux -(__3)
-  __22 =aux -(__4)
-  __23 =aux -(__5)
+  __18 =aux -(__6)
+  __19 =aux -(__7)
+  __20 =aux -(__8)
+  __21 =aux -(__9)
+  __22 =aux -(__10)
+  __23 =aux -(__11)
 
 --
 
-__18 =aux -(__0)
+__18 =aux -(__6)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__18,__0)
+MinusEq(__18,__6)
 
 --
 
-__19 =aux -(__1)
+__19 =aux -(__7)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__19,__1)
+MinusEq(__19,__7)
 
 --
 
-__20 =aux -(__2)
+__20 =aux -(__8)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__20,__2)
+MinusEq(__20,__8)
 
 --
 
-__21 =aux -(__3)
+__21 =aux -(__9)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__21,__3)
+MinusEq(__21,__9)
 
 --
 
-__22 =aux -(__4)
+__22 =aux -(__10)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__22,__4)
+MinusEq(__22,__10)
 
 --
 
-__23 =aux -(__5)
+__23 =aux -(__11)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__23,__5)
+MinusEq(__23,__11)
 
 --
 
-([-(__6),-(__7),-(__8);int(1..)] <lex [-(__9),-(__10),-(__11);int(1..)])
+([-(__12),-(__13),-(__14);int(1..)] <lex [-(__15),-(__16),-(__17);int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([__24, __25, __26], [__27, __28, __29])
 new variables:
@@ -669,52 +669,52 @@ new variables:
   findAux __28: int(-1..0)
   findAux __29: int(-1..0)
 new constraints:
-  __24 =aux -(__6)
-  __25 =aux -(__7)
-  __26 =aux -(__8)
-  __27 =aux -(__9)
-  __28 =aux -(__10)
-  __29 =aux -(__11)
+  __24 =aux -(__12)
+  __25 =aux -(__13)
+  __26 =aux -(__14)
+  __27 =aux -(__15)
+  __28 =aux -(__16)
+  __29 =aux -(__17)
 
 --
 
-__24 =aux -(__6)
+__24 =aux -(__12)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__24,__6)
+MinusEq(__24,__12)
 
 --
 
-__25 =aux -(__7)
+__25 =aux -(__13)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__25,__7)
+MinusEq(__25,__13)
 
 --
 
-__26 =aux -(__8)
+__26 =aux -(__14)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__26,__8)
+MinusEq(__26,__14)
 
 --
 
-__27 =aux -(__9)
+__27 =aux -(__15)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__27,__9)
+MinusEq(__27,__15)
 
 --
 
-__28 =aux -(__10)
+__28 =aux -(__16)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__28,__10)
+MinusEq(__28,__16)
 
 --
 
-__29 =aux -(__11)
+__29 =aux -(__17)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__29,__11)
+MinusEq(__29,__17)
 
 --
 
-([-(__12),-(__13),-(__14);int(1..)] <lex [-(__15),-(__16),-(__17);int(1..)])
+([-(__0),-(__1),-(__2);int(1..)] <lex [-(__3),-(__4),-(__5);int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([__30, __31, __32], [__33, __34, __35])
 new variables:
@@ -725,48 +725,48 @@ new variables:
   findAux __34: int(-1..0)
   findAux __35: int(-1..0)
 new constraints:
-  __30 =aux -(__12)
-  __31 =aux -(__13)
-  __32 =aux -(__14)
-  __33 =aux -(__15)
-  __34 =aux -(__16)
-  __35 =aux -(__17)
+  __30 =aux -(__0)
+  __31 =aux -(__1)
+  __32 =aux -(__2)
+  __33 =aux -(__3)
+  __34 =aux -(__4)
+  __35 =aux -(__5)
 
 --
 
-__30 =aux -(__12)
+__30 =aux -(__0)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__30,__12)
+MinusEq(__30,__0)
 
 --
 
-__31 =aux -(__13)
+__31 =aux -(__1)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__31,__13)
+MinusEq(__31,__1)
 
 --
 
-__32 =aux -(__14)
+__32 =aux -(__2)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__32,__14)
+MinusEq(__32,__2)
 
 --
 
-__33 =aux -(__15)
+__33 =aux -(__3)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__33,__15)
+MinusEq(__33,__3)
 
 --
 
-__34 =aux -(__16)
+__34 =aux -(__4)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__34,__16)
+MinusEq(__34,__4)
 
 --
 
-__35 =aux -(__17)
+__35 =aux -(__5)
    ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)])
-MinusEq(__35,__17)
+MinusEq(__35,__5)
 
 --
 
@@ -838,9 +838,9 @@ findAux __35: int(-1..0)
 such that
 
 true,
-and([or([SumGeq([-1, x#explicit_1#components_2#components_1], x#explicit_1#components_1#components_1),x#explicit_1#components_1#components_1 = x#explicit_1#components_2#components_1;int(1..)]),or([SumGeq([-1, x#explicit_1#components_2#components_1], x#explicit_1#components_1#components_1),FlatLexLt([__18, __19, __20], [__21, __22, __23]);int(1..)]);int(1..)]),
-and([or([SumGeq([-1, x#explicit_1#components_3#components_1], x#explicit_1#components_2#components_1),x#explicit_1#components_2#components_1 = x#explicit_1#components_3#components_1;int(1..)]),or([SumGeq([-1, x#explicit_1#components_3#components_1], x#explicit_1#components_2#components_1),FlatLexLt([__24, __25, __26], [__27, __28, __29]);int(1..)]);int(1..)]),
-and([or([SumGeq([-1, x#explicit_1#components_4#components_1], x#explicit_1#components_3#components_1),x#explicit_1#components_3#components_1 = x#explicit_1#components_4#components_1;int(1..)]),or([SumGeq([-1, x#explicit_1#components_4#components_1], x#explicit_1#components_3#components_1),FlatLexLt([__30, __31, __32], [__33, __34, __35]);int(1..)]);int(1..)]),
+and([or([SumGeq([-1, x#explicit_1#components_2#components_1], x#explicit_1#components_1#components_1),x#explicit_1#components_1#components_1 = x#explicit_1#components_2#components_1;int(1..)]),or([SumGeq([-1, x#explicit_1#components_2#components_1], x#explicit_1#components_1#components_1),FlatLexLt([__30, __31, __32], [__33, __34, __35]);int(1..)]);int(1..)]),
+and([or([SumGeq([-1, x#explicit_1#components_3#components_1], x#explicit_1#components_2#components_1),x#explicit_1#components_2#components_1 = x#explicit_1#components_3#components_1;int(1..)]),or([SumGeq([-1, x#explicit_1#components_3#components_1], x#explicit_1#components_2#components_1),FlatLexLt([__18, __19, __20], [__21, __22, __23]);int(1..)]);int(1..)]),
+and([or([SumGeq([-1, x#explicit_1#components_4#components_1], x#explicit_1#components_3#components_1),x#explicit_1#components_3#components_1 = x#explicit_1#components_4#components_1;int(1..)]),or([SumGeq([-1, x#explicit_1#components_4#components_1], x#explicit_1#components_3#components_1),FlatLexLt([__24, __25, __26], [__27, __28, __29]);int(1..)]);int(1..)]),
 true,
 true,
 true,
@@ -867,22 +867,22 @@ __14 =aux toInt(x#explicit_1#components_3#components_2#occurrence_3),
 __15 =aux toInt(x#explicit_1#components_4#components_2#occurrence_1),
 __16 =aux toInt(x#explicit_1#components_4#components_2#occurrence_2),
 __17 =aux toInt(x#explicit_1#components_4#components_2#occurrence_3),
-MinusEq(__18,__0),
-MinusEq(__19,__1),
-MinusEq(__20,__2),
-MinusEq(__21,__3),
-MinusEq(__22,__4),
-MinusEq(__23,__5),
-MinusEq(__24,__6),
-MinusEq(__25,__7),
-MinusEq(__26,__8),
-MinusEq(__27,__9),
-MinusEq(__28,__10),
-MinusEq(__29,__11),
-MinusEq(__30,__12),
-MinusEq(__31,__13),
-MinusEq(__32,__14),
-MinusEq(__33,__15),
-MinusEq(__34,__16),
-MinusEq(__35,__17)
+MinusEq(__18,__6),
+MinusEq(__19,__7),
+MinusEq(__20,__8),
+MinusEq(__21,__9),
+MinusEq(__22,__10),
+MinusEq(__23,__11),
+MinusEq(__24,__12),
+MinusEq(__25,__13),
+MinusEq(__26,__14),
+MinusEq(__27,__15),
+MinusEq(__28,__16),
+MinusEq(__29,__17),
+MinusEq(__30,__0),
+MinusEq(__31,__1),
+MinusEq(__32,__2),
+MinusEq(__33,__3),
+MinusEq(__34,__4),
+MinusEq(__35,__5)
 

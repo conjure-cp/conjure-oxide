@@ -159,9 +159,9 @@ x#packed_1
 
 --
 
-x#packed_1 = z#packed_1
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-x#packed_1 = z#packed_1
+z#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z#packed_1
 
 --
 
@@ -225,15 +225,15 @@ t1#packed_1
 
 --
 
-x#packed_1
-   ~~> smt_int_lia_variable ([("Smt", 9500)])
-x#packed_1#lia_1
-
---
-
 z#packed_1
    ~~> smt_int_lia_variable ([("Smt", 9500)])
 z#packed_1#lia_1
+
+--
+
+x#packed_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#packed_1#lia_1
 
 --
 
@@ -285,12 +285,6 @@ someInt#lia_1
 
 --
 
-someInt
-   ~~> smt_int_lia_variable ([("Smt", 9500)])
-someInt#lia_1
-
---
-
 t1#packed_1
    ~~> smt_int_lia_variable ([("Smt", 9500)])
 t1#packed_1#lia_1
@@ -321,6 +315,12 @@ and([y2#packed_1#lia_1 = 3;int(1..)])
 
 --
 
+or([and([t1#packed_1#lia_1 = 2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([t1#packed_1#lia_1 = 2;int(1..)])
+
+--
+
 and([x#packed_1#lia_1 = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 x#packed_1#lia_1 = 1
@@ -336,6 +336,12 @@ y1#packed_1#lia_1 = 0
 and([y2#packed_1#lia_1 = 3;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 y2#packed_1#lia_1 = 3
+
+--
+
+and([t1#packed_1#lia_1 = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+t1#packed_1#lia_1 = 2
 
 --
 
@@ -393,6 +399,6 @@ x#packed_1#lia_1 = 1,
 y1#packed_1#lia_1 = 0,
 y2#packed_1#lia_1 = 3,
 x#packed_1#lia_1 = z#packed_1#lia_1,
-or([and([t1#packed_1#lia_1 = 2,someInt#lia_1 = 0;int(1..)]),and([t1#packed_1#lia_1 = 3,someInt#lia_1 = 4;int(1..)]);int(1..)]),
+t1#packed_1#lia_1 = 2,
 or([and([t2#packed_1#lia_1 = 2,t1#packed_1#lia_1 = 2;int(1..)]),and([t2#packed_1#lia_1 = 3,t1#packed_1#lia_1 = 3;int(1..)]);int(1..)])
 

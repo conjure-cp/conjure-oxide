@@ -56,12 +56,6 @@ sum([2,-1;int(1..)]) >= x#explicit_2
 
 --
 
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
 SafeIndex(x#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_2
@@ -74,15 +68,15 @@ x#explicit_1#components_1
 
 --
 
-SafeIndex(x#explicit_1,[2])
+SafeIndex(x#explicit_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
+x#explicit_1#components_1
 
 --
 
-x#explicit_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_1,1)
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
 
 --
 
@@ -92,9 +86,9 @@ WatchedLiteral(x#explicit_1#components_2,1)
 
 --
 
-0 >= x#explicit_2
-   ~~> geq_to_ineq ([("Minion", 4100)])
-Ineq(x#explicit_2, 0, 0)
+x#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1,1)
 
 --
 
@@ -104,15 +98,21 @@ Ineq(x#explicit_2, 1, 0)
 
 --
 
-1 <= x#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#explicit_2, 0)
+0 >= x#explicit_2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 0, 0)
 
 --
 
 2 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(2, x#explicit_2, 0)
+
+--
+
+1 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_2, 0)
 
 --
 

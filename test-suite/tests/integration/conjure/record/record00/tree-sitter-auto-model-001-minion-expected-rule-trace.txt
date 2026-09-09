@@ -28,9 +28,9 @@ y
 
 --
 
-y = z
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-y = z
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
 new variables:
   find z#packed_1: int(0..19)
 
@@ -62,15 +62,15 @@ or([x#packed_1 % 10 = 3;int(1..)])
 
 --
 
-y = z
-   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
-y#packed_1 = z#packed_1
-
---
-
 y = record {a = false,b = 4}
    ~~> record_packed_var_eq_lit ([("ReprRecordPacked", 9700)])
 y#packed_1 = 4
+
+--
+
+y = z
+   ~~> record_packed_var_eq_var ([("ReprRecordPacked", 9700)])
+y#packed_1 = z#packed_1
 
 --
 

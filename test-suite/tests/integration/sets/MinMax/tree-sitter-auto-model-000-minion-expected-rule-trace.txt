@@ -104,12 +104,6 @@ a#explicit_2 <= sum([4,-1;int(1..)])
 
 --
 
-SafeIndex(a#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-a#explicit_1#components_1
-
---
-
 SafeIndex(a#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 a#explicit_1#components_2
@@ -134,6 +128,12 @@ a#explicit_1#components_1
 
 --
 
+SafeIndex(a#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+a#explicit_1#components_1
+
+--
+
 SafeIndex(a#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 a#explicit_1#components_2
@@ -161,12 +161,6 @@ a#explicit_1#components_3
 SafeIndex(a#explicit_1,[4])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 a#explicit_1#components_4
-
---
-
-a#explicit_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(a#explicit_1#components_1,1)
 
 --
 
@@ -188,9 +182,9 @@ WatchedLiteral(a#explicit_1#components_4,1)
 
 --
 
-a#explicit_2 <= 1
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(a#explicit_2, 1, 0)
+a#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(a#explicit_1#components_1,1)
 
 --
 
@@ -206,9 +200,9 @@ Ineq(a#explicit_2, 3, 0)
 
 --
 
-1 <= a#explicit_2
+a#explicit_2 <= 1
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, a#explicit_2, 0)
+Ineq(a#explicit_2, 1, 0)
 
 --
 
@@ -230,9 +224,9 @@ Ineq(4, a#explicit_2, 0)
 
 --
 
-([a#explicit_1#components_1;int(1..)] <lex [a#explicit_1#components_2;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLt([a#explicit_1#components_1], [a#explicit_1#components_2])
+1 <= a#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, a#explicit_2, 0)
 
 --
 
@@ -245,6 +239,12 @@ FlatLexLt([a#explicit_1#components_2], [a#explicit_1#components_3])
 ([a#explicit_1#components_3;int(1..)] <lex [a#explicit_1#components_4;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([a#explicit_1#components_3], [a#explicit_1#components_4])
+
+--
+
+([a#explicit_1#components_1;int(1..)] <lex [a#explicit_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([a#explicit_1#components_1], [a#explicit_1#components_2])
 
 --
 

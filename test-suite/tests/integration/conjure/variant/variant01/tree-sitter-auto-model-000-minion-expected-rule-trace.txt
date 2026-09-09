@@ -170,30 +170,6 @@ and([or([1 <= x#explicit_2,x#explicit_1#components_1#components_1 = 1;int(1..)])
 
 --
 
-SafeIndex(x#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2 = variant{theBool = false}
-   ~~> variant_components_var_eq_lit ([("ReprGeneral", 9700)])
-and([x#explicit_1#components_2#components_1 = 1,x#explicit_1#components_2#components_2 = false;int(1..)])
-
---
-
-or([2 <= x#explicit_2,and([x#explicit_1#components_2#components_1 = 1,x#explicit_1#components_2#components_2 = false;int(1..)]);int(1..)])
-   ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([2 <= x#explicit_2,x#explicit_1#components_2#components_1 = 1;int(1..)]),or([2 <= x#explicit_2,x#explicit_1#components_2#components_2 = false;int(1..)]);int(1..)])
-
---
-
 SafeIndex(x#explicit_1,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_3
@@ -215,6 +191,30 @@ and([x#explicit_1#components_3#components_1 = 1,x#explicit_1#components_3#compon
 or([3 <= x#explicit_2,and([x#explicit_1#components_3#components_1 = 1,x#explicit_1#components_3#components_2 = false;int(1..)]);int(1..)])
    ~~> distribute_or_over_and ([("Base", 8400)])
 and([or([3 <= x#explicit_2,x#explicit_1#components_3#components_1 = 1;int(1..)]),or([3 <= x#explicit_2,x#explicit_1#components_3#components_2 = false;int(1..)]);int(1..)])
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2 = variant{theBool = false}
+   ~~> variant_components_var_eq_lit ([("ReprGeneral", 9700)])
+and([x#explicit_1#components_2#components_1 = 1,x#explicit_1#components_2#components_2 = false;int(1..)])
+
+--
+
+or([2 <= x#explicit_2,and([x#explicit_1#components_2#components_1 = 1,x#explicit_1#components_2#components_2 = false;int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([2 <= x#explicit_2,x#explicit_1#components_2#components_1 = 1;int(1..)]),or([2 <= x#explicit_2,x#explicit_1#components_2#components_2 = false;int(1..)]);int(1..)])
 
 --
 
@@ -242,18 +242,6 @@ and([or([4 <= x#explicit_2,x#explicit_1#components_4#components_1 = 1;int(1..)])
 
 --
 
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-x#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_1
-
---
-
 SafeIndex(x#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_2
@@ -263,12 +251,6 @@ x#explicit_1#components_2
 x#explicit_1#components_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#explicit_1#components_2
-
---
-
-([x#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2;int(1..)])
-   ~~> variant_components_cmp ([("ReprGeneral", 9700)])
-FlatLexLt([x#explicit_1#components_1#components_1, x#explicit_1#components_1#components_2, x#explicit_1#components_1#components_3], [x#explicit_1#components_2#components_1, x#explicit_1#components_2#components_2, x#explicit_1#components_2#components_3])
 
 --
 
@@ -302,18 +284,6 @@ FlatLexLt([x#explicit_1#components_2#components_1, x#explicit_1#components_2#com
 
 --
 
-SafeIndex(x#explicit_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_3
-
---
-
-x#explicit_1#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_3
-
---
-
 SafeIndex(x#explicit_1,[4])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_4
@@ -326,15 +296,39 @@ x#explicit_1#components_4
 
 --
 
-([x#explicit_1#components_3;int(1..)] <lex [x#explicit_1#components_4;int(1..)])
-   ~~> variant_components_cmp ([("ReprGeneral", 9700)])
-FlatLexLt([x#explicit_1#components_3#components_1, x#explicit_1#components_3#components_2, x#explicit_1#components_3#components_3], [x#explicit_1#components_4#components_1, x#explicit_1#components_4#components_2, x#explicit_1#components_4#components_3])
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
 
 --
 
-x#explicit_1#components_1#components_2 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_1#components_2,false)
+x#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_1
+
+--
+
+([x#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2;int(1..)])
+   ~~> variant_components_cmp ([("ReprGeneral", 9700)])
+FlatLexLt([x#explicit_1#components_1#components_1, x#explicit_1#components_1#components_2, x#explicit_1#components_1#components_3], [x#explicit_1#components_2#components_1, x#explicit_1#components_2#components_2, x#explicit_1#components_2#components_3])
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+x#explicit_1#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_3
+
+--
+
+([x#explicit_1#components_3;int(1..)] <lex [x#explicit_1#components_4;int(1..)])
+   ~~> variant_components_cmp ([("ReprGeneral", 9700)])
+FlatLexLt([x#explicit_1#components_3#components_1, x#explicit_1#components_3#components_2, x#explicit_1#components_3#components_3], [x#explicit_1#components_4#components_1, x#explicit_1#components_4#components_2, x#explicit_1#components_4#components_3])
 
 --
 
@@ -380,27 +374,9 @@ WatchedLiteral(x#explicit_1#components_4#components_3,1)
 
 --
 
-x#explicit_1#components_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_1#components_1,1)
-
---
-
 x#explicit_1#components_1#components_2 = false
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#explicit_1#components_1#components_2,false)
-
---
-
-x#explicit_1#components_2#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_2#components_1,1)
-
---
-
-x#explicit_1#components_2#components_2 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_2#components_2,false)
 
 --
 
@@ -416,6 +392,18 @@ WatchedLiteral(x#explicit_1#components_3#components_2,false)
 
 --
 
+x#explicit_1#components_2#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2#components_1,1)
+
+--
+
+x#explicit_1#components_2#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2#components_2,false)
+
+--
+
 x#explicit_1#components_4#components_1 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#explicit_1#components_4#components_1,1)
@@ -428,135 +416,147 @@ WatchedLiteral(x#explicit_1#components_4#components_2,false)
 
 --
 
-(x#explicit_1#components_1#components_1 != 1) -> (WatchedLiteral(x#explicit_1#components_1#components_2,false))
-   ~~> flatten_imply ([("Minion", 4200)])
-(__0) -> (WatchedLiteral(x#explicit_1#components_1#components_2,false))
-new variables:
-  findAux __0: bool
-new constraints:
-  __0 =aux x#explicit_1#components_1#components_1 != 1
+x#explicit_1#components_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1#components_1,1)
 
 --
 
-(__0) -> (WatchedLiteral(x#explicit_1#components_1#components_2,false))
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#explicit_1#components_1#components_2,false), __0)
-
---
-
-__0 =aux x#explicit_1#components_1#components_1 != 1
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#explicit_1#components_1#components_1 != 1, __0)
+x#explicit_1#components_1#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1#components_2,false)
 
 --
 
 (x#explicit_1#components_1#components_1 != 2) -> (WatchedLiteral(x#explicit_1#components_1#components_3,1))
    ~~> flatten_imply ([("Minion", 4200)])
-(__1) -> (WatchedLiteral(x#explicit_1#components_1#components_3,1))
+(__0) -> (WatchedLiteral(x#explicit_1#components_1#components_3,1))
 new variables:
-  findAux __1: bool
+  findAux __0: bool
 new constraints:
-  __1 =aux x#explicit_1#components_1#components_1 != 2
+  __0 =aux x#explicit_1#components_1#components_1 != 2
 
 --
 
-(__1) -> (WatchedLiteral(x#explicit_1#components_1#components_3,1))
+(__0) -> (WatchedLiteral(x#explicit_1#components_1#components_3,1))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#explicit_1#components_1#components_3,1), __1)
+ReifyImply(WatchedLiteral(x#explicit_1#components_1#components_3,1), __0)
 
 --
 
-__1 =aux x#explicit_1#components_1#components_1 != 2
+__0 =aux x#explicit_1#components_1#components_1 != 2
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#explicit_1#components_1#components_1 != 2, __1)
-
---
-
-(x#explicit_1#components_2#components_1 != 1) -> (WatchedLiteral(x#explicit_1#components_2#components_2,false))
-   ~~> flatten_imply ([("Minion", 4200)])
-(__2) -> (WatchedLiteral(x#explicit_1#components_2#components_2,false))
-new variables:
-  findAux __2: bool
-new constraints:
-  __2 =aux x#explicit_1#components_2#components_1 != 1
-
---
-
-(__2) -> (WatchedLiteral(x#explicit_1#components_2#components_2,false))
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#explicit_1#components_2#components_2,false), __2)
-
---
-
-__2 =aux x#explicit_1#components_2#components_1 != 1
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#explicit_1#components_2#components_1 != 1, __2)
+Reify(x#explicit_1#components_1#components_1 != 2, __0)
 
 --
 
 (x#explicit_1#components_2#components_1 != 2) -> (WatchedLiteral(x#explicit_1#components_2#components_3,1))
    ~~> flatten_imply ([("Minion", 4200)])
-(__3) -> (WatchedLiteral(x#explicit_1#components_2#components_3,1))
+(__1) -> (WatchedLiteral(x#explicit_1#components_2#components_3,1))
 new variables:
-  findAux __3: bool
+  findAux __1: bool
 new constraints:
-  __3 =aux x#explicit_1#components_2#components_1 != 2
+  __1 =aux x#explicit_1#components_2#components_1 != 2
 
 --
 
-(__3) -> (WatchedLiteral(x#explicit_1#components_2#components_3,1))
+(__1) -> (WatchedLiteral(x#explicit_1#components_2#components_3,1))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#explicit_1#components_2#components_3,1), __3)
+ReifyImply(WatchedLiteral(x#explicit_1#components_2#components_3,1), __1)
 
 --
 
-__3 =aux x#explicit_1#components_2#components_1 != 2
+__1 =aux x#explicit_1#components_2#components_1 != 2
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#explicit_1#components_2#components_1 != 2, __3)
-
---
-
-(x#explicit_1#components_3#components_1 != 1) -> (WatchedLiteral(x#explicit_1#components_3#components_2,false))
-   ~~> flatten_imply ([("Minion", 4200)])
-(__4) -> (WatchedLiteral(x#explicit_1#components_3#components_2,false))
-new variables:
-  findAux __4: bool
-new constraints:
-  __4 =aux x#explicit_1#components_3#components_1 != 1
-
---
-
-(__4) -> (WatchedLiteral(x#explicit_1#components_3#components_2,false))
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#explicit_1#components_3#components_2,false), __4)
-
---
-
-__4 =aux x#explicit_1#components_3#components_1 != 1
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#explicit_1#components_3#components_1 != 1, __4)
+Reify(x#explicit_1#components_2#components_1 != 2, __1)
 
 --
 
 (x#explicit_1#components_3#components_1 != 2) -> (WatchedLiteral(x#explicit_1#components_3#components_3,1))
    ~~> flatten_imply ([("Minion", 4200)])
-(__5) -> (WatchedLiteral(x#explicit_1#components_3#components_3,1))
+(__2) -> (WatchedLiteral(x#explicit_1#components_3#components_3,1))
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux x#explicit_1#components_3#components_1 != 2
+
+--
+
+(__2) -> (WatchedLiteral(x#explicit_1#components_3#components_3,1))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#explicit_1#components_3#components_3,1), __2)
+
+--
+
+__2 =aux x#explicit_1#components_3#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x#explicit_1#components_3#components_1 != 2, __2)
+
+--
+
+(x#explicit_1#components_4#components_1 != 2) -> (WatchedLiteral(x#explicit_1#components_4#components_3,1))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> (WatchedLiteral(x#explicit_1#components_4#components_3,1))
+new variables:
+  findAux __3: bool
+new constraints:
+  __3 =aux x#explicit_1#components_4#components_1 != 2
+
+--
+
+(__3) -> (WatchedLiteral(x#explicit_1#components_4#components_3,1))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#explicit_1#components_4#components_3,1), __3)
+
+--
+
+__3 =aux x#explicit_1#components_4#components_1 != 2
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x#explicit_1#components_4#components_1 != 2, __3)
+
+--
+
+(x#explicit_1#components_2#components_1 != 1) -> (WatchedLiteral(x#explicit_1#components_2#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__4) -> (WatchedLiteral(x#explicit_1#components_2#components_2,false))
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux x#explicit_1#components_2#components_1 != 1
+
+--
+
+(__4) -> (WatchedLiteral(x#explicit_1#components_2#components_2,false))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(WatchedLiteral(x#explicit_1#components_2#components_2,false), __4)
+
+--
+
+__4 =aux x#explicit_1#components_2#components_1 != 1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x#explicit_1#components_2#components_1 != 1, __4)
+
+--
+
+(x#explicit_1#components_3#components_1 != 1) -> (WatchedLiteral(x#explicit_1#components_3#components_2,false))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__5) -> (WatchedLiteral(x#explicit_1#components_3#components_2,false))
 new variables:
   findAux __5: bool
 new constraints:
-  __5 =aux x#explicit_1#components_3#components_1 != 2
+  __5 =aux x#explicit_1#components_3#components_1 != 1
 
 --
 
-(__5) -> (WatchedLiteral(x#explicit_1#components_3#components_3,1))
+(__5) -> (WatchedLiteral(x#explicit_1#components_3#components_2,false))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#explicit_1#components_3#components_3,1), __5)
+ReifyImply(WatchedLiteral(x#explicit_1#components_3#components_2,false), __5)
 
 --
 
-__5 =aux x#explicit_1#components_3#components_1 != 2
+__5 =aux x#explicit_1#components_3#components_1 != 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#explicit_1#components_3#components_1 != 2, __5)
+Reify(x#explicit_1#components_3#components_1 != 1, __5)
 
 --
 
@@ -582,25 +582,31 @@ Reify(x#explicit_1#components_4#components_1 != 1, __6)
 
 --
 
-(x#explicit_1#components_4#components_1 != 2) -> (WatchedLiteral(x#explicit_1#components_4#components_3,1))
+(x#explicit_1#components_1#components_1 != 1) -> (WatchedLiteral(x#explicit_1#components_1#components_2,false))
    ~~> flatten_imply ([("Minion", 4200)])
-(__7) -> (WatchedLiteral(x#explicit_1#components_4#components_3,1))
+(__7) -> (WatchedLiteral(x#explicit_1#components_1#components_2,false))
 new variables:
   findAux __7: bool
 new constraints:
-  __7 =aux x#explicit_1#components_4#components_1 != 2
+  __7 =aux x#explicit_1#components_1#components_1 != 1
 
 --
 
-(__7) -> (WatchedLiteral(x#explicit_1#components_4#components_3,1))
+(__7) -> (WatchedLiteral(x#explicit_1#components_1#components_2,false))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#explicit_1#components_4#components_3,1), __7)
+ReifyImply(WatchedLiteral(x#explicit_1#components_1#components_2,false), __7)
 
 --
 
-__7 =aux x#explicit_1#components_4#components_1 != 2
+__7 =aux x#explicit_1#components_1#components_1 != 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#explicit_1#components_4#components_1 != 2, __7)
+Reify(x#explicit_1#components_1#components_1 != 1, __7)
+
+--
+
+x#explicit_2 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 3, 0)
 
 --
 
@@ -616,21 +622,15 @@ Ineq(x#explicit_2, 2, 0)
 
 --
 
-x#explicit_2 <= 3
+3 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(x#explicit_2, 3, 0)
+Ineq(3, x#explicit_2, 0)
 
 --
 
-1 <= x#explicit_2
+3 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#explicit_2, 0)
-
---
-
-1 <= x#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#explicit_2, 0)
+Ineq(3, x#explicit_2, 0)
 
 --
 
@@ -646,18 +646,6 @@ Ineq(2, x#explicit_2, 0)
 
 --
 
-3 <= x#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(3, x#explicit_2, 0)
-
---
-
-3 <= x#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(3, x#explicit_2, 0)
-
---
-
 4 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(4, x#explicit_2, 0)
@@ -667,6 +655,18 @@ Ineq(4, x#explicit_2, 0)
 4 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(4, x#explicit_2, 0)
+
+--
+
+1 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_2, 0)
+
+--
+
+1 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_2, 0)
 
 --
 
@@ -710,20 +710,20 @@ and([or([Ineq(1, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_1#compo
 and([or([Ineq(2, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_2#components_1,1);int(1..)]),or([Ineq(2, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_2#components_2,false);int(1..)]);int(1..)]),
 and([or([Ineq(3, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_3#components_1,1);int(1..)]),or([Ineq(3, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_3#components_2,false);int(1..)]);int(1..)]),
 and([or([Ineq(4, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_4#components_1,1);int(1..)]),or([Ineq(4, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_4#components_2,false);int(1..)]);int(1..)]),
-ReifyImply(WatchedLiteral(x#explicit_1#components_1#components_2,false), __0),
-ReifyImply(WatchedLiteral(x#explicit_1#components_1#components_3,1), __1),
-ReifyImply(WatchedLiteral(x#explicit_1#components_2#components_2,false), __2),
-ReifyImply(WatchedLiteral(x#explicit_1#components_2#components_3,1), __3),
-ReifyImply(WatchedLiteral(x#explicit_1#components_3#components_2,false), __4),
-ReifyImply(WatchedLiteral(x#explicit_1#components_3#components_3,1), __5),
+ReifyImply(WatchedLiteral(x#explicit_1#components_1#components_2,false), __7),
+ReifyImply(WatchedLiteral(x#explicit_1#components_1#components_3,1), __0),
+ReifyImply(WatchedLiteral(x#explicit_1#components_2#components_2,false), __4),
+ReifyImply(WatchedLiteral(x#explicit_1#components_2#components_3,1), __1),
+ReifyImply(WatchedLiteral(x#explicit_1#components_3#components_2,false), __5),
+ReifyImply(WatchedLiteral(x#explicit_1#components_3#components_3,1), __2),
 ReifyImply(WatchedLiteral(x#explicit_1#components_4#components_2,false), __6),
-ReifyImply(WatchedLiteral(x#explicit_1#components_4#components_3,1), __7),
-Reify(x#explicit_1#components_1#components_1 != 1, __0),
-Reify(x#explicit_1#components_1#components_1 != 2, __1),
-Reify(x#explicit_1#components_2#components_1 != 1, __2),
-Reify(x#explicit_1#components_2#components_1 != 2, __3),
-Reify(x#explicit_1#components_3#components_1 != 1, __4),
-Reify(x#explicit_1#components_3#components_1 != 2, __5),
+ReifyImply(WatchedLiteral(x#explicit_1#components_4#components_3,1), __3),
+Reify(x#explicit_1#components_1#components_1 != 2, __0),
+Reify(x#explicit_1#components_2#components_1 != 2, __1),
+Reify(x#explicit_1#components_3#components_1 != 2, __2),
+Reify(x#explicit_1#components_4#components_1 != 2, __3),
+Reify(x#explicit_1#components_2#components_1 != 1, __4),
+Reify(x#explicit_1#components_3#components_1 != 1, __5),
 Reify(x#explicit_1#components_4#components_1 != 1, __6),
-Reify(x#explicit_1#components_4#components_1 != 2, __7)
+Reify(x#explicit_1#components_1#components_1 != 1, __7)
 

@@ -134,12 +134,6 @@ SafeSlice(field,[5,..])
 
 --
 
-SafeSlice(field,[1,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[field#components_1,field#components_2,field#components_3,field#components_4,field#components_5;int(1..)]
-
---
-
 SafeSlice(field,[2,..])
    ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
 [field#components_6,field#components_7,field#components_8,field#components_9,field#components_10;int(1..)]
@@ -161,6 +155,12 @@ SafeSlice(field,[4,..])
 SafeSlice(field,[5,..])
    ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
 [field#components_21,field#components_22,field#components_23,field#components_24,field#components_25;int(1..)]
+
+--
+
+SafeSlice(field,[1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_1,field#components_2,field#components_3,field#components_4,field#components_5;int(1..)]
 
 --
 
@@ -194,129 +194,21 @@ __flat_alldiff([field#components_21, field#components_22, field#components_23, f
 
 --
 
-[ allDifferent(field[..,col]) | col : RANGE ]
+[ (values[row, col] > 0) -> (field[row, col] = values[row, col]) | row : RANGE, col : RANGE ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[allDifferent(field[..,1]),allDifferent(field[..,2]),allDifferent(field[..,3]),allDifferent(field[..,4]),allDifferent(field[..,5]);int(1..)]
+[field#components_3 = 3,field#components_4 = 2;int(1..)]
 
 --
 
-field
-   ~~> select_representation ([("ReprGeneral", 10000)])
-field
+field#components_3 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_3,3)
 
 --
 
-field
-   ~~> select_representation ([("ReprGeneral", 10000)])
-field
-
---
-
-field
-   ~~> select_representation ([("ReprGeneral", 10000)])
-field
-
---
-
-field
-   ~~> select_representation ([("ReprGeneral", 10000)])
-field
-
---
-
-field
-   ~~> select_representation ([("ReprGeneral", 10000)])
-field
-
---
-
-field[..,1]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(field,[..,1])
-
---
-
-field[..,2]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(field,[..,2])
-
---
-
-field[..,3]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(field,[..,3])
-
---
-
-field[..,4]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(field,[..,4])
-
---
-
-field[..,5]
-   ~~> slice_to_bubble ([("Bubble", 6000)])
-SafeSlice(field,[..,5])
-
---
-
-SafeSlice(field,[..,1])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[field#components_1,field#components_6,field#components_11,field#components_16,field#components_21;int(1..)]
-
---
-
-SafeSlice(field,[..,2])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[field#components_2,field#components_7,field#components_12,field#components_17,field#components_22;int(1..)]
-
---
-
-SafeSlice(field,[..,3])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[field#components_3,field#components_8,field#components_13,field#components_18,field#components_23;int(1..)]
-
---
-
-SafeSlice(field,[..,4])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[field#components_4,field#components_9,field#components_14,field#components_19,field#components_24;int(1..)]
-
---
-
-SafeSlice(field,[..,5])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[field#components_5,field#components_10,field#components_15,field#components_20,field#components_25;int(1..)]
-
---
-
-allDifferent([field#components_1,field#components_6,field#components_11,field#components_16,field#components_21;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([field#components_1, field#components_6, field#components_11, field#components_16, field#components_21])
-
---
-
-allDifferent([field#components_2,field#components_7,field#components_12,field#components_17,field#components_22;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([field#components_2, field#components_7, field#components_12, field#components_17, field#components_22])
-
---
-
-allDifferent([field#components_3,field#components_8,field#components_13,field#components_18,field#components_23;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([field#components_3, field#components_8, field#components_13, field#components_18, field#components_23])
-
---
-
-allDifferent([field#components_4,field#components_9,field#components_14,field#components_19,field#components_24;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([field#components_4, field#components_9, field#components_14, field#components_19, field#components_24])
-
---
-
-allDifferent([field#components_5,field#components_10,field#components_15,field#components_20,field#components_25;int(1..)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([field#components_5, field#components_10, field#components_15, field#components_20, field#components_25])
+field#components_4 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(field#components_4,2)
 
 --
 
@@ -392,12 +284,6 @@ field#components_25 <= sum([field#components_20,-1;int(1..)])
 
 --
 
-field#components_2 <= sum([field#components_1,-1;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([-1, field#components_1], field#components_2)
-
---
-
 field#components_4 <= sum([field#components_5,-1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([-1, field#components_5], field#components_4)
@@ -458,21 +344,135 @@ SumGeq([-1, field#components_20], field#components_25)
 
 --
 
-[ (values[row, col] > 0) -> (field[row, col] = values[row, col]) | row : RANGE, col : RANGE ]
+field#components_2 <= sum([field#components_1,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, field#components_1], field#components_2)
+
+--
+
+[ allDifferent(field[..,col]) | col : RANGE ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[field#components_3 = 3,field#components_4 = 2;int(1..)]
+[allDifferent(field[..,1]),allDifferent(field[..,2]),allDifferent(field[..,3]),allDifferent(field[..,4]),allDifferent(field[..,5]);int(1..)]
 
 --
 
-field#components_3 = 3
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(field#components_3,3)
+field
+   ~~> select_representation ([("ReprGeneral", 10000)])
+field
 
 --
 
-field#components_4 = 2
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(field#components_4,2)
+field
+   ~~> select_representation ([("ReprGeneral", 10000)])
+field
+
+--
+
+field
+   ~~> select_representation ([("ReprGeneral", 10000)])
+field
+
+--
+
+field
+   ~~> select_representation ([("ReprGeneral", 10000)])
+field
+
+--
+
+field
+   ~~> select_representation ([("ReprGeneral", 10000)])
+field
+
+--
+
+field[..,1]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,1])
+
+--
+
+field[..,2]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,2])
+
+--
+
+field[..,3]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,3])
+
+--
+
+field[..,4]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,4])
+
+--
+
+field[..,5]
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(field,[..,5])
+
+--
+
+SafeSlice(field,[..,2])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_2,field#components_7,field#components_12,field#components_17,field#components_22;int(1..)]
+
+--
+
+SafeSlice(field,[..,3])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_3,field#components_8,field#components_13,field#components_18,field#components_23;int(1..)]
+
+--
+
+SafeSlice(field,[..,4])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_4,field#components_9,field#components_14,field#components_19,field#components_24;int(1..)]
+
+--
+
+SafeSlice(field,[..,5])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_5,field#components_10,field#components_15,field#components_20,field#components_25;int(1..)]
+
+--
+
+SafeSlice(field,[..,1])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[field#components_1,field#components_6,field#components_11,field#components_16,field#components_21;int(1..)]
+
+--
+
+allDifferent([field#components_1,field#components_6,field#components_11,field#components_16,field#components_21;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_1, field#components_6, field#components_11, field#components_16, field#components_21])
+
+--
+
+allDifferent([field#components_2,field#components_7,field#components_12,field#components_17,field#components_22;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_2, field#components_7, field#components_12, field#components_17, field#components_22])
+
+--
+
+allDifferent([field#components_3,field#components_8,field#components_13,field#components_18,field#components_23;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_3, field#components_8, field#components_13, field#components_18, field#components_23])
+
+--
+
+allDifferent([field#components_4,field#components_9,field#components_14,field#components_19,field#components_24;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_4, field#components_9, field#components_14, field#components_19, field#components_24])
+
+--
+
+allDifferent([field#components_5,field#components_10,field#components_15,field#components_20,field#components_25;int(1..)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([field#components_5, field#components_10, field#components_15, field#components_20, field#components_25])
 
 --
 

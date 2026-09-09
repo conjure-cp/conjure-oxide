@@ -163,18 +163,6 @@ and([or([2 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#expli
 
 --
 
-SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
 SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 f#as_relation_1#as_set_1#explicit_1#components_2
@@ -187,21 +175,21 @@ f#as_relation_1#as_set_1#explicit_1#components_2
 
 --
 
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
 ([f#as_relation_1#as_set_1#explicit_1#components_1;int(1..)] <lex [f#as_relation_1#as_set_1#explicit_1#components_2;int(1..)])
    ~~> tuple_var_cmp_var ([("ReprGeneral", 9400)])
 FlatLexLt([f#as_relation_1#as_set_1#explicit_1#components_1#components_1, f#as_relation_1#as_set_1#explicit_1#components_1#components_2], [f#as_relation_1#as_set_1#explicit_1#components_2#components_1, f#as_relation_1#as_set_1#explicit_1#components_2#components_2])
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_1,1)
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_2,false)
 
 --
 
@@ -217,24 +205,24 @@ WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_2#components_2,fal
 
 --
 
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_1,1)
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_2,false)
+
+--
+
 f#as_relation_1#as_set_1#explicit_2 <= 1
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(f#as_relation_1#as_set_1#explicit_2, 1, 0)
 
 --
 
-1 <= f#as_relation_1#as_set_1#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, f#as_relation_1#as_set_1#explicit_2, 0)
-
---
-
-1 <= f#as_relation_1#as_set_1#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, f#as_relation_1#as_set_1#explicit_2, 0)
-
---
-
 2 <= f#as_relation_1#as_set_1#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(2, f#as_relation_1#as_set_1#explicit_2, 0)
@@ -244,6 +232,18 @@ Ineq(2, f#as_relation_1#as_set_1#explicit_2, 0)
 2 <= f#as_relation_1#as_set_1#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(2, f#as_relation_1#as_set_1#explicit_2, 0)
+
+--
+
+1 <= f#as_relation_1#as_set_1#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, f#as_relation_1#as_set_1#explicit_2, 0)
+
+--
+
+1 <= f#as_relation_1#as_set_1#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, f#as_relation_1#as_set_1#explicit_2, 0)
 
 --
 
@@ -2905,54 +2905,6 @@ f#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_1 = (1,false)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false;int(1..)])
-
---
-
-and([1 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([1 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false;int(1..)])
-
---
-
-SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#as_relation_1#as_set_1#explicit_1#components_2
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_2
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_2 = (1,false)
-   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
-and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false;int(1..)])
-
---
-
-and([2 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([2 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false;int(1..)])
-
---
-
-SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
-f#as_relation_1#as_set_1#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-f#as_relation_1#as_set_1#explicit_1#components_1
-
---
-
 f#as_relation_1#as_set_1#explicit_1#components_1 = (1,true)
    ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
 and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = true;int(1..)])
@@ -3853,27 +3805,51 @@ and([2 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_1,1)
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_2,false)
+f#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_2#components_1,1)
+f#as_relation_1#as_set_1#explicit_1#components_1 = (1,false)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false;int(1..)])
 
 --
 
-f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_2#components_2,false)
+and([1 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([1 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false;int(1..)])
+
+--
+
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_2
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_2
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2 = (1,false)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false;int(1..)])
+
+--
+
+and([2 <= f#as_relation_1#as_set_1#explicit_2,and([f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([2 <= f#as_relation_1#as_set_1#explicit_2,f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false;int(1..)])
 
 --
 
@@ -4210,6 +4186,30 @@ WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_1,10)
 f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 10
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_2#components_1,10)
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_1,1)
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_1#components_2,false)
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_2#components_1,1)
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_2#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(f#as_relation_1#as_set_1#explicit_1#components_2#components_2,false)
 
 --
 

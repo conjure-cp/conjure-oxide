@@ -38,6 +38,38 @@ new variables:
 
 --
 
+sum([ toInt(SafeIndex(x#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(1..3) ]) >= 0
+   ~~> flatten_generic ([("Minion", 4200)])
+__0 >= 0
+new variables:
+  findAux __0: int(0..9)
+new constraints:
+  __0 =aux sum([ toInt(SafeIndex(x#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(1..3) ])
+
+--
+
+sum([ toInt(SafeIndex(x#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(1..3) ]) <= 9
+   ~~> flatten_generic ([("Minion", 4200)])
+__1 <= 9
+new variables:
+  findAux __1: int(0..9)
+new constraints:
+  __1 =aux sum([ toInt(SafeIndex(x#occurrence_1,[i0, i1])) | i0 : int(1..3), i1 : int(1..3) ])
+
+--
+
+__1 <= 9
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__1, 9, 0)
+
+--
+
+__0 >= 0
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, __0, 0)
+
+--
+
 [ !(SafeIndex(x#occurrence_1,[x, x])) | x : int(1..3) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [!(SafeIndex(x#occurrence_1,[1, 1])),!(SafeIndex(x#occurrence_1,[2, 2])),!(SafeIndex(x#occurrence_1,[3, 3]));int(1..)]
@@ -470,9 +502,9 @@ x#occurrence_1#components_9
 
 --
 
-sum([toInt(x#occurrence_1#components_1),toInt(x#occurrence_1#components_2),toInt(x#occurrence_1#components_3),toInt(x#occurrence_1#components_4),toInt(x#occurrence_1#components_5),toInt(x#occurrence_1#components_6),toInt(x#occurrence_1#components_7),toInt(x#occurrence_1#components_8),toInt(x#occurrence_1#components_9);int(1..)]) >= 0
+__1 =aux sum([toInt(x#occurrence_1#components_1),toInt(x#occurrence_1#components_2),toInt(x#occurrence_1#components_3),toInt(x#occurrence_1#components_4),toInt(x#occurrence_1#components_5),toInt(x#occurrence_1#components_6),toInt(x#occurrence_1#components_7),toInt(x#occurrence_1#components_8),toInt(x#occurrence_1#components_9);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], 0)
+and([SumLeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], __1),SumGeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], __1);int(1..)])
 
 --
 
@@ -590,9 +622,9 @@ x#occurrence_1#components_9
 
 --
 
-sum([toInt(x#occurrence_1#components_1),toInt(x#occurrence_1#components_2),toInt(x#occurrence_1#components_3),toInt(x#occurrence_1#components_4),toInt(x#occurrence_1#components_5),toInt(x#occurrence_1#components_6),toInt(x#occurrence_1#components_7),toInt(x#occurrence_1#components_8),toInt(x#occurrence_1#components_9);int(1..)]) <= 9
+__0 =aux sum([toInt(x#occurrence_1#components_1),toInt(x#occurrence_1#components_2),toInt(x#occurrence_1#components_3),toInt(x#occurrence_1#components_4),toInt(x#occurrence_1#components_5),toInt(x#occurrence_1#components_6),toInt(x#occurrence_1#components_7),toInt(x#occurrence_1#components_8),toInt(x#occurrence_1#components_9);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], 9)
+and([SumLeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], __0),SumGeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], __0);int(1..)])
 
 --
 
@@ -609,11 +641,15 @@ find x#occurrence_1#components_6: bool
 find x#occurrence_1#components_7: bool
 find x#occurrence_1#components_8: bool
 find x#occurrence_1#components_9: bool
+findAux __0: int(0..9)
+findAux __1: int(0..9)
 
 such that
 
 true,
-and([SumGeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], 0),SumLeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], 9);int(1..)]),
+and([Ineq(0, __0, 0),Ineq(__1, 9, 0);int(1..)]),
 and([WatchedLiteral(x#occurrence_1#components_1,false),WatchedLiteral(x#occurrence_1#components_5,false),WatchedLiteral(x#occurrence_1#components_9,false);int(1..)]),
-and([Ineq(x#occurrence_1#components_2, x#occurrence_1#components_4, 0),Ineq(x#occurrence_1#components_3, x#occurrence_1#components_7, 0),Ineq(x#occurrence_1#components_4, x#occurrence_1#components_2, 0),Ineq(x#occurrence_1#components_6, x#occurrence_1#components_8, 0),Ineq(x#occurrence_1#components_7, x#occurrence_1#components_3, 0),Ineq(x#occurrence_1#components_8, x#occurrence_1#components_6, 0);int(1..)])
+and([Ineq(x#occurrence_1#components_2, x#occurrence_1#components_4, 0),Ineq(x#occurrence_1#components_3, x#occurrence_1#components_7, 0),Ineq(x#occurrence_1#components_4, x#occurrence_1#components_2, 0),Ineq(x#occurrence_1#components_6, x#occurrence_1#components_8, 0),Ineq(x#occurrence_1#components_7, x#occurrence_1#components_3, 0),Ineq(x#occurrence_1#components_8, x#occurrence_1#components_6, 0);int(1..)]),
+and([SumLeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], __0),SumGeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], __0);int(1..)]),
+and([SumLeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], __1),SumGeq([x#occurrence_1#components_1, x#occurrence_1#components_2, x#occurrence_1#components_3, x#occurrence_1#components_4, x#occurrence_1#components_5, x#occurrence_1#components_6, x#occurrence_1#components_7, x#occurrence_1#components_8, x#occurrence_1#components_9], __1);int(1..)])
 

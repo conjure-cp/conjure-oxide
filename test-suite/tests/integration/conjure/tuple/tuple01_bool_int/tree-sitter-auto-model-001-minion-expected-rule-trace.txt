@@ -52,15 +52,15 @@ x#packed_1 % 4
 
 --
 
-sum([SafeMod(x#packed_1,4),1;int(1..)]) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(sum([SafeMod(x#packed_1,4),1;int(1..)]),2) @ 2 != 0}
-
---
-
 (x#packed_1 / 4)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(x#packed_1, 4) @ 4 != 0}
+
+--
+
+sum([SafeMod(x#packed_1,4),1;int(1..)]) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(sum([SafeMod(x#packed_1,4),1;int(1..)]),2) @ 2 != 0}
 
 --
 
@@ -96,15 +96,15 @@ new constraints:
 
 --
 
-__1 =aux SafeMod(__2,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__2, 2, __1)
-
---
-
 __3 =aux SafeMod(x#packed_1,4)
    ~~> introduce_modeq ([("Minion", 4200)])
 ModEq(x#packed_1, 4, __3)
+
+--
+
+__1 =aux SafeMod(__2,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__2, 2, __1)
 
 --
 

@@ -82,24 +82,6 @@ m#components_1#bv_1
 
 --
 
-m[2]
-   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
-m#components_2
-
---
-
-m#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-m#components_2
-
---
-
-m#components_2
-   ~~> smt_int_bv_variable ([("Smt", 9500)])
-m#components_2#bv_1
-
---
-
 m[3]
    ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
 m#components_3
@@ -118,6 +100,24 @@ m#components_3#bv_1
 
 --
 
+m[2]
+   ~~> unsafe_const_index_matrix_components ([("ReprMatrixComponents", 6500)])
+m#components_2
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+m#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m#components_2#bv_1
+
+--
+
 m[m#components_1#bv_1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(m,[m#components_1#bv_1])
@@ -133,78 +133,6 @@ SafeIndex(m,[m#components_2#bv_1])
 m[m#components_3#bv_1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(m,[m#components_3#bv_1])
-
---
-
-SafeIndex(m,[m#components_1#bv_1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([m#components_1,m#components_2,m#components_3;int(1..)],[sum([product([1,(m#components_1#bv_1 - 1);int(1..)]),1;int(1..)])])
-
---
-
-m#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-m#components_1
-
---
-
-m#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-m#components_2
-
---
-
-m#components_3
-   ~~> select_representation ([("ReprGeneral", 10000)])
-m#components_3
-
---
-
-m#components_1
-   ~~> smt_int_bv_variable ([("Smt", 9500)])
-m#components_1#bv_1
-
---
-
-m#components_2
-   ~~> smt_int_bv_variable ([("Smt", 9500)])
-m#components_2#bv_1
-
---
-
-m#components_3
-   ~~> smt_int_bv_variable ([("Smt", 9500)])
-m#components_3#bv_1
-
---
-
-product([1,(m#components_1#bv_1 - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(m#components_1#bv_1 - 1);int(1..)])
-
---
-
-product([(m#components_1#bv_1 - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(m#components_1#bv_1 - 1)
-
---
-
-(m#components_1#bv_1 - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([m#components_1#bv_1,-(1);int(1..)])
-
---
-
-sum([sum([m#components_1#bv_1,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([m#components_1#bv_1,-1,1;int(1..)])
-
---
-
-sum([m#components_1#bv_1;int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-m#components_1#bv_1
 
 --
 
@@ -232,12 +160,6 @@ m#components_3
 
 --
 
-m#components_1
-   ~~> smt_int_bv_variable ([("Smt", 9500)])
-m#components_1#bv_1
-
---
-
 m#components_2
    ~~> smt_int_bv_variable ([("Smt", 9500)])
 m#components_2#bv_1
@@ -247,6 +169,12 @@ m#components_2#bv_1
 m#components_3
    ~~> smt_int_bv_variable ([("Smt", 9500)])
 m#components_3#bv_1
+
+--
+
+m#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m#components_1#bv_1
 
 --
 
@@ -280,6 +208,78 @@ m#components_2#bv_1
 
 --
 
+SafeIndex(m,[m#components_1#bv_1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([m#components_1,m#components_2,m#components_3;int(1..)],[sum([product([1,(m#components_1#bv_1 - 1);int(1..)]),1;int(1..)])])
+
+--
+
+m#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_1
+
+--
+
+m#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_2
+
+--
+
+m#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m#components_3
+
+--
+
+m#components_2
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m#components_2#bv_1
+
+--
+
+m#components_3
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m#components_3#bv_1
+
+--
+
+m#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m#components_1#bv_1
+
+--
+
+product([1,(m#components_1#bv_1 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(m#components_1#bv_1 - 1);int(1..)])
+
+--
+
+product([(m#components_1#bv_1 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(m#components_1#bv_1 - 1)
+
+--
+
+(m#components_1#bv_1 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([m#components_1#bv_1,-(1);int(1..)])
+
+--
+
+sum([sum([m#components_1#bv_1,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([m#components_1#bv_1,-1,1;int(1..)])
+
+--
+
+sum([m#components_1#bv_1;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+m#components_1#bv_1
+
+--
+
 SafeIndex(m,[m#components_3#bv_1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 SafeIndex([m#components_1,m#components_2,m#components_3;int(1..)],[sum([product([1,(m#components_3#bv_1 - 1);int(1..)]),1;int(1..)])])
@@ -304,12 +304,6 @@ m#components_3
 
 --
 
-m#components_1
-   ~~> smt_int_bv_variable ([("Smt", 9500)])
-m#components_1#bv_1
-
---
-
 m#components_2
    ~~> smt_int_bv_variable ([("Smt", 9500)])
 m#components_2#bv_1
@@ -319,6 +313,12 @@ m#components_2#bv_1
 m#components_3
    ~~> smt_int_bv_variable ([("Smt", 9500)])
 m#components_3#bv_1
+
+--
+
+m#components_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+m#components_1#bv_1
 
 --
 

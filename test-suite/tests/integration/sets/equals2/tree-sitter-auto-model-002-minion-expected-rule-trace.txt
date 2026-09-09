@@ -31,27 +31,27 @@ b#packed_1 = 6
 
 --
 
-SafeDiv(b#packed_1, 1) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(b#packed_1, 1),2) @ 2 != 0}
-
---
-
 (b#packed_1 / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(b#packed_1, 2) @ 2 != 0}
 
 --
 
-SafeDiv(b#packed_1, 2) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(b#packed_1, 2),2) @ 2 != 0}
-
---
-
 (b#packed_1 / 4)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(b#packed_1, 4) @ 4 != 0}
+
+--
+
+SafeDiv(b#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(b#packed_1, 1),2) @ 2 != 0}
+
+--
+
+SafeDiv(b#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(b#packed_1, 2),2) @ 2 != 0}
 
 --
 
@@ -81,69 +81,69 @@ WatchedLiteral(b#packed_1,6)
 
 --
 
-SafeMod(SafeDiv(b#packed_1, 1),2)
+SafeMod(SafeDiv(b#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__3,2)
 new variables:
-  findAux __3: int(0..7)
+  findAux __3: int(0..1)
 new constraints:
-  __3 =aux SafeDiv(b#packed_1, 1)
+  __3 =aux SafeDiv(b#packed_1, 4)
 
 --
 
-__0 =aux SafeMod(__3,2)
+__2 =aux SafeMod(__3,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__3, 2, __0)
+ModEq(__3, 2, __2)
 
 --
 
-__3 =aux SafeDiv(b#packed_1, 1)
+__3 =aux SafeDiv(b#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(b#packed_1, 1, __3)
+DivEq(b#packed_1, 4, __3)
+
+--
+
+SafeMod(SafeDiv(b#packed_1, 1),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__4,2)
+new variables:
+  findAux __4: int(0..7)
+new constraints:
+  __4 =aux SafeDiv(b#packed_1, 1)
+
+--
+
+__0 =aux SafeMod(__4,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__4, 2, __0)
+
+--
+
+__4 =aux SafeDiv(b#packed_1, 1)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(b#packed_1, 1, __4)
 
 --
 
 SafeMod(SafeDiv(b#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__4,2)
-new variables:
-  findAux __4: int(0..3)
-new constraints:
-  __4 =aux SafeDiv(b#packed_1, 2)
-
---
-
-__1 =aux SafeMod(__4,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__4, 2, __1)
-
---
-
-__4 =aux SafeDiv(b#packed_1, 2)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(b#packed_1, 2, __4)
-
---
-
-SafeMod(SafeDiv(b#packed_1, 4),2)
-   ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__5,2)
 new variables:
-  findAux __5: int(0..1)
+  findAux __5: int(0..3)
 new constraints:
-  __5 =aux SafeDiv(b#packed_1, 4)
+  __5 =aux SafeDiv(b#packed_1, 2)
 
 --
 
-__2 =aux SafeMod(__5,2)
+__1 =aux SafeMod(__5,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__5, 2, __2)
+ModEq(__5, 2, __1)
 
 --
 
-__5 =aux SafeDiv(b#packed_1, 4)
+__5 =aux SafeDiv(b#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(b#packed_1, 4, __5)
+DivEq(b#packed_1, 2, __5)
 
 --
 
@@ -155,18 +155,18 @@ find b#packed_1: int(0..7)
 findAux __0: int(0..1)
 findAux __1: int(0..1)
 findAux __2: int(0..1)
-findAux __3: int(0..7)
-findAux __4: int(0..3)
-findAux __5: int(0..1)
+findAux __3: int(0..1)
+findAux __4: int(0..7)
+findAux __5: int(0..3)
 
 such that
 
 WatchedLiteral(b#packed_1,6),
 and([SumLeq([__0, __1, __2], 2),SumGeq([__0, __1, __2], 2);int(1..)]),
-ModEq(__3, 2, __0),
-ModEq(__4, 2, __1),
-ModEq(__5, 2, __2),
-DivEq(b#packed_1, 1, __3),
-DivEq(b#packed_1, 2, __4),
-DivEq(b#packed_1, 4, __5)
+ModEq(__4, 2, __0),
+ModEq(__5, 2, __1),
+ModEq(__3, 2, __2),
+DivEq(b#packed_1, 4, __3),
+DivEq(b#packed_1, 1, __4),
+DivEq(b#packed_1, 2, __5)
 

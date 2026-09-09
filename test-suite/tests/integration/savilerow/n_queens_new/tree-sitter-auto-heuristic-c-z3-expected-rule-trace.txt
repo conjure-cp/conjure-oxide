@@ -325,18 +325,6 @@ q1
 
 --
 
-q2
-   ~~> smt_matrix_array_variable ([("Smt", 9500)])
-q2#array_1
-
---
-
-q2#array_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-q2#array_1
-
---
-
 q3
    ~~> smt_matrix_array_variable ([("Smt", 9500)])
 q3#array_1
@@ -517,9 +505,15 @@ q3#array_1
 
 --
 
+q2
+   ~~> smt_matrix_array_variable ([("Smt", 9500)])
 q2#array_1
-   ~~> smt_int_lia_variable ([("Smt", 9500)])
-q2#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+q2#array_1
 
 --
 
@@ -610,6 +604,12 @@ q2#array_1#lia_1
 q3#array_1
    ~~> smt_int_lia_variable ([("Smt", 9500)])
 q3#array_1#lia_1
+
+--
+
+q2#array_1
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+q2#array_1#lia_1
 
 --
 
@@ -1051,12 +1051,6 @@ SafeIndex(q3#array_1#lia_1,[7])
 
 --
 
-q1#array_1#lia_1[0]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex(q1#array_1#lia_1,[0])
-
---
-
 q1#array_1#lia_1[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(q1#array_1#lia_1,[1])
@@ -1105,6 +1099,12 @@ SafeIndex(q1#array_1#lia_1,[0])
 
 --
 
+q1#array_1#lia_1[0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(q1#array_1#lia_1,[0])
+
+--
+
 q1#array_1#lia_1[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(q1#array_1#lia_1,[1])
@@ -1144,18 +1144,6 @@ SafeIndex(q1#array_1#lia_1,[6])
 q1#array_1#lia_1[7]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(q1#array_1#lia_1,[7])
-
---
-
-smtDistinct(q1#array_1#lia_1)
-   ~~> matrix_ref_to_slice ([("Smt", 999)])
-smtDistinct(SafeSlice(q1#array_1#lia_1,[..]))
-
---
-
-SafeSlice(q1#array_1#lia_1,[..])
-   ~~> flatten_matrix_slice ([("Smt", 1000)])
-[SafeIndex(q1#array_1#lia_1,[0]),SafeIndex(q1#array_1#lia_1,[1]),SafeIndex(q1#array_1#lia_1,[2]),SafeIndex(q1#array_1#lia_1,[3]),SafeIndex(q1#array_1#lia_1,[4]),SafeIndex(q1#array_1#lia_1,[5]),SafeIndex(q1#array_1#lia_1,[6]),SafeIndex(q1#array_1#lia_1,[7]);int(1..)]
 
 --
 
@@ -1168,6 +1156,18 @@ smtDistinct(SafeSlice(q2#array_1#lia_1,[..]))
 SafeSlice(q2#array_1#lia_1,[..])
    ~~> flatten_matrix_slice ([("Smt", 1000)])
 [SafeIndex(q2#array_1#lia_1,[0]),SafeIndex(q2#array_1#lia_1,[1]),SafeIndex(q2#array_1#lia_1,[2]),SafeIndex(q2#array_1#lia_1,[3]),SafeIndex(q2#array_1#lia_1,[4]),SafeIndex(q2#array_1#lia_1,[5]),SafeIndex(q2#array_1#lia_1,[6]),SafeIndex(q2#array_1#lia_1,[7]);int(1..)]
+
+--
+
+smtDistinct(q1#array_1#lia_1)
+   ~~> matrix_ref_to_slice ([("Smt", 999)])
+smtDistinct(SafeSlice(q1#array_1#lia_1,[..]))
+
+--
+
+SafeSlice(q1#array_1#lia_1,[..])
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(q1#array_1#lia_1,[0]),SafeIndex(q1#array_1#lia_1,[1]),SafeIndex(q1#array_1#lia_1,[2]),SafeIndex(q1#array_1#lia_1,[3]),SafeIndex(q1#array_1#lia_1,[4]),SafeIndex(q1#array_1#lia_1,[5]),SafeIndex(q1#array_1#lia_1,[6]),SafeIndex(q1#array_1#lia_1,[7]);int(1..)]
 
 --
 

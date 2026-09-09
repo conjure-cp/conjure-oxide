@@ -43,18 +43,6 @@ b#bv_1
 
 --
 
-{SafeDiv(a#bv_1, b#bv_1) @ b#bv_1 != 0} = 1
-   ~~> bubble_up ([("Bubble", 8800)])
-{SafeDiv(a#bv_1, b#bv_1) = 1 @ b#bv_1 != 0}
-
---
-
-{SafeDiv(a#bv_1, b#bv_1) = 1 @ b#bv_1 != 0}
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeDiv(a#bv_1, b#bv_1) = 1,b#bv_1 != 0;int(1..)])
-
---
-
 Final model:
 
 find a: int(3..4)
@@ -64,5 +52,5 @@ find b#bv_1: int(1..2)
 
 such that
 
-and([SafeDiv(a#bv_1, b#bv_1) = 1,b#bv_1 != 0;int(1..)])
+SafeDiv(a#bv_1, b#bv_1) = 1
 

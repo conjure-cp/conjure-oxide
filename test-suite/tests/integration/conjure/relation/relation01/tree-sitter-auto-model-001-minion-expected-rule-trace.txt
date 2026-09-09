@@ -245,18 +245,6 @@ r#as_set_1#explicit_1#components_1#packed_1 <= sum([r#as_set_1#explicit_1#compon
 
 --
 
-SafeIndex(r#as_set_1#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-r#as_set_1#explicit_1#components_2
-
---
-
-r#as_set_1#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-r#as_set_1#explicit_1#components_2
-
---
-
 SafeIndex(r#as_set_1#explicit_1,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 r#as_set_1#explicit_1#components_3
@@ -266,18 +254,6 @@ r#as_set_1#explicit_1#components_3
 r#as_set_1#explicit_1#components_3
    ~~> select_representation ([("ReprGeneral", 10000)])
 r#as_set_1#explicit_1#components_3
-
---
-
-([r#as_set_1#explicit_1#components_2;int(1..)] <lex [r#as_set_1#explicit_1#components_3;int(1..)])
-   ~~> tuple_packed_var_cmp_var ([("ReprTuplePacked", 9700)])
-r#as_set_1#explicit_1#components_2#packed_1 < r#as_set_1#explicit_1#components_3#packed_1
-
---
-
-r#as_set_1#explicit_1#components_2#packed_1 < r#as_set_1#explicit_1#components_3#packed_1
-   ~~> lt_to_leq ([("Minion", 8400)])
-r#as_set_1#explicit_1#components_2#packed_1 <= sum([r#as_set_1#explicit_1#components_3#packed_1,-1;int(1..)])
 
 --
 
@@ -317,9 +293,33 @@ r#as_set_1#explicit_1#components_3#packed_1 <= sum([r#as_set_1#explicit_1#compon
 
 --
 
-r#as_set_1#explicit_1#components_1#packed_1 <= sum([r#as_set_1#explicit_1#components_2#packed_1,-1;int(1..)])
+SafeIndex(r#as_set_1#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+r#as_set_1#explicit_1#components_2
+
+--
+
+r#as_set_1#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+r#as_set_1#explicit_1#components_2
+
+--
+
+([r#as_set_1#explicit_1#components_2;int(1..)] <lex [r#as_set_1#explicit_1#components_3;int(1..)])
+   ~~> tuple_packed_var_cmp_var ([("ReprTuplePacked", 9700)])
+r#as_set_1#explicit_1#components_2#packed_1 < r#as_set_1#explicit_1#components_3#packed_1
+
+--
+
+r#as_set_1#explicit_1#components_2#packed_1 < r#as_set_1#explicit_1#components_3#packed_1
+   ~~> lt_to_leq ([("Minion", 8400)])
+r#as_set_1#explicit_1#components_2#packed_1 <= sum([r#as_set_1#explicit_1#components_3#packed_1,-1;int(1..)])
+
+--
+
+r#as_set_1#explicit_1#components_3#packed_1 <= sum([r#as_set_1#explicit_1#components_4#packed_1,-1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([-1, r#as_set_1#explicit_1#components_2#packed_1], r#as_set_1#explicit_1#components_1#packed_1)
+SumGeq([-1, r#as_set_1#explicit_1#components_4#packed_1], r#as_set_1#explicit_1#components_3#packed_1)
 
 --
 
@@ -329,9 +329,9 @@ SumGeq([-1, r#as_set_1#explicit_1#components_3#packed_1], r#as_set_1#explicit_1#
 
 --
 
-r#as_set_1#explicit_1#components_3#packed_1 <= sum([r#as_set_1#explicit_1#components_4#packed_1,-1;int(1..)])
+r#as_set_1#explicit_1#components_1#packed_1 <= sum([r#as_set_1#explicit_1#components_2#packed_1,-1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([-1, r#as_set_1#explicit_1#components_4#packed_1], r#as_set_1#explicit_1#components_3#packed_1)
+SumGeq([-1, r#as_set_1#explicit_1#components_2#packed_1], r#as_set_1#explicit_1#components_1#packed_1)
 
 --
 

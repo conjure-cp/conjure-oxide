@@ -89,24 +89,6 @@ x#packed_1#lia_1
 
 --
 
-and([sum([(x#packed_1#lia_1 / 4),1;int(1..)]) = 1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-sum([(x#packed_1#lia_1 / 4),1;int(1..)]) = 1
-
---
-
-and([sum([(x#packed_1#lia_1 / 2) % 2,1;int(1..)]) = 1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-sum([(x#packed_1#lia_1 / 2) % 2,1;int(1..)]) = 1
-
---
-
-and([sum([x#packed_1#lia_1 % 2,1;int(1..)]) = 1;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-sum([x#packed_1#lia_1 % 2,1;int(1..)]) = 1
-
---
-
 and([sum([(x#packed_1#lia_1 / 4),1;int(1..)]) = 2;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 sum([(x#packed_1#lia_1 / 4),1;int(1..)]) = 2
@@ -125,9 +107,21 @@ sum([x#packed_1#lia_1 % 2,1;int(1..)]) = 2
 
 --
 
-(x#packed_1#lia_1 / 4)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(x#packed_1#lia_1, 4) @ 4 != 0}
+and([sum([(x#packed_1#lia_1 / 4),1;int(1..)]) = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+sum([(x#packed_1#lia_1 / 4),1;int(1..)]) = 1
+
+--
+
+and([sum([(x#packed_1#lia_1 / 2) % 2,1;int(1..)]) = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+sum([(x#packed_1#lia_1 / 2) % 2,1;int(1..)]) = 1
+
+--
+
+and([sum([x#packed_1#lia_1 % 2,1;int(1..)]) = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+sum([x#packed_1#lia_1 % 2,1;int(1..)]) = 1
 
 --
 
@@ -146,6 +140,18 @@ x#packed_1#lia_1 % 2
 x#packed_1#lia_1 % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
 {SafeMod(x#packed_1#lia_1,2) @ 2 != 0}
+
+--
+
+(x#packed_1#lia_1 / 4)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#packed_1#lia_1, 4) @ 4 != 0}
+
+--
+
+(x#packed_1#lia_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x#packed_1#lia_1, 2) @ 2 != 0}
 
 --
 
@@ -158,12 +164,6 @@ x#packed_1#lia_1 % 2
 SafeDiv(x#packed_1#lia_1, 2) % 2
    ~~> mod_to_bubble ([("Bubble", 6000)])
 {SafeMod(SafeDiv(x#packed_1#lia_1, 2),2) @ 2 != 0}
-
---
-
-(x#packed_1#lia_1 / 2)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(x#packed_1#lia_1, 2) @ 2 != 0}
 
 --
 

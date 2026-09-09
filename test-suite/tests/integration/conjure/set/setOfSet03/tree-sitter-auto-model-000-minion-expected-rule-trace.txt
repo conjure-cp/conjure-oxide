@@ -113,21 +113,9 @@ x#explicit_1#components_2#explicit_1
 
 --
 
-or([([SafeIndex(x#explicit_1#components_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1#components_1#explicit_1,[2]);int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-([SafeIndex(x#explicit_1#components_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1#components_1#explicit_1,[2]);int(1..)])
-
---
-
 or([([SafeIndex(x#explicit_1#components_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1#components_1#explicit_1,[3]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 ([SafeIndex(x#explicit_1#components_1#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1#components_1#explicit_1,[3]);int(1..)])
-
---
-
-or([([SafeIndex(x#explicit_1#components_2#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-([SafeIndex(x#explicit_1#components_2#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)])
 
 --
 
@@ -137,9 +125,33 @@ or([([SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)] <lex [SafeIn
 
 --
 
+or([([SafeIndex(x#explicit_1#components_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1#components_1#explicit_1,[2]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+([SafeIndex(x#explicit_1#components_1#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1#components_1#explicit_1,[2]);int(1..)])
+
+--
+
+or([([SafeIndex(x#explicit_1#components_2#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+([SafeIndex(x#explicit_1#components_2#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)])
+
+--
+
 or([([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
 ([SafeIndex(x#explicit_1,[1]);int(1..)] <lex [SafeIndex(x#explicit_1,[2]);int(1..)])
+
+--
+
+SafeIndex(x#explicit_1#components_2#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1#components_2#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2#explicit_1#components_3
 
 --
 
@@ -155,18 +167,6 @@ x#explicit_1#components_1#explicit_1#components_2
 
 --
 
-SafeIndex(x#explicit_1#components_1#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1#explicit_1#components_2
-
---
-
-SafeIndex(x#explicit_1#components_1#explicit_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1#explicit_1#components_3
-
---
-
 SafeIndex(x#explicit_1#components_2#explicit_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_2#explicit_1#components_1
@@ -176,18 +176,6 @@ x#explicit_1#components_2#explicit_1#components_1
 SafeIndex(x#explicit_1#components_2#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_2#explicit_1#components_2
-
---
-
-SafeIndex(x#explicit_1#components_2#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2#explicit_1#components_2
-
---
-
-SafeIndex(x#explicit_1#components_2#explicit_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2#explicit_1#components_3
 
 --
 
@@ -269,6 +257,18 @@ and([([SafeIndex(x#explicit_1#components_1#explicit_1,[1]),SafeIndex(x#explicit_
 
 --
 
+SafeIndex(x#explicit_1#components_1#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1#components_1#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1#explicit_1#components_3
+
+--
+
 SafeIndex(x#explicit_1#components_1#explicit_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_1#explicit_1#components_1
@@ -311,12 +311,6 @@ FlatLexLt([x#explicit_1#components_1#explicit_1#components_1], [x#explicit_1#com
 
 --
 
-([x#explicit_1#components_1#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_1#explicit_1#components_3;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLt([x#explicit_1#components_1#explicit_1#components_2], [x#explicit_1#components_1#explicit_1#components_3])
-
---
-
 ([x#explicit_1#components_2#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2#explicit_1#components_2;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([x#explicit_1#components_2#explicit_1#components_1], [x#explicit_1#components_2#explicit_1#components_2])
@@ -326,6 +320,12 @@ FlatLexLt([x#explicit_1#components_2#explicit_1#components_1], [x#explicit_1#com
 ([x#explicit_1#components_2#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_2#explicit_1#components_3;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([x#explicit_1#components_2#explicit_1#components_2], [x#explicit_1#components_2#explicit_1#components_3])
+
+--
+
+([x#explicit_1#components_1#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_1#explicit_1#components_3;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_1#explicit_1#components_2], [x#explicit_1#components_1#explicit_1#components_3])
 
 --
 

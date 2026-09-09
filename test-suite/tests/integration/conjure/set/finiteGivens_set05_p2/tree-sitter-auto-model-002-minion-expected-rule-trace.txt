@@ -39,33 +39,15 @@ or([and([x = 3,(__0#packed_1 / 1) % 2 = 1;int(1..)]),and([x = 4,(__0#packed_1 / 
 
 --
 
-SafeDiv(__0#packed_1, 1) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(__0#packed_1, 1),2) @ 2 != 0}
-
---
-
 (__0#packed_1 / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(__0#packed_1, 2) @ 2 != 0}
 
 --
 
-SafeDiv(__0#packed_1, 2) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(__0#packed_1, 2),2) @ 2 != 0}
-
---
-
 (__0#packed_1 / 4)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(__0#packed_1, 4) @ 4 != 0}
-
---
-
-SafeDiv(__0#packed_1, 4) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(__0#packed_1, 4),2) @ 2 != 0}
 
 --
 
@@ -75,33 +57,15 @@ SafeDiv(__0#packed_1, 4) % 2
 
 --
 
-SafeDiv(__0#packed_1, 1) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(__0#packed_1, 1),2) @ 2 != 0}
-
---
-
 (__0#packed_1 / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(__0#packed_1, 2) @ 2 != 0}
 
 --
 
-SafeDiv(__0#packed_1, 2) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(__0#packed_1, 2),2) @ 2 != 0}
-
---
-
 (__0#packed_1 / 4)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(__0#packed_1, 4) @ 4 != 0}
-
---
-
-SafeDiv(__0#packed_1, 4) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(__0#packed_1, 4),2) @ 2 != 0}
 
 --
 
@@ -111,15 +75,21 @@ SafeDiv(__0#packed_1, 4) % 2
 
 --
 
-SafeDiv(__0#packed_1, 1) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeDiv(__0#packed_1, 1),2) @ 2 != 0}
-
---
-
 (__0#packed_1 / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(__0#packed_1, 2) @ 2 != 0}
+
+--
+
+(__0#packed_1 / 4)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(__0#packed_1, 4) @ 4 != 0}
+
+--
+
+SafeDiv(__0#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(__0#packed_1, 1),2) @ 2 != 0}
 
 --
 
@@ -129,9 +99,39 @@ SafeDiv(__0#packed_1, 2) % 2
 
 --
 
-(__0#packed_1 / 4)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(__0#packed_1, 4) @ 4 != 0}
+SafeDiv(__0#packed_1, 4) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(__0#packed_1, 4),2) @ 2 != 0}
+
+--
+
+SafeDiv(__0#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(__0#packed_1, 1),2) @ 2 != 0}
+
+--
+
+SafeDiv(__0#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(__0#packed_1, 2),2) @ 2 != 0}
+
+--
+
+SafeDiv(__0#packed_1, 4) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(__0#packed_1, 4),2) @ 2 != 0}
+
+--
+
+SafeDiv(__0#packed_1, 1) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(__0#packed_1, 1),2) @ 2 != 0}
+
+--
+
+SafeDiv(__0#packed_1, 2) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(__0#packed_1, 2),2) @ 2 != 0}
 
 --
 
@@ -187,151 +187,151 @@ WatchedLiteral(x,5)
 
 --
 
-SafeMod(SafeDiv(__0#packed_1, 1),2)
+SafeMod(SafeDiv(__0#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__7,2)
 new variables:
-  findAux __7: int(0..7)
+  findAux __7: int(0..1)
 new constraints:
-  __7 =aux SafeDiv(__0#packed_1, 1)
+  __7 =aux SafeDiv(__0#packed_1, 4)
 
 --
 
-__1 =aux SafeMod(__7,2)
+__3 =aux SafeMod(__7,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__7, 2, __1)
+ModEq(__7, 2, __3)
 
 --
 
-__7 =aux SafeDiv(__0#packed_1, 1)
+__7 =aux SafeDiv(__0#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 1, __7)
+DivEq(__0#packed_1, 4, __7)
 
 --
 
-SafeMod(SafeDiv(__0#packed_1, 2),2)
+SafeMod(SafeDiv(__0#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__8,2)
 new variables:
-  findAux __8: int(0..3)
+  findAux __8: int(0..7)
 new constraints:
-  __8 =aux SafeDiv(__0#packed_1, 2)
+  __8 =aux SafeDiv(__0#packed_1, 1)
 
 --
 
-__2 =aux SafeMod(__8,2)
+__4 =aux SafeMod(__8,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__8, 2, __2)
+ModEq(__8, 2, __4)
 
 --
 
-__8 =aux SafeDiv(__0#packed_1, 2)
+__8 =aux SafeDiv(__0#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 2, __8)
-
---
-
-SafeMod(SafeDiv(__0#packed_1, 4),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__9,2)
-new variables:
-  findAux __9: int(0..1)
-new constraints:
-  __9 =aux SafeDiv(__0#packed_1, 4)
-
---
-
-__3 =aux SafeMod(__9,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__9, 2, __3)
-
---
-
-__9 =aux SafeDiv(__0#packed_1, 4)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 4, __9)
-
---
-
-SafeMod(SafeDiv(__0#packed_1, 1),2)
-   ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__10,2)
-new variables:
-  findAux __10: int(0..7)
-new constraints:
-  __10 =aux SafeDiv(__0#packed_1, 1)
-
---
-
-__4 =aux SafeMod(__10,2)
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__10, 2, __4)
-
---
-
-__10 =aux SafeDiv(__0#packed_1, 1)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 1, __10)
+DivEq(__0#packed_1, 1, __8)
 
 --
 
 SafeMod(SafeDiv(__0#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__11,2)
+SafeMod(__9,2)
 new variables:
-  findAux __11: int(0..3)
+  findAux __9: int(0..3)
 new constraints:
-  __11 =aux SafeDiv(__0#packed_1, 2)
+  __9 =aux SafeDiv(__0#packed_1, 2)
 
 --
 
-__5 =aux SafeMod(__11,2)
+__5 =aux SafeMod(__9,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__11, 2, __5)
+ModEq(__9, 2, __5)
 
 --
 
-__11 =aux SafeDiv(__0#packed_1, 2)
+__9 =aux SafeDiv(__0#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 2, __11)
+DivEq(__0#packed_1, 2, __9)
 
 --
 
 SafeMod(SafeDiv(__0#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__12,2)
+SafeMod(__10,2)
 new variables:
-  findAux __12: int(0..1)
+  findAux __10: int(0..1)
 new constraints:
-  __12 =aux SafeDiv(__0#packed_1, 4)
+  __10 =aux SafeDiv(__0#packed_1, 4)
 
 --
 
-__6 =aux SafeMod(__12,2)
+__6 =aux SafeMod(__10,2)
    ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(__12, 2, __6)
+ModEq(__10, 2, __6)
 
 --
 
-__12 =aux SafeDiv(__0#packed_1, 4)
+__10 =aux SafeDiv(__0#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 4, __12)
+DivEq(__0#packed_1, 4, __10)
 
 --
 
 SafeMod(SafeDiv(__0#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
-SafeMod(__13,2)
+SafeMod(__11,2)
 new variables:
-  findAux __13: int(0..7)
+  findAux __11: int(0..7)
 new constraints:
-  __13 =aux SafeDiv(__0#packed_1, 1)
+  __11 =aux SafeDiv(__0#packed_1, 1)
 
 --
 
-__13 =aux SafeDiv(__0#packed_1, 1)
+__1 =aux SafeMod(__11,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__11, 2, __1)
+
+--
+
+__11 =aux SafeDiv(__0#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 1, __13)
+DivEq(__0#packed_1, 1, __11)
+
+--
+
+SafeMod(SafeDiv(__0#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__12,2)
+new variables:
+  findAux __12: int(0..3)
+new constraints:
+  __12 =aux SafeDiv(__0#packed_1, 2)
+
+--
+
+__2 =aux SafeMod(__12,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__12, 2, __2)
+
+--
+
+__12 =aux SafeDiv(__0#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(__0#packed_1, 2, __12)
+
+--
+
+SafeMod(SafeDiv(__0#packed_1, 2),2)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__13,2)
+new variables:
+  findAux __13: int(0..3)
+new constraints:
+  __13 =aux SafeDiv(__0#packed_1, 2)
+
+--
+
+__13 =aux SafeDiv(__0#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(__0#packed_1, 2, __13)
 
 --
 
@@ -341,19 +341,19 @@ ModEq(__13, 2, 1)
 
 --
 
-SafeMod(SafeDiv(__0#packed_1, 2),2)
+SafeMod(SafeDiv(__0#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__14,2)
 new variables:
-  findAux __14: int(0..3)
+  findAux __14: int(0..1)
 new constraints:
-  __14 =aux SafeDiv(__0#packed_1, 2)
+  __14 =aux SafeDiv(__0#packed_1, 4)
 
 --
 
-__14 =aux SafeDiv(__0#packed_1, 2)
+__14 =aux SafeDiv(__0#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 2, __14)
+DivEq(__0#packed_1, 4, __14)
 
 --
 
@@ -363,19 +363,19 @@ ModEq(__14, 2, 1)
 
 --
 
-SafeMod(SafeDiv(__0#packed_1, 4),2)
+SafeMod(SafeDiv(__0#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__15,2)
 new variables:
-  findAux __15: int(0..1)
+  findAux __15: int(0..7)
 new constraints:
-  __15 =aux SafeDiv(__0#packed_1, 4)
+  __15 =aux SafeDiv(__0#packed_1, 1)
 
 --
 
-__15 =aux SafeDiv(__0#packed_1, 4)
+__15 =aux SafeDiv(__0#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(__0#packed_1, 4, __15)
+DivEq(__0#packed_1, 1, __15)
 
 --
 
@@ -397,33 +397,33 @@ findAux __3: int(0..1)
 findAux __4: int(0..1)
 findAux __5: int(0..1)
 findAux __6: int(0..1)
-findAux __7: int(0..7)
-findAux __8: int(0..3)
-findAux __9: int(0..1)
-findAux __10: int(0..7)
-findAux __11: int(0..3)
-findAux __12: int(0..1)
-findAux __13: int(0..7)
-findAux __14: int(0..3)
-findAux __15: int(0..1)
+findAux __7: int(0..1)
+findAux __8: int(0..7)
+findAux __9: int(0..3)
+findAux __10: int(0..1)
+findAux __11: int(0..7)
+findAux __12: int(0..3)
+findAux __13: int(0..3)
+findAux __14: int(0..1)
+findAux __15: int(0..7)
 
 such that
 
-or([and([WatchedLiteral(x,3),ModEq(__13, 2, 1);int(1..)]),and([WatchedLiteral(x,4),ModEq(__14, 2, 1);int(1..)]),and([WatchedLiteral(x,5),ModEq(__15, 2, 1);int(1..)]);int(1..)]),
+or([and([WatchedLiteral(x,3),ModEq(__15, 2, 1);int(1..)]),and([WatchedLiteral(x,4),ModEq(__13, 2, 1);int(1..)]),and([WatchedLiteral(x,5),ModEq(__14, 2, 1);int(1..)]);int(1..)]),
 and([SumGeq([__1, __2, __3], 0),SumLeq([__4, __5, __6], 3);int(1..)]),
-ModEq(__7, 2, __1),
-ModEq(__8, 2, __2),
-ModEq(__9, 2, __3),
-ModEq(__10, 2, __4),
-ModEq(__11, 2, __5),
-ModEq(__12, 2, __6),
-DivEq(__0#packed_1, 1, __7),
-DivEq(__0#packed_1, 2, __8),
-DivEq(__0#packed_1, 4, __9),
-DivEq(__0#packed_1, 1, __10),
-DivEq(__0#packed_1, 2, __11),
-DivEq(__0#packed_1, 4, __12),
-DivEq(__0#packed_1, 1, __13),
-DivEq(__0#packed_1, 2, __14),
-DivEq(__0#packed_1, 4, __15)
+ModEq(__11, 2, __1),
+ModEq(__12, 2, __2),
+ModEq(__7, 2, __3),
+ModEq(__8, 2, __4),
+ModEq(__9, 2, __5),
+ModEq(__10, 2, __6),
+DivEq(__0#packed_1, 4, __7),
+DivEq(__0#packed_1, 1, __8),
+DivEq(__0#packed_1, 2, __9),
+DivEq(__0#packed_1, 4, __10),
+DivEq(__0#packed_1, 1, __11),
+DivEq(__0#packed_1, 2, __12),
+DivEq(__0#packed_1, 2, __13),
+DivEq(__0#packed_1, 4, __14),
+DivEq(__0#packed_1, 1, __15)
 

@@ -61,28 +61,24 @@ Ineq(x, y, 0)
 --
 
 min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([z,x,5;int(1..)]),50;int(1..4)])
-   ~~> matrix_to_list ([("Base", 2000)])
+   ~~> matrix_to_list ([("Base", 1998)])
 min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([z,x,5;int(1..)]),50;int(1..)])
 
 --
 
-__0 =aux min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([z,x,5;int(1..)]),50;int(1..)])
-   ~~> introduce_mineq ([("Minion", 6100)])
-FlatMinEq([__1, __2, __3, 50], __0)
+min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([z,x,5;int(1..)]),50;int(1..)])
+   ~~> introduce_mineq_from_min ([("Minion", 6100)])
+__4
 new variables:
   findAux __1: int(2..10)
   findAux __2: int(2..10)
   findAux __3: int(7..15)
+  findAux __4: int(2..10)
 new constraints:
   __1 =aux sum([z,y;int(1..)])
   __2 =aux sum([y,x;int(1..)])
   __3 =aux sum([z,x,5;int(1..)])
-
---
-
-__1 =aux sum([z,y;int(1..)])
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([y, z], __1),SumGeq([y, z], __1);int(1..)])
+  FlatMinEq([__1, __2, __3, 50], __4)
 
 --
 
@@ -98,6 +94,12 @@ and([SumLeq([5, x, z], __3),SumGeq([5, x, z], __3);int(1..)])
 
 --
 
+__1 =aux sum([z,y;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([y, z], __1),SumGeq([y, z], __1);int(1..)])
+
+--
+
 Final model:
 
 find x: int(1..5)
@@ -108,6 +110,7 @@ findAux __0: int(2..10)
 findAux __1: int(2..10)
 findAux __2: int(2..10)
 findAux __3: int(7..15)
+findAux __4: int(2..10)
 
 such that
 
@@ -115,8 +118,9 @@ SumLeq([25, __0, x, y], 40),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
 Ineq(x, y, 0),
-FlatMinEq([__1, __2, __3, 50], __0),
+__0 =aux __4,
 and([SumLeq([y, z], __1),SumGeq([y, z], __1);int(1..)]),
 and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]),
-and([SumLeq([5, x, z], __3),SumGeq([5, x, z], __3);int(1..)])
+and([SumLeq([5, x, z], __3),SumGeq([5, x, z], __3);int(1..)]),
+FlatMinEq([__1, __2, __3, 50], __4)
 

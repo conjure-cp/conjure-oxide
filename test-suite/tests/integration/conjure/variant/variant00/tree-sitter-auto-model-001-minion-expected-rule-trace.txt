@@ -146,6 +146,12 @@ and([y2#packed_1 = 3;int(1..)])
 
 --
 
+or([and([t1#packed_1 = 2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([t1#packed_1 = 2;int(1..)])
+
+--
+
 and([x#packed_1 = 1;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 x#packed_1 = 1
@@ -164,9 +170,9 @@ y2#packed_1 = 3
 
 --
 
-or([and([t1#packed_1 = 2;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
 and([t1#packed_1 = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+t1#packed_1 = 2
 
 --
 
@@ -176,15 +182,21 @@ and([t1#packed_1 = 3;int(1..)])
 
 --
 
+or([and([t1#packed_1 = 2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
 and([t1#packed_1 = 2;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-t1#packed_1 = 2
 
 --
 
 and([t1#packed_1 = 3;int(1..)])
    ~~> remove_unit_vector_and ([("Base", 8800)])
 t1#packed_1 = 3
+
+--
+
+and([t1#packed_1 = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+t1#packed_1 = 2
 
 --
 
@@ -224,24 +236,6 @@ WatchedLiteral(t1#packed_1,2)
 
 --
 
-someInt = 0
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(someInt,0)
-
---
-
-t1#packed_1 = 3
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(t1#packed_1,3)
-
---
-
-someInt = 4
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(someInt,4)
-
---
-
 t2#packed_1 = 2
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(t2#packed_1,2)
@@ -277,6 +271,6 @@ WatchedLiteral(x#packed_1,1),
 WatchedLiteral(y1#packed_1,0),
 WatchedLiteral(y2#packed_1,3),
 x#packed_1 = z#packed_1,
-or([and([WatchedLiteral(t1#packed_1,2),WatchedLiteral(someInt,0);int(1..)]),and([WatchedLiteral(t1#packed_1,3),WatchedLiteral(someInt,4);int(1..)]);int(1..)]),
+WatchedLiteral(t1#packed_1,2),
 or([and([WatchedLiteral(t2#packed_1,2),WatchedLiteral(t1#packed_1,2);int(1..)]),and([WatchedLiteral(t2#packed_1,3),WatchedLiteral(t1#packed_1,3);int(1..)]);int(1..)])
 

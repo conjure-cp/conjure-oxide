@@ -2983,12 +2983,6 @@ sum([d,-(-2);int(1..)])
 
 --
 
-sum([product([36,(a - 1);int(1..)]),product([12,(b - 2);int(1..)]),product([4,(c - 1);int(1..)]),sum([d,2;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([36,(a - 1);int(1..)]),product([12,(b - 2);int(1..)]),product([4,(c - 1);int(1..)]),d,2,1;int(1..)])
-
---
-
 (a - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([a,-(1);int(1..)])
@@ -3004,6 +2998,12 @@ sum([b,-(2);int(1..)])
 (c - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([c,-(1);int(1..)])
+
+--
+
+sum([product([36,sum([a,-1;int(1..)]);int(1..)]),product([12,sum([b,-2;int(1..)]);int(1..)]),product([4,sum([c,-1;int(1..)]);int(1..)]),sum([d,2;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([36,sum([a,-1;int(1..)]);int(1..)]),product([12,sum([b,-2;int(1..)]);int(1..)]),product([4,sum([c,-1;int(1..)]);int(1..)]),d,2,1;int(1..)])
 
 --
 

@@ -25,7 +25,7 @@ Ineq(y, z, 0)
 --
 
 max([x,y,z;int(1..3)])
-   ~~> matrix_to_list ([("Base", 2000)])
+   ~~> matrix_to_list ([("Base", 1998)])
 max([x,y,z;int(1..)])
 
 --
@@ -49,6 +49,12 @@ WatchedLiteral(__0,2)
 
 --
 
+__0 >= z
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(z, __0, 0)
+
+--
+
 __0 >= x
    ~~> geq_to_ineq ([("Minion", 4100)])
 Ineq(x, __0, 0)
@@ -61,21 +67,25 @@ Ineq(y, __0, 0)
 
 --
 
-__0 >= z
-   ~~> geq_to_ineq ([("Minion", 4100)])
-Ineq(z, __0, 0)
-
---
-
 min([x,y,z;int(1..3)])
-   ~~> matrix_to_list ([("Base", 2000)])
+   ~~> matrix_to_list ([("Base", 1998)])
 min([x,y,z;int(1..)])
 
 --
 
-min([x,y,z;int(1..)]) = 1
-   ~~> introduce_mineq ([("Minion", 6100)])
-FlatMinEq([x, y, z], 1)
+min([x,y,z;int(1..)])
+   ~~> introduce_mineq_from_min ([("Minion", 6100)])
+__1
+new variables:
+  findAux __1: int(1..2)
+new constraints:
+  FlatMinEq([x, y, z], __1)
+
+--
+
+__1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__1,1)
 
 --
 
@@ -85,14 +95,16 @@ find x: int(1..2)
 find y: int(1..2)
 find z: int(1..2)
 findAux __0: int(1..2)
+findAux __1: int(1..2)
 
 such that
 
 WatchedLiteral(__0,2),
-FlatMinEq([x, y, z], 1),
+WatchedLiteral(__1,1),
 and([Ineq(x, y, 0),Ineq(y, z, 0);int(1..)]),
 Ineq(x, __0, 0),
 Ineq(y, __0, 0),
 Ineq(z, __0, 0),
-or([__0 = x,__0 = y,__0 = z;int(1..)])
+or([__0 = x,__0 = y,__0 = z;int(1..)]),
+FlatMinEq([x, y, z], __1)
 

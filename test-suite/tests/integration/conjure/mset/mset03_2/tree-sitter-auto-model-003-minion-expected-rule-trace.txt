@@ -269,12 +269,6 @@ x#repetition_2 <= sum([6,-1;int(1..)])
 
 --
 
-SafeIndex(x#repetition_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#repetition_1#components_1
-
---
-
 SafeIndex(x#repetition_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#repetition_1#components_2
@@ -302,6 +296,12 @@ x#repetition_1#components_5
 SafeIndex(x#repetition_1,[6])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#repetition_1#components_6
+
+--
+
+SafeIndex(x#repetition_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#repetition_1#components_1
 
 --
 
@@ -533,18 +533,6 @@ new constraints:
 
 --
 
-x#repetition_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#repetition_1#components_1,1)
-
---
-
-x#repetition_1#components_2 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#repetition_1#components_2,1)
-
---
-
 x#repetition_1#components_3 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#repetition_1#components_3,1)
@@ -566,6 +554,18 @@ WatchedLiteral(x#repetition_1#components_5,1)
 x#repetition_1#components_6 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#repetition_1#components_6,1)
+
+--
+
+x#repetition_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_1,1)
+
+--
+
+x#repetition_1#components_2 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#repetition_1#components_2,1)
 
 --
 
@@ -965,12 +965,6 @@ Reify(and([6 <= x#repetition_2,WatchedLiteral(x#repetition_1#components_6,3);int
 
 --
 
-x#repetition_2 <= 1
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(x#repetition_2, 1, 0)
-
---
-
 x#repetition_2 <= 2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(x#repetition_2, 2, 0)
@@ -995,6 +989,48 @@ Ineq(x#repetition_2, 5, 0)
 
 --
 
+x#repetition_2 <= 1
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#repetition_2, 1, 0)
+
+--
+
+3 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#repetition_2, 0)
+
+--
+
+4 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, x#repetition_2, 0)
+
+--
+
+5 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, x#repetition_2, 0)
+
+--
+
+6 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(6, x#repetition_2, 0)
+
+--
+
+1 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#repetition_2, 0)
+
+--
+
+2 <= x#repetition_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, x#repetition_2, 0)
+
+--
+
 1 <= x#repetition_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(1, x#repetition_2, 0)
@@ -1100,48 +1136,6 @@ Ineq(5, x#repetition_2, 0)
 6 <= x#repetition_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(6, x#repetition_2, 0)
-
---
-
-1 <= x#repetition_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#repetition_2, 0)
-
---
-
-2 <= x#repetition_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(2, x#repetition_2, 0)
-
---
-
-3 <= x#repetition_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(3, x#repetition_2, 0)
-
---
-
-4 <= x#repetition_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(4, x#repetition_2, 0)
-
---
-
-5 <= x#repetition_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(5, x#repetition_2, 0)
-
---
-
-6 <= x#repetition_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(6, x#repetition_2, 0)
-
---
-
-([x#repetition_1#components_1;int(1..)] <=lex [x#repetition_1#components_2;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#repetition_1#components_1], [x#repetition_1#components_2])
 
 --
 
@@ -1166,6 +1160,12 @@ FlatLexLeq([x#repetition_1#components_4], [x#repetition_1#components_5])
 ([x#repetition_1#components_5;int(1..)] <=lex [x#repetition_1#components_6;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLeq([x#repetition_1#components_5], [x#repetition_1#components_6])
+
+--
+
+([x#repetition_1#components_1;int(1..)] <=lex [x#repetition_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#repetition_1#components_1], [x#repetition_1#components_2])
 
 --
 

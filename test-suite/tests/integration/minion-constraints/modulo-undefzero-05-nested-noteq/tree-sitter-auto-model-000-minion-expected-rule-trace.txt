@@ -88,6 +88,12 @@ WatchedLiteral(z,0)
 
 --
 
+SafeMod(y,z) = 0
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(y, z, 0)
+
+--
+
 SafeMod(x,SafeMod(y,z)) != 3
    ~~> flatten_generic ([("Minion", 4200)])
 __0 != 3
@@ -120,12 +126,6 @@ ModEq(y, z, __1)
 
 --
 
-SafeMod(y,z) = 0
-   ~~> introduce_modeq ([("Minion", 4200)])
-ModEq(y, z, 0)
-
---
-
 Final model:
 
 find x: int(5..7)
@@ -136,7 +136,7 @@ findAux __1: int(0..3)
 
 such that
 
-or([__0 != 3,ModEq(y, z, 0),WatchedLiteral(z,0);int(1..)]),
+true,
 ModEq(x, __1, __0),
 ModEq(y, z, __1)
 
