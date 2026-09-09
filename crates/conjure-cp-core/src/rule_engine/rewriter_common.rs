@@ -20,7 +20,6 @@ use std::fmt::Debug;
 use std::sync::Arc;
 use thiserror::Error;
 use tracing::{debug, trace};
-use uniplate::Uniplate;
 
 #[derive(Debug, Clone)]
 pub struct RuleResult<'a> {
@@ -73,12 +72,11 @@ impl RuleAttemptObserver for NoopObserver {
 }
 
 fn expression_ast_depth(expression: &Expression) -> usize {
-    1 + expression
-        .children()
-        .iter()
-        .map(expression_ast_depth)
-        .max()
-        .unwrap_or(0)
+    let mut child_depth = 0;
+    expression.for_each_expr_child(&mut |child| {
+        child_depth = child_depth.max(expression_ast_depth(child));
+    });
+    1 + child_depth
 }
 
 fn effect_ast_depth(effect: &RuleEffect) -> usize {

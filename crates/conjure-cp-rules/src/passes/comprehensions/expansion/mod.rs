@@ -131,9 +131,7 @@ fn has_dependent_generators_and_nested_return(comprehension: &Comprehension) -> 
     generator_count >= 2
         && comprehension
             .return_expression
-            .universe()
-            .iter()
-            .any(|expression| matches!(expression, Expr::Comprehension(_, _)))
+            .any_expression(|expression| matches!(expression, Expr::Comprehension(_, _)))
 }
 
 /// A useful guard is a nonconstant condition whose remaining references include at least one
@@ -199,28 +197,24 @@ fn has_quantified_conjunction_in_pruning_position(
                 return true;
             }
 
-            Moo::unwrap_or_clone(terms.clone())
-                .unwrap_list()
-                .is_some_and(|terms| {
-                    terms.iter().any(|term| {
-                        has_quantified_conjunction_in_pruning_position(
-                            comprehension,
-                            term,
-                            quantified_vars,
-                        )
-                    })
-                })
-        }
-        Expr::Imply(_, antecedent, _) => {
-            antecedent.as_ref().universe().iter().any(|subexpression| {
-                matches!(subexpression, Expr::And(_, _))
-                    && expression_depends_only_on_quantified_decisions(
+            terms.unwrap_list_cow().is_some_and(|terms| {
+                terms.iter().any(|term| {
+                    has_quantified_conjunction_in_pruning_position(
                         comprehension,
-                        subexpression,
+                        term,
                         quantified_vars,
                     )
+                })
             })
         }
+        Expr::Imply(_, antecedent, _) => antecedent.any_expression(|subexpression| {
+            matches!(subexpression, Expr::And(_, _))
+                && expression_depends_only_on_quantified_decisions(
+                    comprehension,
+                    subexpression,
+                    quantified_vars,
+                )
+        }),
         _ => false,
     }
 }

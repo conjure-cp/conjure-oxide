@@ -412,7 +412,7 @@ fn guard_targets_safe_index_index(guard: &Expression, expr: &Expression) -> bool
         return false;
     };
 
-    expr.universe().into_iter().any(|subexpr| {
+    expr.any_expression(|subexpr| {
         let Expression::SafeIndex(_, _, indices) = subexpr else {
             return false;
         };

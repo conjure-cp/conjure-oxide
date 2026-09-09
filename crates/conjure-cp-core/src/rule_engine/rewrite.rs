@@ -38,7 +38,6 @@ use std::{
     time::Instant,
 };
 use tracing::trace;
-use uniplate::Uniplate;
 
 // Rewriter selection invariant:
 //
@@ -1785,21 +1784,13 @@ fn model_needs_abstract_repr_rules(model: &Model) -> bool {
 
     // Record/tuple/set *literals* also need ReprGeneral even without abstract finds.
     // Matrix literals are handled by `ReprMatrixComponents`, not these rule sets.
-    for expr in model.root().universe() {
-        match expr {
-            Expr::AbstractLiteral(_, abs) if !matches!(abs, AbstractLiteral::Matrix(..)) => {
-                return true;
-            }
-            Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(abs)))
-                if !matches!(abs, AbstractLiteral::Matrix(..)) =>
-            {
-                return true;
-            }
-            _ => {}
+    model.root().any_expression(|expr| match expr {
+        Expr::AbstractLiteral(_, abs) => !matches!(abs, AbstractLiteral::Matrix(..)),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(abs))) => {
+            !matches!(abs, AbstractLiteral::Matrix(..))
         }
-    }
-
-    false
+        _ => false,
+    })
 }
 
 /// Rewrites a model by applying rules in priority order, trying enclosing expressions before their

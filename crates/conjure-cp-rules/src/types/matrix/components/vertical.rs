@@ -224,12 +224,7 @@ pub(crate) fn try_lower_const_unsafe_index_matrix_components(
     };
 
     // Nested represented-matrix indices must be lowered first (same invariant as SafeIndex path).
-    if expr
-        .universe()
-        .iter()
-        .skip(1)
-        .any(is_matrix_components_index)
-    {
+    if expr.any_expression_descendant(is_matrix_components_index) {
         return None;
     }
 
@@ -274,12 +269,7 @@ pub(crate) fn try_lower_const_unsafe_index_matrix_components(
 fn index_matrix_components(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
     // Rewriting an outer index first can duplicate nested indices exponentially (e.g. m[m[i]]).
     // Defer it until every represented-matrix index below it has been rewritten.
-    if expr
-        .universe()
-        .iter()
-        .skip(1)
-        .any(is_matrix_components_index)
-    {
+    if expr.any_expression_descendant(is_matrix_components_index) {
         return Err(RuleNotApplicable);
     }
     index_matrix_components_impl(expr, symbols)

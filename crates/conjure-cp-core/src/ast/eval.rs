@@ -53,7 +53,7 @@ fn equal_constant_literals(lhs: &Lit, rhs: &Lit) -> Option<bool> {
 /// scheduler before their parent is considered. Use [`eval_constant`] when a caller explicitly
 /// wants recursive evaluation of an arbitrary expression.
 pub fn eval_constant_local(expr: &Expr) -> Option<Lit> {
-    if !has_only_local_constant_operands(expr) {
+    if !has_only_locally_evaluable_operands(expr) {
         return None;
     }
 
@@ -335,13 +335,16 @@ fn fold_constant_expression(expr: &Expr, constant: Lit) -> Option<Expr> {
     Some(folded)
 }
 
-fn has_only_local_constant_operands(expr: &Expr) -> bool {
+fn has_only_locally_evaluable_operands(expr: &Expr) -> bool {
     match expr {
         Expr::Atomic(_, Atom::Literal(_)) => true,
-        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant().is_some(),
-        Expr::AbstractLiteral(_, lit) => abstract_literal_children_are_local_constants(lit),
+        // Whether a reference resolves to a constant is the evaluator's result, not an
+        // applicability question. Resolving it here would clone/evaluate the value letting and
+        // then make eval_constant do the same work again.
+        Expr::Atomic(_, Atom::Reference(_)) => true,
+        Expr::AbstractLiteral(_, lit) => abstract_literal_children_are_locally_evaluable(lit),
         Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
-            is_local_constant_expr(inner.as_ref())
+            is_locally_evaluable_expr(inner.as_ref())
         }
         Expr::Comprehension(_, _) | Expr::AbstractComprehension(_, _) | Expr::Root(_, _) => false,
         // Visit children by reference. `Uniplate::children()` clones the whole child list, so on a
@@ -350,48 +353,48 @@ fn has_only_local_constant_operands(expr: &Expr) -> bool {
         _ => {
             let mut all_constant = true;
             expr.for_each_expr_child(&mut |child| {
-                all_constant = all_constant && is_local_constant_expr(child);
+                all_constant = all_constant && is_locally_evaluable_expr(child);
             });
             all_constant
         }
     }
 }
 
-fn is_local_constant_expr(expr: &Expr) -> bool {
+fn is_locally_evaluable_expr(expr: &Expr) -> bool {
     match expr {
         Expr::Atomic(_, Atom::Literal(_)) => true,
-        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant().is_some(),
-        Expr::AbstractLiteral(_, lit) => abstract_literal_children_are_local_constants(lit),
+        Expr::Atomic(_, Atom::Reference(_)) => true,
+        Expr::AbstractLiteral(_, lit) => abstract_literal_children_are_locally_evaluable(lit),
         Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
-            is_local_constant_expr(inner.as_ref())
+            is_locally_evaluable_expr(inner.as_ref())
         }
         _ => false,
     }
 }
 
-fn abstract_literal_children_are_local_constants(lit: &AbstractLiteral<Expr>) -> bool {
+fn abstract_literal_children_are_locally_evaluable(lit: &AbstractLiteral<Expr>) -> bool {
     match lit {
         AbstractLiteral::Set(items)
         | AbstractLiteral::MSet(items)
         | AbstractLiteral::Tuple(items)
-        | AbstractLiteral::Matrix(items, _) => items.iter().all(is_local_constant_expr),
+        | AbstractLiteral::Matrix(items, _) => items.iter().all(is_locally_evaluable_expr),
         AbstractLiteral::Record(fields) => fields
             .iter()
-            .all(|field| is_local_constant_expr(&field.value)),
-        AbstractLiteral::Sequence(items) => items.iter().all(is_local_constant_expr),
+            .all(|field| is_locally_evaluable_expr(&field.value)),
+        AbstractLiteral::Sequence(items) => items.iter().all(is_locally_evaluable_expr),
         AbstractLiteral::Function(items) => items
             .iter()
-            .all(|(from, to)| is_local_constant_expr(from) && is_local_constant_expr(to)),
+            .all(|(from, to)| is_locally_evaluable_expr(from) && is_locally_evaluable_expr(to)),
         AbstractLiteral::Relation(items) => items
             .iter()
-            .all(|tuple| tuple.iter().all(is_local_constant_expr)),
+            .all(|tuple| tuple.iter().all(is_locally_evaluable_expr)),
         AbstractLiteral::Partition(parts) => parts
             .iter()
-            .all(|part| part.iter().all(is_local_constant_expr)),
+            .all(|part| part.iter().all(is_locally_evaluable_expr)),
         AbstractLiteral::Permutation(cycles) => cycles
             .iter()
-            .all(|cycle| cycle.iter().all(is_local_constant_expr)),
-        AbstractLiteral::Variant(field) => is_local_constant_expr(&field.value),
+            .all(|cycle| cycle.iter().all(is_locally_evaluable_expr)),
+        AbstractLiteral::Variant(field) => is_locally_evaluable_expr(&field.value),
     }
 }
 

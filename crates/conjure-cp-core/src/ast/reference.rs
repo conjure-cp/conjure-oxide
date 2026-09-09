@@ -270,16 +270,17 @@ impl Reference {
 
     /// Evaluates this reference to a literal if it resolves to a constant.
     pub fn resolve_constant(&self) -> Option<Literal> {
-        self.resolve_expression()
-            .and_then(|expr| super::eval::eval_constant(&expr))
+        self.with_resolved_expression(super::eval::eval_constant)
+            .flatten()
     }
 
     /// Resolves this reference to an atomic expression, if possible.
     pub fn resolve_atomic(&self) -> Option<Atom> {
-        self.resolve_expression().and_then(|expr| match expr {
-            Expression::Atomic(_, atom) => Some(atom),
+        self.with_resolved_expression(|expr| match expr {
+            Expression::Atomic(_, atom) => Some(atom.clone()),
             _ => None,
         })
+        .flatten()
     }
 }
 

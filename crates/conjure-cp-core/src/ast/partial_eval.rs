@@ -11,7 +11,6 @@ use crate::{
     into_matrix_expr,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect},
 };
-use uniplate::Uniplate;
 
 /// Constant comparison shape used when dominating bounds under `And`.
 ///
@@ -52,33 +51,37 @@ fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
 /// Returns whether `expr` is safe after resolving any referenced expressions.
 fn is_semantically_safe(expr: &Expr) -> bool {
     fn helper(expr: &Expr, resolving: &mut HashSet<crate::ast::serde::ObjId>) -> bool {
-        if !expr.is_safe() {
+        if matches!(
+            expr,
+            Expr::UnsafeDiv(_, _, _)
+                | Expr::UnsafeMod(_, _, _)
+                | Expr::UnsafePow(_, _, _)
+                | Expr::UnsafeIndex(_, _, _)
+                | Expr::Bubble(_, _, _)
+                | Expr::UnsafeSlice(_, _, _)
+        ) {
             return false;
         }
 
-        for subexpr in expr.universe() {
-            let Expr::Atomic(_, Atom::Reference(reference)) = subexpr else {
-                continue;
-            };
-
-            let Some(resolved) = reference.resolve_expression() else {
-                continue;
-            };
-
+        if let Expr::Atomic(_, Atom::Reference(reference)) = expr {
             let id = reference.id();
             if !resolving.insert(id.clone()) {
                 return false;
             }
-
-            let is_safe = helper(&resolved, resolving);
+            let is_safe = reference
+                .with_resolved_expression(|resolved| helper(resolved, resolving))
+                .unwrap_or(true);
             resolving.remove(&id);
-
-            if !is_safe {
-                return false;
-            }
+            return is_safe;
         }
 
-        true
+        let mut is_safe = true;
+        expr.for_each_expr_child(&mut |child| {
+            if is_safe {
+                is_safe = helper(child, resolving);
+            }
+        });
+        is_safe
     }
 
     helper(expr, &mut HashSet::new())

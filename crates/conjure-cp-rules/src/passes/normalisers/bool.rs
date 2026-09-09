@@ -7,7 +7,6 @@ use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect,
     register_rule,
 };
-use uniplate::Uniplate;
 
 /// Removes double negations
 ///
@@ -118,13 +117,13 @@ fn distribution_would_duplicate_nontrivial_rest(and_len: usize, rest: &[Expr]) -
 /// ```
 #[register_rule("Base", 8400, [Not])]
 fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    for child in expr.universe() {
-        if matches!(
+    if expr.any_expression(|child| {
+        matches!(
             child,
             Expr::UnsafeDiv(_, _, _) | Expr::Bubble(_, _, _) | Expr::UnsafeMod(_, _, _)
-        ) {
-            return Err(RuleNotApplicable);
-        }
+        )
+    }) {
+        return Err(RuleNotApplicable);
     }
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {

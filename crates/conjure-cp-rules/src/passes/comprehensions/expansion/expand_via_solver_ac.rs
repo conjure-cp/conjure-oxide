@@ -18,7 +18,7 @@ use conjure_cp::{
     solver::{Solver, SolverError, adaptors::Minion},
 };
 use tracing::warn;
-use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
+use uniplate::{Biplate, zipper::Zipper};
 
 use super::via_solver_common::{
     detach_symbols, instantiate_return_expressions_from_values, retain_quantified_solution_values,
@@ -163,9 +163,7 @@ fn prepare_ac_generator_model(
 /// Comprehensions are leaves of the traversal, so this finds nested ones without descending into
 /// their own scopes.
 fn contains_comprehension(expr: &Expression) -> bool {
-    expr.universe()
-        .iter()
-        .any(|subexpr| matches!(subexpr, Expression::Comprehension(_, _)))
+    expr.any_expression(|subexpr| matches!(subexpr, Expression::Comprehension(_, _)))
 }
 
 /// Eliminate all references to non-quantified variables by introducing dummy variables, then
@@ -225,7 +223,7 @@ fn derive_return_expression_constraint(
         // The expression contains non-quantified variables:
 
         // does this expression have any children that can be turned into dummy variables?
-        let has_eligible_child = focus.universe().iter().skip(1).any(|expr| {
+        let has_eligible_child = focus.any_expression_descendant(|expr| {
             // eligible if it can be turned into a dummy variable, and turning it into a
             // dummy variable removes a non-quantified variable from the model.
             can_be_dummy_variable(expr, &dummy_var_type)

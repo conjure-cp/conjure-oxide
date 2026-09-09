@@ -4,7 +4,7 @@ use conjure_cp::ast::eval_constant;
 use conjure_cp::ast::{
     AbstractLiteral, Atom, DeclarationPtr, DomainPtr, Expression as Expr, Literal, Metadata, Moo,
     Reference, SymbolTable,
-    categories::Category,
+    categories::{Category, CategoryOf},
     comprehension::{Comprehension, ComprehensionQualifier},
     records::Field,
 };
@@ -32,7 +32,9 @@ pub fn is_literal(expr: &Expr) -> bool {
 
 /// True if `expr` is flat; i.e. it only contains atoms.
 pub fn is_flat(expr: &Expr) -> bool {
-    expr.children().iter().all(is_atom)
+    let mut flat = true;
+    expr.for_each_expr_child(&mut |child| flat = flat && is_atom(child));
+    flat
 }
 
 /// Rewrites the direct expression children of `expr`, preserving the number of children.
@@ -348,7 +350,21 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     }
 
     // Anything that should be bubbled, bubble
-    if !expr.is_safe() {
+    let mut safe = true;
+    let mut categories = std::collections::HashSet::new();
+    expr.for_each_expression(&mut |subexpr| {
+        safe &= !matches!(
+            subexpr,
+            Expr::UnsafeDiv(_, _, _)
+                | Expr::UnsafeMod(_, _, _)
+                | Expr::UnsafePow(_, _, _)
+                | Expr::UnsafeIndex(_, _, _)
+                | Expr::Bubble(_, _, _)
+                | Expr::UnsafeSlice(_, _, _)
+        );
+        categories.insert(subexpr.category_of());
+    });
+    if !safe {
         if cfg!(debug_assertions) {
             trace!(why = "expression is unsafe", "to_aux_var() failed");
         }
@@ -377,8 +393,6 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     // constants.
     //
     // i.e. dont flatten things containing givens, quantified variables, just constants, etc.
-    let categories = expr.universe_categories();
-
     bug_assert!(!categories.is_empty());
 
     if !(categories.len() == 1 && categories.contains(&Category::Decision)

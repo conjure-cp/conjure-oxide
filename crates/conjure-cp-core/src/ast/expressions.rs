@@ -2106,20 +2106,17 @@ impl Expression {
     /// safe through the use of bubble rules.
     pub fn is_safe(&self) -> bool {
         // TODO: memoise in Metadata
-        for expr in self.universe() {
-            match expr {
+        !self.any_expression(|expr| {
+            matches!(
+                expr,
                 Expression::UnsafeDiv(_, _, _)
-                | Expression::UnsafeMod(_, _, _)
-                | Expression::UnsafePow(_, _, _)
-                | Expression::UnsafeIndex(_, _, _)
-                | Expression::Bubble(_, _, _)
-                | Expression::UnsafeSlice(_, _, _) => {
-                    return false;
-                }
-                _ => {}
-            }
-        }
-        true
+                    | Expression::UnsafeMod(_, _, _)
+                    | Expression::UnsafePow(_, _, _)
+                    | Expression::UnsafeIndex(_, _, _)
+                    | Expression::Bubble(_, _, _)
+                    | Expression::UnsafeSlice(_, _, _)
+            )
+        })
     }
 
     /// True if the expression is an associative and commutative operator
@@ -2337,10 +2334,11 @@ impl Expression {
 
     /// Returns the categories of all sub-expressions of self.
     pub fn universe_categories(&self) -> HashSet<Category> {
-        self.universe()
-            .into_iter()
-            .map(|x| x.category_of())
-            .collect()
+        let mut categories = HashSet::new();
+        self.for_each_expression(&mut |expr| {
+            categories.insert(expr.category_of());
+        });
+        categories
     }
 }
 
@@ -3202,7 +3200,7 @@ impl Typeable for Expression {
 
 impl Expression {
     /// Visit each direct `Expression` child by reference, without cloning.
-    pub(crate) fn for_each_expr_child(&self, f: &mut impl FnMut(&Expression)) {
+    pub fn for_each_expr_child<'a>(&'a self, f: &mut impl FnMut(&'a Expression)) {
         match self {
             // Special Case
             Expression::AbstractLiteral(_, alit) => match alit {
@@ -3436,6 +3434,47 @@ impl Expression {
             | Expression::FlatLexLt(_, _, _)
             | Expression::FlatLexLeq(_, _, _) => {}
         }
+    }
+
+    /// Visits this expression and all of its expression descendants by reference.
+    pub fn for_each_expression<'a>(&'a self, f: &mut impl FnMut(&'a Expression)) {
+        f(self);
+        self.for_each_expr_child(&mut |child| child.for_each_expression(f));
+    }
+
+    /// Returns whether this expression or any expression below it satisfies `predicate`.
+    ///
+    /// Unlike [`Uniplate::universe`], this does not construct an owned copy of the traversed tree.
+    pub fn any_expression(&self, mut predicate: impl FnMut(&Expression) -> bool) -> bool {
+        fn visit(expr: &Expression, predicate: &mut impl FnMut(&Expression) -> bool) -> bool {
+            if predicate(expr) {
+                return true;
+            }
+
+            let mut found = false;
+            expr.for_each_expr_child(&mut |child| {
+                if !found {
+                    found = visit(child, predicate);
+                }
+            });
+            found
+        }
+
+        visit(self, &mut predicate)
+    }
+
+    /// Returns whether any expression strictly below this one satisfies `predicate`.
+    pub fn any_expression_descendant(
+        &self,
+        mut predicate: impl FnMut(&Expression) -> bool,
+    ) -> bool {
+        let mut found = false;
+        self.for_each_expr_child(&mut |child| {
+            if !found {
+                found = child.any_expression(&mut predicate);
+            }
+        });
+        found
     }
 }
 
@@ -3803,10 +3842,9 @@ impl Expression {
 
     /// Computes an expression content hash that ignores metadata except for child content hashes.
     pub(crate) fn calculate_content_hash(&self) -> u64 {
-        let mut child_hashes = self
-            .children()
-            .into_iter()
-            .map(|child| child.cached_content_hash());
+        let mut hashes = Vec::new();
+        self.for_each_expr_child(&mut |child| hashes.push(child.cached_content_hash()));
+        let mut child_hashes = hashes.into_iter();
         let result = self.content_hash_from_child_hashes(&mut child_hashes);
         self.meta_ref()
             .cached_content_hash
