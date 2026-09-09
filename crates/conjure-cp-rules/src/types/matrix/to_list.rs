@@ -48,6 +48,11 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             // first is redundant and creates fake optionality.
             | Expr::LexLt(_, _, _)
             | Expr::LexLeq(_, _, _)
+            // `elementId` reports a position in its subject, so the subject's index domain is
+            // part of what it means. Renumbering it to `int(1..)` selects a different lowering,
+            // and the two lowerings disagree on which index stands for a value that the subject
+            // does not contain.
+            | Expr::ElementId(_, _, _)
     ) {
         return Err(RuleNotApplicable);
     }
