@@ -69,6 +69,8 @@ These project conventions are more specific than the general guidance above.
 
 - Document all top-level public functions, structs, enums, and type aliases with brief rustdocs.
 - Document public fields and enum variants when their meaning is not completely obvious.
+- Do not clone a value just to ask it a question. Prefer borrowed views and iterators for checks
+  such as lengths, predicates, lookups, and traversal; clone only data that must escape.
 - Put representation-dependent rules under `types/<type>/<representation>/vertical`; reserve `types/<type>/horizontal` for representation-independent rules.
 
 ### Test Runs
