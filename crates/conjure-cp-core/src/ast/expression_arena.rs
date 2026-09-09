@@ -219,6 +219,9 @@ impl ExpressionArena {
             .collect();
         let rebuilt = self.node(id).expr.with_children(child_exprs);
         rebuilt.meta_ref().clear_cached_domain();
+        // `with_children` carries the old metadata onto the rebuilt expression, cached content
+        // hash included, but the children it now holds are different ones.
+        rebuilt.invalidate_cached_content_hash();
         let node = self.node_mut(id);
         node.expr = rebuilt;
         node.generation = node.generation.wrapping_add(1);
@@ -560,6 +563,8 @@ mod tests {
         let root_id = arena.root();
         let eq_id = arena.children(root_id)[0];
         let left = arena.children(eq_id)[0];
+        let old_eq_hash = arena.expression(eq_id).cached_content_hash();
+        let old_root_hash = arena.expression(root_id).cached_content_hash();
 
         arena.replace_subtree(left, int(3));
         arena.rebuild_payload_from_children(eq_id);
@@ -567,6 +572,11 @@ mod tests {
 
         assert_eq!(arena.expression(eq_id), &eq(int(3), int(2)));
         assert_eq!(arena.expression(root_id), &root(vec![eq(int(3), int(2))]));
+        assert_ne!(arena.expression(eq_id).cached_content_hash(), old_eq_hash);
+        assert_ne!(
+            arena.expression(root_id).cached_content_hash(),
+            old_root_hash
+        );
     }
 
     #[test]
