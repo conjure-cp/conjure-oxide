@@ -883,6 +883,255 @@ struct WorklistScheduler {
     next_sequence: u64,
 }
 
+/// Ancestors waiting for an evaluator pass, held until the worklist runs out of rule work.
+///
+/// A rewrite normalises its own replacement subtree straight away and records its ancestors here.
+/// Because the same ancestor is only recorded once, a wide `and`/`or`/arithmetic node gets one
+/// evaluator pass after all its changed children are done, instead of one per child.
+#[derive(Default)]
+struct DeferredEvaluatorWork {
+    nodes: HashSet<(usize, ExpressionNodeId)>,
+}
+
+impl DeferredEvaluatorWork {
+    fn defer_ancestors(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        node_id: ExpressionNodeId,
+    ) {
+        let mut current = arena.parent(node_id);
+        while let Some(current_id) = current {
+            self.nodes.insert((surface, current_id));
+            current = arena.parent(current_id);
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
+}
+
+/// Ancestors waiting to have their rules re-checked, held until the worklist is about to move on
+/// to a lower priority (or emptied straight away after a change to the model).
+///
+/// Rewriting a child can make a higher-priority rule apply to an expression enclosing it, so those
+/// ancestors have to be re-checked before any lower-priority work runs. Collecting them up while
+/// the current priority finishes means a shared wide root is visited once per priority instead of
+/// once per child -- the shape unrolling a comprehension produces.
+#[derive(Default)]
+struct DeferredAncestorRuleWork {
+    nodes: HashSet<(usize, ExpressionNodeId)>,
+    postponed: Vec<(usize, usize, ExpressionNodeId, ScheduledMode)>,
+    flush_after_level: Option<usize>,
+}
+
+impl DeferredAncestorRuleWork {
+    fn defer_ancestors(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        rewrite_level: usize,
+    ) {
+        self.flush_after_level = Some(
+            self.flush_after_level
+                .map_or(rewrite_level, |level| level.min(rewrite_level)),
+        );
+
+        let mut current = arena.parent(node_id);
+        while let Some(current_id) = current {
+            self.nodes.insert((surface, current_id));
+            current = arena.parent(current_id);
+        }
+    }
+
+    fn should_flush_before(&self, next_level: Option<usize>) -> bool {
+        let Some(flush_after_level) = self.flush_after_level else {
+            return false;
+        };
+        next_level.is_none_or(|level| level > flush_after_level)
+    }
+
+    fn contains(&self, surface: usize, node_id: ExpressionNodeId) -> bool {
+        self.nodes.contains(&(surface, node_id))
+    }
+
+    fn postpone(&mut self, item: (usize, usize, ExpressionNodeId, ScheduledMode)) {
+        self.postponed.push(item);
+    }
+
+    /// Brings just the enclosing expressions of a rewrite up to date, stopping short of the root.
+    ///
+    /// Choosing a representation can change which rule should win for a sibling in the same
+    /// comparison, so the expressions around it cannot wait. The surface root is left in the
+    /// batch on purpose: rebuilding its long list of constraints every time an auxiliary appears
+    /// costs time proportional to the whole model, once per auxiliary.
+    fn flush_effect_path_before_root(
+        &mut self,
+        scheduler: &mut WorklistScheduler,
+        surfaces: &mut [RewriteSurface],
+        deferred_evaluators: &mut DeferredEvaluatorWork,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        dirty_trace: &mut DirtyTrace,
+    ) {
+        let Some(rewrite_surface) = surfaces.get(surface) else {
+            return;
+        };
+        let root = rewrite_surface.arena.root();
+        let mut path = Vec::new();
+        let mut current = rewrite_surface.arena.parent(node_id);
+        while let Some(current_id) = current {
+            if current_id == root {
+                break;
+            }
+            path.push(current_id);
+            current = rewrite_surface.arena.parent(current_id);
+        }
+
+        for ancestor in path {
+            self.nodes.remove(&(surface, ancestor));
+            let Some(rewrite_surface) = surfaces.get_mut(surface) else {
+                continue;
+            };
+            if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(ancestor) {
+                continue;
+            }
+
+            rewrite_surface
+                .arena
+                .rebuild_payload_from_children(ancestor);
+            let evaluator_changed = if matches!(rewrite_surface.kind, RewriteSurfaceKind::Root) {
+                deferred_evaluators.nodes.remove(&(surface, ancestor));
+                normalise_evaluator_node_to_fixpoint_without_ancestor_sync(
+                    &mut rewrite_surface.arena,
+                    ancestor,
+                    dirty_trace,
+                )
+            } else {
+                false
+            };
+
+            if evaluator_changed {
+                scheduler.index_subtree_references(&rewrite_surface.arena, surface, ancestor);
+                scheduler.enqueue_subtree(
+                    &rewrite_surface.arena,
+                    surface,
+                    ancestor,
+                    Some(dirty_trace),
+                );
+            } else {
+                scheduler.enqueue_node_at_level(
+                    &rewrite_surface.arena,
+                    surface,
+                    ancestor,
+                    0,
+                    ScheduledMode::CheckNode,
+                    Some(dirty_trace),
+                );
+            }
+        }
+    }
+
+    fn flush(
+        &mut self,
+        scheduler: &mut WorklistScheduler,
+        surfaces: &mut [RewriteSurface],
+        deferred_evaluators: &mut DeferredEvaluatorWork,
+        dirty_trace: &mut DirtyTrace,
+    ) {
+        let mut nodes: Vec<_> = std::mem::take(&mut self.nodes).into_iter().collect();
+        let postponed = std::mem::take(&mut self.postponed);
+        nodes.sort_by(|(left_surface, left_node), (right_surface, right_node)| {
+            let left_path = surfaces[*left_surface].arena.preorder_path(*left_node);
+            let right_path = surfaces[*right_surface].arena.preorder_path(*right_node);
+            right_path
+                .len()
+                .cmp(&left_path.len())
+                .then_with(|| left_surface.cmp(right_surface))
+                .then_with(|| left_path.cmp(right_path))
+        });
+        self.flush_after_level = None;
+
+        // Expressions above a changed child are left alone while the priority finishes, so
+        // anything already queued against them stays valid. Rebuild deepest first, once each, so
+        // every ancestor sees up-to-date children. Ancestors on the root surface also get the
+        // evaluator here, so a parent sees an already-normalised child and the path above a
+        // rewrite is copied once per batch instead of once per rewrite.
+        let mut evaluator_changed = HashSet::new();
+        for &(surface, node_id) in &nodes {
+            let Some(rewrite_surface) = surfaces.get_mut(surface) else {
+                continue;
+            };
+            if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(node_id) {
+                continue;
+            }
+            rewrite_surface.arena.rebuild_payload_from_children(node_id);
+
+            if matches!(rewrite_surface.kind, RewriteSurfaceKind::Root) {
+                deferred_evaluators.nodes.remove(&(surface, node_id));
+                if node_id != rewrite_surface.arena.root()
+                    && normalise_evaluator_node_to_fixpoint_without_ancestor_sync(
+                        &mut rewrite_surface.arena,
+                        node_id,
+                        dirty_trace,
+                    )
+                {
+                    evaluator_changed.insert((surface, node_id));
+                }
+            }
+        }
+
+        for (surface, node_id) in nodes {
+            let Some(rewrite_surface) = surfaces.get(surface) else {
+                continue;
+            };
+            if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(node_id) {
+                continue;
+            }
+            if evaluator_changed.contains(&(surface, node_id)) {
+                scheduler.index_subtree_references(&rewrite_surface.arena, surface, node_id);
+                scheduler.enqueue_subtree(
+                    &rewrite_surface.arena,
+                    surface,
+                    node_id,
+                    Some(dirty_trace),
+                );
+            } else {
+                scheduler.enqueue_node_at_level(
+                    &rewrite_surface.arena,
+                    surface,
+                    node_id,
+                    0,
+                    ScheduledMode::CheckNode,
+                    Some(dirty_trace),
+                );
+            }
+        }
+
+        // An item taken off the queue while its ancestors were still out of date must not be
+        // dropped. Put it back now that they are rebuilt, so descendants it had not reached yet
+        // -- new top-level constraints in particular -- still get visited.
+        for (level, surface, node_id, mode) in postponed {
+            let Some(rewrite_surface) = surfaces.get(surface) else {
+                continue;
+            };
+            if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(node_id) {
+                continue;
+            }
+            scheduler.enqueue_node_at_level(
+                &rewrite_surface.arena,
+                surface,
+                node_id,
+                level,
+                mode,
+                Some(dirty_trace),
+            );
+        }
+    }
+}
+
 impl WorklistScheduler {
     fn empty(rule_groups: &[RuleGroup<'_>]) -> Self {
         Self {
@@ -1013,6 +1262,7 @@ impl WorklistScheduler {
         );
     }
 
+    #[cfg(test)]
     fn enqueue_node_and_ancestors(
         &mut self,
         arena: &ExpressionArena,
@@ -1895,10 +2145,58 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
     }
     write_worklist_surfaces_to_model(submodel, &surfaces);
     let mut scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
+    let mut deferred_evaluators = DeferredEvaluatorWork::default();
+    let mut deferred_ancestor_rules = DeferredAncestorRuleWork::default();
 
-    while let Some((level, surface_index, node_id, scheduled_mode)) =
-        scheduler.pop_next(&surfaces, ctx.bucketed_rules, ctx.config, ctx.dirty_trace)
-    {
+    loop {
+        let next = loop {
+            let candidate =
+                scheduler.pop_next(&surfaces, ctx.bucketed_rules, ctx.config, ctx.dirty_trace);
+            if let Some((_, surface, node_id, _)) = candidate
+                && deferred_ancestor_rules.contains(surface, node_id)
+            {
+                deferred_ancestor_rules.postpone(candidate.unwrap());
+                continue;
+            }
+            break candidate;
+        };
+        let crosses_priority_boundary =
+            deferred_ancestor_rules.should_flush_before(next.as_ref().map(|item| item.0));
+        if crosses_priority_boundary {
+            // `pop_next` removes a live item from the queue. Put it back before injecting the
+            // higher-priority ancestor checks that must precede it.
+            if let Some((level, surface, node_id, mode)) = next {
+                scheduler.enqueue_node_at_level(
+                    &surfaces[surface].arena,
+                    surface,
+                    node_id,
+                    level,
+                    mode,
+                    Some(ctx.dirty_trace),
+                );
+            }
+            deferred_ancestor_rules.flush(
+                &mut scheduler,
+                &mut surfaces,
+                &mut deferred_evaluators,
+                ctx.dirty_trace,
+            );
+            continue;
+        }
+
+        let Some((level, surface_index, node_id, scheduled_mode)) = next else {
+            if normalise_deferred_evaluators(
+                &mut deferred_evaluators,
+                submodel,
+                &mut surfaces,
+                &mut scheduler,
+                ctx.dirty_trace,
+            ) {
+                did_rewrite = true;
+                continue;
+            }
+            break;
+        };
         ctx.dirty_trace.priority_scans += 1;
         ctx.dirty_trace.expression_visits += 1;
 
@@ -2044,7 +2342,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         } = effect;
         {
             let arena = &mut surfaces[surface_index].arena;
-            replace_focus_and_sync_ancestors(arena, *node_id, new_expression);
+            arena.replace_subtree(*node_id, new_expression);
         }
 
         ctx.dirty_trace
@@ -2059,9 +2357,12 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             Vec::new()
         };
         submodel.add_clauses(new_clauses);
-        let (rewrite_impact_node_id, _) = {
+        let rewrite_impact_node_id = {
             let arena = &mut surfaces[surface_index].arena;
-            normalise_evaluators_from_node_to_root(arena, *node_id, ctx.dirty_trace)
+            normalise_evaluators_subtree_bottom_up(arena, *node_id, ctx.dirty_trace);
+            deferred_evaluators.defer_ancestors(arena, surface_index, *node_id);
+            deferred_ancestor_rules.defer_ancestors(arena, surface_index, *node_id, level);
+            *node_id
         };
         scheduler.index_subtree_references(
             &surfaces[surface_index].arena,
@@ -2070,10 +2371,21 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         );
         for &new_top_node_id in &new_top_node_ids {
             if surfaces[root_surface].arena.is_reachable(new_top_node_id) {
-                normalise_evaluators_from_node_to_root(
+                normalise_evaluators_subtree_bottom_up(
                     &mut surfaces[root_surface].arena,
                     new_top_node_id,
                     ctx.dirty_trace,
+                );
+                deferred_evaluators.defer_ancestors(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    new_top_node_id,
+                );
+                deferred_ancestor_rules.defer_ancestors(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    new_top_node_id,
+                    level,
                 );
                 scheduler.index_subtree_references(
                     &surfaces[root_surface].arena,
@@ -2104,6 +2416,22 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             &mut value_letting_surfaces,
             &symbol_surface_names,
         );
+
+        // Choosing a representation, or any other change to the model, can change which rule
+        // should win for a sibling at the same priority. Do not batch across that: bring the
+        // enclosing expressions up to date and re-check their rules before moving to another
+        // sibling. Rewrites that only change an expression still get batched, and those are the
+        // common case when unrolling.
+        if has_model_side_effects {
+            deferred_ancestor_rules.flush_effect_path_before_root(
+                &mut scheduler,
+                &mut surfaces,
+                &mut deferred_evaluators,
+                surface_index,
+                rewrite_impact_node_id,
+                ctx.dirty_trace,
+            );
+        }
         {
             if has_model_side_effects {
                 ctx.dirty_trace.record_side_effect_kept_in_arena();
@@ -2119,12 +2447,11 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
                     Some(ctx.dirty_trace),
                 );
             }
-            enqueue_worklist_rewrite_impact(
-                &mut scheduler,
+            scheduler.enqueue_subtree(
                 &surfaces[surface_index].arena,
                 surface_index,
                 rewrite_impact_node_id,
-                ctx.dirty_trace,
+                Some(ctx.dirty_trace),
             );
             for new_top_node_id in new_top_node_ids {
                 scheduler.enqueue_subtree(
@@ -2151,22 +2478,16 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             );
         }
 
-        #[cfg(debug_assertions)]
-        {
-            // Well-formedness only: do not rebuild surfaces/scheduler here. A full rebuild after
-            // every rule changes same-priority sibling order vs release (incremental enqueue).
-            write_worklist_surfaces_to_model(submodel, &surfaces);
-            let assertion_context = format!("rewriter after applying rule '{rule_name}'");
-            debug_assert_model_well_formed(submodel, &assertion_context);
-        }
-
         did_rewrite = true;
     }
 
     write_worklist_surfaces_to_model(submodel, &surfaces);
+    #[cfg(debug_assertions)]
+    debug_assert_model_well_formed(submodel, "rewriter after a settled worklist pass");
     did_rewrite.then_some(())
 }
 
+#[cfg(test)]
 fn enqueue_worklist_rewrite_impact(
     scheduler: &mut WorklistScheduler,
     arena: &ExpressionArena,
@@ -2176,6 +2497,121 @@ fn enqueue_worklist_rewrite_impact(
 ) {
     scheduler.enqueue_node_and_ancestors(arena, surface, node_id, dirty_trace);
     scheduler.enqueue_subtree(arena, surface, node_id, Some(dirty_trace));
+}
+
+/// Rebuilds and evaluates the waiting ancestors, once the worklist has run out of rule work.
+///
+/// Nodes are handled deepest first, so each parent is rebuilt once from children that are already
+/// up to date. Doing it here rather than after every rewrite is what stops each rewrite from
+/// copying the whole matrix/`and`/root chain above it. The surfaces that changed go back on the
+/// worklist, and later rewrites fill the next batch.
+fn normalise_deferred_evaluators(
+    work: &mut DeferredEvaluatorWork,
+    submodel: &mut Model,
+    surfaces: &mut [RewriteSurface],
+    scheduler: &mut WorklistScheduler,
+    dirty_trace: &mut DirtyTrace,
+) -> bool {
+    if work.is_empty() {
+        return false;
+    }
+
+    let mut nodes: Vec<_> = std::mem::take(&mut work.nodes).into_iter().collect();
+    nodes.sort_by(|(left_surface, left_node), (right_surface, right_node)| {
+        let depth = |surface: usize, node_id: ExpressionNodeId| {
+            surfaces
+                .get(surface)
+                .filter(|rewrite_surface| rewrite_surface.active)
+                .filter(|rewrite_surface| rewrite_surface.arena.is_reachable(node_id))
+                .map_or(0, |rewrite_surface| {
+                    rewrite_surface.arena.preorder_path(node_id).len()
+                })
+        };
+
+        depth(*right_surface, *right_node)
+            .cmp(&depth(*left_surface, *left_node))
+            .then_with(|| left_surface.cmp(right_surface))
+            .then_with(|| {
+                if left_surface == right_surface
+                    && let Some(surface) = surfaces.get(*left_surface)
+                    && surface.arena.is_reachable(*left_node)
+                    && surface.arena.is_reachable(*right_node)
+                {
+                    return surface
+                        .arena
+                        .preorder_path(*left_node)
+                        .cmp(surface.arena.preorder_path(*right_node));
+                }
+                left_node.cmp(right_node)
+            })
+    });
+
+    let mut affected_surfaces = HashSet::new();
+    let mut changed_value_lettings = HashSet::new();
+    for (surface, node_id) in nodes {
+        let Some(rewrite_surface) = surfaces.get_mut(surface) else {
+            continue;
+        };
+        if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(node_id) {
+            continue;
+        }
+        affected_surfaces.insert(surface);
+        rewrite_surface.arena.rebuild_payload_from_children(node_id);
+
+        // Root-list reshaping is deliberately left to the final evaluator pass.
+        if node_id != rewrite_surface.arena.root()
+            && normalise_evaluator_node_to_fixpoint_without_ancestor_sync(
+                &mut rewrite_surface.arena,
+                node_id,
+                dirty_trace,
+            )
+        {
+            scheduler.index_subtree_references(&rewrite_surface.arena, surface, node_id);
+            if let Some(name) = value_letting_surface_name(&rewrite_surface.kind) {
+                changed_value_lettings.insert(name.clone());
+            }
+        }
+    }
+
+    let mut wrote_value_letting = false;
+    let mut changed_value_lettings: Vec<_> = changed_value_lettings.into_iter().collect();
+    changed_value_lettings.sort();
+    for name in &changed_value_lettings {
+        let Some(surface) = surfaces.iter().find(|surface| {
+            surface.active && value_letting_surface_name(&surface.kind) == Some(name)
+        }) else {
+            continue;
+        };
+        wrote_value_letting |=
+            write_value_letting_surface_to_model_without_refresh(submodel, name, &surface.arena);
+    }
+    if wrote_value_letting {
+        submodel.symbols_mut().refresh_local_binding_hashes();
+        scheduler.invalidate_symbol_rule_failures();
+        scheduler.enqueue_node_at_level(
+            &surfaces[0].arena,
+            0,
+            surfaces[0].arena.root(),
+            0,
+            ScheduledMode::CheckNode,
+            Some(dirty_trace),
+        );
+        enqueue_worklist_nodes_referencing_names(
+            scheduler,
+            surfaces,
+            &changed_value_lettings,
+            dirty_trace,
+        );
+    }
+
+    let mut affected_surfaces: Vec<_> = affected_surfaces.into_iter().collect();
+    affected_surfaces.sort_unstable();
+    for surface in affected_surfaces.iter().copied() {
+        let arena = &surfaces[surface].arena;
+        scheduler.enqueue_subtree(arena, surface, arena.root(), Some(dirty_trace));
+    }
+
+    !affected_surfaces.is_empty()
 }
 
 /// Applies evaluator normalisation throughout an existing arena surface.
@@ -2200,7 +2636,19 @@ fn normalise_evaluators_subtree_bottom_up(
         if !arena.is_reachable(node_id) {
             continue;
         }
-        changed |= normalise_evaluator_node_to_fixpoint(arena, node_id, dirty_trace);
+        changed |=
+            normalise_evaluator_node_to_fixpoint_without_ancestor_sync(arena, node_id, dirty_trace);
+
+        // Copy the child's new value one level up. Going deepest first means each parent is up
+        // to date before its own evaluator runs, without touching wider ancestors every time
+        // something folds. Anything above the subtree root is the caller's job: the worklist
+        // defers it, the non-worklist path updates it directly.
+        if node_id != subtree_root
+            && let Some(parent_id) = arena.parent(node_id)
+            && arena.is_reachable(parent_id)
+        {
+            arena.sync_payload_for_changed_child(parent_id, node_id);
+        }
     }
 
     changed
@@ -2284,6 +2732,21 @@ fn normalise_evaluator_node_to_fixpoint(
     node_id: ExpressionNodeId,
     dirty_trace: &mut DirtyTrace,
 ) -> bool {
+    let changed =
+        normalise_evaluator_node_to_fixpoint_without_ancestor_sync(arena, node_id, dirty_trace);
+
+    if changed {
+        sync_ancestor_payloads(arena, node_id);
+    }
+
+    changed
+}
+
+fn normalise_evaluator_node_to_fixpoint_without_ancestor_sync(
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+) -> bool {
     let mut changed = false;
 
     while arena.is_reachable(node_id) {
@@ -2296,10 +2759,6 @@ fn normalise_evaluator_node_to_fixpoint(
         arena.replace_subtree(node_id, replacement);
         dirty_trace.record_rewrite("evaluator_normalisation_hook", false);
         changed = true;
-    }
-
-    if changed {
-        sync_ancestor_payloads(arena, node_id);
     }
 
     changed
@@ -3570,6 +4029,7 @@ mod tests {
             vec![root_id, eq_id, reference_id]
         );
     }
+
     #[test]
     fn worklist_caches_symbols_only_failures_until_symbols_change() {
         let tree = root(vec![int_lit(1)]);
@@ -3592,5 +4052,55 @@ mod tests {
 
         scheduler.invalidate_symbol_rule_failures();
         assert!(scheduler.should_attempt_rule(0, node_id, rule_data));
+    }
+
+    #[test]
+    fn evaluator_batches_ancestor_work_until_the_worklist_is_empty() {
+        let x = Name::user("x");
+        let and = Expr::And(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(true), reference_expr(&x)]),
+        );
+        let mut surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(root(
+            vec![and],
+        )))];
+        let ids = rewriter_preorder_ids(&surfaces[0].arena);
+        let and_id = ids
+            .iter()
+            .copied()
+            .find(|&node_id| matches!(surfaces[0].arena.expression(node_id), Expr::And(..)))
+            .expect("and node");
+        let true_id = ids
+            .iter()
+            .copied()
+            .find(|&node_id| surfaces[0].arena.expression(node_id) == &bool_lit(true))
+            .expect("true literal");
+
+        replace_focus_and_sync_ancestors(&mut surfaces[0].arena, true_id, bool_lit(false));
+        let mut work = DeferredEvaluatorWork::default();
+        work.defer_ancestors(&mut surfaces[0].arena, 0, true_id);
+        work.defer_ancestors(&mut surfaces[0].arena, 0, true_id);
+        assert_eq!(
+            work.nodes.len(),
+            3,
+            "matrix, `and`, and root ancestors are unique"
+        );
+        assert!(matches!(
+            surfaces[0].arena.expression(and_id),
+            Expr::And(..)
+        ));
+
+        let rule_groups = Vec::new();
+        let mut scheduler = WorklistScheduler::empty(&rule_groups);
+        let mut dirty_trace = DirtyTrace::default();
+        assert!(normalise_deferred_evaluators(
+            &mut work,
+            &mut Model::new(Default::default()),
+            &mut surfaces,
+            &mut scheduler,
+            &mut dirty_trace,
+        ));
+        assert_eq!(surfaces[0].arena.expression(and_id), &bool_lit(false));
+        assert!(work.is_empty());
     }
 }
