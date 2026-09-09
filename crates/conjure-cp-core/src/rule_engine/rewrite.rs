@@ -811,12 +811,16 @@ struct ScheduledKey {
     generation: u32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-struct SubtreeCandidateKey {
-    level: usize,
-    surface: usize,
-    node_id: ExpressionNodeId,
+/// Which rule levels can match the subtree rooted at one arena node.
+///
+/// `known_levels` marks the levels already decided for this node's current generation;
+/// `candidate_levels` holds the answer for those. A stale generation resets both.
+#[derive(Clone, Copy, Debug, Default)]
+struct NodeSubtreeCandidateCache {
     generation: u32,
+    generation_valid: bool,
+    known_levels: u128,
+    candidate_levels: u128,
 }
 
 /// Identifies one failed application of a rule whose applicability depends only on symbols.
@@ -860,7 +864,12 @@ struct WorklistScheduler {
     // priority" does not depend on enqueue timing.
     queues_by_level: Vec<BinaryHeap<ScheduledNode>>,
     scheduled: HashMap<ScheduledKey, ScheduledMode>,
-    subtree_candidate_cache: HashMap<SubtreeCandidateKey, bool>,
+    /// Per-surface, per-arena-slot cache of the rule levels that can match a subtree.
+    ///
+    /// Arena node ids are dense indices, so a flat cache avoids hashing a `(surface, node,
+    /// level, generation)` tuple for every worklist descent. A `u128` covers the current 58 rule
+    /// levels; levels beyond that remain correct and simply run uncached.
+    subtree_candidate_cache: Vec<Vec<NodeSubtreeCandidateCache>>,
     /// Failed applications whose applicability depends only on the symbol table, keyed by the
     /// symbol-table revision at which they were attempted.
     failed_symbol_rules: HashMap<FailedSymbolRuleKey, u64>,
@@ -873,7 +882,7 @@ impl WorklistScheduler {
         Self {
             queues_by_level: vec![BinaryHeap::new(); rule_groups.len()],
             scheduled: HashMap::new(),
-            subtree_candidate_cache: HashMap::new(),
+            subtree_candidate_cache: Vec::new(),
             failed_symbol_rules: HashMap::new(),
             symbol_revision: 0,
             next_sequence: 0,
@@ -1262,14 +1271,28 @@ impl WorklistScheduler {
             return false;
         }
 
-        let key = SubtreeCandidateKey {
-            level,
-            surface,
-            node_id,
-            generation: arena.generation(node_id),
-        };
-        if let Some(&has_candidates) = self.subtree_candidate_cache.get(&key) {
-            return has_candidates;
+        let cache_bit = 1u128.checked_shl(level as u32);
+        if let Some(bit) = cache_bit {
+            if self.subtree_candidate_cache.len() <= surface {
+                self.subtree_candidate_cache
+                    .resize_with(surface + 1, Vec::new);
+            }
+            let surface_cache = &mut self.subtree_candidate_cache[surface];
+            if surface_cache.len() <= node_id.index() {
+                surface_cache.resize(node_id.index() + 1, NodeSubtreeCandidateCache::default());
+            }
+            let entry = &mut surface_cache[node_id.index()];
+            let generation = arena.generation(node_id);
+            if !entry.generation_valid || entry.generation != generation {
+                *entry = NodeSubtreeCandidateCache {
+                    generation,
+                    generation_valid: true,
+                    ..NodeSubtreeCandidateCache::default()
+                };
+            }
+            if entry.known_levels & bit != 0 {
+                return entry.candidate_levels & bit != 0;
+            }
         }
 
         let rule_group = &rule_groups[level];
@@ -1286,7 +1309,13 @@ impl WorklistScheduler {
                     )
                 }));
 
-        self.subtree_candidate_cache.insert(key, has_candidates);
+        if let Some(bit) = cache_bit {
+            let entry = &mut self.subtree_candidate_cache[surface][node_id.index()];
+            entry.known_levels |= bit;
+            if has_candidates {
+                entry.candidate_levels |= bit;
+            }
+        }
         has_candidates
     }
 }
