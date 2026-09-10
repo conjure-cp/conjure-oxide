@@ -8,6 +8,7 @@ use conjure_cp::settings::{
     Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp::solver::adaptors::{MinionValueOrder, MinionVariableOrder};
+use git_version::git_version;
 
 use crate::{pretty, solve, test_solve};
 
@@ -40,7 +41,13 @@ pub enum Command {
     about = "Conjure Oxide: Automated Constraints Modelling Toolkit",
     before_help = "Full documentation can be found online at: https://conjure-cp.github.io/conjure-oxide",
     // Free `-h` for `--heuristic`; help remains available as `--help`.
-    disable_help_flag = true
+    disable_help_flag = true,
+    version = git_version!(),
+    disable_version_flag = true,
+    display_name = "conjure-oxide",
+    // clap's derive turns this on for a required subcommand; keep the concise
+    // "requires a subcommand" error instead of dumping the full help.
+    arg_required_else_help = false
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -50,8 +57,10 @@ pub struct Cli {
     pub global_args: GlobalArgs,
 
     /// Print version
-    #[arg(long = "version", short = 'V')]
-    pub version: bool,
+    // `ArgAction::Version` is handled by clap while parsing, so `--version` works on its own,
+    // without the otherwise-required subcommand.
+    #[arg(long = "version", short = 'V', action = ArgAction::Version)]
+    pub version: (),
 }
 
 #[derive(Debug, Clone, Args)]
@@ -385,6 +394,16 @@ fn parse_minion_variable_order(input: &str) -> Result<MinionVariableOrder, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Regression test for #1631: `--version` used to fail as it requires a subcommand.
+    #[test]
+    fn version_flag_works_without_a_subcommand() {
+        for flag in ["--version", "-V"] {
+            let err = Cli::try_parse_from(["conjure-oxide", flag]).unwrap_err();
+            assert_eq!(err.kind(), clap::error::ErrorKind::DisplayVersion);
+            assert!(err.to_string().starts_with("conjure-oxide "));
+        }
+    }
 
     #[test]
     fn compact_is_the_default_cli_heuristic() {
