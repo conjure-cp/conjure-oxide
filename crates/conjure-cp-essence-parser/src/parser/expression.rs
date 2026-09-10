@@ -585,7 +585,7 @@ fn parse_unary_expression(
         "factorial_expr" => {
             // looking for the operator node (either '!' at the end or 'factorial' at the start) to add hover info
             if let Some(op_node) = (0..node.child_count())
-                .filter_map(|i| node.child(i.try_into().unwrap()))
+                .filter_map(|i| node.child(i))
                 .find(|c| matches!(c.kind(), "!" | "factorial"))
             {
                 ctx.add_span_and_doc_hover(
