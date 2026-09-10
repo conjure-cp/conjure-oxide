@@ -24,7 +24,6 @@ use test_solve::run_test_solve_command;
 
 use conjure_cp_rules as _;
 
-use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
@@ -59,11 +58,6 @@ pub fn main() {
 
 pub fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
-
-    if cli.version {
-        println!("Version: {}", git_version!());
-        return Ok(());
-    }
 
     let logging_state = setup_logging(&cli.global_args)?;
     let result = run_subcommand(cli);
