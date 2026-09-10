@@ -69,6 +69,38 @@ new variables:
 
 --
 
+sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]) >= 0
+   ~~> flatten_generic ([("Minion", 4200)])
+__0 >= 0
+new variables:
+  findAux __0: int(0..20)
+new constraints:
+  __0 =aux sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ])
+
+--
+
+sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]) <= 2
+   ~~> flatten_generic ([("Minion", 4200)])
+__1 <= 2
+new variables:
+  findAux __1: int(0..20)
+new constraints:
+  __1 =aux sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ])
+
+--
+
+__1 <= 2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__1, 2, 0)
+
+--
+
+__0 >= 0
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, __0, 0)
+
+--
+
 [ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..10), i1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j0 : int(1..10), j1 : bool, SafeIndex(f#as_relation_1#occurrence_1,[j0, j1]) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [(SafeIndex(f#as_relation_1#occurrence_1,[1, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[1, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[1, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[1, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[2, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[2, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[2, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[2, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[3, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[3, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[3, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[3, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[4, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[4, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[4, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[4, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[5, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[5, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[5, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[5, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[6, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[6, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[6, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[6, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[7, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[7, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[7, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[7, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[8, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[8, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[8, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[8, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[9, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[9, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[9, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[9, false]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[10, false])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[10, true]));int(1..)])),(SafeIndex(f#as_relation_1#occurrence_1,[10, true])) -> (and([!(SafeIndex(f#as_relation_1#occurrence_1,[10, false]));int(1..)]));int(1..)]
@@ -555,12 +587,6 @@ f#as_relation_1#occurrence_1#components_20
 
 --
 
-SafeIndex(f#as_relation_1#occurrence_1,[1, true])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-f#as_relation_1#occurrence_1#components_2
-
---
-
 SafeIndex(f#as_relation_1#occurrence_1,[1, false])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 f#as_relation_1#occurrence_1#components_1
@@ -672,6 +698,12 @@ f#as_relation_1#occurrence_1#components_20
 SafeIndex(f#as_relation_1#occurrence_1,[10, false])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 f#as_relation_1#occurrence_1#components_19
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, true])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_2
 
 --
 
@@ -795,12 +827,6 @@ ReifyImply(!(f#as_relation_1#occurrence_1#components_19), f#as_relation_1#occurr
 
 --
 
-!(f#as_relation_1#occurrence_1#components_2)
-   ~~> not_literal_to_wliteral ([("Minion", 4100)])
-WatchedLiteral(f#as_relation_1#occurrence_1#components_2,false)
-
---
-
 !(f#as_relation_1#occurrence_1#components_1)
    ~~> not_literal_to_wliteral ([("Minion", 4100)])
 WatchedLiteral(f#as_relation_1#occurrence_1#components_1,false)
@@ -915,6 +941,12 @@ WatchedLiteral(f#as_relation_1#occurrence_1#components_19,false)
 
 --
 
+!(f#as_relation_1#occurrence_1#components_2)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(f#as_relation_1#occurrence_1#components_2,false)
+
+--
+
 [ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..10), i1 : bool ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [toInt(SafeIndex(f#as_relation_1#occurrence_1,[1, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[1, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[2, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[2, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[3, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[3, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[4, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[4, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[5, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[5, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[6, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[6, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[7, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[7, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[8, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[8, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[9, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[9, true])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[10, false])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[10, true]));int(1..)]
@@ -1161,9 +1193,9 @@ f#as_relation_1#occurrence_1#components_20
 
 --
 
-sum([toInt(f#as_relation_1#occurrence_1#components_1),toInt(f#as_relation_1#occurrence_1#components_2),toInt(f#as_relation_1#occurrence_1#components_3),toInt(f#as_relation_1#occurrence_1#components_4),toInt(f#as_relation_1#occurrence_1#components_5),toInt(f#as_relation_1#occurrence_1#components_6),toInt(f#as_relation_1#occurrence_1#components_7),toInt(f#as_relation_1#occurrence_1#components_8),toInt(f#as_relation_1#occurrence_1#components_9),toInt(f#as_relation_1#occurrence_1#components_10),toInt(f#as_relation_1#occurrence_1#components_11),toInt(f#as_relation_1#occurrence_1#components_12),toInt(f#as_relation_1#occurrence_1#components_13),toInt(f#as_relation_1#occurrence_1#components_14),toInt(f#as_relation_1#occurrence_1#components_15),toInt(f#as_relation_1#occurrence_1#components_16),toInt(f#as_relation_1#occurrence_1#components_17),toInt(f#as_relation_1#occurrence_1#components_18),toInt(f#as_relation_1#occurrence_1#components_19),toInt(f#as_relation_1#occurrence_1#components_20);int(1..)]) >= 0
+__0 =aux sum([toInt(f#as_relation_1#occurrence_1#components_1),toInt(f#as_relation_1#occurrence_1#components_2),toInt(f#as_relation_1#occurrence_1#components_3),toInt(f#as_relation_1#occurrence_1#components_4),toInt(f#as_relation_1#occurrence_1#components_5),toInt(f#as_relation_1#occurrence_1#components_6),toInt(f#as_relation_1#occurrence_1#components_7),toInt(f#as_relation_1#occurrence_1#components_8),toInt(f#as_relation_1#occurrence_1#components_9),toInt(f#as_relation_1#occurrence_1#components_10),toInt(f#as_relation_1#occurrence_1#components_11),toInt(f#as_relation_1#occurrence_1#components_12),toInt(f#as_relation_1#occurrence_1#components_13),toInt(f#as_relation_1#occurrence_1#components_14),toInt(f#as_relation_1#occurrence_1#components_15),toInt(f#as_relation_1#occurrence_1#components_16),toInt(f#as_relation_1#occurrence_1#components_17),toInt(f#as_relation_1#occurrence_1#components_18),toInt(f#as_relation_1#occurrence_1#components_19),toInt(f#as_relation_1#occurrence_1#components_20);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], 0)
+and([SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], __0),SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], __0);int(1..)])
 
 --
 
@@ -1413,9 +1445,9 @@ f#as_relation_1#occurrence_1#components_20
 
 --
 
-sum([toInt(f#as_relation_1#occurrence_1#components_1),toInt(f#as_relation_1#occurrence_1#components_2),toInt(f#as_relation_1#occurrence_1#components_3),toInt(f#as_relation_1#occurrence_1#components_4),toInt(f#as_relation_1#occurrence_1#components_5),toInt(f#as_relation_1#occurrence_1#components_6),toInt(f#as_relation_1#occurrence_1#components_7),toInt(f#as_relation_1#occurrence_1#components_8),toInt(f#as_relation_1#occurrence_1#components_9),toInt(f#as_relation_1#occurrence_1#components_10),toInt(f#as_relation_1#occurrence_1#components_11),toInt(f#as_relation_1#occurrence_1#components_12),toInt(f#as_relation_1#occurrence_1#components_13),toInt(f#as_relation_1#occurrence_1#components_14),toInt(f#as_relation_1#occurrence_1#components_15),toInt(f#as_relation_1#occurrence_1#components_16),toInt(f#as_relation_1#occurrence_1#components_17),toInt(f#as_relation_1#occurrence_1#components_18),toInt(f#as_relation_1#occurrence_1#components_19),toInt(f#as_relation_1#occurrence_1#components_20);int(1..)]) <= 2
+__1 =aux sum([toInt(f#as_relation_1#occurrence_1#components_1),toInt(f#as_relation_1#occurrence_1#components_2),toInt(f#as_relation_1#occurrence_1#components_3),toInt(f#as_relation_1#occurrence_1#components_4),toInt(f#as_relation_1#occurrence_1#components_5),toInt(f#as_relation_1#occurrence_1#components_6),toInt(f#as_relation_1#occurrence_1#components_7),toInt(f#as_relation_1#occurrence_1#components_8),toInt(f#as_relation_1#occurrence_1#components_9),toInt(f#as_relation_1#occurrence_1#components_10),toInt(f#as_relation_1#occurrence_1#components_11),toInt(f#as_relation_1#occurrence_1#components_12),toInt(f#as_relation_1#occurrence_1#components_13),toInt(f#as_relation_1#occurrence_1#components_14),toInt(f#as_relation_1#occurrence_1#components_15),toInt(f#as_relation_1#occurrence_1#components_16),toInt(f#as_relation_1#occurrence_1#components_17),toInt(f#as_relation_1#occurrence_1#components_18),toInt(f#as_relation_1#occurrence_1#components_19),toInt(f#as_relation_1#occurrence_1#components_20);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], 2)
+and([SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], __1),SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], __1);int(1..)])
 
 --
 
@@ -1444,10 +1476,14 @@ find f#as_relation_1#occurrence_1#components_17: bool
 find f#as_relation_1#occurrence_1#components_18: bool
 find f#as_relation_1#occurrence_1#components_19: bool
 find f#as_relation_1#occurrence_1#components_20: bool
+findAux __0: int(0..20)
+findAux __1: int(0..20)
 
 such that
 
 true,
 and([ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_2,false), f#as_relation_1#occurrence_1#components_1),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_1,false), f#as_relation_1#occurrence_1#components_2),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_4,false), f#as_relation_1#occurrence_1#components_3),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_3,false), f#as_relation_1#occurrence_1#components_4),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_6,false), f#as_relation_1#occurrence_1#components_5),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_5,false), f#as_relation_1#occurrence_1#components_6),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_8,false), f#as_relation_1#occurrence_1#components_7),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_7,false), f#as_relation_1#occurrence_1#components_8),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_10,false), f#as_relation_1#occurrence_1#components_9),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_9,false), f#as_relation_1#occurrence_1#components_10),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_12,false), f#as_relation_1#occurrence_1#components_11),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_11,false), f#as_relation_1#occurrence_1#components_12),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_14,false), f#as_relation_1#occurrence_1#components_13),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_13,false), f#as_relation_1#occurrence_1#components_14),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_16,false), f#as_relation_1#occurrence_1#components_15),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_15,false), f#as_relation_1#occurrence_1#components_16),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_18,false), f#as_relation_1#occurrence_1#components_17),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_17,false), f#as_relation_1#occurrence_1#components_18),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_20,false), f#as_relation_1#occurrence_1#components_19),ReifyImply(WatchedLiteral(f#as_relation_1#occurrence_1#components_19,false), f#as_relation_1#occurrence_1#components_20);int(1..)]),
-and([SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], 0),SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], 2);int(1..)])
+and([Ineq(0, __0, 0),Ineq(__1, 2, 0);int(1..)]),
+and([SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], __0),SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], __0);int(1..)]),
+and([SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], __1),SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_10, f#as_relation_1#occurrence_1#components_11, f#as_relation_1#occurrence_1#components_12, f#as_relation_1#occurrence_1#components_13, f#as_relation_1#occurrence_1#components_14, f#as_relation_1#occurrence_1#components_15, f#as_relation_1#occurrence_1#components_16, f#as_relation_1#occurrence_1#components_17, f#as_relation_1#occurrence_1#components_18, f#as_relation_1#occurrence_1#components_19, f#as_relation_1#occurrence_1#components_2, f#as_relation_1#occurrence_1#components_20, f#as_relation_1#occurrence_1#components_3, f#as_relation_1#occurrence_1#components_4, f#as_relation_1#occurrence_1#components_5, f#as_relation_1#occurrence_1#components_6, f#as_relation_1#occurrence_1#components_7, f#as_relation_1#occurrence_1#components_8, f#as_relation_1#occurrence_1#components_9], __1);int(1..)])
 

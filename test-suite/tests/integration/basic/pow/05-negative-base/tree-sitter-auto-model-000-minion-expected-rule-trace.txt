@@ -16,21 +16,21 @@ such that
 
 --
 
-{SafePow(x, y) @ and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])} = z
+and([y >= 0;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+y >= 0
+
+--
+
+{SafePow(x, y) @ y >= 0} = z
    ~~> bubble_up ([("Bubble", 8800)])
-{SafePow(x, y) = z @ and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])}
+{SafePow(x, y) = z @ y >= 0}
 
 --
 
-{SafePow(x, y) = z @ and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])}
+{SafePow(x, y) = z @ y >= 0}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafePow(x, y) = z,and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)]);int(1..)])
-
---
-
-and([SafePow(x, y) = z,and([or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafePow(x, y) = z,or([x != 0,y != 0;int(1..)]),y >= 0;int(1..)])
+and([SafePow(x, y) = z,y >= 0;int(1..)])
 
 --
 
@@ -54,5 +54,5 @@ find z: int(-10..-1)
 
 such that
 
-and([MinionPow(x,y,z),or([x != 0,y != 0;int(1..)]),Ineq(0, y, 0);int(1..)])
+and([MinionPow(x,y,z),Ineq(0, y, 0);int(1..)])
 

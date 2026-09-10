@@ -65,35 +65,35 @@ new constraints:
 
 --
 
-toInt(y in {7,8})
+toInt(y in {7,9})
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__3)
 new variables:
   findAux __3: bool
 new constraints:
-  __3 =aux y in {7,8}
+  __3 =aux y in {7,9}
 
 --
 
-__3 =aux y in {7,8}
+__3 =aux y in {7,9}
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(y in {7,8}, __3)
+Reify(y in {7,9}, __3)
 
 --
 
-toInt(y in {7,9})
+toInt(y in {7,8})
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__4)
 new variables:
   findAux __4: bool
 new constraints:
-  __4 =aux y in {7,9}
+  __4 =aux y in {7,8}
 
 --
 
-__4 =aux y in {7,9}
+__4 =aux y in {7,8}
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(y in {7,9}, __4)
+Reify(y in {7,8}, __4)
 
 --
 
@@ -113,15 +113,15 @@ Reify(y in {8,9}, __5)
 
 --
 
-y in {7,8}
-   ~~> in_set ([("Minion", 1)])
-__minion_w_inset(y,[7,8])
-
---
-
 y in {7,9}
    ~~> in_set ([("Minion", 1)])
 __minion_w_inset(y,[7,9])
+
+--
+
+y in {7,8}
+   ~~> in_set ([("Minion", 1)])
+__minion_w_inset(y,[7,8])
 
 --
 
@@ -145,10 +145,10 @@ findAux __5: bool
 such that
 
 and([SumLeq([__0, __1, __2], x),SumGeq([__0, __1, __2], x);int(1..)]),
-__0 =aux toInt(__3),
-__1 =aux toInt(__4),
+__0 =aux toInt(__4),
+__1 =aux toInt(__3),
 __2 =aux toInt(__5),
-Reify(__minion_w_inset(y,[7,8]), __3),
-Reify(__minion_w_inset(y,[7,9]), __4),
+Reify(__minion_w_inset(y,[7,9]), __3),
+Reify(__minion_w_inset(y,[7,8]), __4),
 Reify(__minion_w_inset(y,[8,9]), __5)
 

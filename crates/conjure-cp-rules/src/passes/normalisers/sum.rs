@@ -17,11 +17,12 @@ fn remove_unit_vector_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let exprs = e.as_ref().clone().unwrap_list().ok_or(RuleNotApplicable)?;
-
-    if exprs.len() == 1 {
-        Ok(RuleEffect::pure(exprs[0].clone()))
-    } else {
-        Err(RuleNotApplicable)
+    // The failure path is only a shape check and must stay O(1) on a wide sum.
+    if e.list_len() != Some(1) {
+        return Err(RuleNotApplicable);
     }
+    let mut exprs = e.unwrap_list().ok_or(RuleNotApplicable)?;
+    Ok(RuleEffect::pure(
+        exprs.pop().expect("singleton length checked above"),
+    ))
 }

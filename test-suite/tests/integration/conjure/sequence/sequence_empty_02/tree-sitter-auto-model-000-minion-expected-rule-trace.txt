@@ -55,6 +55,12 @@ B#explicit_2 = 0
 
 --
 
+SafeIndex(B#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+B#explicit_1#components_3
+
+--
+
 SafeIndex(B#explicit_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 B#explicit_1#components_1
@@ -67,15 +73,15 @@ B#explicit_1#components_2
 
 --
 
-SafeIndex(B#explicit_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-B#explicit_1#components_3
-
---
-
 B#explicit_2 = 0
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(B#explicit_2,0)
+
+--
+
+B#explicit_1#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(B#explicit_1#components_3,0)
 
 --
 
@@ -91,9 +97,9 @@ WatchedLiteral(B#explicit_1#components_2,0)
 
 --
 
-B#explicit_1#components_3 = 0
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(B#explicit_1#components_3,0)
+3 <= B#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, B#explicit_2, 0)
 
 --
 
@@ -106,12 +112,6 @@ Ineq(1, B#explicit_2, 0)
 2 <= B#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(2, B#explicit_2, 0)
-
---
-
-3 <= B#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(3, B#explicit_2, 0)
 
 --
 

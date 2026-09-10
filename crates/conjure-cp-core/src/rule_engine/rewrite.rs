@@ -1,4 +1,7 @@
-use super::{AtomKind, RewriteError, RulePrefilter, RuleSet, resolve_rules::RuleData};
+use super::{
+    AtomKind, RewriteError, RuleFailureInvalidation, RulePrefilter, RuleSet,
+    resolve_rules::RuleData,
+};
 use crate::{
     Model,
     ast::{
@@ -27,7 +30,7 @@ use crate::{
 use itertools::Itertools;
 use std::{
     cmp::Ordering,
-    collections::{BTreeMap, BinaryHeap, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet},
     fmt::Write as FmtWrite,
     fs::{self, OpenOptions},
     io::Write as IoWrite,
@@ -35,7 +38,6 @@ use std::{
     time::Instant,
 };
 use tracing::trace;
-use uniplate::Uniplate;
 
 // Rewriter selection invariant:
 //
@@ -562,6 +564,7 @@ enum CandidateRules<'group, 'rules> {
     Filtered {
         iter: std::slice::Iter<'group, RuleData<'rules>>,
         expr: &'group Expr,
+        arena_node: Option<(&'group ExpressionArena, ExpressionNodeId)>,
         include_universal: bool,
     },
 }
@@ -575,10 +578,11 @@ impl<'group, 'rules> Iterator for CandidateRules<'group, 'rules> {
             CandidateRules::Filtered {
                 iter,
                 expr,
+                arena_node,
                 include_universal,
             } => loop {
                 let rule_data = iter.next()?;
-                if rule_matches_specific_prefilter(rule_data, expr)
+                if rule_matches_specific_prefilter(rule_data, expr, *arena_node)
                     || (*include_universal && rule_is_universal(rule_data))
                 {
                     return Some(rule_data);
@@ -647,6 +651,24 @@ impl<'a> RuleGroup<'a> {
         config: RewriteConfig,
         expr: &'group Expr,
     ) -> CandidateRules<'group, 'a> {
+        self.candidates_with_arena(config, expr, None)
+    }
+
+    fn candidates_at_node<'group>(
+        &'group self,
+        config: RewriteConfig,
+        arena: &'group ExpressionArena,
+        node_id: ExpressionNodeId,
+    ) -> CandidateRules<'group, 'a> {
+        self.candidates_with_arena(config, arena.expression(node_id), Some((arena, node_id)))
+    }
+
+    fn candidates_with_arena<'group>(
+        &'group self,
+        config: RewriteConfig,
+        expr: &'group Expr,
+        arena_node: Option<(&'group ExpressionArena, ExpressionNodeId)>,
+    ) -> CandidateRules<'group, 'a> {
         if !config.prefilter {
             return CandidateRules::Slice(self.rules.iter());
         }
@@ -660,6 +682,7 @@ impl<'a> RuleGroup<'a> {
             return CandidateRules::Filtered {
                 iter: self.rules.iter(),
                 expr,
+                arena_node,
                 include_universal: true,
             };
         }
@@ -674,7 +697,26 @@ impl<'a> RuleGroup<'a> {
         )
     }
 
+    #[cfg(test)]
     fn has_candidates(&self, config: RewriteConfig, expr: &Expr) -> bool {
+        self.has_candidates_with_arena(config, expr, None)
+    }
+
+    fn has_candidates_at_node(
+        &self,
+        config: RewriteConfig,
+        arena: &ExpressionArena,
+        node_id: ExpressionNodeId,
+    ) -> bool {
+        self.has_candidates_with_arena(config, arena.expression(node_id), Some((arena, node_id)))
+    }
+
+    fn has_candidates_with_arena(
+        &self,
+        config: RewriteConfig,
+        expr: &Expr,
+        arena_node: Option<(&ExpressionArena, ExpressionNodeId)>,
+    ) -> bool {
         if !config.prefilter {
             return !self.rules.is_empty();
         }
@@ -684,7 +726,7 @@ impl<'a> RuleGroup<'a> {
                 || self
                     .rules
                     .iter()
-                    .any(|rule_data| rule_matches_specific_prefilter(rule_data, expr));
+                    .any(|rule_data| rule_matches_specific_prefilter(rule_data, expr, arena_node));
         }
 
         let discriminant = discriminant_from_value(expr);
@@ -768,12 +810,26 @@ struct ScheduledKey {
     generation: u32,
 }
 
+/// Which rule levels can match the subtree rooted at one arena node.
+///
+/// `known_levels` marks the levels already decided for this node's current generation;
+/// `candidate_levels` holds the answer for those. A stale generation resets both.
+#[derive(Clone, Copy, Debug, Default)]
+struct NodeSubtreeCandidateCache {
+    generation: u32,
+    generation_valid: bool,
+    known_levels: u128,
+    candidate_levels: u128,
+}
+
+/// Identifies one failed application of a rule whose applicability depends only on symbols.
+///
+/// `rule` is the address of the `&'static Rule` that failed, which identifies it exactly.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-struct SubtreeCandidateKey {
-    level: usize,
+struct FailedSymbolRuleKey {
     surface: usize,
     node_id: ExpressionNodeId,
-    generation: u32,
+    rule: usize,
 }
 
 #[derive(Clone, Copy)]
@@ -807,8 +863,263 @@ struct WorklistScheduler {
     // priority" does not depend on enqueue timing.
     queues_by_level: Vec<BinaryHeap<ScheduledNode>>,
     scheduled: HashMap<ScheduledKey, ScheduledMode>,
-    subtree_candidate_cache: HashMap<SubtreeCandidateKey, bool>,
+    /// Per-surface, per-arena-slot cache of the rule levels that can match a subtree.
+    ///
+    /// Arena node ids are dense indices, so a flat cache avoids hashing a `(surface, node,
+    /// level, generation)` tuple for every worklist descent. A `u128` covers the current 58 rule
+    /// levels; levels beyond that remain correct and simply run uncached.
+    subtree_candidate_cache: Vec<Vec<NodeSubtreeCandidateCache>>,
+    /// Failed applications whose applicability depends only on the symbol table, keyed by the
+    /// symbol-table revision at which they were attempted.
+    failed_symbol_rules: HashMap<FailedSymbolRuleKey, u64>,
+    /// Arena nodes containing direct references, indexed by declaration name.
+    ///
+    /// Replacement appends fresh arena slots, so old entries can remain and are validated lazily
+    /// at invalidation time. This avoids rescanning every expression surface after each
+    /// representation effect.
+    reference_nodes_by_name: HashMap<Name, HashSet<(usize, ExpressionNodeId)>>,
+    symbol_revision: u64,
     next_sequence: u64,
+}
+
+/// Ancestors waiting for an evaluator pass, held until the worklist runs out of rule work.
+///
+/// A rewrite normalises its own replacement subtree straight away and records its ancestors here.
+/// Because the same ancestor is only recorded once, a wide `and`/`or`/arithmetic node gets one
+/// evaluator pass after all its changed children are done, instead of one per child.
+#[derive(Default)]
+struct DeferredEvaluatorWork {
+    nodes: HashSet<(usize, ExpressionNodeId)>,
+}
+
+impl DeferredEvaluatorWork {
+    fn defer_ancestors(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        node_id: ExpressionNodeId,
+    ) {
+        let mut current = arena.parent(node_id);
+        while let Some(current_id) = current {
+            self.nodes.insert((surface, current_id));
+            current = arena.parent(current_id);
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
+}
+
+/// Ancestors waiting to have their rules re-checked, held until the worklist is about to move on
+/// to a lower priority (or emptied straight away after a change to the model).
+///
+/// Rewriting a child can make a higher-priority rule apply to an expression enclosing it, so those
+/// ancestors have to be re-checked before any lower-priority work runs. Collecting them up while
+/// the current priority finishes means a shared wide root is visited once per priority instead of
+/// once per child -- the shape unrolling a comprehension produces.
+#[derive(Default)]
+struct DeferredAncestorRuleWork {
+    nodes: HashSet<(usize, ExpressionNodeId)>,
+    postponed: Vec<(usize, usize, ExpressionNodeId, ScheduledMode)>,
+    flush_after_level: Option<usize>,
+}
+
+impl DeferredAncestorRuleWork {
+    fn defer_ancestors(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        rewrite_level: usize,
+    ) {
+        self.flush_after_level = Some(
+            self.flush_after_level
+                .map_or(rewrite_level, |level| level.min(rewrite_level)),
+        );
+
+        let mut current = arena.parent(node_id);
+        while let Some(current_id) = current {
+            self.nodes.insert((surface, current_id));
+            current = arena.parent(current_id);
+        }
+    }
+
+    fn should_flush_before(&self, next_level: Option<usize>) -> bool {
+        let Some(flush_after_level) = self.flush_after_level else {
+            return false;
+        };
+        next_level.is_none_or(|level| level > flush_after_level)
+    }
+
+    fn contains(&self, surface: usize, node_id: ExpressionNodeId) -> bool {
+        self.nodes.contains(&(surface, node_id))
+    }
+
+    fn postpone(&mut self, item: (usize, usize, ExpressionNodeId, ScheduledMode)) {
+        self.postponed.push(item);
+    }
+
+    /// Brings just the enclosing expressions of a rewrite up to date, stopping short of the root.
+    ///
+    /// Choosing a representation can change which rule should win for a sibling in the same
+    /// comparison, so the expressions around it cannot wait. The surface root is left in the
+    /// batch on purpose: rebuilding its long list of constraints every time an auxiliary appears
+    /// costs time proportional to the whole model, once per auxiliary.
+    fn flush_effect_path_before_root(
+        &mut self,
+        scheduler: &mut WorklistScheduler,
+        surfaces: &mut [RewriteSurface],
+        deferred_evaluators: &mut DeferredEvaluatorWork,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        dirty_trace: &mut DirtyTrace,
+    ) {
+        let Some(rewrite_surface) = surfaces.get(surface) else {
+            return;
+        };
+        let root = rewrite_surface.arena.root();
+        let mut path = Vec::new();
+        let mut current = rewrite_surface.arena.parent(node_id);
+        while let Some(current_id) = current {
+            if current_id == root {
+                break;
+            }
+            path.push(current_id);
+            current = rewrite_surface.arena.parent(current_id);
+        }
+
+        for ancestor in path {
+            self.nodes.remove(&(surface, ancestor));
+            let Some(rewrite_surface) = surfaces.get_mut(surface) else {
+                continue;
+            };
+            if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(ancestor) {
+                continue;
+            }
+
+            rewrite_surface
+                .arena
+                .rebuild_payload_from_children(ancestor);
+            let evaluator_changed = if matches!(rewrite_surface.kind, RewriteSurfaceKind::Root) {
+                deferred_evaluators.nodes.remove(&(surface, ancestor));
+                normalise_evaluator_node_to_fixpoint_without_ancestor_sync(
+                    &mut rewrite_surface.arena,
+                    ancestor,
+                    dirty_trace,
+                )
+            } else {
+                false
+            };
+
+            if evaluator_changed {
+                scheduler.index_subtree_references(&rewrite_surface.arena, surface, ancestor);
+                scheduler.enqueue_subtree(
+                    &rewrite_surface.arena,
+                    surface,
+                    ancestor,
+                    Some(dirty_trace),
+                );
+            } else {
+                scheduler.enqueue_node_at_level(
+                    &rewrite_surface.arena,
+                    surface,
+                    ancestor,
+                    0,
+                    ScheduledMode::CheckNode,
+                    Some(dirty_trace),
+                );
+            }
+        }
+    }
+
+    fn flush(
+        &mut self,
+        scheduler: &mut WorklistScheduler,
+        surfaces: &mut [RewriteSurface],
+        deferred_evaluators: &mut DeferredEvaluatorWork,
+        dirty_trace: &mut DirtyTrace,
+    ) {
+        let nodes = deferred_nodes_in_bottom_up_order(std::mem::take(&mut self.nodes), surfaces);
+        let postponed = std::mem::take(&mut self.postponed);
+        self.flush_after_level = None;
+
+        // Expressions above a changed child are left alone while the priority finishes, so
+        // anything already queued against them stays valid. Rebuild deepest first, once each, so
+        // every ancestor sees up-to-date children. Ancestors on the root surface also get the
+        // evaluator here, so a parent sees an already-normalised child and the path above a
+        // rewrite is copied once per batch instead of once per rewrite.
+        let mut evaluator_changed = HashSet::new();
+        for &(surface, node_id, _) in &nodes {
+            let Some(rewrite_surface) = surfaces.get_mut(surface) else {
+                continue;
+            };
+            if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(node_id) {
+                continue;
+            }
+            rewrite_surface.arena.rebuild_payload_from_children(node_id);
+
+            if matches!(rewrite_surface.kind, RewriteSurfaceKind::Root) {
+                deferred_evaluators.nodes.remove(&(surface, node_id));
+                if node_id != rewrite_surface.arena.root()
+                    && normalise_evaluator_node_to_fixpoint_without_ancestor_sync(
+                        &mut rewrite_surface.arena,
+                        node_id,
+                        dirty_trace,
+                    )
+                {
+                    evaluator_changed.insert((surface, node_id));
+                }
+            }
+        }
+
+        for (surface, node_id, _) in nodes {
+            let Some(rewrite_surface) = surfaces.get(surface) else {
+                continue;
+            };
+            if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(node_id) {
+                continue;
+            }
+            if evaluator_changed.contains(&(surface, node_id)) {
+                scheduler.index_subtree_references(&rewrite_surface.arena, surface, node_id);
+                scheduler.enqueue_subtree(
+                    &rewrite_surface.arena,
+                    surface,
+                    node_id,
+                    Some(dirty_trace),
+                );
+            } else {
+                scheduler.enqueue_node_at_level(
+                    &rewrite_surface.arena,
+                    surface,
+                    node_id,
+                    0,
+                    ScheduledMode::CheckNode,
+                    Some(dirty_trace),
+                );
+            }
+        }
+
+        // An item taken off the queue while its ancestors were still out of date must not be
+        // dropped. Put it back now that they are rebuilt, so descendants it had not reached yet
+        // -- new top-level constraints in particular -- still get visited.
+        for (level, surface, node_id, mode) in postponed {
+            let Some(rewrite_surface) = surfaces.get(surface) else {
+                continue;
+            };
+            if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(node_id) {
+                continue;
+            }
+            scheduler.enqueue_node_at_level(
+                &rewrite_surface.arena,
+                surface,
+                node_id,
+                level,
+                mode,
+                Some(dirty_trace),
+            );
+        }
+    }
 }
 
 impl WorklistScheduler {
@@ -816,7 +1127,10 @@ impl WorklistScheduler {
         Self {
             queues_by_level: vec![BinaryHeap::new(); rule_groups.len()],
             scheduled: HashMap::new(),
-            subtree_candidate_cache: HashMap::new(),
+            subtree_candidate_cache: Vec::new(),
+            failed_symbol_rules: HashMap::new(),
+            reference_nodes_by_name: HashMap::new(),
+            symbol_revision: 0,
             next_sequence: 0,
         }
     }
@@ -848,12 +1162,77 @@ impl WorklistScheduler {
             return;
         }
 
+        self.index_subtree_references(
+            &rewrite_surface.arena,
+            surface,
+            rewrite_surface.arena.root(),
+        );
         self.enqueue_subtree(
             &rewrite_surface.arena,
             surface,
             rewrite_surface.arena.root(),
             dirty_trace,
         );
+    }
+
+    fn index_subtree_references(
+        &mut self,
+        arena: &ExpressionArena,
+        surface: usize,
+        subtree_root: ExpressionNodeId,
+    ) {
+        for node_id in rewriter_reachable_subtree_ids(arena, subtree_root) {
+            let Expr::Atomic(_, Atom::Reference(reference)) = arena.expression(node_id) else {
+                continue;
+            };
+            self.reference_nodes_by_name
+                .entry(reference.name().clone())
+                .or_default()
+                .insert((surface, node_id));
+        }
+    }
+
+    fn should_attempt_rule(
+        &self,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        rule_data: &RuleData<'_>,
+    ) -> bool {
+        if rule_data.rule.failure_invalidation != RuleFailureInvalidation::SymbolsOnly {
+            return true;
+        }
+
+        self.failed_symbol_rules.get(&FailedSymbolRuleKey {
+            surface,
+            node_id,
+            rule: rule_data.rule as *const _ as usize,
+        }) != Some(&self.symbol_revision)
+    }
+
+    fn record_rule_failure(
+        &mut self,
+        surface: usize,
+        node_id: ExpressionNodeId,
+        rule_data: &RuleData<'_>,
+    ) {
+        if rule_data.rule.failure_invalidation == RuleFailureInvalidation::SymbolsOnly {
+            self.failed_symbol_rules.insert(
+                FailedSymbolRuleKey {
+                    surface,
+                    node_id,
+                    rule: rule_data.rule as *const _ as usize,
+                },
+                self.symbol_revision,
+            );
+        }
+    }
+
+    fn invalidate_symbol_rule_failures(&mut self) {
+        let (next_revision, overflowed) = self.symbol_revision.overflowing_add(1);
+        self.symbol_revision = next_revision;
+        if overflowed {
+            self.failed_symbol_rules.clear();
+        }
     }
 
     fn enqueue_subtree(
@@ -873,6 +1252,7 @@ impl WorklistScheduler {
         );
     }
 
+    #[cfg(test)]
     fn enqueue_node_and_ancestors(
         &mut self,
         arena: &ExpressionArena,
@@ -956,7 +1336,7 @@ impl WorklistScheduler {
             node_id,
             generation: arena.generation(node_id),
             mode,
-            depth: arena.preorder_path(node_id).len(),
+            depth: arena.depth(node_id),
             sequence: self.next_sequence,
         };
         self.next_sequence += 1;
@@ -1160,18 +1540,32 @@ impl WorklistScheduler {
             return false;
         }
 
-        let key = SubtreeCandidateKey {
-            level,
-            surface,
-            node_id,
-            generation: arena.generation(node_id),
-        };
-        if let Some(&has_candidates) = self.subtree_candidate_cache.get(&key) {
-            return has_candidates;
+        let cache_bit = 1u128.checked_shl(level as u32);
+        if let Some(bit) = cache_bit {
+            if self.subtree_candidate_cache.len() <= surface {
+                self.subtree_candidate_cache
+                    .resize_with(surface + 1, Vec::new);
+            }
+            let surface_cache = &mut self.subtree_candidate_cache[surface];
+            if surface_cache.len() <= node_id.index() {
+                surface_cache.resize(node_id.index() + 1, NodeSubtreeCandidateCache::default());
+            }
+            let entry = &mut surface_cache[node_id.index()];
+            let generation = arena.generation(node_id);
+            if !entry.generation_valid || entry.generation != generation {
+                *entry = NodeSubtreeCandidateCache {
+                    generation,
+                    generation_valid: true,
+                    ..NodeSubtreeCandidateCache::default()
+                };
+            }
+            if entry.known_levels & bit != 0 {
+                return entry.candidate_levels & bit != 0;
+            }
         }
 
         let rule_group = &rule_groups[level];
-        let has_candidates = rule_group.has_candidates(config, arena.expression(node_id))
+        let has_candidates = rule_group.has_candidates_at_node(config, arena, node_id)
             || (!matches!(arena.expression(node_id), Expr::Comprehension(_, _))
                 && arena.children(node_id).iter().any(|&child_id| {
                     self.subtree_has_candidates_at_level(
@@ -1184,7 +1578,13 @@ impl WorklistScheduler {
                     )
                 }));
 
-        self.subtree_candidate_cache.insert(key, has_candidates);
+        if let Some(bit) = cache_bit {
+            let entry = &mut self.subtree_candidate_cache[surface][node_id.index()];
+            entry.known_levels |= bit;
+            if has_candidates {
+                entry.candidate_levels |= bit;
+            }
+        }
         has_candidates
     }
 }
@@ -1200,18 +1600,22 @@ fn next_worklist_candidate_level(
         return rule_groups.len();
     }
 
-    let expr = arena.expression(node_id);
     rule_groups
         .iter()
         .enumerate()
         .skip(start_level)
-        .find_map(|(level, rule_group)| rule_group.has_candidates(config, expr).then_some(level))
+        .find_map(|(level, rule_group)| {
+            rule_group
+                .has_candidates_at_node(config, arena, node_id)
+                .then_some(level)
+        })
         .unwrap_or(rule_groups.len())
 }
 
 struct RuleEffectImpact {
     added_names: Vec<Name>,
     changed_names: Vec<Name>,
+    invalidated_reference_names: Vec<Name>,
     has_new_top: bool,
     has_new_clauses: bool,
 }
@@ -1231,19 +1635,43 @@ impl RuleEffectImpact {
                 changed_names.push(name);
             }
         }
+        let added_names: Vec<_> = effect.added_symbols(symbols).into_iter().collect();
+        // A new auxiliary stands in for the declaration it was derived from, so expressions
+        // referencing that source have to be reconsidered alongside the ones that changed.
+        let mut invalidated_reference_names = changed_names.clone();
+        for added_name in &added_names {
+            let Some(declaration) = effect.symbols.lookup_local(added_name) else {
+                continue;
+            };
+            let mut seen_sources = HashSet::new();
+            let mut source = declaration.source().clone();
+            while let Some(source_declaration) = source.take() {
+                let source_name = source_declaration.name().clone();
+                if !seen_sources.insert(source_name.clone()) {
+                    break;
+                }
+                if !invalidated_reference_names.contains(&source_name) {
+                    invalidated_reference_names.push(source_name);
+                }
+                source.clone_from(&source_declaration.source());
+            }
+        }
+
         Self {
-            added_names: effect.added_symbols(symbols).into_iter().collect(),
+            added_names,
             changed_names,
+            invalidated_reference_names,
             has_new_top: !effect.new_top.is_empty(),
             has_new_clauses: !effect.new_clauses.is_empty(),
         }
     }
 
     fn has_model_side_effects(&self) -> bool {
-        self.has_new_top
-            || self.has_new_clauses
-            || !self.added_names.is_empty()
-            || !self.changed_names.is_empty()
+        self.has_new_top || self.has_new_clauses || self.has_symbol_changes()
+    }
+
+    fn has_symbol_changes(&self) -> bool {
+        !self.added_names.is_empty() || !self.changed_names.is_empty()
     }
 }
 
@@ -1347,21 +1775,13 @@ fn model_needs_abstract_repr_rules(model: &Model) -> bool {
 
     // Record/tuple/set *literals* also need ReprGeneral even without abstract finds.
     // Matrix literals are handled by `ReprMatrixComponents`, not these rule sets.
-    for expr in model.root().universe() {
-        match expr {
-            Expr::AbstractLiteral(_, abs) if !matches!(abs, AbstractLiteral::Matrix(..)) => {
-                return true;
-            }
-            Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(abs)))
-                if !matches!(abs, AbstractLiteral::Matrix(..)) =>
-            {
-                return true;
-            }
-            _ => {}
+    model.root().any_expression(|expr| match expr {
+        Expr::AbstractLiteral(_, abs) => !matches!(abs, AbstractLiteral::Matrix(..)),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(abs))) => {
+            !matches!(abs, AbstractLiteral::Matrix(..))
         }
-    }
-
-    false
+        _ => false,
+    })
 }
 
 /// Rewrites a model by applying rules in priority order, trying enclosing expressions before their
@@ -1613,29 +2033,26 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
             results.swap(0, selected);
         }
 
-        match results.as_slice() {
-            [] => {
-                submodel.replace_root(arena.into_root_expression());
+        match results.into_iter().next() {
+            None => {
+                submodel.replace_root(arena.into_synced_root_expression());
                 break;
             }
-            [
-                (result, _level, expr, node_id, variable_snapshot_before),
-                ..,
-            ] => {
+            Some((result, _level, expr, node_id, variable_snapshot_before)) => {
                 let effect = result.effect.materialise(&submodel.symbols());
-                let variable_snapshots = variable_snapshot_before.clone().map(|before| {
+                let variable_snapshots = variable_snapshot_before.map(|before| {
                     let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect);
                     (before, after)
                 });
                 let result = RuleResult {
-                    rule_data: result.rule_data.clone(),
+                    rule_data: result.rule_data,
                     effect,
                 };
 
                 // Extract the single applicable rule and apply it
                 log_rule_application(
                     &result,
-                    expr,
+                    &expr,
                     &submodel.symbols(),
                     variable_snapshots
                         .as_ref()
@@ -1655,7 +2072,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                     ..
                 } = effect;
                 // Replace expr with new_expression
-                replace_focus_and_sync_ancestors(&mut arena, *node_id, new_expression);
+                replace_focus_and_sync_ancestors(&mut arena, node_id, new_expression);
 
                 // Apply new symbols and top level
                 ctx.dirty_trace
@@ -1669,7 +2086,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                 }
                 submodel.add_clauses(new_clauses);
                 let _ =
-                    normalise_evaluators_from_node_to_root(&mut arena, *node_id, ctx.dirty_trace);
+                    normalise_evaluators_from_node_to_root(&mut arena, node_id, ctx.dirty_trace);
                 if has_model_side_effects {
                     ctx.dirty_trace.record_side_effect_kept_in_arena();
                 }
@@ -1678,7 +2095,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                 {
                     // Check well-formedness without rebuilding the live arena: a rebuild would
                     // renumber nodes and can change subsequent full-scan order vs release builds.
-                    submodel.replace_root(arena.clone().into_root_expression());
+                    submodel.replace_root(arena.expression(arena.root()).clone());
                     let assertion_context = format!("rewriter after applying rule '{rule_name}'");
                     debug_assert_model_well_formed(submodel, &assertion_context);
                 }
@@ -1707,18 +2124,63 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
     }
     write_worklist_surfaces_to_model(submodel, &surfaces);
     let mut scheduler = WorklistScheduler::new(&surfaces, ctx.bucketed_rules, ctx.config);
+    let mut deferred_evaluators = DeferredEvaluatorWork::default();
+    let mut deferred_ancestor_rules = DeferredAncestorRuleWork::default();
 
-    while let Some((level, surface_index, node_id, scheduled_mode)) =
-        scheduler.pop_next(&surfaces, ctx.bucketed_rules, ctx.config, ctx.dirty_trace)
-    {
+    loop {
+        let next = loop {
+            let candidate =
+                scheduler.pop_next(&surfaces, ctx.bucketed_rules, ctx.config, ctx.dirty_trace);
+            if let Some((_, surface, node_id, _)) = candidate
+                && deferred_ancestor_rules.contains(surface, node_id)
+            {
+                deferred_ancestor_rules.postpone(candidate.unwrap());
+                continue;
+            }
+            break candidate;
+        };
+        let crosses_priority_boundary =
+            deferred_ancestor_rules.should_flush_before(next.as_ref().map(|item| item.0));
+        if crosses_priority_boundary {
+            // `pop_next` removes a live item from the queue. Put it back before injecting the
+            // higher-priority ancestor checks that must precede it.
+            if let Some((level, surface, node_id, mode)) = next {
+                scheduler.enqueue_node_at_level(
+                    &surfaces[surface].arena,
+                    surface,
+                    node_id,
+                    level,
+                    mode,
+                    Some(ctx.dirty_trace),
+                );
+            }
+            deferred_ancestor_rules.flush(
+                &mut scheduler,
+                &mut surfaces,
+                &mut deferred_evaluators,
+                ctx.dirty_trace,
+            );
+            continue;
+        }
+
+        let Some((level, surface_index, node_id, scheduled_mode)) = next else {
+            if normalise_deferred_evaluators(
+                &mut deferred_evaluators,
+                submodel,
+                &mut surfaces,
+                &mut scheduler,
+                ctx.dirty_trace,
+            ) {
+                did_rewrite = true;
+                continue;
+            }
+            break;
+        };
         ctx.dirty_trace.priority_scans += 1;
         ctx.dirty_trace.expression_visits += 1;
 
         let rule_group = &ctx.bucketed_rules[level];
-        if !rule_group.has_candidates(
-            ctx.config,
-            surfaces[surface_index].arena.expression(node_id),
-        ) {
+        if !rule_group.has_candidates_at_node(ctx.config, &surfaces[surface_index].arena, node_id) {
             ctx.dirty_trace
                 .record_worklist_no_candidate_pop(scheduled_mode);
             scheduler.enqueue_after_no_rewrite(
@@ -1740,8 +2202,12 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         let mut results: Vec<ApplicableRule<'_, ExpressionNodeId>> = vec![];
         let mut attempted_rule = false;
         {
-            let expr = surfaces[surface_index].arena.expression(node_id);
-            for rd in rule_group.candidates(ctx.config, expr) {
+            let arena = &surfaces[surface_index].arena;
+            let expr = arena.expression(node_id);
+            for rd in rule_group.candidates_at_node(ctx.config, arena, node_id) {
+                if !scheduler.should_attempt_rule(surface_index, node_id, rd) {
+                    continue;
+                }
                 attempted_rule = true;
                 ctx.dirty_trace
                     .record_rule_attempt(rule_group.priority, rd.rule.name);
@@ -1771,12 +2237,15 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
                             root_variable_snapshot_for_default_trace(expr, &submodel.symbols()),
                         ));
                     }
-                    Err(_) => ctx.attempt_observer.attempted(
-                        rule_group.priority,
-                        rd,
-                        expr,
-                        RuleAttemptStatus::Failure,
-                    ),
+                    Err(_) => {
+                        scheduler.record_rule_failure(surface_index, node_id, rd);
+                        ctx.attempt_observer.attempted(
+                            rule_group.priority,
+                            rd,
+                            expr,
+                            RuleAttemptStatus::Failure,
+                        );
+                    }
                 }
             }
         }
@@ -1805,29 +2274,22 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         }
 
         let selected = choose_rule_result_index(results.iter().map(|(result, _, _, _, _)| result));
-        results.swap(0, selected);
-
-        let [
-            (result, _level, expr, node_id, variable_snapshot_before),
-            ..,
-        ] = results.as_slice()
-        else {
-            unreachable!("checked non-empty results above")
-        };
+        let (result, _level, expr, node_id, variable_snapshot_before) =
+            results.swap_remove(selected);
 
         let effect = result.effect.materialise(&submodel.symbols());
-        let variable_snapshots = variable_snapshot_before.clone().map(|before| {
+        let variable_snapshots = variable_snapshot_before.map(|before| {
             let after = snapshot_symbols_after_effect(&submodel.symbols(), &effect);
             (before, after)
         });
         let result = RuleResult {
-            rule_data: result.rule_data.clone(),
+            rule_data: result.rule_data,
             effect,
         };
 
         log_rule_application(
             &result,
-            expr,
+            &expr,
             &submodel.symbols(),
             variable_snapshots
                 .as_ref()
@@ -1838,6 +2300,8 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         let has_model_side_effects = effect_impact.has_model_side_effects();
         let rewritten_value_letting_name =
             value_letting_surface_name(&surfaces[surface_index].kind).cloned();
+        let invalidates_symbol_rules =
+            effect_impact.has_symbol_changes() || rewritten_value_letting_name.is_some();
         let rule_name = result.rule_data.rule.name;
         let RuleResult { effect, .. } = result;
         let crate::rule_engine::rule::RuleEffect {
@@ -1850,7 +2314,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         } = effect;
         {
             let arena = &mut surfaces[surface_index].arena;
-            replace_focus_and_sync_ancestors(arena, *node_id, new_expression);
+            arena.replace_subtree(node_id, new_expression);
         }
 
         ctx.dirty_trace
@@ -1865,16 +2329,40 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             Vec::new()
         };
         submodel.add_clauses(new_clauses);
-        let (rewrite_impact_node_id, _) = {
+        let rewrite_impact_node_id = {
             let arena = &mut surfaces[surface_index].arena;
-            normalise_evaluators_from_node_to_root(arena, *node_id, ctx.dirty_trace)
+            normalise_evaluators_subtree_bottom_up(arena, node_id, ctx.dirty_trace);
+            deferred_evaluators.defer_ancestors(arena, surface_index, node_id);
+            deferred_ancestor_rules.defer_ancestors(arena, surface_index, node_id, level);
+            node_id
         };
+        scheduler.index_subtree_references(
+            &surfaces[surface_index].arena,
+            surface_index,
+            rewrite_impact_node_id,
+        );
         for &new_top_node_id in &new_top_node_ids {
             if surfaces[root_surface].arena.is_reachable(new_top_node_id) {
-                normalise_evaluators_from_node_to_root(
+                normalise_evaluators_subtree_bottom_up(
                     &mut surfaces[root_surface].arena,
                     new_top_node_id,
                     ctx.dirty_trace,
+                );
+                deferred_evaluators.defer_ancestors(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    new_top_node_id,
+                );
+                deferred_ancestor_rules.defer_ancestors(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    new_top_node_id,
+                    level,
+                );
+                scheduler.index_subtree_references(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    new_top_node_id,
                 );
             }
         }
@@ -1883,7 +2371,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             ctx.dirty_trace.value_letting_rewrites += 1;
             increment_counter(&mut ctx.stats.rewriter_value_letting_rewrites);
         }
-        let mut affected_names = effect_impact.changed_names.clone();
+        let mut affected_names = effect_impact.invalidated_reference_names.clone();
         if let Some(name) = rewritten_value_letting_name.as_ref()
             && !affected_names.contains(name)
         {
@@ -1900,16 +2388,42 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             &mut value_letting_surfaces,
             &symbol_surface_names,
         );
+
+        // Choosing a representation, or any other change to the model, can change which rule
+        // should win for a sibling at the same priority. Do not batch across that: bring the
+        // enclosing expressions up to date and re-check their rules before moving to another
+        // sibling. Rewrites that only change an expression still get batched, and those are the
+        // common case when unrolling.
+        if has_model_side_effects {
+            deferred_ancestor_rules.flush_effect_path_before_root(
+                &mut scheduler,
+                &mut surfaces,
+                &mut deferred_evaluators,
+                surface_index,
+                rewrite_impact_node_id,
+                ctx.dirty_trace,
+            );
+        }
         {
             if has_model_side_effects {
                 ctx.dirty_trace.record_side_effect_kept_in_arena();
             }
-            enqueue_worklist_rewrite_impact(
-                &mut scheduler,
+            if invalidates_symbol_rules {
+                scheduler.invalidate_symbol_rule_failures();
+                scheduler.enqueue_node_at_level(
+                    &surfaces[root_surface].arena,
+                    root_surface,
+                    surfaces[root_surface].arena.root(),
+                    0,
+                    ScheduledMode::CheckNode,
+                    Some(ctx.dirty_trace),
+                );
+            }
+            scheduler.enqueue_subtree(
                 &surfaces[surface_index].arena,
                 surface_index,
                 rewrite_impact_node_id,
-                ctx.dirty_trace,
+                Some(ctx.dirty_trace),
             );
             for new_top_node_id in new_top_node_ids {
                 scheduler.enqueue_subtree(
@@ -1936,22 +2450,16 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             );
         }
 
-        #[cfg(debug_assertions)]
-        {
-            // Well-formedness only: do not rebuild surfaces/scheduler here. A full rebuild after
-            // every rule changes same-priority sibling order vs release (incremental enqueue).
-            write_worklist_surfaces_to_model(submodel, &surfaces);
-            let assertion_context = format!("rewriter after applying rule '{rule_name}'");
-            debug_assert_model_well_formed(submodel, &assertion_context);
-        }
-
         did_rewrite = true;
     }
 
-    write_worklist_surfaces_to_model(submodel, &surfaces);
+    move_worklist_surfaces_to_model(submodel, surfaces);
+    #[cfg(debug_assertions)]
+    debug_assert_model_well_formed(submodel, "rewriter after a settled worklist pass");
     did_rewrite.then_some(())
 }
 
+#[cfg(test)]
 fn enqueue_worklist_rewrite_impact(
     scheduler: &mut WorklistScheduler,
     arena: &ExpressionArena,
@@ -1961,6 +2469,126 @@ fn enqueue_worklist_rewrite_impact(
 ) {
     scheduler.enqueue_node_and_ancestors(arena, surface, node_id, dirty_trace);
     scheduler.enqueue_subtree(arena, surface, node_id, Some(dirty_trace));
+}
+
+/// Rebuilds and evaluates the waiting ancestors, once the worklist has run out of rule work.
+///
+/// Nodes are handled deepest first, so each parent is rebuilt once from children that are already
+/// up to date. Doing it here rather than after every rewrite is what stops each rewrite from
+/// copying the whole matrix/`and`/root chain above it. The surfaces that changed go back on the
+/// worklist, and later rewrites fill the next batch.
+fn normalise_deferred_evaluators(
+    work: &mut DeferredEvaluatorWork,
+    submodel: &mut Model,
+    surfaces: &mut [RewriteSurface],
+    scheduler: &mut WorklistScheduler,
+    dirty_trace: &mut DirtyTrace,
+) -> bool {
+    if work.is_empty() {
+        return false;
+    }
+
+    let nodes = deferred_nodes_in_bottom_up_order(std::mem::take(&mut work.nodes), surfaces);
+
+    let mut affected_surfaces = HashSet::new();
+    let mut changed_value_lettings = HashSet::new();
+    for (surface, node_id, _) in nodes {
+        let Some(rewrite_surface) = surfaces.get_mut(surface) else {
+            continue;
+        };
+        if !rewrite_surface.active || !rewrite_surface.arena.is_reachable(node_id) {
+            continue;
+        }
+        affected_surfaces.insert(surface);
+        rewrite_surface.arena.rebuild_payload_from_children(node_id);
+
+        // Root-list reshaping is deliberately left to the final evaluator pass.
+        if node_id != rewrite_surface.arena.root()
+            && normalise_evaluator_node_to_fixpoint_without_ancestor_sync(
+                &mut rewrite_surface.arena,
+                node_id,
+                dirty_trace,
+            )
+        {
+            scheduler.index_subtree_references(&rewrite_surface.arena, surface, node_id);
+            if let Some(name) = value_letting_surface_name(&rewrite_surface.kind) {
+                changed_value_lettings.insert(name.clone());
+            }
+        }
+    }
+
+    let mut wrote_value_letting = false;
+    let mut changed_value_lettings: Vec<_> = changed_value_lettings.into_iter().collect();
+    changed_value_lettings.sort();
+    for name in &changed_value_lettings {
+        let Some(surface) = surfaces.iter().find(|surface| {
+            surface.active && value_letting_surface_name(&surface.kind) == Some(name)
+        }) else {
+            continue;
+        };
+        wrote_value_letting |=
+            write_value_letting_surface_to_model_without_refresh(submodel, name, &surface.arena);
+    }
+    if wrote_value_letting {
+        submodel.symbols_mut().refresh_local_binding_hashes();
+        scheduler.invalidate_symbol_rule_failures();
+        scheduler.enqueue_node_at_level(
+            &surfaces[0].arena,
+            0,
+            surfaces[0].arena.root(),
+            0,
+            ScheduledMode::CheckNode,
+            Some(dirty_trace),
+        );
+        enqueue_worklist_nodes_referencing_names(
+            scheduler,
+            surfaces,
+            &changed_value_lettings,
+            dirty_trace,
+        );
+    }
+
+    let mut affected_surfaces: Vec<_> = affected_surfaces.into_iter().collect();
+    affected_surfaces.sort_unstable();
+    for surface in affected_surfaces.iter().copied() {
+        let arena = &surfaces[surface].arena;
+        scheduler.enqueue_subtree(arena, surface, arena.root(), Some(dirty_trace));
+    }
+
+    !affected_surfaces.is_empty()
+}
+
+fn deferred_nodes_in_bottom_up_order(
+    nodes: impl IntoIterator<Item = (usize, ExpressionNodeId)>,
+    surfaces: &[RewriteSurface],
+) -> Vec<(usize, ExpressionNodeId, Option<Vec<usize>>)> {
+    // Cache each rarely needed path once. Reconstructing paths inside the comparison closure would
+    // turn sorting into O(n log n) parent-chain walks.
+    let mut nodes: Vec<_> = nodes
+        .into_iter()
+        .map(|(surface, node_id)| {
+            let path = surfaces
+                .get(surface)
+                .filter(|rewrite_surface| rewrite_surface.active)
+                .filter(|rewrite_surface| rewrite_surface.arena.is_reachable(node_id))
+                .map(|rewrite_surface| rewrite_surface.arena.preorder_path(node_id));
+            (surface, node_id, path)
+        })
+        .collect();
+    nodes.sort_by(
+        |(left_surface, left_node, left_path), (right_surface, right_node, right_path)| {
+            right_path
+                .as_ref()
+                .map_or(0, Vec::len)
+                .cmp(&left_path.as_ref().map_or(0, Vec::len))
+                .then_with(|| left_surface.cmp(right_surface))
+                .then_with(|| match (left_path, right_path) {
+                    (Some(left_path), Some(right_path)) => left_path.cmp(right_path),
+                    _ => left_node.cmp(right_node),
+                })
+        },
+    );
+    nodes
 }
 
 /// Applies evaluator normalisation throughout an existing arena surface.
@@ -1985,7 +2613,19 @@ fn normalise_evaluators_subtree_bottom_up(
         if !arena.is_reachable(node_id) {
             continue;
         }
-        changed |= normalise_evaluator_node_to_fixpoint(arena, node_id, dirty_trace);
+        changed |=
+            normalise_evaluator_node_to_fixpoint_without_ancestor_sync(arena, node_id, dirty_trace);
+
+        // Copy the child's new value one level up. Going deepest first means each parent is up
+        // to date before its own evaluator runs, without touching wider ancestors every time
+        // something folds. Anything above the subtree root is the caller's job: the worklist
+        // defers it, the non-worklist path updates it directly.
+        if node_id != subtree_root
+            && let Some(parent_id) = arena.parent(node_id)
+            && arena.is_reachable(parent_id)
+        {
+            arena.sync_payload_for_changed_child(parent_id, node_id);
+        }
     }
 
     changed
@@ -2069,6 +2709,21 @@ fn normalise_evaluator_node_to_fixpoint(
     node_id: ExpressionNodeId,
     dirty_trace: &mut DirtyTrace,
 ) -> bool {
+    let changed =
+        normalise_evaluator_node_to_fixpoint_without_ancestor_sync(arena, node_id, dirty_trace);
+
+    if changed {
+        sync_ancestor_payloads(arena, node_id);
+    }
+
+    changed
+}
+
+fn normalise_evaluator_node_to_fixpoint_without_ancestor_sync(
+    arena: &mut ExpressionArena,
+    node_id: ExpressionNodeId,
+    dirty_trace: &mut DirtyTrace,
+) -> bool {
     let mut changed = false;
 
     while arena.is_reachable(node_id) {
@@ -2083,10 +2738,6 @@ fn normalise_evaluator_node_to_fixpoint(
         changed = true;
     }
 
-    if changed {
-        sync_ancestor_payloads(arena, node_id);
-    }
-
     changed
 }
 
@@ -2097,12 +2748,13 @@ fn build_worklist_surfaces(
     let mut surfaces = vec![RewriteSurface::root(root_arena)];
     let mut value_letting_surfaces = HashMap::new();
 
-    for (name, decl) in submodel.symbols().clone().into_iter_local() {
+    let symbols = submodel.symbols();
+    for (name, decl) in symbols.iter_local() {
         let letting_expr = decl.as_value_letting().map(|expr| expr.clone());
         if let Some(expr) = letting_expr {
             let surface = surfaces.len();
             surfaces.push(RewriteSurface::value_letting(name.clone(), expr));
-            value_letting_surfaces.insert(name, surface);
+            value_letting_surfaces.insert(name.clone(), surface);
         }
     }
 
@@ -2159,7 +2811,10 @@ fn sync_value_letting_surfaces(
 }
 
 fn write_worklist_surfaces_to_model(submodel: &mut Model, surfaces: &[RewriteSurface]) {
-    let root = surfaces[0].arena.expression_from(surfaces[0].arena.root());
+    let root = surfaces[0]
+        .arena
+        .expression(surfaces[0].arena.root())
+        .clone();
     submodel.replace_root(root);
 
     let mut wrote_value_letting = false;
@@ -2170,8 +2825,33 @@ fn write_worklist_surfaces_to_model(submodel: &mut Model, surfaces: &[RewriteSur
         let Some(name) = value_letting_surface_name(&surface.kind) else {
             continue;
         };
+        let expression = surface.arena.expression(surface.arena.root()).clone();
         wrote_value_letting |=
-            write_value_letting_surface_to_model_without_refresh(submodel, name, &surface.arena);
+            write_value_letting_expression_to_model_without_refresh(submodel, name, expression);
+    }
+    if wrote_value_letting {
+        submodel.symbols_mut().refresh_local_binding_hashes();
+    }
+}
+
+fn move_worklist_surfaces_to_model(submodel: &mut Model, surfaces: Vec<RewriteSurface>) {
+    let mut surfaces = surfaces.into_iter();
+    let root = surfaces.next().expect("worklist must have a root surface");
+    submodel.replace_root(root.arena.into_synced_root_expression());
+
+    let mut wrote_value_letting = false;
+    for surface in surfaces {
+        if !surface.active {
+            continue;
+        }
+        let RewriteSurfaceKind::ValueLetting { name } = surface.kind else {
+            continue;
+        };
+        wrote_value_letting |= write_value_letting_expression_to_model_without_refresh(
+            submodel,
+            &name,
+            surface.arena.into_synced_root_expression(),
+        );
     }
     if wrote_value_letting {
         submodel.symbols_mut().refresh_local_binding_hashes();
@@ -2195,6 +2875,18 @@ fn write_value_letting_surface_to_model_without_refresh(
     name: &Name,
     arena: &ExpressionArena,
 ) -> bool {
+    write_value_letting_expression_to_model_without_refresh(
+        submodel,
+        name,
+        arena.expression_from(arena.root()),
+    )
+}
+
+fn write_value_letting_expression_to_model_without_refresh(
+    submodel: &mut Model,
+    name: &Name,
+    expression: Expr,
+) -> bool {
     let declaration = {
         let symbols = submodel.symbols();
         symbols.lookup_local(name)
@@ -2207,7 +2899,7 @@ fn write_value_letting_surface_to_model_without_refresh(
             return false;
         };
 
-        *letting = arena.expression_from(arena.root());
+        *letting = expression;
     }
     true
 }
@@ -2222,31 +2914,49 @@ fn enqueue_worklist_nodes_referencing_names(
         return;
     }
 
-    for (surface_index, surface) in surfaces.iter().enumerate() {
-        if !surface.active {
+    // A `BTreeSet` rather than a hash set: the scheduler breaks depth ties by enqueue order, so
+    // the order these are inserted in has to be the same on every run.
+    let mut affected_nodes = BTreeSet::new();
+    for name in names {
+        let Some(reference_nodes) = scheduler.reference_nodes_by_name.get(name) else {
             continue;
-        }
+        };
+        for &(surface_index, reference_node) in reference_nodes {
+            let Some(surface) = surfaces.get(surface_index) else {
+                continue;
+            };
+            if !surface.active
+                || !surface.arena.is_reachable(reference_node)
+                || !expression_directly_references_any(
+                    surface.arena.expression(reference_node),
+                    std::slice::from_ref(name),
+                )
+            {
+                continue;
+            }
 
-        let mut affected_nodes = Vec::new();
-        collect_worklist_nodes_referencing_names(
-            &surface.arena,
-            surface.arena.root(),
-            names,
-            &mut affected_nodes,
-        );
-        for node_id in affected_nodes.into_iter().rev() {
-            scheduler.enqueue_node_at_level(
-                &surface.arena,
-                surface_index,
-                node_id,
-                0,
-                ScheduledMode::CheckNode,
-                Some(dirty_trace),
-            );
+            let mut current = Some(reference_node);
+            while let Some(node_id) = current {
+                affected_nodes.insert((surface_index, node_id));
+                current = surface.arena.parent(node_id);
+            }
         }
+    }
+
+    for (surface_index, node_id) in affected_nodes {
+        let surface = &surfaces[surface_index];
+        scheduler.enqueue_node_at_level(
+            &surface.arena,
+            surface_index,
+            node_id,
+            0,
+            ScheduledMode::CheckNode,
+            Some(dirty_trace),
+        );
     }
 }
 
+#[cfg(test)]
 fn collect_worklist_nodes_referencing_names(
     arena: &ExpressionArena,
     node_id: ExpressionNodeId,
@@ -2359,7 +3069,11 @@ fn rule_matches_self_discriminant(rule_data: &RuleData<'_>, expr_discriminant: u
         })
 }
 
-fn rule_matches_specific_prefilter(rule_data: &RuleData<'_>, expr: &Expr) -> bool {
+fn rule_matches_specific_prefilter(
+    rule_data: &RuleData<'_>,
+    expr: &Expr,
+    arena_node: Option<(&ExpressionArena, ExpressionNodeId)>,
+) -> bool {
     if rule_is_universal(rule_data) {
         return false;
     }
@@ -2368,13 +3082,28 @@ fn rule_matches_specific_prefilter(rule_data: &RuleData<'_>, expr: &Expr) -> boo
     rule_data.rule.prefilters.is_some_and(|prefilters| {
         prefilters.iter().any(|prefilter| match prefilter {
             RulePrefilter::Variant(discriminant) => *discriminant == expr_discriminant,
-            RulePrefilter::Child { child } => expr_has_direct_child_discriminant(expr, &[*child]),
+            RulePrefilter::Child { child } => {
+                has_direct_child_discriminant(expr, arena_node, *child)
+            }
             RulePrefilter::VariantChild { variant, child } => {
-                *variant == expr_discriminant && expr_has_direct_child_discriminant(expr, &[*child])
+                *variant == expr_discriminant
+                    && has_direct_child_discriminant(expr, arena_node, *child)
             }
             RulePrefilter::Atom(atom_kind) => expr_atom_kind(expr) == Some(*atom_kind),
         })
     })
+}
+
+fn has_direct_child_discriminant(
+    expr: &Expr,
+    arena_node: Option<(&ExpressionArena, ExpressionNodeId)>,
+    target_discriminant: usize,
+) -> bool {
+    if let Some((arena, node_id)) = arena_node {
+        arena.has_direct_child_discriminant(node_id, target_discriminant)
+    } else {
+        expr_has_direct_child_discriminant(expr, &[target_discriminant])
+    }
 }
 
 fn expr_atom_kind(expr: &Expr) -> Option<AtomKind> {
@@ -2497,6 +3226,14 @@ mod tests {
         application: never_apply_test_rule,
         rule_sets: &[("test-rule-set", 1)],
         prefilters: Some(&[]),
+        failure_invalidation: crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
+    };
+    static TEST_SYMBOLS_ONLY_RULE: crate::rule_engine::Rule<'static> = crate::rule_engine::Rule {
+        name: "symbols-only-test-rule",
+        application: never_apply_test_rule,
+        rule_sets: &[("test-rule-set", 1)],
+        prefilters: None,
+        failure_invalidation: crate::rule_engine::RuleFailureInvalidation::SymbolsOnly,
     };
     fn test_rule_groups_at_priorities(priorities: &[u16]) -> Vec<RuleGroup<'static>> {
         priorities
@@ -2593,6 +3330,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: Some(child_prefilters),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -2635,6 +3374,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: Some(&[RulePrefilter::Atom(AtomKind::Reference)]),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -2676,6 +3417,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: Some(lex_prefilters),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let universal_rule: &'static crate::rule_engine::Rule<'static> =
             Box::leak(Box::new(crate::rule_engine::Rule {
@@ -2683,6 +3426,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: None,
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -2744,6 +3489,8 @@ mod tests {
                 application: never_apply_test_rule,
                 rule_sets: &[("test-rule-set", 1)],
                 prefilters: Some(paired_prefilters),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
             }));
         let rule_group = RuleGroup::new(
             1,
@@ -3299,5 +4046,79 @@ mod tests {
             affected_nodes.into_iter().rev().collect_vec(),
             vec![root_id, eq_id, reference_id]
         );
+    }
+
+    #[test]
+    fn worklist_caches_symbols_only_failures_until_symbols_change() {
+        let tree = root(vec![int_lit(1)]);
+        let surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(tree))];
+        let node_id = surfaces[0].arena.root();
+        let rule_groups = vec![RuleGroup::new(
+            1,
+            vec![crate::rule_engine::RuleData {
+                rule: &TEST_SYMBOLS_ONLY_RULE,
+                priority: 1,
+                rule_set: &TEST_RULE_SET,
+            }],
+        )];
+        let rule_data = &rule_groups[0].rules[0];
+        let mut scheduler = WorklistScheduler::empty(&rule_groups);
+
+        assert!(scheduler.should_attempt_rule(0, node_id, rule_data));
+        scheduler.record_rule_failure(0, node_id, rule_data);
+        assert!(!scheduler.should_attempt_rule(0, node_id, rule_data));
+
+        scheduler.invalidate_symbol_rule_failures();
+        assert!(scheduler.should_attempt_rule(0, node_id, rule_data));
+    }
+
+    #[test]
+    fn evaluator_batches_ancestor_work_until_the_worklist_is_empty() {
+        let x = Name::user("x");
+        let and = Expr::And(
+            Metadata::new(),
+            Moo::new(matrix_expr![bool_lit(true), reference_expr(&x)]),
+        );
+        let mut surfaces = vec![RewriteSurface::root(ExpressionArena::from_root(root(
+            vec![and],
+        )))];
+        let ids = rewriter_preorder_ids(&surfaces[0].arena);
+        let and_id = ids
+            .iter()
+            .copied()
+            .find(|&node_id| matches!(surfaces[0].arena.expression(node_id), Expr::And(..)))
+            .expect("and node");
+        let true_id = ids
+            .iter()
+            .copied()
+            .find(|&node_id| surfaces[0].arena.expression(node_id) == &bool_lit(true))
+            .expect("true literal");
+
+        replace_focus_and_sync_ancestors(&mut surfaces[0].arena, true_id, bool_lit(false));
+        let mut work = DeferredEvaluatorWork::default();
+        work.defer_ancestors(&mut surfaces[0].arena, 0, true_id);
+        work.defer_ancestors(&mut surfaces[0].arena, 0, true_id);
+        assert_eq!(
+            work.nodes.len(),
+            3,
+            "matrix, `and`, and root ancestors are unique"
+        );
+        assert!(matches!(
+            surfaces[0].arena.expression(and_id),
+            Expr::And(..)
+        ));
+
+        let rule_groups = Vec::new();
+        let mut scheduler = WorklistScheduler::empty(&rule_groups);
+        let mut dirty_trace = DirtyTrace::default();
+        assert!(normalise_deferred_evaluators(
+            &mut work,
+            &mut Model::new(Default::default()),
+            &mut surfaces,
+            &mut scheduler,
+            &mut dirty_trace,
+        ));
+        assert_eq!(surfaces[0].arena.expression(and_id), &bool_lit(false));
+        assert!(work.is_empty());
     }
 }

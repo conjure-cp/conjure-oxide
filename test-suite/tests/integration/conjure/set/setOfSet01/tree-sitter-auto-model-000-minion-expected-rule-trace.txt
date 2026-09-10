@@ -278,6 +278,18 @@ x#explicit_2 <= sum([4,-1;int(1..)])
 
 --
 
+SafeIndex(x#explicit_1#components_3#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1#components_4#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_4#explicit_1#components_1
+
+--
+
 SafeIndex(x#explicit_1#components_1#explicit_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_1#explicit_1#components_1
@@ -290,21 +302,9 @@ x#explicit_1#components_1#explicit_1#components_2
 
 --
 
-SafeIndex(x#explicit_1#components_2#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2#explicit_1#components_1
-
---
-
 SafeIndex(x#explicit_1#components_2#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_2#explicit_1#components_2
-
---
-
-SafeIndex(x#explicit_1#components_3#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_3#explicit_1#components_1
 
 --
 
@@ -314,15 +314,15 @@ x#explicit_1#components_3#explicit_1#components_2
 
 --
 
-SafeIndex(x#explicit_1#components_4#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_4#explicit_1#components_1
-
---
-
 SafeIndex(x#explicit_1#components_4#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_4#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1#components_2#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2#explicit_1#components_1
 
 --
 
@@ -536,18 +536,6 @@ x#explicit_1#components_1#explicit_2 <= sum([x#explicit_1#components_2#explicit_
 
 --
 
-SafeIndex(x#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2
-
---
-
 SafeIndex(x#explicit_1,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_3
@@ -557,48 +545,6 @@ x#explicit_1#components_3
 x#explicit_1#components_3
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#explicit_1#components_3
-
---
-
-([x#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_3;int(1..)])
-   ~~> lex_explicit_sets ([("ReprGeneral", 9500)])
-or([x#explicit_1#components_2#explicit_2 < x#explicit_1#components_3#explicit_2,and([x#explicit_1#components_2#explicit_2 = x#explicit_1#components_3#explicit_2,([SafeIndex(x#explicit_1#components_2#explicit_1,[1]),SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1#components_3#explicit_1,[1]),SafeIndex(x#explicit_1#components_3#explicit_1,[2]);int(1..)]);int(1..)]);int(1..)])
-
---
-
-x#explicit_1#components_2#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2#explicit_1
-
---
-
-x#explicit_1#components_2#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2#explicit_1
-
---
-
-x#explicit_1#components_3#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_3#explicit_1
-
---
-
-x#explicit_1#components_3#explicit_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_3#explicit_1
-
---
-
-or([x#explicit_2 <= 2,or([x#explicit_1#components_2#explicit_2 < x#explicit_1#components_3#explicit_2,and([x#explicit_1#components_2#explicit_2 = x#explicit_1#components_3#explicit_2,([SafeIndex(x#explicit_1#components_2#explicit_1,[1]),SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1#components_3#explicit_1,[1]),SafeIndex(x#explicit_1#components_3#explicit_1,[2]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-or([x#explicit_2 <= 2,x#explicit_1#components_2#explicit_2 < x#explicit_1#components_3#explicit_2,and([x#explicit_1#components_2#explicit_2 = x#explicit_1#components_3#explicit_2,([SafeIndex(x#explicit_1#components_2#explicit_1,[1]),SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1#components_3#explicit_1,[1]),SafeIndex(x#explicit_1#components_3#explicit_1,[2]);int(1..)]);int(1..)]);int(1..)])
-
---
-
-x#explicit_1#components_2#explicit_2 < x#explicit_1#components_3#explicit_2
-   ~~> lt_to_leq ([("Minion", 8400)])
-x#explicit_1#components_2#explicit_2 <= sum([x#explicit_1#components_3#explicit_2,-1;int(1..)])
 
 --
 
@@ -668,6 +614,60 @@ x#explicit_1#components_3#explicit_2 <= sum([x#explicit_1#components_4#explicit_
 
 --
 
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+([x#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_3;int(1..)])
+   ~~> lex_explicit_sets ([("ReprGeneral", 9500)])
+or([x#explicit_1#components_2#explicit_2 < x#explicit_1#components_3#explicit_2,and([x#explicit_1#components_2#explicit_2 = x#explicit_1#components_3#explicit_2,([SafeIndex(x#explicit_1#components_2#explicit_1,[1]),SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1#components_3#explicit_1,[1]),SafeIndex(x#explicit_1#components_3#explicit_1,[2]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+x#explicit_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2#explicit_1
+
+--
+
+x#explicit_1#components_2#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2#explicit_1
+
+--
+
+x#explicit_1#components_3#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_3#explicit_1
+
+--
+
+x#explicit_1#components_3#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_3#explicit_1
+
+--
+
+or([x#explicit_2 <= 2,or([x#explicit_1#components_2#explicit_2 < x#explicit_1#components_3#explicit_2,and([x#explicit_1#components_2#explicit_2 = x#explicit_1#components_3#explicit_2,([SafeIndex(x#explicit_1#components_2#explicit_1,[1]),SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1#components_3#explicit_1,[1]),SafeIndex(x#explicit_1#components_3#explicit_1,[2]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([x#explicit_2 <= 2,x#explicit_1#components_2#explicit_2 < x#explicit_1#components_3#explicit_2,and([x#explicit_1#components_2#explicit_2 = x#explicit_1#components_3#explicit_2,([SafeIndex(x#explicit_1#components_2#explicit_1,[1]),SafeIndex(x#explicit_1#components_2#explicit_1,[2]);int(1..)] <lex [SafeIndex(x#explicit_1#components_3#explicit_1,[1]),SafeIndex(x#explicit_1#components_3#explicit_1,[2]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+x#explicit_1#components_2#explicit_2 < x#explicit_1#components_3#explicit_2
+   ~~> lt_to_leq ([("Minion", 8400)])
+x#explicit_1#components_2#explicit_2 <= sum([x#explicit_1#components_3#explicit_2,-1;int(1..)])
+
+--
+
 SafeIndex(x#explicit_1#components_1#explicit_1,[1])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_1#explicit_1#components_1
@@ -689,30 +689,6 @@ x#explicit_1#components_2#explicit_1#components_1
 SafeIndex(x#explicit_1#components_2#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_2#explicit_1#components_2
-
---
-
-SafeIndex(x#explicit_1#components_2#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1#components_2#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2#explicit_1#components_2
-
---
-
-SafeIndex(x#explicit_1#components_3#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_3#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1#components_3#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_3#explicit_1#components_2
 
 --
 
@@ -740,9 +716,33 @@ x#explicit_1#components_4#explicit_1#components_2
 
 --
 
-x#explicit_1#components_1#explicit_2 <= sum([x#explicit_1#components_2#explicit_2,-1;int(1..)])
+SafeIndex(x#explicit_1#components_2#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1#components_2#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1#components_3#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1#components_3#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3#explicit_1#components_2
+
+--
+
+x#explicit_1#components_3#explicit_2 <= sum([x#explicit_1#components_4#explicit_2,-1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([-1, x#explicit_1#components_2#explicit_2], x#explicit_1#components_1#explicit_2)
+SumGeq([-1, x#explicit_1#components_4#explicit_2], x#explicit_1#components_3#explicit_2)
 
 --
 
@@ -752,9 +752,9 @@ SumGeq([-1, x#explicit_1#components_3#explicit_2], x#explicit_1#components_2#exp
 
 --
 
-x#explicit_1#components_3#explicit_2 <= sum([x#explicit_1#components_4#explicit_2,-1;int(1..)])
+x#explicit_1#components_1#explicit_2 <= sum([x#explicit_1#components_2#explicit_2,-1;int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([-1, x#explicit_1#components_4#explicit_2], x#explicit_1#components_3#explicit_2)
+SumGeq([-1, x#explicit_1#components_2#explicit_2], x#explicit_1#components_1#explicit_2)
 
 --
 
@@ -782,6 +782,12 @@ WatchedLiteral(x#explicit_1#components_4#explicit_2,0)
 
 --
 
+x#explicit_1#components_4#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_4#explicit_1#components_1,1)
+
+--
+
 x#explicit_1#components_1#explicit_1#components_1 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#explicit_1#components_1#explicit_1#components_1,1)
@@ -794,21 +800,9 @@ WatchedLiteral(x#explicit_1#components_1#explicit_1#components_2,1)
 
 --
 
-x#explicit_1#components_2#explicit_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_2#explicit_1#components_1,1)
-
---
-
 x#explicit_1#components_2#explicit_1#components_2 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#explicit_1#components_2#explicit_1#components_2,1)
-
---
-
-x#explicit_1#components_3#explicit_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_3#explicit_1#components_1,1)
 
 --
 
@@ -818,15 +812,21 @@ WatchedLiteral(x#explicit_1#components_3#explicit_1#components_2,1)
 
 --
 
-x#explicit_1#components_4#explicit_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_4#explicit_1#components_1,1)
-
---
-
 x#explicit_1#components_4#explicit_1#components_2 = 1
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#explicit_1#components_4#explicit_1#components_2,1)
+
+--
+
+x#explicit_1#components_2#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2#explicit_1#components_1,1)
+
+--
+
+x#explicit_1#components_3#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_3#explicit_1#components_1,1)
 
 --
 
@@ -860,15 +860,21 @@ Ineq(x#explicit_2, 1, 0)
 
 --
 
+x#explicit_2 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x#explicit_2, 3, 0)
+
+--
+
 x#explicit_2 <= 2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(x#explicit_2, 2, 0)
 
 --
 
-x#explicit_2 <= 3
+1 <= x#explicit_1#components_4#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(x#explicit_2, 3, 0)
+Ineq(1, x#explicit_1#components_4#explicit_2, 0)
 
 --
 
@@ -884,21 +890,9 @@ Ineq(2, x#explicit_1#components_1#explicit_2, 0)
 
 --
 
-1 <= x#explicit_1#components_2#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#explicit_1#components_2#explicit_2, 0)
-
---
-
 2 <= x#explicit_1#components_2#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(2, x#explicit_1#components_2#explicit_2, 0)
-
---
-
-1 <= x#explicit_1#components_3#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#explicit_1#components_3#explicit_2, 0)
 
 --
 
@@ -908,15 +902,21 @@ Ineq(2, x#explicit_1#components_3#explicit_2, 0)
 
 --
 
-1 <= x#explicit_1#components_4#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#explicit_1#components_4#explicit_2, 0)
-
---
-
 2 <= x#explicit_1#components_4#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(2, x#explicit_1#components_4#explicit_2, 0)
+
+--
+
+1 <= x#explicit_1#components_2#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_1#components_2#explicit_2, 0)
+
+--
+
+1 <= x#explicit_1#components_3#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_1#components_3#explicit_2, 0)
 
 --
 
@@ -944,12 +944,6 @@ Ineq(4, x#explicit_2, 0)
 
 --
 
-([x#explicit_1#components_1#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_1#explicit_1#components_2;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLt([x#explicit_1#components_1#explicit_1#components_1], [x#explicit_1#components_1#explicit_1#components_2])
-
---
-
 ([x#explicit_1#components_2#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2#explicit_1#components_2;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([x#explicit_1#components_2#explicit_1#components_1], [x#explicit_1#components_2#explicit_1#components_2])
@@ -968,21 +962,27 @@ FlatLexLt([x#explicit_1#components_4#explicit_1#components_1], [x#explicit_1#com
 
 --
 
+([x#explicit_1#components_1#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_1#explicit_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_1#explicit_1#components_1], [x#explicit_1#components_1#explicit_1#components_2])
+
+--
+
 ([x#explicit_1#components_1#explicit_1#components_1,x#explicit_1#components_1#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_2#explicit_1#components_1,x#explicit_1#components_2#explicit_1#components_2;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([x#explicit_1#components_1#explicit_1#components_1, x#explicit_1#components_1#explicit_1#components_2], [x#explicit_1#components_2#explicit_1#components_1, x#explicit_1#components_2#explicit_1#components_2])
 
 --
 
-([x#explicit_1#components_2#explicit_1#components_1,x#explicit_1#components_2#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_3#explicit_1#components_1,x#explicit_1#components_3#explicit_1#components_2;int(1..)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLt([x#explicit_1#components_2#explicit_1#components_1, x#explicit_1#components_2#explicit_1#components_2], [x#explicit_1#components_3#explicit_1#components_1, x#explicit_1#components_3#explicit_1#components_2])
-
---
-
 ([x#explicit_1#components_3#explicit_1#components_1,x#explicit_1#components_3#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_4#explicit_1#components_1,x#explicit_1#components_4#explicit_1#components_2;int(1..)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLt([x#explicit_1#components_3#explicit_1#components_1, x#explicit_1#components_3#explicit_1#components_2], [x#explicit_1#components_4#explicit_1#components_1, x#explicit_1#components_4#explicit_1#components_2])
+
+--
+
+([x#explicit_1#components_2#explicit_1#components_1,x#explicit_1#components_2#explicit_1#components_2;int(1..)] <lex [x#explicit_1#components_3#explicit_1#components_1,x#explicit_1#components_3#explicit_1#components_2;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#explicit_1#components_2#explicit_1#components_1, x#explicit_1#components_2#explicit_1#components_2], [x#explicit_1#components_3#explicit_1#components_1, x#explicit_1#components_3#explicit_1#components_2])
 
 --
 

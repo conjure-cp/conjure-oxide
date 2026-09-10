@@ -13,8 +13,8 @@ use crate::bug;
 use crate::representation::{Representation, get_repr_rule};
 use std::any::TypeId;
 
+use std::collections::BTreeMap;
 use std::collections::VecDeque;
-use std::collections::{BTreeMap, BTreeSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
@@ -541,19 +541,7 @@ impl SymbolTable {
     /// necessary.
     pub fn extend(&mut self, other: SymbolTable) {
         self.ensure_local_binding_hashes_current();
-        if other.table.keys().count() > self.table.keys().count() {
-            let new_vars = other.table.keys().collect::<BTreeSet<_>>();
-            let old_vars = self.table.keys().collect::<BTreeSet<_>>();
-
-            for added_var in new_vars.difference(&old_vars) {
-                let next_var = &mut self.next_machine_name;
-                if let Name::Machine(m) = *added_var
-                    && *m >= *next_var
-                {
-                    *next_var = *m + 1;
-                }
-            }
-        }
+        self.next_machine_name = self.next_machine_name.max(other.next_machine_name);
 
         for (name, declaration) in &other.table {
             if let Some(existing) = self.table.get(name).cloned() {
@@ -562,6 +550,22 @@ impl SymbolTable {
             self.xor_binding_in(name, declaration);
         }
         self.table.extend(other.table);
+        self.invalidate_context_hash_cache();
+    }
+
+    /// Retains only local bindings that are new or changed relative to `baseline`.
+    ///
+    /// Rules traditionally build their effects by cloning the model symbol table and mutating the
+    /// clone. Compacting that snapshot before application turns it into a small effect delta, so
+    /// impact analysis and `extend` do not repeatedly process every unchanged declaration.
+    pub(crate) fn retain_local_changes_from(&mut self, baseline: &SymbolTable) {
+        self.table.retain(|name, declaration| {
+            baseline
+                .table
+                .get(name)
+                .is_none_or(|old| !declaration.content_eq(old))
+        });
+        self.recompute_local_bindings_xor();
         self.invalidate_context_hash_cache();
     }
 

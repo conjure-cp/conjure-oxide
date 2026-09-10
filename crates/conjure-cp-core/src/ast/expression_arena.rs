@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use uniplate::Uniplate;
 
-use super::Expression;
+use super::{Expression, discriminant_from_value};
 
 /// Stable handle for an expression node stored in an [`ExpressionArena`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -27,11 +27,21 @@ pub struct ExpressionArena {
 
 #[derive(Clone, Debug)]
 struct ExpressionArenaNode {
+    /// The expression payload, replaced with an empty tombstone when this node becomes
+    /// unreachable.
     expr: Expression,
     parent: Option<ExpressionNodeId>,
     children: Vec<ExpressionNodeId>,
+    /// Counts of direct child expression variants.
+    ///
+    /// The rule prefilter asks this question extremely often. Keeping the small set of distinct
+    /// variants here avoids rescanning every element of wide matrix literals after each rewrite.
+    direct_child_discriminants: Vec<(usize, usize)>,
     reachable: bool,
-    preorder_path: Vec<usize>,
+    /// Position in the parent's expression-child sequence. `None` only for the root.
+    child_slot: Option<usize>,
+    /// Distance from the root, cached because the scheduler reads it frequently.
+    depth: usize,
     /// Incremented when this node's rewrite-relevant content changes.
     generation: u32,
 }
@@ -43,7 +53,7 @@ impl ExpressionArena {
             nodes: Vec::new(),
             root: ExpressionNodeId(0),
         };
-        arena.root = arena.push_subtree(root, None, Vec::new());
+        arena.root = arena.push_subtree(root, None, None, 0);
         arena
     }
 
@@ -57,15 +67,6 @@ impl ExpressionArena {
         &self.node(id).expr
     }
 
-    /// Returns the mutable expression payload stored at `id`.
-    ///
-    /// Callers that change the number or order of direct expression children should use
-    /// [`ExpressionArena::replace_subtree`] instead so the arena links stay consistent.
-    pub fn expression_mut(&mut self, id: ExpressionNodeId) -> &mut Expression {
-        self.invalidate_expression_hashes_to_root(id);
-        &mut self.node_mut(id).expr
-    }
-
     /// Returns the parent of `id`, or `None` for the root.
     pub fn parent(&self, id: ExpressionNodeId) -> Option<ExpressionNodeId> {
         self.node(id).parent
@@ -76,16 +77,46 @@ impl ExpressionArena {
         &self.node(id).children
     }
 
+    /// Returns whether a direct child of `id` has the requested expression discriminant.
+    pub(crate) fn has_direct_child_discriminant(
+        &self,
+        id: ExpressionNodeId,
+        discriminant: usize,
+    ) -> bool {
+        self.node(id)
+            .direct_child_discriminants
+            .iter()
+            .any(|&(candidate, count)| candidate == discriminant && count != 0)
+    }
+
     /// Returns whether `id` is still reachable from the current root.
     pub fn is_reachable(&self, id: ExpressionNodeId) -> bool {
         self.node(id).reachable
     }
 
-    /// Returns the current preorder path of `id`.
+    /// Returns the depth of `id` below the root.
+    pub fn depth(&self, id: ExpressionNodeId) -> usize {
+        self.node(id).depth
+    }
+
+    /// Builds the current preorder path of `id`.
     ///
-    /// Lexicographic ordering of these paths is the model preorder used by the rewriter.
-    pub fn preorder_path(&self, id: ExpressionNodeId) -> &[usize] {
-        &self.node(id).preorder_path
+    /// Lexicographic ordering of these paths is the model preorder used by the rewriter. Paths
+    /// are only materialised for the relatively rare ordering operations; storing one on every
+    /// node makes building a deep arena quadratic in the tree depth.
+    pub fn preorder_path(&self, id: ExpressionNodeId) -> Vec<usize> {
+        let mut path = Vec::with_capacity(self.depth(id));
+        let mut current = id;
+        while let Some(parent) = self.parent(current) {
+            path.push(
+                self.node(current)
+                    .child_slot
+                    .expect("non-root expression node must have a child slot"),
+            );
+            current = parent;
+        }
+        path.reverse();
+        path
     }
 
     /// Returns the generation counter for `id`.
@@ -107,28 +138,48 @@ impl ExpressionArena {
         self.assert_valid_id(id);
         replacement.invalidate_cached_content_hash();
         replacement.meta_ref().clear_cached_domain();
+        let old_discriminant = discriminant_from_value(self.expression(id));
+        let new_discriminant = discriminant_from_value(&replacement);
+        let parent = self.parent(id);
 
         let old_children = self.children(id).to_vec();
         for old_child in old_children {
             self.mark_subtree_unreachable(old_child);
         }
 
-        let parent_path = self.preorder_path(id).to_vec();
+        let child_depth = self.depth(id) + 1;
         let children = replacement
             .children()
             .into_iter()
             .enumerate()
             .map(|(child_index, child)| {
-                let mut child_path = parent_path.clone();
-                child_path.push(child_index);
-                self.push_subtree(child, Some(id), child_path)
+                self.push_subtree(child, Some(id), Some(child_index), child_depth)
             })
-            .collect();
+            .collect::<Vec<_>>();
+        let mut direct_child_discriminants = Vec::new();
+        for &child_id in &children {
+            let discriminant = discriminant_from_value(self.expression(child_id));
+            if let Some((_, count)) = direct_child_discriminants
+                .iter_mut()
+                .find(|(candidate, _)| *candidate == discriminant)
+            {
+                *count += 1;
+            } else {
+                direct_child_discriminants.push((discriminant, 1));
+            }
+        }
 
         let node = self.node_mut(id);
         node.expr = replacement;
         node.children = children;
+        node.direct_child_discriminants = direct_child_discriminants;
         node.generation = node.generation.wrapping_add(1);
+
+        if old_discriminant != new_discriminant
+            && let Some(parent_id) = parent
+        {
+            self.replace_direct_child_discriminant(parent_id, old_discriminant, new_discriminant);
+        }
     }
 
     /// Appends top-level constraints to the root expression.
@@ -144,12 +195,16 @@ impl ExpressionArena {
             .into_iter()
             .enumerate()
             .map(|(offset, child)| {
-                self.push_subtree(child, Some(root), vec![first_new_child_index + offset])
+                self.push_subtree(child, Some(root), Some(first_new_child_index + offset), 1)
             })
             .collect::<Vec<_>>();
         self.node_mut(root)
             .children
             .extend(new_children.iter().copied());
+        for &child_id in &new_children {
+            let child_discriminant = discriminant_from_value(self.expression(child_id));
+            self.increment_direct_child_discriminant(root, child_discriminant);
+        }
 
         let rebuilt_children = self
             .children(root)
@@ -174,8 +229,11 @@ impl ExpressionArena {
             .iter()
             .map(|&child_id| self.direct_child_expression(child_id))
             .collect();
-        let rebuilt = self.node(id).expr.with_children(child_exprs);
+        let rebuilt = self.expression(id).with_children(child_exprs);
         rebuilt.meta_ref().clear_cached_domain();
+        // `with_children` carries the old metadata onto the rebuilt expression, cached content
+        // hash included, but the children it now holds are different ones.
+        rebuilt.invalidate_cached_content_hash();
         let node = self.node_mut(id);
         node.expr = rebuilt;
         node.generation = node.generation.wrapping_add(1);
@@ -184,18 +242,15 @@ impl ExpressionArena {
     /// Syncs the parent payload after a direct child changed.
     ///
     /// Uses [`Uniplate::try_replace_child_at`](uniplate::Uniplate::try_replace_child_at) so
-    /// same-arity updates avoid cloning siblings. Falls back to a full rebuild if the child is
-    /// missing or in-place replace fails (e.g. arity mismatch).
+    /// same-arity updates avoid cloning siblings. The child's stored slot gives its position in
+    /// the parent in O(1). Falls back to a full rebuild if the child is missing or in-place replace
+    /// fails (e.g. arity mismatch).
     pub fn sync_payload_for_changed_child(
         &mut self,
         parent_id: ExpressionNodeId,
         child_id: ExpressionNodeId,
     ) {
-        let Some(index) = self
-            .children(parent_id)
-            .iter()
-            .position(|&id| id == child_id)
-        else {
+        let Some(index) = self.direct_child_index(parent_id, child_id) else {
             self.rebuild_payload_from_children(parent_id);
             return;
         };
@@ -216,6 +271,62 @@ impl ExpressionArena {
         node.generation = node.generation.wrapping_add(1);
     }
 
+    /// Returns `child_id`'s position among `parent_id`'s direct children.
+    ///
+    /// Checking the stored parent and child slot keeps this lookup safe for unreachable nodes
+    /// whose relationship metadata is retained after subtree replacement.
+    fn direct_child_index(
+        &self,
+        parent_id: ExpressionNodeId,
+        child_id: ExpressionNodeId,
+    ) -> Option<usize> {
+        let child = self.node(child_id);
+        if child.parent != Some(parent_id) {
+            return None;
+        }
+
+        let index = child.child_slot?;
+        (self.children(parent_id).get(index).copied() == Some(child_id)).then_some(index)
+    }
+
+    fn increment_direct_child_discriminant(&mut self, id: ExpressionNodeId, discriminant: usize) {
+        let counts = &mut self.node_mut(id).direct_child_discriminants;
+        if let Some((_, count)) = counts
+            .iter_mut()
+            .find(|(candidate, _)| *candidate == discriminant)
+        {
+            *count += 1;
+        } else {
+            counts.push((discriminant, 1));
+        }
+    }
+
+    fn replace_direct_child_discriminant(
+        &mut self,
+        id: ExpressionNodeId,
+        old_discriminant: usize,
+        new_discriminant: usize,
+    ) {
+        let counts = &mut self.node_mut(id).direct_child_discriminants;
+        let old_index = counts
+            .iter()
+            .position(|(candidate, _)| *candidate == old_discriminant)
+            .expect("old direct-child discriminant must be indexed");
+        counts[old_index].1 -= 1;
+        if counts[old_index].1 == 0 {
+            counts.swap_remove(old_index);
+        }
+
+        if let Some((_, count)) = counts
+            .iter_mut()
+            .find(|(candidate, _)| *candidate == new_discriminant)
+        {
+            *count += 1;
+        } else {
+            counts.push((new_discriminant, 1));
+        }
+    }
+
     /// Clears cached expression content hashes from `id` through the root.
     fn invalidate_expression_hashes_to_root(&mut self, id: ExpressionNodeId) {
         let mut node = Some(id);
@@ -229,6 +340,19 @@ impl ExpressionArena {
     /// Rebuilds the expression tree reachable from the arena root.
     pub fn into_root_expression(self) -> Expression {
         self.expression_from(self.root)
+    }
+
+    /// Moves out the root payload when callers have kept ancestor payloads synchronized.
+    ///
+    /// Unlike [`Self::into_root_expression`], this does not recursively rebuild the tree. It is
+    /// intended for the rewriter's settled arena, where every changed child has already been
+    /// propagated to the root.
+    pub(crate) fn into_synced_root_expression(self) -> Expression {
+        self.nodes
+            .into_iter()
+            .nth(self.root.0)
+            .expect("arena must contain its root node")
+            .expr
     }
 
     fn direct_child_expression(&self, id: ExpressionNodeId) -> Expression {
@@ -286,7 +410,8 @@ impl ExpressionArena {
         &mut self,
         expr: Expression,
         parent: Option<ExpressionNodeId>,
-        preorder_path: Vec<usize>,
+        child_slot: Option<usize>,
+        depth: usize,
     ) -> ExpressionNodeId {
         expr.invalidate_cached_content_hash();
         expr.meta_ref().clear_cached_domain();
@@ -296,8 +421,10 @@ impl ExpressionArena {
             expr,
             parent,
             children: Vec::new(),
+            direct_child_discriminants: Vec::new(),
             reachable: true,
-            preorder_path: preorder_path.clone(),
+            child_slot,
+            depth,
             generation: 0,
         });
 
@@ -305,12 +432,18 @@ impl ExpressionArena {
             .into_iter()
             .enumerate()
             .map(|(child_index, child)| {
-                let mut child_path = preorder_path.clone();
-                child_path.push(child_index);
-                self.push_subtree(child, Some(id), child_path)
+                self.push_subtree(child, Some(id), Some(child_index), depth + 1)
             })
             .collect();
         self.nodes[id.0].children = children;
+        let child_discriminants = self.nodes[id.0]
+            .children
+            .iter()
+            .map(|&child_id| discriminant_from_value(self.expression(child_id)))
+            .collect::<Vec<_>>();
+        for child_discriminant in child_discriminants {
+            self.increment_direct_child_discriminant(id, child_discriminant);
+        }
 
         id
     }
@@ -320,8 +453,10 @@ impl ExpressionArena {
             return;
         }
 
-        let children = self.children(id).to_vec();
+        let children = std::mem::take(&mut self.node_mut(id).children);
         let node = self.node_mut(id);
+        node.expr = Expression::Root(super::Metadata::new(), Vec::new());
+        node.direct_child_discriminants.clear();
         node.reachable = false;
         node.generation = node.generation.wrapping_add(1);
 
@@ -385,6 +520,27 @@ mod tests {
     }
 
     #[test]
+    fn direct_child_discriminants_update_without_losing_duplicate_counts() {
+        let mut arena = ExpressionArena::from_root(root(vec![int(1), int(2)]));
+        let root_id = arena.root();
+        let children = arena.children(root_id).to_vec();
+        let atomic = discriminant_from_value(arena.expression(children[0]));
+        let equality = discriminant_from_value(&eq(int(1), int(2)));
+
+        assert!(arena.has_direct_child_discriminant(root_id, atomic));
+        assert!(!arena.has_direct_child_discriminant(root_id, equality));
+
+        arena.replace_subtree(children[0], eq(int(3), int(4)));
+        assert!(arena.has_direct_child_discriminant(root_id, atomic));
+        assert!(arena.has_direct_child_discriminant(root_id, equality));
+        assert!(arena.has_direct_child_discriminant(children[0], atomic));
+
+        arena.replace_subtree(children[1], eq(int(5), int(6)));
+        assert!(!arena.has_direct_child_discriminant(root_id, atomic));
+        assert!(arena.has_direct_child_discriminant(root_id, equality));
+    }
+
+    #[test]
     fn replacement_marks_old_descendants_unreachable_and_paths_new_children() {
         let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2)), int(3)]));
         let root_id = arena.root();
@@ -420,6 +576,40 @@ mod tests {
     }
 
     #[test]
+    fn obtains_direct_child_indices_from_preorder_paths() {
+        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2)), int(3)]));
+        let root_id = arena.root();
+        let eq_id = arena.children(root_id)[0];
+        let eq_children = arena.children(eq_id).to_vec();
+
+        assert_eq!(arena.direct_child_index(root_id, eq_id), Some(0));
+        assert_eq!(arena.direct_child_index(eq_id, eq_children[0]), Some(0));
+        assert_eq!(arena.direct_child_index(eq_id, eq_children[1]), Some(1));
+        assert_eq!(arena.direct_child_index(root_id, eq_children[0]), None);
+        assert_eq!(arena.direct_child_index(eq_id, root_id), None);
+
+        let added = arena.add_root_children(vec![int(4)]);
+        assert_eq!(arena.direct_child_index(root_id, added[0]), Some(2));
+    }
+
+    #[test]
+    fn direct_child_index_rejects_unreachable_replaced_children() {
+        let mut arena = ExpressionArena::from_root(root(vec![eq(int(1), int(2))]));
+        let root_id = arena.root();
+        let eq_id = arena.children(root_id)[0];
+        let old_left = arena.children(eq_id)[0];
+
+        arena.replace_subtree(eq_id, eq(int(3), int(4)));
+
+        assert!(!arena.is_reachable(old_left));
+        assert_eq!(arena.direct_child_index(eq_id, old_left), None);
+        assert_eq!(
+            arena.direct_child_index(eq_id, arena.children(eq_id)[0]),
+            Some(0)
+        );
+    }
+
+    #[test]
     fn adding_root_children_bumps_root_generation() {
         let mut arena = ExpressionArena::from_root(root(vec![int(1)]));
         let root_id = arena.root();
@@ -449,6 +639,8 @@ mod tests {
         let root_id = arena.root();
         let eq_id = arena.children(root_id)[0];
         let left = arena.children(eq_id)[0];
+        let old_eq_hash = arena.expression(eq_id).cached_content_hash();
+        let old_root_hash = arena.expression(root_id).cached_content_hash();
 
         arena.replace_subtree(left, int(3));
         arena.rebuild_payload_from_children(eq_id);
@@ -456,6 +648,11 @@ mod tests {
 
         assert_eq!(arena.expression(eq_id), &eq(int(3), int(2)));
         assert_eq!(arena.expression(root_id), &root(vec![eq(int(3), int(2))]));
+        assert_ne!(arena.expression(eq_id).cached_content_hash(), old_eq_hash);
+        assert_ne!(
+            arena.expression(root_id).cached_content_hash(),
+            old_root_hash
+        );
     }
 
     #[test]

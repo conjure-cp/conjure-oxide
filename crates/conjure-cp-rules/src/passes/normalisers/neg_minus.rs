@@ -92,7 +92,7 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
     };
 
     let mut factors = Moo::unwrap_or_clone(factors)
-        .unwrap_list()
+        .into_list()
         .ok_or(RuleNotApplicable)?;
 
     factors.push(essence_expr!(-1));

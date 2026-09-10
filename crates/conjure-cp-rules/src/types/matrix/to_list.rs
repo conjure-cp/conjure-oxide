@@ -29,7 +29,9 @@ use conjure_cp::rule_engine::{
 /// be left alone.
 // Match parents of matrix values whether they appear as `AbstractLiteral`
 // nodes or as `Atomic` literals wrapping a matrix.
-#[register_rule("Base", 2000, [* / AbstractLiteral, * / Atomic])]
+// Run after same-priority backend flatteners such as `flatten_lex_lt_leq`: they already accept
+// explicitly indexed matrix literals, so converting a nested operand first is wasted work.
+#[register_rule("Base", 1998, [* / AbstractLiteral, * / Atomic])]
 fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // match on the parent: do not apply this rule to things descended from abstract literal, or
     // special language constructs like bubble.
@@ -48,13 +50,18 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             // first is redundant and creates fake optionality.
             | Expr::LexLt(_, _, _)
             | Expr::LexLeq(_, _, _)
+            // `elementId` reports a position in its subject, so the subject's index domain is
+            // part of what it means. Renumbering it to `int(1..)` selects a different lowering,
+            // and the two lowerings disagree on which index stands for a value that the subject
+            // does not contain.
+            | Expr::ElementId(_, _, _)
     ) {
         return Err(RuleNotApplicable);
     }
 
     let (new_expr, num_changed) = rewrite_children(expr, |child| {
         // already a list => no change
-        if child.unwrap_list().is_some() {
+        if child.is_list() {
             return (child, false);
         }
 

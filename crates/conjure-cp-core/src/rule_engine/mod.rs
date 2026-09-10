@@ -84,7 +84,8 @@ pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_set
 pub use rewrite::rewrite_model;
 pub use rewriter_common::RewriteError;
 pub use rule::{
-    ApplicationError, ApplicationResult, AtomKind, Rule, RuleEffect, RuleFn, RulePrefilter,
+    ApplicationError, ApplicationResult, AtomKind, Rule, RuleEffect, RuleFailureInvalidation,
+    RuleFn, RulePrefilter,
 };
 pub use rule_set::RuleSet;
 

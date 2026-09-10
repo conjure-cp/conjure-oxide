@@ -4,7 +4,7 @@ use conjure_cp::ast::eval_constant;
 use conjure_cp::ast::{
     AbstractLiteral, Atom, DeclarationPtr, DomainPtr, Expression as Expr, Literal, Metadata, Moo,
     Reference, SymbolTable,
-    categories::Category,
+    categories::{Category, CategoryOf},
     comprehension::{Comprehension, ComprehensionQualifier},
     records::Field,
 };
@@ -32,7 +32,9 @@ pub fn is_literal(expr: &Expr) -> bool {
 
 /// True if `expr` is flat; i.e. it only contains atoms.
 pub fn is_flat(expr: &Expr) -> bool {
-    expr.children().iter().all(is_atom)
+    let mut flat = true;
+    expr.for_each_expr_child(&mut |child| flat = flat && is_atom(child));
+    flat
 }
 
 /// Rewrites the direct expression children of `expr`, preserving the number of children.
@@ -274,6 +276,48 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
     Some(atoms)
 }
 
+/// Replaces every direct child of `expr` that needs one with a fresh auxiliary variable.
+///
+/// `applies` decides whether the rewrite goes ahead, given the number of children that need an
+/// auxiliary and the total number of children. It is consulted before the model-wide symbol table
+/// is cloned, so a rule that does not apply pays neither for the clone nor for the rebuild.
+///
+/// Child domains are derived once and reused for the rewrite. Deriving the domain of an expression
+/// can enumerate its whole value set, and expression clones start with an empty domain cache, so
+/// each domain is worth deriving exactly once per call.
+pub fn flatten_children_to_aux_vars(
+    expr: &Expr,
+    symbols: &SymbolTable,
+    applies: impl FnOnce(usize, usize) -> bool,
+) -> Option<(Expr, Vec<Expr>, SymbolTable)> {
+    let children = expr.children();
+    let child_domains: Vec<Option<DomainPtr>> = children.iter().map(to_aux_var_domain).collect();
+
+    let needs_aux = child_domains
+        .iter()
+        .filter(|domain| domain.is_some())
+        .count();
+    if !applies(needs_aux, children.len()) {
+        return None;
+    }
+
+    let mut symbols = symbols.clone();
+    let mut new_tops: Vec<Expr> = vec![];
+    let mut new_children: VecDeque<Expr> = VecDeque::with_capacity(children.len());
+    for (child, domain) in children.into_iter().zip(child_domains) {
+        match domain {
+            Some(domain) => {
+                let (reference, top) = materialise_aux_var_in(&child, &mut symbols, &domain);
+                new_tops.push(top);
+                new_children.push_back(Expr::Atomic(Metadata::new(), Atom::Reference(reference)));
+            }
+            None => new_children.push_back(child),
+        }
+    }
+
+    Some((expr.with_children(new_children), new_tops, symbols))
+}
+
 /// Creates a new auxiliary variable using the given expression.
 ///
 /// # Returns
@@ -286,10 +330,14 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
 ///     + A new top level expression, containing the declaration of the auxiliary variable.
 ///     + A reference to the auxiliary variable to replace the existing expression with.
 ///
+/// Adds an auxiliary for `expr` directly to an existing speculative symbol table.
+///
+/// Use this when constructing one or more auxiliaries inside an effect. It avoids cloning the
+/// complete, growing symbol table for each auxiliary.
 #[instrument(skip_all, fields(expr = %expr))]
-pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> {
+pub fn to_aux_var_in(expr: &Expr, symbols: &mut SymbolTable) -> Option<(Reference, Expr)> {
     let domain = to_aux_var_domain(expr)?;
-    Some(materialise_aux_var(expr, symbols, &domain))
+    Some(materialise_aux_var_in(expr, symbols, &domain))
 }
 
 fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
@@ -302,7 +350,21 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     }
 
     // Anything that should be bubbled, bubble
-    if !expr.is_safe() {
+    let mut safe = true;
+    let mut categories = std::collections::HashSet::new();
+    expr.for_each_expression(&mut |subexpr| {
+        safe &= !matches!(
+            subexpr,
+            Expr::UnsafeDiv(_, _, _)
+                | Expr::UnsafeMod(_, _, _)
+                | Expr::UnsafePow(_, _, _)
+                | Expr::UnsafeIndex(_, _, _)
+                | Expr::Bubble(_, _, _)
+                | Expr::UnsafeSlice(_, _, _)
+        );
+        categories.insert(subexpr.category_of());
+    });
+    if !safe {
         if cfg!(debug_assertions) {
             trace!(why = "expression is unsafe", "to_aux_var() failed");
         }
@@ -331,8 +393,6 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     // constants.
     //
     // i.e. dont flatten things containing givens, quantified variables, just constants, etc.
-    let categories = expr.universe_categories();
-
     bug_assert!(!categories.is_empty());
 
     if !(categories.len() == 1 && categories.contains(&Category::Decision)
@@ -374,8 +434,8 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
         let index_has_element_id = indices
             .iter()
             .any(|index| matches!(index, Expr::ElementId(..)));
-        let can_lower_via_element = subject.clone().unwrap_list().is_some()
-            && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
+        let can_lower_via_element =
+            subject.is_list() && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
 
         if !can_lower_via_element && !index_has_element_id {
             if cfg!(debug_assertions) {
@@ -397,6 +457,21 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
 
 fn materialise_aux_var(expr: &Expr, symbols: &SymbolTable, domain: &DomainPtr) -> ToAuxVarOutput {
     let mut symbols = symbols.clone();
+    let (reference, aux_expression) = materialise_aux_var_in(expr, &mut symbols, domain);
+
+    ToAuxVarOutput {
+        aux_reference: reference,
+        aux_expression,
+        symbols,
+        _unconstructable: (),
+    }
+}
+
+fn materialise_aux_var_in(
+    expr: &Expr,
+    symbols: &mut SymbolTable,
+    domain: &DomainPtr,
+) -> (Reference, Expr) {
     let decl = symbols.gen_find_auxiliary(domain);
     let mut reference = Reference::new(decl);
     let mut representation_constraints = Vec::new();
@@ -440,12 +515,7 @@ fn materialise_aux_var(expr: &Expr, symbols: &SymbolTable, domain: &DomainPtr) -
         Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(expressions)))
     };
 
-    ToAuxVarOutput {
-        aux_reference: reference,
-        aux_expression,
-        symbols,
-        _unconstructable: (),
-    }
+    (reference, aux_expression)
 }
 
 /// Defers auxiliary variable allocation until a selected rule is materialised.
@@ -462,7 +532,7 @@ pub fn defer_aux_var(
     }))
 }
 
-/// Output data of `to_aux_var`.
+/// Output passed to deferred auxiliary-effect builders.
 pub struct ToAuxVarOutput {
     aux_reference: Reference,
     aux_expression: Expr,

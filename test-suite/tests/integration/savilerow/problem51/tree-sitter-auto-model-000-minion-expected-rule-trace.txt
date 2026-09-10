@@ -41,6 +41,22 @@ __0 =aux sum([ product([toInt(packed[i]),values[i];int(1..)]) | i : int(1..nItem
 
 --
 
+sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]) <= 11
+   ~~> flatten_generic ([("Minion", 4200)])
+__1 <= 11
+new variables:
+  findAux __1: int(0..80)
+new constraints:
+  __1 =aux sum([ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ])
+
+--
+
+__1 <= 11
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__1, 11, 0)
+
+--
+
 [ product([toInt(packed[i]),weights[i];int(1..)]) | i : int(1..nItems) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([toInt(packed#components_1),1;int(1..)]),product([toInt(packed#components_2),7;int(1..)]),product([toInt(packed#components_3),2;int(1..)]),product([toInt(packed#components_4),2;int(1..)]),product([toInt(packed#components_5),2;int(1..)]),product([toInt(packed#components_6),6;int(1..)]),product([toInt(packed#components_7),8;int(1..)]),product([toInt(packed#components_8),5;int(1..)]),product([toInt(packed#components_9),8;int(1..)]),product([toInt(packed#components_10),4;int(1..)]);int(1..)]
@@ -113,11 +129,10 @@ toInt(packed#components_1)
 
 --
 
-sum([toInt(packed#components_1),product([7,toInt(packed#components_2);int(1..)]),product([2,toInt(packed#components_3);int(1..)]),product([2,toInt(packed#components_4);int(1..)]),product([2,toInt(packed#components_5);int(1..)]),product([6,toInt(packed#components_6);int(1..)]),product([8,toInt(packed#components_7);int(1..)]),product([5,toInt(packed#components_8);int(1..)]),product([8,toInt(packed#components_9);int(1..)]),product([4,toInt(packed#components_10);int(1..)]);int(1..)]) <= 11
+__1 =aux sum([toInt(packed#components_1),product([7,toInt(packed#components_2);int(1..)]),product([2,toInt(packed#components_3);int(1..)]),product([2,toInt(packed#components_4);int(1..)]),product([2,toInt(packed#components_5);int(1..)]),product([6,toInt(packed#components_6);int(1..)]),product([8,toInt(packed#components_7);int(1..)]),product([5,toInt(packed#components_8);int(1..)]),product([8,toInt(packed#components_9);int(1..)]),product([4,toInt(packed#components_10);int(1..)]);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-FlatWeightedSumLeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__1, __2, __3, __4, __5, __6, __7, __8, __9, packed#components_1],11)
+and([FlatWeightedSumLeq([4, 7, 2, 2, 2, 6, 8, 5, 8, 1],[__10, __2, __3, __4, __5, __6, __7, __8, __9, packed#components_1],__1),FlatWeightedSumGeq([4, 7, 2, 2, 2, 6, 8, 5, 8, 1],[__10, __2, __3, __4, __5, __6, __7, __8, __9, packed#components_1],__1);int(1..)])
 new variables:
-  findAux __1: int(0..1)
   findAux __2: int(0..1)
   findAux __3: int(0..1)
   findAux __4: int(0..1)
@@ -126,16 +141,17 @@ new variables:
   findAux __7: int(0..1)
   findAux __8: int(0..1)
   findAux __9: int(0..1)
+  findAux __10: int(0..1)
 new constraints:
-  __1 =aux product([toInt(packed#components_2);int(1..)])
-  __2 =aux product([toInt(packed#components_3);int(1..)])
-  __3 =aux product([toInt(packed#components_4);int(1..)])
-  __4 =aux product([toInt(packed#components_5);int(1..)])
-  __5 =aux product([toInt(packed#components_6);int(1..)])
-  __6 =aux product([toInt(packed#components_7);int(1..)])
-  __7 =aux product([toInt(packed#components_8);int(1..)])
-  __8 =aux product([toInt(packed#components_9);int(1..)])
-  __9 =aux product([toInt(packed#components_10);int(1..)])
+  __2 =aux product([toInt(packed#components_2);int(1..)])
+  __3 =aux product([toInt(packed#components_3);int(1..)])
+  __4 =aux product([toInt(packed#components_4);int(1..)])
+  __5 =aux product([toInt(packed#components_5);int(1..)])
+  __6 =aux product([toInt(packed#components_6);int(1..)])
+  __7 =aux product([toInt(packed#components_7);int(1..)])
+  __8 =aux product([toInt(packed#components_8);int(1..)])
+  __9 =aux product([toInt(packed#components_9);int(1..)])
+  __10 =aux product([toInt(packed#components_10);int(1..)])
 
 --
 
@@ -267,9 +283,8 @@ toInt(packed#components_1)
 
 __0 =aux sum([toInt(packed#components_1),product([7,toInt(packed#components_2);int(1..)]),product([2,toInt(packed#components_3);int(1..)]),product([2,toInt(packed#components_4);int(1..)]),product([2,toInt(packed#components_5);int(1..)]),product([6,toInt(packed#components_6);int(1..)]),product([8,toInt(packed#components_7);int(1..)]),product([5,toInt(packed#components_8);int(1..)]),product([8,toInt(packed#components_9);int(1..)]),product([4,toInt(packed#components_10);int(1..)]);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __18, packed#components_1],__0),FlatWeightedSumGeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __18, packed#components_1],__0);int(1..)])
+and([FlatWeightedSumLeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__11, __12, __13, __14, __15, __16, __17, __18, __19, packed#components_1],__0),FlatWeightedSumGeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__11, __12, __13, __14, __15, __16, __17, __18, __19, packed#components_1],__0);int(1..)])
 new variables:
-  findAux __10: int(0..1)
   findAux __11: int(0..1)
   findAux __12: int(0..1)
   findAux __13: int(0..1)
@@ -278,16 +293,17 @@ new variables:
   findAux __16: int(0..1)
   findAux __17: int(0..1)
   findAux __18: int(0..1)
+  findAux __19: int(0..1)
 new constraints:
-  __10 =aux product([toInt(packed#components_2);int(1..)])
-  __11 =aux product([toInt(packed#components_3);int(1..)])
-  __12 =aux product([toInt(packed#components_4);int(1..)])
-  __13 =aux product([toInt(packed#components_5);int(1..)])
-  __14 =aux product([toInt(packed#components_6);int(1..)])
-  __15 =aux product([toInt(packed#components_7);int(1..)])
-  __16 =aux product([toInt(packed#components_8);int(1..)])
-  __17 =aux product([toInt(packed#components_9);int(1..)])
-  __18 =aux product([toInt(packed#components_10);int(1..)])
+  __11 =aux product([toInt(packed#components_2);int(1..)])
+  __12 =aux product([toInt(packed#components_3);int(1..)])
+  __13 =aux product([toInt(packed#components_4);int(1..)])
+  __14 =aux product([toInt(packed#components_5);int(1..)])
+  __15 =aux product([toInt(packed#components_6);int(1..)])
+  __16 =aux product([toInt(packed#components_7);int(1..)])
+  __17 =aux product([toInt(packed#components_8);int(1..)])
+  __18 =aux product([toInt(packed#components_9);int(1..)])
+  __19 =aux product([toInt(packed#components_10);int(1..)])
 
 --
 
@@ -383,7 +399,7 @@ letting values#components_7 be 8
 letting values#components_8 be 5
 letting values#components_9 be 8
 letting values#components_10 be 4
-findAux __1: int(0..1)
+findAux __1: int(0..80)
 findAux __2: int(0..1)
 findAux __3: int(0..1)
 findAux __4: int(0..1)
@@ -401,27 +417,29 @@ findAux __15: int(0..1)
 findAux __16: int(0..1)
 findAux __17: int(0..1)
 findAux __18: int(0..1)
+findAux __19: int(0..1)
 
 such that
 
-FlatWeightedSumLeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__1, __2, __3, __4, __5, __6, __7, __8, __9, packed#components_1],11),
-and([FlatWeightedSumLeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __18, packed#components_1],__0),FlatWeightedSumGeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __18, packed#components_1],__0);int(1..)]),
-__1 =aux toInt(packed#components_2),
-__2 =aux toInt(packed#components_3),
-__3 =aux toInt(packed#components_4),
-__4 =aux toInt(packed#components_5),
-__5 =aux toInt(packed#components_6),
-__6 =aux toInt(packed#components_7),
-__7 =aux toInt(packed#components_8),
-__8 =aux toInt(packed#components_9),
-__9 =aux toInt(packed#components_10),
-__10 =aux toInt(packed#components_2),
-__11 =aux toInt(packed#components_3),
-__12 =aux toInt(packed#components_4),
-__13 =aux toInt(packed#components_5),
-__14 =aux toInt(packed#components_6),
-__15 =aux toInt(packed#components_7),
-__16 =aux toInt(packed#components_8),
-__17 =aux toInt(packed#components_9),
-__18 =aux toInt(packed#components_10)
+Ineq(__1, 11, 0),
+and([FlatWeightedSumLeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__11, __12, __13, __14, __15, __16, __17, __18, __19, packed#components_1],__0),FlatWeightedSumGeq([7, 2, 2, 2, 6, 8, 5, 8, 4, 1],[__11, __12, __13, __14, __15, __16, __17, __18, __19, packed#components_1],__0);int(1..)]),
+and([FlatWeightedSumLeq([4, 7, 2, 2, 2, 6, 8, 5, 8, 1],[__10, __2, __3, __4, __5, __6, __7, __8, __9, packed#components_1],__1),FlatWeightedSumGeq([4, 7, 2, 2, 2, 6, 8, 5, 8, 1],[__10, __2, __3, __4, __5, __6, __7, __8, __9, packed#components_1],__1);int(1..)]),
+__2 =aux toInt(packed#components_2),
+__3 =aux toInt(packed#components_3),
+__4 =aux toInt(packed#components_4),
+__5 =aux toInt(packed#components_5),
+__6 =aux toInt(packed#components_6),
+__7 =aux toInt(packed#components_7),
+__8 =aux toInt(packed#components_8),
+__9 =aux toInt(packed#components_9),
+__10 =aux toInt(packed#components_10),
+__11 =aux toInt(packed#components_2),
+__12 =aux toInt(packed#components_3),
+__13 =aux toInt(packed#components_4),
+__14 =aux toInt(packed#components_5),
+__15 =aux toInt(packed#components_6),
+__16 =aux toInt(packed#components_7),
+__17 =aux toInt(packed#components_8),
+__18 =aux toInt(packed#components_9),
+__19 =aux toInt(packed#components_10)
 

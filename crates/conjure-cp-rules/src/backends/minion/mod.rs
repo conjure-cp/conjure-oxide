@@ -12,7 +12,9 @@ use std::{
 };
 
 use crate::extra_check;
-use crate::shared::utils::{defer_aux_var, is_flat, rewrite_children, to_aux_var};
+use crate::shared::utils::{
+    defer_aux_var, flatten_children_to_aux_vars, is_flat, rewrite_children, to_aux_var_in,
+};
 use crate::types::matrix::try_index_matrix_components;
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{Domain, DomainPtr, GroundDomain, HasDomain, Moo, eval_constant};
@@ -48,6 +50,18 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
         return Err(RuleNotApplicable);
     };
 
+    // When all but the leading index are fixed, project those dimensions while the value letting
+    // is still borrowed. The generic matrix rules would otherwise clone the complete matrix and
+    // build one SafeIndex per outer element, only to evaluate every one of them independently.
+    if let Some(projected) = reference
+        .with_resolved_expression(|resolved| {
+            specialise_literal_matrix_index(resolved, indices.as_slice())
+        })
+        .flatten()
+    {
+        return Ok(RuleEffect::pure(projected));
+    }
+
     let constant = reference.resolve_constant().ok_or(RuleNotApplicable)?;
     let Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _)) = &constant else {
         return Err(RuleNotApplicable);
@@ -58,6 +72,69 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
         Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(constant))),
         indices.clone(),
     )))
+}
+
+fn literal_matrix_offset(domain: &GroundDomain, index: i32) -> Option<usize> {
+    let GroundDomain::Int(ranges) = domain else {
+        return None;
+    };
+    let [range] = ranges.as_slice() else {
+        return None;
+    };
+    usize::try_from(index.checked_sub(*range.low()?)?).ok()
+}
+
+fn literal_at_matrix_indices<'a>(mut value: &'a Lit, indices: &[i32]) -> Option<&'a Lit> {
+    for &index in indices {
+        let Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, domain)) = value else {
+            return None;
+        };
+        value = elems.get(literal_matrix_offset(domain, index)?)?;
+    }
+    Some(value)
+}
+
+/// Projects fixed trailing dimensions from a directly stored literal matrix.
+///
+/// For example, `m[i, 2]` becomes `[m[1,2], ..., m[n,2]][i]` in one rewrite, without cloning `m`
+/// or constructing `n` intermediate SafeIndex expressions.
+fn specialise_literal_matrix_index(resolved: &Expr, indices: &[Expr]) -> Option<Expr> {
+    if indices.len() < 2 {
+        return None;
+    }
+
+    let Expr::Atomic(
+        _,
+        Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(outer_elems, outer_domain))),
+    ) = resolved
+    else {
+        return None;
+    };
+
+    let trailing_indices = indices[1..]
+        .iter()
+        .map(|index| match eval_constant(index)? {
+            Lit::Int(value) => Some(value),
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>()?;
+
+    let projected = outer_elems
+        .iter()
+        .map(|row| literal_at_matrix_indices(row, &trailing_indices).cloned())
+        .collect::<Option<Vec<_>>>()?;
+
+    Some(Expr::SafeIndex(
+        Metadata::new(),
+        Moo::new(Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(
+                projected,
+                outer_domain.clone(),
+            ))),
+        )),
+        vec![indices[0].clone()],
+    ))
 }
 
 fn materialise_matrix_operand(expr: &Expr) -> Option<Expr> {
@@ -148,7 +225,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    let mut factors_vec = (**factors).clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let mut factors_vec = (**factors).clone().into_list().ok_or(RuleNotApplicable)?;
     if factors_vec.len() < 2 {
         return Err(RuleNotApplicable);
     }
@@ -330,37 +407,37 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
         ) {
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Leq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Leq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Geq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Geq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Eq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Eq) => {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
@@ -376,7 +453,7 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
             let total: Atom = Atom::Reference(reference);
             if let Expr::Sum(_, sum_terms) = Moo::unwrap_or_clone(a) {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
-                    .unwrap_list()
+                    .into_list()
                     .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             } else {
@@ -620,7 +697,7 @@ fn flatten_weighted_sum_term(
             // we already check for the first case above, so this should only error when we have a
             // non-list matrix literal.
             let factors = Moo::unwrap_or_clone(factors)
-                .unwrap_list()
+                .into_list()
                 .ok_or(RuleNotApplicable)?;
 
             match factors.as_slice() {
@@ -707,10 +784,10 @@ fn flatten_weighted_sum_term(
 ///  + Returns [`ApplicationError::RuleNotApplicable`] if the expression cannot be placed into an
 ///    auxiliary variable. For example, expressions that do not have domains.
 ///
-///    This function supports the same expressions as [`to_aux_var`], except that this functions
+///    This function supports the same expressions as [`to_aux_var_in`], except that this function
 ///    succeeds when the expression given is atomic.
 ///
-///    See [`to_aux_var`] for more information.
+///    See [`to_aux_var_in`] for more information.
 ///
 fn flatten_expression_to_atom(
     expr: Expr,
@@ -731,11 +808,10 @@ fn flatten_expression_to_atom(
         return Ok(atom.clone());
     }
 
-    let aux_var_info = to_aux_var(&expr, symtab).ok_or(RuleNotApplicable)?;
-    *symtab = aux_var_info.symbols();
-    top_level_exprs.push(aux_var_info.top_level_expr());
+    let (reference, top) = to_aux_var_in(&expr, symtab).ok_or(RuleNotApplicable)?;
+    top_level_exprs.push(top);
 
-    Ok(aux_var_info.as_atom())
+    Ok(Atom::Reference(reference))
 }
 
 #[register_rule("Minion", 4200, [Eq / SafeDiv, AuxDeclaration / SafeDiv])]
@@ -943,13 +1019,14 @@ fn match_lee_complement(complement: &Expr, expected_inner: &Expr) -> Option<i32>
             (inner.as_ref() == expected_inner).then_some(alphabet_size)
         }
         Expr::Sum(_, matrix) => {
-            let terms = matrix.as_ref().clone().unwrap_list().or_else(|| {
+            let matrix = matrix.as_ref().clone();
+            let terms = if matrix.is_list() {
+                matrix.into_list()
+            } else {
                 matrix
-                    .as_ref()
-                    .clone()
                     .unwrap_matrix_unchecked()
-                    .map(|(elems, _)| elems)
-            })?;
+                    .map(|(elements, _)| elements)
+            }?;
             if terms.len() != 2 {
                 return None;
             }
@@ -1021,7 +1098,7 @@ fn introduce_mineq_from_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationRe
         return Err(RuleNotApplicable);
     };
 
-    let Some(exprs) = inside_min_expr.as_ref().clone().unwrap_list() else {
+    let Some(exprs) = inside_min_expr.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
     if exprs.is_empty() {
@@ -1078,7 +1155,7 @@ fn introduce_mineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Min(_, inside_min_expr) = min_expr else {
         return Err(RuleNotApplicable);
     };
-    let Some(exprs) = inside_min_expr.as_ref().clone().unwrap_list() else {
+    let Some(exprs) = inside_min_expr.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
     if exprs.is_empty() {
@@ -1192,15 +1269,14 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => Moo::unwrap_or_clone(es.clone()),
     };
 
-    let es = matrix_expr
-        .clone()
-        .unwrap_list()
-        .or_else(|| {
-            matrix_expr
-                .unwrap_matrix_unchecked()
-                .map(|(elements, _)| elements)
-        })
-        .ok_or(RuleNotApplicable)?;
+    let es = if matrix_expr.is_list() {
+        matrix_expr.into_list()
+    } else {
+        matrix_expr
+            .unwrap_matrix_unchecked()
+            .map(|(elements, _)| elements)
+    }
+    .ok_or(RuleNotApplicable)?;
 
     let atoms = es
         .into_iter()
@@ -1279,7 +1355,7 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
         return Err(RuleNotApplicable);
     };
 
-    let es = (**matrix).clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let es = (**matrix).clone().into_list().ok_or(RuleNotApplicable)?;
     if es.is_empty() {
         return Err(RuleNotApplicable);
     }
@@ -1343,16 +1419,13 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         return Err(RuleNotApplicable);
     };
 
-    let matrix_expr = Moo::unwrap_or_clone(matrix.clone());
     let value_expr = (**value).clone();
     let value_atom: Atom = value_expr.clone().try_into().or(Err(RuleNotApplicable))?;
 
-    let matrix_elems = matrix_expr.unwrap_list().or_else(|| {
-        matrix_expr
-            .clone()
-            .unwrap_matrix_unchecked()
-            .map(|(elems, _)| elems)
-    });
+    let matrix_elems = (**matrix)
+        .clone()
+        .unwrap_matrix_unchecked()
+        .map(|(elements, _)| elements);
 
     if let Some(elems) = matrix_elems {
         let mut atom_list = vec![];
@@ -1381,7 +1454,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         if let Some(search_values) = literal_matrix_int_values(&atom_list)
             && element_id_value_may_be_outside_matrix(&value_expr, &search_values)
         {
-            if let Ok(atom_list) = indexed_element_id_inverse_lookup(&matrix_expr, &value_expr) {
+            if let Ok(atom_list) = indexed_element_id_inverse_lookup(matrix.as_ref(), &value_expr) {
                 return Ok(RuleEffect::pure(Expr::MinionElementOne(
                     Metadata::new(),
                     atom_list,
@@ -1403,7 +1476,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
             )));
         }
 
-        let atom_list = pad_indexed_element_id_list(&matrix_expr, atom_list.clone(), reference)
+        let atom_list = pad_indexed_element_id_list(matrix.as_ref(), atom_list.clone(), reference)
             .or_else(|| pad_represented_element_id_list(atom_list.clone(), reference))
             .unwrap_or(atom_list);
 
@@ -1415,7 +1488,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         )));
     }
 
-    let atom_list = indexed_element_id_inverse_lookup(&matrix_expr, &value_expr)?;
+    let atom_list = indexed_element_id_inverse_lookup(matrix.as_ref(), &value_expr)?;
 
     Ok(RuleEffect::pure(Expr::MinionElementOne(
         Metadata::new(),
@@ -2109,7 +2182,7 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         return Err(RuleNotApplicable);
     }
 
-    let Some(list) = Moo::unwrap_or_clone(subject).unwrap_list() else {
+    let Some(list) = Moo::unwrap_or_clone(subject).into_list() else {
         return Err(RuleNotApplicable);
     };
 
@@ -2198,22 +2271,12 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let mut symbols = symbols.clone();
-    let mut new_tops: Vec<Expr> = vec![];
-
-    let (expr, num_changed) = rewrite_children(expr, |child| {
-        if let Some(aux_var_info) = to_aux_var(&child, &symbols) {
-            symbols = aux_var_info.symbols();
-            new_tops.push(aux_var_info.top_level_expr());
-            (aux_var_info.as_expr(), true)
-        } else {
-            (child, false)
-        }
-    });
-
-    if num_changed == 0 {
-        return Err(RuleNotApplicable);
-    }
+    // Cloning the model-wide symbol table costs a clone per declaration, and most calls reach
+    // this rule with already-atomic children. Decide applicability from the child domains
+    // first, and hand those domains to the rewrite so they are only derived once.
+    let (expr, new_tops, symbols) =
+        flatten_children_to_aux_vars(expr, symbols, |needs_aux, _| needs_aux > 0)
+            .ok_or(RuleNotApplicable)?;
 
     Ok(RuleEffect::new(expr, new_tops, symbols))
 }
@@ -2224,23 +2287,13 @@ fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let mut symbols = symbols.clone();
-    let mut new_tops: Vec<Expr> = vec![];
-
-    let (expr, num_changed) = rewrite_children(expr, |child| {
-        if let Some(aux_var_info) = to_aux_var(&child, &symbols) {
-            symbols = aux_var_info.symbols();
-            new_tops.push(aux_var_info.top_level_expr());
-            (aux_var_info.as_expr(), true)
-        } else {
-            (child, false)
-        }
-    });
-
-    // eq: both sides have to be non flat for the rule to be applicable!
-    if num_changed != 2 {
-        return Err(RuleNotApplicable);
-    }
+    // eq: both sides have to be non flat for the rule to be applicable. Deciding that from the
+    // child domains keeps the symbol-table clone off the failure path.
+    let (expr, new_tops, symbols) =
+        flatten_children_to_aux_vars(expr, symbols, |needs_aux, num_children| {
+            num_children == 2 && needs_aux == 2
+        })
+        .ok_or(RuleNotApplicable)?;
 
     Ok(RuleEffect::new(expr, new_tops, symbols))
 }
@@ -2281,7 +2334,7 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let factors = (**factors).clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let factors = (**factors).clone().into_list().ok_or(RuleNotApplicable)?;
 
     let mut new_factors = vec![];
     let mut top_level_exprs = vec![];
@@ -2354,10 +2407,9 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
 
         // flatten expressions
         for e in es.iter_mut() {
-            if let Some(aux_info) = to_aux_var(e, &symbols) {
-                *e = aux_info.as_expr();
-                top_level_exprs.push(aux_info.top_level_expr());
-                symbols = aux_info.symbols();
+            if let Some((reference, top)) = to_aux_var_in(e, &mut symbols) {
+                *e = Expr::Atomic(Metadata::new(), Atom::Reference(reference));
+                top_level_exprs.push(top);
                 child_changed = true;
             } else if let Expr::SafeIndex(_, subject, indices) = e {
                 let index_has_element_id = indices
@@ -2491,10 +2543,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let sum_exprs = (*sum_exprs)
-        .clone()
-        .unwrap_list()
-        .ok_or(RuleNotApplicable)?;
+    let sum_exprs = (*sum_exprs).clone().into_list().ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
         [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
@@ -2530,7 +2579,7 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     let sum_exprs = Moo::unwrap_or_clone(sum_exprs)
-        .unwrap_list()
+        .into_list()
         .ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),

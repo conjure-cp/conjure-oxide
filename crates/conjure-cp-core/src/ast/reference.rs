@@ -219,6 +219,10 @@ impl Reference {
     }
 
     /// Returns the expression behind a value-letting reference, if this is one.
+    ///
+    /// Prefer [`Reference::with_resolved_expression`] when the expression only needs to be
+    /// inspected. Returning an owned value here necessarily clones collection-bearing
+    /// expressions such as matrix literals.
     pub fn resolve_expression(&self) -> Option<Expression> {
         if let Some(expr) = self.ptr().as_value_letting() {
             return Some(expr.clone());
@@ -242,18 +246,41 @@ impl Reference {
         None
     }
 
+    /// Calls `inspect` with the expression behind a value-letting reference.
+    ///
+    /// The declaration is kept read-locked for the duration of `inspect`, allowing callers to ask
+    /// questions about large value lettings without cloning them. Quantified declarations may
+    /// delegate their value to an expression generator; those are handled here as well.
+    pub fn with_resolved_expression<T>(&self, inspect: impl FnOnce(&Expression) -> T) -> Option<T> {
+        if let Some(expr) = self.ptr().as_value_letting() {
+            return Some(inspect(&expr));
+        }
+
+        let generator = {
+            let kind = self.ptr.kind();
+            if let DeclarationKind::Quantified(inner) = &*kind {
+                inner.generator().cloned()
+            } else {
+                None
+            }
+        }?;
+        let expr = generator.as_value_letting()?;
+        Some(inspect(&expr))
+    }
+
     /// Evaluates this reference to a literal if it resolves to a constant.
     pub fn resolve_constant(&self) -> Option<Literal> {
-        self.resolve_expression()
-            .and_then(|expr| super::eval::eval_constant(&expr))
+        self.with_resolved_expression(super::eval::eval_constant)
+            .flatten()
     }
 
     /// Resolves this reference to an atomic expression, if possible.
     pub fn resolve_atomic(&self) -> Option<Atom> {
-        self.resolve_expression().and_then(|expr| match expr {
-            Expression::Atomic(_, atom) => Some(atom),
+        self.with_resolved_expression(|expr| match expr {
+            Expression::Atomic(_, atom) => Some(atom.clone()),
             _ => None,
         })
+        .flatten()
     }
 }
 

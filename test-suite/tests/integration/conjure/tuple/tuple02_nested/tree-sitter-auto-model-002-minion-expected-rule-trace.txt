@@ -151,12 +151,6 @@ x#packed_1 % 8
 
 --
 
-SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]) % 2
-   ~~> mod_to_bubble ([("Bubble", 6000)])
-{SafeMod(SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]),2) @ 2 != 0}
-
---
-
 (x#packed_1 / 8)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(x#packed_1, 8) @ 8 != 0}
@@ -172,6 +166,12 @@ SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]) 
 x#packed_1 % 8
    ~~> mod_to_bubble ([("Bubble", 6000)])
 {SafeMod(x#packed_1,8) @ 8 != 0}
+
+--
+
+SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]) % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeIndex([1,2,3,4,1,2,3,4;int(1..)],[sum([SafeMod(x#packed_1,8),1;int(1..)])]),2) @ 2 != 0}
 
 --
 
@@ -501,9 +501,9 @@ findAux __19: int(1..4)
 such that
 
 __0 = __1,
-Reify(__minion_element_one([false,false,false,false,true,true,true,true],__4,true), true),
-__2 = __3,
 Reify(__minion_element_one([false,false,false,false,true,true,true,true],__6,true), true),
+__2 = __3,
+Reify(__minion_element_one([false,false,false,false,true,true,true,true],__4,true), true),
 __0 =aux toInt(__10),
 ModEq(__13, 2, __1),
 __2 =aux toInt(__16),

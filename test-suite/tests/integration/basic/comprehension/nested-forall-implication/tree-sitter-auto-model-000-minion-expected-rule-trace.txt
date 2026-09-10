@@ -20,14 +20,14 @@ and([ (i <= j) -> (x <= (j - i)) | i : int(1..2), j : int(1..2) ])
 
 --
 
-and([x <= 0;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
 x <= 0
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x, 0, 0)
 
 --
 
-x <= 0
-   ~~> leq_to_ineq ([("Minion", 4100)])
+and([Ineq(x, 0, 0);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
 Ineq(x, 0, 0)
 
 --

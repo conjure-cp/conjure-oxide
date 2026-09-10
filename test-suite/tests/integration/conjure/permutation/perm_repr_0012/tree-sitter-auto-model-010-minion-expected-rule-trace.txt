@@ -454,12 +454,6 @@ SafeIndex(p#function_2#explicit_1,[4]) = 4
 
 --
 
-SafeIndex(p#function_1#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-p#function_1#explicit_1#components_1
-
---
-
 SafeIndex(p#function_1#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 p#function_1#explicit_1#components_2
@@ -646,9 +640,9 @@ p#function_2#explicit_1#components_4
 
 --
 
-p#function_1#explicit_1#components_1 = 1
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(p#function_1#explicit_1#components_1,1)
+SafeIndex(p#function_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+p#function_1#explicit_1#components_1
 
 --
 
@@ -838,15 +832,41 @@ WatchedLiteral(p#function_2#explicit_1#components_4,4)
 
 --
 
-allDifferent(p#function_1#explicit_1)
-   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
-allDifferent([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..4)])
+p#function_1#explicit_1#components_1 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(p#function_1#explicit_1#components_1,1)
 
 --
 
-allDifferent([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..4)])
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([p#function_1#explicit_1#components_1, p#function_1#explicit_1#components_2, p#function_1#explicit_1#components_3, p#function_1#explicit_1#components_4])
+sum([ toInt(i != image(p#function_1,i)) | i : int(1..4) ]) >= 2
+   ~~> flatten_generic ([("Minion", 4200)])
+__0 >= 2
+new variables:
+  findAux __0: int(0..4)
+new constraints:
+  __0 =aux sum([ toInt(i != image(p#function_1,i)) | i : int(1..4) ])
+
+--
+
+sum([ toInt(i != image(p#function_1,i)) | i : int(1..4) ]) <= 3
+   ~~> flatten_generic ([("Minion", 4200)])
+__1 <= 3
+new variables:
+  findAux __1: int(0..4)
+new constraints:
+  __1 =aux sum([ toInt(i != image(p#function_1,i)) | i : int(1..4) ])
+
+--
+
+__1 <= 3
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__1, 3, 0)
+
+--
+
+__0 >= 2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(2, __0, 0)
 
 --
 
@@ -859,6 +879,18 @@ allDifferent([p#function_2#explicit_1#components_1,p#function_2#explicit_1#compo
 allDifferent([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..4)])
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([p#function_2#explicit_1#components_1, p#function_2#explicit_1#components_2, p#function_2#explicit_1#components_3, p#function_2#explicit_1#components_4])
+
+--
+
+allDifferent(p#function_1#explicit_1)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
+allDifferent([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..4)])
+
+--
+
+allDifferent([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..4)])
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([p#function_1#explicit_1#components_1, p#function_1#explicit_1#components_2, p#function_1#explicit_1#components_3, p#function_1#explicit_1#components_4])
 
 --
 
@@ -1050,163 +1082,11 @@ elementId([1,2,3,4;int(1..4)], 1)
 
 SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(__0 - 1);int(1..)]),1;int(1..)])])
-new variables:
-  findAux __0: int(1..4)
-new constraints:
-  __0 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))
-
---
-
-product([1,(__0 - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(__0 - 1);int(1..)])
-
---
-
-product([(__0 - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(__0 - 1)
-
---
-
-(__0 - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([__0,-(1);int(1..)])
-
---
-
-sum([sum([__0,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([__0,-1,1;int(1..)])
-
---
-
-sum([__0;int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-__0
-
---
-
-SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 2)])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)]),1;int(1..)])])
-
---
-
-product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
-
---
-
-product([(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(elementId([1,2,3,4;int(1..4)], 2) - 1)
-
---
-
-(elementId([1,2,3,4;int(1..4)], 2) - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([elementId([1,2,3,4;int(1..4)], 2),-(1);int(1..)])
-
---
-
-sum([sum([elementId([1,2,3,4;int(1..4)], 2),-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([elementId([1,2,3,4;int(1..4)], 2),-1,1;int(1..)])
-
---
-
-sum([elementId([1,2,3,4;int(1..4)], 2);int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-elementId([1,2,3,4;int(1..4)], 2)
-
---
-
-SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(__1 - 1);int(1..)]),1;int(1..)])])
-new variables:
-  findAux __1: int(1..4)
-new constraints:
-  __1 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))
-
---
-
-product([1,(__1 - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(__1 - 1);int(1..)])
-
---
-
-product([(__1 - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(__1 - 1)
-
---
-
-(__1 - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([__1,-(1);int(1..)])
-
---
-
-sum([sum([__1,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([__1,-1,1;int(1..)])
-
---
-
-sum([__1;int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-__1
-
---
-
-SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 3)])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)]),1;int(1..)])])
-
---
-
-product([1,(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
-
---
-
-product([(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(elementId([1,2,3,4;int(1..4)], 3) - 1)
-
---
-
-(elementId([1,2,3,4;int(1..4)], 3) - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([elementId([1,2,3,4;int(1..4)], 3),-(1);int(1..)])
-
---
-
-sum([sum([elementId([1,2,3,4;int(1..4)], 3),-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([elementId([1,2,3,4;int(1..4)], 3),-1,1;int(1..)])
-
---
-
-sum([elementId([1,2,3,4;int(1..4)], 3);int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-elementId([1,2,3,4;int(1..4)], 3)
-
---
-
-SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(__2 - 1);int(1..)]),1;int(1..)])])
 new variables:
   findAux __2: int(1..4)
 new constraints:
-  __2 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))
+  __2 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))
 
 --
 
@@ -1316,21 +1196,173 @@ __3
 
 --
 
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[__0]) = 1
-   ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__0,1)
+SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 2)])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)]),1;int(1..)])])
 
 --
 
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[__1]) = 2
-   ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__1,2)
+product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
 
 --
 
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[__2]) = 3
+product([(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(elementId([1,2,3,4;int(1..4)], 2) - 1)
+
+--
+
+(elementId([1,2,3,4;int(1..4)], 2) - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([elementId([1,2,3,4;int(1..4)], 2),-(1);int(1..)])
+
+--
+
+sum([sum([elementId([1,2,3,4;int(1..4)], 2),-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([elementId([1,2,3,4;int(1..4)], 2),-1,1;int(1..)])
+
+--
+
+sum([elementId([1,2,3,4;int(1..4)], 2);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+elementId([1,2,3,4;int(1..4)], 2)
+
+--
+
+SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(__4 - 1);int(1..)]),1;int(1..)])])
+new variables:
+  findAux __4: int(1..4)
+new constraints:
+  __4 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))
+
+--
+
+product([1,(__4 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(__4 - 1);int(1..)])
+
+--
+
+product([(__4 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__4 - 1)
+
+--
+
+(__4 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__4,-(1);int(1..)])
+
+--
+
+sum([sum([__4,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__4,-1,1;int(1..)])
+
+--
+
+sum([__4;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__4
+
+--
+
+SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 3)])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
+
+--
+
+product([(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(elementId([1,2,3,4;int(1..4)], 3) - 1)
+
+--
+
+(elementId([1,2,3,4;int(1..4)], 3) - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([elementId([1,2,3,4;int(1..4)], 3),-(1);int(1..)])
+
+--
+
+sum([sum([elementId([1,2,3,4;int(1..4)], 3),-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([elementId([1,2,3,4;int(1..4)], 3),-1,1;int(1..)])
+
+--
+
+sum([elementId([1,2,3,4;int(1..4)], 3);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+elementId([1,2,3,4;int(1..4)], 3)
+
+--
+
+SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(__5 - 1);int(1..)]),1;int(1..)])])
+new variables:
+  findAux __5: int(1..4)
+new constraints:
+  __5 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))
+
+--
+
+product([1,(__5 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(__5 - 1);int(1..)])
+
+--
+
+product([(__5 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__5 - 1)
+
+--
+
+(__5 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__5,-(1);int(1..)])
+
+--
+
+sum([sum([__5,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__5,-1,1;int(1..)])
+
+--
+
+sum([__5;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__5
+
+--
+
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[__2]) = 1
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__2,3)
+__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__2,1)
+
+--
+
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[__4]) = 2
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__4,2)
+
+--
+
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[__5]) = 3
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__5,3)
 
 --
 
@@ -1346,21 +1378,9 @@ SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#componen
 
 --
 
-__0 =aux elementId([1,2,3,4;int(1..4)], p#function_1#explicit_1#components_1)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,3,4],__0,p#function_1#explicit_1#components_1)
-
---
-
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)])
    ~~> flatten_element_id_index ([("Minion", 4300)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[2])
-
---
-
-__1 =aux elementId([1,2,3,4;int(1..4)], p#function_1#explicit_1#components_2)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,3,4],__1,p#function_1#explicit_1#components_2)
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[4])
 
 --
 
@@ -1370,21 +1390,33 @@ SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#componen
 
 --
 
-__2 =aux elementId([1,2,3,4;int(1..4)], p#function_1#explicit_1#components_3)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,3,4],__2,p#function_1#explicit_1#components_3)
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)])
+   ~~> flatten_element_id_index ([("Minion", 4300)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[2])
 
 --
 
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)])
-   ~~> flatten_element_id_index ([("Minion", 4300)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[4])
+__2 =aux elementId([1,2,3,4;int(1..4)], p#function_1#explicit_1#components_1)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,3,4],__2,p#function_1#explicit_1#components_1)
 
 --
 
 __3 =aux elementId([1,2,3,4;int(1..4)], p#function_1#explicit_1#components_4)
    ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
 __minion_element_one([1,2,3,4],__3,p#function_1#explicit_1#components_4)
+
+--
+
+__4 =aux elementId([1,2,3,4;int(1..4)], p#function_1#explicit_1#components_2)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,3,4],__4,p#function_1#explicit_1#components_2)
+
+--
+
+__5 =aux elementId([1,2,3,4;int(1..4)], p#function_1#explicit_1#components_3)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,3,4],__5,p#function_1#explicit_1#components_3)
 
 --
 
@@ -1576,163 +1608,11 @@ elementId([1,2,3,4;int(1..4)], 1)
 
 SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(__4 - 1);int(1..)]),1;int(1..)])])
-new variables:
-  findAux __4: int(1..4)
-new constraints:
-  __4 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))
-
---
-
-product([1,(__4 - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(__4 - 1);int(1..)])
-
---
-
-product([(__4 - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(__4 - 1)
-
---
-
-(__4 - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([__4,-(1);int(1..)])
-
---
-
-sum([sum([__4,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([__4,-1,1;int(1..)])
-
---
-
-sum([__4;int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-__4
-
---
-
-SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], 2)])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)]),1;int(1..)])])
-
---
-
-product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
-
---
-
-product([(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(elementId([1,2,3,4;int(1..4)], 2) - 1)
-
---
-
-(elementId([1,2,3,4;int(1..4)], 2) - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([elementId([1,2,3,4;int(1..4)], 2),-(1);int(1..)])
-
---
-
-sum([sum([elementId([1,2,3,4;int(1..4)], 2),-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([elementId([1,2,3,4;int(1..4)], 2),-1,1;int(1..)])
-
---
-
-sum([elementId([1,2,3,4;int(1..4)], 2);int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-elementId([1,2,3,4;int(1..4)], 2)
-
---
-
-SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(__5 - 1);int(1..)]),1;int(1..)])])
-new variables:
-  findAux __5: int(1..4)
-new constraints:
-  __5 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))
-
---
-
-product([1,(__5 - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(__5 - 1);int(1..)])
-
---
-
-product([(__5 - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(__5 - 1)
-
---
-
-(__5 - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([__5,-(1);int(1..)])
-
---
-
-sum([sum([__5,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([__5,-1,1;int(1..)])
-
---
-
-sum([__5;int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-__5
-
---
-
-SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], 3)])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)]),1;int(1..)])])
-
---
-
-product([1,(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
-
---
-
-product([(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(elementId([1,2,3,4;int(1..4)], 3) - 1)
-
---
-
-(elementId([1,2,3,4;int(1..4)], 3) - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([elementId([1,2,3,4;int(1..4)], 3),-(1);int(1..)])
-
---
-
-sum([sum([elementId([1,2,3,4;int(1..4)], 3),-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([elementId([1,2,3,4;int(1..4)], 3),-1,1;int(1..)])
-
---
-
-sum([elementId([1,2,3,4;int(1..4)], 3);int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-elementId([1,2,3,4;int(1..4)], 3)
-
---
-
-SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(__6 - 1);int(1..)]),1;int(1..)])])
 new variables:
   findAux __6: int(1..4)
 new constraints:
-  __6 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))
+  __6 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))
 
 --
 
@@ -1842,21 +1722,173 @@ __7
 
 --
 
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[__4]) = 1
-   ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__4,1)
+SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], 2)])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)]),1;int(1..)])])
 
 --
 
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[__5]) = 2
-   ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__5,2)
+product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
 
 --
 
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[__6]) = 3
+product([(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(elementId([1,2,3,4;int(1..4)], 2) - 1)
+
+--
+
+(elementId([1,2,3,4;int(1..4)], 2) - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([elementId([1,2,3,4;int(1..4)], 2),-(1);int(1..)])
+
+--
+
+sum([sum([elementId([1,2,3,4;int(1..4)], 2),-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([elementId([1,2,3,4;int(1..4)], 2),-1,1;int(1..)])
+
+--
+
+sum([elementId([1,2,3,4;int(1..4)], 2);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+elementId([1,2,3,4;int(1..4)], 2)
+
+--
+
+SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(__8 - 1);int(1..)]),1;int(1..)])])
+new variables:
+  findAux __8: int(1..4)
+new constraints:
+  __8 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))
+
+--
+
+product([1,(__8 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(__8 - 1);int(1..)])
+
+--
+
+product([(__8 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__8 - 1)
+
+--
+
+(__8 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__8,-(1);int(1..)])
+
+--
+
+sum([sum([__8,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__8,-1,1;int(1..)])
+
+--
+
+sum([__8;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__8
+
+--
+
+SafeIndex(p#function_2#explicit_1,[elementId([1,2,3,4;int(1..4)], 3)])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
+
+--
+
+product([(elementId([1,2,3,4;int(1..4)], 3) - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(elementId([1,2,3,4;int(1..4)], 3) - 1)
+
+--
+
+(elementId([1,2,3,4;int(1..4)], 3) - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([elementId([1,2,3,4;int(1..4)], 3),-(1);int(1..)])
+
+--
+
+sum([sum([elementId([1,2,3,4;int(1..4)], 3),-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([elementId([1,2,3,4;int(1..4)], 3),-1,1;int(1..)])
+
+--
+
+sum([elementId([1,2,3,4;int(1..4)], 3);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+elementId([1,2,3,4;int(1..4)], 3)
+
+--
+
+SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(__9 - 1);int(1..)]),1;int(1..)])])
+new variables:
+  findAux __9: int(1..4)
+new constraints:
+  __9 =aux elementId([1,2,3,4;int(1..4)], SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))
+
+--
+
+product([1,(__9 - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(__9 - 1);int(1..)])
+
+--
+
+product([(__9 - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__9 - 1)
+
+--
+
+(__9 - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__9,-(1);int(1..)])
+
+--
+
+sum([sum([__9,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__9,-1,1;int(1..)])
+
+--
+
+sum([__9;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__9
+
+--
+
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[__6]) = 1
    ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__6,3)
+__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__6,1)
+
+--
+
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[__8]) = 2
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__8,2)
+
+--
+
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[__9]) = 3
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__9,3)
 
 --
 
@@ -1872,21 +1904,9 @@ SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#componen
 
 --
 
-__4 =aux elementId([1,2,3,4;int(1..4)], p#function_2#explicit_1#components_1)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,3,4],__4,p#function_2#explicit_1#components_1)
-
---
-
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)])
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)])
    ~~> flatten_element_id_index ([("Minion", 4300)])
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[2])
-
---
-
-__5 =aux elementId([1,2,3,4;int(1..4)], p#function_2#explicit_1#components_2)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,3,4],__5,p#function_2#explicit_1#components_2)
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[4])
 
 --
 
@@ -1896,15 +1916,15 @@ SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#componen
 
 --
 
-__6 =aux elementId([1,2,3,4;int(1..4)], p#function_2#explicit_1#components_3)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,3,4],__6,p#function_2#explicit_1#components_3)
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)])
+   ~~> flatten_element_id_index ([("Minion", 4300)])
+SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[2])
 
 --
 
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)])
-   ~~> flatten_element_id_index ([("Minion", 4300)])
-SafeIndex([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4;int(1..)],[4])
+__6 =aux elementId([1,2,3,4;int(1..4)], p#function_2#explicit_1#components_1)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,3,4],__6,p#function_2#explicit_1#components_1)
 
 --
 
@@ -1914,6 +1934,18 @@ __minion_element_one([1,2,3,4],__7,p#function_2#explicit_1#components_4)
 
 --
 
+__8 =aux elementId([1,2,3,4;int(1..4)], p#function_2#explicit_1#components_2)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,3,4],__8,p#function_2#explicit_1#components_2)
+
+--
+
+__9 =aux elementId([1,2,3,4;int(1..4)], p#function_2#explicit_1#components_3)
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,3,4],__9,p#function_2#explicit_1#components_3)
+
+--
+
 [ toInt(i != image(p#function_1,i)) | i : int(1..4) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [toInt(1 != image(p#function_1,1)),toInt(2 != image(p#function_1,2)),toInt(3 != image(p#function_1,3)),toInt(4 != image(p#function_1,4));int(1..)]
@@ -2028,6 +2060,42 @@ elementId([1,2,3,4;int(1..4)], 1)
 
 --
 
+SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 4)])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
+
+--
+
+product([(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(elementId([1,2,3,4;int(1..4)], 4) - 1)
+
+--
+
+(elementId([1,2,3,4;int(1..4)], 4) - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([elementId([1,2,3,4;int(1..4)], 4),-(1);int(1..)])
+
+--
+
+sum([sum([elementId([1,2,3,4;int(1..4)], 4),-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([elementId([1,2,3,4;int(1..4)], 4),-1,1;int(1..)])
+
+--
+
+sum([elementId([1,2,3,4;int(1..4)], 4);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+elementId([1,2,3,4;int(1..4)], 4)
+
+--
+
 SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 2)])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)]),1;int(1..)])])
@@ -2100,61 +2168,19 @@ elementId([1,2,3,4;int(1..4)], 3)
 
 --
 
-SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 4)])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)]),1;int(1..)])])
-
---
-
-product([1,(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
-
---
-
-product([(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(elementId([1,2,3,4;int(1..4)], 4) - 1)
-
---
-
-(elementId([1,2,3,4;int(1..4)], 4) - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([elementId([1,2,3,4;int(1..4)], 4),-(1);int(1..)])
-
---
-
-sum([sum([elementId([1,2,3,4;int(1..4)], 4),-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([elementId([1,2,3,4;int(1..4)], 4),-1,1;int(1..)])
-
---
-
-sum([elementId([1,2,3,4;int(1..4)], 4);int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-elementId([1,2,3,4;int(1..4)], 4)
-
---
-
-sum([toInt(1 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)])),toInt(2 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)])),toInt(3 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)])),toInt(4 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)]));int(1..)]) >= 2
+__1 =aux sum([toInt(1 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)])),toInt(2 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)])),toInt(3 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)])),toInt(4 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)]));int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([__10, __11, __8, __9], 2)
+and([SumLeq([__10, __11, __12, __13], __1),SumGeq([__10, __11, __12, __13], __1);int(1..)])
 new variables:
-  findAux __8: int(0..1)
-  findAux __9: int(0..1)
   findAux __10: int(0..1)
   findAux __11: int(0..1)
+  findAux __12: int(0..1)
+  findAux __13: int(0..1)
 new constraints:
-  __8 =aux toInt(1 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))
-  __9 =aux toInt(2 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))
-  __10 =aux toInt(3 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))
-  __11 =aux toInt(4 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)]))
-
---
-
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)])
-   ~~> flatten_element_id_index ([("Minion", 4300)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[1])
+  __10 =aux toInt(1 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))
+  __11 =aux toInt(2 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))
+  __12 =aux toInt(3 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))
+  __13 =aux toInt(4 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)]))
 
 --
 
@@ -2176,67 +2202,73 @@ SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#componen
 
 --
 
-toInt(1 != p#function_1#explicit_1#components_1)
-   ~~> flatten_generic ([("Minion", 4200)])
-toInt(__12)
-new variables:
-  findAux __12: bool
-new constraints:
-  __12 =aux 1 != p#function_1#explicit_1#components_1
-
---
-
-__12 =aux 1 != p#function_1#explicit_1#components_1
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(1 != p#function_1#explicit_1#components_1, __12)
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)])
+   ~~> flatten_element_id_index ([("Minion", 4300)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[1])
 
 --
 
 toInt(2 != p#function_1#explicit_1#components_2)
-   ~~> flatten_generic ([("Minion", 4200)])
-toInt(__13)
-new variables:
-  findAux __13: bool
-new constraints:
-  __13 =aux 2 != p#function_1#explicit_1#components_2
-
---
-
-__13 =aux 2 != p#function_1#explicit_1#components_2
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(2 != p#function_1#explicit_1#components_2, __13)
-
---
-
-toInt(3 != p#function_1#explicit_1#components_3)
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__14)
 new variables:
   findAux __14: bool
 new constraints:
-  __14 =aux 3 != p#function_1#explicit_1#components_3
+  __14 =aux 2 != p#function_1#explicit_1#components_2
 
 --
 
-__14 =aux 3 != p#function_1#explicit_1#components_3
+__14 =aux 2 != p#function_1#explicit_1#components_2
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(3 != p#function_1#explicit_1#components_3, __14)
+Reify(2 != p#function_1#explicit_1#components_2, __14)
 
 --
 
-toInt(4 != p#function_1#explicit_1#components_4)
+toInt(3 != p#function_1#explicit_1#components_3)
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__15)
 new variables:
   findAux __15: bool
 new constraints:
-  __15 =aux 4 != p#function_1#explicit_1#components_4
+  __15 =aux 3 != p#function_1#explicit_1#components_3
 
 --
 
-__15 =aux 4 != p#function_1#explicit_1#components_4
+__15 =aux 3 != p#function_1#explicit_1#components_3
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(4 != p#function_1#explicit_1#components_4, __15)
+Reify(3 != p#function_1#explicit_1#components_3, __15)
+
+--
+
+toInt(4 != p#function_1#explicit_1#components_4)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__16)
+new variables:
+  findAux __16: bool
+new constraints:
+  __16 =aux 4 != p#function_1#explicit_1#components_4
+
+--
+
+__16 =aux 4 != p#function_1#explicit_1#components_4
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(4 != p#function_1#explicit_1#components_4, __16)
+
+--
+
+toInt(1 != p#function_1#explicit_1#components_1)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__17)
+new variables:
+  findAux __17: bool
+new constraints:
+  __17 =aux 1 != p#function_1#explicit_1#components_1
+
+--
+
+__17 =aux 1 != p#function_1#explicit_1#components_1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(1 != p#function_1#explicit_1#components_1, __17)
 
 --
 
@@ -2354,6 +2386,42 @@ elementId([1,2,3,4;int(1..4)], 1)
 
 --
 
+SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 4)])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
+
+--
+
+product([(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(elementId([1,2,3,4;int(1..4)], 4) - 1)
+
+--
+
+(elementId([1,2,3,4;int(1..4)], 4) - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([elementId([1,2,3,4;int(1..4)], 4),-(1);int(1..)])
+
+--
+
+sum([sum([elementId([1,2,3,4;int(1..4)], 4),-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([elementId([1,2,3,4;int(1..4)], 4),-1,1;int(1..)])
+
+--
+
+sum([elementId([1,2,3,4;int(1..4)], 4);int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+elementId([1,2,3,4;int(1..4)], 4)
+
+--
+
 SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 2)])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 2) - 1);int(1..)]),1;int(1..)])])
@@ -2426,61 +2494,19 @@ elementId([1,2,3,4;int(1..4)], 3)
 
 --
 
-SafeIndex(p#function_1#explicit_1,[elementId([1,2,3,4;int(1..4)], 4)])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[sum([product([1,(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)]),1;int(1..)])])
-
---
-
-product([1,(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
-   ~~> reorder_product ([("Base", 8800)])
-product([(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
-
---
-
-product([(elementId([1,2,3,4;int(1..4)], 4) - 1);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-(elementId([1,2,3,4;int(1..4)], 4) - 1)
-
---
-
-(elementId([1,2,3,4;int(1..4)], 4) - 1)
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([elementId([1,2,3,4;int(1..4)], 4),-(1);int(1..)])
-
---
-
-sum([sum([elementId([1,2,3,4;int(1..4)], 4),-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([elementId([1,2,3,4;int(1..4)], 4),-1,1;int(1..)])
-
---
-
-sum([elementId([1,2,3,4;int(1..4)], 4);int(1..)])
-   ~~> remove_unit_vector_sum ([("Base", 8800)])
-elementId([1,2,3,4;int(1..4)], 4)
-
---
-
-sum([toInt(1 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)])),toInt(2 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)])),toInt(3 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)])),toInt(4 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)]));int(1..)]) <= 3
+__0 =aux sum([toInt(1 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)])),toInt(2 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)])),toInt(3 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)])),toInt(4 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)]));int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([__16, __17, __18, __19], 3)
+and([SumLeq([__18, __19, __20, __21], __0),SumGeq([__18, __19, __20, __21], __0);int(1..)])
 new variables:
-  findAux __16: int(0..1)
-  findAux __17: int(0..1)
   findAux __18: int(0..1)
   findAux __19: int(0..1)
+  findAux __20: int(0..1)
+  findAux __21: int(0..1)
 new constraints:
-  __16 =aux toInt(1 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))
-  __17 =aux toInt(2 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))
-  __18 =aux toInt(3 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))
-  __19 =aux toInt(4 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)]))
-
---
-
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)])
-   ~~> flatten_element_id_index ([("Minion", 4300)])
-SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[1])
+  __18 =aux toInt(1 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)]))
+  __19 =aux toInt(2 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 2)]))
+  __20 =aux toInt(3 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 3)]))
+  __21 =aux toInt(4 != SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 4)]))
 
 --
 
@@ -2502,67 +2528,73 @@ SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#componen
 
 --
 
-toInt(1 != p#function_1#explicit_1#components_1)
-   ~~> flatten_generic ([("Minion", 4200)])
-toInt(__20)
-new variables:
-  findAux __20: bool
-new constraints:
-  __20 =aux 1 != p#function_1#explicit_1#components_1
-
---
-
-__20 =aux 1 != p#function_1#explicit_1#components_1
-   ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(1 != p#function_1#explicit_1#components_1, __20)
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[elementId([1,2,3,4;int(1..4)], 1)])
+   ~~> flatten_element_id_index ([("Minion", 4300)])
+SafeIndex([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4;int(1..)],[1])
 
 --
 
 toInt(2 != p#function_1#explicit_1#components_2)
    ~~> flatten_generic ([("Minion", 4200)])
-toInt(__21)
+toInt(__22)
 new variables:
-  findAux __21: bool
+  findAux __22: bool
 new constraints:
-  __21 =aux 2 != p#function_1#explicit_1#components_2
+  __22 =aux 2 != p#function_1#explicit_1#components_2
 
 --
 
-__21 =aux 2 != p#function_1#explicit_1#components_2
+__22 =aux 2 != p#function_1#explicit_1#components_2
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(2 != p#function_1#explicit_1#components_2, __21)
+Reify(2 != p#function_1#explicit_1#components_2, __22)
 
 --
 
 toInt(3 != p#function_1#explicit_1#components_3)
    ~~> flatten_generic ([("Minion", 4200)])
-toInt(__22)
+toInt(__23)
 new variables:
-  findAux __22: bool
+  findAux __23: bool
 new constraints:
-  __22 =aux 3 != p#function_1#explicit_1#components_3
+  __23 =aux 3 != p#function_1#explicit_1#components_3
 
 --
 
-__22 =aux 3 != p#function_1#explicit_1#components_3
+__23 =aux 3 != p#function_1#explicit_1#components_3
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(3 != p#function_1#explicit_1#components_3, __22)
+Reify(3 != p#function_1#explicit_1#components_3, __23)
 
 --
 
 toInt(4 != p#function_1#explicit_1#components_4)
    ~~> flatten_generic ([("Minion", 4200)])
-toInt(__23)
+toInt(__24)
 new variables:
-  findAux __23: bool
+  findAux __24: bool
 new constraints:
-  __23 =aux 4 != p#function_1#explicit_1#components_4
+  __24 =aux 4 != p#function_1#explicit_1#components_4
 
 --
 
-__23 =aux 4 != p#function_1#explicit_1#components_4
+__24 =aux 4 != p#function_1#explicit_1#components_4
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(4 != p#function_1#explicit_1#components_4, __23)
+Reify(4 != p#function_1#explicit_1#components_4, __24)
+
+--
+
+toInt(1 != p#function_1#explicit_1#components_1)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__25)
+new variables:
+  findAux __25: bool
+new constraints:
+  __25 =aux 1 != p#function_1#explicit_1#components_1
+
+--
+
+__25 =aux 1 != p#function_1#explicit_1#components_1
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(1 != p#function_1#explicit_1#components_1, __25)
 
 --
 
@@ -2582,37 +2614,39 @@ find p#function_2#explicit_1#components_1: int(1..4)
 find p#function_2#explicit_1#components_2: int(1..4)
 find p#function_2#explicit_1#components_3: int(1..4)
 find p#function_2#explicit_1#components_4: int(1..4)
-findAux __0: int(1..4)
-findAux __1: int(1..4)
+findAux __0: int(0..4)
+findAux __1: int(0..4)
 findAux __2: int(1..4)
 findAux __3: int(1..4)
 findAux __4: int(1..4)
 findAux __5: int(1..4)
 findAux __6: int(1..4)
 findAux __7: int(1..4)
-findAux __8: int(0..1)
-findAux __9: int(0..1)
+findAux __8: int(1..4)
+findAux __9: int(1..4)
 findAux __10: int(0..1)
 findAux __11: int(0..1)
-findAux __12: bool
-findAux __13: bool
+findAux __12: int(0..1)
+findAux __13: int(0..1)
 findAux __14: bool
 findAux __15: bool
-findAux __16: int(0..1)
-findAux __17: int(0..1)
+findAux __16: bool
+findAux __17: bool
 findAux __18: int(0..1)
 findAux __19: int(0..1)
-findAux __20: bool
-findAux __21: bool
+findAux __20: int(0..1)
+findAux __21: int(0..1)
 findAux __22: bool
 findAux __23: bool
+findAux __24: bool
+findAux __25: bool
 
 such that
 
 true,
-and([SumGeq([__10, __11, __8, __9], 2),SumLeq([__16, __17, __18, __19], 3);int(1..)]),
-and([__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__0,1),__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__1,2),__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__2,3),__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__3,4);int(1..)]),
-and([__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__4,1),__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__5,2),__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__6,3),__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__7,4);int(1..)]),
+and([Ineq(2, __0, 0),Ineq(__1, 3, 0);int(1..)]),
+and([__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__2,1),__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__4,2),__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__5,3),__minion_element_one([p#function_2#explicit_1#components_1,p#function_2#explicit_1#components_2,p#function_2#explicit_1#components_3,p#function_2#explicit_1#components_4],__3,4);int(1..)]),
+and([__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__6,1),__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__8,2),__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__9,3),__minion_element_one([p#function_1#explicit_1#components_1,p#function_1#explicit_1#components_2,p#function_1#explicit_1#components_3,p#function_1#explicit_1#components_4],__7,4);int(1..)]),
 __flat_alldiff([p#function_1#explicit_1#components_1, p#function_1#explicit_1#components_2, p#function_1#explicit_1#components_3, p#function_1#explicit_1#components_4]),
 or([WatchedLiteral(p#function_1#explicit_1#components_1,1),WatchedLiteral(p#function_1#explicit_1#components_2,1),WatchedLiteral(p#function_1#explicit_1#components_3,1),WatchedLiteral(p#function_1#explicit_1#components_4,1);int(1..)]),
 or([WatchedLiteral(p#function_1#explicit_1#components_1,2),WatchedLiteral(p#function_1#explicit_1#components_2,2),WatchedLiteral(p#function_1#explicit_1#components_3,2),WatchedLiteral(p#function_1#explicit_1#components_4,2);int(1..)]),
@@ -2623,28 +2657,30 @@ or([WatchedLiteral(p#function_2#explicit_1#components_1,1),WatchedLiteral(p#func
 or([WatchedLiteral(p#function_2#explicit_1#components_1,2),WatchedLiteral(p#function_2#explicit_1#components_2,2),WatchedLiteral(p#function_2#explicit_1#components_3,2),WatchedLiteral(p#function_2#explicit_1#components_4,2);int(1..)]),
 or([WatchedLiteral(p#function_2#explicit_1#components_1,3),WatchedLiteral(p#function_2#explicit_1#components_2,3),WatchedLiteral(p#function_2#explicit_1#components_3,3),WatchedLiteral(p#function_2#explicit_1#components_4,3);int(1..)]),
 or([WatchedLiteral(p#function_2#explicit_1#components_1,4),WatchedLiteral(p#function_2#explicit_1#components_2,4),WatchedLiteral(p#function_2#explicit_1#components_3,4),WatchedLiteral(p#function_2#explicit_1#components_4,4);int(1..)]),
-__minion_element_one([1,2,3,4],__0,p#function_1#explicit_1#components_1),
-__minion_element_one([1,2,3,4],__1,p#function_1#explicit_1#components_2),
-__minion_element_one([1,2,3,4],__2,p#function_1#explicit_1#components_3),
+and([SumLeq([__18, __19, __20, __21], __0),SumGeq([__18, __19, __20, __21], __0);int(1..)]),
+and([SumLeq([__10, __11, __12, __13], __1),SumGeq([__10, __11, __12, __13], __1);int(1..)]),
+__minion_element_one([1,2,3,4],__2,p#function_1#explicit_1#components_1),
 __minion_element_one([1,2,3,4],__3,p#function_1#explicit_1#components_4),
-__minion_element_one([1,2,3,4],__4,p#function_2#explicit_1#components_1),
-__minion_element_one([1,2,3,4],__5,p#function_2#explicit_1#components_2),
-__minion_element_one([1,2,3,4],__6,p#function_2#explicit_1#components_3),
+__minion_element_one([1,2,3,4],__4,p#function_1#explicit_1#components_2),
+__minion_element_one([1,2,3,4],__5,p#function_1#explicit_1#components_3),
+__minion_element_one([1,2,3,4],__6,p#function_2#explicit_1#components_1),
 __minion_element_one([1,2,3,4],__7,p#function_2#explicit_1#components_4),
-__8 =aux toInt(__12),
-__9 =aux toInt(__13),
-__10 =aux toInt(__14),
-__11 =aux toInt(__15),
-Reify(1 != p#function_1#explicit_1#components_1, __12),
-Reify(2 != p#function_1#explicit_1#components_2, __13),
-Reify(3 != p#function_1#explicit_1#components_3, __14),
-Reify(4 != p#function_1#explicit_1#components_4, __15),
-__16 =aux toInt(__20),
-__17 =aux toInt(__21),
-__18 =aux toInt(__22),
-__19 =aux toInt(__23),
-Reify(1 != p#function_1#explicit_1#components_1, __20),
-Reify(2 != p#function_1#explicit_1#components_2, __21),
-Reify(3 != p#function_1#explicit_1#components_3, __22),
-Reify(4 != p#function_1#explicit_1#components_4, __23)
+__minion_element_one([1,2,3,4],__8,p#function_2#explicit_1#components_2),
+__minion_element_one([1,2,3,4],__9,p#function_2#explicit_1#components_3),
+__10 =aux toInt(__17),
+__11 =aux toInt(__14),
+__12 =aux toInt(__15),
+__13 =aux toInt(__16),
+Reify(2 != p#function_1#explicit_1#components_2, __14),
+Reify(3 != p#function_1#explicit_1#components_3, __15),
+Reify(4 != p#function_1#explicit_1#components_4, __16),
+Reify(1 != p#function_1#explicit_1#components_1, __17),
+__18 =aux toInt(__25),
+__19 =aux toInt(__22),
+__20 =aux toInt(__23),
+__21 =aux toInt(__24),
+Reify(2 != p#function_1#explicit_1#components_2, __22),
+Reify(3 != p#function_1#explicit_1#components_3, __23),
+Reify(4 != p#function_1#explicit_1#components_4, __24),
+Reify(1 != p#function_1#explicit_1#components_1, __25)
 

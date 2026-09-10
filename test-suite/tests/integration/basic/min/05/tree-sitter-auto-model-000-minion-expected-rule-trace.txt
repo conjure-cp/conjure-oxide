@@ -26,14 +26,18 @@ Ineq(__0, 2, 0)
 --
 
 min([a,b;int(1..2)])
-   ~~> matrix_to_list ([("Base", 2000)])
+   ~~> matrix_to_list ([("Base", 1998)])
 min([a,b;int(1..)])
 
 --
 
-__0 =aux min([a,b;int(1..)])
-   ~~> introduce_mineq ([("Minion", 6100)])
-FlatMinEq([a, b], __0)
+min([a,b;int(1..)])
+   ~~> introduce_mineq_from_min ([("Minion", 6100)])
+__1
+new variables:
+  findAux __1: int(1..4)
+new constraints:
+  FlatMinEq([a, b], __1)
 
 --
 
@@ -42,9 +46,11 @@ Final model:
 find a: int(1..5)
 find b: int(2..4)
 findAux __0: int(1..4)
+findAux __1: int(1..4)
 
 such that
 
 Ineq(__0, 2, 0),
-FlatMinEq([a, b], __0)
+__0 =aux __1,
+FlatMinEq([a, b], __1)
 

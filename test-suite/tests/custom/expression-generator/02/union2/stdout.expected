@@ -41,30 +41,30 @@ SumGeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 0),
 SumLeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 4),
 SumGeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 0),
 SumLeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 4),
-__0 =aux toInt(__12),
-__1 =aux toInt(__13),
-__2 =aux toInt(__14),
-__3 =aux toInt(__15),
-__4 =aux toInt(__16),
-__5 =aux toInt(__17),
-__6 =aux toInt(__18),
-__7 =aux toInt(__19),
-__8 =aux toInt(__20),
-__9 =aux toInt(__21),
+__0 =aux toInt(__23),
+__1 =aux toInt(__12),
+__2 =aux toInt(__18),
+__3 =aux toInt(__13),
+__4 =aux toInt(__19),
+__5 =aux toInt(__14),
+__6 =aux toInt(__20),
+__7 =aux toInt(__15),
+__8 =aux toInt(__21),
+__9 =aux toInt(__16),
 __10 =aux toInt(__22),
-__11 =aux toInt(__23),
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __12),
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __13),
-Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __14),
+__11 =aux toInt(__17),
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __12),
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __13),
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __14),
 Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __15),
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __16),
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __17),
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __16),
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __17),
 Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __18),
-Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __19),
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __20),
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __21),
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __19),
+Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __20),
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __21),
 Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __22),
-Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __23)
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __23)
 
 Model before rewriting:
 
@@ -101,18 +101,6 @@ new constraints:
 
 --
 
-sum([toInt(a#occurrence_1),toInt(a#occurrence_2),toInt(a#occurrence_3),toInt(a#occurrence_4);int(1..)]) >= 0
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 0)
-
---
-
-sum([toInt(a#occurrence_1),toInt(a#occurrence_2),toInt(a#occurrence_3),toInt(a#occurrence_4);int(1..)]) <= 4
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 4)
-
---
-
 sum([toInt(b#occurrence_1),toInt(b#occurrence_2),toInt(b#occurrence_3),toInt(b#occurrence_4);int(1..)]) >= 0
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumGeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 0)
@@ -122,6 +110,18 @@ SumGeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 0)
 sum([toInt(b#occurrence_1),toInt(b#occurrence_2),toInt(b#occurrence_3),toInt(b#occurrence_4);int(1..)]) <= 4
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumLeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 4)
+
+--
+
+sum([toInt(a#occurrence_1),toInt(a#occurrence_2),toInt(a#occurrence_3),toInt(a#occurrence_4);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 0)
+
+--
+
+sum([toInt(a#occurrence_1),toInt(a#occurrence_2),toInt(a#occurrence_3),toInt(a#occurrence_4);int(1..)]) <= 4
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 4)
 
 --
 
@@ -595,51 +595,51 @@ toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]))
 
 --
 
-toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
+toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__12)
 new variables:
   findAux __12: bool
 new constraints:
-  __12 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
+  __12 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
 
 --
 
-__12 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
+__12 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __12)
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __12)
 
 --
 
-toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]))
+toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__13)
 new variables:
   findAux __13: bool
 new constraints:
-  __13 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
+  __13 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
 
 --
 
-__13 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
+__13 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __13)
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __13)
 
 --
 
-toInt(or([a#occurrence_3,b#occurrence_3;int(1..)]))
+toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__14)
 new variables:
   findAux __14: bool
 new constraints:
-  __14 =aux or([a#occurrence_3,b#occurrence_3;int(1..)])
+  __14 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
 
 --
 
-__14 =aux or([a#occurrence_3,b#occurrence_3;int(1..)])
+__14 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __14)
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __14)
 
 --
 
@@ -659,35 +659,35 @@ Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __15)
 
 --
 
-toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
+toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__16)
 new variables:
   findAux __16: bool
 new constraints:
-  __16 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
+  __16 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
 
 --
 
-__16 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
+__16 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __16)
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __16)
 
 --
 
-toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]))
+toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__17)
 new variables:
   findAux __17: bool
 new constraints:
-  __17 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
+  __17 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
 
 --
 
-__17 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
+__17 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __17)
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __17)
 
 --
 
@@ -707,51 +707,51 @@ Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __18)
 
 --
 
-toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]))
+toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__19)
 new variables:
   findAux __19: bool
 new constraints:
-  __19 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
+  __19 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
 
 --
 
-__19 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
+__19 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __19)
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __19)
 
 --
 
-toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
+toInt(or([a#occurrence_3,b#occurrence_3;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__20)
 new variables:
   findAux __20: bool
 new constraints:
-  __20 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
+  __20 =aux or([a#occurrence_3,b#occurrence_3;int(1..)])
 
 --
 
-__20 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
+__20 =aux or([a#occurrence_3,b#occurrence_3;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __20)
+Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __20)
 
 --
 
-toInt(or([a#occurrence_2,b#occurrence_2;int(1..)]))
+toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__21)
 new variables:
   findAux __21: bool
 new constraints:
-  __21 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
+  __21 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
 
 --
 
-__21 =aux or([a#occurrence_2,b#occurrence_2;int(1..)])
+__21 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __21)
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __21)
 
 --
 
@@ -771,19 +771,19 @@ Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __22)
 
 --
 
-toInt(or([a#occurrence_4,b#occurrence_4;int(1..)]))
+toInt(or([a#occurrence_1,b#occurrence_1;int(1..)]))
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__23)
 new variables:
   findAux __23: bool
 new constraints:
-  __23 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
+  __23 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
 
 --
 
-__23 =aux or([a#occurrence_4,b#occurrence_4;int(1..)])
+__23 =aux or([a#occurrence_1,b#occurrence_1;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __23)
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __23)
 
 --
 
@@ -829,28 +829,28 @@ such that
 and([FlatWeightedSumLeq([2, 3, 6, 7, 4, 5, 3, 4, 5, 6, 4, 5],[__0, __1, __10, __11, __2, __3, __4, __5, __6, __7, __8, __9],10),FlatWeightedSumGeq([2, 3, 6, 7, 4, 5, 3, 4, 5, 6, 4, 5],[__0, __1, __10, __11, __2, __3, __4, __5, __6, __7, __8, __9],10);int(1..)]),
 and([SumGeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 0),SumLeq([a#occurrence_1, a#occurrence_2, a#occurrence_3, a#occurrence_4], 4);int(1..)]),
 and([SumGeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 0),SumLeq([b#occurrence_1, b#occurrence_2, b#occurrence_3, b#occurrence_4], 4);int(1..)]),
-__0 =aux toInt(__12),
-__1 =aux toInt(__13),
-__2 =aux toInt(__14),
-__3 =aux toInt(__15),
-__4 =aux toInt(__16),
-__5 =aux toInt(__17),
-__6 =aux toInt(__18),
-__7 =aux toInt(__19),
-__8 =aux toInt(__20),
-__9 =aux toInt(__21),
+__0 =aux toInt(__23),
+__1 =aux toInt(__12),
+__2 =aux toInt(__18),
+__3 =aux toInt(__13),
+__4 =aux toInt(__19),
+__5 =aux toInt(__14),
+__6 =aux toInt(__20),
+__7 =aux toInt(__15),
+__8 =aux toInt(__21),
+__9 =aux toInt(__16),
 __10 =aux toInt(__22),
-__11 =aux toInt(__23),
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __12),
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __13),
-Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __14),
+__11 =aux toInt(__17),
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __12),
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __13),
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __14),
 Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __15),
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __16),
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __17),
+Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __16),
+Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __17),
 Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __18),
-Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __19),
-Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __20),
-Reify(or([a#occurrence_2,b#occurrence_2;int(1..)]), __21),
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __19),
+Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __20),
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __21),
 Reify(or([a#occurrence_3,b#occurrence_3;int(1..)]), __22),
-Reify(or([a#occurrence_4,b#occurrence_4;int(1..)]), __23)
+Reify(or([a#occurrence_1,b#occurrence_1;int(1..)]), __23)
 

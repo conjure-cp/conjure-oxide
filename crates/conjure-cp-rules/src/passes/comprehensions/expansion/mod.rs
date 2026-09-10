@@ -131,9 +131,7 @@ fn has_dependent_generators_and_nested_return(comprehension: &Comprehension) -> 
     generator_count >= 2
         && comprehension
             .return_expression
-            .universe()
-            .iter()
-            .any(|expression| matches!(expression, Expr::Comprehension(_, _)))
+            .any_expression(|expression| matches!(expression, Expr::Comprehension(_, _)))
 }
 
 /// A useful guard is a nonconstant condition whose remaining references include at least one
@@ -199,28 +197,24 @@ fn has_quantified_conjunction_in_pruning_position(
                 return true;
             }
 
-            Moo::unwrap_or_clone(terms.clone())
-                .unwrap_list()
-                .is_some_and(|terms| {
-                    terms.iter().any(|term| {
-                        has_quantified_conjunction_in_pruning_position(
-                            comprehension,
-                            term,
-                            quantified_vars,
-                        )
-                    })
-                })
-        }
-        Expr::Imply(_, antecedent, _) => {
-            antecedent.as_ref().universe().iter().any(|subexpression| {
-                matches!(subexpression, Expr::And(_, _))
-                    && expression_depends_only_on_quantified_decisions(
+            terms.unwrap_list_cow().is_some_and(|terms| {
+                terms.iter().any(|term| {
+                    has_quantified_conjunction_in_pruning_position(
                         comprehension,
-                        subexpression,
+                        term,
                         quantified_vars,
                     )
+                })
             })
         }
+        Expr::Imply(_, antecedent, _) => antecedent.any_expression(|subexpression| {
+            matches!(subexpression, Expr::And(_, _))
+                && expression_depends_only_on_quantified_decisions(
+                    comprehension,
+                    subexpression,
+                    quantified_vars,
+                )
+        }),
         _ => false,
     }
 }
@@ -250,8 +244,9 @@ fn simplify_expanded_ac_results(results: Vec<Expr>, ac_operator: ACOperatorKind)
         | (ACOperatorKind::Sum, Expr::Sum(_, matrix))
         | (ACOperatorKind::Product, Expr::Product(_, matrix))
         | (ACOperatorKind::Min, Expr::Min(_, matrix))
-        | (ACOperatorKind::Max, Expr::Max(_, matrix)) => Moo::unwrap_or_clone(matrix.clone())
-            .unwrap_list()
+        | (ACOperatorKind::Max, Expr::Max(_, matrix)) => matrix
+            .unwrap_list_cow()
+            .map(std::borrow::Cow::into_owned)
             .unwrap_or_else(|| vec![simplified]),
         _ => vec![simplified],
     }
@@ -380,7 +375,7 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
     };
     let expanded = into_matrix_expr!(results);
     let expanded = match comprehension_domain {
-        Some(domain) if expanded.unwrap_list().is_some_and(|elems| elems.is_empty()) => {
+        Some(domain) if expanded.list_len() == Some(0) => {
             Expr::DomainAnnotation(Metadata::new(), Moo::new(expanded), domain)
         }
         _ => expanded,
@@ -492,7 +487,7 @@ fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
 
     // Borrow the elements: this runs on every `Or` the rewriter visits, and copying the list
     // first made the test cost the whole matrix on a wide disjunction.
-    let [Expr::Comprehension(_, comprehension)] = expr.unwrap_list_ref()?.as_slice() else {
+    let [Expr::Comprehension(_, comprehension)] = expr.unwrap_list_ref()? else {
         return None;
     };
 

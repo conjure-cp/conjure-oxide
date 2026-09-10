@@ -50,15 +50,25 @@ total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
 
 --
 
-[ toInt(selected[i]) | i : int(1..10) ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4),toInt(selected#components_5),toInt(selected#components_6),toInt(selected#components_7),toInt(selected#components_8),toInt(selected#components_9),toInt(selected#components_10);int(1..)]
+sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2
+   ~~> flatten_generic ([("Minion", 4200)])
+__0 >= 2
+new variables:
+  findAux __0: int(0..10)
+new constraints:
+  __0 =aux sum([ toInt(selected[i]) | i : int(1..10) ])
 
 --
 
-sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4),toInt(selected#components_5),toInt(selected#components_6),toInt(selected#components_7),toInt(selected#components_8),toInt(selected#components_9),toInt(selected#components_10);int(1..)]) >= 2
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], 2)
+__0 >= 2
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(2, __0, 0)
+
+--
+
+[ toInt(selected[i]) | i : int(1..10) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4),toInt(selected#components_5),toInt(selected#components_6),toInt(selected#components_7),toInt(selected#components_8),toInt(selected#components_9),toInt(selected#components_10);int(1..)]
 
 --
 
@@ -134,11 +144,16 @@ toInt(selected#components_10)
 
 --
 
+__0 =aux sum([toInt(selected#components_1),toInt(selected#components_2),toInt(selected#components_3),toInt(selected#components_4),toInt(selected#components_5),toInt(selected#components_6),toInt(selected#components_7),toInt(selected#components_8),toInt(selected#components_9),toInt(selected#components_10);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], __0),SumGeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], __0);int(1..)])
+
+--
+
 total_cost = sum([product([9,toInt(selected#components_1);int(1..)]),product([4,toInt(selected#components_2);int(1..)]),product([7,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]),product([3,toInt(selected#components_5);int(1..)]),product([8,toInt(selected#components_6);int(1..)]),product([5,toInt(selected#components_7);int(1..)]),product([2,toInt(selected#components_8);int(1..)]),product([10,toInt(selected#components_9);int(1..)]),toInt(selected#components_10);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__0, __1, __2, __3, __4, __5, __6, __7, __8, selected#components_10],total_cost),FlatWeightedSumGeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__0, __1, __2, __3, __4, __5, __6, __7, __8, selected#components_10],total_cost);int(1..)])
+and([FlatWeightedSumLeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__1, __2, __3, __4, __5, __6, __7, __8, __9, selected#components_10],total_cost),FlatWeightedSumGeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__1, __2, __3, __4, __5, __6, __7, __8, __9, selected#components_10],total_cost);int(1..)])
 new variables:
-  findAux __0: int(0..1)
   findAux __1: int(0..1)
   findAux __2: int(0..1)
   findAux __3: int(0..1)
@@ -147,16 +162,17 @@ new variables:
   findAux __6: int(0..1)
   findAux __7: int(0..1)
   findAux __8: int(0..1)
+  findAux __9: int(0..1)
 new constraints:
-  __0 =aux product([toInt(selected#components_1);int(1..)])
-  __1 =aux product([toInt(selected#components_2);int(1..)])
-  __2 =aux product([toInt(selected#components_3);int(1..)])
-  __3 =aux product([toInt(selected#components_4);int(1..)])
-  __4 =aux product([toInt(selected#components_5);int(1..)])
-  __5 =aux product([toInt(selected#components_6);int(1..)])
-  __6 =aux product([toInt(selected#components_7);int(1..)])
-  __7 =aux product([toInt(selected#components_8);int(1..)])
-  __8 =aux product([toInt(selected#components_9);int(1..)])
+  __1 =aux product([toInt(selected#components_1);int(1..)])
+  __2 =aux product([toInt(selected#components_2);int(1..)])
+  __3 =aux product([toInt(selected#components_3);int(1..)])
+  __4 =aux product([toInt(selected#components_4);int(1..)])
+  __5 =aux product([toInt(selected#components_5);int(1..)])
+  __6 =aux product([toInt(selected#components_6);int(1..)])
+  __7 =aux product([toInt(selected#components_7);int(1..)])
+  __8 =aux product([toInt(selected#components_8);int(1..)])
+  __9 =aux product([toInt(selected#components_9);int(1..)])
 
 --
 
@@ -288,9 +304,8 @@ toInt(selected#components_10)
 
 total_cost = sum([product([9,toInt(selected#components_1);int(1..)]),product([4,toInt(selected#components_2);int(1..)]),product([7,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]),product([3,toInt(selected#components_5);int(1..)]),product([8,toInt(selected#components_6);int(1..)]),product([5,toInt(selected#components_7);int(1..)]),product([2,toInt(selected#components_8);int(1..)]),product([10,toInt(selected#components_9);int(1..)]),toInt(selected#components_10);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([4, 7, 6, 3, 8, 5, 2, 10, 9, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __9, selected#components_10],total_cost),FlatWeightedSumGeq([4, 7, 6, 3, 8, 5, 2, 10, 9, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __9, selected#components_10],total_cost);int(1..)])
+and([FlatWeightedSumLeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __18, selected#components_10],total_cost),FlatWeightedSumGeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __18, selected#components_10],total_cost);int(1..)])
 new variables:
-  findAux __9: int(0..1)
   findAux __10: int(0..1)
   findAux __11: int(0..1)
   findAux __12: int(0..1)
@@ -299,16 +314,17 @@ new variables:
   findAux __15: int(0..1)
   findAux __16: int(0..1)
   findAux __17: int(0..1)
+  findAux __18: int(0..1)
 new constraints:
-  __9 =aux product([toInt(selected#components_1);int(1..)])
-  __10 =aux product([toInt(selected#components_2);int(1..)])
-  __11 =aux product([toInt(selected#components_3);int(1..)])
-  __12 =aux product([toInt(selected#components_4);int(1..)])
-  __13 =aux product([toInt(selected#components_5);int(1..)])
-  __14 =aux product([toInt(selected#components_6);int(1..)])
-  __15 =aux product([toInt(selected#components_7);int(1..)])
-  __16 =aux product([toInt(selected#components_8);int(1..)])
-  __17 =aux product([toInt(selected#components_9);int(1..)])
+  __10 =aux product([toInt(selected#components_1);int(1..)])
+  __11 =aux product([toInt(selected#components_2);int(1..)])
+  __12 =aux product([toInt(selected#components_3);int(1..)])
+  __13 =aux product([toInt(selected#components_4);int(1..)])
+  __14 =aux product([toInt(selected#components_5);int(1..)])
+  __15 =aux product([toInt(selected#components_6);int(1..)])
+  __16 =aux product([toInt(selected#components_7);int(1..)])
+  __17 =aux product([toInt(selected#components_8);int(1..)])
+  __18 =aux product([toInt(selected#components_9);int(1..)])
 
 --
 
@@ -440,9 +456,8 @@ toInt(selected#components_1)
 
 total_carbon = sum([toInt(selected#components_1),product([7,toInt(selected#components_2);int(1..)]),product([2,toInt(selected#components_3);int(1..)]),product([6,toInt(selected#components_4);int(1..)]),product([8,toInt(selected#components_5);int(1..)]),product([3,toInt(selected#components_6);int(1..)]),product([5,toInt(selected#components_7);int(1..)]),product([9,toInt(selected#components_8);int(1..)]),product([4,toInt(selected#components_9);int(1..)]),product([10,toInt(selected#components_10);int(1..)]);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([7, 2, 6, 8, 3, 5, 9, 4, 10, 1],[__18, __19, __20, __21, __22, __23, __24, __25, __26, selected#components_1],total_carbon),FlatWeightedSumGeq([7, 2, 6, 8, 3, 5, 9, 4, 10, 1],[__18, __19, __20, __21, __22, __23, __24, __25, __26, selected#components_1],total_carbon);int(1..)])
+and([FlatWeightedSumLeq([7, 2, 6, 8, 3, 5, 9, 4, 10, 1],[__19, __20, __21, __22, __23, __24, __25, __26, __27, selected#components_1],total_carbon),FlatWeightedSumGeq([7, 2, 6, 8, 3, 5, 9, 4, 10, 1],[__19, __20, __21, __22, __23, __24, __25, __26, __27, selected#components_1],total_carbon);int(1..)])
 new variables:
-  findAux __18: int(0..1)
   findAux __19: int(0..1)
   findAux __20: int(0..1)
   findAux __21: int(0..1)
@@ -451,16 +466,17 @@ new variables:
   findAux __24: int(0..1)
   findAux __25: int(0..1)
   findAux __26: int(0..1)
+  findAux __27: int(0..1)
 new constraints:
-  __18 =aux product([toInt(selected#components_2);int(1..)])
-  __19 =aux product([toInt(selected#components_3);int(1..)])
-  __20 =aux product([toInt(selected#components_4);int(1..)])
-  __21 =aux product([toInt(selected#components_5);int(1..)])
-  __22 =aux product([toInt(selected#components_6);int(1..)])
-  __23 =aux product([toInt(selected#components_7);int(1..)])
-  __24 =aux product([toInt(selected#components_8);int(1..)])
-  __25 =aux product([toInt(selected#components_9);int(1..)])
-  __26 =aux product([toInt(selected#components_10);int(1..)])
+  __19 =aux product([toInt(selected#components_2);int(1..)])
+  __20 =aux product([toInt(selected#components_3);int(1..)])
+  __21 =aux product([toInt(selected#components_4);int(1..)])
+  __22 =aux product([toInt(selected#components_5);int(1..)])
+  __23 =aux product([toInt(selected#components_6);int(1..)])
+  __24 =aux product([toInt(selected#components_7);int(1..)])
+  __25 =aux product([toInt(selected#components_8);int(1..)])
+  __26 =aux product([toInt(selected#components_9);int(1..)])
+  __27 =aux product([toInt(selected#components_10);int(1..)])
 
 --
 
@@ -555,7 +571,7 @@ letting carbon_footprint#components_7 be 5
 letting carbon_footprint#components_8 be 9
 letting carbon_footprint#components_9 be 4
 letting carbon_footprint#components_10 be 10
-findAux __0: int(0..1)
+findAux __0: int(0..10)
 findAux __1: int(0..1)
 findAux __2: int(0..1)
 findAux __3: int(0..1)
@@ -582,38 +598,40 @@ findAux __23: int(0..1)
 findAux __24: int(0..1)
 findAux __25: int(0..1)
 findAux __26: int(0..1)
+findAux __27: int(0..1)
 
 such that
 
-SumGeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], 2),
-and([FlatWeightedSumLeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__0, __1, __2, __3, __4, __5, __6, __7, __8, selected#components_10],total_cost),FlatWeightedSumGeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__0, __1, __2, __3, __4, __5, __6, __7, __8, selected#components_10],total_cost);int(1..)]),
-and([FlatWeightedSumLeq([4, 7, 6, 3, 8, 5, 2, 10, 9, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __9, selected#components_10],total_cost),FlatWeightedSumGeq([4, 7, 6, 3, 8, 5, 2, 10, 9, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __9, selected#components_10],total_cost);int(1..)]),
-and([FlatWeightedSumLeq([7, 2, 6, 8, 3, 5, 9, 4, 10, 1],[__18, __19, __20, __21, __22, __23, __24, __25, __26, selected#components_1],total_carbon),FlatWeightedSumGeq([7, 2, 6, 8, 3, 5, 9, 4, 10, 1],[__18, __19, __20, __21, __22, __23, __24, __25, __26, selected#components_1],total_carbon);int(1..)]),
-__0 =aux toInt(selected#components_1),
-__1 =aux toInt(selected#components_2),
-__2 =aux toInt(selected#components_3),
-__3 =aux toInt(selected#components_4),
-__4 =aux toInt(selected#components_5),
-__5 =aux toInt(selected#components_6),
-__6 =aux toInt(selected#components_7),
-__7 =aux toInt(selected#components_8),
-__8 =aux toInt(selected#components_9),
-__9 =aux toInt(selected#components_1),
-__10 =aux toInt(selected#components_2),
-__11 =aux toInt(selected#components_3),
-__12 =aux toInt(selected#components_4),
-__13 =aux toInt(selected#components_5),
-__14 =aux toInt(selected#components_6),
-__15 =aux toInt(selected#components_7),
-__16 =aux toInt(selected#components_8),
-__17 =aux toInt(selected#components_9),
-__18 =aux toInt(selected#components_2),
-__19 =aux toInt(selected#components_3),
-__20 =aux toInt(selected#components_4),
-__21 =aux toInt(selected#components_5),
-__22 =aux toInt(selected#components_6),
-__23 =aux toInt(selected#components_7),
-__24 =aux toInt(selected#components_8),
-__25 =aux toInt(selected#components_9),
-__26 =aux toInt(selected#components_10)
+Ineq(2, __0, 0),
+and([FlatWeightedSumLeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__1, __2, __3, __4, __5, __6, __7, __8, __9, selected#components_10],total_cost),FlatWeightedSumGeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__1, __2, __3, __4, __5, __6, __7, __8, __9, selected#components_10],total_cost);int(1..)]),
+and([FlatWeightedSumLeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __18, selected#components_10],total_cost),FlatWeightedSumGeq([9, 4, 7, 6, 3, 8, 5, 2, 10, 1],[__10, __11, __12, __13, __14, __15, __16, __17, __18, selected#components_10],total_cost);int(1..)]),
+and([FlatWeightedSumLeq([7, 2, 6, 8, 3, 5, 9, 4, 10, 1],[__19, __20, __21, __22, __23, __24, __25, __26, __27, selected#components_1],total_carbon),FlatWeightedSumGeq([7, 2, 6, 8, 3, 5, 9, 4, 10, 1],[__19, __20, __21, __22, __23, __24, __25, __26, __27, selected#components_1],total_carbon);int(1..)]),
+and([SumLeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], __0),SumGeq([selected#components_1, selected#components_10, selected#components_2, selected#components_3, selected#components_4, selected#components_5, selected#components_6, selected#components_7, selected#components_8, selected#components_9], __0);int(1..)]),
+__1 =aux toInt(selected#components_1),
+__2 =aux toInt(selected#components_2),
+__3 =aux toInt(selected#components_3),
+__4 =aux toInt(selected#components_4),
+__5 =aux toInt(selected#components_5),
+__6 =aux toInt(selected#components_6),
+__7 =aux toInt(selected#components_7),
+__8 =aux toInt(selected#components_8),
+__9 =aux toInt(selected#components_9),
+__10 =aux toInt(selected#components_1),
+__11 =aux toInt(selected#components_2),
+__12 =aux toInt(selected#components_3),
+__13 =aux toInt(selected#components_4),
+__14 =aux toInt(selected#components_5),
+__15 =aux toInt(selected#components_6),
+__16 =aux toInt(selected#components_7),
+__17 =aux toInt(selected#components_8),
+__18 =aux toInt(selected#components_9),
+__19 =aux toInt(selected#components_2),
+__20 =aux toInt(selected#components_3),
+__21 =aux toInt(selected#components_4),
+__22 =aux toInt(selected#components_5),
+__23 =aux toInt(selected#components_6),
+__24 =aux toInt(selected#components_7),
+__25 =aux toInt(selected#components_8),
+__26 =aux toInt(selected#components_9),
+__27 =aux toInt(selected#components_10)
 

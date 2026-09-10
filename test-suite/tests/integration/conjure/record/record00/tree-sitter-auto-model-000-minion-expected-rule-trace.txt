@@ -29,9 +29,9 @@ y
 
 --
 
-y = z
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-y = z
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
 new variables:
   find z#components_1: bool
   find z#components_2: int(0..9)
@@ -65,15 +65,15 @@ x#components_2
 
 --
 
-y = z
-   ~~> record_components_var_eq_var ([("ReprGeneral", 9400)])
-and([y#components_1 = z#components_1,y#components_2 = z#components_2;int(1..)])
-
---
-
 y = record {a = false,b = 4}
    ~~> record_components_var_eq_lit ([("ReprGeneral", 9400)])
 and([y#components_1 = false,y#components_2 = 4;int(1..)])
+
+--
+
+y = z
+   ~~> record_components_var_eq_var ([("ReprGeneral", 9400)])
+and([y#components_1 = z#components_1,y#components_2 = z#components_2;int(1..)])
 
 --
 

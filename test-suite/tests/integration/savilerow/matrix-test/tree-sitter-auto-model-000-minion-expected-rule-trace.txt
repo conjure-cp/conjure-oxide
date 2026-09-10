@@ -49,27 +49,45 @@ bibd[bibd[x, y], bibd[x, y]]
 
 --
 
-{SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) @ and([__inDomain(bibd[x, y],int(1..3)),__inDomain(bibd[x, y],int(1..3));int(1..)])} = 1
-   ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1 @ and([__inDomain(bibd[x, y],int(1..3)),__inDomain(bibd[x, y],int(1..3));int(1..)])}
-
---
-
-{SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1 @ and([__inDomain(bibd[x, y],int(1..3)),__inDomain(bibd[x, y],int(1..3));int(1..)])}
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1,and([__inDomain(bibd[x, y],int(1..3)),__inDomain(bibd[x, y],int(1..3));int(1..)]);int(1..)])
-
---
-
-and([SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1,and([__inDomain(bibd[x, y],int(1..3)),__inDomain(bibd[x, y],int(1..3));int(1..)]);int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1,__inDomain(bibd[x, y],int(1..3)),__inDomain(bibd[x, y],int(1..3));int(1..)])
+bibd[x, y]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
 
 --
 
 bibd[x, y]
    ~~> index_to_bubble ([("Bubble", 6000)])
 {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
+
+--
+
+bibd[x, y]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
+
+--
+
+bibd[x, y]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
+
+--
+
+{SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) @ and([__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3)),__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3));int(1..)])} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1 @ and([__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3)),__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3));int(1..)])}
+
+--
+
+{SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1 @ and([__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3)),__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3));int(1..)])}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1,and([__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3)),__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3));int(1..)]);int(1..)])
+
+--
+
+and([SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1,and([__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3)),__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3));int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1,__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3)),__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3));int(1..)])
 
 --
 
@@ -85,15 +103,15 @@ and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),and([__inDomain(x,int(1..3)),_
 
 --
 
-and([SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1,and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)]),__inDomain(bibd[x, y],int(1..3));int(1..)])
+and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1,__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(bibd[x, y],int(1..3));int(1..)])
+and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
 
 --
 
-bibd[x, y]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
+and([SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1,and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]),__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3));int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1,__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain({SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])},int(1..3));int(1..)])
 
 --
 
@@ -109,67 +127,49 @@ and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),and([__inDomain(x,int(1..3)),_
 
 --
 
-and([SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1,__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)]);int(1..)])
+and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafeIndex(bibd,[bibd[x, y], bibd[x, y]]) = 1,__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
+and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
 
 --
 
-bibd[x, y]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
-
---
-
-SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, bibd[x, y]])
-   ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), bibd[x, y]]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
-
---
-
-{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), bibd[x, y]]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])} = 1
-   ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), bibd[x, y]]) = 1 @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
-
---
-
-{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), bibd[x, y]]) = 1 @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), bibd[x, y]]) = 1,and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])
-
---
-
-and([and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), bibd[x, y]]) = 1,and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)]),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
+and([SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1,__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),and([__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
-and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), bibd[x, y]]) = 1,__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
+and([SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}]) = 1,__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
 
 --
 
-bibd[x, y]
-   ~~> index_to_bubble ([("Bubble", 6000)])
-{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
-
---
-
-SafeIndex(bibd,[SafeIndex(bibd,[x, y]), {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}])
+SafeIndex(bibd,[{SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}, {SafeIndex(bibd,[x, y]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}])
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
+{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) @ and([and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]),and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])}
 
 --
 
-{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])} = 1
+and([and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]),and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
+
+--
+
+{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])} = 1
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1 @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
+{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1 @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
 
 --
 
-{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1 @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
+{SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1 @ and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1,and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])
+and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1,and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])
 
 --
 
-and([and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1,and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)]),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
+and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1,and([__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1,__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
+
+--
+
+and([and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1,__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)]),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([SafeIndex(bibd,[SafeIndex(bibd,[x, y]), SafeIndex(bibd,[x, y])]) = 1,__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3)),__inDomain(SafeIndex(bibd,[x, y]),int(1..3)),__inDomain(x,int(1..3)),__inDomain(y,int(1..3));int(1..)])
 
@@ -199,15 +199,15 @@ sum([y,-(1);int(1..)])
 
 --
 
-sum([product([3,(x - 1);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([3,(x - 1);int(1..)]),y,-1,1;int(1..)])
-
---
-
 (x - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([x,-(1);int(1..)])
+
+--
+
+sum([product([3,sum([x,-1;int(1..)]);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y,-1,1;int(1..)])
 
 --
 
@@ -235,15 +235,15 @@ sum([y,-(1);int(1..)])
 
 --
 
-sum([product([3,(x - 1);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([3,(x - 1);int(1..)]),y,-1,1;int(1..)])
-
---
-
 (x - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([x,-(1);int(1..)])
+
+--
+
+sum([product([3,sum([x,-1;int(1..)]);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y,-1,1;int(1..)])
 
 --
 
@@ -271,15 +271,15 @@ sum([y,-(1);int(1..)])
 
 --
 
-sum([product([3,(x - 1);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([3,(x - 1);int(1..)]),y,-1,1;int(1..)])
-
---
-
 (x - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([x,-(1);int(1..)])
+
+--
+
+sum([product([3,sum([x,-1;int(1..)]);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y,-1,1;int(1..)])
 
 --
 
@@ -307,15 +307,15 @@ sum([y,-(1);int(1..)])
 
 --
 
-sum([product([3,(x - 1);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([3,(x - 1);int(1..)]),y,-1,1;int(1..)])
-
---
-
 (x - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([x,-(1);int(1..)])
+
+--
+
+sum([product([3,sum([x,-1;int(1..)]);int(1..)]),sum([y,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y,-1,1;int(1..)])
 
 --
 
@@ -343,15 +343,15 @@ sum([SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#compo
 
 --
 
-sum([product([3,(SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]) - 1);int(1..)]),sum([SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]),-1;int(1..)]),1;int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([3,(SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]) - 1);int(1..)]),SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]),-1,1;int(1..)])
-
---
-
 (SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]) - 1)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]),-(1);int(1..)])
+
+--
+
+sum([product([3,sum([SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]),-1;int(1..)]);int(1..)]),sum([SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]),-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([3,sum([SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]),-1;int(1..)]);int(1..)]),SafeIndex([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9;int(1..)],[sum([product([3,sum([x,-1;int(1..)]);int(1..)]),y;int(1..)])]),-1,1;int(1..)])
 
 --
 
@@ -678,7 +678,7 @@ findAux __14: int(-6..4)
 
 such that
 
-and([__minion_element_one([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9],__6,1),__minion_w_inintervalset(x,[1,3]),__minion_w_inintervalset(y,[1,3]),__minion_w_inintervalset(x,[1,3]),__minion_w_inintervalset(y,[1,3]),__minion_w_inintervalset(__2,[1,3]),__minion_w_inintervalset(x,[1,3]),__minion_w_inintervalset(y,[1,3]),__minion_w_inintervalset(__5,[1,3]),__minion_w_inintervalset(x,[1,3]),__minion_w_inintervalset(y,[1,3]);int(1..)]),
+and([__minion_element_one([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9],__6,1),__minion_w_inintervalset(x,[1,3]),__minion_w_inintervalset(y,[1,3]),__minion_w_inintervalset(x,[1,3]),__minion_w_inintervalset(y,[1,3]),__minion_w_inintervalset(__5,[1,3]),__minion_w_inintervalset(x,[1,3]),__minion_w_inintervalset(y,[1,3]),__minion_w_inintervalset(__2,[1,3]),__minion_w_inintervalset(x,[1,3]),__minion_w_inintervalset(y,[1,3]);int(1..)]),
 and([FlatWeightedSumLeq([3, 1],[__1, y],__0),FlatWeightedSumGeq([3, 1],[__1, y],__0);int(1..)]),
 and([SumLeq([-1, x], __1),SumGeq([-1, x], __1);int(1..)]),
 __minion_element_one([bibd#components_1,bibd#components_2,bibd#components_3,bibd#components_4,bibd#components_5,bibd#components_6,bibd#components_7,bibd#components_8,bibd#components_9],__0,__2),

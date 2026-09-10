@@ -201,12 +201,17 @@ impl RuleEffect {
     }
 
     /// Returns the concrete effect for the current symbol table.
-    pub fn materialise(&self, symbols: &SymbolTable) -> Self {
-        let Some(materialise) = &self.materialise else {
-            return self.clone();
-        };
+    ///
+    /// This consumes the selected effect: cloning a concrete effect can duplicate its expression,
+    /// top-level constraints, clauses, and speculative symbol table. Before returning, the symbol
+    /// snapshot is reduced to the bindings that the effect actually changes.
+    pub fn materialise(mut self, symbols: &SymbolTable) -> Self {
+        if let Some(materialise) = self.materialise.take() {
+            return materialise(symbols).materialise(symbols);
+        }
 
-        materialise(symbols).materialise(symbols)
+        self.symbols.retain_local_changes_from(symbols);
+        self
     }
 
     pub(crate) fn is_deferred(&self) -> bool {
@@ -248,7 +253,7 @@ impl RuleEffect {
             update.apply();
         }
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
-        model.add_constraints(self.new_top.clone());
+        model.add_constraints(self.new_top);
         model.add_clauses(self.new_clauses);
     }
 
@@ -319,6 +324,22 @@ pub enum RulePrefilter {
     Atom(AtomKind),
 }
 
+/// State changes that can invalidate a failed rule application.
+///
+/// Most rules may become applicable when either their focused expression or the symbol table
+/// changes. A small number of Root rules use the expression only as an entry point and decide
+/// applicability entirely from declarations. Remembering their failed applications until the
+/// symbol table changes avoids repeatedly scanning every declaration after unrelated expression
+/// rewrites.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum RuleFailureInvalidation {
+    /// Reconsider a failed application after any relevant expression or symbol-table change.
+    #[default]
+    ExpressionOrSymbols,
+    /// Reconsider a failed application only after the symbol table changes.
+    SymbolsOnly,
+}
+
 /**
  * A rule with a name, application function, and rule sets.
  *
@@ -334,6 +355,8 @@ pub struct Rule<'a> {
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
     /// Complete prefilter alternatives this rule applies to, or `None` for universal rules.
     pub prefilters: Option<&'static [RulePrefilter]>,
+    /// Which state changes can make a failed application become applicable.
+    pub failure_invalidation: RuleFailureInvalidation,
 }
 
 impl<'a> Rule<'a> {
@@ -347,6 +370,7 @@ impl<'a> Rule<'a> {
             application,
             rule_sets,
             prefilters: None,
+            failure_invalidation: RuleFailureInvalidation::ExpressionOrSymbols,
         }
     }
 

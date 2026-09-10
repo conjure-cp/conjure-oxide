@@ -88,18 +88,6 @@ a[..,3]
 
 --
 
-allDifferent({SafeSlice(a,[..,3]) @ false})
-   ~~> bubble_up ([("Bubble", 8800)])
-{allDifferent(SafeSlice(a,[..,3])) @ false}
-
---
-
-{allDifferent(SafeSlice(a,[..,3])) @ false}
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([allDifferent(SafeSlice(a,[..,3])),false;int(1..)])
-
---
-
 a[1,..]
    ~~> slice_to_bubble ([("Bubble", 6000)])
 SafeSlice(a,[1,..])
@@ -118,15 +106,15 @@ SafeSlice(a,[3,..])
 
 --
 
-SafeSlice(a,[..,1])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[a#components_1,a#components_3,a#components_5;int(1..)]
+allDifferent({SafeSlice(a,[..,3]) @ false})
+   ~~> bubble_up ([("Bubble", 8800)])
+{allDifferent(SafeSlice(a,[..,3])) @ false}
 
 --
 
-SafeSlice(a,[1,..])
-   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
-[a#components_1,a#components_2;int(1..)]
+{allDifferent(SafeSlice(a,[..,3])) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([allDifferent(SafeSlice(a,[..,3])),false;int(1..)])
 
 --
 
@@ -139,6 +127,18 @@ SafeSlice(a,[2,..])
 SafeSlice(a,[3,..])
    ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
 [a#components_5,a#components_6;int(1..)]
+
+--
+
+SafeSlice(a,[..,1])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[a#components_1,a#components_3,a#components_5;int(1..)]
+
+--
+
+SafeSlice(a,[1,..])
+   ~~> slice_matrix_components ([("ReprMatrixComponents", 5000)])
+[a#components_1,a#components_2;int(1..)]
 
 --
 

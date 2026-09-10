@@ -107,15 +107,21 @@ bibd#array_1#lia_1[bibd#array_1#lia_1[x#lia_1, y#lia_1], 0]
 
 --
 
-{SafeIndex(bibd#array_1#lia_1,[bibd#array_1#lia_1[x#lia_1, y#lia_1], 0]) @ false} = 1
-   ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(bibd#array_1#lia_1,[bibd#array_1#lia_1[x#lia_1, y#lia_1], 0]) = 1 @ false}
+bibd#array_1#lia_1[x#lia_1, y#lia_1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(bibd#array_1#lia_1,[x#lia_1, y#lia_1]) @ and([__inDomain(x#lia_1,int(1..3)),__inDomain(y#lia_1,int(1..3));int(1..)])}
 
 --
 
-{SafeIndex(bibd#array_1#lia_1,[bibd#array_1#lia_1[x#lia_1, y#lia_1], 0]) = 1 @ false}
+{SafeIndex(bibd#array_1#lia_1,[{SafeIndex(bibd#array_1#lia_1,[x#lia_1, y#lia_1]) @ and([__inDomain(x#lia_1,int(1..3)),__inDomain(y#lia_1,int(1..3));int(1..)])}, 0]) @ false} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(bibd#array_1#lia_1,[{SafeIndex(bibd#array_1#lia_1,[x#lia_1, y#lia_1]) @ and([__inDomain(x#lia_1,int(1..3)),__inDomain(y#lia_1,int(1..3));int(1..)])}, 0]) = 1 @ false}
+
+--
+
+{SafeIndex(bibd#array_1#lia_1,[{SafeIndex(bibd#array_1#lia_1,[x#lia_1, y#lia_1]) @ and([__inDomain(x#lia_1,int(1..3)),__inDomain(y#lia_1,int(1..3));int(1..)])}, 0]) = 1 @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(bibd#array_1#lia_1,[bibd#array_1#lia_1[x#lia_1, y#lia_1], 0]) = 1,false;int(1..)])
+and([SafeIndex(bibd#array_1#lia_1,[{SafeIndex(bibd#array_1#lia_1,[x#lia_1, y#lia_1]) @ and([__inDomain(x#lia_1,int(1..3)),__inDomain(y#lia_1,int(1..3));int(1..)])}, 0]) = 1,false;int(1..)])
 
 --
 

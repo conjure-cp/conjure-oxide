@@ -45,7 +45,7 @@ pub fn validate_direct_int_operands(
                 return Err(RuleNotApplicable);
             };
 
-            let Some(v) = inner.as_ref().clone().unwrap_list() else {
+            let Some(v) = inner.as_ref().clone().into_list() else {
                 return Err(RuleNotApplicable);
             };
 
@@ -291,7 +291,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     else {
         return Err(RuleNotApplicable);
     };
-    let Some(numer_bits) = numer_inner.as_ref().clone().unwrap_list() else {
+    let Some(numer_bits) = numer_inner.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
 
@@ -301,7 +301,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Some(denom_bits) = denom_inner.as_ref().clone().unwrap_list() else {
+    let Some(denom_bits) = denom_inner.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
 
@@ -374,7 +374,7 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Some(exprs) = sum_exprs.as_ref().clone().unwrap_list() else {
+    let Some(exprs) = sum_exprs.as_ref().clone().into_list() else {
         return Err(RuleNotApplicable);
     };
 

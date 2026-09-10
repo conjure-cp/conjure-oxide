@@ -19,15 +19,15 @@ type VisitingStack = Vec<Name>;
 /// Rewrites variables in domains.
 ///
 /// Solvers require variable declarations to have ground domains. For integer domains that contain variables in them, we widen to a finite ground superset-domain and add constraints that enforce membership in the original (possibly variable-dependent) domain.
-#[register_rule("Base", 8990, [Root])]
+#[register_rule("Base", 8990, [Root], symbols_only)]
 fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(_, _) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    // Fast path: models whose finds are already ground never need widening. The previous gate
-    // treated every ground integer find as a hit, so this rule scanned the whole symbol table on
-    // every Root attempt and always returned RuleNotApplicable afterwards.
+    // Fast path: models whose finds are already ground never need widening, and this rule is
+    // attempted at the root after every rewrite, so keep the symbol-table scan behind a cheap
+    // test.
     if !symbols_need_domain_widening(symbols) {
         return Err(RuleNotApplicable);
     }
@@ -93,9 +93,14 @@ fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 /// trigger the expensive symbol-table scan in [`handle_variables_in_domains`].
 fn symbols_need_domain_widening(symbols: &SymbolTable) -> bool {
     symbols.iter_local().any(|(_, declaration)| {
-        declaration
-            .domain()
-            .is_some_and(|domain| matches!(domain.as_ref(), Domain::Unresolved(_)))
+        declaration.domain().is_some_and(|domain| {
+            // `Domain::Unresolved` only means "not yet resolved", not "unresolvable": a domain
+            // written against a `letting` is unresolved but resolves fine. Widening is needed only
+            // when resolution actually fails, which is the condition the body acts on below.
+            // Testing that here keeps the O(declarations) pass off every Root attempt in models
+            // that merely name a domain letting.
+            matches!(domain.as_ref(), Domain::Unresolved(_)) && domain.resolve().is_err()
+        })
     })
 }
 

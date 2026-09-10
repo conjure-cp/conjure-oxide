@@ -23,18 +23,6 @@ sum([x,y,z;int(1..)])
 
 --
 
-{SafeDiv(sum([x,y,z;int(1..)]), a) @ a != 0} = 3
-   ~~> bubble_up ([("Bubble", 8800)])
-{SafeDiv(sum([x,y,z;int(1..)]), a) = 3 @ a != 0}
-
---
-
-{SafeDiv(sum([x,y,z;int(1..)]), a) = 3 @ a != 0}
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeDiv(sum([x,y,z;int(1..)]), a) = 3,a != 0;int(1..)])
-
---
-
 SafeDiv(sum([x,y,z;int(1..)]), a)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeDiv(__0, a)
@@ -67,6 +55,6 @@ findAux __0: int(6..14)
 
 such that
 
-and([DivEq(__0, a, 3),a != 0;int(1..)]),
+DivEq(__0, a, 3),
 and([SumLeq([x, y, z], __0),SumGeq([x, y, z], __0);int(1..)])
 

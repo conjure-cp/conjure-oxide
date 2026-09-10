@@ -12,7 +12,7 @@ or([ x = i | i : int(1..3) ])
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 or([ x = i | i : int(1..3) ])
 new variables:
-  find x#lia_1: int(1)
+  find x#bv_1: int(1)
 
 --
 
@@ -30,17 +30,17 @@ x
 
 --
 
-x = __0
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-x = __0
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
 new variables:
   findAux __0#lia_1: int(1..3)
 
 --
 
 x
-   ~~> smt_int_lia_variable ([("Smt", 9500)])
-x#lia_1
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+x#bv_1
 
 --
 
@@ -53,11 +53,11 @@ __0#lia_1
 Final model:
 
 find x: int(1)
-find x#lia_1: int(1)
+find x#bv_1: int(1)
 findAux __0: int(1..3)
 findAux __0#lia_1: int(1..3)
 
 such that
 
-x#lia_1 = __0#lia_1
+x#bv_1 = __0#lia_1
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import math
 import subprocess
 import sys
 import tomllib
@@ -52,7 +51,6 @@ FIELDNAMES = [
     "new_total_rule_attempts",
     "old_total_rule_applications",
     "new_total_rule_applications",
-    "summary",
 ]
 
 
@@ -151,7 +149,6 @@ def build_row(
 ) -> dict[str, str]:
     old_config = run_stats(old_stats, run_key)
     new_config = run_stats(new_stats, run_key)
-    is_new_config = run_key is not None and not old_config and bool(new_config)
     config = config_name(run_key)
 
     old_conjure = tool_stats(old_stats, "conjure")
@@ -231,20 +228,6 @@ def build_row(
         ),
         "new_total_rule_applications": integer(
             new_rule_trace["total-rule-applications"]
-        ),
-        "summary": "new config"
-        if is_new_config
-        else summarize(
-            old_status=old_status,
-            new_status=new_status,
-            old_conjure_status=old_conjure_status,
-            new_conjure_status=new_conjure_status,
-            old_oxide_status=old_oxide_status,
-            new_oxide_status=new_oxide_status,
-            old_oxide_total=old_oxide_total,
-            new_oxide_total=new_oxide_total,
-            old_conjure_total=old_conjure_total,
-            new_conjure_total=new_conjure_total,
         ),
     }
 
@@ -366,56 +349,6 @@ def total_time(stats: dict[str, float | str | None]) -> float | None:
     if isinstance(translation_time, float) and isinstance(solve_time, float):
         return translation_time + solve_time
     return None
-
-
-def summarize(
-    *,
-    old_status: str | None,
-    new_status: str | None,
-    old_conjure_status: str | None,
-    new_conjure_status: str | None,
-    old_oxide_status: str | None,
-    new_oxide_status: str | None,
-    old_oxide_total: float | None,
-    new_oxide_total: float | None,
-    old_conjure_total: float | None,
-    new_conjure_total: float | None,
-) -> str:
-    old_effective = effective_status(old_status, old_oxide_status, old_conjure_status)
-    new_effective = effective_status(new_status, new_oxide_status, new_conjure_status)
-    old_kind = status_kind(old_effective)
-    new_kind = status_kind(new_effective)
-
-    if old_effective is None and new_effective is not None:
-        return "new test"
-    if old_kind == "timeout" and new_kind == "timeout":
-        return "still timeout"
-    if old_kind == "fail" and new_kind == "fail":
-        return "still fail"
-    if new_kind == "timeout":
-        return "new timeout"
-    if old_kind == "timeout":
-        return "no longer timeout"
-    if new_kind == "fail":
-        return "new fail"
-    if old_kind == "fail":
-        return "fixed"
-    if old_kind != new_kind:
-        return "status changed"
-
-    old_total = old_oxide_total
-    new_total = new_oxide_total
-    if old_total is None or new_total is None:
-        old_total = old_conjure_total
-        new_total = new_conjure_total
-
-    if old_total is None or new_total is None:
-        return "stayed same"
-    if math.isclose(old_total, new_total, rel_tol=1e-9, abs_tol=1e-12):
-        return "stayed same"
-    if new_total < old_total:
-        return "got faster"
-    return "got slower"
 
 
 def status_kind(status: str | None) -> str | None:

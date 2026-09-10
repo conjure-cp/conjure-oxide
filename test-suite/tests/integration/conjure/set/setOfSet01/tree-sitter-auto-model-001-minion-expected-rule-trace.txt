@@ -162,30 +162,6 @@ and([or([1 <= x#explicit_2,x#explicit_1#components_1#occurrence_1 = false;int(1.
 
 --
 
-SafeIndex(x#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_2
-
---
-
-x#explicit_1#components_2 = {}
-   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
-and([x#explicit_1#components_2#occurrence_1 = false,x#explicit_1#components_2#occurrence_2 = false;int(1..)])
-
---
-
-or([2 <= x#explicit_2,and([x#explicit_1#components_2#occurrence_1 = false,x#explicit_1#components_2#occurrence_2 = false;int(1..)]);int(1..)])
-   ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([2 <= x#explicit_2,x#explicit_1#components_2#occurrence_1 = false;int(1..)]),or([2 <= x#explicit_2,x#explicit_1#components_2#occurrence_2 = false;int(1..)]);int(1..)])
-
---
-
 SafeIndex(x#explicit_1,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_3
@@ -207,6 +183,30 @@ and([x#explicit_1#components_3#occurrence_1 = false,x#explicit_1#components_3#oc
 or([3 <= x#explicit_2,and([x#explicit_1#components_3#occurrence_1 = false,x#explicit_1#components_3#occurrence_2 = false;int(1..)]);int(1..)])
    ~~> distribute_or_over_and ([("Base", 8400)])
 and([or([3 <= x#explicit_2,x#explicit_1#components_3#occurrence_1 = false;int(1..)]),or([3 <= x#explicit_2,x#explicit_1#components_3#occurrence_2 = false;int(1..)]);int(1..)])
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_2
+
+--
+
+x#explicit_1#components_2 = {}
+   ~~> eq_occurrence_literal ([("ReprGeneral", 9500)])
+and([x#explicit_1#components_2#occurrence_1 = false,x#explicit_1#components_2#occurrence_2 = false;int(1..)])
+
+--
+
+or([2 <= x#explicit_2,and([x#explicit_1#components_2#occurrence_1 = false,x#explicit_1#components_2#occurrence_2 = false;int(1..)]);int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([2 <= x#explicit_2,x#explicit_1#components_2#occurrence_1 = false;int(1..)]),or([2 <= x#explicit_2,x#explicit_1#components_2#occurrence_2 = false;int(1..)]);int(1..)])
 
 --
 
@@ -234,18 +234,6 @@ and([or([4 <= x#explicit_2,x#explicit_1#components_4#occurrence_1 = false;int(1.
 
 --
 
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-x#explicit_1#components_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#explicit_1#components_1
-
---
-
 SafeIndex(x#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_2
@@ -255,12 +243,6 @@ x#explicit_1#components_2
 x#explicit_1#components_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#explicit_1#components_2
-
---
-
-([x#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2;int(1..)])
-   ~~> lex_occurrence_sets ([("ReprGeneral", 9500)])
-([-(toInt(x#explicit_1#components_1#occurrence_1)),-(toInt(x#explicit_1#components_1#occurrence_2));int(1..)] <lex [-(toInt(x#explicit_1#components_2#occurrence_1)),-(toInt(x#explicit_1#components_2#occurrence_2));int(1..)])
 
 --
 
@@ -324,27 +306,21 @@ x#explicit_1#components_4
 
 --
 
-sum([toInt(x#explicit_1#components_1#occurrence_1),toInt(x#explicit_1#components_1#occurrence_2);int(1..)]) >= 0
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([x#explicit_1#components_1#occurrence_1, x#explicit_1#components_1#occurrence_2], 0)
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
 
 --
 
-sum([toInt(x#explicit_1#components_1#occurrence_1),toInt(x#explicit_1#components_1#occurrence_2);int(1..)]) <= 2
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([x#explicit_1#components_1#occurrence_1, x#explicit_1#components_1#occurrence_2], 2)
+x#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1#components_1
 
 --
 
-sum([toInt(x#explicit_1#components_2#occurrence_1),toInt(x#explicit_1#components_2#occurrence_2);int(1..)]) >= 0
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumGeq([x#explicit_1#components_2#occurrence_1, x#explicit_1#components_2#occurrence_2], 0)
-
---
-
-sum([toInt(x#explicit_1#components_2#occurrence_1),toInt(x#explicit_1#components_2#occurrence_2);int(1..)]) <= 2
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([x#explicit_1#components_2#occurrence_1, x#explicit_1#components_2#occurrence_2], 2)
+([x#explicit_1#components_1;int(1..)] <lex [x#explicit_1#components_2;int(1..)])
+   ~~> lex_occurrence_sets ([("ReprGeneral", 9500)])
+([-(toInt(x#explicit_1#components_1#occurrence_1)),-(toInt(x#explicit_1#components_1#occurrence_2));int(1..)] <lex [-(toInt(x#explicit_1#components_2#occurrence_1)),-(toInt(x#explicit_1#components_2#occurrence_2));int(1..)])
 
 --
 
@@ -372,27 +348,27 @@ SumLeq([x#explicit_1#components_4#occurrence_1, x#explicit_1#components_4#occurr
 
 --
 
-x#explicit_1#components_1#occurrence_1 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_1#occurrence_1,false)
+sum([toInt(x#explicit_1#components_1#occurrence_1),toInt(x#explicit_1#components_1#occurrence_2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#explicit_1#components_1#occurrence_1, x#explicit_1#components_1#occurrence_2], 0)
 
 --
 
-x#explicit_1#components_1#occurrence_2 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_1#occurrence_2,false)
+sum([toInt(x#explicit_1#components_1#occurrence_1),toInt(x#explicit_1#components_1#occurrence_2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#explicit_1#components_1#occurrence_1, x#explicit_1#components_1#occurrence_2], 2)
 
 --
 
-x#explicit_1#components_2#occurrence_1 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_2#occurrence_1,false)
+sum([toInt(x#explicit_1#components_2#occurrence_1),toInt(x#explicit_1#components_2#occurrence_2);int(1..)]) >= 0
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([x#explicit_1#components_2#occurrence_1, x#explicit_1#components_2#occurrence_2], 0)
 
 --
 
-x#explicit_1#components_2#occurrence_2 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#explicit_1#components_2#occurrence_2,false)
+sum([toInt(x#explicit_1#components_2#occurrence_1),toInt(x#explicit_1#components_2#occurrence_2);int(1..)]) <= 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#explicit_1#components_2#occurrence_1, x#explicit_1#components_2#occurrence_2], 2)
 
 --
 
@@ -408,6 +384,18 @@ WatchedLiteral(x#explicit_1#components_3#occurrence_2,false)
 
 --
 
+x#explicit_1#components_2#occurrence_1 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2#occurrence_1,false)
+
+--
+
+x#explicit_1#components_2#occurrence_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2#occurrence_2,false)
+
+--
+
 x#explicit_1#components_4#occurrence_1 = false
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#explicit_1#components_4#occurrence_1,false)
@@ -420,123 +408,135 @@ WatchedLiteral(x#explicit_1#components_4#occurrence_2,false)
 
 --
 
--(toInt(x#explicit_1#components_1#occurrence_1))
+x#explicit_1#components_1#occurrence_1 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1#occurrence_1,false)
+
+--
+
+x#explicit_1#components_1#occurrence_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1#occurrence_2,false)
+
+--
+
+-(toInt(x#explicit_1#components_3#occurrence_1))
    ~~> flatten_generic ([("Minion", 4200)])
 -(__0)
 new variables:
   findAux __0: int(0..1)
 new constraints:
-  __0 =aux toInt(x#explicit_1#components_1#occurrence_1)
+  __0 =aux toInt(x#explicit_1#components_3#occurrence_1)
 
 --
 
--(toInt(x#explicit_1#components_1#occurrence_2))
+-(toInt(x#explicit_1#components_3#occurrence_2))
    ~~> flatten_generic ([("Minion", 4200)])
 -(__1)
 new variables:
   findAux __1: int(0..1)
 new constraints:
-  __1 =aux toInt(x#explicit_1#components_1#occurrence_2)
-
---
-
--(toInt(x#explicit_1#components_2#occurrence_1))
-   ~~> flatten_generic ([("Minion", 4200)])
--(__2)
-new variables:
-  findAux __2: int(0..1)
-new constraints:
-  __2 =aux toInt(x#explicit_1#components_2#occurrence_1)
-
---
-
--(toInt(x#explicit_1#components_2#occurrence_2))
-   ~~> flatten_generic ([("Minion", 4200)])
--(__3)
-new variables:
-  findAux __3: int(0..1)
-new constraints:
-  __3 =aux toInt(x#explicit_1#components_2#occurrence_2)
-
---
-
--(toInt(x#explicit_1#components_2#occurrence_1))
-   ~~> flatten_generic ([("Minion", 4200)])
--(__4)
-new variables:
-  findAux __4: int(0..1)
-new constraints:
-  __4 =aux toInt(x#explicit_1#components_2#occurrence_1)
-
---
-
--(toInt(x#explicit_1#components_2#occurrence_2))
-   ~~> flatten_generic ([("Minion", 4200)])
--(__5)
-new variables:
-  findAux __5: int(0..1)
-new constraints:
-  __5 =aux toInt(x#explicit_1#components_2#occurrence_2)
-
---
-
--(toInt(x#explicit_1#components_3#occurrence_1))
-   ~~> flatten_generic ([("Minion", 4200)])
--(__6)
-new variables:
-  findAux __6: int(0..1)
-new constraints:
-  __6 =aux toInt(x#explicit_1#components_3#occurrence_1)
-
---
-
--(toInt(x#explicit_1#components_3#occurrence_2))
-   ~~> flatten_generic ([("Minion", 4200)])
--(__7)
-new variables:
-  findAux __7: int(0..1)
-new constraints:
-  __7 =aux toInt(x#explicit_1#components_3#occurrence_2)
-
---
-
--(toInt(x#explicit_1#components_3#occurrence_1))
-   ~~> flatten_generic ([("Minion", 4200)])
--(__8)
-new variables:
-  findAux __8: int(0..1)
-new constraints:
-  __8 =aux toInt(x#explicit_1#components_3#occurrence_1)
-
---
-
--(toInt(x#explicit_1#components_3#occurrence_2))
-   ~~> flatten_generic ([("Minion", 4200)])
--(__9)
-new variables:
-  findAux __9: int(0..1)
-new constraints:
-  __9 =aux toInt(x#explicit_1#components_3#occurrence_2)
+  __1 =aux toInt(x#explicit_1#components_3#occurrence_2)
 
 --
 
 -(toInt(x#explicit_1#components_4#occurrence_1))
    ~~> flatten_generic ([("Minion", 4200)])
--(__10)
+-(__2)
 new variables:
-  findAux __10: int(0..1)
+  findAux __2: int(0..1)
 new constraints:
-  __10 =aux toInt(x#explicit_1#components_4#occurrence_1)
+  __2 =aux toInt(x#explicit_1#components_4#occurrence_1)
 
 --
 
 -(toInt(x#explicit_1#components_4#occurrence_2))
    ~~> flatten_generic ([("Minion", 4200)])
+-(__3)
+new variables:
+  findAux __3: int(0..1)
+new constraints:
+  __3 =aux toInt(x#explicit_1#components_4#occurrence_2)
+
+--
+
+-(toInt(x#explicit_1#components_1#occurrence_1))
+   ~~> flatten_generic ([("Minion", 4200)])
+-(__4)
+new variables:
+  findAux __4: int(0..1)
+new constraints:
+  __4 =aux toInt(x#explicit_1#components_1#occurrence_1)
+
+--
+
+-(toInt(x#explicit_1#components_1#occurrence_2))
+   ~~> flatten_generic ([("Minion", 4200)])
+-(__5)
+new variables:
+  findAux __5: int(0..1)
+new constraints:
+  __5 =aux toInt(x#explicit_1#components_1#occurrence_2)
+
+--
+
+-(toInt(x#explicit_1#components_2#occurrence_1))
+   ~~> flatten_generic ([("Minion", 4200)])
+-(__6)
+new variables:
+  findAux __6: int(0..1)
+new constraints:
+  __6 =aux toInt(x#explicit_1#components_2#occurrence_1)
+
+--
+
+-(toInt(x#explicit_1#components_2#occurrence_2))
+   ~~> flatten_generic ([("Minion", 4200)])
+-(__7)
+new variables:
+  findAux __7: int(0..1)
+new constraints:
+  __7 =aux toInt(x#explicit_1#components_2#occurrence_2)
+
+--
+
+-(toInt(x#explicit_1#components_2#occurrence_1))
+   ~~> flatten_generic ([("Minion", 4200)])
+-(__8)
+new variables:
+  findAux __8: int(0..1)
+new constraints:
+  __8 =aux toInt(x#explicit_1#components_2#occurrence_1)
+
+--
+
+-(toInt(x#explicit_1#components_2#occurrence_2))
+   ~~> flatten_generic ([("Minion", 4200)])
+-(__9)
+new variables:
+  findAux __9: int(0..1)
+new constraints:
+  __9 =aux toInt(x#explicit_1#components_2#occurrence_2)
+
+--
+
+-(toInt(x#explicit_1#components_3#occurrence_1))
+   ~~> flatten_generic ([("Minion", 4200)])
+-(__10)
+new variables:
+  findAux __10: int(0..1)
+new constraints:
+  __10 =aux toInt(x#explicit_1#components_3#occurrence_1)
+
+--
+
+-(toInt(x#explicit_1#components_3#occurrence_2))
+   ~~> flatten_generic ([("Minion", 4200)])
 -(__11)
 new variables:
   findAux __11: int(0..1)
 new constraints:
-  __11 =aux toInt(x#explicit_1#components_4#occurrence_2)
+  __11 =aux toInt(x#explicit_1#components_3#occurrence_2)
 
 --
 
@@ -558,18 +558,6 @@ Ineq(x#explicit_2, 3, 0)
 
 --
 
-1 <= x#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#explicit_2, 0)
-
---
-
-1 <= x#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(1, x#explicit_2, 0)
-
---
-
 2 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(2, x#explicit_2, 0)
@@ -582,18 +570,6 @@ Ineq(2, x#explicit_2, 0)
 
 --
 
-3 <= x#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(3, x#explicit_2, 0)
-
---
-
-3 <= x#explicit_2
-   ~~> leq_to_ineq ([("Minion", 4100)])
-Ineq(3, x#explicit_2, 0)
-
---
-
 4 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(4, x#explicit_2, 0)
@@ -603,6 +579,30 @@ Ineq(4, x#explicit_2, 0)
 4 <= x#explicit_2
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(4, x#explicit_2, 0)
+
+--
+
+1 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_2, 0)
+
+--
+
+1 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, x#explicit_2, 0)
+
+--
+
+3 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#explicit_2, 0)
+
+--
+
+3 <= x#explicit_2
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, x#explicit_2, 0)
 
 --
 
@@ -771,9 +771,9 @@ findAux __23: int(-1..0)
 such that
 
 true,
-or([Ineq(x#explicit_2, 1, 0),FlatLexLt([__12, __13], [__14, __15]);int(1..)]),
-or([Ineq(x#explicit_2, 2, 0),FlatLexLt([__16, __17], [__18, __19]);int(1..)]),
-or([Ineq(x#explicit_2, 3, 0),FlatLexLt([__20, __21], [__22, __23]);int(1..)]),
+or([Ineq(x#explicit_2, 1, 0),FlatLexLt([__16, __17], [__18, __19]);int(1..)]),
+or([Ineq(x#explicit_2, 2, 0),FlatLexLt([__20, __21], [__22, __23]);int(1..)]),
+or([Ineq(x#explicit_2, 3, 0),FlatLexLt([__12, __13], [__14, __15]);int(1..)]),
 and([or([Ineq(1, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_1#occurrence_1,false);int(1..)]),or([Ineq(1, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_1#occurrence_2,false);int(1..)]);int(1..)]),
 and([or([Ineq(2, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_2#occurrence_1,false);int(1..)]),or([Ineq(2, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_2#occurrence_2,false);int(1..)]);int(1..)]),
 and([or([Ineq(3, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_3#occurrence_1,false);int(1..)]),or([Ineq(3, x#explicit_2, 0),WatchedLiteral(x#explicit_1#components_3#occurrence_2,false);int(1..)]);int(1..)]),
@@ -782,18 +782,18 @@ and([SumGeq([x#explicit_1#components_1#occurrence_1, x#explicit_1#components_1#o
 and([SumGeq([x#explicit_1#components_2#occurrence_1, x#explicit_1#components_2#occurrence_2], 0),SumLeq([x#explicit_1#components_2#occurrence_1, x#explicit_1#components_2#occurrence_2], 2);int(1..)]),
 and([SumGeq([x#explicit_1#components_3#occurrence_1, x#explicit_1#components_3#occurrence_2], 0),SumLeq([x#explicit_1#components_3#occurrence_1, x#explicit_1#components_3#occurrence_2], 2);int(1..)]),
 and([SumGeq([x#explicit_1#components_4#occurrence_1, x#explicit_1#components_4#occurrence_2], 0),SumLeq([x#explicit_1#components_4#occurrence_1, x#explicit_1#components_4#occurrence_2], 2);int(1..)]),
-__0 =aux toInt(x#explicit_1#components_1#occurrence_1),
-__1 =aux toInt(x#explicit_1#components_1#occurrence_2),
-__2 =aux toInt(x#explicit_1#components_2#occurrence_1),
-__3 =aux toInt(x#explicit_1#components_2#occurrence_2),
-__4 =aux toInt(x#explicit_1#components_2#occurrence_1),
-__5 =aux toInt(x#explicit_1#components_2#occurrence_2),
-__6 =aux toInt(x#explicit_1#components_3#occurrence_1),
-__7 =aux toInt(x#explicit_1#components_3#occurrence_2),
-__8 =aux toInt(x#explicit_1#components_3#occurrence_1),
-__9 =aux toInt(x#explicit_1#components_3#occurrence_2),
-__10 =aux toInt(x#explicit_1#components_4#occurrence_1),
-__11 =aux toInt(x#explicit_1#components_4#occurrence_2),
+__0 =aux toInt(x#explicit_1#components_3#occurrence_1),
+__1 =aux toInt(x#explicit_1#components_3#occurrence_2),
+__2 =aux toInt(x#explicit_1#components_4#occurrence_1),
+__3 =aux toInt(x#explicit_1#components_4#occurrence_2),
+__4 =aux toInt(x#explicit_1#components_1#occurrence_1),
+__5 =aux toInt(x#explicit_1#components_1#occurrence_2),
+__6 =aux toInt(x#explicit_1#components_2#occurrence_1),
+__7 =aux toInt(x#explicit_1#components_2#occurrence_2),
+__8 =aux toInt(x#explicit_1#components_2#occurrence_1),
+__9 =aux toInt(x#explicit_1#components_2#occurrence_2),
+__10 =aux toInt(x#explicit_1#components_3#occurrence_1),
+__11 =aux toInt(x#explicit_1#components_3#occurrence_2),
 MinusEq(__12,__0),
 MinusEq(__13,__1),
 MinusEq(__14,__2),

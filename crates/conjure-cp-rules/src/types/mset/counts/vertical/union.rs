@@ -128,7 +128,7 @@ fn union_counts(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shared::utils::to_aux_var;
+    use crate::shared::utils::to_aux_var_in;
     use conjure_cp::ast::{Domain, MSetAttr, Reference};
     use conjure_cp::representation::ReprRule;
     use conjure_cp::{domain_int, range};
@@ -194,14 +194,10 @@ mod tests {
             )),
         );
 
-        let auxiliary = to_aux_var(&source, &symbols).unwrap();
-        let Atom::Reference(reference) = auxiliary.as_atom() else {
-            panic!("expected an auxiliary reference");
-        };
+        let (reference, top) = to_aux_var_in(&source, &mut symbols).unwrap();
         assert_eq!(reference.get_repr().unwrap().0.short_name(), "counts");
         assert!(
-            auxiliary
-                .top_level_expr()
+            top
                 .universe()
                 .iter()
                 .any(|expr| matches!(expr, Expr::AuxDeclaration(_, reference, _) if reference.repr == Some(MSetCounts::STORED)))

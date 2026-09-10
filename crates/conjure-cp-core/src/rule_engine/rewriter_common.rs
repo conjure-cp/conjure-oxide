@@ -20,7 +20,6 @@ use std::fmt::Debug;
 use std::sync::Arc;
 use thiserror::Error;
 use tracing::{debug, trace};
-use uniplate::Uniplate;
 
 #[derive(Debug, Clone)]
 pub struct RuleResult<'a> {
@@ -73,12 +72,11 @@ impl RuleAttemptObserver for NoopObserver {
 }
 
 fn expression_ast_depth(expression: &Expression) -> usize {
-    1 + expression
-        .children()
-        .iter()
-        .map(expression_ast_depth)
-        .max()
-        .unwrap_or(0)
+    let mut child_depth = 0;
+    expression.for_each_expr_child(&mut |child| {
+        child_depth = child_depth.max(expression_ast_depth(child));
+    });
+    1 + child_depth
 }
 
 fn effect_ast_depth(effect: &RuleEffect) -> usize {
@@ -324,11 +322,11 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     observer: &mut O,
 ) -> Option<Name> {
-    let symbols = model.symbols().clone();
+    let symbols = model.symbols();
     let mut results: Vec<ApplicableLettingRule<'_>> = vec![];
 
     'top: for (priority, rules) in rules_grouped.iter() {
-        for (_, decl) in symbols.clone().into_iter_local() {
+        for (_, decl) in symbols.iter_local() {
             let Some(letting_expr) = decl.as_value_letting().map(|expr| expr.clone()) else {
                 continue;
             };
@@ -369,21 +367,21 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
         return None;
     }
     let selected = choose_rule_result_index(results.iter().map(|(result, ..)| result));
-    results.swap(0, selected);
-    let (result, _, expr, decl, ctx) = &results[0];
+    let (result, _, expr, decl, ctx) = results.swap_remove(selected);
 
     let effect = result.effect.materialise(&symbols);
     let result = RuleResult {
-        rule_data: result.rule_data.clone(),
+        rule_data: result.rule_data,
         effect,
     };
 
-    log_rule_application(&result, expr, &symbols, None);
+    log_rule_application(&result, &expr, &symbols, None);
 
     let rewritten_expr = ctx(result.effect.new_expression.clone());
+    drop(symbols);
     result.effect.apply(model);
 
-    let mut decl = decl.clone();
+    let mut decl = decl;
     *decl
         .as_value_letting_mut()
         .expect("declaration should still be a value letting") = rewritten_expr;

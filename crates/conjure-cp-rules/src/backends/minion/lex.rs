@@ -1,4 +1,4 @@
-use crate::shared::utils::{as_resolved_atom, to_aux_var};
+use crate::shared::utils::{as_resolved_atom, to_aux_var_in};
 use crate::types::record::RecordComponents;
 use crate::types::tuple::{TupleComponents, TuplePacked};
 use conjure_cp::ast::{
@@ -89,10 +89,9 @@ fn flatten_lex_element(
         }
     }
 
-    if let Some(aux) = to_aux_var(element, symbols) {
-        *symbols = aux.symbols();
-        tops.push(aux.top_level_expr());
-        return Ok(vec![aux.as_atom()]);
+    if let Some((reference, top)) = to_aux_var_in(element, symbols) {
+        tops.push(top);
+        return Ok(vec![Atom::Reference(reference)]);
     }
 
     Err(RuleNotApplicable)

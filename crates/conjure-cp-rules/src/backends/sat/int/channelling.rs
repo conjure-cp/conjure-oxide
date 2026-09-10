@@ -117,7 +117,7 @@ fn to_log(expr: Expr, clauses: &mut Vec<CnfClause>, symbols: &mut SymbolTable) -
     if matches!(encoding, SATIntEncoding::Log) {
         return expr;
     }
-    let Some(bits) = bits.as_ref().clone().unwrap_list() else {
+    let Some(bits) = bits.as_ref().clone().into_list() else {
         return expr;
     };
 

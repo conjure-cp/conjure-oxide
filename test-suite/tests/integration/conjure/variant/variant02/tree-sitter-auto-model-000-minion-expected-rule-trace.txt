@@ -77,15 +77,15 @@ WatchedLiteral(x#components_1,2)
 
 --
 
-x#components_2 = false
-   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
-WatchedLiteral(x#components_2,false)
-
---
-
 x#components_3 = 0
    ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
 WatchedLiteral(x#components_3,0)
+
+--
+
+x#components_2 = false
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#components_2,false)
 
 --
 
@@ -107,47 +107,47 @@ WatchedLiteral(x#components_3,0)
 
 --
 
-(WatchedLiteral(x#components_1,1)) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
+(x#components_1 != 2) -> (WatchedLiteral(x#components_3,0))
    ~~> flatten_imply ([("Minion", 4200)])
-(__0) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
+(__0) -> (WatchedLiteral(x#components_3,0))
 new variables:
   findAux __0: bool
 new constraints:
-  __0 =aux WatchedLiteral(x#components_1,1)
+  __0 =aux x#components_1 != 2
 
 --
 
-(__0) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
+(__0) -> (WatchedLiteral(x#components_3,0))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]), __0)
+ReifyImply(WatchedLiteral(x#components_3,0), __0)
 
 --
 
-__0 =aux WatchedLiteral(x#components_1,1)
+__0 =aux x#components_1 != 2
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#components_1,1), __0)
+Reify(x#components_1 != 2, __0)
 
 --
 
-(WatchedLiteral(x#components_1,2)) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
+(WatchedLiteral(x#components_1,1)) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
-(__1) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
+(__1) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
 new variables:
   findAux __1: bool
 new constraints:
-  __1 =aux WatchedLiteral(x#components_1,2)
+  __1 =aux WatchedLiteral(x#components_1,1)
 
 --
 
-(__1) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
+(__1) -> (and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]), __1)
+ReifyImply(and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]), __1)
 
 --
 
-__1 =aux WatchedLiteral(x#components_1,2)
+__1 =aux WatchedLiteral(x#components_1,1)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(WatchedLiteral(x#components_1,2), __1)
+Reify(WatchedLiteral(x#components_1,1), __1)
 
 --
 
@@ -173,25 +173,25 @@ Reify(x#components_1 != 1, __2)
 
 --
 
-(x#components_1 != 2) -> (WatchedLiteral(x#components_3,0))
+(WatchedLiteral(x#components_1,2)) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
    ~~> flatten_imply ([("Minion", 4200)])
-(__3) -> (WatchedLiteral(x#components_3,0))
+(__3) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
 new variables:
   findAux __3: bool
 new constraints:
-  __3 =aux x#components_1 != 2
+  __3 =aux WatchedLiteral(x#components_1,2)
 
 --
 
-(__3) -> (WatchedLiteral(x#components_3,0))
+(__3) -> (and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]))
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(WatchedLiteral(x#components_3,0), __3)
+ReifyImply(and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]), __3)
 
 --
 
-__3 =aux x#components_1 != 2
+__3 =aux WatchedLiteral(x#components_1,2)
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x#components_1 != 2, __3)
+Reify(WatchedLiteral(x#components_1,2), __3)
 
 --
 
@@ -209,12 +209,12 @@ findAux __3: bool
 
 such that
 
-ReifyImply(and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]), __0),
-ReifyImply(and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]), __1),
+ReifyImply(and([WatchedLiteral(x#components_1,1),x#components_2;int(1..)]), __1),
+ReifyImply(and([WatchedLiteral(x#components_1,2),WatchedLiteral(x#components_3,0);int(1..)]), __3),
 ReifyImply(WatchedLiteral(x#components_2,false), __2),
-ReifyImply(WatchedLiteral(x#components_3,0), __3),
-Reify(WatchedLiteral(x#components_1,1), __0),
-Reify(WatchedLiteral(x#components_1,2), __1),
+ReifyImply(WatchedLiteral(x#components_3,0), __0),
+Reify(x#components_1 != 2, __0),
+Reify(WatchedLiteral(x#components_1,1), __1),
 Reify(x#components_1 != 1, __2),
-Reify(x#components_1 != 2, __3)
+Reify(WatchedLiteral(x#components_1,2), __3)
 

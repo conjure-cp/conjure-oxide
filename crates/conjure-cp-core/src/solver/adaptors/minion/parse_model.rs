@@ -206,7 +206,7 @@ fn for_each_unrepresented_var(
         .collect();
 
     let mut variables = Vec::new();
-    for (name, decl) in symbols.clone().into_iter_local() {
+    for (name, decl) in symbols.iter_local() {
         let Some(var) = decl.as_find() else {
             continue;
         };
@@ -215,16 +215,15 @@ fn for_each_unrepresented_var(
             continue;
         }
 
-        if !conjure_model
-            .symbols()
-            .representations_for(&name)
+        if !symbols
+            .representations_for(name)
             .is_none_or(|x| x.is_empty())
         {
             continue;
         }
 
         drop(var);
-        variables.push((name, decl));
+        variables.push((name.clone(), decl.clone()));
     }
     drop(symbols);
 

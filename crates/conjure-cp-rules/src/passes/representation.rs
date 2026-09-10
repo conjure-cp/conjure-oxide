@@ -140,7 +140,7 @@ fn select_aux_declaration_representation(expr: &Expr, symtab: &SymbolTable) -> A
 }
 
 /// Select a representation for unconstrained finds with abstract domains
-#[register_rule("ReprGeneral", 9900, [Root])]
+#[register_rule("ReprGeneral", 9900, [Root], symbols_only)]
 fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     let Expr::Root(..) = expr else {
         return Err(RuleNotApplicable);

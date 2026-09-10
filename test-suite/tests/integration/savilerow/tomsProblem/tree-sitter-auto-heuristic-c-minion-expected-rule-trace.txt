@@ -97,6 +97,18 @@ WatchedLiteral(M#components_9,1)
 
 --
 
+[ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[false;int(1..)]
+
+--
+
+[ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[M#components_2 = M#components_4,M#components_3 = M#components_7,M#components_4 = M#components_2,M#components_6 = M#components_8,M#components_7 = M#components_3,M#components_8 = M#components_6;int(1..)]
+
+--
+
 [ product([M[a, b],c;int(1..)]) = product([a,M[b, c];int(1..)]) | a : D, b : D, c : D ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([M#components_1,1;int(1..)]) = product([1,M#components_1;int(1..)]),product([M#components_1,2;int(1..)]) = product([1,M#components_2;int(1..)]),product([M#components_1,3;int(1..)]) = product([1,M#components_3;int(1..)]),product([M#components_2,1;int(1..)]) = product([1,M#components_4;int(1..)]),product([M#components_2,2;int(1..)]) = product([1,M#components_5;int(1..)]),product([M#components_2,3;int(1..)]) = product([1,M#components_6;int(1..)]),product([M#components_3,1;int(1..)]) = product([1,M#components_7;int(1..)]),product([M#components_3,2;int(1..)]) = product([1,M#components_8;int(1..)]),product([M#components_3,3;int(1..)]) = product([1,M#components_9;int(1..)]),product([M#components_4,1;int(1..)]) = product([2,M#components_1;int(1..)]),product([M#components_4,2;int(1..)]) = product([2,M#components_2;int(1..)]),product([M#components_4,3;int(1..)]) = product([2,M#components_3;int(1..)]),product([M#components_5,1;int(1..)]) = product([2,M#components_4;int(1..)]),product([M#components_5,2;int(1..)]) = product([2,M#components_5;int(1..)]),product([M#components_5,3;int(1..)]) = product([2,M#components_6;int(1..)]),product([M#components_6,1;int(1..)]) = product([2,M#components_7;int(1..)]),product([M#components_6,2;int(1..)]) = product([2,M#components_8;int(1..)]),product([M#components_6,3;int(1..)]) = product([2,M#components_9;int(1..)]),product([M#components_7,1;int(1..)]) = product([3,M#components_1;int(1..)]),product([M#components_7,2;int(1..)]) = product([3,M#components_2;int(1..)]),product([M#components_7,3;int(1..)]) = product([3,M#components_3;int(1..)]),product([M#components_8,1;int(1..)]) = product([3,M#components_4;int(1..)]),product([M#components_8,2;int(1..)]) = product([3,M#components_5;int(1..)]),product([M#components_8,3;int(1..)]) = product([3,M#components_6;int(1..)]),product([M#components_9,1;int(1..)]) = product([3,M#components_7;int(1..)]),product([M#components_9,2;int(1..)]) = product([3,M#components_8;int(1..)]),product([M#components_9,3;int(1..)]) = product([3,M#components_9;int(1..)]);int(1..)]
@@ -784,18 +796,6 @@ FlatProductEq(M#components_9,3,__23)
 __24 =aux product([3,M#components_9;int(1..)])
    ~~> introduce_producteq ([("Minion", 4200)])
 FlatProductEq(M#components_9,3,__24)
-
---
-
-[ product([M[a, b],c;int(1..)]) = 0 | a : D, b : D, c : D ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[false;int(1..)]
-
---
-
-[ (a != b) -> (M[a, b] = M[b, a]) | a : D, b : D ]
-   ~~> expand_comprehension_native ([("Base", 2000)])
-[M#components_2 = M#components_4,M#components_3 = M#components_7,M#components_4 = M#components_2,M#components_6 = M#components_8,M#components_7 = M#components_3,M#components_8 = M#components_6;int(1..)]
 
 --
 

@@ -34,9 +34,9 @@ m
 
 --
 
-(m >=lex m2)
-   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
-(m >=lex m2)
+m2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m2
 
 --
 
@@ -46,27 +46,27 @@ m
 
 --
 
-(m <=lex m2)
-   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
-([m#components_1,m#components_2;int(1..2)] <=lex [m2#components_1,m2#components_2;int(1..2)])
-
---
-
 (m2 <=lex m)
    ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
 ([m2#components_1,m2#components_2;int(1..2)] <=lex [m#components_1,m#components_2;int(1..2)])
 
 --
 
+(m <=lex m2)
+   ~~> expand_matrix_components_reference ([("ReprMatrixComponents", 2000)])
 ([m#components_1,m#components_2;int(1..2)] <=lex [m2#components_1,m2#components_2;int(1..2)])
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([m#components_1, m#components_2], [m2#components_1, m2#components_2])
 
 --
 
 ([m2#components_1,m2#components_2;int(1..2)] <=lex [m#components_1,m#components_2;int(1..2)])
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
 FlatLexLeq([m2#components_1, m2#components_2], [m#components_1, m#components_2])
+
+--
+
+([m#components_1,m#components_2;int(1..2)] <=lex [m2#components_1,m2#components_2;int(1..2)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([m#components_1, m#components_2], [m2#components_1, m2#components_2])
 
 --
 

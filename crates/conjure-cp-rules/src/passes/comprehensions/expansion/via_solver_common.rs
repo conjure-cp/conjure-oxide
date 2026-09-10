@@ -393,7 +393,7 @@ pub(super) fn strip_guarded_safe_index_conditions(expr: Expression) -> Option<Ex
 
 fn collect_top_level_and_terms(expr: Expression, out: &mut Vec<Expression>) {
     if let Expression::And(_, ref children) = expr
-        && let Some(children) = children.as_ref().clone().unwrap_list()
+        && let Some(children) = children.as_ref().clone().into_list()
     {
         for child in children {
             collect_top_level_and_terms(child, out);
@@ -412,7 +412,7 @@ fn guard_targets_safe_index_index(guard: &Expression, expr: &Expression) -> bool
         return false;
     };
 
-    expr.universe().into_iter().any(|subexpr| {
+    expr.any_expression(|subexpr| {
         let Expression::SafeIndex(_, _, indices) = subexpr else {
             return false;
         };
@@ -437,7 +437,7 @@ pub(super) fn lift_machine_references_into_parent_scope(
 ) -> Expression {
     let mut machine_name_translations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
 
-    for (name, decl) in child_symtab.clone().into_iter_local() {
+    for (name, decl) in child_symtab.iter_local() {
         // Do not add quantified declarations for quantified vars to the parent symbol table.
         if matches!(
             &decl.kind() as &DeclarationKind,
@@ -446,7 +446,7 @@ pub(super) fn lift_machine_references_into_parent_scope(
             continue;
         }
 
-        if !matches!(&name, Name::Machine(_)) {
+        if !matches!(name, Name::Machine(_)) {
             continue;
         }
 

@@ -82,15 +82,9 @@ a#array_1#lia_1[1]
 
 --
 
-{SafeIndex(a#array_1#lia_1,[1]) @ false} != b#array_1#bv_1[1]
-   ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(a#array_1#lia_1,[1]) != b#array_1#bv_1[1] @ false}
-
---
-
-{SafeIndex(a#array_1#lia_1,[1]) != b#array_1#bv_1[1] @ false}
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(a#array_1#lia_1,[1]) != b#array_1#bv_1[1],false;int(1..)])
+b#array_1#bv_1[1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(b#array_1#bv_1,[1])
 
 --
 
@@ -115,6 +109,18 @@ SafeIndex(a#array_1#lia_1,[3])
 b#array_1#bv_1[3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 {SafeIndex(b#array_1#bv_1,[3]) @ false}
+
+--
+
+{SafeIndex(a#array_1#lia_1,[1]) @ false} != SafeIndex(b#array_1#bv_1,[1])
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(a#array_1#lia_1,[1]) != SafeIndex(b#array_1#bv_1,[1]) @ false}
+
+--
+
+{SafeIndex(a#array_1#lia_1,[1]) != SafeIndex(b#array_1#bv_1,[1]) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(a#array_1#lia_1,[1]) != SafeIndex(b#array_1#bv_1,[1]),false;int(1..)])
 
 --
 
