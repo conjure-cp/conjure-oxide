@@ -20,20 +20,11 @@ pub fn get_repr_by_name(name: &str) -> Option<ReprRulePtr> {
         .find(|rule| rule.name() == name)
 }
 
-/// Look up a representation rule by its Essence short name (e.g. `"packed"`, `"occurrence"`).
-///
-/// If multiple rules share the same short name (e.g. set and tuple both use `"packed"`), the first
-/// registration wins. Prefer [`get_applicable_repr_by_short_name`] when a declaration is available.
-pub fn get_repr_by_short_name(short_name: &str) -> Option<ReprRulePtr> {
-    REPR_RULES_DISTRIBUTED_SLICE
-        .iter()
-        .copied()
-        .find(|rule| rule.short_name() == short_name)
-}
-
 /// Look up a representation by short name that is applicable to `decl`.
 ///
-/// Disambiguates shared short names such as `"packed"` (set vs tuple) via [`ReprRuleStored::probe_for`].
+/// Short names are not unique -- nine representations are called `packed` -- so a declaration is
+/// required to disambiguate, via [`ReprRuleStored::probe_for`]. There is deliberately no lookup by
+/// short name alone.
 pub fn get_applicable_repr_by_short_name(
     decl: &crate::ast::DeclarationPtr,
     short_name: &str,

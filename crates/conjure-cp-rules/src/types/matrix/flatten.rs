@@ -1,5 +1,7 @@
+use crate::types::matrix::MatrixComponents;
 use conjure_cp::ast::{Atom, Expression as Expr, GroundDomain, Name, SymbolTable, matrix};
 use conjure_cp::into_matrix_expr;
+use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
@@ -21,13 +23,13 @@ fn flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         };
 
-        if reprs.first().is_none_or(|x| x.as_str() != "matrix_to_atom") {
+        if reprs.first().is_none_or(|x| *x != MatrixComponents::id()) {
             return Err(RuleNotApplicable);
         }
 
         let decl = symbols.lookup(name.as_ref()).unwrap();
         let repr = symbols
-            .get_representation(name.as_ref(), &["matrix_to_atom"])
+            .get_representation(name.as_ref(), &[MatrixComponents::id()])
             .unwrap()[0]
             .clone();
 
@@ -45,7 +47,7 @@ fn flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             .map(|i| {
                 matrix_values[&Name::Represented(Box::new((
                     name.as_ref().clone(),
-                    "matrix_to_atom".into(),
+                    MatrixComponents::id(),
                     i.iter().join("_").into(),
                 )))]
                     .clone()

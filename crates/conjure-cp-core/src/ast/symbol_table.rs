@@ -10,6 +10,7 @@ fn default_context_hash_cache() -> AtomicU64 {
 }
 
 use crate::bug;
+use crate::representation::ReprId;
 use crate::representation::{Representation, get_repr_rule};
 use std::any::TypeId;
 
@@ -615,7 +616,7 @@ impl SymbolTable {
     pub fn get_representation(
         &self,
         name: &Name,
-        representation: &[&str],
+        representation: &[ReprId],
     ) -> Option<Vec<Box<dyn Representation>>> {
         // TODO: move representation stuff to declaration / variable to avoid cloning? (we have to
         // move inside of an rc here, so cannot return borrows)
@@ -633,7 +634,7 @@ impl SymbolTable {
 
         var.representations
             .iter()
-            .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
+            .find(|x| &x.iter().map(|r| r.repr_id()).collect_vec()[..] == representation)
             .cloned()
     }
 
@@ -666,7 +667,7 @@ impl SymbolTable {
     pub fn get_or_add_representation(
         &mut self,
         name: &Name,
-        representation: &[&str],
+        representation: &[ReprId],
     ) -> Option<Vec<Box<dyn Representation>>> {
         // Lookup the declaration reference
         let mut decl = self.lookup(name)?;
@@ -675,7 +676,7 @@ impl SymbolTable {
             && let Some(existing_reprs) = var
                 .representations
                 .iter()
-                .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
+                .find(|x| &x.iter().map(|r| r.repr_id()).collect_vec()[..] == representation)
                 .cloned()
         {
             return Some(existing_reprs); // Found: return early
@@ -686,8 +687,7 @@ impl SymbolTable {
         if representation.len() != 1 {
             bug!("nested representations not implemented")
         }
-        let repr_name_str = representation[0];
-        let repr_init_fn = get_repr_rule(repr_name_str)?;
+        let repr_init_fn = get_repr_rule(representation[0].name())?;
 
         let reprs = vec![repr_init_fn(name, self)?];
 

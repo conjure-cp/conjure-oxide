@@ -69,6 +69,9 @@ pub trait ReprRuleStored: Send + Sync {
 
     fn short_name(&self) -> &'static str;
 
+    /// This representation's identity.
+    fn id(&self) -> super::ReprId;
+
     /// Whether this representation is available when targeting `family`.
     fn applies_to(&self, family: crate::settings::SolverFamily) -> bool;
 
@@ -99,6 +102,10 @@ pub trait ReprRuleStored: Send + Sync {
 impl<R: ReprRule> ReprRuleStored for R {
     fn name(&self) -> &'static str {
         R::NAME
+    }
+
+    fn id(&self) -> super::ReprId {
+        <R as ReprRule>::id()
     }
 
     fn short_name(&self) -> &'static str {
@@ -160,7 +167,7 @@ impl Debug for dyn ReprRuleStored {
 
 impl PartialEq for dyn ReprRuleStored {
     fn eq(&self, other: &Self) -> bool {
-        self.name() == other.name()
+        self.id() == other.id()
     }
 }
 

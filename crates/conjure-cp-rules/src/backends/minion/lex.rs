@@ -1,9 +1,11 @@
 use crate::shared::utils::{as_resolved_atom, to_aux_var_in};
+use crate::types::matrix::MatrixComponents;
 use crate::types::record::RecordComponents;
 use crate::types::tuple::{TupleComponents, TuplePacked};
 use conjure_cp::ast::{
     Atom, Expression as Expr, GroundDomain, IntVal, Metadata, Moo, Name, Range, SymbolTable, matrix,
 };
+use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect,
     register_rule,
@@ -109,14 +111,14 @@ fn lex_represented_matrix_to_atoms(
     };
     if representations
         .first()
-        .is_none_or(|name| name.as_str() != "matrix_to_atom")
+        .is_none_or(|id| *id != MatrixComponents::id())
     {
         return Ok(None);
     }
 
     let declaration = symbols.lookup(name.as_ref()).ok_or(RuleNotApplicable)?;
     let representation = symbols
-        .get_representation(name.as_ref(), &["matrix_to_atom"])
+        .get_representation(name.as_ref(), &[MatrixComponents::id()])
         .ok_or(RuleNotApplicable)?[0]
         .clone();
     let domain = declaration.resolved_domain().ok_or(RuleNotApplicable)?;
@@ -133,7 +135,7 @@ fn lex_represented_matrix_to_atoms(
             matrix_values
                 .get(&Name::Represented(Box::new((
                     name.as_ref().clone(),
-                    "matrix_to_atom".into(),
+                    MatrixComponents::id(),
                     index.iter().join("_").into(),
                 ))))
                 .cloned()

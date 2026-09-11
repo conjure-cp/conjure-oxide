@@ -3,6 +3,7 @@ use conjure_cp::ast::{
     Atom, DeclarationPtr, Expression as Expr, Metadata, Moo, Name, Reference, SymbolTable,
     comprehension::ComprehensionQualifier,
 };
+use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
@@ -49,7 +50,7 @@ fn lower_counts_mset_generator(expr: &Expr, _: &SymbolTable) -> ApplicationResul
     let value_index =
         DeclarationPtr::new_quantified(old.name().clone(), domain_int!(1..repr.max_distinct));
     let repetition = DeclarationPtr::new_quantified(
-        Name::repr(old.name().clone(), "iterator", "count"),
+        Name::repr(old.name().clone(), MSetCounts::id(), "iterator"),
         domain_int!(1..repr.occurrence.1),
     );
     let index_expr = Expr::from(Reference::new(value_index.clone()));

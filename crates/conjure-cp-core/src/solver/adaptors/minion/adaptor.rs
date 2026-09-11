@@ -113,8 +113,6 @@ fn wall_time_limit(timeout: Duration) -> TimeLimit {
 fn parse_name(minion_name: &str) -> Name {
     static MACHINE_NAME_RE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap());
-    static REPRESENTED_NAME_RE: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"__conjure_represented_name__(.*)__(.*)___(.*)").unwrap());
     const REPRESENTED_JSON_PREFIX: &str = "__conjure_represented_name_json_";
 
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
@@ -125,12 +123,6 @@ fn parse_name(minion_name: &str) -> Name {
             .map(|i| u8::from_str_radix(&encoded[i..i + 2], 16).unwrap())
             .collect::<Vec<_>>();
         serde_json::from_slice(&bytes).unwrap()
-    } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
-        conjure_ast::Name::Represented(Box::new((
-            parse_name(&caps[1]),
-            Ustr::from(&caps[2]),
-            Ustr::from(&caps[3]),
-        )))
     } else {
         conjure_ast::Name::User(Ustr::from(minion_name))
     }

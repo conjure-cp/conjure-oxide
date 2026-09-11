@@ -90,6 +90,9 @@ pub trait Representation: Send + Sync + Debug {
     /// The rule name for this representaion.
     fn repr_name(&self) -> &str;
 
+    /// The identity of this representation.
+    fn repr_id(&self) -> super::ReprId;
+
     /// Makes a clone of `self` into a `Representation` trait object.
     fn box_clone(&self) -> Box<dyn Representation>;
 }
