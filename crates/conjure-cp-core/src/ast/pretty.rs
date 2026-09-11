@@ -274,15 +274,11 @@ fn format_domain_with_selected_representation(
     decl: &crate::ast::DeclarationPtr,
     domain: &crate::ast::DomainPtr,
 ) -> String {
-    let selected = decl.reprs().iter().find_map(|(_, state)| {
-        let rule = state.rule();
-        // MatrixComponents is structural layout, not an abstract-domain representation name.
-        if rule.short_name() == "components" {
-            None
-        } else {
-            Some(rule.short_name())
-        }
-    });
+    let selected = decl
+        .reprs()
+        .iter()
+        .map(|(_, state)| state.rule().short_name())
+        .next();
 
     match selected {
         Some(short_name) if domain.representation_preference() != Some(short_name) => {
