@@ -66,7 +66,7 @@ module.exports = grammar ({
 
     FALSE: $ => "false",
 
-    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*'*/,
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", field("identifier", $.identifier)),
