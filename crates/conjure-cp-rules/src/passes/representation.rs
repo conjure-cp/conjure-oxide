@@ -356,6 +356,10 @@ fn source_has_encoding_repr(decl: &DeclarationPtr) -> bool {
 }
 
 /// Find a representation already chosen for another declaration with the same domain.
+///
+/// Any representation the sibling settled on is worth copying, component layouts included: a
+/// matrix chooses between `components`, `packed` and `array`, so `components` is a modelling
+/// choice like any other rather than a decomposition to see past.
 fn representation_for_identical_domain(
     decl: &DeclarationPtr,
     dom: &DomainPtr,
@@ -373,10 +377,6 @@ fn representation_for_identical_domain(
         }
         for (_, state) in other.reprs().iter() {
             let rule = state.rule();
-            // MatrixComponents is a structural layout, not an abstract-domain representation.
-            if rule.name() == "components" {
-                continue;
-            }
             if rule.probe_for(decl).is_ok() {
                 return Some(rule);
             }
