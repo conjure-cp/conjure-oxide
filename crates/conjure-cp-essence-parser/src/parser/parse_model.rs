@@ -152,7 +152,10 @@ pub fn parse_essence_with_context_and_map(
                         .insert(DeclarationPtr::new_given(name, domain));
                 }
             }
-            "bool_expr" | "atom" | "comparison_expr" => {
+            // `arithmetic_expr` is not a valid constraint, but the grammar accepts it here so
+            // that the type checker can report "expected bool, got int" against the expression
+            // itself rather than the parser rejecting the whole line as malformed.
+            "bool_expr" | "atom" | "comparison_expr" | "arithmetic_expr" => {
                 ctx.typechecking_context = TypecheckingContext::Boolean;
                 let Some(expr) = parse_expression(&mut ctx, statement)? else {
                     continue;

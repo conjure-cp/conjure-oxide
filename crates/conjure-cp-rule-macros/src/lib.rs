@@ -35,6 +35,8 @@ use util::{build_serde_as_type, rename_fn, rename_ident_in_fn, type_contains_ide
 ///                      // with the right variant
 /// Atomic / Reference   // focused expression must be an atomic reference
 /// Atomic / Literal     // focused expression must be an atomic literal
+/// * / Atomic / Reference  // focused expression must have an immediate atomic-reference child
+/// * / Atomic / Literal    // focused expression must have an immediate atomic-literal child
 /// ```
 ///
 /// Items in the list are alternatives. For example, `[And / Comprehension, Or / Comprehension]`
@@ -52,6 +54,8 @@ enum ParsedPrefilter {
     VariantChild { variant: Ident, child: Ident },
     /// Atomic subvariant prefilter, parsed from `Atomic / Reference` or `Atomic / Literal`.
     Atom(Ident),
+    /// Immediate-child atomic subvariant prefilter, parsed from `* / Atomic / Reference`.
+    ChildAtom(Ident),
 }
 
 struct RegisterRuleArgs {
@@ -108,7 +112,23 @@ impl Parse for RegisterRuleArgs {
                     let _: Token![*] = content.parse()?;
                     let _: Token![/] = content.parse()?;
                     let variant: Ident = content.parse()?;
-                    prefilters.push(ParsedPrefilter::Child { child: variant });
+                    if variant == "Atomic" && content.peek(Token![/]) {
+                        let _: Token![/] = content.parse()?;
+                        let subvariant: Ident = content.parse()?;
+                        match subvariant.to_string().as_str() {
+                            "Literal" | "Reference" => {
+                                prefilters.push(ParsedPrefilter::ChildAtom(subvariant));
+                            }
+                            _ => {
+                                return Err(syn::Error::new(
+                                    subvariant.span(),
+                                    "expected Literal or Reference after * / Atomic /",
+                                ));
+                            }
+                        }
+                    } else {
+                        prefilters.push(ParsedPrefilter::Child { child: variant });
+                    }
                 } else {
                     let variant: Ident = content.parse()?;
                     if content.peek(Token![/]) {
@@ -213,6 +233,13 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             ParsedPrefilter::Atom(atom_variant) => {
                 quote! {
                     ::conjure_cp::rule_engine::RulePrefilter::Atom(
+                        ::conjure_cp::rule_engine::AtomKind::#atom_variant
+                    )
+                }
+            }
+            ParsedPrefilter::ChildAtom(atom_variant) => {
+                quote! {
+                    ::conjure_cp::rule_engine::RulePrefilter::ChildAtom(
                         ::conjure_cp::rule_engine::AtomKind::#atom_variant
                     )
                 }

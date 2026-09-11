@@ -1,8 +1,8 @@
 use conjure_cp::{
     ast::Metadata,
     ast::{
-        Atom, DeclarationKind, Expression, Literal, Moo, Name, ReturnType, SymbolTable, Typeable,
-        eval_constant,
+        Atom, DeclarationKind, Expression, Literal, Moo, Name, Reference, ReturnType, SymbolTable,
+        Typeable, eval_constant,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
@@ -43,7 +43,7 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
     E.g. ((a / b) @ (b != 0)) = c => (a / b = c) @ (b != 0)
 */
-#[register_rule("Bubble", 8800, [* / Bubble])]
+#[register_rule("Bubble", 8800, [* / Bubble, * / Atomic / Reference])]
 fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     // do not put root inside a bubble
     //
@@ -54,12 +54,24 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     }
 
     let mut bubbled_conditions = vec![];
+    let mut followed_lettings = vec![];
     let (new_inner, num_changed) = rewrite_children(expr, |child| match child {
         Expression::Bubble(_, a, b) if a.return_type() != ReturnType::Bool => {
             let a = Moo::unwrap_or_clone(a);
             let b = Moo::unwrap_or_clone(b);
             bubbled_conditions.push(b);
             (a, true)
+        }
+        // A bubble in a value letting's body has nothing above it to escape into, so follow the
+        // reference and lift it from here instead. Without this, `letting a be 2 / 0` leaves every
+        // use of `a` an opaque reference all the way down to the solver adaptor.
+        Expression::Atomic(_, Atom::Reference(ref reference)) => {
+            let Some((inner, condition, name)) = bubbled_value_letting(reference) else {
+                return (child, false);
+            };
+            bubbled_conditions.push(condition);
+            followed_lettings.push(name);
+            (inner, true)
         }
         child => (child, false),
     });
@@ -68,14 +80,16 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     }
 
     // The value-letting guard walks every referenced name in the subtree, so keep it behind the
-    // cheap direct-child Bubble check. Most `bubble_up` attempts fail before this point.
+    // cheap direct-child check above. Most `bubble_up` attempts fail before this point. Lettings
+    // this call has just followed are exempt: their bubble is the one being lifted.
     if expr.universe_bi().iter().any(|x: &Name| {
-        syms.lookup(x).is_some_and(|x| {
-            matches!(
-                &x.kind() as &DeclarationKind,
-                DeclarationKind::ValueLetting(_, _)
-            )
-        })
+        !followed_lettings.contains(x)
+            && syms.lookup(x).is_some_and(|x| {
+                matches!(
+                    &x.kind() as &DeclarationKind,
+                    DeclarationKind::ValueLetting(_, _)
+                )
+            })
     }) {
         return Err(RuleNotApplicable);
     };
@@ -98,6 +112,24 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
             )),
         )))
     }
+}
+
+/// The inner expression, bubble condition and name of a value letting whose body is a non-boolean
+/// bubble, e.g. `letting a be 2 / 0`.
+fn bubbled_value_letting(reference: &Reference) -> Option<(Expression, Expression, Name)> {
+    let declaration = reference.ptr();
+    let value = declaration.as_value_letting()?;
+    let Expression::Bubble(_, inner, condition) = &*value else {
+        return None;
+    };
+    if inner.return_type() == ReturnType::Bool {
+        return None;
+    }
+    Some((
+        Moo::unwrap_or_clone(Moo::clone(inner)),
+        Moo::unwrap_or_clone(Moo::clone(condition)),
+        reference.name().clone(),
+    ))
 }
 
 // Bubble applications

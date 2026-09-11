@@ -64,7 +64,7 @@ pub fn parse_expression(
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
                     format!(
-                        "Type error: {}\n\tExepected: int\n\tGot: boolean expression",
+                        "Type error: {}\n\tExpected: int\n\tGot: boolean expression",
                         &ctx.source_code[node.start_byte()..node.end_byte()]
                     ),
                     Some(node.range()),
@@ -77,7 +77,7 @@ pub fn parse_expression(
             if ctx.typechecking_context == TypecheckingContext::Boolean {
                 ctx.record_error(RecoverableParseError::new(
                     format!(
-                        "Type error: {}\n\tExepected: bool\n\tGot: arithmetic expression",
+                        "Type error: {}\n\tExpected: bool\n\tGot: int",
                         &ctx.source_code[node.start_byte()..node.end_byte()]
                     ),
                     Some(node.range()),
@@ -90,7 +90,7 @@ pub fn parse_expression(
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
                     format!(
-                        "Type error: {}\n\tExepected: int\n\tGot: comparison expression",
+                        "Type error: {}\n\tExpected: int\n\tGot: comparison expression",
                         &ctx.source_code[node.start_byte()..node.end_byte()]
                     ),
                     Some(node.range()),
@@ -102,7 +102,7 @@ pub fn parse_expression(
         "all_diff_comparison" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
+                    format!("Type error: {}\n\tExpected: arithmetic expression\n\tGot: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
                     Some(node.range()),
                 ));
                 return Ok(None);
@@ -113,7 +113,7 @@ pub fn parse_expression(
         "all_different_except_comparison" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
+                    format!("Type error: {}\n\tExpected: arithmetic expression\n\tGot: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
                     Some(node.range()),
                 ));
                 return Ok(None);
@@ -124,7 +124,7 @@ pub fn parse_expression(
         "global_cardinality_comparison" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
+                    format!("Type error: {}\n\tExpected: arithmetic expression\n\tGot: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
                     Some(node.range()),
                 ));
                 return Ok(None);
