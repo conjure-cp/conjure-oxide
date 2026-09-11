@@ -427,23 +427,23 @@ DivEq(a#packed_1, 1, __15)
 
 --
 
-SafeMod(SafeDiv(a#packed_1, 2),2) != 1
+SafeMod(SafeDiv(a#packed_1, 1),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
 __16 != 1
 new variables:
   findAux __16: int(0..1)
 new constraints:
-  __16 =aux SafeMod(SafeDiv(a#packed_1, 2),2)
+  __16 =aux SafeMod(SafeDiv(a#packed_1, 1),2)
 
 --
 
-SafeMod(SafeDiv(a#packed_1, 2),2)
+SafeMod(SafeDiv(a#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__17,2)
 new variables:
-  findAux __17: int(0..1)
+  findAux __17: int(0..3)
 new constraints:
-  __17 =aux SafeDiv(a#packed_1, 2)
+  __17 =aux SafeDiv(a#packed_1, 1)
 
 --
 
@@ -453,29 +453,29 @@ ModEq(__17, 2, __16)
 
 --
 
-__17 =aux SafeDiv(a#packed_1, 2)
+__17 =aux SafeDiv(a#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(a#packed_1, 2, __17)
+DivEq(a#packed_1, 1, __17)
 
 --
 
-SafeMod(SafeDiv(a#packed_1, 1),2) != 1
+SafeMod(SafeDiv(a#packed_1, 2),2) != 1
    ~~> flatten_generic ([("Minion", 4200)])
 __18 != 1
 new variables:
   findAux __18: int(0..1)
 new constraints:
-  __18 =aux SafeMod(SafeDiv(a#packed_1, 1),2)
+  __18 =aux SafeMod(SafeDiv(a#packed_1, 2),2)
 
 --
 
-SafeMod(SafeDiv(a#packed_1, 1),2)
+SafeMod(SafeDiv(a#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__19,2)
 new variables:
-  findAux __19: int(0..3)
+  findAux __19: int(0..1)
 new constraints:
-  __19 =aux SafeDiv(a#packed_1, 1)
+  __19 =aux SafeDiv(a#packed_1, 2)
 
 --
 
@@ -485,9 +485,9 @@ ModEq(__19, 2, __18)
 
 --
 
-__19 =aux SafeDiv(a#packed_1, 1)
+__19 =aux SafeDiv(a#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(a#packed_1, 1, __19)
+DivEq(a#packed_1, 2, __19)
 
 --
 
@@ -558,15 +558,15 @@ findAux __13: int(0..3)
 findAux __14: int(0..1)
 findAux __15: int(0..3)
 findAux __16: int(0..1)
-findAux __17: int(0..1)
+findAux __17: int(0..3)
 findAux __18: int(0..1)
-findAux __19: int(0..3)
+findAux __19: int(0..1)
 findAux __20: int(0..1)
 findAux __21: int(0..3)
 
 such that
 
-and([or([__18 != 1,ModEq(__21, 2, 1);int(1..)]),or([__16 != 1,ModEq(__20, 2, 1);int(1..)]);int(1..)]),
+and([or([__16 != 1,ModEq(__21, 2, 1);int(1..)]),or([__18 != 1,ModEq(__20, 2, 1);int(1..)]);int(1..)]),
 and([SumGeq([__0, __1], 0),SumLeq([__2, __3], 2);int(1..)]),
 and([SumGeq([__4, __5], 0),SumLeq([__6, __7], 2);int(1..)]),
 ModEq(__15, 2, __0),
@@ -586,9 +586,9 @@ DivEq(b#packed_1, 1, __13),
 DivEq(b#packed_1, 2, __14),
 DivEq(a#packed_1, 1, __15),
 ModEq(__17, 2, __16),
-DivEq(a#packed_1, 2, __17),
+DivEq(a#packed_1, 1, __17),
 ModEq(__19, 2, __18),
-DivEq(a#packed_1, 1, __19),
+DivEq(a#packed_1, 2, __19),
 DivEq(b#packed_1, 2, __20),
 DivEq(b#packed_1, 1, __21)
 
