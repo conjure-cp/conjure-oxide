@@ -77,7 +77,7 @@ pub fn parse_expression(
             if ctx.typechecking_context == TypecheckingContext::Boolean {
                 ctx.record_error(RecoverableParseError::new(
                     format!(
-                        "Type error: {}\n\tExpected: bool\n\tGot: arithmetic expression",
+                        "Type error: {}\n\tExpected: bool\n\tGot: int",
                         &ctx.source_code[node.start_byte()..node.end_byte()]
                     ),
                     Some(node.range()),

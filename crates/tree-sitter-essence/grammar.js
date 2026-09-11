@@ -38,10 +38,14 @@ module.exports = grammar ({
 
     language_declaration: $ => token(seq("language", /.*/)),
 
+    // Arithmetic expressions are accepted here even though a constraint must be
+    // boolean, so that `such that 2 / 0` is reported by the type checker as
+    // "expected bool, got int" rather than as a malformed line by the parser.
     _constraint_expression: $ => choice(
       field("bool_expr", $.bool_expr),
       field("atom", $.atom),
-      field("comparison_expr", $.comparison_expr)
+      field("comparison_expr", $.comparison_expr),
+      field("arithmetic_expr", $.arithmetic_expr)
     ),
 
     where_statement: $ => seq(
