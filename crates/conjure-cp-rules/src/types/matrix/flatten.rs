@@ -1,60 +1,58 @@
-use crate::types::matrix::MatrixComponents;
-use conjure_cp::ast::{Atom, Expression as Expr, GroundDomain, Name, SymbolTable, matrix};
+use conjure_cp::ast::{Expression as Expr, ReturnType, SymbolTable, Typeable};
 use conjure_cp::into_matrix_expr;
-use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
-use itertools::Itertools;
 
+/// `flatten([[a, b], [c, d]])` ~~> `[a, b, c, d]`.
+///
+/// Handles a flatten whose argument is written out as a matrix literal.
+/// [`flatten_matrix_components`](super::components) covers a reference carrying the
+/// `MatrixComponents` representation; without this rule a `sum(flatten(...))` over literal rows
+/// survives to the solver adaptor, which has no atomic expression to load.
 #[register_rule("Base", 8000, [Flatten])]
-fn flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    if let Expr::Flatten(_, n, matrix) = expr {
-        if n.is_some() {
-            // TODO handle flatten with n dimension option
-            return Err(RuleNotApplicable);
-        }
+fn flatten_matrix_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Flatten(_, None, matrix) = expr else {
+        // TODO handle flatten with n dimension option
+        return Err(RuleNotApplicable);
+    };
 
-        let Expr::Atomic(_, Atom::Reference(decl)) = matrix.as_ref() else {
-            return Err(RuleNotApplicable);
-        };
+    let elements = matrix.unwrap_list_ref().ok_or(RuleNotApplicable)?;
 
-        let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
-            return Err(RuleNotApplicable);
-        };
-
-        if reprs.first().is_none_or(|x| *x != MatrixComponents::id()) {
-            return Err(RuleNotApplicable);
-        }
-
-        let decl = symbols.lookup(name.as_ref()).unwrap();
-        let repr = symbols
-            .get_representation(name.as_ref(), &[MatrixComponents::id()])
-            .unwrap()[0]
-            .clone();
-
-        // resolve index domains so that we can enumerate them later
-        let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
-        let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
-            return Err(RuleNotApplicable);
-        };
-
-        let Ok(matrix_values) = repr.expression_down(symbols) else {
-            return Err(RuleNotApplicable);
-        };
-
-        let flat_values = matrix::enumerate_indices(index_domains.clone())
-            .map(|i| {
-                matrix_values[&Name::Represented(Box::new((
-                    name.as_ref().clone(),
-                    MatrixComponents::id(),
-                    i.iter().join("_").into(),
-                )))]
-                    .clone()
-            })
-            .collect_vec();
-        return Ok(RuleEffect::pure(into_matrix_expr![flat_values]));
+    // Only worth doing when there is a nested level to remove; a flat literal is already flat.
+    if !elements
+        .iter()
+        .any(|element| element.unwrap_list_ref().is_some())
+    {
+        return Err(RuleNotApplicable);
     }
 
-    Err(RuleNotApplicable)
+    let mut flat_values = Vec::new();
+    for element in elements {
+        collect_matrix_literal_leaves(element, &mut flat_values).ok_or(RuleNotApplicable)?;
+    }
+
+    Ok(RuleEffect::pure(into_matrix_expr![flat_values]))
+}
+
+/// Appends the leaves of nested matrix literals to `leaves`, in index order.
+///
+/// Returns `None` if a leaf is itself matrix-valued without being written out as a literal, such
+/// as a reference to a matrix: there is nothing to flatten it into here, and treating it as a leaf
+/// would leave a nested matrix behind.
+fn collect_matrix_literal_leaves(expr: &Expr, leaves: &mut Vec<Expr>) -> Option<()> {
+    match expr.unwrap_list_ref() {
+        Some(elements) => {
+            for element in elements {
+                collect_matrix_literal_leaves(element, leaves)?;
+            }
+        }
+        None => {
+            if matches!(expr.return_type(), ReturnType::Matrix(_)) {
+                return None;
+            }
+            leaves.push(expr.clone());
+        }
+    }
+    Some(())
 }
