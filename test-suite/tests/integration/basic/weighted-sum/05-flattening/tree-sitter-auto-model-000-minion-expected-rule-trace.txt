@@ -47,63 +47,41 @@ product([3,c,d;int(1..)])
 
 sum([product([2,a;int(1..)]),product([2,b;int(1..)]),product([3,c,d;int(1..)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..)]),-(a),-(SafeDiv(g, h));int(1..)]) <= 18
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[__0, __1, __2, __3, __4, __5, a],18)
+FlatWeightedSumLeq([3, 1, 6, -1, 1, 2],[__0, __1, __2, __3, a, b],18)
 new variables:
-  findAux __0: int(2..10)
-  findAux __1: int(2..10)
-  findAux __2: int(4..100)
+  findAux __0: int(4..100)
+  findAux __1: int(0..5)
+  findAux __2: int(0..5)
   findAux __3: int(0..5)
-  findAux __4: int(0..5)
-  findAux __5: int(0..5)
 new constraints:
-  __0 =aux product([a;int(1..)])
-  __1 =aux product([b;int(1..)])
-  __2 =aux product([d,c;int(1..)])
-  __3 =aux SafeDiv(e, f)
-  __4 =aux product([SafeDiv(g, h);int(1..)])
-  __5 =aux SafeDiv(g, h)
+  __0 =aux product([d,c;int(1..)])
+  __1 =aux SafeDiv(e, f)
+  __2 =aux SafeDiv(g, h)
+  __3 =aux SafeDiv(g, h)
 
 --
 
-product([a;int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-a
-
---
-
-product([b;int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-b
-
---
-
-product([SafeDiv(g, h);int(1..)])
-   ~~> remove_unit_vector_products ([("Base", 8800)])
-SafeDiv(g, h)
-
---
-
-__5 =aux SafeDiv(g, h)
+__2 =aux SafeDiv(g, h)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(g, h, __5)
+DivEq(g, h, __2)
 
 --
 
-__2 =aux product([d,c;int(1..)])
+__3 =aux SafeDiv(g, h)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(g, h, __3)
+
+--
+
+__0 =aux product([d,c;int(1..)])
    ~~> introduce_producteq ([("Minion", 4200)])
-FlatProductEq(c,d,__2)
+FlatProductEq(c,d,__0)
 
 --
 
-__3 =aux SafeDiv(e, f)
+__1 =aux SafeDiv(e, f)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(e, f, __3)
-
---
-
-__4 =aux SafeDiv(g, h)
-   ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(g, h, __4)
+DivEq(e, f, __1)
 
 --
 
@@ -117,20 +95,16 @@ find e: int(2..10)
 find f: int(2..10)
 find g: int(2..10)
 find h: int(2..10)
-findAux __0: int(2..10)
-findAux __1: int(2..10)
-findAux __2: int(4..100)
+findAux __0: int(4..100)
+findAux __1: int(0..5)
+findAux __2: int(0..5)
 findAux __3: int(0..5)
-findAux __4: int(0..5)
-findAux __5: int(0..5)
 
 such that
 
-FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[__0, __1, __2, __3, __4, __5, a],18),
-__0 =aux a,
-__1 =aux b,
-FlatProductEq(c,d,__2),
-DivEq(e, f, __3),
-DivEq(g, h, __4),
-DivEq(g, h, __5)
+FlatWeightedSumLeq([3, 1, 6, -1, 1, 2],[__0, __1, __2, __3, a, b],18),
+FlatProductEq(c,d,__0),
+DivEq(e, f, __1),
+DivEq(g, h, __2),
+DivEq(g, h, __3)
 
