@@ -322,6 +322,8 @@ pub enum RulePrefilter {
     VariantChild { variant: usize, child: usize },
     /// Focused expression must be an `Atomic` expression with this atomic subvariant.
     Atom(AtomKind),
+    /// Focused expression must have an immediate `Atomic` child with this atomic subvariant.
+    ChildAtom(AtomKind),
 }
 
 /// State changes that can invalidate a failed rule application.

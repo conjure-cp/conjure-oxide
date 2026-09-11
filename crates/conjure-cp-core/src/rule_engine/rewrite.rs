@@ -602,7 +602,8 @@ impl<'a> RuleGroup<'a> {
                 RulePrefilter::Variant(discriminant) => Some(*discriminant),
                 RulePrefilter::Child { .. }
                 | RulePrefilter::VariantChild { .. }
-                | RulePrefilter::Atom(_) => None,
+                | RulePrefilter::Atom(_)
+                | RulePrefilter::ChildAtom(_) => None,
             })
             .collect_vec();
 
@@ -3090,6 +3091,9 @@ fn rule_matches_specific_prefilter(
                     && has_direct_child_discriminant(expr, arena_node, *child)
             }
             RulePrefilter::Atom(atom_kind) => expr_atom_kind(expr) == Some(*atom_kind),
+            RulePrefilter::ChildAtom(atom_kind) => {
+                expr_has_direct_child_atom_kind(expr, *atom_kind)
+            }
         })
     })
 }
@@ -3112,6 +3116,20 @@ fn expr_atom_kind(expr: &Expr) -> Option<AtomKind> {
         Expr::Atomic(_, Atom::Reference(_)) => Some(AtomKind::Reference),
         _ => None,
     }
+}
+
+/// Returns whether `expr` has an immediate `Atomic` child of this kind.
+///
+/// Direct children are walked rather than read off the arena's cached child discriminants, which
+/// record `Expression` variants only and so cannot tell a reference from a literal.
+fn expr_has_direct_child_atom_kind(expr: &Expr, target: AtomKind) -> bool {
+    let mut found = false;
+    expr.for_each_expr_child(&mut |child| {
+        if !found && expr_atom_kind(child) == Some(target) {
+            found = true;
+        }
+    });
+    found
 }
 
 fn expr_has_direct_child_discriminant(expr: &Expr, target_discriminants: &[usize]) -> bool {
@@ -3400,6 +3418,49 @@ mod tests {
         );
         assert!(!rule_group.has_candidates(config, &literal));
         assert!(!rule_group.has_candidates(config, &composite));
+    }
+
+    #[test]
+    fn rule_group_child_atom_filter_matches_direct_atomic_reference_child() {
+        let child_atom_rule: &'static crate::rule_engine::Rule<'static> =
+            Box::leak(Box::new(crate::rule_engine::Rule {
+                name: "child-atom-reference-test-rule",
+                application: never_apply_test_rule,
+                rule_sets: &[("test-rule-set", 1)],
+                prefilters: Some(&[RulePrefilter::ChildAtom(AtomKind::Reference)]),
+                failure_invalidation:
+                    crate::rule_engine::RuleFailureInvalidation::ExpressionOrSymbols,
+            }));
+        let rule_group = RuleGroup::new(
+            1,
+            vec![crate::rule_engine::RuleData {
+                rule: child_atom_rule,
+                priority: 1,
+                rule_set: &TEST_RULE_SET,
+            }],
+        );
+        let config = RewriteConfig::optimised();
+        let with_reference_child = Expr::Eq(
+            Metadata::new(),
+            Moo::new(reference_expr(&Name::user("x"))),
+            Moo::new(int_lit(2)),
+        );
+        // Literal children have the same `Atomic` variant, so only the atom kind separates them.
+        let with_literal_children =
+            Expr::Eq(Metadata::new(), Moo::new(int_lit(1)), Moo::new(int_lit(2)));
+        // The reference itself is not a match: the filter is about children.
+        let bare_reference = reference_expr(&Name::user("x"));
+
+        assert!(rule_group.has_candidates(config, &with_reference_child));
+        assert_eq!(
+            rule_group
+                .candidates(config, &with_reference_child)
+                .map(|rule_data| rule_data.rule.name)
+                .collect_vec(),
+            vec!["child-atom-reference-test-rule"]
+        );
+        assert!(!rule_group.has_candidates(config, &with_literal_children));
+        assert!(!rule_group.has_candidates(config, &bare_reference));
     }
 
     #[test]
