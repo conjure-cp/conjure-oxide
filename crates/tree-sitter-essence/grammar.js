@@ -878,7 +878,7 @@ module.exports = grammar ({
       seq(
         field("variable", choice($.identifier, $.tuple)),
         "<-",
-        field("collection", choice($.arithmetic_expr, $.identifier, $.matrix))
+        field("collection", choice($.arithmetic_expr, $.identifier, $.matrix, $.set_operation))
       )
     )),
 
