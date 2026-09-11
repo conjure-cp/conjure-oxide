@@ -14,8 +14,13 @@ use conjure_cp::rule_engine::{
 ///
 /// ```text
 /// v(v(a,b,...),c,d,...) ~> v(a,b,c,d)
+/// v(a,b,[c,d],...)      ~> v(a,b,c,d)
 /// where v is an AC vector operator
 /// ```
+///
+/// The second form arises when a comprehension standing for several terms is expanded in place:
+/// the expansion lands as a matrix literal among the operands, and an AC operator's operand list
+/// is flat by definition.
 #[register_rule("Base", 8900, [And, Or, Product, Sum])]
 fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if !expr.is_associative_commutative_operator() {
@@ -32,6 +37,16 @@ fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> Applicatio
         expr: Expr,
         changed: &mut bool,
     ) -> Vec<Expr> {
+        // A matrix literal among the operands is spliced in, whatever the operator.
+        if let Expr::AbstractLiteral(_, AbstractLiteral::Matrix(children, _)) = &expr {
+            *changed = true;
+            return children
+                .clone()
+                .into_iter()
+                .flat_map(|child| recurse_deeply(root_discriminant, child, changed))
+                .collect();
+        }
+
         // if expr a different expression type, stop recursing
         if std::mem::discriminant(&expr) != root_discriminant {
             return vec![expr];
@@ -72,9 +87,13 @@ fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> Applicatio
 fn has_direct_nested_ac_child(expr: &Expr) -> bool {
     let root_discriminant = std::mem::discriminant(expr);
     ac_children(expr).is_some_and(|children| {
-        children
-            .iter()
-            .any(|child| std::mem::discriminant(child) == root_discriminant)
+        children.iter().any(|child| {
+            std::mem::discriminant(child) == root_discriminant
+                || matches!(
+                    child,
+                    Expr::AbstractLiteral(_, AbstractLiteral::Matrix(_, _))
+                )
+        })
     })
 }
 
