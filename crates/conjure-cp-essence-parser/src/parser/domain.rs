@@ -901,7 +901,9 @@ pub fn parse_set_domain(
                         );
                         continue;
                     }
-                    let Some(value) = parse_int(ctx, &value_node) else {
+                    // Attribute values may be expressions over givens, e.g. `maxSize |nums|`,
+                    // which only become ground once the parameters are instantiated.
+                    let Some(value) = parse_int_val(ctx, value_node)? else {
                         return Ok(None);
                     };
                     match name {

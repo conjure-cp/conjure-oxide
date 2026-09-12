@@ -182,12 +182,15 @@ module.exports = grammar ({
 
     set_attributes: $ => commaSep1($.set_attribute),
 
+    // Attribute values may be expressions, e.g. `maxSize |nums|`, not only literals.
     set_attribute: $ => choice(
-      seq(field("attribute", "size"), field("value", $.integer)),
-      seq(field("attribute", "minSize"), field("value", $.integer)),
-      seq(field("attribute", "maxSize"), field("value", $.integer)),
+      seq(field("attribute", "size"), field("value", $._set_attribute_value)),
+      seq(field("attribute", "minSize"), field("value", $._set_attribute_value)),
+      seq(field("attribute", "maxSize"), field("value", $._set_attribute_value)),
       seq(field("attribute", "representation"), field("value", $.identifier))
     ),
+
+    _set_attribute_value: $ => choice($.arithmetic_expr, $.atom),
 
     mset_domain: $ => seq(
       "mset",
