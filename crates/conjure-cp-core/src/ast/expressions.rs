@@ -273,6 +273,13 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Substring(Metadata, Moo<Expression>, Moo<Expression>),
 
+    /// `catchUndef(e, d)`: `e` where `e` is defined, `d` where it is not.
+    ///
+    /// Definedness is only known once the bubble rules have run, so this survives until then and
+    /// is lowered against the bubble condition the inner expression produces.
+    #[compatible(JsonInput)]
+    CatchUndef(Metadata, Moo<Expression>, Moo<Expression>),
+
     /// Division after preventing division by zero, usually with a bubble
     #[compatible(SMT)]
     SafeDiv(Metadata, Moo<Expression>, Moo<Expression>),
@@ -1191,6 +1198,12 @@ impl Expression {
                 )
                 .map(DomainPtr::from)
                 .ok(),
+            // Either operand's value can survive, so the domain must cover both.
+            Expression::CatchUndef(_, a, b) => {
+                let inner = a.domain_of()?;
+                let default = b.domain_of()?;
+                inner.union(&default).ok()
+            }
             Expression::SafeDiv(_, a, b) => {
                 // rust integer division is truncating; however, we want to always round down
                 // including for negative numbers.
@@ -2006,6 +2019,7 @@ impl Expression {
             Leq,
             Gt,
             Lt,
+            CatchUndef,
             SafeDiv,
             UnsafeDiv,
             SafeMod,
@@ -2717,6 +2731,9 @@ impl Display for Expression {
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
             }
+            Expression::CatchUndef(_, box1, box2) => {
+                write!(f, "catchUndef({box1}, {box2})")
+            }
             Expression::SafeDiv(_, box1, box2) => {
                 write!(f, "SafeDiv({}, {})", box1.clone(), box2.clone())
             }
@@ -3012,6 +3029,7 @@ impl Typeable for Expression {
             Expression::Parts(_, subject) => {
                 ReturnType::Set(Box::new(ReturnType::Set(Box::new(subject.return_type()))))
             }
+            Expression::CatchUndef(_, _, _) => ReturnType::Int,
             Expression::SafeDiv(_, _, _) => ReturnType::Int,
             Expression::UnsafeDiv(_, _, _) => ReturnType::Int,
             Expression::FlatAllDiff(_, _) => ReturnType::Bool,
@@ -3343,6 +3361,7 @@ impl Expression {
             | Expression::Leq(_, m1, m2)
             | Expression::Gt(_, m1, m2)
             | Expression::Lt(_, m1, m2)
+            | Expression::CatchUndef(_, m1, m2)
             | Expression::SafeDiv(_, m1, m2)
             | Expression::UnsafeDiv(_, m1, m2)
             | Expression::SafeMod(_, m1, m2)
@@ -3664,6 +3683,7 @@ impl Expression {
             | Expression::Apart(_, m1, m2)
             | Expression::Together(_, m1, m2)
             | Expression::Party(_, m1, m2)
+            | Expression::CatchUndef(_, m1, m2)
             | Expression::SafeDiv(_, m1, m2)
             | Expression::UnsafeDiv(_, m1, m2)
             | Expression::SafeMod(_, m1, m2)
