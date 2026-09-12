@@ -1,7 +1,10 @@
 use std::sync::{Arc, Mutex};
 
 use conjure_cp::{
-    ast::{Expression, comprehension::Comprehension},
+    ast::{
+        Expression,
+        comprehension::{Comprehension, ComprehensionQualifier},
+    },
     rule_engine::resolve_rule_sets,
     settings::{SolverFamily, current_rewriter},
     solver::{Solver, SolverError, adaptors::Minion},
@@ -20,6 +23,13 @@ use super::via_solver_common::{
 /// solved here; they are held back and re-applied to each expanded element under the enclosing AC
 /// operator's skip semantics.
 pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>, SolverError> {
+    // An empty generator domain -- `int(1..exposedBlock-1)` where an enclosing comprehension has
+    // just bound `exposedBlock` to 1 -- yields no elements at all. Building a generator model for
+    // it would materialise a find over an empty domain, which Minion cannot hold.
+    if comprehension_has_empty_generator(&comprehension) {
+        return Ok(vec![]);
+    }
+
     let minion = Solver::new(Minion::new());
     let skip_operator = comprehension.skip_operator;
     let (comprehension, symbolic_guards) = split_symbolic_guards(&comprehension);
@@ -112,4 +122,20 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
         &symbolic_guards,
         skip_operator,
     )
+}
+
+/// Whether any domain generator of `comprehension` ranges over nothing.
+fn comprehension_has_empty_generator(comprehension: &Comprehension) -> bool {
+    comprehension.qualifiers.iter().any(|qualifier| {
+        let ComprehensionQualifier::Generator { ptr } = qualifier else {
+            return false;
+        };
+        ptr.domain().is_some_and(|domain| {
+            domain
+                .resolve()
+                .ok()
+                .and_then(|resolved| resolved.values().ok())
+                .is_some_and(|mut values| values.next().is_none())
+        })
+    })
 }
