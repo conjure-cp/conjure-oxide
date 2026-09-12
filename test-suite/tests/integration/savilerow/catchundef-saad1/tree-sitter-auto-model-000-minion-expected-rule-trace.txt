@@ -1,0 +1,963 @@
+Model before rewriting:
+
+letting weights be [0,1,2,3,4,5;int(0..5)]
+find setSize: int(1..5)
+find setValues: matrix indexed by [int(1..5)] of int(0..5)
+find setWeight: int(0..(sum(weights)))
+
+such that
+
+and([ and([(i > setSize) <-> (setValues[i] = 0),(i < setSize) -> (setValues[i] < setValues[sum([i,1;int(1..)])]);int(1..)]) | i : int(1..5) ]),
+setSize > 1,
+setWeight = sum([ product([catchUndef(weights[setValues[i]], 0),toInt(i <= setSize);int(1..)]) | i : int(1..5) ])
+
+--
+
+and([ and([(i > setSize) <-> (setValues[i] = 0),(i < setSize) -> (setValues[i] < setValues[sum([i,1;int(1..)])]);int(1..)]) | i : int(1..5) ]),
+setSize > 1,
+setWeight = sum([ product([catchUndef(weights[setValues[i]], 0),toInt(i <= setSize);int(1..)]) | i : int(1..5) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ and([(i > setSize) <-> (setValues[i] = 0),(i < setSize) -> (setValues[i] < setValues[sum([i,1;int(1..)])]);int(1..)]) | i : int(1..5) ]),
+setSize > 1,
+setWeight = sum([ product([catchUndef(weights[setValues[i]], 0),toInt(i <= setSize);int(1..)]) | i : int(1..5) ])
+new variables:
+  find setValues#components_1: int(0..5)
+  find setValues#components_2: int(0..5)
+  find setValues#components_3: int(0..5)
+  find setValues#components_4: int(0..5)
+  find setValues#components_5: int(0..5)
+
+--
+
+and([ and([(i > setSize) <-> (setValues[i] = 0),(i < setSize) -> (setValues[i] < setValues[sum([i,1;int(1..)])]);int(1..)]) | i : int(1..5) ]),
+setSize > 1,
+setWeight = sum([ product([catchUndef(weights[setValues[i]], 0),toInt(i <= setSize);int(1..)]) | i : int(1..5) ])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+and([ and([(i > setSize) <-> (setValues[i] = 0),(i < setSize) -> (setValues[i] < setValues[sum([i,1;int(1..)])]);int(1..)]) | i : int(1..5) ]),
+setSize > 1,
+setWeight = sum([ product([catchUndef(weights[setValues[i]], 0),toInt(i <= setSize);int(1..)]) | i : int(1..5) ])
+
+--
+
+setSize > 1
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([setSize,-1;int(1..)]) >= 1
+
+--
+
+sum([setSize,-1;int(1..)]) >= 1
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(1, setSize, -1)
+
+--
+
+[ and([(i > setSize) <-> (setValues[i] = 0),(i < setSize) -> (setValues[i] < setValues[sum([i,1;int(1..)])]);int(1..)]) | i : int(1..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([(1 > setSize) <-> (setValues#components_1 = 0),(1 < setSize) -> (setValues#components_1 < setValues#components_2);int(1..)]),and([(2 > setSize) <-> (setValues#components_2 = 0),(2 < setSize) -> (setValues#components_2 < setValues#components_3);int(1..)]),and([(3 > setSize) <-> (setValues#components_3 = 0),(3 < setSize) -> (setValues#components_3 < setValues#components_4);int(1..)]),and([(4 > setSize) <-> (setValues#components_4 = 0),(4 < setSize) -> (setValues#components_4 < setValues#components_5);int(1..)]),and([(5 > setSize) <-> (setValues#components_5 = 0),(5 < setSize) -> (setValues#components_5 < setValues[6]);int(1..)]);int(1..)]
+
+--
+
+setValues
+   ~~> select_representation ([("ReprGeneral", 10000)])
+setValues
+
+--
+
+and([and([(1 > setSize) <-> (setValues#components_1 = 0),(1 < setSize) -> (setValues#components_1 < setValues#components_2);int(1..)]),and([(2 > setSize) <-> (setValues#components_2 = 0),(2 < setSize) -> (setValues#components_2 < setValues#components_3);int(1..)]),and([(3 > setSize) <-> (setValues#components_3 = 0),(3 < setSize) -> (setValues#components_3 < setValues#components_4);int(1..)]),and([(4 > setSize) <-> (setValues#components_4 = 0),(4 < setSize) -> (setValues#components_4 < setValues#components_5);int(1..)]),and([(5 > setSize) <-> (setValues#components_5 = 0),(5 < setSize) -> (setValues#components_5 < setValues[6]);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([(1 > setSize) <-> (setValues#components_1 = 0),(1 < setSize) -> (setValues#components_1 < setValues#components_2),(2 > setSize) <-> (setValues#components_2 = 0),(2 < setSize) -> (setValues#components_2 < setValues#components_3),(3 > setSize) <-> (setValues#components_3 = 0),(3 < setSize) -> (setValues#components_3 < setValues#components_4),(4 > setSize) <-> (setValues#components_4 = 0),(4 < setSize) -> (setValues#components_4 < setValues#components_5),(5 > setSize) <-> (setValues#components_5 = 0),(5 < setSize) -> (setValues#components_5 < setValues[6]);int(1..)])
+
+--
+
+1 > setSize
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([1,-1;int(1..)]) >= setSize
+
+--
+
+1 < setSize
+   ~~> lt_to_leq ([("Minion", 8400)])
+1 <= sum([setSize,-1;int(1..)])
+
+--
+
+setValues#components_1 < setValues#components_2
+   ~~> lt_to_leq ([("Minion", 8400)])
+setValues#components_1 <= sum([setValues#components_2,-1;int(1..)])
+
+--
+
+2 > setSize
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([2,-1;int(1..)]) >= setSize
+
+--
+
+2 < setSize
+   ~~> lt_to_leq ([("Minion", 8400)])
+2 <= sum([setSize,-1;int(1..)])
+
+--
+
+setValues#components_2 < setValues#components_3
+   ~~> lt_to_leq ([("Minion", 8400)])
+setValues#components_2 <= sum([setValues#components_3,-1;int(1..)])
+
+--
+
+3 > setSize
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([3,-1;int(1..)]) >= setSize
+
+--
+
+3 < setSize
+   ~~> lt_to_leq ([("Minion", 8400)])
+3 <= sum([setSize,-1;int(1..)])
+
+--
+
+setValues#components_3 < setValues#components_4
+   ~~> lt_to_leq ([("Minion", 8400)])
+setValues#components_3 <= sum([setValues#components_4,-1;int(1..)])
+
+--
+
+4 > setSize
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([4,-1;int(1..)]) >= setSize
+
+--
+
+4 < setSize
+   ~~> lt_to_leq ([("Minion", 8400)])
+4 <= sum([setSize,-1;int(1..)])
+
+--
+
+setValues#components_4 < setValues#components_5
+   ~~> lt_to_leq ([("Minion", 8400)])
+setValues#components_4 <= sum([setValues#components_5,-1;int(1..)])
+
+--
+
+5 > setSize
+   ~~> gt_to_geq ([("Minion", 8400)])
+sum([5,-1;int(1..)]) >= setSize
+
+--
+
+5 < setSize
+   ~~> lt_to_leq ([("Minion", 8400)])
+5 <= sum([setSize,-1;int(1..)])
+
+--
+
+setValues#components_5 < setValues[6]
+   ~~> lt_to_leq ([("Minion", 8400)])
+setValues#components_5 <= sum([setValues[6],-1;int(1..)])
+
+--
+
+setValues[6]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(setValues,[6]) @ false}
+
+--
+
+[{SafeIndex(setValues,[6]) @ false},-1;int(1..)]
+   ~~> bubble_up ([("Bubble", 8800)])
+{[SafeIndex(setValues,[6]),-1;int(1..)] @ false}
+
+--
+
+sum({[SafeIndex(setValues,[6]),-1;int(1..)] @ false})
+   ~~> bubble_up ([("Bubble", 8800)])
+{sum([SafeIndex(setValues,[6]),-1;int(1..)]) @ false}
+
+--
+
+setValues#components_5 <= {sum([SafeIndex(setValues,[6]),-1;int(1..)]) @ false}
+   ~~> bubble_up ([("Bubble", 8800)])
+{setValues#components_5 <= sum([SafeIndex(setValues,[6]),-1;int(1..)]) @ false}
+
+--
+
+{setValues#components_5 <= sum([SafeIndex(setValues,[6]),-1;int(1..)]) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([setValues#components_5 <= sum([SafeIndex(setValues,[6]),-1;int(1..)]),false;int(1..)])
+
+--
+
+1 <= sum([setSize,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setSize], 1)
+
+--
+
+setValues#components_1 <= sum([setValues#components_2,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setValues#components_2], setValues#components_1)
+
+--
+
+2 <= sum([setSize,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setSize], 2)
+
+--
+
+setValues#components_2 <= sum([setValues#components_3,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setValues#components_3], setValues#components_2)
+
+--
+
+3 <= sum([setSize,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setSize], 3)
+
+--
+
+setValues#components_3 <= sum([setValues#components_4,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setValues#components_4], setValues#components_3)
+
+--
+
+4 <= sum([setSize,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setSize], 4)
+
+--
+
+setValues#components_4 <= sum([setValues#components_5,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setValues#components_5], setValues#components_4)
+
+--
+
+5 <= sum([setSize,-1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, setSize], 5)
+
+--
+
+(0 >= setSize) <-> (setValues#components_1 = 0)
+   ~~> iff_to_eq ([("Minion", 4400)])
+0 >= setSize = setValues#components_1 = 0
+
+--
+
+(1 >= setSize) <-> (setValues#components_2 = 0)
+   ~~> iff_to_eq ([("Minion", 4400)])
+1 >= setSize = setValues#components_2 = 0
+
+--
+
+(2 >= setSize) <-> (setValues#components_3 = 0)
+   ~~> iff_to_eq ([("Minion", 4400)])
+2 >= setSize = setValues#components_3 = 0
+
+--
+
+(3 >= setSize) <-> (setValues#components_4 = 0)
+   ~~> iff_to_eq ([("Minion", 4400)])
+3 >= setSize = setValues#components_4 = 0
+
+--
+
+(4 >= setSize) <-> (setValues#components_5 = 0)
+   ~~> iff_to_eq ([("Minion", 4400)])
+4 >= setSize = setValues#components_5 = 0
+
+--
+
+setValues#components_1 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(setValues#components_1,0)
+
+--
+
+setValues#components_2 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(setValues#components_2,0)
+
+--
+
+setValues#components_3 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(setValues#components_3,0)
+
+--
+
+setValues#components_4 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(setValues#components_4,0)
+
+--
+
+setValues#components_5 = 0
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(setValues#components_5,0)
+
+--
+
+!(SumGeq([-1, setSize], 5))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__0)
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux SumGeq([-1, setSize], 5)
+
+--
+
+__0 =aux SumGeq([-1, setSize], 5)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SumGeq([-1, setSize], 5), __0)
+
+--
+
+(SumGeq([-1, setSize], 2)) -> (SumGeq([-1, setValues#components_3], setValues#components_2))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__1) -> (SumGeq([-1, setValues#components_3], setValues#components_2))
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux SumGeq([-1, setSize], 2)
+
+--
+
+__1 =aux SumGeq([-1, setSize], 2)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SumGeq([-1, setSize], 2), __1)
+
+--
+
+(__1) -> (SumGeq([-1, setValues#components_3], setValues#components_2))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(SumGeq([-1, setValues#components_3], setValues#components_2), __1)
+
+--
+
+(SumGeq([-1, setSize], 4)) -> (SumGeq([-1, setValues#components_5], setValues#components_4))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__2) -> (SumGeq([-1, setValues#components_5], setValues#components_4))
+new variables:
+  findAux __2: bool
+new constraints:
+  __2 =aux SumGeq([-1, setSize], 4)
+
+--
+
+__2 =aux SumGeq([-1, setSize], 4)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SumGeq([-1, setSize], 4), __2)
+
+--
+
+(__2) -> (SumGeq([-1, setValues#components_5], setValues#components_4))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(SumGeq([-1, setValues#components_5], setValues#components_4), __2)
+
+--
+
+1 >= setSize = WatchedLiteral(setValues#components_2,0)
+   ~~> flatten_eq ([("Minion", 4200)])
+__3 = __4
+new variables:
+  findAux __3: bool
+  findAux __4: bool
+new constraints:
+  __3 =aux 1 >= setSize
+  __4 =aux WatchedLiteral(setValues#components_2,0)
+
+--
+
+__4 =aux WatchedLiteral(setValues#components_2,0)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(setValues#components_2,0), __4)
+
+--
+
+__3 =aux 1 >= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(1 >= setSize, __3)
+
+--
+
+2 >= setSize = WatchedLiteral(setValues#components_3,0)
+   ~~> flatten_eq ([("Minion", 4200)])
+__5 = __6
+new variables:
+  findAux __5: bool
+  findAux __6: bool
+new constraints:
+  __5 =aux 2 >= setSize
+  __6 =aux WatchedLiteral(setValues#components_3,0)
+
+--
+
+__6 =aux WatchedLiteral(setValues#components_3,0)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(setValues#components_3,0), __6)
+
+--
+
+__5 =aux 2 >= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(2 >= setSize, __5)
+
+--
+
+3 >= setSize = WatchedLiteral(setValues#components_4,0)
+   ~~> flatten_eq ([("Minion", 4200)])
+__7 = __8
+new variables:
+  findAux __7: bool
+  findAux __8: bool
+new constraints:
+  __7 =aux 3 >= setSize
+  __8 =aux WatchedLiteral(setValues#components_4,0)
+
+--
+
+__8 =aux WatchedLiteral(setValues#components_4,0)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(setValues#components_4,0), __8)
+
+--
+
+__7 =aux 3 >= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(3 >= setSize, __7)
+
+--
+
+4 >= setSize = WatchedLiteral(setValues#components_5,0)
+   ~~> flatten_eq ([("Minion", 4200)])
+__9 = __10
+new variables:
+  findAux __9: bool
+  findAux __10: bool
+new constraints:
+  __9 =aux 4 >= setSize
+  __10 =aux WatchedLiteral(setValues#components_5,0)
+
+--
+
+__10 =aux WatchedLiteral(setValues#components_5,0)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(setValues#components_5,0), __10)
+
+--
+
+__9 =aux 4 >= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(4 >= setSize, __9)
+
+--
+
+(SumGeq([-1, setSize], 1)) -> (SumGeq([-1, setValues#components_2], setValues#components_1))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__11) -> (SumGeq([-1, setValues#components_2], setValues#components_1))
+new variables:
+  findAux __11: bool
+new constraints:
+  __11 =aux SumGeq([-1, setSize], 1)
+
+--
+
+__11 =aux SumGeq([-1, setSize], 1)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SumGeq([-1, setSize], 1), __11)
+
+--
+
+(__11) -> (SumGeq([-1, setValues#components_2], setValues#components_1))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(SumGeq([-1, setValues#components_2], setValues#components_1), __11)
+
+--
+
+0 >= setSize = WatchedLiteral(setValues#components_1,0)
+   ~~> flatten_eq ([("Minion", 4200)])
+__12 = __13
+new variables:
+  findAux __12: bool
+  findAux __13: bool
+new constraints:
+  __12 =aux 0 >= setSize
+  __13 =aux WatchedLiteral(setValues#components_1,0)
+
+--
+
+__13 =aux WatchedLiteral(setValues#components_1,0)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(WatchedLiteral(setValues#components_1,0), __13)
+
+--
+
+__12 =aux 0 >= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(0 >= setSize, __12)
+
+--
+
+(SumGeq([-1, setSize], 3)) -> (SumGeq([-1, setValues#components_4], setValues#components_3))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__14) -> (SumGeq([-1, setValues#components_4], setValues#components_3))
+new variables:
+  findAux __14: bool
+new constraints:
+  __14 =aux SumGeq([-1, setSize], 3)
+
+--
+
+__14 =aux SumGeq([-1, setSize], 3)
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SumGeq([-1, setSize], 3), __14)
+
+--
+
+(__14) -> (SumGeq([-1, setValues#components_4], setValues#components_3))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(SumGeq([-1, setValues#components_4], setValues#components_3), __14)
+
+--
+
+1 >= setSize
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(setSize, 1, 0)
+
+--
+
+2 >= setSize
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(setSize, 2, 0)
+
+--
+
+3 >= setSize
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(setSize, 3, 0)
+
+--
+
+4 >= setSize
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(setSize, 4, 0)
+
+--
+
+0 >= setSize
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(setSize, 0, 0)
+
+--
+
+!(__0)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__0,false)
+
+--
+
+[ product([catchUndef(weights[setValues[i]], 0),toInt(i <= setSize);int(1..)]) | i : int(1..5) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[product([catchUndef([0,1,2,3,4,5;int(0..5)][setValues#components_1], 0),toInt(1 <= setSize);int(1..)]),product([catchUndef([0,1,2,3,4,5;int(0..5)][setValues#components_2], 0),toInt(2 <= setSize);int(1..)]),product([catchUndef([0,1,2,3,4,5;int(0..5)][setValues#components_3], 0),toInt(3 <= setSize);int(1..)]),product([catchUndef([0,1,2,3,4,5;int(0..5)][setValues#components_4], 0),toInt(4 <= setSize);int(1..)]),product([catchUndef([0,1,2,3,4,5;int(0..5)][setValues#components_5], 0),toInt(5 <= setSize);int(1..)]);int(1..)]
+
+--
+
+[0,1,2,3,4,5;int(0..5)][setValues#components_1]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_1])
+
+--
+
+[0,1,2,3,4,5;int(0..5)][setValues#components_2]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_2])
+
+--
+
+[0,1,2,3,4,5;int(0..5)][setValues#components_3]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_3])
+
+--
+
+[0,1,2,3,4,5;int(0..5)][setValues#components_4]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_4])
+
+--
+
+[0,1,2,3,4,5;int(0..5)][setValues#components_5]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_5])
+
+--
+
+catchUndef(SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_1]), 0)
+   ~~> catch_undef_total ([("Base", 8700)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_1])
+
+--
+
+catchUndef(SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_2]), 0)
+   ~~> catch_undef_total ([("Base", 8700)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_2])
+
+--
+
+catchUndef(SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_3]), 0)
+   ~~> catch_undef_total ([("Base", 8700)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_3])
+
+--
+
+catchUndef(SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_4]), 0)
+   ~~> catch_undef_total ([("Base", 8700)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_4])
+
+--
+
+catchUndef(SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_5]), 0)
+   ~~> catch_undef_total ([("Base", 8700)])
+SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_5])
+
+--
+
+setWeight = sum([product([SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_1]),toInt(1 <= setSize);int(1..)]),product([SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_2]),toInt(2 <= setSize);int(1..)]),product([SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_3]),toInt(3 <= setSize);int(1..)]),product([SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_4]),toInt(4 <= setSize);int(1..)]),product([SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_5]),toInt(5 <= setSize);int(1..)]);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__17, __20, __23, __26, __29], setWeight),SumGeq([__17, __20, __23, __26, __29], setWeight);int(1..)])
+new variables:
+  findAux __15: int(0..5)
+  findAux __16: int(0..1)
+  findAux __17: int(0..5)
+  findAux __18: int(0..5)
+  findAux __19: int(0..1)
+  findAux __20: int(0..5)
+  findAux __21: int(0..5)
+  findAux __22: int(0..1)
+  findAux __23: int(0..5)
+  findAux __24: int(0..5)
+  findAux __25: int(0..1)
+  findAux __26: int(0..5)
+  findAux __27: int(0..5)
+  findAux __28: int(0..1)
+  findAux __29: int(0..5)
+new constraints:
+  __15 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_1])
+  __16 =aux toInt(1 <= setSize)
+  FlatProductEq(__15,__16,__17)
+  __18 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_2])
+  __19 =aux toInt(2 <= setSize)
+  FlatProductEq(__18,__19,__20)
+  __21 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_3])
+  __22 =aux toInt(3 <= setSize)
+  FlatProductEq(__21,__22,__23)
+  __24 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_4])
+  __25 =aux toInt(4 <= setSize)
+  FlatProductEq(__24,__25,__26)
+  __27 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_5])
+  __28 =aux toInt(5 <= setSize)
+  FlatProductEq(__27,__28,__29)
+
+--
+
+__15 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_1])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([0,1,2,3,4,5],__30,__15)
+new variables:
+  findAux __30: int(1..6)
+new constraints:
+  __30 =aux sum([setValues#components_1,1;int(1..)])
+
+--
+
+__30 =aux sum([setValues#components_1,1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, setValues#components_1], __30),SumGeq([1, setValues#components_1], __30);int(1..)])
+
+--
+
+__21 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_3])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([0,1,2,3,4,5],__31,__21)
+new variables:
+  findAux __31: int(1..6)
+new constraints:
+  __31 =aux sum([setValues#components_3,1;int(1..)])
+
+--
+
+__31 =aux sum([setValues#components_3,1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, setValues#components_3], __31),SumGeq([1, setValues#components_3], __31);int(1..)])
+
+--
+
+__27 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_5])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([0,1,2,3,4,5],__32,__27)
+new variables:
+  findAux __32: int(1..6)
+new constraints:
+  __32 =aux sum([setValues#components_5,1;int(1..)])
+
+--
+
+__32 =aux sum([setValues#components_5,1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, setValues#components_5], __32),SumGeq([1, setValues#components_5], __32);int(1..)])
+
+--
+
+__18 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_2])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([0,1,2,3,4,5],__33,__18)
+new variables:
+  findAux __33: int(1..6)
+new constraints:
+  __33 =aux sum([setValues#components_2,1;int(1..)])
+
+--
+
+__33 =aux sum([setValues#components_2,1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, setValues#components_2], __33),SumGeq([1, setValues#components_2], __33);int(1..)])
+
+--
+
+__24 =aux SafeIndex([0,1,2,3,4,5;int(0..5)],[setValues#components_4])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([0,1,2,3,4,5],__34,__24)
+new variables:
+  findAux __34: int(1..6)
+new constraints:
+  __34 =aux sum([setValues#components_4,1;int(1..)])
+
+--
+
+__34 =aux sum([setValues#components_4,1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, setValues#components_4], __34),SumGeq([1, setValues#components_4], __34);int(1..)])
+
+--
+
+toInt(4 <= setSize)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__35)
+new variables:
+  findAux __35: bool
+new constraints:
+  __35 =aux 4 <= setSize
+
+--
+
+__35 =aux 4 <= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(4 <= setSize, __35)
+
+--
+
+toInt(5 <= setSize)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__36)
+new variables:
+  findAux __36: bool
+new constraints:
+  __36 =aux 5 <= setSize
+
+--
+
+__36 =aux 5 <= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(5 <= setSize, __36)
+
+--
+
+toInt(1 <= setSize)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__37)
+new variables:
+  findAux __37: bool
+new constraints:
+  __37 =aux 1 <= setSize
+
+--
+
+__37 =aux 1 <= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(1 <= setSize, __37)
+
+--
+
+toInt(2 <= setSize)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__38)
+new variables:
+  findAux __38: bool
+new constraints:
+  __38 =aux 2 <= setSize
+
+--
+
+__38 =aux 2 <= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(2 <= setSize, __38)
+
+--
+
+toInt(3 <= setSize)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__39)
+new variables:
+  findAux __39: bool
+new constraints:
+  __39 =aux 3 <= setSize
+
+--
+
+__39 =aux 3 <= setSize
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(3 <= setSize, __39)
+
+--
+
+4 <= setSize
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(4, setSize, 0)
+
+--
+
+5 <= setSize
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(5, setSize, 0)
+
+--
+
+1 <= setSize
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(1, setSize, 0)
+
+--
+
+2 <= setSize
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(2, setSize, 0)
+
+--
+
+3 <= setSize
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(3, setSize, 0)
+
+--
+
+Final model:
+
+letting weights be [0,1,2,3,4,5;int(0..5)]
+find setSize: int(1..5)
+find setValues: matrix indexed by [int(1..5)] of int(0..5)
+find setWeight: int(0..(sum(weights)))
+find setValues#components_1: int(0..5)
+find setValues#components_2: int(0..5)
+find setValues#components_3: int(0..5)
+find setValues#components_4: int(0..5)
+find setValues#components_5: int(0..5)
+letting weights#components_1 be 0
+letting weights#components_2 be 1
+letting weights#components_3 be 2
+letting weights#components_4 be 3
+letting weights#components_5 be 4
+letting weights#components_6 be 5
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: int(0..5)
+findAux __16: int(0..1)
+findAux __17: int(0..5)
+findAux __18: int(0..5)
+findAux __19: int(0..1)
+findAux __20: int(0..5)
+findAux __21: int(0..5)
+findAux __22: int(0..1)
+findAux __23: int(0..5)
+findAux __24: int(0..5)
+findAux __25: int(0..1)
+findAux __26: int(0..5)
+findAux __27: int(0..5)
+findAux __28: int(0..1)
+findAux __29: int(0..5)
+findAux __30: int(1..6)
+findAux __31: int(1..6)
+findAux __32: int(1..6)
+findAux __33: int(1..6)
+findAux __34: int(1..6)
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+
+such that
+
+and([__12 = __13,ReifyImply(SumGeq([-1, setValues#components_2], setValues#components_1), __11),__3 = __4,ReifyImply(SumGeq([-1, setValues#components_3], setValues#components_2), __1),__5 = __6,ReifyImply(SumGeq([-1, setValues#components_4], setValues#components_3), __14),__7 = __8,ReifyImply(SumGeq([-1, setValues#components_5], setValues#components_4), __2),__9 = __10,WatchedLiteral(__0,false);int(1..)]),
+Ineq(1, setSize, -1),
+and([SumLeq([__17, __20, __23, __26, __29], setWeight),SumGeq([__17, __20, __23, __26, __29], setWeight);int(1..)]),
+Reify(SumGeq([-1, setSize], 5), __0),
+Reify(SumGeq([-1, setSize], 2), __1),
+Reify(SumGeq([-1, setSize], 4), __2),
+Reify(Ineq(setSize, 1, 0), __3),
+Reify(WatchedLiteral(setValues#components_2,0), __4),
+Reify(Ineq(setSize, 2, 0), __5),
+Reify(WatchedLiteral(setValues#components_3,0), __6),
+Reify(Ineq(setSize, 3, 0), __7),
+Reify(WatchedLiteral(setValues#components_4,0), __8),
+Reify(Ineq(setSize, 4, 0), __9),
+Reify(WatchedLiteral(setValues#components_5,0), __10),
+Reify(SumGeq([-1, setSize], 1), __11),
+Reify(Ineq(setSize, 0, 0), __12),
+Reify(WatchedLiteral(setValues#components_1,0), __13),
+Reify(SumGeq([-1, setSize], 3), __14),
+__minion_element_one([0,1,2,3,4,5],__30,__15),
+__16 =aux toInt(__37),
+FlatProductEq(__15,__16,__17),
+__minion_element_one([0,1,2,3,4,5],__33,__18),
+__19 =aux toInt(__38),
+FlatProductEq(__18,__19,__20),
+__minion_element_one([0,1,2,3,4,5],__31,__21),
+__22 =aux toInt(__39),
+FlatProductEq(__21,__22,__23),
+__minion_element_one([0,1,2,3,4,5],__34,__24),
+__25 =aux toInt(__35),
+FlatProductEq(__24,__25,__26),
+__minion_element_one([0,1,2,3,4,5],__32,__27),
+__28 =aux toInt(__36),
+FlatProductEq(__27,__28,__29),
+and([SumLeq([1, setValues#components_1], __30),SumGeq([1, setValues#components_1], __30);int(1..)]),
+and([SumLeq([1, setValues#components_3], __31),SumGeq([1, setValues#components_3], __31);int(1..)]),
+and([SumLeq([1, setValues#components_5], __32),SumGeq([1, setValues#components_5], __32);int(1..)]),
+and([SumLeq([1, setValues#components_2], __33),SumGeq([1, setValues#components_2], __33);int(1..)]),
+and([SumLeq([1, setValues#components_4], __34),SumGeq([1, setValues#components_4], __34);int(1..)]),
+Reify(Ineq(4, setSize, 0), __35),
+Reify(Ineq(5, setSize, 0), __36),
+Reify(Ineq(1, setSize, 0), __37),
+Reify(Ineq(2, setSize, 0), __38),
+Reify(Ineq(3, setSize, 0), __39)
+
