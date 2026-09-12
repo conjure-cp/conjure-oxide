@@ -346,7 +346,7 @@ fn has_only_locally_evaluable_operands(expr: &Expr) -> bool {
         Expr::TypeAnnotation(_, inner, _) | Expr::DomainAnnotation(_, inner, _) => {
             is_locally_evaluable_expr(inner.as_ref())
         }
-        Expr::Comprehension(_, _) | Expr::AbstractComprehension(_, _) | Expr::Root(_, _) => false,
+        Expr::Comprehension(_, _) | Expr::Root(_, _) => false,
         // Visit children by reference. `Uniplate::children()` clones the whole child list, so on a
         // wide node (e.g. `or` over a large matrix) this test alone costs O(subtree); the evaluator
         // hook runs it on every ancestor after every rewrite, which makes rewriting quadratic.
@@ -535,7 +535,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Comprehension(_, comprehension) => {
             eval_constant_comprehension(comprehension.as_ref())
         }
-        Expr::AbstractComprehension(_, _) => None,
         Expr::RecordField(_, rec, fld_name) => match eval_constant(rec.as_ref())? {
             Lit::AbstractLiteral(AbstractLiteral::Record(ents)) => {
                 for Field { name, value } in ents {

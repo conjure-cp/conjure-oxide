@@ -28,7 +28,6 @@ use crate::ast::FuncAttr;
 use crate::ast::metadata::NO_HASH;
 use crate::bug;
 
-use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::{Comprehension, ComprehensionQualifier};
@@ -77,7 +76,6 @@ static_assertions::const_assert!(std::mem::size_of::<Expression>() <= 152);
 #[generate_discriminants]
 #[document_compatibility]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
-#[biplate(to=AbstractComprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=Atom)]
@@ -112,10 +110,6 @@ pub enum Expression {
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
-
-    /// Higher-level abstract comprehension
-    #[polyquine_skip] // no idea what this is lol but it stops rustc screaming at me
-    AbstractComprehension(Metadata, Moo<AbstractComprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
@@ -1047,7 +1041,6 @@ impl Expression {
             Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
-            Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
             Expression::RecordField(_, rec, field_name) => {
                 let rec_ents = rec.domain_of()?.as_record()?;
                 for ent in rec_ents {
@@ -1977,7 +1970,6 @@ impl Expression {
             Root,
             Bubble,
             Comprehension,
-            AbstractComprehension,
             DominanceRelation,
             TypeAnnotation,
             DomainAnnotation,
@@ -2554,7 +2546,6 @@ impl Display for Expression {
 
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
-            Expression::AbstractComprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) => write!(f, "{e1}{}", pretty_vec(e2)),
             Expression::RecordField(_, r, fld) => {
                 write!(f, "{r}[{fld}]")
@@ -2989,7 +2980,6 @@ impl Typeable for Expression {
             }
             Expression::InDomain(_, _, _) => ReturnType::Bool,
             Expression::Comprehension(_, comp) => comp.return_type(),
-            Expression::AbstractComprehension(_, comp) => comp.return_type(),
             Expression::Root(_, _) => ReturnType::Bool,
             Expression::DominanceRelation(_, _) => ReturnType::Bool,
             Expression::FromSolution(_, expr) => expr.return_type(),
@@ -3452,7 +3442,6 @@ impl Expression {
 
             // No Expression children
             Expression::Comprehension(_, _)
-            | Expression::AbstractComprehension(_, _)
             | Expression::Atomic(_, _)
             | Expression::FromSolution(_, _)
             | Expression::Metavar(_, _)
@@ -3786,7 +3775,6 @@ impl Expression {
 
             // Non-Expression Moo types - hash normally
             Expression::Comprehension(_, c) => c.hash(&mut hasher),
-            Expression::AbstractComprehension(_, c) => c.hash(&mut hasher),
 
             // Leaf types - no Expression children
             Expression::Atomic(_, a) => a.hash(&mut hasher),
