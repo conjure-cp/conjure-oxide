@@ -684,30 +684,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), es.as_ref()).map(Lit::Bool)
         }
-        Expr::Imply(_, box1, box2) => {
-            let a: &Atom = (&**box1).try_into().ok()?;
-            let b: &Atom = (&**box2).try_into().ok()?;
-
-            let a: bool = a.try_into().ok()?;
-            let b: bool = b.try_into().ok()?;
-
-            if a {
-                // true -> b ~> b
-                Some(Lit::Bool(b))
-            } else {
-                // false -> b ~> true
-                Some(Lit::Bool(true))
-            }
-        }
-        Expr::Iff(_, box1, box2) => {
-            let a: &Atom = (&**box1).try_into().ok()?;
-            let b: &Atom = (&**box2).try_into().ok()?;
-
-            let a: bool = a.try_into().ok()?;
-            let b: bool = b.try_into().ok()?;
-
-            Some(Lit::Bool(a == b))
-        }
+        Expr::Imply(_, a, b) => bin_op::<bool, bool>(|a, b| !a || b, a, b).map(Lit::Bool),
+        Expr::Iff(_, a, b) => bin_op::<bool, bool>(|a, b| a == b, a, b).map(Lit::Bool),
         Expr::Sum(_, exprs) => vec_lit_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
         Expr::Product(_, exprs) => {
             vec_lit_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int)
