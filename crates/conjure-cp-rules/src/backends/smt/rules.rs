@@ -209,7 +209,7 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
 /// TODO: We currently only support one "in set" generator.
 /// This rule can be made much more general and nicer.
 #[register_rule("Smt", 999, [Sum])]
-fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn unwrap_set_comprehension_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, inner) = expr else {
         return Err(RuleNotApplicable);
     };

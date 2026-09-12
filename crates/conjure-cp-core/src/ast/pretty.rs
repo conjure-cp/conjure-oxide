@@ -184,7 +184,6 @@ fn expression_precedence(expr: &Expression) -> Precedence {
         | Expression::Atomic(_, Atom::Literal(_))
         | Expression::AbstractLiteral(_, _)
         | Expression::Comprehension(_, _)
-        | Expression::AbstractComprehension(_, _)
         | Expression::Metavar(_, _)
         | Expression::FromSolution(_, _) => Precedence::ATOM,
         _ => Precedence::ATOM,
