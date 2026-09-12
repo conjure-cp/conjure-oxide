@@ -345,7 +345,23 @@ impl UnresolvedDomain {
     pub fn element_domain(&self) -> Option<DomainPtr> {
         match self {
             UnresolvedDomain::Matrix(inner, _) => Some(inner.clone()),
-            UnresolvedDomain::Sequence(_, inner_dom) => Some(inner_dom.clone()),
+            // A sequence is a function from int(1..|s|), and iterating a function yields its
+            // pairs, so iterating a sequence yields (position, value). Mirrors
+            // `GroundDomain::element_domain`.
+            UnresolvedDomain::Sequence(attr, inner_dom) => {
+                let max = match &attr.size {
+                    Range::Single(max) | Range::UnboundedL(max) | Range::Bounded(_, max) => {
+                        max.clone()
+                    }
+                    Range::UnboundedR(_) | Range::Unbounded => return None,
+                };
+                let positions = Moo::new(crate::ast::Domain::Unresolved(Moo::new(
+                    UnresolvedDomain::Int(vec![Range::Bounded(IntVal::new_const(1), max)]),
+                )));
+                Some(Moo::new(crate::ast::Domain::Unresolved(Moo::new(
+                    UnresolvedDomain::Tuple(vec![positions, inner_dom.clone()]),
+                ))))
+            }
             UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
             _ => None,
         }
