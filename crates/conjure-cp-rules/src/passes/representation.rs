@@ -1,7 +1,9 @@
 use crate::guard;
 use crate::shared::utils::as_cmp_or_lex_op;
+use crate::types::int::{IntDirect, IntLog, IntOrder, SmtBv, SmtLia};
 use conjure_cp::ast::pretty::pretty_find_with_representation;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
+use conjure_cp::representation::ReprRule;
 use conjure_cp::settings::{
     Channelling, Heuristic, channelling, heuristic, next_heuristic_all_index,
     next_heuristic_interactive_index, next_heuristic_random_index,
@@ -294,9 +296,9 @@ fn compact_representation_choice(candidates: &[(ReprRulePtr, usize)]) -> Option<
     candidates
         .iter()
         .min_by_key(|(rule, score)| {
-            let smt_integer_tie_break = match rule.name() {
-                "SmtLia" => 0,
-                "SmtBv" => 1,
+            let smt_integer_tie_break = match rule.id() {
+                id if id == SmtLia::id() => 0,
+                id if id == SmtBv::id() => 1,
                 _ => 0,
             };
             (*score, smt_integer_tie_break, rule.name())
@@ -312,10 +314,14 @@ fn compact_representation_choice(candidates: &[(ReprRulePtr, usize)]) -> Option<
 /// a matrix choose `array` and its integers choose `bv` as two independent decisions rather than
 /// one combined `bv-array`.
 fn is_encoding_repr(rule: ReprRulePtr) -> bool {
-    matches!(
-        rule.name(),
-        "SmtLia" | "SmtBv" | "IntLog" | "IntDirect" | "IntOrder"
-    )
+    [
+        SmtLia::id(),
+        SmtBv::id(),
+        IntLog::id(),
+        IntDirect::id(),
+        IntOrder::id(),
+    ]
+    .contains(&rule.id())
 }
 
 /// True if `decl` was introduced by a representation that left it holding the whole value, rather
@@ -350,6 +356,10 @@ fn source_has_encoding_repr(decl: &DeclarationPtr) -> bool {
 }
 
 /// Find a representation already chosen for another declaration with the same domain.
+///
+/// Any representation the sibling settled on is worth copying, component layouts included: a
+/// matrix chooses between `components`, `packed` and `array`, so `components` is a modelling
+/// choice like any other rather than a decomposition to see past.
 fn representation_for_identical_domain(
     decl: &DeclarationPtr,
     dom: &DomainPtr,
@@ -367,10 +377,6 @@ fn representation_for_identical_domain(
         }
         for (_, state) in other.reprs().iter() {
             let rule = state.rule();
-            // MatrixComponents is a structural layout, not an abstract-domain representation.
-            if rule.name() == "components" {
-                continue;
-            }
             if rule.probe_for(decl).is_ok() {
                 return Some(rule);
             }
@@ -548,10 +554,10 @@ mod tests {
     #[test]
     fn compact_prefers_lia_when_smt_integer_scores_saturate() {
         let lia = get_repr_rules()
-            .find(|rule| rule.name() == "SmtLia")
+            .find(|rule| rule.id() == SmtLia::id())
             .expect("SmtLia representation should be registered");
         let bv = get_repr_rules()
-            .find(|rule| rule.name() == "SmtBv")
+            .find(|rule| rule.id() == SmtBv::id())
             .expect("SmtBv representation should be registered");
 
         assert_eq!(

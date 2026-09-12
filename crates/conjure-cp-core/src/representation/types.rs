@@ -85,6 +85,12 @@ pub type ReprGetOrInitResult<'a, D, E> =
 pub trait ReprRule: Send + Sync {
     const NAME: &'static str;
     const SHORT_NAME: &'static str;
+
+    /// This representation's identity.
+    fn id() -> super::ReprId {
+        super::ReprId::new(Self::NAME, Self::SHORT_NAME)
+    }
+
     const STORED: &'static dyn ReprRuleStored;
     type Assignment: ReprAssignment;
     type DeclLevel: ReprDeclLevel<Assignment = Self::Assignment>;
@@ -131,7 +137,7 @@ pub trait ReprRule: Send + Sync {
         if crate::settings::channelling() == crate::settings::Channelling::No {
             let existing_rule = decl.reprs().iter().next().map(|(_, state)| state.rule());
             if let Some(existing_rule) = existing_rule
-                && existing_rule.name() != Self::NAME
+                && existing_rule.id() != Self::id()
             {
                 return Err(ReprInstantiateError::ConflictingRepresentation {
                     declaration: decl.clone(),

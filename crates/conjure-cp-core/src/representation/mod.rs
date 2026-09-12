@@ -1,5 +1,6 @@
 pub mod default_impls;
 pub mod errors;
+pub mod id;
 mod legacy;
 pub mod registry;
 mod serde;
@@ -10,10 +11,10 @@ pub mod util;
 
 pub use conjure_cp_rule_macros::register_representation;
 pub use errors::*;
+pub use id::ReprId;
 pub use legacy::*;
 pub use registry::{
-    ReprRulePtr, get_applicable_repr_by_short_name, get_repr_by_name, get_repr_by_short_name,
-    get_repr_rules,
+    ReprRulePtr, get_applicable_repr_by_short_name, get_repr_by_name, get_repr_rules,
 };
 pub use store::ReprStore;
 pub use stored::{ReprRuleStored, ReprStateStored};

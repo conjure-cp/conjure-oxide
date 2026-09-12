@@ -11,6 +11,9 @@ use std::{
     convert::TryInto,
 };
 
+use crate::types::matrix::MatrixComponents;
+use conjure_cp::representation::ReprRule;
+
 use crate::extra_check;
 use crate::shared::utils::{
     defer_aux_var, flatten_children_to_aux_vars, is_flat, rewrite_children, to_aux_var_in,
@@ -1684,7 +1687,7 @@ fn represented_matrix_to_atom_index(atom: &Atom) -> Option<i32> {
         return None;
     };
     let (_, rule, suffix) = fields.as_ref();
-    if rule.as_str() != "matrix_to_atom" {
+    if *rule != MatrixComponents::id() {
         return None;
     }
     suffix.as_str().parse().ok()

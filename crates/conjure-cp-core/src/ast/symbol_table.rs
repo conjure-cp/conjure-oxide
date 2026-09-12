@@ -9,8 +9,8 @@ fn default_context_hash_cache() -> AtomicU64 {
     AtomicU64::new(NO_CONTEXT_HASH)
 }
 
-use crate::bug;
-use crate::representation::{Representation, get_repr_rule};
+use crate::representation::ReprId;
+use crate::representation::Representation;
 use std::any::TypeId;
 
 use std::collections::BTreeMap;
@@ -615,7 +615,7 @@ impl SymbolTable {
     pub fn get_representation(
         &self,
         name: &Name,
-        representation: &[&str],
+        representation: &[ReprId],
     ) -> Option<Vec<Box<dyn Representation>>> {
         // TODO: move representation stuff to declaration / variable to avoid cloning? (we have to
         // move inside of an rc here, so cannot return borrows)
@@ -633,7 +633,7 @@ impl SymbolTable {
 
         var.representations
             .iter()
-            .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
+            .find(|x| &x.iter().map(|r| r.repr_id()).collect_vec()[..] == representation)
             .cloned()
     }
 
@@ -645,66 +645,6 @@ impl SymbolTable {
     pub fn representations_for(&self, name: &Name) -> Option<Vec<Vec<Box<dyn Representation>>>> {
         let decl = self.lookup(name)?;
         decl.as_find().map(|x| x.representations.clone())
-    }
-
-    /// Gets the representation `representation` for `name`, creating it if it does not exist.
-    ///
-    /// If the representation does not exist, this method initialises the representation in this
-    /// symbol table, adding the representation to `name`, and the declarations for the represented
-    /// variables to the symbol table.
-    ///
-    /// # Usage
-    ///
-    /// Representations for variable references should be selected and created by the
-    /// `select_representation` rule. Therefore, this method should not be used in other rules.
-    /// Consider using [`get_representation`](`SymbolTable::get_representation`) instead.
-    ///
-    /// # Returns
-    ///
-    /// + `None` if `name` does not exist, is not a decision variable, or cannot be given that
-    ///   representation.
-    pub fn get_or_add_representation(
-        &mut self,
-        name: &Name,
-        representation: &[&str],
-    ) -> Option<Vec<Box<dyn Representation>>> {
-        // Lookup the declaration reference
-        let mut decl = self.lookup(name)?;
-
-        if let Some(var) = decl.as_find()
-            && let Some(existing_reprs) = var
-                .representations
-                .iter()
-                .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
-                .cloned()
-        {
-            return Some(existing_reprs); // Found: return early
-        }
-        // Representation not found
-
-        // TODO: nested representations logic...
-        if representation.len() != 1 {
-            bug!("nested representations not implemented")
-        }
-        let repr_name_str = representation[0];
-        let repr_init_fn = get_repr_rule(repr_name_str)?;
-
-        let reprs = vec![repr_init_fn(name, self)?];
-
-        for repr_instance in &reprs {
-            repr_instance
-                .declaration_down()
-                .ok()?
-                .into_iter()
-                .for_each(|x| self.update_insert(x));
-        }
-
-        // Do not hold the declaration write lock while inserting represented variables:
-        // `update_insert` may refresh content hashes and read this declaration.
-        let mut var = decl.as_find_mut()?;
-        var.representations.push(reprs.clone());
-
-        Some(reprs)
     }
 }
 
