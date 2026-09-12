@@ -233,6 +233,14 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Intersect(Metadata, Moo<Expression>, Moo<Expression>),
 
+    /// Set difference, `a - b`.
+    ///
+    /// Spelled with minus in Essence, but kept apart from [`Expression::Minus`]: the two share a
+    /// symbol and nothing else, and overloading one node for both made every arithmetic rule have
+    /// to ask whether its operands were really sets.
+    #[compatible(JsonInput)]
+    Difference(Metadata, Moo<Expression>, Moo<Expression>),
+
     #[compatible(JsonInput)]
     Supset(Metadata, Moo<Expression>, Moo<Expression>),
 
@@ -1038,6 +1046,8 @@ impl Expression {
                 mset_union_result_domain(a, b).or_else(|| lhs.union(&rhs).ok())
             }
             Expression::Intersect(_, a, b) => a.domain_of()?.intersect(&b.domain_of()?).ok(),
+            // Removing elements can only shrink the left operand, never widen it.
+            Expression::Difference(_, a, _) => a.domain_of(),
             Expression::In(_, _, _) => Some(Domain::bool()),
             Expression::Supset(_, _, _) => Some(Domain::bool()),
             Expression::SupsetEq(_, _, _) => Some(Domain::bool()),
@@ -2007,6 +2017,7 @@ impl Expression {
             Imply,
             Iff,
             Union,
+            Difference,
             In,
             Intersect,
             Supset,
@@ -2539,6 +2550,9 @@ impl Display for Expression {
             Expression::Union(_, box1, box2) => {
                 write!(f, "({} union {})", box1.clone(), box2.clone())
             }
+            Expression::Difference(_, box1, box2) => {
+                write!(f, "({} - {})", box1.clone(), box2.clone())
+            }
             Expression::In(_, e1, e2) => {
                 write!(f, "{e1} in {e2}")
             }
@@ -2927,9 +2941,9 @@ fn minus_operand_return_type(expr: &Expression) -> ReturnType {
 impl Typeable for Expression {
     fn return_type(&self) -> ReturnType {
         match self {
-            Expression::Union(_, subject, _) | Expression::Intersect(_, subject, _) => {
-                subject.return_type()
-            }
+            Expression::Union(_, subject, _)
+            | Expression::Intersect(_, subject, _)
+            | Expression::Difference(_, subject, _) => subject.return_type(),
             Expression::In(_, _, _) => ReturnType::Bool,
             Expression::Supset(_, _, _) => ReturnType::Bool,
             Expression::SupsetEq(_, _, _) => ReturnType::Bool,
@@ -3348,6 +3362,7 @@ impl Expression {
             | Expression::Bubble(_, m1, m2)
             | Expression::Imply(_, m1, m2)
             | Expression::Iff(_, m1, m2)
+            | Expression::Difference(_, m1, m2)
             | Expression::Union(_, m1, m2)
             | Expression::In(_, m1, m2)
             | Expression::Intersect(_, m1, m2)
@@ -3667,6 +3682,7 @@ impl Expression {
             | Expression::Bubble(_, m1, m2)
             | Expression::Imply(_, m1, m2)
             | Expression::Iff(_, m1, m2)
+            | Expression::Difference(_, m1, m2)
             | Expression::Union(_, m1, m2)
             | Expression::In(_, m1, m2)
             | Expression::Intersect(_, m1, m2)

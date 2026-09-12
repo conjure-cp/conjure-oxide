@@ -630,6 +630,12 @@ pub fn parse_binary_expression(
         ctx.typechecking_context = TypecheckingContext::Unknown
     }
 
+    // Minus spells both arithmetic subtraction and set difference, so neither operand can be held
+    // to the arithmetic context until the operand types say which one this is.
+    if op_str == "-" {
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+    }
+
     // parse left operand
     let Some(left_node) = field!(recover, ctx, node, "left") else {
         return Ok(None);
@@ -652,6 +658,10 @@ pub fn parse_binary_expression(
     // relation/etc all support membership too); the grammar's "set_comparison" node kind sets
     // `saved_ctx` to `Set` unconditionally, which only the left operand's override above escapes.
     if op_str == "in" {
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+    }
+
+    if op_str == "-" {
         ctx.typechecking_context = TypecheckingContext::Unknown;
     }
 
@@ -681,11 +691,27 @@ pub fn parse_binary_expression(
         }
         "-" => {
             doc_name = "L_Minus";
-            Ok(Some(Expression::Minus(
-                Metadata::new(),
-                Moo::new(left),
-                Moo::new(right),
-            )))
+            if is_set_valued(&left) || is_set_valued(&right) {
+                Ok(Some(Expression::Difference(
+                    Metadata::new(),
+                    Moo::new(left),
+                    Moo::new(right),
+                )))
+            } else {
+                // Subtraction, so the operands do have to be integers. The arithmetic context
+                // could not be imposed while parsing them, since it would have rejected the set
+                // operands that make this a difference instead.
+                if !require_int_operand(ctx, &left_node, &left)
+                    || !require_int_operand(ctx, &right_node, &right)
+                {
+                    return Ok(None);
+                }
+                Ok(Some(Expression::Minus(
+                    Metadata::new(),
+                    Moo::new(left),
+                    Moo::new(right),
+                )))
+            }
         }
         "*" => {
             doc_name = "L_Times";
@@ -1118,4 +1144,49 @@ fn parse_catch_undef_expression(
         Moo::new(expression),
         Moo::new(default),
     )))
+}
+
+/// Whether `expr` is known to be set-valued, used to read `-` as set difference.
+fn is_set_valued(expr: &Expression) -> bool {
+    matches!(expr.return_type(), ReturnType::Set(_))
+}
+
+/// Reports a type error when an arithmetic operand is not an integer.
+///
+/// Returns whether the operand is acceptable.
+fn require_int_operand(ctx: &mut ParseContext, node: &Node, expr: &Expression) -> bool {
+    let actual = expr.return_type();
+    if matches!(actual, ReturnType::Int | ReturnType::Unknown) {
+        return true;
+    }
+
+    ctx.record_error(RecoverableParseError::new(
+        format!(
+            "Type error: {}\n\tExpected: int\n\tGot: {}",
+            ctx.source_code[node.start_byte()..node.end_byte()].trim(),
+            type_name(&actual)
+        ),
+        Some(node.range()),
+    ));
+    false
+}
+
+/// The bare name of a type, as type errors spell it: `partition`, not `partition of int`.
+fn type_name(return_type: &ReturnType) -> &'static str {
+    match return_type {
+        ReturnType::Unknown => "unknown",
+        ReturnType::Bool => "bool",
+        ReturnType::Int => "int",
+        ReturnType::Tuple(_) => "tuple",
+        ReturnType::Record(_) => "record",
+        ReturnType::Variant(_) => "variant",
+        ReturnType::Matrix(_) => "matrix",
+        ReturnType::Sequence(_) => "sequence",
+        ReturnType::Set(_) => "set",
+        ReturnType::MSet(_) => "mset",
+        ReturnType::Function(_, _) => "function",
+        ReturnType::Relation(_) => "relation",
+        ReturnType::Partition(_) => "partition",
+        ReturnType::Permutation(_) => "permutation",
+    }
 }

@@ -20,7 +20,7 @@ fn difference_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     // match on expression being of form A - B
                     let Some((a, b)) = (match ptr.as_quantified_expr() {
                         Some(expr_guard) => match &*expr_guard {
-                            Expr::Minus(_, a, b) => Some((a.clone(), b.clone())),
+                            Expr::Difference(_, a, b) => Some((a.clone(), b.clone())),
                             _ => None,
                         },
                         None => None,
