@@ -25,6 +25,7 @@ use conjure_cp::{
     settings::{QuantifiedExpander, comprehension_expander},
 };
 use std::collections::{BTreeSet, HashMap};
+use tracing::debug;
 use uniplate::{Biplate, Uniplate};
 
 use via_solver_common::simplify_expression;
@@ -426,8 +427,22 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
         return Err(RuleNotApplicable);
     }
 
-    let results = expand_via_solver(comprehension)
-        .unwrap_or_else(|e| bug!("via-solver comprehension expansion failed: {e}"));
+    // A generator model the solver cannot load means this expander cannot do this comprehension
+    // -- a guard over a type Minion has no encoding for, say -- not that something has gone
+    // wrong. Expand it natively instead: leaving it alone would strand the comprehension, since
+    // the native rule only fires for comprehensions `auto` chose it for.
+    let results = match expand_via_solver(comprehension.clone()) {
+        Ok(results) => results,
+        Err(e) => {
+            debug!(why=%e, "via-solver comprehension expansion failed, falling back to native expansion");
+            let mut symbols = symbols.clone();
+            let results = expand_native(comprehension, &mut symbols).or(Err(RuleNotApplicable))?;
+            return Ok(RuleEffect::with_symbols(
+                into_matrix_expr!(results),
+                symbols,
+            ));
+        }
+    };
     Ok(RuleEffect::with_symbols(
         into_matrix_expr!(results),
         symbols.clone(),
@@ -473,8 +488,19 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
         }
     }
 
-    let results =
-        expand_via_solver_ac(comprehension, ac_operator_kind).or(Err(RuleNotApplicable))?;
+    let results = match expand_via_solver_ac(comprehension.clone(), ac_operator_kind) {
+        Ok(results) => results,
+        // As in `expand_comprehension_via_solver`: fall back to native expansion rather than
+        // stranding a comprehension this expander cannot build a solvable generator model for.
+        Err(e) => {
+            debug!(why=%e, "via-solver-ac comprehension expansion failed, falling back to native expansion");
+            let mut symbols = symbols.clone();
+            let results = expand_native(comprehension, &mut symbols).or(Err(RuleNotApplicable))?;
+            let results = simplify_expanded_ac_results(results, ac_operator_kind);
+            let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
+            return Ok(RuleEffect::with_symbols(new_expr, symbols));
+        }
+    };
 
     let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
     Ok(RuleEffect::with_symbols(new_expr, symbols.clone()))
