@@ -687,6 +687,9 @@ fn rewrite_int_ranges_in_unresolved_domain(
                 rewrite_int_range(range, replacements_by_id, replacements_by_name);
             }
         }
+        // The collection is an ordinary expression, so quantified references inside it are
+        // rewritten by the same walk that handles the rest of the comprehension body.
+        UnresolvedDomain::IntFromValues(_) => {}
         UnresolvedDomain::Tuple(inner_domains) => {
             for inner_domain in inner_domains {
                 rewrite_int_ranges_in_domain_ptr(
