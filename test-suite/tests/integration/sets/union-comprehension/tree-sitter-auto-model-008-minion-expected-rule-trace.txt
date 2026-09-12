@@ -779,18 +779,6 @@ product([6,toInt((a#packed_1 / 4) % 2 = 1);int(1..)])
 
 --
 
-flatten([[product([2,toInt((a#packed_1 / 1) % 2 = 1);int(1..)]),product([4,toInt((a#packed_1 / 2) % 2 = 1);int(1..)]),product([6,toInt((a#packed_1 / 4) % 2 = 1);int(1..)]);int(1..)],[ product([i,2;int(1..)]) | i : int(5..10), i in b, !(i in a) ];int(1..)])
-   ~~> flatten_matrix_literal ([("Base", 8000)])
-[product([2,toInt((a#packed_1 / 1) % 2 = 1);int(1..)]),product([4,toInt((a#packed_1 / 2) % 2 = 1);int(1..)]),product([6,toInt((a#packed_1 / 4) % 2 = 1);int(1..)]),[ product([i,2;int(1..)]) | i : int(5..10), i in b, !(i in a) ];int(1..)]
-
---
-
-(a#packed_1 / 1)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(a#packed_1, 1) @ 1 != 0}
-
---
-
 (a#packed_1 / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(a#packed_1, 2) @ 2 != 0}
@@ -800,6 +788,12 @@ flatten([[product([2,toInt((a#packed_1 / 1) % 2 = 1);int(1..)]),product([4,toInt
 (a#packed_1 / 4)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(a#packed_1, 4) @ 4 != 0}
+
+--
+
+(a#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(a#packed_1, 1) @ 1 != 0}
 
 --
 
@@ -821,45 +815,45 @@ SafeDiv(a#packed_1, 4) % 2
 
 --
 
-product([2,toInt(SafeMod(SafeDiv(a#packed_1, 1),2) = 1);int(1..)])
+product([4,toInt(SafeMod(SafeDiv(a#packed_1, 2),2) = 1);int(1..)])
    ~~> flatten_product ([("Minion", 4200)])
-product([2,__36;int(1..)])
+product([4,__36;int(1..)])
 new variables:
   findAux __36: int(0..1)
 new constraints:
-  __36 =aux toInt(SafeMod(SafeDiv(a#packed_1, 1),2) = 1)
+  __36 =aux toInt(SafeMod(SafeDiv(a#packed_1, 2),2) = 1)
 
 --
 
-toInt(SafeMod(SafeDiv(a#packed_1, 1),2) = 1)
+toInt(SafeMod(SafeDiv(a#packed_1, 2),2) = 1)
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__37)
 new variables:
   findAux __37: bool
 new constraints:
-  __37 =aux SafeMod(SafeDiv(a#packed_1, 1),2) = 1
+  __37 =aux SafeMod(SafeDiv(a#packed_1, 2),2) = 1
 
 --
 
-__37 =aux SafeMod(SafeDiv(a#packed_1, 1),2) = 1
+__37 =aux SafeMod(SafeDiv(a#packed_1, 2),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(a#packed_1, 1),2) = 1, __37)
+Reify(SafeMod(SafeDiv(a#packed_1, 2),2) = 1, __37)
 
 --
 
-SafeMod(SafeDiv(a#packed_1, 1),2)
+SafeMod(SafeDiv(a#packed_1, 2),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__38,2)
 new variables:
-  findAux __38: int(0..7)
+  findAux __38: int(0..3)
 new constraints:
-  __38 =aux SafeDiv(a#packed_1, 1)
+  __38 =aux SafeDiv(a#packed_1, 2)
 
 --
 
-__38 =aux SafeDiv(a#packed_1, 1)
+__38 =aux SafeDiv(a#packed_1, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(a#packed_1, 1, __38)
+DivEq(a#packed_1, 2, __38)
 
 --
 
@@ -869,45 +863,45 @@ ModEq(__38, 2, 1)
 
 --
 
-product([4,toInt(SafeMod(SafeDiv(a#packed_1, 2),2) = 1);int(1..)])
+product([6,toInt(SafeMod(SafeDiv(a#packed_1, 4),2) = 1);int(1..)])
    ~~> flatten_product ([("Minion", 4200)])
-product([4,__39;int(1..)])
+product([6,__39;int(1..)])
 new variables:
   findAux __39: int(0..1)
 new constraints:
-  __39 =aux toInt(SafeMod(SafeDiv(a#packed_1, 2),2) = 1)
+  __39 =aux toInt(SafeMod(SafeDiv(a#packed_1, 4),2) = 1)
 
 --
 
-toInt(SafeMod(SafeDiv(a#packed_1, 2),2) = 1)
+toInt(SafeMod(SafeDiv(a#packed_1, 4),2) = 1)
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__40)
 new variables:
   findAux __40: bool
 new constraints:
-  __40 =aux SafeMod(SafeDiv(a#packed_1, 2),2) = 1
+  __40 =aux SafeMod(SafeDiv(a#packed_1, 4),2) = 1
 
 --
 
-__40 =aux SafeMod(SafeDiv(a#packed_1, 2),2) = 1
+__40 =aux SafeMod(SafeDiv(a#packed_1, 4),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(a#packed_1, 2),2) = 1, __40)
+Reify(SafeMod(SafeDiv(a#packed_1, 4),2) = 1, __40)
 
 --
 
-SafeMod(SafeDiv(a#packed_1, 2),2)
+SafeMod(SafeDiv(a#packed_1, 4),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__41,2)
 new variables:
-  findAux __41: int(0..3)
+  findAux __41: int(0..1)
 new constraints:
-  __41 =aux SafeDiv(a#packed_1, 2)
+  __41 =aux SafeDiv(a#packed_1, 4)
 
 --
 
-__41 =aux SafeDiv(a#packed_1, 2)
+__41 =aux SafeDiv(a#packed_1, 4)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(a#packed_1, 2, __41)
+DivEq(a#packed_1, 4, __41)
 
 --
 
@@ -917,45 +911,45 @@ ModEq(__41, 2, 1)
 
 --
 
-product([6,toInt(SafeMod(SafeDiv(a#packed_1, 4),2) = 1);int(1..)])
+product([2,toInt(SafeMod(SafeDiv(a#packed_1, 1),2) = 1);int(1..)])
    ~~> flatten_product ([("Minion", 4200)])
-product([6,__42;int(1..)])
+product([2,__42;int(1..)])
 new variables:
   findAux __42: int(0..1)
 new constraints:
-  __42 =aux toInt(SafeMod(SafeDiv(a#packed_1, 4),2) = 1)
+  __42 =aux toInt(SafeMod(SafeDiv(a#packed_1, 1),2) = 1)
 
 --
 
-toInt(SafeMod(SafeDiv(a#packed_1, 4),2) = 1)
+toInt(SafeMod(SafeDiv(a#packed_1, 1),2) = 1)
    ~~> flatten_generic ([("Minion", 4200)])
 toInt(__43)
 new variables:
   findAux __43: bool
 new constraints:
-  __43 =aux SafeMod(SafeDiv(a#packed_1, 4),2) = 1
+  __43 =aux SafeMod(SafeDiv(a#packed_1, 1),2) = 1
 
 --
 
-__43 =aux SafeMod(SafeDiv(a#packed_1, 4),2) = 1
+__43 =aux SafeMod(SafeDiv(a#packed_1, 1),2) = 1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(SafeMod(SafeDiv(a#packed_1, 4),2) = 1, __43)
+Reify(SafeMod(SafeDiv(a#packed_1, 1),2) = 1, __43)
 
 --
 
-SafeMod(SafeDiv(a#packed_1, 4),2)
+SafeMod(SafeDiv(a#packed_1, 1),2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeMod(__44,2)
 new variables:
-  findAux __44: int(0..1)
+  findAux __44: int(0..7)
 new constraints:
-  __44 =aux SafeDiv(a#packed_1, 4)
+  __44 =aux SafeDiv(a#packed_1, 1)
 
 --
 
-__44 =aux SafeDiv(a#packed_1, 4)
+__44 =aux SafeDiv(a#packed_1, 1)
    ~~> introduce_diveq ([("Minion", 4200)])
-DivEq(a#packed_1, 4, __44)
+DivEq(a#packed_1, 1, __44)
 
 --
 
@@ -1115,12 +1109,6 @@ false
 
 --
 
-sum([product([2,__36;int(1..)]),product([4,__39;int(1..)]),product([6,__42;int(1..)]),[product([toInt((b#packed_1 / 1) % 2 = 1),10;int(1..)]),product([toInt((b#packed_1 / 2) % 2 = 1),12;int(1..)]),product([toInt((b#packed_1 / 4) % 2 = 1),14;int(1..)]),product([toInt((b#packed_1 / 8) % 2 = 1),16;int(1..)]),product([toInt((b#packed_1 / 16) % 2 = 1),18;int(1..)]),product([toInt((b#packed_1 / 32) % 2 = 1),20;int(1..)]);int(1..)];int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([2,__36;int(1..)]),product([4,__39;int(1..)]),product([6,__42;int(1..)]),product([toInt((b#packed_1 / 1) % 2 = 1),10;int(1..)]),product([toInt((b#packed_1 / 2) % 2 = 1),12;int(1..)]),product([toInt((b#packed_1 / 4) % 2 = 1),14;int(1..)]),product([toInt((b#packed_1 / 8) % 2 = 1),16;int(1..)]),product([toInt((b#packed_1 / 16) % 2 = 1),18;int(1..)]),product([toInt((b#packed_1 / 32) % 2 = 1),20;int(1..)]);int(1..)])
-
---
-
 product([toInt((b#packed_1 / 1) % 2 = 1),10;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([10,toInt((b#packed_1 / 1) % 2 = 1);int(1..)])
@@ -1157,6 +1145,18 @@ product([20,toInt((b#packed_1 / 32) % 2 = 1);int(1..)])
 
 --
 
+flatten([[product([2,__42;int(1..)]),product([4,__36;int(1..)]),product([6,__39;int(1..)]);int(1..)],[product([10,toInt((b#packed_1 / 1) % 2 = 1);int(1..)]),product([12,toInt((b#packed_1 / 2) % 2 = 1);int(1..)]),product([14,toInt((b#packed_1 / 4) % 2 = 1);int(1..)]),product([16,toInt((b#packed_1 / 8) % 2 = 1);int(1..)]),product([18,toInt((b#packed_1 / 16) % 2 = 1);int(1..)]),product([20,toInt((b#packed_1 / 32) % 2 = 1);int(1..)]);int(1..)];int(1..)])
+   ~~> flatten_matrix_literal ([("Base", 8000)])
+[product([2,__42;int(1..)]),product([4,__36;int(1..)]),product([6,__39;int(1..)]),product([10,toInt((b#packed_1 / 1) % 2 = 1);int(1..)]),product([12,toInt((b#packed_1 / 2) % 2 = 1);int(1..)]),product([14,toInt((b#packed_1 / 4) % 2 = 1);int(1..)]),product([16,toInt((b#packed_1 / 8) % 2 = 1);int(1..)]),product([18,toInt((b#packed_1 / 16) % 2 = 1);int(1..)]),product([20,toInt((b#packed_1 / 32) % 2 = 1);int(1..)]);int(1..)]
+
+--
+
+(b#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(b#packed_1, 1) @ 1 != 0}
+
+--
+
 (b#packed_1 / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(b#packed_1, 2) @ 2 != 0}
@@ -1184,12 +1184,6 @@ product([20,toInt((b#packed_1 / 32) % 2 = 1);int(1..)])
 (b#packed_1 / 32)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(b#packed_1, 32) @ 32 != 0}
-
---
-
-(b#packed_1 / 1)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(b#packed_1, 1) @ 1 != 0}
 
 --
 
@@ -1229,9 +1223,9 @@ SafeDiv(b#packed_1, 32) % 2
 
 --
 
-sum([product([2,__36;int(1..)]),product([4,__39;int(1..)]),product([6,__42;int(1..)]),product([10,toInt(SafeMod(SafeDiv(b#packed_1, 1),2) = 1);int(1..)]),product([12,toInt(SafeMod(SafeDiv(b#packed_1, 2),2) = 1);int(1..)]),product([14,toInt(SafeMod(SafeDiv(b#packed_1, 4),2) = 1);int(1..)]),product([16,toInt(SafeMod(SafeDiv(b#packed_1, 8),2) = 1);int(1..)]),product([18,toInt(SafeMod(SafeDiv(b#packed_1, 16),2) = 1);int(1..)]),product([20,toInt(SafeMod(SafeDiv(b#packed_1, 32),2) = 1);int(1..)]);int(1..)]) = 20
+sum([product([2,__42;int(1..)]),product([4,__36;int(1..)]),product([6,__39;int(1..)]),product([10,toInt(SafeMod(SafeDiv(b#packed_1, 1),2) = 1);int(1..)]),product([12,toInt(SafeMod(SafeDiv(b#packed_1, 2),2) = 1);int(1..)]),product([14,toInt(SafeMod(SafeDiv(b#packed_1, 4),2) = 1);int(1..)]),product([16,toInt(SafeMod(SafeDiv(b#packed_1, 8),2) = 1);int(1..)]),product([18,toInt(SafeMod(SafeDiv(b#packed_1, 16),2) = 1);int(1..)]),product([20,toInt(SafeMod(SafeDiv(b#packed_1, 32),2) = 1);int(1..)]);int(1..)]) = 20
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([FlatWeightedSumLeq([2, 4, 6, 10, 12, 14, 16, 18, 20],[__36, __39, __42, __45, __46, __47, __48, __49, __50],20),FlatWeightedSumGeq([2, 4, 6, 10, 12, 14, 16, 18, 20],[__36, __39, __42, __45, __46, __47, __48, __49, __50],20);int(1..)])
+and([FlatWeightedSumLeq([4, 6, 2, 10, 12, 14, 16, 18, 20],[__36, __39, __42, __45, __46, __47, __48, __49, __50],20),FlatWeightedSumGeq([4, 6, 2, 10, 12, 14, 16, 18, 20],[__36, __39, __42, __45, __46, __47, __48, __49, __50],20);int(1..)])
 new variables:
   findAux __45: int(0..1)
   findAux __46: int(0..1)
@@ -1521,13 +1515,13 @@ findAux __34: int(0..1)
 findAux __35: int(0..7)
 findAux __36: int(0..1)
 findAux __37: bool
-findAux __38: int(0..7)
+findAux __38: int(0..3)
 findAux __39: int(0..1)
 findAux __40: bool
-findAux __41: int(0..3)
+findAux __41: int(0..1)
 findAux __42: int(0..1)
 findAux __43: bool
-findAux __44: int(0..1)
+findAux __44: int(0..7)
 findAux __45: int(0..1)
 findAux __46: int(0..1)
 findAux __47: int(0..1)
@@ -1549,7 +1543,7 @@ findAux __62: int(0..63)
 
 such that
 
-and([FlatWeightedSumLeq([2, 4, 6, 10, 12, 14, 16, 18, 20],[__36, __39, __42, __45, __46, __47, __48, __49, __50],20),FlatWeightedSumGeq([2, 4, 6, 10, 12, 14, 16, 18, 20],[__36, __39, __42, __45, __46, __47, __48, __49, __50],20);int(1..)]),
+and([FlatWeightedSumLeq([4, 6, 2, 10, 12, 14, 16, 18, 20],[__36, __39, __42, __45, __46, __47, __48, __49, __50],20),FlatWeightedSumGeq([4, 6, 2, 10, 12, 14, 16, 18, 20],[__36, __39, __42, __45, __46, __47, __48, __49, __50],20);int(1..)]),
 and([SumGeq([__0, __1, __2], 0),SumLeq([__3, __4, __5], 3);int(1..)]),
 and([SumGeq([__10, __11, __6, __7, __8, __9], 0),SumLeq([__12, __13, __14, __15, __16, __17], 6);int(1..)]),
 ModEq(__35, 2, __0),
@@ -1590,13 +1584,13 @@ DivEq(b#packed_1, 32, __34),
 DivEq(a#packed_1, 1, __35),
 __36 =aux toInt(__37),
 Reify(ModEq(__38, 2, 1), __37),
-DivEq(a#packed_1, 1, __38),
+DivEq(a#packed_1, 2, __38),
 __39 =aux toInt(__40),
 Reify(ModEq(__41, 2, 1), __40),
-DivEq(a#packed_1, 2, __41),
+DivEq(a#packed_1, 4, __41),
 __42 =aux toInt(__43),
 Reify(ModEq(__44, 2, 1), __43),
-DivEq(a#packed_1, 4, __44),
+DivEq(a#packed_1, 1, __44),
 __45 =aux toInt(__56),
 __46 =aux toInt(__51),
 __47 =aux toInt(__52),
