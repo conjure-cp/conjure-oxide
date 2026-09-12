@@ -144,19 +144,21 @@ fn expand_nested_comprehensions(
     expr: Expression,
     parent_symbols: &mut SymbolTable,
 ) -> Result<Expression, SolverError> {
+    // Expand a comprehension before descending into it. Its own generators have to be bound before
+    // anything nested in its body is expanded, since a nested generator's domain may depend on them
+    // -- `forAll blockLeft : int(1..exposedBlock-1)` inside `exists exposedBlock : ...`. Expanding
+    // inside out would reach `blockLeft` while `exposedBlock` is still unbound.
+    if let Expression::Comprehension(_, comprehension) = &expr {
+        let results = expand_native(comprehension.as_ref().clone(), parent_symbols)?;
+        return Ok(into_matrix_expr!(results));
+    }
+
     let children = expr
         .children()
         .into_iter()
         .map(|child| expand_nested_comprehensions(child, parent_symbols))
         .collect::<Result<_, _>>()?;
-    let expr = expr.with_children(children);
-
-    let Expression::Comprehension(_, comprehension) = expr else {
-        return Ok(expr);
-    };
-
-    let results = expand_native(comprehension.as_ref().clone(), parent_symbols)?;
-    Ok(into_matrix_expr!(results))
+    Ok(expr.with_children(children))
 }
 
 fn apply_guard_to_suffix(
