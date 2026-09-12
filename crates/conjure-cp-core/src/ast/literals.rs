@@ -327,8 +327,14 @@ impl AbstractLiteral<Expression> {
                 // i.e. if <(1..3), (1..3), (5), (8..9)> then seq dom is (1..3, 5, 8..9)
                 let item_domain = union_item_domains(item_domains, "sequence")?;
 
+                // The literal's own length is its size: without it nothing downstream can tell
+                // how many positions the sequence has.
+                let size = Range::Single(i32::try_from(elems.len()).ok()?);
                 Some(Domain::sequence(
-                    SequenceAttr::<Int>::default(),
+                    SequenceAttr::<Int> {
+                        size,
+                        ..SequenceAttr::default()
+                    },
                     item_domain,
                 ))
             }

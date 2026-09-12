@@ -1103,15 +1103,19 @@ impl Expression {
                     return Some(current);
                 }
 
-                // may actually use the value in the future
-                #[allow(clippy::redundant_pattern_matching)]
-                if dom.as_tuple().is_some()
-                    || resolved_dom
-                        .as_ref()
-                        .is_some_and(|dom| dom.as_tuple().is_some())
+                // Indexing a tuple picks one component, so the domain is that component's --
+                // known only when the position is a literal, as tuple components need not share
+                // a domain.
+                if let Some(components) =
+                    dom.as_tuple().or_else(|| resolved_dom.as_ref()?.as_tuple())
                 {
-                    // TODO: We can implement proper indexing for tuples
-                    return None;
+                    let Expression::Atomic(_, Atom::Literal(Literal::Int(index))) =
+                        index.first()?
+                    else {
+                        return None;
+                    };
+                    let index: usize = (*index - 1).try_into().ok()?;
+                    return components.get(index).cloned();
                 }
 
                 if let Some(doms) = dom.as_variant().or(dom.as_record()).or_else(|| {
@@ -2425,7 +2429,8 @@ pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
             match d.as_ref() {
                 GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
                 GroundDomain::Permutation(_, inner) => Some(inner.clone().into()),
-                // Not defined for anything other than a function or permutation
+                GroundDomain::Sequence(_, inner) => Some(inner.clone().into()),
+                // Not defined for anything other than a function, permutation or sequence
                 _ => None,
             }
         }
@@ -2433,7 +2438,8 @@ pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
             match function_domain.as_unresolved()? {
                 UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone()),
                 UnresolvedDomain::Permutation(_, inner) => Some(inner.clone()),
-                // Not defined for anything other than a function or permutation
+                UnresolvedDomain::Sequence(_, inner) => Some(inner.clone()),
+                // Not defined for anything other than a function, permutation or sequence
                 _ => None,
             }
         }
@@ -3158,6 +3164,8 @@ impl Typeable for Expression {
                 match subject {
                     ReturnType::Function(_, codomain) => *codomain,
                     ReturnType::Permutation(inner) => *inner,
+                    // A sequence is a function from int, so applying it is an image too.
+                    ReturnType::Sequence(inner) => *inner,
                     _ => bug!(
                         "Invalid image operation: expected the operand to be a function or permutation, got {self}: {subject}"
                     ),

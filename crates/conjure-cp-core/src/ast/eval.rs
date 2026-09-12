@@ -1072,6 +1072,17 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     .into_iter()
                     .find(|(key, _)| *key == arg)
                     .map(|(_, value)| value),
+                // A sequence is a function from int(1..n), so applying it reads the entry at
+                // that one-based position. Out of range is undefined, so unevaluable.
+                Lit::AbstractLiteral(AbstractLiteral::Sequence(values)) => {
+                    let Lit::Int(index) = arg else {
+                        return None;
+                    };
+                    usize::try_from(index)
+                        .ok()
+                        .filter(|index| *index >= 1)
+                        .and_then(|index| values.get(index - 1).cloned())
+                }
                 // Cycle notation: find which cycle (if any) mentions `arg` and return the next
                 // element in it (wrapping around); an element mentioned in no cycle is an
                 // implicit fixed point, mapping to itself.
