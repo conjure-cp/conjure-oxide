@@ -872,6 +872,44 @@
     }
   },
   {
+    "type": "apply_expr",
+    "named": true,
+    "fields": {
+      "argument": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "function": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "apply_expr",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "arithmetic_comparison",
     "named": true,
     "fields": {
@@ -1061,6 +1099,16 @@
         "types": [
           {
             "type": "apart_expr",
+            "named": true
+          }
+        ]
+      },
+      "apply_expr": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "apply_expr",
             "named": true
           }
         ]
@@ -1867,11 +1915,53 @@
             "named": false
           },
           {
+            "type": "comprehension_letting",
+            "named": true
+          },
+          {
             "type": "condition",
             "named": true
           },
           {
             "type": "generator",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "comprehension_letting",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
             "named": true
           }
         ]
@@ -3483,11 +3573,15 @@
         "required": true,
         "types": [
           {
-            "type": "identifier",
+            "type": "arithmetic_expr",
             "named": true
           },
           {
-            "type": "integer",
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "identifier",
             "named": true
           }
         ]
@@ -4509,6 +4603,24 @@
           }
         ]
       },
+      "guard": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
+            "named": true
+          }
+        ]
+      },
       "operator": {
         "multiple": false,
         "required": true,
@@ -4533,6 +4645,10 @@
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "tuple",
             "named": true
           }
         ]
@@ -4901,7 +5017,11 @@
         "required": false,
         "types": [
           {
-            "type": "integer",
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
             "named": true
           }
         ]

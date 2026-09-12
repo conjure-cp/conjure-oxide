@@ -124,7 +124,9 @@ fn parse_mset_domain(
                         );
                         continue;
                     }
-                    let Some(value) = parse_int(ctx, &value_node) else {
+                    // Attribute values may be expressions over givens, e.g. `maxSize |nums|`,
+                    // which only become ground once the parameters are instantiated.
+                    let Some(value) = parse_int_val(ctx, value_node)? else {
                         return Ok(None);
                     };
                     match name {
@@ -508,7 +510,10 @@ fn parse_sequence_domain(
                             let Some(value_node) = attribute.child_by_field_name("value") else {
                                 return Ok(None);
                             };
-                            let Some(value) = parse_int(ctx, &value_node) else {
+                            // Attribute values may be expressions over givens, e.g.
+                            // `maxSize n`, which only become ground once the parameters are
+                            // instantiated.
+                            let Some(value) = parse_int_val(ctx, value_node)? else {
                                 return Ok(None);
                             };
                             match name {

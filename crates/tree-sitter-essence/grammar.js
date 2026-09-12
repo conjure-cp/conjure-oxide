@@ -182,15 +182,16 @@ module.exports = grammar ({
 
     set_attributes: $ => commaSep1($.set_attribute),
 
-    // Attribute values may be expressions, e.g. `maxSize |nums|`, not only literals.
     set_attribute: $ => choice(
-      seq(field("attribute", "size"), field("value", $._set_attribute_value)),
-      seq(field("attribute", "minSize"), field("value", $._set_attribute_value)),
-      seq(field("attribute", "maxSize"), field("value", $._set_attribute_value)),
+      seq(field("attribute", "size"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minSize"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxSize"), field("value", $._domain_attribute_value)),
       seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
-    _set_attribute_value: $ => choice($.arithmetic_expr, $.atom),
+    // Attribute values may be expressions, e.g. `maxSize |nums|` or `maxSize n`, not only
+    // literals. Note the absence of $.integer: it would be ambiguous with $.atom's constant.
+    _domain_attribute_value: $ => choice($.arithmetic_expr, $.atom),
 
     mset_domain: $ => seq(
       "mset",
@@ -202,11 +203,11 @@ module.exports = grammar ({
     mset_attributes: $ => commaSep1($.mset_attribute),
 
     mset_attribute: $ => choice(
-      seq(field("attribute", "size"), field("value", $.integer)),
-      seq(field("attribute", "minSize"), field("value", $.integer)),
-      seq(field("attribute", "maxSize"), field("value", $.integer)),
-      seq(field("attribute", "minOccur"), field("value", $.integer)),
-      seq(field("attribute", "maxOccur"), field("value", $.integer)),
+      seq(field("attribute", "size"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minSize"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxSize"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minOccur"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxOccur"), field("value", $._domain_attribute_value)),
       seq(field("attribute", "representation"), field("value", $.identifier))
     ),
 
@@ -224,9 +225,9 @@ module.exports = grammar ({
     sequence_attributes: $ => commaSep1($.sequence_attribute),
 
     sequence_attribute: $ => choice(
-      seq(field("attribute", "size"), field("value", $.integer)),
-      seq(field("attribute", "minSize"), field("value", $.integer)),
-      seq(field("attribute", "maxSize"), field("value", $.integer)),
+      seq(field("attribute", "size"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "minSize"), field("value", $._domain_attribute_value)),
+      seq(field("attribute", "maxSize"), field("value", $._domain_attribute_value)),
       field("attribute", "injective"),
       field("attribute", "surjective"),
       field("attribute", "bijective")
@@ -464,6 +465,16 @@ module.exports = grammar ({
       ")"
     ),
 
+    // Function or sequence application, e.g. `f(1)` or `horizontalLocs[row](index)`. This is
+    // sugar for `image(f, x)`, and is parsed into the same node. Several arguments make a tuple,
+    // so `f(1, 2)` and `f((1, 2))` mean the same thing.
+    apply_expr: $ => prec.left(seq(
+      field("function", choice($.identifier, $.index_or_slice, $.apply_expr)),
+      "(",
+      commaSep1(field("argument", choice($.arithmetic_expr, $.atom))),
+      ")"
+    )),
+
     image_set_expr: $ => seq(
       "imageSet",
       "(",
@@ -665,14 +676,21 @@ module.exports = grammar ({
 
     quantifier_expr: $ => prec(-5, seq(
       field("operator", choice("forAll", "exists")),
-      field("variables", commaSep1($.identifier)),
+      // A tuple here is a destructuring pattern, e.g. `forAll (i, j) in pairs`; `_` discards
+      // that component.
+      field("variables", commaSep1(choice($.identifier, $.tuple))),
       choice(
         seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.index_or_slice))),
         seq(":", field("domain", $.domain))
       ),
+      // A comma here is unambiguous: the variable list has already ended at `in` or `:`.
+      optional(seq(",", field("guard", choice($.bool_expr, $.comparison_expr, $.atom)))),
       ".",
       field("expression", choice($.bool_expr, $.comparison_expr, $.atom))
     )),
+
+    // Destructuring pattern for a generator variable, e.g. `(i, j)` over a set of pairs or
+    // `(index, _)` over a sequence. `_` discards that component.
 
     aggregate_expr: $ => prec(-5, seq(
       field("operator", choice("sum", "min", "max")),
@@ -819,6 +837,7 @@ module.exports = grammar ({
       field("table", $.table),
       field("negative_table", $.negative_table),
       field("pareto_expression", $.pareto_expression),
+      field("apply_expr", $.apply_expr),
       field("image_expr", $.image_expr),
       field("image_set_expr", $.image_set_expr),
       field("pre_image_expr", $.pre_image_expr),
@@ -869,6 +888,16 @@ module.exports = grammar ({
       "]"
     ),
 
+    // A name bound for the rest of the comprehension, e.g.
+    // `[ x[i] | i : int(1..3), letting j be i + 1, x[j] > 0 ]`. Pure sugar: the parser
+    // substitutes the bound expression wherever the name is used.
+    comprehension_letting: $ => seq(
+      "letting",
+      field("name", $.identifier),
+      "be",
+      field("value", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom))
+    ),
+
     comprehension: $ => prec(1, seq(
       "[",
       field("expression", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom)),
@@ -876,7 +905,7 @@ module.exports = grammar ({
       field("generator_or_condition", commaSep1(choice(
         $.generator,
         $.condition,
-        // TODO: add letting statement support
+        $.comprehension_letting,
       ))),
       "]"
     )),
