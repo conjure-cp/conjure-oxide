@@ -1,4 +1,5 @@
 mod explicit;
+mod generator;
 mod horizontal;
 mod packed;
 
