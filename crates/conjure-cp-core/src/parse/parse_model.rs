@@ -1430,6 +1430,20 @@ fn parse_bin_op(
         Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
             let arg1 = parse_expression(&bin_op_args[0], scope)?;
             let arg2 = parse_expression(&bin_op_args[1], scope)?;
+
+            // Conjure spells set difference with minus, so the operand types decide which of the
+            // two it is -- the same choice the Essence parser makes.
+            if key == "MkOpMinus"
+                && (matches!(arg1.try_return_type(), Some(ReturnType::Set(_)))
+                    || matches!(arg2.try_return_type(), Some(ReturnType::Set(_))))
+            {
+                return Ok(Expression::Difference(
+                    Metadata::new(),
+                    Moo::new(arg1),
+                    Moo::new(arg2),
+                ));
+            }
+
             Ok(constructor(Metadata::new(), Moo::new(arg1), Moo::new(arg2)))
         }
         _ => Err(error!("Binary operator arguments are not a 2-array")),

@@ -1148,14 +1148,17 @@ fn parse_catch_undef_expression(
 
 /// Whether `expr` is known to be set-valued, used to read `-` as set difference.
 fn is_set_valued(expr: &Expression) -> bool {
-    matches!(expr.return_type(), ReturnType::Set(_))
+    matches!(expr.try_return_type(), Some(ReturnType::Set(_)))
 }
 
 /// Reports a type error when an arithmetic operand is not an integer.
 ///
 /// Returns whether the operand is acceptable.
 fn require_int_operand(ctx: &mut ParseContext, node: &Node, expr: &Expression) -> bool {
-    let actual = expr.return_type();
+    // An operand whose type cannot be worked out yet gets the benefit of the doubt.
+    let Some(actual) = expr.try_return_type() else {
+        return true;
+    };
     if matches!(actual, ReturnType::Int | ReturnType::Unknown) {
         return true;
     }

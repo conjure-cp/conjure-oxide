@@ -2391,6 +2391,20 @@ impl Expression {
         TryFrom::try_from(self).ok()
     }
 
+    /// [`Typeable::return_type`], where the type can be worked out.
+    ///
+    /// `return_type` panics for a reference whose declaration has no domain yet -- a value letting
+    /// whose body is not yet a constant, say. Parsers cannot rule those out while building the
+    /// model, so they ask this instead and read `None` as "unknown".
+    pub fn try_return_type(&self) -> Option<ReturnType> {
+        let has_untyped_reference = self.any_expression(|expr| {
+            matches!(expr, Expression::Atomic(_, Atom::Reference(reference))
+                if reference.domain().is_none() && reference.resolve_constant().is_none())
+        });
+
+        (!has_untyped_reference).then(|| self.return_type())
+    }
+
     /// Returns the categories of all sub-expressions of self.
     pub fn universe_categories(&self) -> HashSet<Category> {
         let mut categories = HashSet::new();
