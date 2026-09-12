@@ -2180,7 +2180,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
     4400,
     [Eq / SafeIndex, AuxDeclaration / SafeIndex, SafeIndex]
 )]
-fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn introduce_element_from_index(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     let (equalto, subject, indices) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
             (Expr::Atomic(_, eq), Expr::SafeIndex(_, subject, indices)) => {
@@ -2207,12 +2207,45 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         return Err(RuleNotApplicable);
     }
 
-    let Some(list) = Moo::unwrap_or_clone(subject).into_list() else {
-        return Err(RuleNotApplicable);
-    };
+    // Minion's `element` is 1-based. A list already is, so it needs no shift; any other contiguous
+    // integer index domain does, which is why this rule used to decline for e.g.
+    // `[10,20,30,40; int(0..3)][i]`.
+    let subject = Moo::unwrap_or_clone(subject);
+    let mut symtab = symtab.clone();
+    let mut top_level_exprs = vec![];
 
-    let Expr::Atomic(_, index) = indices[0].clone() else {
-        return Err(RuleNotApplicable);
+    let (list, index) = match subject.clone().into_list() {
+        Some(list) => {
+            let Expr::Atomic(_, index) = indices[0].clone() else {
+                return Err(RuleNotApplicable);
+            };
+            (list, index)
+        }
+        None => {
+            let Some((list, index_domain)) = subject.unwrap_matrix_unchecked() else {
+                return Err(RuleNotApplicable);
+            };
+            let offset = offset_to_one_based(&index_domain, list.len()).ok_or(RuleNotApplicable)?;
+            if offset == 0 {
+                // Already 1-based; use the index as it stands rather than minting an auxiliary
+                // for `index + 0`.
+                let Expr::Atomic(_, index) = indices[0].clone() else {
+                    return Err(RuleNotApplicable);
+                };
+                (list, index)
+            } else {
+                let index_expr = Expr::Sum(
+                    Metadata::new(),
+                    Moo::new(into_matrix_expr![vec![
+                        indices[0].clone(),
+                        Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(offset))),
+                    ]]),
+                );
+                let index =
+                    flatten_expression_to_atom(index_expr, &mut symtab, &mut top_level_exprs)?;
+                (list, index)
+            }
+        }
     };
 
     let mut atom_list = vec![];
@@ -2225,12 +2258,33 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         atom_list.push(elem);
     }
 
-    Ok(RuleEffect::pure(Expr::MinionElementOne(
-        Metadata::new(),
-        atom_list,
-        Moo::new(index),
-        Moo::new(equalto),
-    )))
+    Ok(RuleEffect::new(
+        Expr::MinionElementOne(
+            Metadata::new(),
+            atom_list,
+            Moo::new(index),
+            Moo::new(equalto),
+        ),
+        top_level_exprs,
+        symtab,
+    ))
+}
+
+/// How much to add to an Essence index to reach Minion's 1-based `element` position.
+///
+/// `None` when the index domain is not a contiguous integer range covering exactly the elements,
+/// in which case the caller has no straightforward shift to apply.
+fn offset_to_one_based(index_domain: &DomainPtr, elements: usize) -> Option<i32> {
+    let resolved = index_domain.resolve().ok()?;
+    let GroundDomain::Int(ranges) = resolved.as_ref() else {
+        return None;
+    };
+    if !Range::is_contiguous(ranges) {
+        return None;
+    }
+    let low = Range::low_of(ranges)?;
+    let values = Range::values(ranges)?.count();
+    (values == elements).then_some(1 - low)
 }
 
 /// Flattens an implication.

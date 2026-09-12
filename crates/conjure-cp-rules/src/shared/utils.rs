@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 
 use conjure_cp::ast::eval_constant;
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, DeclarationPtr, DomainPtr, Expression as Expr, Literal, Metadata, Moo,
-    Reference, SymbolTable,
+    AbstractLiteral, Atom, DeclarationPtr, DomainPtr, Expression as Expr, GroundDomain, Literal,
+    Metadata, Moo, Range, Reference, SymbolTable,
     categories::{Category, CategoryOf},
     comprehension::{Comprehension, ComprehensionQualifier},
     records::Field,
@@ -340,6 +340,44 @@ pub fn to_aux_var_in(expr: &Expr, symbols: &mut SymbolTable) -> Option<(Referenc
     Some(materialise_aux_var_in(expr, symbols, &domain))
 }
 
+/// Whether `expr` is a matrix Minion's `element` can search directly.
+///
+/// A list qualifies. So does a matrix literal of atoms with a contiguous integer index domain,
+/// since `introduce_element_from_index` shifts a non-1-based index onto `element`'s own positions.
+/// Anything else -- a reference, or a literal still holding compound elements -- is left alone:
+/// hoisting it into an auxiliary here would hide it from the representation rules that lower it.
+fn is_element_lowerable_subject(expr: &Expr) -> bool {
+    if expr.is_list() {
+        return true;
+    }
+
+    // A literal matrix reaches here either spelled out or already folded into an atom.
+    let index_domain = match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elements, index_domain)) => {
+            if !elements
+                .iter()
+                .all(|element| matches!(element, Expr::Atomic(_, _)))
+            {
+                return false;
+            }
+            let Ok(resolved) = index_domain.resolve() else {
+                return false;
+            };
+            resolved
+        }
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(_, index_domain))),
+        ) => index_domain.clone(),
+        _ => return false,
+    };
+
+    let GroundDomain::Int(ranges) = index_domain.as_ref() else {
+        return false;
+    };
+    Range::is_contiguous(ranges)
+}
+
 fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     // No need to put an atom in an aux_var
     if is_atom(expr) {
@@ -434,8 +472,8 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
         let index_has_element_id = indices
             .iter()
             .any(|index| matches!(index, Expr::ElementId(..)));
-        let can_lower_via_element =
-            subject.is_list() && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
+        let can_lower_via_element = is_element_lowerable_subject(subject)
+            && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
 
         if !can_lower_via_element && !index_has_element_id {
             if cfg!(debug_assertions) {
