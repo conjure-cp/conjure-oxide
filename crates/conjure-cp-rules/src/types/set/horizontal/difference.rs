@@ -56,3 +56,29 @@ fn difference_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => Err(RuleNotApplicable),
     }
 }
+
+/// `x in (a - b)` ~~> `x in a /\ !(x in b)`.
+///
+/// Membership is where set difference has to be lowered once anything other than a comprehension
+/// generator gets to it first -- an equality between sets, say, which expands to memberships.
+#[register_rule("Base", 8700, [In])]
+fn membership_in_difference(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::In(_, member, collection) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Difference(_, a, b) = collection.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let in_a = Expr::In(Metadata::new(), member.clone(), a.clone());
+    let in_b = Expr::In(Metadata::new(), member.clone(), b.clone());
+
+    Ok(RuleEffect::pure(Expr::And(
+        Metadata::new(),
+        Moo::new(conjure_cp::matrix_expr![
+            in_a,
+            Expr::Not(Metadata::new(), Moo::new(in_b))
+        ]),
+    )))
+}
