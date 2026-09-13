@@ -2136,7 +2136,8 @@ impl Expression {
                     | Expression::UnsafeIndex(_, _, _)
                     | Expression::Bubble(_, _, _)
                     | Expression::UnsafeSlice(_, _, _)
-            )
+            ) || matches!(expr, Expression::Image(_, subject, argument)
+                if image_can_be_undefined(subject, argument))
         })
     }
 
@@ -2417,6 +2418,53 @@ impl Expression {
         });
         categories
     }
+}
+
+/// True when `image(subject, argument)` can be undefined.
+///
+/// A function is defined only on its own domain -- `total` means defined for every value *in* that
+/// domain, not defined everywhere -- so an argument that can fall outside it has no image there. A
+/// partial function may also be undefined inside its domain, and a sequence is defined only on
+/// `1..|s|`, which for a sequence whose length varies is not known until solving.
+///
+/// Anything this cannot work out counts as undefinable. Safety has to be conservative: treating a
+/// partial application as total lets its definedness be reasoned away, and the constraint it sits
+/// in then silently holds where it should not.
+pub fn image_can_be_undefined(subject: &Expression, argument: &Expression) -> bool {
+    let Some(domain) = subject.domain_of().and_then(|domain| domain.resolve().ok()) else {
+        return true;
+    };
+
+    match domain.as_ref() {
+        GroundDomain::Function(attr, from, _) => {
+            !matches!(attr.partiality, PartialityAttr::Total) || !argument_always_in(argument, from)
+        }
+        // A permutation is total on its own domain, which is also where its image lands.
+        GroundDomain::Permutation(_, inner) => !argument_always_in(argument, inner),
+        GroundDomain::Sequence(attr, _) => match attr.size {
+            Range::Single(size) => {
+                !argument_always_in(argument, &GroundDomain::Int(vec![Range::Bounded(1, size)]))
+            }
+            // The active length, and so the set of defined positions, is a decision.
+            _ => true,
+        },
+        _ => true,
+    }
+}
+
+/// Whether every value `argument` can take lies in `domain`.
+///
+/// Answers false whenever that cannot be established, including for domains that are equivalent
+/// but not written the same way -- callers use this to decide whether they may reason about
+/// definedness, where saying "no" only costs them the chance to simplify.
+fn argument_always_in(argument: &Expression, domain: &GroundDomain) -> bool {
+    let Some(argument_domain) = argument.domain_of().and_then(|d| d.resolve().ok()) else {
+        return false;
+    };
+
+    argument_domain
+        .intersect(domain)
+        .is_ok_and(|intersection| intersection == *argument_domain.as_ref())
 }
 
 /// Also handles permutations: `image(perm, x)` returns a value from the permutation's own inner

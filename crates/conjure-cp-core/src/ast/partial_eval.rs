@@ -63,6 +63,14 @@ fn is_semantically_safe(expr: &Expr) -> bool {
             return false;
         }
 
+        // Applying a partial function is undefined outside the positions it defines, so it has to
+        // keep its undefinedness until a bubble discharges it.
+        if let Expr::Image(_, subject, argument) = expr
+            && crate::ast::expressions::image_can_be_undefined(subject, argument)
+        {
+            return false;
+        }
+
         if let Expr::Atomic(_, Atom::Reference(reference)) = expr {
             let id = reference.id();
             if !resolving.insert(id.clone()) {
@@ -255,14 +263,29 @@ fn is_empty_min_max(expr: &Expr) -> bool {
     matches!(expr, Expr::Min(_, values) | Expr::Max(_, values) if is_empty_matrix_operand(values))
 }
 
+/// Whether `expr` is unsafe in a way that still leaves its domain worth deriving: it can be
+/// undefined, but every value it *can* take is a real one, so a literal outside that set decides
+/// the equality regardless.
+fn can_be_undefined_but_not_empty(expr: &Expr) -> bool {
+    matches!(expr, Expr::Image(_, _, _))
+}
+
 /// Tries to decide `expr = lit` and `expr != lit` from the resolved domain of `expr`.
-fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, bool)> {
+///
+/// Each direction is decided separately, because an expression that can be undefined does not
+/// settle both at once: where it is undefined, relational semantics make the containing boolean
+/// false, which agrees with a `false` equality but contradicts a `true` disequality.
+fn simplify_comparison_with_literal(
+    expr: &Expr,
+    lit: &Lit,
+) -> Option<(Option<bool>, Option<bool>)> {
     // Deriving the domain of a compound expression enumerates its value set, and combining
     // operands takes the Cartesian product of those sets -- packed set representations reach tens
-    // of thousands of values. Nothing below this point can decide the comparison for an
-    // unsafe expression other than the empty `min`/`max` case, so bail out before paying for it.
+    // of thousands of values. An unsafe expression can still be decided below -- an empty
+    // `min`/`max`, or a literal its domain cannot hold -- but nothing else can, so a safe
+    // expression is worth the lookup unconditionally and an unsafe one only for those shapes.
     let is_safe = is_semantically_safe(expr);
-    if !is_safe && !is_empty_min_max(expr) {
+    if !is_safe && !is_empty_min_max(expr) && !can_be_undefined_but_not_empty(expr) {
         return None;
     }
 
@@ -271,11 +294,7 @@ fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, boo
     // An empty domain represents an undefined value. Under relational semantics the closest
     // containing Boolean expression is false, for both equality and disequality.
     if matches!(expr_domain.as_ref(), GroundDomain::Empty(_)) {
-        return Some((false, false));
-    }
-
-    if !is_safe {
-        return None;
+        return Some((Some(false), Some(false)));
     }
 
     if !expr_domain.contains(lit).ok()? {
@@ -287,7 +306,14 @@ fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, boo
         {
             return None;
         }
-        return Some((false, true));
+        // No value the expression can take equals the literal, and where it is undefined the
+        // equality is false as well -- so the equality is false either way. The disequality is
+        // only true where the expression is defined, so it needs safety.
+        return Some((Some(false), is_safe.then_some(true)));
+    }
+
+    if !is_safe {
+        return None;
     }
 
     match (expr_domain.as_ref(), lit) {
@@ -301,7 +327,7 @@ fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, boo
             };
 
             if low == high && low == value {
-                Some((true, false))
+                Some((Some(true), Some(false)))
             } else {
                 None
             }
@@ -994,7 +1020,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 )))
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
                 && comparison_domain_lookup_is_cheap(y, mode)
-                && let Some((eq_result, _)) = simplify_comparison_with_literal(y, lit)
+                && let Some((Some(eq_result), _)) = simplify_comparison_with_literal(y, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
@@ -1002,7 +1028,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 )))
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
                 && comparison_domain_lookup_is_cheap(x, mode)
-                && let Some((eq_result, _)) = simplify_comparison_with_literal(x, lit)
+                && let Some((Some(eq_result), _)) = simplify_comparison_with_literal(x, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
@@ -1022,7 +1048,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 )))
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
                 && comparison_domain_lookup_is_cheap(y, mode)
-                && let Some((_, neq_result)) = simplify_comparison_with_literal(y, lit)
+                && let Some((_, Some(neq_result))) = simplify_comparison_with_literal(y, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
@@ -1030,7 +1056,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
                 )))
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
                 && comparison_domain_lookup_is_cheap(x, mode)
-                && let Some((_, neq_result)) = simplify_comparison_with_literal(x, lit)
+                && let Some((_, Some(neq_result))) = simplify_comparison_with_literal(x, lit)
             {
                 Ok(RuleEffect::pure(Expr::Atomic(
                     Metadata::new(),
