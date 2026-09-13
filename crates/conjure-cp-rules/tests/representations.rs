@@ -7,11 +7,11 @@ use conjure_cp::ast::{
 use conjure_cp::representation::{ReprAssignment, ReprDomainLevel, ReprRule};
 use conjure_cp::{domain_int, into_matrix, range};
 use conjure_cp_rules::representation::{
-    FunctionAsRelation, FunctionExplicit, MSetCounts, MSetOccurrence, MSetPacked, MSetRepetition,
-    MatrixComponents, MatrixPacked, PartitionAsSet, PartitionOccurrence, PartitionPacked,
-    PermutationAsFunction, RecordComponents, RecordPacked, RelationAsSet, RelationOccurrence,
-    RelationPacked, SequenceExplicit, SequencePacked, SetExplicit, SetOccurrence, SetPacked,
-    TupleComponents, TuplePacked, VariantComponents, VariantPacked,
+    FunctionAsRelation, FunctionExplicit, FunctionPacked, MSetCounts, MSetOccurrence, MSetPacked,
+    MSetRepetition, MatrixComponents, MatrixPacked, PartitionAsSet, PartitionOccurrence,
+    PartitionPacked, PermutationAsFunction, RecordComponents, RecordPacked, RelationAsSet,
+    RelationOccurrence, RelationPacked, SequenceExplicit, SequencePacked, SetExplicit,
+    SetOccurrence, SetPacked, TupleComponents, TuplePacked, VariantComponents, VariantPacked,
 };
 use uniplate::Uniplate;
 
@@ -1101,7 +1101,7 @@ fn function_as_relation_round_trips_pairs() {
 }
 
 #[test]
-fn function_as_relation_total_function_builds_well_formedness_and_forward_witness_constraints() {
+fn function_as_relation_total_function_builds_only_the_well_formedness_constraint() {
     let domain = Domain::function(
         func_attr(
             conjure_cp::ast::Range::Unbounded,
@@ -1114,9 +1114,9 @@ fn function_as_relation_total_function_builds_well_formedness_and_forward_witnes
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = FunctionAsRelation::init_for(&mut declaration).unwrap();
-    // well-formedness + one forward-witness triple (In + key Eq + value Eq) per domain value (a
-    // total function always gets a forward_witness_matrix, regardless of jectivity).
-    assert_eq!(constraints.len(), 1 + 3 * 3);
+    // Well-formedness, and nothing else: totality follows from it together with the relation's
+    // fixed size, and `image` reads the relation directly rather than a forward lookup table.
+    assert_eq!(constraints.len(), 1);
 }
 
 #[test]
@@ -1129,10 +1129,9 @@ fn function_as_relation_bijective_adds_injective_and_surjective_constraints() {
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = FunctionAsRelation::init_for(&mut declaration).unwrap();
-    // well-formedness + injective (pairwise) + one witness-membership pair (In + Eq) per
-    // codomain value + one forward-witness triple (In + key Eq + value Eq) per domain value
-    // (total).
-    assert_eq!(constraints.len(), 1 + 1 + 2 * 3 + 3 * 3);
+    // well-formedness + injective (pairwise) + one surjectivity witness pair (In + Eq) per
+    // codomain value.
+    assert_eq!(constraints.len(), 1 + 1 + 2 * 3);
 }
 
 #[test]
@@ -1198,9 +1197,9 @@ fn explicit_function_partial_injective_builds_guarded_pairwise_constraints() {
     let mut symbols = SymbolTable::new();
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = FunctionExplicit::init_for(&mut declaration).unwrap();
-    // one cardinality bound (maxSize 3 is not Unbounded) + guarded pairwise over 3 domain
-    // positions: C(3,2) = 3 constraints.
-    assert_eq!(constraints.len(), 1 + 3);
+    // one cardinality bound (maxSize 3 is not Unbounded) + one canonical-padding constraint per
+    // domain position + guarded pairwise over 3 domain positions: C(3,2) = 3 constraints.
+    assert_eq!(constraints.len(), 1 + 3 + 3);
 }
 
 #[test]
@@ -1701,4 +1700,90 @@ fn permutation_as_function_builds_three_structural_constraints() {
     let mut declaration = symbols.gen_find(&domain);
     let (_, constraints) = PermutationAsFunction::init_for(&mut declaration).unwrap();
     assert_eq!(constraints.len(), 3);
+}
+
+#[test]
+fn packed_function_round_trips_a_total_function() {
+    let domain = Domain::function(
+        func_attr(range!(3), PartialityAttr::Total, JectivityAttr::None),
+        domain_int!(1..3),
+        domain_int!(7..8),
+    );
+    let state = <FunctionPacked as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Function(vec![
+        (Literal::Int(1), Literal::Int(8)),
+        (Literal::Int(2), Literal::Int(7)),
+        (Literal::Int(3), Literal::Int(8)),
+    ]));
+    let down = state.down(value.clone()).unwrap();
+    assert!(matches!(down.packed, Literal::Int(_)));
+    assert_eq!(down.up(), value);
+}
+
+/// A partial function's digits carry definedness themselves: digit 0 means "defines nothing here",
+/// so the domain has exactly `(codomain + 1) ** |domain|` values and an undefined key round-trips
+/// by being absent rather than by holding some padding value.
+#[test]
+fn packed_function_round_trips_a_partial_function() {
+    let domain = Domain::function(
+        func_attr(
+            conjure_cp::ast::Range::Unbounded,
+            PartialityAttr::Partial,
+            JectivityAttr::None,
+        ),
+        domain_int!(1..3),
+        domain_int!(7..8),
+    );
+    let state = <FunctionPacked as ReprRule>::DomainLevel::init(domain.clone()).unwrap();
+    assert_eq!(FunctionPacked::compactness_score(domain).unwrap(), 27);
+
+    let value = Literal::AbstractLiteral(AbstractLiteral::Function(vec![
+        (Literal::Int(1), Literal::Int(8)),
+        (Literal::Int(3), Literal::Int(7)),
+    ]));
+    let down = state.down(value.clone()).unwrap();
+    assert_eq!(down.up(), value);
+}
+
+#[test]
+fn packed_function_rejects_a_total_function_missing_a_key() {
+    let domain = Domain::function(
+        func_attr(range!(3), PartialityAttr::Total, JectivityAttr::None),
+        domain_int!(1..3),
+        domain_int!(7..8),
+    );
+    let state = <FunctionPacked as ReprRule>::DomainLevel::init(domain).unwrap();
+    let value = Literal::AbstractLiteral(AbstractLiteral::Function(vec![(
+        Literal::Int(1),
+        Literal::Int(8),
+    )]));
+    assert!(state.down(value).is_err());
+}
+
+#[test]
+fn packed_function_partial_builds_a_cardinality_constraint() {
+    let domain = Domain::function(
+        func_attr(range!(2), PartialityAttr::Partial, JectivityAttr::None),
+        domain_int!(1..3),
+        domain_int!(7..8),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = FunctionPacked::init_for(&mut declaration).unwrap();
+    // Exactly the `size` constraint: nothing else is structural for a plain partial function.
+    assert_eq!(constraints.len(), 1);
+}
+
+#[test]
+fn packed_function_bijective_builds_injective_and_surjective_constraints() {
+    let domain = Domain::function(
+        func_attr(range!(2), PartialityAttr::Total, JectivityAttr::Bijective),
+        domain_int!(1..2),
+        domain_int!(7..8),
+    );
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    let (_, constraints) = FunctionPacked::init_for(&mut declaration).unwrap();
+    // One pairwise distinctness constraint, plus one coverage constraint per codomain value.
+    assert_eq!(constraints.len(), 1 + 2);
 }
