@@ -12,6 +12,9 @@ new variables:
   find x#explicit_2: matrix indexed by [int(1..3)] of bool
 new constraints:
   and([sum([toInt(SafeIndex(x#explicit_2,[1])),toInt(SafeIndex(x#explicit_2,[2])),toInt(SafeIndex(x#explicit_2,[3]));int(1..)]) >= 2,sum([toInt(SafeIndex(x#explicit_2,[1])),toInt(SafeIndex(x#explicit_2,[2])),toInt(SafeIndex(x#explicit_2,[3]));int(1..)]) <= 3;int(1..)])
+  or([SafeIndex(x#explicit_2,[1]),SafeIndex(x#explicit_1,[1]) = 13;int(1..)])
+  or([SafeIndex(x#explicit_2,[2]),SafeIndex(x#explicit_1,[2]) = 13;int(1..)])
+  or([SafeIndex(x#explicit_2,[3]),SafeIndex(x#explicit_1,[3]) = 13;int(1..)])
   or([!(SafeIndex(x#explicit_2,[1])),!(SafeIndex(x#explicit_2,[2])),SafeIndex(x#explicit_1,[1]) != SafeIndex(x#explicit_1,[2]);int(1..)])
   or([!(SafeIndex(x#explicit_2,[1])),!(SafeIndex(x#explicit_2,[3])),SafeIndex(x#explicit_1,[1]) != SafeIndex(x#explicit_1,[3]);int(1..)])
   or([!(SafeIndex(x#explicit_2,[2])),!(SafeIndex(x#explicit_2,[3])),SafeIndex(x#explicit_1,[2]) != SafeIndex(x#explicit_1,[3]);int(1..)])
@@ -25,6 +28,12 @@ new variables:
   find x#explicit_2#components_1: bool
   find x#explicit_2#components_2: bool
   find x#explicit_2#components_3: bool
+
+--
+
+x#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_2
 
 --
 
@@ -50,6 +59,36 @@ x#explicit_1
 
 --
 
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+
+--
+
+x#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_2
+
+--
+
+x#explicit_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_2
+
+--
+
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+
+--
+
+x#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#explicit_1
+
+--
+
 x#explicit_2
    ~~> select_representation ([("ReprGeneral", 10000)])
 x#explicit_2
@@ -140,24 +179,6 @@ x#explicit_2#components_1
 
 --
 
-SafeIndex(x#explicit_2,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_2#components_3
-
---
-
-SafeIndex(x#explicit_1,[1])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_1
-
---
-
-SafeIndex(x#explicit_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_3
-
---
-
 SafeIndex(x#explicit_2,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_2#components_2
@@ -167,18 +188,6 @@ x#explicit_2#components_2
 SafeIndex(x#explicit_2,[3])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_2#components_3
-
---
-
-SafeIndex(x#explicit_1,[2])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_2
-
---
-
-SafeIndex(x#explicit_1,[3])
-   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
-x#explicit_1#components_3
 
 --
 
@@ -203,6 +212,72 @@ x#explicit_1#components_1
 SafeIndex(x#explicit_1,[2])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_2,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_2#components_1
+
+--
+
+SafeIndex(x#explicit_2,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_2#components_3
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+SafeIndex(x#explicit_2,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_2#components_2
+
+--
+
+SafeIndex(x#explicit_2,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_2#components_3
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
+
+--
+
+SafeIndex(x#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_1
+
+--
+
+SafeIndex(x#explicit_1,[2])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_2
+
+--
+
+SafeIndex(x#explicit_1,[3])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+x#explicit_1#components_3
 
 --
 
@@ -251,6 +326,24 @@ SumGeq([x#explicit_2#components_1, x#explicit_2#components_2, x#explicit_2#compo
 sum([toInt(x#explicit_2#components_1),toInt(x#explicit_2#components_2),toInt(x#explicit_2#components_3);int(1..)]) <= 3
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumLeq([x#explicit_2#components_1, x#explicit_2#components_2, x#explicit_2#components_3], 3)
+
+--
+
+x#explicit_1#components_1 = 13
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_1,13)
+
+--
+
+x#explicit_1#components_2 = 13
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_2,13)
+
+--
+
+x#explicit_1#components_3 = 13
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(x#explicit_1#components_3,13)
 
 --
 
@@ -306,6 +399,9 @@ such that
 
 true,
 and([SumGeq([x#explicit_2#components_1, x#explicit_2#components_2, x#explicit_2#components_3], 2),SumLeq([x#explicit_2#components_1, x#explicit_2#components_2, x#explicit_2#components_3], 3);int(1..)]),
+or([x#explicit_2#components_1,WatchedLiteral(x#explicit_1#components_1,13);int(1..)]),
+or([x#explicit_2#components_2,WatchedLiteral(x#explicit_1#components_2,13);int(1..)]),
+or([x#explicit_2#components_3,WatchedLiteral(x#explicit_1#components_3,13);int(1..)]),
 or([WatchedLiteral(x#explicit_2#components_1,false),WatchedLiteral(x#explicit_2#components_2,false),x#explicit_1#components_1 != x#explicit_1#components_2;int(1..)]),
 or([WatchedLiteral(x#explicit_2#components_1,false),WatchedLiteral(x#explicit_2#components_3,false),x#explicit_1#components_1 != x#explicit_1#components_3;int(1..)]),
 or([WatchedLiteral(x#explicit_2#components_2,false),WatchedLiteral(x#explicit_2#components_3,false),x#explicit_1#components_2 != x#explicit_1#components_3;int(1..)])
