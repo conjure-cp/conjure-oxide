@@ -20,7 +20,7 @@ fn parse_collection_expression(
             parse_expression(ctx, collection_node)
         }
         "atom" | "matrix" | "set_literal" | "tuple" | "record" | "identifier"
-        | "index_or_slice" => parse_atom(ctx, &collection_node),
+        | "index_or_slice" | "set_operation" => parse_atom(ctx, &collection_node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Unexpected collection type: '{}'", collection_node.kind()),

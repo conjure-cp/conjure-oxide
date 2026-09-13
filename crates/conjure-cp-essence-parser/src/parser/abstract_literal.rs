@@ -182,8 +182,10 @@ fn parse_tuple(
     let mut elements = Vec::new();
     let mut had_error = false;
     for child in named_children(node) {
-        // Parse elements with inner typechecking context
-        ctx.typechecking_context = saved_inner_ctx;
+        // A tuple is heterogeneous: each position has its own type, so the surrounding scalar
+        // context says nothing about any given element. `(y, z)` of type `(int, bool)` must not
+        // have `z` checked against the tuple's own context.
+        ctx.typechecking_context = TypecheckingContext::Unknown;
         ctx.inner_typechecking_context = TypecheckingContext::Unknown;
 
         let Some(expr) = parse_expression(ctx, child)? else {
