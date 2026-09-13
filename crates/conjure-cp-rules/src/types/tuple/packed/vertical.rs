@@ -71,6 +71,10 @@ fn tuple_packed_var_eq_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```plain
 /// x = (1, 2, 3)  (x is TuplePacked)  ~>  x_packed = encode(1,2,3)
 /// ```
+///
+/// A tuple whose entries are not all constants cannot be encoded to a single packed value, so
+/// those are decoded and compared field by field instead -- the same fallback
+/// `tuple_packed_var_eq_var` uses for two packed variables whose layouts disagree.
 #[register_rule("ReprTuplePacked", 9700, [Eq, Neq])]
 fn tuple_packed_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
@@ -87,8 +91,10 @@ fn tuple_packed_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         "equality on tuples with different shapes!"
     );
 
-    let packed_val = encode_entries(&repr, &rhs_ents)?;
-    let new_expr = eq_or_neq(neq, repr.packed_expr(), packed_val);
+    let new_expr = match encode_entries(&repr, &rhs_ents) {
+        Ok(packed_val) => eq_or_neq(neq, repr.packed_expr(), packed_val),
+        Err(_) => collect_eq_or_neq(neq, unpack_entries(&repr).into_iter().zip(rhs_ents)),
+    };
     Ok(Reduction::pure(new_expr))
 }
 
