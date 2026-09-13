@@ -5,7 +5,6 @@ use conjure_cp::ast::{
     Domain, GroundDomain, JectivityAttr, Moo, PartialityAttr, Range, Reference, RelAttr,
     SymbolTablePtr,
 };
-use conjure_cp::range;
 
 register_representation!(
     FunctionAsRelation("as_relation")
