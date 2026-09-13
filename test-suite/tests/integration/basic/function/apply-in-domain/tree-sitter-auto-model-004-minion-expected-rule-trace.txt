@@ -1,0 +1,115 @@
+Model before rewriting:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..2)
+
+such that
+
+image(f,y) = 1
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find f#as_relation_1: relation (size 2) of (int(1..2) * int(1))
+new constraints:
+  and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+new variables:
+  find f#as_relation_1#occurrence_1: matrix indexed by [int(1..2), int(1)] of bool
+new constraints:
+  sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1) ]) = 2
+
+--
+
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1) ]) = 2
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1) ]) = 2
+new variables:
+  find f#as_relation_1#occurrence_1#components_1: bool
+  find f#as_relation_1#occurrence_1#components_2: bool
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ (SafeIndex((i0,i1),[1]) = SafeIndex(j,[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex(j,[2])) | i0 : int(1..2), i1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j <- f#as_relation_1 ]
+
+--
+
+[ (SafeIndex((i0,i1),[1]) = SafeIndex(j,[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex(j,[2])) | i0 : int(1..2), i1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j <- f#as_relation_1 ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j0 : int(1..2), j1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[j0, j1]) ]
+
+--
+
+[ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j0 : int(1..2), j1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[j0, j1]) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true;int(1..)]
+
+--
+
+[ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(SafeIndex(f#as_relation_1#occurrence_1,[1, 1])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[2, 1]));int(1..)]
+
+--
+
+f#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#occurrence_1
+
+--
+
+f#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#occurrence_1
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, 1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_1
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, 1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_2
+
+--
+
+sum([toInt(f#as_relation_1#occurrence_1#components_1),toInt(f#as_relation_1#occurrence_1#components_2);int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2], 2),SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2], 2);int(1..)])
+
+--
+
+Final model:
+
+find f: function (total) int(1..2) --> int(1) 
+find y: int(1..2)
+find f#as_relation_1: relation (size 2) of (int(1..2) * int(1))
+find f#as_relation_1#occurrence_1: matrix indexed by [int(1..2), int(1)] of bool
+find f#as_relation_1#occurrence_1#components_1: bool
+find f#as_relation_1#occurrence_1#components_2: bool
+
+such that
+
+true,
+true,
+and([SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2], 2),SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2], 2);int(1..)])
+
