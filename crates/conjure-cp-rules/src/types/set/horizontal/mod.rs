@@ -2,6 +2,7 @@ mod concat;
 mod difference;
 mod equals;
 mod generator;
+mod membership;
 mod neq;
 mod subset;
 mod subseteq;
