@@ -472,6 +472,17 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
     #[allow(clippy::mutable_key_type)]
     let mut coefficients_and_vars: HashMap<Atom, i32> = HashMap::new();
 
+    // Every summand must stand for a single term. An unexpanded comprehension stands for many, and
+    // flattening it here mints an auxiliary holding the whole matrix, which no solver can take.
+    // Leave it for comprehension expansion. (A comprehension's return type is its element type, so
+    // this has to match the variant rather than ask for the type.)
+    if sum_exprs
+        .iter()
+        .any(|term| matches!(term, Expr::Comprehension(_, _)))
+    {
+        return Err(RuleNotApplicable);
+    }
+
     // for each sub-term, get the coefficient and the variable, flattening if necessary.
     //
     for expr in sum_exprs {
@@ -716,6 +727,17 @@ fn flatten_weighted_sum_term(
                     e,
                     rest @ ..,
                 ] => {
+                    // A lone remaining factor is the term itself. Wrapping it back up as
+                    // `product([x])` would ask for an auxiliary holding a one-element product,
+                    // which has no integer domain when `x` is a bool -- and a bool is exactly what
+                    // `flatten_product` leaves behind, since Minion reads it as 0/1.
+                    if rest.is_empty() {
+                        return Ok((
+                            *coeff,
+                            flatten_expression_to_atom(e.clone(), symtab, top_level_exprs)?,
+                        ));
+                    }
+
                     let mut product_terms = Vec::from(rest);
                     product_terms.push(e.clone());
                     let product =
