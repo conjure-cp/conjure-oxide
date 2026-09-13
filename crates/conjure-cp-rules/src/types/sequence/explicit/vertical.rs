@@ -1,6 +1,7 @@
 use super::SequenceExplicit;
 use crate::guard;
-use conjure_cp::ast::{Atom, Expression as Expr, SymbolTable};
+use crate::types::sequence::apply_at_position;
+use conjure_cp::ast::{Atom, Expression as Expr, Reference, SymbolTable};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, RuleEffect as Reduction, register_rule};
 
@@ -31,10 +32,8 @@ fn sequence_explicit_card(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// sValues[i]
 /// ```
 ///
-/// Positions past the active length hold `padding`, so this reads a padding value rather than
-/// going undefined when `i` is beyond `|s|`. That matches how the rest of this representation
-/// already treats inactive positions; giving out-of-range application its own undefinedness
-/// semantics needs a design of its own, and is deferred until a case in scope needs it.
+/// See [`apply_at_position`] for how the undefinedness of applying a sequence out of range is
+/// handled.
 #[register_rule("ReprGeneral", 9500, [Image])]
 fn sequence_explicit_image(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
@@ -46,5 +45,10 @@ fn sequence_explicit_image(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     );
 
-    Ok(Reduction::pure(repr.slot_expr_at(index.as_ref().clone())))
+    Ok(Reduction::pure(apply_at_position(
+        Expr::from(Reference::new(repr.values_matrix.clone())),
+        index.as_ref().clone(),
+        repr.size_bounds,
+        || repr.length_expr(),
+    )))
 }
