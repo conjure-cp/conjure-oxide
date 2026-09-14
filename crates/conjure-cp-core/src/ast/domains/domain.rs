@@ -117,6 +117,23 @@ impl Domain {
         ))))
     }
 
+    /// Creates an integer domain holding the values of a collection, as in `int([i | i <- nums])`.
+    ///
+    /// Resolves to the concrete values once the collection can be evaluated, which for a
+    /// collection built from `given`s is after instantiation.
+    pub fn int_from_values(values: Expression) -> DomainPtr {
+        // Evaluate now when the collection is already constant. Leaving it as an expression means
+        // re-evaluating it on every domain query during rewriting, which is ruinous: `domain_or_init`
+        // runs per node per rule attempt.
+        if let Some(ranges) = int_ranges_from_constant_collection(&values) {
+            return Domain::int_ground(ranges);
+        }
+
+        Moo::new(Domain::Unresolved(Moo::new(
+            UnresolvedDomain::IntFromValues(Moo::new(values)),
+        )))
+    }
+
     /// Create a new ground integer domain with the given ranges
     pub fn int_ground(ranges: Vec<Range<Int>>) -> DomainPtr {
         let rngs = Range::squeeze(&ranges);
@@ -1381,4 +1398,17 @@ mod tests {
         );
         assert_eq!(m.length(), Ok(64));
     }
+}
+
+/// The ranges of an integer collection that can already be evaluated, if it can.
+fn int_ranges_from_constant_collection(values: &Expression) -> Option<Vec<Range<Int>>> {
+    let values = crate::ast::eval::generator_values_from_expr(values)?;
+    let mut ranges = Vec::with_capacity(values.len());
+    for value in values {
+        let crate::ast::Literal::Int(value) = value else {
+            return None;
+        };
+        ranges.push(Range::Single(value));
+    }
+    Some(ranges)
 }

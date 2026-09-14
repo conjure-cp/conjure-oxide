@@ -45,6 +45,11 @@ impl TryFrom<FieldUnresolved> for FieldGround {
 /// Variants use the project-wide type/domain ordering; keep broad matches in the same order.
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
+    /// An integer domain given by the values of a collection, as in `int([i | i <- nums])`.
+    ///
+    /// The collection may be built from `given` declarations, so it stays an expression until
+    /// those are instantiated and it can be evaluated.
+    IntFromValues(Moo<Expression>),
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<DomainPtr>),
     /// A record
@@ -117,8 +122,49 @@ impl UnresolvedDomain {
         Some(unresolved)
     }
 
+    /// Whether this domain takes its values from a collection expression anywhere inside it.
+    ///
+    /// Such a domain is expensive to resolve -- the collection is evaluated afresh each time -- so
+    /// callers ground it once rather than leaving it to be re-resolved on every query.
+    pub fn has_int_from_values(&self) -> bool {
+        match self {
+            UnresolvedDomain::IntFromValues(_) => true,
+            UnresolvedDomain::Int(_) => false,
+            UnresolvedDomain::Tuple(inners) | UnresolvedDomain::Relation(_, inners) => {
+                inners.iter().any(domain_has_int_from_values)
+            }
+            UnresolvedDomain::Record(entries) | UnresolvedDomain::Variant(entries) => entries
+                .iter()
+                .any(|entry| domain_has_int_from_values(&entry.value)),
+            UnresolvedDomain::Matrix(value, indices) => {
+                domain_has_int_from_values(value) || indices.iter().any(domain_has_int_from_values)
+            }
+            UnresolvedDomain::Sequence(_, inner)
+            | UnresolvedDomain::Set(_, inner)
+            | UnresolvedDomain::MSet(_, inner)
+            | UnresolvedDomain::Partition(_, inner)
+            | UnresolvedDomain::Permutation(_, inner) => domain_has_int_from_values(inner),
+            UnresolvedDomain::Function(_, from, to) => {
+                domain_has_int_from_values(from) || domain_has_int_from_values(to)
+            }
+            UnresolvedDomain::Reference(_) => false,
+        }
+    }
+
     pub fn resolve(&self) -> Result<GroundDomain, DomainOpError> {
         match self {
+            UnresolvedDomain::IntFromValues(expr) => {
+                let values = crate::ast::eval::generator_values_from_expr(expr)
+                    .ok_or(DomainOpError::NotGround)?;
+                let mut ranges = Vec::with_capacity(values.len());
+                for value in values {
+                    let crate::ast::Literal::Int(value) = value else {
+                        return Err(DomainOpError::WrongType);
+                    };
+                    ranges.push(Range::Single(value));
+                }
+                Ok(GroundDomain::Int(Range::squeeze(&ranges)))
+            }
             UnresolvedDomain::Int(rngs) => rngs
                 .iter()
                 .map(Range::<IntVal>::resolve)
@@ -215,6 +261,9 @@ impl UnresolvedDomain {
                 let merged = lhs.iter().chain(rhs.iter()).cloned().collect_vec();
                 Ok(UnresolvedDomain::Int(merged))
             }
+            (UnresolvedDomain::IntFromValues(_), _) | (_, UnresolvedDomain::IntFromValues(_)) => {
+                Err(DomainOpError::NotGround)
+            }
             (UnresolvedDomain::Int(_), _) | (_, UnresolvedDomain::Int(_)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -305,7 +354,7 @@ impl UnresolvedDomain {
     /// True if any domain in this tree has a representation preference.
     pub fn has_representation_preference(&self) -> bool {
         match self {
-            UnresolvedDomain::Int(_) => false,
+            UnresolvedDomain::Int(_) | UnresolvedDomain::IntFromValues(_) => false,
             UnresolvedDomain::Tuple(inners) => {
                 inners.iter().any(|d| d.has_representation_preference())
             }
@@ -345,7 +394,7 @@ impl UnresolvedDomain {
     /// Format this domain in Essence type style, omitting size attributes and integer ranges.
     pub fn as_type_string(&self) -> String {
         match self {
-            UnresolvedDomain::Int(_) => "int".to_string(),
+            UnresolvedDomain::Int(_) | UnresolvedDomain::IntFromValues(_) => "int".to_string(),
             UnresolvedDomain::Tuple(inners) => {
                 format!(
                     "tuple ({})",
@@ -422,7 +471,7 @@ impl UnresolvedDomain {
 impl Typeable for UnresolvedDomain {
     fn return_type(&self) -> ReturnType {
         match self {
-            UnresolvedDomain::Int(_) => ReturnType::Int,
+            UnresolvedDomain::Int(_) | UnresolvedDomain::IntFromValues(_) => ReturnType::Int,
             UnresolvedDomain::Tuple(inners) => {
                 let mut inner_types = Vec::new();
                 for inner in inners {
@@ -490,6 +539,7 @@ impl Display for UnresolvedDomain {
                     write!(f, "int")
                 }
             }
+            UnresolvedDomain::IntFromValues(expr) => write!(f, "int({expr})"),
             UnresolvedDomain::Tuple(domains) => {
                 write!(f, "tuple ({})", domains.iter().join(","))
             }
@@ -543,5 +593,13 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Reference(re) => write!(f, "{re}"),
         }
+    }
+}
+
+/// Whether `domain` takes its values from a collection expression anywhere inside it.
+pub fn domain_has_int_from_values(domain: &DomainPtr) -> bool {
+    match &**domain {
+        crate::ast::Domain::Ground(_) => false,
+        crate::ast::Domain::Unresolved(unresolved) => unresolved.has_int_from_values(),
     }
 }

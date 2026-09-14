@@ -85,6 +85,7 @@ pub fn instantiate_model(mut problem_model: Model, param_model: Model) -> anyhow
     }
 
     drop(symbol_table);
+    ground_collection_valued_domains(&mut problem_model);
     validate_instantiation_conditions(&mut problem_model)?;
     Ok(problem_model)
 }
@@ -207,5 +208,32 @@ mod tests {
             objective_domain.resolve().unwrap().as_ref(),
             &GroundDomain::Int(vec![Range::Bounded(1, 7)])
         );
+    }
+}
+
+/// Grounds declaration domains that take their values from a collection expression.
+///
+/// `int([i | i <- nums])` stays an expression until the parameters arrive, and resolving it means
+/// evaluating the collection afresh -- which the rewriter would otherwise do on every domain
+/// query, per node per rule attempt. Doing it once here is the difference between a second and
+/// twenty minutes.
+///
+/// Only these domains are grounded. Resolving every domain is not safe to do blindly: a full-width
+/// `int` resolves to an enormous ground domain.
+fn ground_collection_valued_domains(model: &mut Model) {
+    for (_, decl) in model.symbols_mut().iter_local_mut() {
+        // Only decision variables, and reached through `as_find_mut` rather than `domain()`:
+        // the latter computes a domain for every declaration, which for a value letting over a
+        // large expression is itself expensive.
+        let Some(mut var) = decl.as_find_mut() else {
+            continue;
+        };
+        if !crate::ast::domain_has_int_from_values(&var.domain) {
+            continue;
+        }
+        let Ok(ground) = var.domain.resolve() else {
+            continue;
+        };
+        var.domain = ground.into();
     }
 }

@@ -561,18 +561,6 @@ product([6,toInt(a#occurrence_3);int(1..)])
 
 --
 
-flatten([[product([2,toInt(a#occurrence_1);int(1..)]),product([4,toInt(a#occurrence_2);int(1..)]),product([6,toInt(a#occurrence_3);int(1..)]);int(1..)],[ product([i,2;int(1..)]) | i : int(5..10), i in b, !(i in a) ];int(1..)])
-   ~~> flatten_matrix_literal ([("Base", 8000)])
-[product([2,toInt(a#occurrence_1);int(1..)]),product([4,toInt(a#occurrence_2);int(1..)]),product([6,toInt(a#occurrence_3);int(1..)]),[ product([i,2;int(1..)]) | i : int(5..10), i in b, !(i in a) ];int(1..)]
-
---
-
-product([2,toInt(a#occurrence_1);int(1..)])
-   ~~> flatten_product ([("Minion", 4200)])
-product([2,a#occurrence_1;int(1..)])
-
---
-
 product([4,toInt(a#occurrence_2);int(1..)])
    ~~> flatten_product ([("Minion", 4200)])
 product([4,a#occurrence_2;int(1..)])
@@ -582,6 +570,12 @@ product([4,a#occurrence_2;int(1..)])
 product([6,toInt(a#occurrence_3);int(1..)])
    ~~> flatten_product ([("Minion", 4200)])
 product([6,a#occurrence_3;int(1..)])
+
+--
+
+product([2,toInt(a#occurrence_1);int(1..)])
+   ~~> flatten_product ([("Minion", 4200)])
+product([2,a#occurrence_1;int(1..)])
 
 --
 
@@ -735,12 +729,6 @@ false
 
 --
 
-sum([product([2,a#occurrence_1;int(1..)]),product([4,a#occurrence_2;int(1..)]),product([6,a#occurrence_3;int(1..)]),[product([toInt((b#packed_1 / 1) % 2 = 1),10;int(1..)]),product([toInt((b#packed_1 / 2) % 2 = 1),12;int(1..)]),product([toInt((b#packed_1 / 4) % 2 = 1),14;int(1..)]),product([toInt((b#packed_1 / 8) % 2 = 1),16;int(1..)]),product([toInt((b#packed_1 / 16) % 2 = 1),18;int(1..)]),product([toInt((b#packed_1 / 32) % 2 = 1),20;int(1..)]);int(1..)];int(1..)])
-   ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([2,a#occurrence_1;int(1..)]),product([4,a#occurrence_2;int(1..)]),product([6,a#occurrence_3;int(1..)]),product([toInt((b#packed_1 / 1) % 2 = 1),10;int(1..)]),product([toInt((b#packed_1 / 2) % 2 = 1),12;int(1..)]),product([toInt((b#packed_1 / 4) % 2 = 1),14;int(1..)]),product([toInt((b#packed_1 / 8) % 2 = 1),16;int(1..)]),product([toInt((b#packed_1 / 16) % 2 = 1),18;int(1..)]),product([toInt((b#packed_1 / 32) % 2 = 1),20;int(1..)]);int(1..)])
-
---
-
 product([toInt((b#packed_1 / 1) % 2 = 1),10;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([10,toInt((b#packed_1 / 1) % 2 = 1);int(1..)])
@@ -777,6 +765,18 @@ product([20,toInt((b#packed_1 / 32) % 2 = 1);int(1..)])
 
 --
 
+flatten([[product([2,a#occurrence_1;int(1..)]),product([4,a#occurrence_2;int(1..)]),product([6,a#occurrence_3;int(1..)]);int(1..)],[product([10,toInt((b#packed_1 / 1) % 2 = 1);int(1..)]),product([12,toInt((b#packed_1 / 2) % 2 = 1);int(1..)]),product([14,toInt((b#packed_1 / 4) % 2 = 1);int(1..)]),product([16,toInt((b#packed_1 / 8) % 2 = 1);int(1..)]),product([18,toInt((b#packed_1 / 16) % 2 = 1);int(1..)]),product([20,toInt((b#packed_1 / 32) % 2 = 1);int(1..)]);int(1..)];int(1..)])
+   ~~> flatten_matrix_literal ([("Base", 8000)])
+[product([2,a#occurrence_1;int(1..)]),product([4,a#occurrence_2;int(1..)]),product([6,a#occurrence_3;int(1..)]),product([10,toInt((b#packed_1 / 1) % 2 = 1);int(1..)]),product([12,toInt((b#packed_1 / 2) % 2 = 1);int(1..)]),product([14,toInt((b#packed_1 / 4) % 2 = 1);int(1..)]),product([16,toInt((b#packed_1 / 8) % 2 = 1);int(1..)]),product([18,toInt((b#packed_1 / 16) % 2 = 1);int(1..)]),product([20,toInt((b#packed_1 / 32) % 2 = 1);int(1..)]);int(1..)]
+
+--
+
+(b#packed_1 / 1)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(b#packed_1, 1) @ 1 != 0}
+
+--
+
 (b#packed_1 / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(b#packed_1, 2) @ 2 != 0}
@@ -804,12 +804,6 @@ product([20,toInt((b#packed_1 / 32) % 2 = 1);int(1..)])
 (b#packed_1 / 32)
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(b#packed_1, 32) @ 32 != 0}
-
---
-
-(b#packed_1 / 1)
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(b#packed_1, 1) @ 1 != 0}
 
 --
 

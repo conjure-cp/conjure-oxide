@@ -145,8 +145,13 @@ impl Comprehension {
 }
 
 impl Typeable for Comprehension {
+    /// A comprehension is a collection, so its type is a matrix of the return expression's type.
+    ///
+    /// This agrees with [`Comprehension::domain_of`], which reports a matrix domain. Reporting the
+    /// element type here instead made every "is this a collection?" test quietly miss
+    /// comprehensions.
     fn return_type(&self) -> ReturnType {
-        self.return_expression.return_type()
+        ReturnType::Matrix(Box::new(self.return_expression.return_type()))
     }
 }
 

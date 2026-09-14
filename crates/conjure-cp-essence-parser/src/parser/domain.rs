@@ -216,6 +216,17 @@ fn parse_int_domain(
             Ok(Some(Domain::int_ground(vec![])))
         };
     };
+    // `int(<collection>)` takes its values from the collection rather than listing ranges, as in
+    // `int([i | i <- nums])`. One component that is collection-valued means this form.
+    let components: Vec<_> = named_children(&range_list).collect();
+    if let [only] = components.as_slice()
+        && matches!(only.kind(), "atom" | "arithmetic_expr")
+        && let Some(expr) = parse_collection_valued_expression(ctx, *only)?
+    {
+        ctx.add_span_and_doc_hover(&int_keyword_node, "int", SymbolKind::Domain, None, None);
+        return Ok(Some(Domain::int_from_values(expr)));
+    }
+
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
     let mut all_resolved = true;
 
@@ -901,7 +912,9 @@ pub fn parse_set_domain(
                         );
                         continue;
                     }
-                    let Some(value) = parse_int(ctx, &value_node) else {
+                    // Attribute values may be expressions over givens, e.g. `maxSize |nums|`,
+                    // which only become ground once the parameters are instantiated.
+                    let Some(value) = parse_int_val(ctx, value_node)? else {
                         return Ok(None);
                     };
                     match name {
@@ -953,4 +966,41 @@ pub fn parse_set_domain(
         ));
         Ok(None)
     }
+}
+
+/// Parses `node` when it denotes a collection of integers, for `int(<collection>)`.
+///
+/// Returns `None` without recording an error when it is something else, so the caller can carry on
+/// reading the node as an ordinary range bound.
+fn parse_collection_valued_expression(
+    ctx: &mut ParseContext,
+    node: Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let saved_context = ctx.typechecking_context;
+    let saved_inner_context = ctx.inner_typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+    let parsed = parse_expression(ctx, node);
+    ctx.typechecking_context = saved_context;
+    ctx.inner_typechecking_context = saved_inner_context;
+
+    let Some(expr) = parsed? else {
+        return Ok(None);
+    };
+    use conjure_cp_core::ast::Typeable;
+
+    // A comprehension's return type is its *element* type, so the variant has to be recognised
+    // directly rather than asked for its type.
+    if matches!(expr, Expression::Comprehension(_, _)) {
+        return Ok(Some(expr));
+    }
+
+    Ok(matches!(
+        expr.return_type(),
+        conjure_cp_core::ast::ReturnType::Set(_)
+            | conjure_cp_core::ast::ReturnType::MSet(_)
+            | conjure_cp_core::ast::ReturnType::Matrix(_)
+            | conjure_cp_core::ast::ReturnType::Sequence(_)
+    )
+    .then_some(expr))
 }

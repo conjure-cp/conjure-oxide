@@ -6,6 +6,7 @@ mod ground;
 mod int_val;
 mod range;
 mod unresolved;
+pub use unresolved::domain_has_int_from_values;
 
 pub use attrs::{
     BinaryAttr, FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, PartitionAttr, PermutationAttr,
