@@ -17,7 +17,7 @@ use conjure_cp::{
     settings::{SolverFamily, current_rewriter},
     solver::{Solver, SolverError, adaptors::Minion},
 };
-use tracing::warn;
+use tracing::debug;
 use uniplate::{Biplate, zipper::Zipper};
 
 use super::via_solver_common::{
@@ -84,7 +84,9 @@ pub fn expand_via_solver_ac(
 
         let minion = match minion {
             Err(e) => {
-                warn!(why=%e,model=%generator_model,"Loading generator model failed, failing solver-backed AC comprehension expansion rule");
+                // Callers fall back to native expansion, so this is a routine outcome rather
+                // than a problem; the model is large, so keep it out of the default log.
+                debug!(why=%e,model=%generator_model,"Loading generator model failed, failing solver-backed AC comprehension expansion rule");
                 return Err(e);
             }
             Ok(minion) => minion,

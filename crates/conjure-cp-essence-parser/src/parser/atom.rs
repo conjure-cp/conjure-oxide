@@ -106,6 +106,7 @@ pub fn parse_atom(
         "comprehension" => parse_comprehension(ctx, node),
         "defined_expr" | "range_expr" | "to_set_expr" | "to_mset_expr" | "to_relation_expr"
         | "perm_inverse_expr" => parse_function_unary_operator(ctx, node),
+        "apply_expr" => parse_apply_expr(ctx, node),
         "image_expr" | "image_set_expr" | "pre_image_expr" | "inverse_expr" | "compose_expr" => {
             parse_function_binary_operator(ctx, node)
         }
@@ -495,6 +496,52 @@ fn parse_partition_binary_operator(
 /// Parses the two arguments of a binary function-call-style operator (`image`, `imageSet`,
 /// `preImage`, `inverse`): keyword immediately followed by a parenthesised, comma-separated
 /// argument pair. `inverse_expr` uses `left`/`right` fields; the rest use `function`/`argument`.
+/// Parses function or sequence application, `f(x)`, into the `image(f, x)` it is sugar for.
+///
+/// Several arguments make a tuple, so `f(1, 2)` and `f((1, 2))` mean the same thing, as in Conjure.
+fn parse_apply_expr(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let parsed = (|ctx: &mut ParseContext| {
+        let Some(function_node) = field!(recover, ctx, node, "function") else {
+            return Ok(None);
+        };
+        let Some(function) = parse_expression(ctx, function_node)? else {
+            return Ok(None);
+        };
+
+        let mut cursor = node.walk();
+        let mut arguments = Vec::new();
+        for argument_node in node.children_by_field_name("argument", &mut cursor) {
+            let Some(argument) = parse_expression(ctx, argument_node)? else {
+                return Ok(None);
+            };
+            arguments.push(argument);
+        }
+
+        let argument = match <[Expression; 1]>::try_from(arguments) {
+            Ok([argument]) => argument,
+            Err(arguments) => Expression::AbstractLiteral(
+                Metadata::new(),
+                conjure_cp_core::ast::AbstractLiteral::Tuple(arguments),
+            ),
+        };
+
+        Ok(Some(Expression::Image(
+            Metadata::new(),
+            Moo::new(function),
+            Moo::new(argument),
+        )))
+    })(ctx);
+
+    ctx.typechecking_context = saved_context;
+    parsed
+}
+
 fn parse_function_binary_operator(
     ctx: &mut ParseContext,
     node: &Node,

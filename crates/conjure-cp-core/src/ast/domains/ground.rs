@@ -187,6 +187,36 @@ fn permutation_mapping_to_cycles(elements: &[Literal], mapped: &[Literal]) -> Ve
     cycles
 }
 
+/// The size attribute covering both sizes, for a union of two sequence domains.
+///
+/// Sizes have to survive the union: without a maximum, nothing downstream can tell how many
+/// positions a sequence has -- iterating one, for instance, needs to know the range of positions.
+fn union_sequence_sizes(left: &Range<i32>, right: &Range<i32>) -> Range<i32> {
+    let bounds = |range: &Range<i32>| match range {
+        Range::Single(size) => (*size, Some(*size)),
+        Range::Bounded(min, max) => (*min, Some(*max)),
+        Range::UnboundedL(max) => (0, Some(*max)),
+        Range::UnboundedR(min) => (*min, None),
+        Range::Unbounded => (0, None),
+    };
+
+    let (left_min, left_max) = bounds(left);
+    let (right_min, right_max) = bounds(right);
+    let min = left_min.min(right_min);
+
+    match (left_max, right_max) {
+        (Some(left_max), Some(right_max)) => {
+            let max = left_max.max(right_max);
+            if min == max {
+                Range::Single(min)
+            } else {
+                Range::Bounded(min, max)
+            }
+        }
+        _ => Range::UnboundedR(min),
+    }
+}
+
 impl GroundDomain {
     pub fn union(&self, other: &GroundDomain) -> Result<GroundDomain, DomainOpError> {
         // Keep implemented variants before `todo!` variants so mixed-domain unions report a type
@@ -259,9 +289,15 @@ impl GroundDomain {
                 MSetAttr::default(),
                 Moo::new(in1.union(in2)?),
             )),
-            (GroundDomain::Sequence(_, in1), GroundDomain::Sequence(_, in2)) => Ok(
-                GroundDomain::Sequence(SequenceAttr::default(), Moo::new(in1.union(in2)?)),
-            ),
+            (GroundDomain::Sequence(attr1, in1), GroundDomain::Sequence(attr2, in2)) => {
+                Ok(GroundDomain::Sequence(
+                    SequenceAttr {
+                        size: union_sequence_sizes(&attr1.size, &attr2.size),
+                        ..SequenceAttr::default()
+                    },
+                    Moo::new(in1.union(in2)?),
+                ))
+            }
             (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -1552,18 +1588,33 @@ impl GroundDomain {
 
             Literal::AbstractLiteral(AbstractLiteral::Sequence(_)) => {
                 let mut all_elems = vec![];
+                let mut lengths = Vec::new();
 
                 for lit in literals {
                     let Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) = lit else {
                         return Err(DomainOpError::WrongType);
                     };
 
+                    lengths.push(i32::try_from(elems.len()).map_err(|_| DomainOpError::TooLarge)?);
                     all_elems.extend(elems.clone());
                 }
                 let elem_domain = GroundDomain::from_literal_vec(&all_elems)?;
 
+                // These literals are known values, so their lengths bound the size attribute --
+                // without which nothing downstream can tell how many positions to iterate over.
+                let min = lengths.iter().copied().min().unwrap_or(0);
+                let max = lengths.iter().copied().max().unwrap_or(0);
+                let size = if min == max {
+                    Range::Single(min)
+                } else {
+                    Range::Bounded(min, max)
+                };
+
                 Ok(GroundDomain::Sequence(
-                    SequenceAttr::default(),
+                    SequenceAttr {
+                        size,
+                        ..SequenceAttr::default()
+                    },
                     Moo::new(elem_domain),
                 ))
             }
@@ -1691,6 +1742,18 @@ impl GroundDomain {
             GroundDomain::MSet(_, inner) => Some(inner.clone()),
             GroundDomain::Relation(_, inner_doms) => {
                 Some(Moo::new(GroundDomain::Tuple(inner_doms.clone())))
+            }
+            // A sequence is a function from int(1..|s|), and iterating a function yields its
+            // pairs, so iterating a sequence yields (position, value).
+            GroundDomain::Sequence(attr, inner) => {
+                let max = match attr.size {
+                    Range::Single(max) | Range::UnboundedL(max) | Range::Bounded(_, max) => max,
+                    Range::UnboundedR(_) | Range::Unbounded => return None,
+                };
+                Some(Moo::new(GroundDomain::Tuple(vec![
+                    Moo::new(GroundDomain::Int(vec![Range::Bounded(1, max)])),
+                    inner.clone(),
+                ])))
             }
             _ => None,
         }

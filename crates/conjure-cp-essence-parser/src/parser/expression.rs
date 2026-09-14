@@ -44,6 +44,7 @@ pub fn parse_expression(
         | "element_id"
         | "table"
         | "negative_table"
+        | "apply_expr"
         | "image_expr"
         | "image_set_expr"
         | "pre_image_expr"
