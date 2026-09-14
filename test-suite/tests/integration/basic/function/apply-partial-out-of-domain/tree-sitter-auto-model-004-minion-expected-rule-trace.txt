@@ -1,0 +1,293 @@
+Model before rewriting:
+
+find f: function (size 1) int(1..2) --> int(1) 
+find y: int(1..3)
+
+such that
+
+image(f,y) = 1
+
+--
+
+f
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f
+new variables:
+  find f#as_relation_1: relation (size 1) of (int(1..2) * int(1))
+new constraints:
+  and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+
+--
+
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+new variables:
+  find f#as_relation_1#occurrence_1: matrix indexed by [int(1..2), int(1)] of bool
+new constraints:
+  sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1) ]) = 1
+
+--
+
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1) ]) = 1
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+sum([ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1) ]) = 1
+new variables:
+  find f#as_relation_1#occurrence_1#components_1: bool
+  find f#as_relation_1#occurrence_1#components_2: bool
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ (SafeIndex((i0,i1),[1]) = SafeIndex(j,[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex(j,[2])) | i0 : int(1..2), i1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j <- f#as_relation_1 ]
+
+--
+
+[ (SafeIndex((i0,i1),[1]) = SafeIndex(j,[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex(j,[2])) | i0 : int(1..2), i1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j <- f#as_relation_1 ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j0 : int(1..2), j1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[j0, j1]) ]
+
+--
+
+image(f,y)
+   ~~> image_function_as_relation ([("Base", 8400)])
+{__0 @ __1}
+new variables:
+  findAux __0: int(1)
+  findAux __1: bool
+new constraints:
+  (__1) <-> (or([ SafeIndex(e,[1]) = y | e <- f#as_relation_1 ]))
+  (__1) -> ((y,__0) in f#as_relation_1)
+
+--
+
+f#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1
+
+--
+
+{__0 @ __1} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__0 = 1 @ __1}
+
+--
+
+{true @ __1}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([true,__1;int(1..)])
+
+--
+
+and([__1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__1
+
+--
+
+(y,__0) in f#as_relation_1
+   ~~> membership_relation_occurrence ([("Base", 8650)])
+SafeIndex(f#as_relation_1#occurrence_1,[SafeIndex((y,__0),[1]), SafeIndex((y,__0),[2])])
+
+--
+
+f#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#occurrence_1
+
+--
+
+SafeIndex((y,__0),[1])
+   ~~> tuple_literal_index ([("Base", 8700)])
+y
+
+--
+
+SafeIndex((y,__0),[2])
+   ~~> tuple_literal_index ([("Base", 8700)])
+__0
+
+--
+
+[ SafeIndex(e,[1]) = y | e <- f#as_relation_1 ]
+   ~~> lower_relation_occurrence_expression_generator ([("Base", 8650)])
+[ SafeIndex((e0,e1),[1]) = y | e0 : int(1..2), e1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[e0, e1]) ]
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[y, __0])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+SafeIndex([f#as_relation_1#occurrence_1#components_1,f#as_relation_1#occurrence_1#components_2;int(1..)],[sum([product([1,(y - 1);int(1..)]),1;int(1..)])])
+
+--
+
+product([1,(y - 1);int(1..)])
+   ~~> reorder_product ([("Base", 8800)])
+product([(y - 1);int(1..)])
+
+--
+
+product([(y - 1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(y - 1)
+
+--
+
+(y - 1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([y,-(1);int(1..)])
+
+--
+
+sum([sum([y,-1;int(1..)]),1;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([y,-1,1;int(1..)])
+
+--
+
+sum([y;int(1..)])
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+y
+
+--
+
+(__1) <-> (or([ SafeIndex((e0,e1),[1]) = y | e0 : int(1..2), e1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[e0, e1]) ]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(or([ SafeIndex((e0,e1),[1]) = y | e0 : int(1..2), e1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[e0, e1]) ]), __1)
+
+--
+
+(__1) -> (SafeIndex([f#as_relation_1#occurrence_1#components_1,f#as_relation_1#occurrence_1#components_2;int(1..)],[y]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(SafeIndex([f#as_relation_1#occurrence_1#components_1,f#as_relation_1#occurrence_1#components_2;int(1..)],[y]), __1)
+
+--
+
+SafeIndex([f#as_relation_1#occurrence_1#components_1,f#as_relation_1#occurrence_1#components_2;int(1..)],[y])
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([f#as_relation_1#occurrence_1#components_1,f#as_relation_1#occurrence_1#components_2],y,true)
+
+--
+
+[ (SafeIndex((i0,i1),[1]) = SafeIndex((j0,j1),[1])) -> (SafeIndex((i0,i1),[2]) = SafeIndex((j0,j1),[2])) | i0 : int(1..2), i1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[i0, i1]), j0 : int(1..2), j1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[j0, j1]) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true;int(1..)]
+
+--
+
+[ SafeIndex((e0,e1),[1]) = y | e0 : int(1..2), e1 : int(1), SafeIndex(f#as_relation_1#occurrence_1,[e0, e1]) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([SafeIndex(f#as_relation_1#occurrence_1,[1, 1]),or([1 = y;int(1..)]);int(1..)]),and([SafeIndex(f#as_relation_1#occurrence_1,[2, 1]),or([2 = y;int(1..)]);int(1..)]);int(1..)]
+
+--
+
+f#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#occurrence_1
+
+--
+
+f#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#occurrence_1
+
+--
+
+or([1 = y;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+1 = y
+
+--
+
+or([2 = y;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+2 = y
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, 1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_1
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, 1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_2
+
+--
+
+1 = y
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,1)
+
+--
+
+2 = y
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,2)
+
+--
+
+[ toInt(SafeIndex(f#as_relation_1#occurrence_1,[i0, i1])) | i0 : int(1..2), i1 : int(1) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(SafeIndex(f#as_relation_1#occurrence_1,[1, 1])),toInt(SafeIndex(f#as_relation_1#occurrence_1,[2, 1]));int(1..)]
+
+--
+
+f#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#occurrence_1
+
+--
+
+f#as_relation_1#occurrence_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#occurrence_1
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[1, 1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_1
+
+--
+
+SafeIndex(f#as_relation_1#occurrence_1,[2, 1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#occurrence_1#components_2
+
+--
+
+sum([toInt(f#as_relation_1#occurrence_1#components_1),toInt(f#as_relation_1#occurrence_1#components_2);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2], 1),SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2], 1);int(1..)])
+
+--
+
+Final model:
+
+find f: function (size 1) int(1..2) --> int(1) 
+find y: int(1..3)
+find f#as_relation_1: relation (size 1) of (int(1..2) * int(1))
+find f#as_relation_1#occurrence_1: matrix indexed by [int(1..2), int(1)] of bool
+find f#as_relation_1#occurrence_1#components_1: bool
+find f#as_relation_1#occurrence_1#components_2: bool
+findAux __0: int(1)
+findAux __1: bool
+
+such that
+
+__1,
+true,
+and([SumLeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2], 1),SumGeq([f#as_relation_1#occurrence_1#components_1, f#as_relation_1#occurrence_1#components_2], 1);int(1..)]),
+Reify(or([and([f#as_relation_1#occurrence_1#components_1,WatchedLiteral(y,1);int(1..)]),and([f#as_relation_1#occurrence_1#components_2,WatchedLiteral(y,2);int(1..)]);int(1..)]), __1),
+ReifyImply(__minion_element_one([f#as_relation_1#occurrence_1#components_1,f#as_relation_1#occurrence_1#components_2],y,true), __1)
+

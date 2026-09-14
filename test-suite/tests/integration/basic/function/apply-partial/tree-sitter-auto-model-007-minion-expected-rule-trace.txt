@@ -1,0 +1,274 @@
+Model before rewriting:
+
+find f: function (size 1) int(1..2) --> int(1) 
+find y: int(1..2)
+
+such that
+
+image(f,y) = 1
+
+--
+
+f
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f
+new variables:
+  find f#packed_1: int(0..3)
+new constraints:
+  sum([toInt((f#packed_1 / 2) != 0),toInt(f#packed_1 % 2 != 0);int(1..)]) = 1
+
+--
+
+image(f,y)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__0 @ __1}
+new variables:
+  findAux __0: int(1)
+  findAux __1: bool
+new constraints:
+  (__1) <-> (or([and([y = 1,(f#packed_1 / 2) != 0;int(1..)]),and([y = 2,f#packed_1 % 2 != 0;int(1..)]);int(1..)]))
+  (__1) -> (or([and([y = 1,__0 = (f#packed_1 / 2);int(1..)]),and([y = 2,__0 = f#packed_1 % 2;int(1..)]);int(1..)]))
+
+--
+
+{__0 @ __1} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__0 = 1 @ __1}
+
+--
+
+{true @ __1}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([true,__1;int(1..)])
+
+--
+
+and([__1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__1
+
+--
+
+(f#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(f#packed_1, 2) @ 2 != 0}
+
+--
+
+f#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(f#packed_1,2) @ 2 != 0}
+
+--
+
+(f#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(f#packed_1, 2) @ 2 != 0}
+
+--
+
+f#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(f#packed_1,2) @ 2 != 0}
+
+--
+
+(f#packed_1 / 2)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(f#packed_1, 2) @ 2 != 0}
+
+--
+
+f#packed_1 % 2
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(f#packed_1,2) @ 2 != 0}
+
+--
+
+sum([toInt(SafeDiv(f#packed_1, 2) != 0),toInt(SafeMod(f#packed_1,2) != 0);int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__2, __3], 1),SumGeq([__2, __3], 1);int(1..)])
+new variables:
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+new constraints:
+  __2 =aux toInt(SafeDiv(f#packed_1, 2) != 0)
+  __3 =aux toInt(SafeMod(f#packed_1,2) != 0)
+
+--
+
+(__1) -> (or([and([y = 1,__0 = SafeDiv(f#packed_1, 2);int(1..)]),and([y = 2,__0 = SafeMod(f#packed_1,2);int(1..)]);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([and([y = 1,__0 = SafeDiv(f#packed_1, 2);int(1..)]),and([y = 2,__0 = SafeMod(f#packed_1,2);int(1..)]);int(1..)]), __1)
+
+--
+
+(__1) <-> (or([and([y = 1,SafeDiv(f#packed_1, 2) != 0;int(1..)]),and([y = 2,SafeMod(f#packed_1,2) != 0;int(1..)]);int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(or([and([y = 1,SafeDiv(f#packed_1, 2) != 0;int(1..)]),and([y = 2,SafeMod(f#packed_1,2) != 0;int(1..)]);int(1..)]), __1)
+
+--
+
+y = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,1)
+
+--
+
+y = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,2)
+
+--
+
+y = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,1)
+
+--
+
+y = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(y,2)
+
+--
+
+toInt(SafeDiv(f#packed_1, 2) != 0)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__4)
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux SafeDiv(f#packed_1, 2) != 0
+
+--
+
+__4 =aux SafeDiv(f#packed_1, 2) != 0
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SafeDiv(f#packed_1, 2) != 0, __4)
+
+--
+
+toInt(SafeMod(f#packed_1,2) != 0)
+   ~~> flatten_generic ([("Minion", 4200)])
+toInt(__5)
+new variables:
+  findAux __5: bool
+new constraints:
+  __5 =aux SafeMod(f#packed_1,2) != 0
+
+--
+
+__5 =aux SafeMod(f#packed_1,2) != 0
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(SafeMod(f#packed_1,2) != 0, __5)
+
+--
+
+SafeDiv(f#packed_1, 2) != 0
+   ~~> flatten_generic ([("Minion", 4200)])
+__6 != 0
+new variables:
+  findAux __6: int(0..1)
+new constraints:
+  __6 =aux SafeDiv(f#packed_1, 2)
+
+--
+
+__6 =aux SafeDiv(f#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(f#packed_1, 2, __6)
+
+--
+
+SafeMod(f#packed_1,2) != 0
+   ~~> flatten_generic ([("Minion", 4200)])
+__7 != 0
+new variables:
+  findAux __7: int(0..1)
+new constraints:
+  __7 =aux SafeMod(f#packed_1,2)
+
+--
+
+__7 =aux SafeMod(f#packed_1,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(f#packed_1, 2, __7)
+
+--
+
+__0 = SafeDiv(f#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(f#packed_1, 2, __0)
+
+--
+
+__0 = SafeMod(f#packed_1,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(f#packed_1, 2, __0)
+
+--
+
+SafeDiv(f#packed_1, 2) != 0
+   ~~> flatten_generic ([("Minion", 4200)])
+__8 != 0
+new variables:
+  findAux __8: int(0..1)
+new constraints:
+  __8 =aux SafeDiv(f#packed_1, 2)
+
+--
+
+__8 =aux SafeDiv(f#packed_1, 2)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(f#packed_1, 2, __8)
+
+--
+
+SafeMod(f#packed_1,2) != 0
+   ~~> flatten_generic ([("Minion", 4200)])
+__9 != 0
+new variables:
+  findAux __9: int(0..1)
+new constraints:
+  __9 =aux SafeMod(f#packed_1,2)
+
+--
+
+__9 =aux SafeMod(f#packed_1,2)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(f#packed_1, 2, __9)
+
+--
+
+Final model:
+
+find f: function (size 1) int(1..2) --> int(1) 
+find y: int(1..2)
+find f#packed_1: int(0..3)
+findAux __0: int(1)
+findAux __1: bool
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+findAux __4: bool
+findAux __5: bool
+findAux __6: int(0..1)
+findAux __7: int(0..1)
+findAux __8: int(0..1)
+findAux __9: int(0..1)
+
+such that
+
+__1,
+and([SumLeq([__2, __3], 1),SumGeq([__2, __3], 1);int(1..)]),
+Reify(or([and([WatchedLiteral(y,1),__8 != 0;int(1..)]),and([WatchedLiteral(y,2),__9 != 0;int(1..)]);int(1..)]), __1),
+ReifyImply(or([and([WatchedLiteral(y,1),DivEq(f#packed_1, 2, __0);int(1..)]),and([WatchedLiteral(y,2),ModEq(f#packed_1, 2, __0);int(1..)]);int(1..)]), __1),
+__2 =aux toInt(__4),
+__3 =aux toInt(__5),
+Reify(__6 != 0, __4),
+Reify(__7 != 0, __5),
+DivEq(f#packed_1, 2, __6),
+ModEq(f#packed_1, 2, __7),
+DivEq(f#packed_1, 2, __8),
+ModEq(f#packed_1, 2, __9)
+

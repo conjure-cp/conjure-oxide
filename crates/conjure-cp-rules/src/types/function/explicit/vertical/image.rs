@@ -7,13 +7,12 @@
 //! mechanism `allDifferentExcept`-style indexing uses), then index into `values_matrix` at that
 //! position.
 //!
-//! Scoped to total functions only for now: a partial function's `image` at an undefined position
-//! is not required to mean anything in particular, and building that case correctly needs its own
-//! design (e.g. whether to fall through to `padding`, as `down`/`up` already treat it, or make the
-//! whole model infeasible) -- deferred until a concrete in-scope case needs it.
+//! A partial function is undefined at a position it does not define, so `image` there is wrapped
+//! in a bubble on that position's definedness flag: `values_matrix` holds `padding` at undefined
+//! positions, which without the bubble would quietly answer as if it were a real value.
 
 use super::super::FunctionExplicit;
-use conjure_cp::ast::{Atom, Expression as Expr, Metadata, Moo, Reference, SymbolTable};
+use conjure_cp::ast::{Atom, Expression as Expr, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
@@ -30,11 +29,6 @@ fn image_function_explicit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Some(representation) = reference.ptr().get_repr::<FunctionExplicit>() else {
         return Err(RuleNotApplicable);
     };
-    if representation.flags_matrix.is_some() {
-        // Partial function: see the module doc.
-        return Err(RuleNotApplicable);
-    }
-
     let n = representation.domain_values.len() as i32;
     let domain_value_exprs: Vec<Expr> = representation
         .domain_values
@@ -45,11 +39,16 @@ fn image_function_explicit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let domain_values_matrix = into_matrix_expr![domain_value_exprs; domain_int!(1..n)];
 
     let position = Expr::ElementId(Metadata::new(), Moo::new(domain_values_matrix), arg.clone());
-    let values_ref = Expr::from(Reference::new(representation.values_matrix.clone()));
-    Ok(RuleEffect::pure(Expr::SafeIndex(
+    let value = representation.value_expr_at(position.clone());
+
+    if representation.flags_matrix.is_none() {
+        return Ok(RuleEffect::pure(value));
+    }
+
+    Ok(RuleEffect::pure(Expr::Bubble(
         Metadata::new(),
-        Moo::new(values_ref),
-        vec![position],
+        Moo::new(value),
+        Moo::new(representation.defined_expr_at(position)),
     )))
 }
 

@@ -1,0 +1,5542 @@
+Model before rewriting:
+
+find p: permutation  of int(1..3)
+find x: int(1..3)
+
+such that
+
+x = image(p,1),
+x != 1
+
+--
+
+p
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p
+new variables:
+  find p#function_1: function (total, bijective) int(1..3) --> int(1..3) 
+  find p#function_2: function (total, bijective) int(1..3) --> int(1..3) 
+new constraints:
+  true
+  and([ image(p#function_2,image(p#function_1,i)) = i | i : int(1..3) ])
+  and([ image(p#function_1,image(p#function_2,i)) = i | i : int(1..3) ])
+
+--
+
+x = image(p,1),
+x != 1,
+true,
+and([ image(p#function_2,image(p#function_1,i)) = i | i : int(1..3) ]),
+and([ image(p#function_1,image(p#function_2,i)) = i | i : int(1..3) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x = image(p,1),
+x != 1,
+true,
+and([ image(p#function_2,image(p#function_1,i)) = i | i : int(1..3) ]),
+and([ image(p#function_1,image(p#function_2,i)) = i | i : int(1..3) ])
+new variables:
+  find p#function_1#packed_1: int(0..26)
+  find p#function_2#packed_1: int(0..26)
+new constraints:
+  sum([(p#function_1#packed_1 / 9),1;int(1..)]) != sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)])
+  sum([(p#function_1#packed_1 / 9),1;int(1..)]) != sum([p#function_1#packed_1 % 3,1;int(1..)])
+  sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]) != sum([p#function_1#packed_1 % 3,1;int(1..)])
+  or([sum([(p#function_1#packed_1 / 9),1;int(1..)]) = 1,sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]) = 1,sum([p#function_1#packed_1 % 3,1;int(1..)]) = 1;int(1..)])
+  or([sum([(p#function_1#packed_1 / 9),1;int(1..)]) = 2,sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]) = 2,sum([p#function_1#packed_1 % 3,1;int(1..)]) = 2;int(1..)])
+  or([sum([(p#function_1#packed_1 / 9),1;int(1..)]) = 3,sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]) = 3,sum([p#function_1#packed_1 % 3,1;int(1..)]) = 3;int(1..)])
+  sum([(p#function_2#packed_1 / 9),1;int(1..)]) != sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)])
+  sum([(p#function_2#packed_1 / 9),1;int(1..)]) != sum([p#function_2#packed_1 % 3,1;int(1..)])
+  sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]) != sum([p#function_2#packed_1 % 3,1;int(1..)])
+  or([sum([(p#function_2#packed_1 / 9),1;int(1..)]) = 1,sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]) = 1,sum([p#function_2#packed_1 % 3,1;int(1..)]) = 1;int(1..)])
+  or([sum([(p#function_2#packed_1 / 9),1;int(1..)]) = 2,sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]) = 2,sum([p#function_2#packed_1 % 3,1;int(1..)]) = 2;int(1..)])
+  or([sum([(p#function_2#packed_1 / 9),1;int(1..)]) = 3,sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]) = 3,sum([p#function_2#packed_1 % 3,1;int(1..)]) = 3;int(1..)])
+
+--
+
+image(p,1)
+   ~~> image_permutation_as_function ([("Base", 8500)])
+image(p#function_1,1)
+
+--
+
+p#function_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1
+
+--
+
+image(p#function_1,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__0 @ __1}
+new variables:
+  findAux __0: int(1..3)
+  findAux __1: bool
+new constraints:
+  (__1) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__1) -> (or([and([1 = 1,__0 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__0 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__0 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+x = {__0 @ __1}
+   ~~> bubble_up ([("Bubble", 8800)])
+{x = __0 @ __1}
+
+--
+
+{x = __0 @ __1}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([x = __0,__1;int(1..)])
+
+--
+
+or([and([__0 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+and([__0 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__0 = sum([(p#function_1#packed_1 / 9),1;int(1..)])
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+__0 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __2], __0),SumGeq([1, __2], __0);int(1..)])
+new variables:
+  findAux __2: int(0..2)
+new constraints:
+  __2 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __3], 1),SumGeq([1, __3], 1);int(1..)])
+new variables:
+  findAux __3: int(0..2)
+new constraints:
+  __3 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __4], 1),SumGeq([1, __4], 1);int(1..)])
+new variables:
+  findAux __4: int(0..2)
+new constraints:
+  __4 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+sum([SafeMod(p#function_1#packed_1,3),1;int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __5], 1),SumGeq([1, __5], 1);int(1..)])
+new variables:
+  findAux __5: int(0..2)
+new constraints:
+  __5 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __6], 2),SumGeq([1, __6], 2);int(1..)])
+new variables:
+  findAux __6: int(0..2)
+new constraints:
+  __6 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __7], 2),SumGeq([1, __7], 2);int(1..)])
+new variables:
+  findAux __7: int(0..2)
+new constraints:
+  __7 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+sum([SafeMod(p#function_1#packed_1,3),1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __8], 2),SumGeq([1, __8], 2);int(1..)])
+new variables:
+  findAux __8: int(0..2)
+new constraints:
+  __8 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)]) = 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __9], 3),SumGeq([1, __9], 3);int(1..)])
+new variables:
+  findAux __9: int(0..2)
+new constraints:
+  __9 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)]) = 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __10], 3),SumGeq([1, __10], 3);int(1..)])
+new variables:
+  findAux __10: int(0..2)
+new constraints:
+  __10 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+sum([SafeMod(p#function_1#packed_1,3),1;int(1..)]) = 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __11], 3),SumGeq([1, __11], 3);int(1..)])
+new variables:
+  findAux __11: int(0..2)
+new constraints:
+  __11 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __12], 1),SumGeq([1, __12], 1);int(1..)])
+new variables:
+  findAux __12: int(0..2)
+new constraints:
+  __12 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __13], 1),SumGeq([1, __13], 1);int(1..)])
+new variables:
+  findAux __13: int(0..2)
+new constraints:
+  __13 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+sum([SafeMod(p#function_2#packed_1,3),1;int(1..)]) = 1
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __14], 1),SumGeq([1, __14], 1);int(1..)])
+new variables:
+  findAux __14: int(0..2)
+new constraints:
+  __14 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __15], 2),SumGeq([1, __15], 2);int(1..)])
+new variables:
+  findAux __15: int(0..2)
+new constraints:
+  __15 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __16], 2),SumGeq([1, __16], 2);int(1..)])
+new variables:
+  findAux __16: int(0..2)
+new constraints:
+  __16 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+sum([SafeMod(p#function_2#packed_1,3),1;int(1..)]) = 2
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __17], 2),SumGeq([1, __17], 2);int(1..)])
+new variables:
+  findAux __17: int(0..2)
+new constraints:
+  __17 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)]) = 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __18], 3),SumGeq([1, __18], 3);int(1..)])
+new variables:
+  findAux __18: int(0..2)
+new constraints:
+  __18 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)]) = 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __19], 3),SumGeq([1, __19], 3);int(1..)])
+new variables:
+  findAux __19: int(0..2)
+new constraints:
+  __19 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+sum([SafeMod(p#function_2#packed_1,3),1;int(1..)]) = 3
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __20], 3),SumGeq([1, __20], 3);int(1..)])
+new variables:
+  findAux __20: int(0..2)
+new constraints:
+  __20 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+(__1) -> (and([SumLeq([1, __2], __0),SumGeq([1, __2], __0);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __2], __0),SumGeq([1, __2], __0);int(1..)]), __1)
+
+--
+
+__3 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __3)
+
+--
+
+__5 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __5)
+
+--
+
+__6 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __6)
+
+--
+
+__8 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __8)
+
+--
+
+__9 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __9)
+
+--
+
+__11 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __11)
+
+--
+
+__12 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __12)
+
+--
+
+__14 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __14)
+
+--
+
+__15 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __15)
+
+--
+
+__17 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __17)
+
+--
+
+__18 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __18)
+
+--
+
+__20 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __20)
+
+--
+
+__2 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __2)
+
+--
+
+sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)]) != sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> flatten_generic ([("Minion", 4200)])
+__21 != __22
+new variables:
+  findAux __21: int(1..3)
+  findAux __22: int(1..3)
+new constraints:
+  __21 =aux sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+  __22 =aux sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+
+--
+
+__21 =aux sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __23], __21),SumGeq([1, __23], __21);int(1..)])
+new variables:
+  findAux __23: int(0..2)
+new constraints:
+  __23 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+__22 =aux sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __24], __22),SumGeq([1, __24], __22);int(1..)])
+new variables:
+  findAux __24: int(0..2)
+new constraints:
+  __24 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)]) != sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> flatten_generic ([("Minion", 4200)])
+__25 != __26
+new variables:
+  findAux __25: int(1..3)
+  findAux __26: int(1..3)
+new constraints:
+  __25 =aux sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+  __26 =aux sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+
+--
+
+__25 =aux sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __27], __25),SumGeq([1, __27], __25);int(1..)])
+new variables:
+  findAux __27: int(0..2)
+new constraints:
+  __27 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+__26 =aux sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __28], __26),SumGeq([1, __28], __26);int(1..)])
+new variables:
+  findAux __28: int(0..2)
+new constraints:
+  __28 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)]) != sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> flatten_generic ([("Minion", 4200)])
+__29 != __30
+new variables:
+  findAux __29: int(1..3)
+  findAux __30: int(1..3)
+new constraints:
+  __29 =aux sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+  __30 =aux sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+
+--
+
+__29 =aux sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __31], __29),SumGeq([1, __31], __29);int(1..)])
+new variables:
+  findAux __31: int(0..2)
+new constraints:
+  __31 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+__30 =aux sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __32], __30),SumGeq([1, __32], __30);int(1..)])
+new variables:
+  findAux __32: int(0..2)
+new constraints:
+  __32 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)]) != sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> flatten_generic ([("Minion", 4200)])
+__33 != __34
+new variables:
+  findAux __33: int(1..3)
+  findAux __34: int(1..3)
+new constraints:
+  __33 =aux sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+  __34 =aux sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+
+--
+
+__33 =aux sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __35], __33),SumGeq([1, __35], __33);int(1..)])
+new variables:
+  findAux __35: int(0..2)
+new constraints:
+  __35 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+__34 =aux sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __36], __34),SumGeq([1, __36], __34);int(1..)])
+new variables:
+  findAux __36: int(0..2)
+new constraints:
+  __36 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)]) != sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> flatten_generic ([("Minion", 4200)])
+__37 != __38
+new variables:
+  findAux __37: int(1..3)
+  findAux __38: int(1..3)
+new constraints:
+  __37 =aux sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+  __38 =aux sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+
+--
+
+__37 =aux sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __39], __37),SumGeq([1, __39], __37);int(1..)])
+new variables:
+  findAux __39: int(0..2)
+new constraints:
+  __39 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+__38 =aux sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __40], __38),SumGeq([1, __40], __38);int(1..)])
+new variables:
+  findAux __40: int(0..2)
+new constraints:
+  __40 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)]) != sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> flatten_generic ([("Minion", 4200)])
+__41 != __42
+new variables:
+  findAux __41: int(1..3)
+  findAux __42: int(1..3)
+new constraints:
+  __41 =aux sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+  __42 =aux sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+
+--
+
+__41 =aux sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __43], __41),SumGeq([1, __43], __41);int(1..)])
+new variables:
+  findAux __43: int(0..2)
+new constraints:
+  __43 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+__42 =aux sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __44], __42),SumGeq([1, __44], __42);int(1..)])
+new variables:
+  findAux __44: int(0..2)
+new constraints:
+  __44 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+__23 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __23)
+
+--
+
+__28 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __28)
+
+--
+
+__27 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __27)
+
+--
+
+__32 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __32)
+
+--
+
+__35 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __35)
+
+--
+
+__40 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __40)
+
+--
+
+__39 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __39)
+
+--
+
+__44 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __44)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__45,3)
+new variables:
+  findAux __45: int(0..8)
+new constraints:
+  __45 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__4 =aux SafeMod(__45,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__45, 3, __4)
+
+--
+
+__45 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __45)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__46,3)
+new variables:
+  findAux __46: int(0..8)
+new constraints:
+  __46 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__7 =aux SafeMod(__46,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__46, 3, __7)
+
+--
+
+__46 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __46)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__47,3)
+new variables:
+  findAux __47: int(0..8)
+new constraints:
+  __47 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__10 =aux SafeMod(__47,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__47, 3, __10)
+
+--
+
+__47 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __47)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__48,3)
+new variables:
+  findAux __48: int(0..8)
+new constraints:
+  __48 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__13 =aux SafeMod(__48,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__48, 3, __13)
+
+--
+
+__48 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __48)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__49,3)
+new variables:
+  findAux __49: int(0..8)
+new constraints:
+  __49 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__16 =aux SafeMod(__49,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__49, 3, __16)
+
+--
+
+__49 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __49)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__50,3)
+new variables:
+  findAux __50: int(0..8)
+new constraints:
+  __50 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__19 =aux SafeMod(__50,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__50, 3, __19)
+
+--
+
+__50 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __50)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__51,3)
+new variables:
+  findAux __51: int(0..8)
+new constraints:
+  __51 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__24 =aux SafeMod(__51,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__51, 3, __24)
+
+--
+
+__51 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __51)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__52,3)
+new variables:
+  findAux __52: int(0..8)
+new constraints:
+  __52 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__31 =aux SafeMod(__52,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__52, 3, __31)
+
+--
+
+__52 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __52)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__53,3)
+new variables:
+  findAux __53: int(0..8)
+new constraints:
+  __53 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__36 =aux SafeMod(__53,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__53, 3, __36)
+
+--
+
+__53 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __53)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__54,3)
+new variables:
+  findAux __54: int(0..8)
+new constraints:
+  __54 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__43 =aux SafeMod(__54,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__54, 3, __43)
+
+--
+
+__54 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __54)
+
+--
+
+[ image(p#function_2,image(p#function_1,i)) = i | i : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[image(p#function_2,image(p#function_1,1)) = 1,image(p#function_2,image(p#function_1,2)) = 2,image(p#function_2,image(p#function_1,3)) = 3;int(1..)]
+
+--
+
+p#function_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2
+
+--
+
+p#function_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2
+
+--
+
+p#function_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2
+
+--
+
+p#function_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1
+
+--
+
+p#function_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1
+
+--
+
+p#function_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1
+
+--
+
+image(p#function_2,image(p#function_1,1))
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__55 @ __56}
+new variables:
+  findAux __55: int(1..3)
+  findAux __56: bool
+new constraints:
+  (__56) <-> (or([and([image(p#function_1,1) = 1,true;int(1..)]),and([image(p#function_1,1) = 2,true;int(1..)]),and([image(p#function_1,1) = 3,true;int(1..)]);int(1..)]))
+  (__56) -> (or([and([image(p#function_1,1) = 1,__55 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([image(p#function_1,1) = 2,__55 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([image(p#function_1,1) = 3,__55 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,image(p#function_1,2))
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__57 @ __58}
+new variables:
+  findAux __57: int(1..3)
+  findAux __58: bool
+new constraints:
+  (__58) <-> (or([and([image(p#function_1,2) = 1,true;int(1..)]),and([image(p#function_1,2) = 2,true;int(1..)]),and([image(p#function_1,2) = 3,true;int(1..)]);int(1..)]))
+  (__58) -> (or([and([image(p#function_1,2) = 1,__57 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([image(p#function_1,2) = 2,__57 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([image(p#function_1,2) = 3,__57 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,image(p#function_1,3))
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__59 @ __60}
+new variables:
+  findAux __59: int(1..3)
+  findAux __60: bool
+new constraints:
+  (__60) <-> (or([and([image(p#function_1,3) = 1,true;int(1..)]),and([image(p#function_1,3) = 2,true;int(1..)]),and([image(p#function_1,3) = 3,true;int(1..)]);int(1..)]))
+  (__60) -> (or([and([image(p#function_1,3) = 1,__59 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([image(p#function_1,3) = 2,__59 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([image(p#function_1,3) = 3,__59 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__61 @ __62}
+new variables:
+  findAux __61: int(1..3)
+  findAux __62: bool
+new constraints:
+  (__62) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__62) -> (or([and([1 = 1,__61 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__61 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__61 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__63 @ __64}
+new variables:
+  findAux __63: int(1..3)
+  findAux __64: bool
+new constraints:
+  (__64) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__64) -> (or([and([1 = 1,__63 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__63 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__63 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__65 @ __66}
+new variables:
+  findAux __65: int(1..3)
+  findAux __66: bool
+new constraints:
+  (__66) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__66) -> (or([and([1 = 1,__65 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__65 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__65 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__67 @ __68}
+new variables:
+  findAux __67: int(1..3)
+  findAux __68: bool
+new constraints:
+  (__68) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__68) -> (or([and([1 = 1,__67 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__67 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__67 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__69 @ __70}
+new variables:
+  findAux __69: int(1..3)
+  findAux __70: bool
+new constraints:
+  (__70) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__70) -> (or([and([1 = 1,__69 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__69 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__69 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__71 @ __72}
+new variables:
+  findAux __71: int(1..3)
+  findAux __72: bool
+new constraints:
+  (__72) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__72) -> (or([and([1 = 1,__71 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__71 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__71 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__73 @ __74}
+new variables:
+  findAux __73: int(1..3)
+  findAux __74: bool
+new constraints:
+  (__74) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__74) -> (or([and([2 = 1,__73 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__73 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__73 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__75 @ __76}
+new variables:
+  findAux __75: int(1..3)
+  findAux __76: bool
+new constraints:
+  (__76) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__76) -> (or([and([2 = 1,__75 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__75 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__75 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__77 @ __78}
+new variables:
+  findAux __77: int(1..3)
+  findAux __78: bool
+new constraints:
+  (__78) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__78) -> (or([and([2 = 1,__77 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__77 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__77 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__79 @ __80}
+new variables:
+  findAux __79: int(1..3)
+  findAux __80: bool
+new constraints:
+  (__80) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__80) -> (or([and([2 = 1,__79 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__79 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__79 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__81 @ __82}
+new variables:
+  findAux __81: int(1..3)
+  findAux __82: bool
+new constraints:
+  (__82) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__82) -> (or([and([2 = 1,__81 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__81 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__81 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__83 @ __84}
+new variables:
+  findAux __83: int(1..3)
+  findAux __84: bool
+new constraints:
+  (__84) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__84) -> (or([and([2 = 1,__83 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__83 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__83 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__85 @ __86}
+new variables:
+  findAux __85: int(1..3)
+  findAux __86: bool
+new constraints:
+  (__86) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__86) -> (or([and([3 = 1,__85 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__85 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__85 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__87 @ __88}
+new variables:
+  findAux __87: int(1..3)
+  findAux __88: bool
+new constraints:
+  (__88) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__88) -> (or([and([3 = 1,__87 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__87 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__87 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__89 @ __90}
+new variables:
+  findAux __89: int(1..3)
+  findAux __90: bool
+new constraints:
+  (__90) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__90) -> (or([and([3 = 1,__89 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__89 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__89 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__91 @ __92}
+new variables:
+  findAux __91: int(1..3)
+  findAux __92: bool
+new constraints:
+  (__92) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__92) -> (or([and([3 = 1,__91 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__91 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__91 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__93 @ __94}
+new variables:
+  findAux __93: int(1..3)
+  findAux __94: bool
+new constraints:
+  (__94) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__94) -> (or([and([3 = 1,__93 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__93 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__93 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__95 @ __96}
+new variables:
+  findAux __95: int(1..3)
+  findAux __96: bool
+new constraints:
+  (__96) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__96) -> (or([and([3 = 1,__95 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__95 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__95 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+or([and([__63 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__63 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__65 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__65 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__67 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__67 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__69 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__69 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__71 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__71 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__73 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__73 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__75 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__75 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__77 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__77 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__79 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__79 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__81 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__81 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__83 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__83 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__85 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__85 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__87 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__87 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__89 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__89 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__91 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__91 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__93 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__93 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__95 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__95 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__61 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__61 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+and([__63 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__63 = sum([(p#function_1#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__65 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__65 = sum([(p#function_1#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__67 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__67 = sum([(p#function_1#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__69 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__69 = sum([(p#function_1#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__71 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__71 = sum([(p#function_1#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__73 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__73 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__75 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__75 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__77 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__77 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__79 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__79 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__81 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__81 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__83 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__83 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__85 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__85 = sum([p#function_1#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__87 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__87 = sum([p#function_1#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__89 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__89 = sum([p#function_1#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__91 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__91 = sum([p#function_1#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__93 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__93 = sum([p#function_1#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__95 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__95 = sum([p#function_1#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__61 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__61 = sum([(p#function_1#packed_1 / 9),1;int(1..)])
+
+--
+
+{__55 @ __56} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__55 = 1 @ __56}
+
+--
+
+{__55 = 1 @ __56}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__55 = 1,__56;int(1..)])
+
+--
+
+and([and([__55 = 1,__56;int(1..)]),{__57 @ __58} = 2,{__59 @ __60} = 3;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__55 = 1,__56,{__57 @ __58} = 2,{__59 @ __60} = 3;int(1..)])
+
+--
+
+{__57 @ __58} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__57 = 2 @ __58}
+
+--
+
+{__57 = 2 @ __58}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__57 = 2,__58;int(1..)])
+
+--
+
+and([__55 = 1,__56,and([__57 = 2,__58;int(1..)]),{__59 @ __60} = 3;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__55 = 1,__56,__57 = 2,__58,{__59 @ __60} = 3;int(1..)])
+
+--
+
+{__59 @ __60} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__59 = 3 @ __60}
+
+--
+
+{__59 = 3 @ __60}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__59 = 3,__60;int(1..)])
+
+--
+
+and([__55 = 1,__56,__57 = 2,__58,and([__59 = 3,__60;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__55 = 1,__56,__57 = 2,__58,__59 = 3,__60;int(1..)])
+
+--
+
+and([{__61 @ __62} = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__61 @ __62} = 1
+
+--
+
+and([{__63 @ __64} = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__63 @ __64} = 2
+
+--
+
+and([{__65 @ __66} = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__65 @ __66} = 3
+
+--
+
+and([{__73 @ __74} = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__73 @ __74} = 1
+
+--
+
+and([{__75 @ __76} = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__75 @ __76} = 2
+
+--
+
+and([{__77 @ __78} = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__77 @ __78} = 3
+
+--
+
+and([{__85 @ __86} = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__85 @ __86} = 1
+
+--
+
+and([{__87 @ __88} = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__87 @ __88} = 2
+
+--
+
+and([{__89 @ __90} = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__89 @ __90} = 3
+
+--
+
+{__61 @ __62} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__61 = 1 @ __62}
+
+--
+
+{__61 = 1 @ __62}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__61 = 1,__62;int(1..)])
+
+--
+
+{__65 @ __66} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__65 = 3 @ __66}
+
+--
+
+{__65 = 3 @ __66}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__65 = 3,__66;int(1..)])
+
+--
+
+{__75 @ __76} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__75 = 2 @ __76}
+
+--
+
+{__75 = 2 @ __76}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__75 = 2,__76;int(1..)])
+
+--
+
+{__85 @ __86} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__85 = 1 @ __86}
+
+--
+
+{__85 = 1 @ __86}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__85 = 1,__86;int(1..)])
+
+--
+
+{__89 @ __90} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__89 = 3 @ __90}
+
+--
+
+{__89 = 3 @ __90}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__89 = 3,__90;int(1..)])
+
+--
+
+{__63 @ __64} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__63 = 2 @ __64}
+
+--
+
+{__63 = 2 @ __64}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__63 = 2,__64;int(1..)])
+
+--
+
+{__73 @ __74} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__73 = 1 @ __74}
+
+--
+
+{__73 = 1 @ __74}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__73 = 1,__74;int(1..)])
+
+--
+
+{__77 @ __78} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__77 = 3 @ __78}
+
+--
+
+{__77 = 3 @ __78}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__77 = 3,__78;int(1..)])
+
+--
+
+{__87 @ __88} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__87 = 2 @ __88}
+
+--
+
+{__87 = 2 @ __88}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__87 = 2,__88;int(1..)])
+
+--
+
+{__67 @ __68} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__67 = 1 @ __68}
+
+--
+
+{__67 = 1 @ __68}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__67 = 1,__68;int(1..)])
+
+--
+
+and([and([__67 = 1,__68;int(1..)]),__55 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__67 = 1,__68,__55 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+{__69 @ __70} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__69 = 2 @ __70}
+
+--
+
+{__69 = 2 @ __70}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__69 = 2,__70;int(1..)])
+
+--
+
+and([and([__69 = 2,__70;int(1..)]),__55 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__69 = 2,__70,__55 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__71 @ __72} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__71 = 3 @ __72}
+
+--
+
+{__71 = 3 @ __72}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__71 = 3,__72;int(1..)])
+
+--
+
+and([and([__71 = 3,__72;int(1..)]),__55 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__71 = 3,__72,__55 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__79 @ __80} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__79 = 1 @ __80}
+
+--
+
+{__79 = 1 @ __80}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__79 = 1,__80;int(1..)])
+
+--
+
+and([and([__79 = 1,__80;int(1..)]),__57 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__79 = 1,__80,__57 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+{__81 @ __82} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__81 = 2 @ __82}
+
+--
+
+{__81 = 2 @ __82}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__81 = 2,__82;int(1..)])
+
+--
+
+and([and([__81 = 2,__82;int(1..)]),__57 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__81 = 2,__82,__57 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__83 @ __84} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__83 = 3 @ __84}
+
+--
+
+{__83 = 3 @ __84}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__83 = 3,__84;int(1..)])
+
+--
+
+and([and([__83 = 3,__84;int(1..)]),__57 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__83 = 3,__84,__57 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__91 @ __92} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__91 = 1 @ __92}
+
+--
+
+{__91 = 1 @ __92}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__91 = 1,__92;int(1..)])
+
+--
+
+and([and([__91 = 1,__92;int(1..)]),__59 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__91 = 1,__92,__59 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+{__93 @ __94} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__93 = 2 @ __94}
+
+--
+
+{__93 = 2 @ __94}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__93 = 2,__94;int(1..)])
+
+--
+
+and([and([__93 = 2,__94;int(1..)]),__59 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__93 = 2,__94,__59 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__95 @ __96} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__95 = 3 @ __96}
+
+--
+
+{__95 = 3 @ __96}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__95 = 3,__96;int(1..)])
+
+--
+
+and([and([__95 = 3,__96;int(1..)]),__59 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__95 = 3,__96,__59 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+__63 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __97], __63),SumGeq([1, __97], __63);int(1..)])
+new variables:
+  findAux __97: int(0..2)
+new constraints:
+  __97 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+__65 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __98], __65),SumGeq([1, __98], __65);int(1..)])
+new variables:
+  findAux __98: int(0..2)
+new constraints:
+  __98 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+__67 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __99], __67),SumGeq([1, __99], __67);int(1..)])
+new variables:
+  findAux __99: int(0..2)
+new constraints:
+  __99 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+__69 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __100], __69),SumGeq([1, __100], __69);int(1..)])
+new variables:
+  findAux __100: int(0..2)
+new constraints:
+  __100 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+__71 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __101], __71),SumGeq([1, __101], __71);int(1..)])
+new variables:
+  findAux __101: int(0..2)
+new constraints:
+  __101 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+__85 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __102], __85),SumGeq([1, __102], __85);int(1..)])
+new variables:
+  findAux __102: int(0..2)
+new constraints:
+  __102 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+__87 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __103], __87),SumGeq([1, __103], __87);int(1..)])
+new variables:
+  findAux __103: int(0..2)
+new constraints:
+  __103 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+__89 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __104], __89),SumGeq([1, __104], __89);int(1..)])
+new variables:
+  findAux __104: int(0..2)
+new constraints:
+  __104 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+__91 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __105], __91),SumGeq([1, __105], __91);int(1..)])
+new variables:
+  findAux __105: int(0..2)
+new constraints:
+  __105 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+__93 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __106], __93),SumGeq([1, __106], __93);int(1..)])
+new variables:
+  findAux __106: int(0..2)
+new constraints:
+  __106 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+__95 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __107], __95),SumGeq([1, __107], __95);int(1..)])
+new variables:
+  findAux __107: int(0..2)
+new constraints:
+  __107 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+__61 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __108], __61),SumGeq([1, __108], __61);int(1..)])
+new variables:
+  findAux __108: int(0..2)
+new constraints:
+  __108 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+__73 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __109], __73),SumGeq([1, __109], __73);int(1..)])
+new variables:
+  findAux __109: int(0..2)
+new constraints:
+  __109 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+__75 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __110], __75),SumGeq([1, __110], __75);int(1..)])
+new variables:
+  findAux __110: int(0..2)
+new constraints:
+  __110 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+__77 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __111], __77),SumGeq([1, __111], __77);int(1..)])
+new variables:
+  findAux __111: int(0..2)
+new constraints:
+  __111 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+__79 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __112], __79),SumGeq([1, __112], __79);int(1..)])
+new variables:
+  findAux __112: int(0..2)
+new constraints:
+  __112 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+__81 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __113], __81),SumGeq([1, __113], __81);int(1..)])
+new variables:
+  findAux __113: int(0..2)
+new constraints:
+  __113 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+__83 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __114], __83),SumGeq([1, __114], __83);int(1..)])
+new variables:
+  findAux __114: int(0..2)
+new constraints:
+  __114 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+__55 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __115], __55),SumGeq([1, __115], __55);int(1..)])
+new variables:
+  findAux __115: int(0..2)
+new constraints:
+  __115 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+and([__67 = 1,__68,and([SumLeq([1, __115], __55),SumGeq([1, __115], __55);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__67 = 1,__68,SumLeq([1, __115], __55),SumGeq([1, __115], __55);int(1..)])
+
+--
+
+__55 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __116], __55),SumGeq([1, __116], __55);int(1..)])
+new variables:
+  findAux __116: int(0..2)
+new constraints:
+  __116 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+and([__71 = 3,__72,and([SumLeq([1, __116], __55),SumGeq([1, __116], __55);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__71 = 3,__72,SumLeq([1, __116], __55),SumGeq([1, __116], __55);int(1..)])
+
+--
+
+__57 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __117], __57),SumGeq([1, __117], __57);int(1..)])
+new variables:
+  findAux __117: int(0..2)
+new constraints:
+  __117 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+and([__79 = 1,__80,and([SumLeq([1, __117], __57),SumGeq([1, __117], __57);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__79 = 1,__80,SumLeq([1, __117], __57),SumGeq([1, __117], __57);int(1..)])
+
+--
+
+__57 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __118], __57),SumGeq([1, __118], __57);int(1..)])
+new variables:
+  findAux __118: int(0..2)
+new constraints:
+  __118 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+and([__83 = 3,__84,and([SumLeq([1, __118], __57),SumGeq([1, __118], __57);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__83 = 3,__84,SumLeq([1, __118], __57),SumGeq([1, __118], __57);int(1..)])
+
+--
+
+__59 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __119], __59),SumGeq([1, __119], __59);int(1..)])
+new variables:
+  findAux __119: int(0..2)
+new constraints:
+  __119 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+and([__91 = 1,__92,and([SumLeq([1, __119], __59),SumGeq([1, __119], __59);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__91 = 1,__92,SumLeq([1, __119], __59),SumGeq([1, __119], __59);int(1..)])
+
+--
+
+__59 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __120], __59),SumGeq([1, __120], __59);int(1..)])
+new variables:
+  findAux __120: int(0..2)
+new constraints:
+  __120 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+and([__95 = 3,__96,and([SumLeq([1, __120], __59),SumGeq([1, __120], __59);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__95 = 3,__96,SumLeq([1, __120], __59),SumGeq([1, __120], __59);int(1..)])
+
+--
+
+__55 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __121], __55),SumGeq([1, __121], __55);int(1..)])
+new variables:
+  findAux __121: int(0..2)
+new constraints:
+  __121 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+and([__69 = 2,__70,and([SumLeq([1, __121], __55),SumGeq([1, __121], __55);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__69 = 2,__70,SumLeq([1, __121], __55),SumGeq([1, __121], __55);int(1..)])
+
+--
+
+__57 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __122], __57),SumGeq([1, __122], __57);int(1..)])
+new variables:
+  findAux __122: int(0..2)
+new constraints:
+  __122 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+and([__81 = 2,__82,and([SumLeq([1, __122], __57),SumGeq([1, __122], __57);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__81 = 2,__82,SumLeq([1, __122], __57),SumGeq([1, __122], __57);int(1..)])
+
+--
+
+__59 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __123], __59),SumGeq([1, __123], __59);int(1..)])
+new variables:
+  findAux __123: int(0..2)
+new constraints:
+  __123 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+and([__93 = 2,__94,and([SumLeq([1, __123], __59),SumGeq([1, __123], __59);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__93 = 2,__94,SumLeq([1, __123], __59),SumGeq([1, __123], __59);int(1..)])
+
+--
+
+(__56) <-> (or([and([__61 = 1,__62;int(1..)]),and([__63 = 2,__64;int(1..)]),and([__65 = 3,__66;int(1..)]);int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(or([and([__61 = 1,__62;int(1..)]),and([__63 = 2,__64;int(1..)]),and([__65 = 3,__66;int(1..)]);int(1..)]), __56)
+
+--
+
+(__58) <-> (or([and([__73 = 1,__74;int(1..)]),and([__75 = 2,__76;int(1..)]),and([__77 = 3,__78;int(1..)]);int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(or([and([__73 = 1,__74;int(1..)]),and([__75 = 2,__76;int(1..)]),and([__77 = 3,__78;int(1..)]);int(1..)]), __58)
+
+--
+
+(__60) <-> (or([and([__85 = 1,__86;int(1..)]),and([__87 = 2,__88;int(1..)]),and([__89 = 3,__90;int(1..)]);int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(or([and([__85 = 1,__86;int(1..)]),and([__87 = 2,__88;int(1..)]),and([__89 = 3,__90;int(1..)]);int(1..)]), __60)
+
+--
+
+(__66) -> (and([SumLeq([1, __98], __65),SumGeq([1, __98], __65);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __98], __65),SumGeq([1, __98], __65);int(1..)]), __66)
+
+--
+
+(__68) -> (and([SumLeq([1, __99], __67),SumGeq([1, __99], __67);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __99], __67),SumGeq([1, __99], __67);int(1..)]), __68)
+
+--
+
+(__70) -> (and([SumLeq([1, __100], __69),SumGeq([1, __100], __69);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __100], __69),SumGeq([1, __100], __69);int(1..)]), __70)
+
+--
+
+(__72) -> (and([SumLeq([1, __101], __71),SumGeq([1, __101], __71);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __101], __71),SumGeq([1, __101], __71);int(1..)]), __72)
+
+--
+
+(__86) -> (and([SumLeq([1, __102], __85),SumGeq([1, __102], __85);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __102], __85),SumGeq([1, __102], __85);int(1..)]), __86)
+
+--
+
+(__88) -> (and([SumLeq([1, __103], __87),SumGeq([1, __103], __87);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __103], __87),SumGeq([1, __103], __87);int(1..)]), __88)
+
+--
+
+(__90) -> (and([SumLeq([1, __104], __89),SumGeq([1, __104], __89);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __104], __89),SumGeq([1, __104], __89);int(1..)]), __90)
+
+--
+
+(__92) -> (and([SumLeq([1, __105], __91),SumGeq([1, __105], __91);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __105], __91),SumGeq([1, __105], __91);int(1..)]), __92)
+
+--
+
+(__94) -> (and([SumLeq([1, __106], __93),SumGeq([1, __106], __93);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __106], __93),SumGeq([1, __106], __93);int(1..)]), __94)
+
+--
+
+(__96) -> (and([SumLeq([1, __107], __95),SumGeq([1, __107], __95);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __107], __95),SumGeq([1, __107], __95);int(1..)]), __96)
+
+--
+
+(__62) -> (and([SumLeq([1, __108], __61),SumGeq([1, __108], __61);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __108], __61),SumGeq([1, __108], __61);int(1..)]), __62)
+
+--
+
+(__64) -> (and([SumLeq([1, __97], __63),SumGeq([1, __97], __63);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __97], __63),SumGeq([1, __97], __63);int(1..)]), __64)
+
+--
+
+(__74) -> (and([SumLeq([1, __109], __73),SumGeq([1, __109], __73);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __109], __73),SumGeq([1, __109], __73);int(1..)]), __74)
+
+--
+
+(__76) -> (and([SumLeq([1, __110], __75),SumGeq([1, __110], __75);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __110], __75),SumGeq([1, __110], __75);int(1..)]), __76)
+
+--
+
+(__78) -> (and([SumLeq([1, __111], __77),SumGeq([1, __111], __77);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __111], __77),SumGeq([1, __111], __77);int(1..)]), __78)
+
+--
+
+(__80) -> (and([SumLeq([1, __112], __79),SumGeq([1, __112], __79);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __112], __79),SumGeq([1, __112], __79);int(1..)]), __80)
+
+--
+
+(__82) -> (and([SumLeq([1, __113], __81),SumGeq([1, __113], __81);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __113], __81),SumGeq([1, __113], __81);int(1..)]), __82)
+
+--
+
+(__84) -> (and([SumLeq([1, __114], __83),SumGeq([1, __114], __83);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __114], __83),SumGeq([1, __114], __83);int(1..)]), __84)
+
+--
+
+(__56) -> (or([and([__67 = 1,__68,SumLeq([1, __115], __55),SumGeq([1, __115], __55);int(1..)]),and([__69 = 2,__70,SumLeq([1, __121], __55),SumGeq([1, __121], __55);int(1..)]),and([__71 = 3,__72,SumLeq([1, __116], __55),SumGeq([1, __116], __55);int(1..)]);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([and([__67 = 1,__68,SumLeq([1, __115], __55),SumGeq([1, __115], __55);int(1..)]),and([__69 = 2,__70,SumLeq([1, __121], __55),SumGeq([1, __121], __55);int(1..)]),and([__71 = 3,__72,SumLeq([1, __116], __55),SumGeq([1, __116], __55);int(1..)]);int(1..)]), __56)
+
+--
+
+(__58) -> (or([and([__79 = 1,__80,SumLeq([1, __117], __57),SumGeq([1, __117], __57);int(1..)]),and([__81 = 2,__82,SumLeq([1, __122], __57),SumGeq([1, __122], __57);int(1..)]),and([__83 = 3,__84,SumLeq([1, __118], __57),SumGeq([1, __118], __57);int(1..)]);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([and([__79 = 1,__80,SumLeq([1, __117], __57),SumGeq([1, __117], __57);int(1..)]),and([__81 = 2,__82,SumLeq([1, __122], __57),SumGeq([1, __122], __57);int(1..)]),and([__83 = 3,__84,SumLeq([1, __118], __57),SumGeq([1, __118], __57);int(1..)]);int(1..)]), __58)
+
+--
+
+(__60) -> (or([and([__91 = 1,__92,SumLeq([1, __119], __59),SumGeq([1, __119], __59);int(1..)]),and([__93 = 2,__94,SumLeq([1, __123], __59),SumGeq([1, __123], __59);int(1..)]),and([__95 = 3,__96,SumLeq([1, __120], __59),SumGeq([1, __120], __59);int(1..)]);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([and([__91 = 1,__92,SumLeq([1, __119], __59),SumGeq([1, __119], __59);int(1..)]),and([__93 = 2,__94,SumLeq([1, __123], __59),SumGeq([1, __123], __59);int(1..)]),and([__95 = 3,__96,SumLeq([1, __120], __59),SumGeq([1, __120], __59);int(1..)]);int(1..)]), __60)
+
+--
+
+__55 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__55,1)
+
+--
+
+__57 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__57,2)
+
+--
+
+__59 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__59,3)
+
+--
+
+__61 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__61,1)
+
+--
+
+__63 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__63,2)
+
+--
+
+__65 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__65,3)
+
+--
+
+__73 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__73,1)
+
+--
+
+__75 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__75,2)
+
+--
+
+__77 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__77,3)
+
+--
+
+__85 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__85,1)
+
+--
+
+__87 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__87,2)
+
+--
+
+__89 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__89,3)
+
+--
+
+__67 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__67,1)
+
+--
+
+__69 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__69,2)
+
+--
+
+__71 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__71,3)
+
+--
+
+__79 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__79,1)
+
+--
+
+__81 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__81,2)
+
+--
+
+__83 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__83,3)
+
+--
+
+__91 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__91,1)
+
+--
+
+__93 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__93,2)
+
+--
+
+__95 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__95,3)
+
+--
+
+__98 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __98)
+
+--
+
+__99 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __99)
+
+--
+
+__100 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __100)
+
+--
+
+__101 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __101)
+
+--
+
+__102 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __102)
+
+--
+
+__103 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __103)
+
+--
+
+__104 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __104)
+
+--
+
+__105 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __105)
+
+--
+
+__106 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __106)
+
+--
+
+__107 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __107)
+
+--
+
+__108 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __108)
+
+--
+
+__115 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __115)
+
+--
+
+__116 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __116)
+
+--
+
+__117 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __117)
+
+--
+
+__118 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __118)
+
+--
+
+__119 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __119)
+
+--
+
+__120 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __120)
+
+--
+
+__97 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __97)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__124,3)
+new variables:
+  findAux __124: int(0..8)
+new constraints:
+  __124 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__109 =aux SafeMod(__124,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__124, 3, __109)
+
+--
+
+__124 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __124)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__125,3)
+new variables:
+  findAux __125: int(0..8)
+new constraints:
+  __125 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__110 =aux SafeMod(__125,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__125, 3, __110)
+
+--
+
+__125 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __125)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__126,3)
+new variables:
+  findAux __126: int(0..8)
+new constraints:
+  __126 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__111 =aux SafeMod(__126,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__126, 3, __111)
+
+--
+
+__126 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __126)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__127,3)
+new variables:
+  findAux __127: int(0..8)
+new constraints:
+  __127 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__112 =aux SafeMod(__127,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__127, 3, __112)
+
+--
+
+__127 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __127)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__128,3)
+new variables:
+  findAux __128: int(0..8)
+new constraints:
+  __128 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__113 =aux SafeMod(__128,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__128, 3, __113)
+
+--
+
+__128 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __128)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__129,3)
+new variables:
+  findAux __129: int(0..8)
+new constraints:
+  __129 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__114 =aux SafeMod(__129,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__129, 3, __114)
+
+--
+
+__129 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __129)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__130,3)
+new variables:
+  findAux __130: int(0..8)
+new constraints:
+  __130 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__121 =aux SafeMod(__130,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__130, 3, __121)
+
+--
+
+__130 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __130)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__131,3)
+new variables:
+  findAux __131: int(0..8)
+new constraints:
+  __131 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__122 =aux SafeMod(__131,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__131, 3, __122)
+
+--
+
+__131 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __131)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__132,3)
+new variables:
+  findAux __132: int(0..8)
+new constraints:
+  __132 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__123 =aux SafeMod(__132,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__132, 3, __123)
+
+--
+
+__132 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __132)
+
+--
+
+[ image(p#function_1,image(p#function_2,i)) = i | i : int(1..3) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[image(p#function_1,image(p#function_2,1)) = 1,image(p#function_1,image(p#function_2,2)) = 2,image(p#function_1,image(p#function_2,3)) = 3;int(1..)]
+
+--
+
+p#function_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1
+
+--
+
+p#function_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1
+
+--
+
+p#function_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_1
+
+--
+
+p#function_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2
+
+--
+
+p#function_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2
+
+--
+
+p#function_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+p#function_2
+
+--
+
+image(p#function_1,image(p#function_2,1))
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__133 @ __134}
+new variables:
+  findAux __133: int(1..3)
+  findAux __134: bool
+new constraints:
+  (__134) <-> (or([and([image(p#function_2,1) = 1,true;int(1..)]),and([image(p#function_2,1) = 2,true;int(1..)]),and([image(p#function_2,1) = 3,true;int(1..)]);int(1..)]))
+  (__134) -> (or([and([image(p#function_2,1) = 1,__133 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([image(p#function_2,1) = 2,__133 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([image(p#function_2,1) = 3,__133 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,image(p#function_2,2))
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__135 @ __136}
+new variables:
+  findAux __135: int(1..3)
+  findAux __136: bool
+new constraints:
+  (__136) <-> (or([and([image(p#function_2,2) = 1,true;int(1..)]),and([image(p#function_2,2) = 2,true;int(1..)]),and([image(p#function_2,2) = 3,true;int(1..)]);int(1..)]))
+  (__136) -> (or([and([image(p#function_2,2) = 1,__135 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([image(p#function_2,2) = 2,__135 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([image(p#function_2,2) = 3,__135 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_1,image(p#function_2,3))
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__137 @ __138}
+new variables:
+  findAux __137: int(1..3)
+  findAux __138: bool
+new constraints:
+  (__138) <-> (or([and([image(p#function_2,3) = 1,true;int(1..)]),and([image(p#function_2,3) = 2,true;int(1..)]),and([image(p#function_2,3) = 3,true;int(1..)]);int(1..)]))
+  (__138) -> (or([and([image(p#function_2,3) = 1,__137 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)]),and([image(p#function_2,3) = 2,__137 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([image(p#function_2,3) = 3,__137 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__139 @ __140}
+new variables:
+  findAux __139: int(1..3)
+  findAux __140: bool
+new constraints:
+  (__140) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__140) -> (or([and([1 = 1,__139 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__139 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__139 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__141 @ __142}
+new variables:
+  findAux __141: int(1..3)
+  findAux __142: bool
+new constraints:
+  (__142) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__142) -> (or([and([1 = 1,__141 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__141 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__141 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__143 @ __144}
+new variables:
+  findAux __143: int(1..3)
+  findAux __144: bool
+new constraints:
+  (__144) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__144) -> (or([and([1 = 1,__143 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__143 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__143 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__145 @ __146}
+new variables:
+  findAux __145: int(1..3)
+  findAux __146: bool
+new constraints:
+  (__146) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__146) -> (or([and([1 = 1,__145 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__145 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__145 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__147 @ __148}
+new variables:
+  findAux __147: int(1..3)
+  findAux __148: bool
+new constraints:
+  (__148) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__148) -> (or([and([1 = 1,__147 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__147 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__147 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,1)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__149 @ __150}
+new variables:
+  findAux __149: int(1..3)
+  findAux __150: bool
+new constraints:
+  (__150) <-> (or([and([1 = 1,true;int(1..)]),and([1 = 2,true;int(1..)]),and([1 = 3,true;int(1..)]);int(1..)]))
+  (__150) -> (or([and([1 = 1,__149 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([1 = 2,__149 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([1 = 3,__149 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__151 @ __152}
+new variables:
+  findAux __151: int(1..3)
+  findAux __152: bool
+new constraints:
+  (__152) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__152) -> (or([and([2 = 1,__151 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__151 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__151 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__153 @ __154}
+new variables:
+  findAux __153: int(1..3)
+  findAux __154: bool
+new constraints:
+  (__154) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__154) -> (or([and([2 = 1,__153 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__153 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__153 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__155 @ __156}
+new variables:
+  findAux __155: int(1..3)
+  findAux __156: bool
+new constraints:
+  (__156) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__156) -> (or([and([2 = 1,__155 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__155 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__155 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__157 @ __158}
+new variables:
+  findAux __157: int(1..3)
+  findAux __158: bool
+new constraints:
+  (__158) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__158) -> (or([and([2 = 1,__157 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__157 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__157 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__159 @ __160}
+new variables:
+  findAux __159: int(1..3)
+  findAux __160: bool
+new constraints:
+  (__160) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__160) -> (or([and([2 = 1,__159 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__159 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__159 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,2)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__161 @ __162}
+new variables:
+  findAux __161: int(1..3)
+  findAux __162: bool
+new constraints:
+  (__162) <-> (or([and([2 = 1,true;int(1..)]),and([2 = 2,true;int(1..)]),and([2 = 3,true;int(1..)]);int(1..)]))
+  (__162) -> (or([and([2 = 1,__161 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([2 = 2,__161 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([2 = 3,__161 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__163 @ __164}
+new variables:
+  findAux __163: int(1..3)
+  findAux __164: bool
+new constraints:
+  (__164) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__164) -> (or([and([3 = 1,__163 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__163 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__163 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__165 @ __166}
+new variables:
+  findAux __165: int(1..3)
+  findAux __166: bool
+new constraints:
+  (__166) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__166) -> (or([and([3 = 1,__165 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__165 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__165 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__167 @ __168}
+new variables:
+  findAux __167: int(1..3)
+  findAux __168: bool
+new constraints:
+  (__168) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__168) -> (or([and([3 = 1,__167 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__167 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__167 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__169 @ __170}
+new variables:
+  findAux __169: int(1..3)
+  findAux __170: bool
+new constraints:
+  (__170) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__170) -> (or([and([3 = 1,__169 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__169 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__169 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__171 @ __172}
+new variables:
+  findAux __171: int(1..3)
+  findAux __172: bool
+new constraints:
+  (__172) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__172) -> (or([and([3 = 1,__171 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__171 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__171 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+image(p#function_2,3)
+   ~~> image_function_packed ([("ReprFunctionPacked", 9700)])
+{__173 @ __174}
+new variables:
+  findAux __173: int(1..3)
+  findAux __174: bool
+new constraints:
+  (__174) <-> (or([and([3 = 1,true;int(1..)]),and([3 = 2,true;int(1..)]),and([3 = 3,true;int(1..)]);int(1..)]))
+  (__174) -> (or([and([3 = 1,__173 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]),and([3 = 2,__173 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]),and([3 = 3,__173 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)]))
+
+--
+
+or([and([__141 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__141 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__143 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__143 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__145 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__145 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__147 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__147 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__149 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__149 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+or([and([__151 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__151 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__153 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__153 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__155 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__155 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__157 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__157 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__159 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__159 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__161 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__161 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__163 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__163 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__165 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__165 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__167 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__167 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__169 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__169 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__171 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__171 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__173 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__173 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+or([and([__139 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__139 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+and([__141 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__141 = sum([(p#function_2#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__143 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__143 = sum([(p#function_2#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__145 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__145 = sum([(p#function_2#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__147 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__147 = sum([(p#function_2#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__149 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__149 = sum([(p#function_2#packed_1 / 9),1;int(1..)])
+
+--
+
+and([__151 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__151 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__153 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__153 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__155 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__155 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__157 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__157 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__159 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__159 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__161 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__161 = sum([(p#function_2#packed_1 / 3) % 3,1;int(1..)])
+
+--
+
+and([__163 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__163 = sum([p#function_2#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__165 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__165 = sum([p#function_2#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__167 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__167 = sum([p#function_2#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__169 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__169 = sum([p#function_2#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__171 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__171 = sum([p#function_2#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__173 = sum([p#function_2#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__173 = sum([p#function_2#packed_1 % 3,1;int(1..)])
+
+--
+
+and([__139 = sum([(p#function_2#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__139 = sum([(p#function_2#packed_1 / 9),1;int(1..)])
+
+--
+
+{__133 @ __134} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__133 = 1 @ __134}
+
+--
+
+{__133 = 1 @ __134}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__133 = 1,__134;int(1..)])
+
+--
+
+and([and([__133 = 1,__134;int(1..)]),{__135 @ __136} = 2,{__137 @ __138} = 3;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__133 = 1,__134,{__135 @ __136} = 2,{__137 @ __138} = 3;int(1..)])
+
+--
+
+{__135 @ __136} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__135 = 2 @ __136}
+
+--
+
+{__135 = 2 @ __136}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__135 = 2,__136;int(1..)])
+
+--
+
+and([__133 = 1,__134,and([__135 = 2,__136;int(1..)]),{__137 @ __138} = 3;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__133 = 1,__134,__135 = 2,__136,{__137 @ __138} = 3;int(1..)])
+
+--
+
+{__137 @ __138} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__137 = 3 @ __138}
+
+--
+
+{__137 = 3 @ __138}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__137 = 3,__138;int(1..)])
+
+--
+
+and([__133 = 1,__134,__135 = 2,__136,and([__137 = 3,__138;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__133 = 1,__134,__135 = 2,__136,__137 = 3,__138;int(1..)])
+
+--
+
+and([{__139 @ __140} = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__139 @ __140} = 1
+
+--
+
+and([{__141 @ __142} = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__141 @ __142} = 2
+
+--
+
+and([{__143 @ __144} = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__143 @ __144} = 3
+
+--
+
+and([{__151 @ __152} = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__151 @ __152} = 1
+
+--
+
+and([{__153 @ __154} = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__153 @ __154} = 2
+
+--
+
+and([{__155 @ __156} = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__155 @ __156} = 3
+
+--
+
+and([{__163 @ __164} = 1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__163 @ __164} = 1
+
+--
+
+and([{__165 @ __166} = 2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__165 @ __166} = 2
+
+--
+
+and([{__167 @ __168} = 3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+{__167 @ __168} = 3
+
+--
+
+{__139 @ __140} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__139 = 1 @ __140}
+
+--
+
+{__139 = 1 @ __140}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__139 = 1,__140;int(1..)])
+
+--
+
+{__143 @ __144} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__143 = 3 @ __144}
+
+--
+
+{__143 = 3 @ __144}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__143 = 3,__144;int(1..)])
+
+--
+
+{__153 @ __154} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__153 = 2 @ __154}
+
+--
+
+{__153 = 2 @ __154}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__153 = 2,__154;int(1..)])
+
+--
+
+{__163 @ __164} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__163 = 1 @ __164}
+
+--
+
+{__163 = 1 @ __164}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__163 = 1,__164;int(1..)])
+
+--
+
+{__167 @ __168} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__167 = 3 @ __168}
+
+--
+
+{__167 = 3 @ __168}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__167 = 3,__168;int(1..)])
+
+--
+
+{__141 @ __142} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__141 = 2 @ __142}
+
+--
+
+{__141 = 2 @ __142}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__141 = 2,__142;int(1..)])
+
+--
+
+{__151 @ __152} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__151 = 1 @ __152}
+
+--
+
+{__151 = 1 @ __152}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__151 = 1,__152;int(1..)])
+
+--
+
+{__155 @ __156} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__155 = 3 @ __156}
+
+--
+
+{__155 = 3 @ __156}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__155 = 3,__156;int(1..)])
+
+--
+
+{__165 @ __166} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__165 = 2 @ __166}
+
+--
+
+{__165 = 2 @ __166}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__165 = 2,__166;int(1..)])
+
+--
+
+{__145 @ __146} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__145 = 1 @ __146}
+
+--
+
+{__145 = 1 @ __146}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__145 = 1,__146;int(1..)])
+
+--
+
+and([and([__145 = 1,__146;int(1..)]),__133 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__145 = 1,__146,__133 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+{__147 @ __148} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__147 = 2 @ __148}
+
+--
+
+{__147 = 2 @ __148}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__147 = 2,__148;int(1..)])
+
+--
+
+and([and([__147 = 2,__148;int(1..)]),__133 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__147 = 2,__148,__133 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__149 @ __150} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__149 = 3 @ __150}
+
+--
+
+{__149 = 3 @ __150}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__149 = 3,__150;int(1..)])
+
+--
+
+and([and([__149 = 3,__150;int(1..)]),__133 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__149 = 3,__150,__133 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__157 @ __158} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__157 = 1 @ __158}
+
+--
+
+{__157 = 1 @ __158}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__157 = 1,__158;int(1..)])
+
+--
+
+and([and([__157 = 1,__158;int(1..)]),__135 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__157 = 1,__158,__135 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+{__159 @ __160} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__159 = 2 @ __160}
+
+--
+
+{__159 = 2 @ __160}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__159 = 2,__160;int(1..)])
+
+--
+
+and([and([__159 = 2,__160;int(1..)]),__135 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__159 = 2,__160,__135 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__161 @ __162} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__161 = 3 @ __162}
+
+--
+
+{__161 = 3 @ __162}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__161 = 3,__162;int(1..)])
+
+--
+
+and([and([__161 = 3,__162;int(1..)]),__135 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__161 = 3,__162,__135 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__169 @ __170} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{__169 = 1 @ __170}
+
+--
+
+{__169 = 1 @ __170}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__169 = 1,__170;int(1..)])
+
+--
+
+and([and([__169 = 1,__170;int(1..)]),__137 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__169 = 1,__170,__137 = sum([(p#function_1#packed_1 / 9),1;int(1..)]);int(1..)])
+
+--
+
+{__171 @ __172} = 2
+   ~~> bubble_up ([("Bubble", 8800)])
+{__171 = 2 @ __172}
+
+--
+
+{__171 = 2 @ __172}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__171 = 2,__172;int(1..)])
+
+--
+
+and([and([__171 = 2,__172;int(1..)]),__137 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__171 = 2,__172,__137 = sum([(p#function_1#packed_1 / 3) % 3,1;int(1..)]);int(1..)])
+
+--
+
+{__173 @ __174} = 3
+   ~~> bubble_up ([("Bubble", 8800)])
+{__173 = 3 @ __174}
+
+--
+
+{__173 = 3 @ __174}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__173 = 3,__174;int(1..)])
+
+--
+
+and([and([__173 = 3,__174;int(1..)]),__137 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__173 = 3,__174,__137 = sum([p#function_1#packed_1 % 3,1;int(1..)]);int(1..)])
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+p#function_2#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_2#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 9) @ 9 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_2#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_2#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 9)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 9) @ 9 != 0}
+
+--
+
+p#function_1#packed_1 % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(p#function_1#packed_1,3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+(p#function_1#packed_1 / 3)
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(p#function_1#packed_1, 3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_2#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_2#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+SafeDiv(p#function_1#packed_1, 3) % 3
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(SafeDiv(p#function_1#packed_1, 3),3) @ 3 != 0}
+
+--
+
+__141 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __175], __141),SumGeq([1, __175], __141);int(1..)])
+new variables:
+  findAux __175: int(0..2)
+new constraints:
+  __175 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+__143 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __176], __143),SumGeq([1, __176], __143);int(1..)])
+new variables:
+  findAux __176: int(0..2)
+new constraints:
+  __176 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+__145 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __177], __145),SumGeq([1, __177], __145);int(1..)])
+new variables:
+  findAux __177: int(0..2)
+new constraints:
+  __177 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+__147 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __178], __147),SumGeq([1, __178], __147);int(1..)])
+new variables:
+  findAux __178: int(0..2)
+new constraints:
+  __178 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+__149 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __179], __149),SumGeq([1, __179], __149);int(1..)])
+new variables:
+  findAux __179: int(0..2)
+new constraints:
+  __179 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+__163 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __180], __163),SumGeq([1, __180], __163);int(1..)])
+new variables:
+  findAux __180: int(0..2)
+new constraints:
+  __180 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+__165 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __181], __165),SumGeq([1, __181], __165);int(1..)])
+new variables:
+  findAux __181: int(0..2)
+new constraints:
+  __181 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+__167 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __182], __167),SumGeq([1, __182], __167);int(1..)])
+new variables:
+  findAux __182: int(0..2)
+new constraints:
+  __182 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+__169 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __183], __169),SumGeq([1, __183], __169);int(1..)])
+new variables:
+  findAux __183: int(0..2)
+new constraints:
+  __183 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+__171 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __184], __171),SumGeq([1, __184], __171);int(1..)])
+new variables:
+  findAux __184: int(0..2)
+new constraints:
+  __184 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+__173 = sum([SafeMod(p#function_2#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __185], __173),SumGeq([1, __185], __173);int(1..)])
+new variables:
+  findAux __185: int(0..2)
+new constraints:
+  __185 =aux SafeMod(p#function_2#packed_1,3)
+
+--
+
+__139 = sum([SafeDiv(p#function_2#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __186], __139),SumGeq([1, __186], __139);int(1..)])
+new variables:
+  findAux __186: int(0..2)
+new constraints:
+  __186 =aux SafeDiv(p#function_2#packed_1, 9)
+
+--
+
+__151 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __187], __151),SumGeq([1, __187], __151);int(1..)])
+new variables:
+  findAux __187: int(0..2)
+new constraints:
+  __187 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+__153 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __188], __153),SumGeq([1, __188], __153);int(1..)])
+new variables:
+  findAux __188: int(0..2)
+new constraints:
+  __188 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+__155 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __189], __155),SumGeq([1, __189], __155);int(1..)])
+new variables:
+  findAux __189: int(0..2)
+new constraints:
+  __189 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+__157 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __190], __157),SumGeq([1, __190], __157);int(1..)])
+new variables:
+  findAux __190: int(0..2)
+new constraints:
+  __190 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+__159 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __191], __159),SumGeq([1, __191], __159);int(1..)])
+new variables:
+  findAux __191: int(0..2)
+new constraints:
+  __191 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+__161 = sum([SafeMod(SafeDiv(p#function_2#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __192], __161),SumGeq([1, __192], __161);int(1..)])
+new variables:
+  findAux __192: int(0..2)
+new constraints:
+  __192 =aux SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+
+--
+
+__133 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __193], __133),SumGeq([1, __193], __133);int(1..)])
+new variables:
+  findAux __193: int(0..2)
+new constraints:
+  __193 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+and([__145 = 1,__146,and([SumLeq([1, __193], __133),SumGeq([1, __193], __133);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__145 = 1,__146,SumLeq([1, __193], __133),SumGeq([1, __193], __133);int(1..)])
+
+--
+
+__133 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __194], __133),SumGeq([1, __194], __133);int(1..)])
+new variables:
+  findAux __194: int(0..2)
+new constraints:
+  __194 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+and([__149 = 3,__150,and([SumLeq([1, __194], __133),SumGeq([1, __194], __133);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__149 = 3,__150,SumLeq([1, __194], __133),SumGeq([1, __194], __133);int(1..)])
+
+--
+
+__135 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __195], __135),SumGeq([1, __195], __135);int(1..)])
+new variables:
+  findAux __195: int(0..2)
+new constraints:
+  __195 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+and([__157 = 1,__158,and([SumLeq([1, __195], __135),SumGeq([1, __195], __135);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__157 = 1,__158,SumLeq([1, __195], __135),SumGeq([1, __195], __135);int(1..)])
+
+--
+
+__135 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __196], __135),SumGeq([1, __196], __135);int(1..)])
+new variables:
+  findAux __196: int(0..2)
+new constraints:
+  __196 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+and([__161 = 3,__162,and([SumLeq([1, __196], __135),SumGeq([1, __196], __135);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__161 = 3,__162,SumLeq([1, __196], __135),SumGeq([1, __196], __135);int(1..)])
+
+--
+
+__137 = sum([SafeDiv(p#function_1#packed_1, 9),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __197], __137),SumGeq([1, __197], __137);int(1..)])
+new variables:
+  findAux __197: int(0..2)
+new constraints:
+  __197 =aux SafeDiv(p#function_1#packed_1, 9)
+
+--
+
+and([__169 = 1,__170,and([SumLeq([1, __197], __137),SumGeq([1, __197], __137);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__169 = 1,__170,SumLeq([1, __197], __137),SumGeq([1, __197], __137);int(1..)])
+
+--
+
+__137 = sum([SafeMod(p#function_1#packed_1,3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __198], __137),SumGeq([1, __198], __137);int(1..)])
+new variables:
+  findAux __198: int(0..2)
+new constraints:
+  __198 =aux SafeMod(p#function_1#packed_1,3)
+
+--
+
+and([__173 = 3,__174,and([SumLeq([1, __198], __137),SumGeq([1, __198], __137);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__173 = 3,__174,SumLeq([1, __198], __137),SumGeq([1, __198], __137);int(1..)])
+
+--
+
+__133 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __199], __133),SumGeq([1, __199], __133);int(1..)])
+new variables:
+  findAux __199: int(0..2)
+new constraints:
+  __199 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+and([__147 = 2,__148,and([SumLeq([1, __199], __133),SumGeq([1, __199], __133);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__147 = 2,__148,SumLeq([1, __199], __133),SumGeq([1, __199], __133);int(1..)])
+
+--
+
+__135 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __200], __135),SumGeq([1, __200], __135);int(1..)])
+new variables:
+  findAux __200: int(0..2)
+new constraints:
+  __200 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+and([__159 = 2,__160,and([SumLeq([1, __200], __135),SumGeq([1, __200], __135);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__159 = 2,__160,SumLeq([1, __200], __135),SumGeq([1, __200], __135);int(1..)])
+
+--
+
+__137 = sum([SafeMod(SafeDiv(p#function_1#packed_1, 3),3),1;int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, __201], __137),SumGeq([1, __201], __137);int(1..)])
+new variables:
+  findAux __201: int(0..2)
+new constraints:
+  __201 =aux SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+
+--
+
+and([__171 = 2,__172,and([SumLeq([1, __201], __137),SumGeq([1, __201], __137);int(1..)]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__171 = 2,__172,SumLeq([1, __201], __137),SumGeq([1, __201], __137);int(1..)])
+
+--
+
+(__134) <-> (or([and([__139 = 1,__140;int(1..)]),and([__141 = 2,__142;int(1..)]),and([__143 = 3,__144;int(1..)]);int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(or([and([__139 = 1,__140;int(1..)]),and([__141 = 2,__142;int(1..)]),and([__143 = 3,__144;int(1..)]);int(1..)]), __134)
+
+--
+
+(__136) <-> (or([and([__151 = 1,__152;int(1..)]),and([__153 = 2,__154;int(1..)]),and([__155 = 3,__156;int(1..)]);int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(or([and([__151 = 1,__152;int(1..)]),and([__153 = 2,__154;int(1..)]),and([__155 = 3,__156;int(1..)]);int(1..)]), __136)
+
+--
+
+(__138) <-> (or([and([__163 = 1,__164;int(1..)]),and([__165 = 2,__166;int(1..)]),and([__167 = 3,__168;int(1..)]);int(1..)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(or([and([__163 = 1,__164;int(1..)]),and([__165 = 2,__166;int(1..)]),and([__167 = 3,__168;int(1..)]);int(1..)]), __138)
+
+--
+
+(__144) -> (and([SumLeq([1, __176], __143),SumGeq([1, __176], __143);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __176], __143),SumGeq([1, __176], __143);int(1..)]), __144)
+
+--
+
+(__146) -> (and([SumLeq([1, __177], __145),SumGeq([1, __177], __145);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __177], __145),SumGeq([1, __177], __145);int(1..)]), __146)
+
+--
+
+(__148) -> (and([SumLeq([1, __178], __147),SumGeq([1, __178], __147);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __178], __147),SumGeq([1, __178], __147);int(1..)]), __148)
+
+--
+
+(__150) -> (and([SumLeq([1, __179], __149),SumGeq([1, __179], __149);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __179], __149),SumGeq([1, __179], __149);int(1..)]), __150)
+
+--
+
+(__164) -> (and([SumLeq([1, __180], __163),SumGeq([1, __180], __163);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __180], __163),SumGeq([1, __180], __163);int(1..)]), __164)
+
+--
+
+(__166) -> (and([SumLeq([1, __181], __165),SumGeq([1, __181], __165);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __181], __165),SumGeq([1, __181], __165);int(1..)]), __166)
+
+--
+
+(__168) -> (and([SumLeq([1, __182], __167),SumGeq([1, __182], __167);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __182], __167),SumGeq([1, __182], __167);int(1..)]), __168)
+
+--
+
+(__170) -> (and([SumLeq([1, __183], __169),SumGeq([1, __183], __169);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __183], __169),SumGeq([1, __183], __169);int(1..)]), __170)
+
+--
+
+(__172) -> (and([SumLeq([1, __184], __171),SumGeq([1, __184], __171);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __184], __171),SumGeq([1, __184], __171);int(1..)]), __172)
+
+--
+
+(__174) -> (and([SumLeq([1, __185], __173),SumGeq([1, __185], __173);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __185], __173),SumGeq([1, __185], __173);int(1..)]), __174)
+
+--
+
+(__140) -> (and([SumLeq([1, __186], __139),SumGeq([1, __186], __139);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __186], __139),SumGeq([1, __186], __139);int(1..)]), __140)
+
+--
+
+(__142) -> (and([SumLeq([1, __175], __141),SumGeq([1, __175], __141);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __175], __141),SumGeq([1, __175], __141);int(1..)]), __142)
+
+--
+
+(__152) -> (and([SumLeq([1, __187], __151),SumGeq([1, __187], __151);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __187], __151),SumGeq([1, __187], __151);int(1..)]), __152)
+
+--
+
+(__154) -> (and([SumLeq([1, __188], __153),SumGeq([1, __188], __153);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __188], __153),SumGeq([1, __188], __153);int(1..)]), __154)
+
+--
+
+(__156) -> (and([SumLeq([1, __189], __155),SumGeq([1, __189], __155);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __189], __155),SumGeq([1, __189], __155);int(1..)]), __156)
+
+--
+
+(__158) -> (and([SumLeq([1, __190], __157),SumGeq([1, __190], __157);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __190], __157),SumGeq([1, __190], __157);int(1..)]), __158)
+
+--
+
+(__160) -> (and([SumLeq([1, __191], __159),SumGeq([1, __191], __159);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __191], __159),SumGeq([1, __191], __159);int(1..)]), __160)
+
+--
+
+(__162) -> (and([SumLeq([1, __192], __161),SumGeq([1, __192], __161);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(and([SumLeq([1, __192], __161),SumGeq([1, __192], __161);int(1..)]), __162)
+
+--
+
+(__134) -> (or([and([__145 = 1,__146,SumLeq([1, __193], __133),SumGeq([1, __193], __133);int(1..)]),and([__147 = 2,__148,SumLeq([1, __199], __133),SumGeq([1, __199], __133);int(1..)]),and([__149 = 3,__150,SumLeq([1, __194], __133),SumGeq([1, __194], __133);int(1..)]);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([and([__145 = 1,__146,SumLeq([1, __193], __133),SumGeq([1, __193], __133);int(1..)]),and([__147 = 2,__148,SumLeq([1, __199], __133),SumGeq([1, __199], __133);int(1..)]),and([__149 = 3,__150,SumLeq([1, __194], __133),SumGeq([1, __194], __133);int(1..)]);int(1..)]), __134)
+
+--
+
+(__136) -> (or([and([__157 = 1,__158,SumLeq([1, __195], __135),SumGeq([1, __195], __135);int(1..)]),and([__159 = 2,__160,SumLeq([1, __200], __135),SumGeq([1, __200], __135);int(1..)]),and([__161 = 3,__162,SumLeq([1, __196], __135),SumGeq([1, __196], __135);int(1..)]);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([and([__157 = 1,__158,SumLeq([1, __195], __135),SumGeq([1, __195], __135);int(1..)]),and([__159 = 2,__160,SumLeq([1, __200], __135),SumGeq([1, __200], __135);int(1..)]),and([__161 = 3,__162,SumLeq([1, __196], __135),SumGeq([1, __196], __135);int(1..)]);int(1..)]), __136)
+
+--
+
+(__138) -> (or([and([__169 = 1,__170,SumLeq([1, __197], __137),SumGeq([1, __197], __137);int(1..)]),and([__171 = 2,__172,SumLeq([1, __201], __137),SumGeq([1, __201], __137);int(1..)]),and([__173 = 3,__174,SumLeq([1, __198], __137),SumGeq([1, __198], __137);int(1..)]);int(1..)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([and([__169 = 1,__170,SumLeq([1, __197], __137),SumGeq([1, __197], __137);int(1..)]),and([__171 = 2,__172,SumLeq([1, __201], __137),SumGeq([1, __201], __137);int(1..)]),and([__173 = 3,__174,SumLeq([1, __198], __137),SumGeq([1, __198], __137);int(1..)]);int(1..)]), __138)
+
+--
+
+__133 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__133,1)
+
+--
+
+__135 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__135,2)
+
+--
+
+__137 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__137,3)
+
+--
+
+__139 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__139,1)
+
+--
+
+__141 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__141,2)
+
+--
+
+__143 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__143,3)
+
+--
+
+__151 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__151,1)
+
+--
+
+__153 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__153,2)
+
+--
+
+__155 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__155,3)
+
+--
+
+__163 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__163,1)
+
+--
+
+__165 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__165,2)
+
+--
+
+__167 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__167,3)
+
+--
+
+__145 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__145,1)
+
+--
+
+__147 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__147,2)
+
+--
+
+__149 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__149,3)
+
+--
+
+__157 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__157,1)
+
+--
+
+__159 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__159,2)
+
+--
+
+__161 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__161,3)
+
+--
+
+__169 = 1
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__169,1)
+
+--
+
+__171 = 2
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__171,2)
+
+--
+
+__173 = 3
+   ~~> eq_atom_literal_to_wliteral ([("Minion", 4400)])
+WatchedLiteral(__173,3)
+
+--
+
+__176 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __176)
+
+--
+
+__177 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __177)
+
+--
+
+__178 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __178)
+
+--
+
+__179 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __179)
+
+--
+
+__180 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __180)
+
+--
+
+__181 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __181)
+
+--
+
+__182 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __182)
+
+--
+
+__183 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __183)
+
+--
+
+__184 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __184)
+
+--
+
+__185 =aux SafeMod(p#function_2#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_2#packed_1, 3, __185)
+
+--
+
+__186 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __186)
+
+--
+
+__193 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __193)
+
+--
+
+__194 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __194)
+
+--
+
+__195 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __195)
+
+--
+
+__196 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __196)
+
+--
+
+__197 =aux SafeDiv(p#function_1#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 9, __197)
+
+--
+
+__198 =aux SafeMod(p#function_1#packed_1,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(p#function_1#packed_1, 3, __198)
+
+--
+
+__175 =aux SafeDiv(p#function_2#packed_1, 9)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 9, __175)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__202,3)
+new variables:
+  findAux __202: int(0..8)
+new constraints:
+  __202 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__187 =aux SafeMod(__202,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__202, 3, __187)
+
+--
+
+__202 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __202)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__203,3)
+new variables:
+  findAux __203: int(0..8)
+new constraints:
+  __203 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__188 =aux SafeMod(__203,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__203, 3, __188)
+
+--
+
+__203 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __203)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__204,3)
+new variables:
+  findAux __204: int(0..8)
+new constraints:
+  __204 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__189 =aux SafeMod(__204,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__204, 3, __189)
+
+--
+
+__204 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __204)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__205,3)
+new variables:
+  findAux __205: int(0..8)
+new constraints:
+  __205 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__190 =aux SafeMod(__205,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__205, 3, __190)
+
+--
+
+__205 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __205)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__206,3)
+new variables:
+  findAux __206: int(0..8)
+new constraints:
+  __206 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__191 =aux SafeMod(__206,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__206, 3, __191)
+
+--
+
+__206 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __206)
+
+--
+
+SafeMod(SafeDiv(p#function_2#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__207,3)
+new variables:
+  findAux __207: int(0..8)
+new constraints:
+  __207 =aux SafeDiv(p#function_2#packed_1, 3)
+
+--
+
+__192 =aux SafeMod(__207,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__207, 3, __192)
+
+--
+
+__207 =aux SafeDiv(p#function_2#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_2#packed_1, 3, __207)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__208,3)
+new variables:
+  findAux __208: int(0..8)
+new constraints:
+  __208 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__199 =aux SafeMod(__208,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__208, 3, __199)
+
+--
+
+__208 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __208)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__209,3)
+new variables:
+  findAux __209: int(0..8)
+new constraints:
+  __209 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__200 =aux SafeMod(__209,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__209, 3, __200)
+
+--
+
+__209 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __209)
+
+--
+
+SafeMod(SafeDiv(p#function_1#packed_1, 3),3)
+   ~~> flatten_generic ([("Minion", 4200)])
+SafeMod(__210,3)
+new variables:
+  findAux __210: int(0..8)
+new constraints:
+  __210 =aux SafeDiv(p#function_1#packed_1, 3)
+
+--
+
+__201 =aux SafeMod(__210,3)
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(__210, 3, __201)
+
+--
+
+__210 =aux SafeDiv(p#function_1#packed_1, 3)
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(p#function_1#packed_1, 3, __210)
+
+--
+
+Final model:
+
+find p: permutation  of int(1..3)
+find x: int(1..3)
+find p#function_1: function (total, bijective) int(1..3) --> int(1..3) 
+find p#function_2: function (total, bijective) int(1..3) --> int(1..3) 
+find p#function_1#packed_1: int(0..26)
+find p#function_2#packed_1: int(0..26)
+findAux __0: int(1..3)
+findAux __1: bool
+findAux __2: int(0..2)
+findAux __3: int(0..2)
+findAux __4: int(0..2)
+findAux __5: int(0..2)
+findAux __6: int(0..2)
+findAux __7: int(0..2)
+findAux __8: int(0..2)
+findAux __9: int(0..2)
+findAux __10: int(0..2)
+findAux __11: int(0..2)
+findAux __12: int(0..2)
+findAux __13: int(0..2)
+findAux __14: int(0..2)
+findAux __15: int(0..2)
+findAux __16: int(0..2)
+findAux __17: int(0..2)
+findAux __18: int(0..2)
+findAux __19: int(0..2)
+findAux __20: int(0..2)
+findAux __21: int(1..3)
+findAux __22: int(1..3)
+findAux __23: int(0..2)
+findAux __24: int(0..2)
+findAux __25: int(1..3)
+findAux __26: int(1..3)
+findAux __27: int(0..2)
+findAux __28: int(0..2)
+findAux __29: int(1..3)
+findAux __30: int(1..3)
+findAux __31: int(0..2)
+findAux __32: int(0..2)
+findAux __33: int(1..3)
+findAux __34: int(1..3)
+findAux __35: int(0..2)
+findAux __36: int(0..2)
+findAux __37: int(1..3)
+findAux __38: int(1..3)
+findAux __39: int(0..2)
+findAux __40: int(0..2)
+findAux __41: int(1..3)
+findAux __42: int(1..3)
+findAux __43: int(0..2)
+findAux __44: int(0..2)
+findAux __45: int(0..8)
+findAux __46: int(0..8)
+findAux __47: int(0..8)
+findAux __48: int(0..8)
+findAux __49: int(0..8)
+findAux __50: int(0..8)
+findAux __51: int(0..8)
+findAux __52: int(0..8)
+findAux __53: int(0..8)
+findAux __54: int(0..8)
+findAux __55: int(1..3)
+findAux __56: bool
+findAux __57: int(1..3)
+findAux __58: bool
+findAux __59: int(1..3)
+findAux __60: bool
+findAux __61: int(1..3)
+findAux __62: bool
+findAux __63: int(1..3)
+findAux __64: bool
+findAux __65: int(1..3)
+findAux __66: bool
+findAux __67: int(1..3)
+findAux __68: bool
+findAux __69: int(1..3)
+findAux __70: bool
+findAux __71: int(1..3)
+findAux __72: bool
+findAux __73: int(1..3)
+findAux __74: bool
+findAux __75: int(1..3)
+findAux __76: bool
+findAux __77: int(1..3)
+findAux __78: bool
+findAux __79: int(1..3)
+findAux __80: bool
+findAux __81: int(1..3)
+findAux __82: bool
+findAux __83: int(1..3)
+findAux __84: bool
+findAux __85: int(1..3)
+findAux __86: bool
+findAux __87: int(1..3)
+findAux __88: bool
+findAux __89: int(1..3)
+findAux __90: bool
+findAux __91: int(1..3)
+findAux __92: bool
+findAux __93: int(1..3)
+findAux __94: bool
+findAux __95: int(1..3)
+findAux __96: bool
+findAux __97: int(0..2)
+findAux __98: int(0..2)
+findAux __99: int(0..2)
+findAux __100: int(0..2)
+findAux __101: int(0..2)
+findAux __102: int(0..2)
+findAux __103: int(0..2)
+findAux __104: int(0..2)
+findAux __105: int(0..2)
+findAux __106: int(0..2)
+findAux __107: int(0..2)
+findAux __108: int(0..2)
+findAux __109: int(0..2)
+findAux __110: int(0..2)
+findAux __111: int(0..2)
+findAux __112: int(0..2)
+findAux __113: int(0..2)
+findAux __114: int(0..2)
+findAux __115: int(0..2)
+findAux __116: int(0..2)
+findAux __117: int(0..2)
+findAux __118: int(0..2)
+findAux __119: int(0..2)
+findAux __120: int(0..2)
+findAux __121: int(0..2)
+findAux __122: int(0..2)
+findAux __123: int(0..2)
+findAux __124: int(0..8)
+findAux __125: int(0..8)
+findAux __126: int(0..8)
+findAux __127: int(0..8)
+findAux __128: int(0..8)
+findAux __129: int(0..8)
+findAux __130: int(0..8)
+findAux __131: int(0..8)
+findAux __132: int(0..8)
+findAux __133: int(1..3)
+findAux __134: bool
+findAux __135: int(1..3)
+findAux __136: bool
+findAux __137: int(1..3)
+findAux __138: bool
+findAux __139: int(1..3)
+findAux __140: bool
+findAux __141: int(1..3)
+findAux __142: bool
+findAux __143: int(1..3)
+findAux __144: bool
+findAux __145: int(1..3)
+findAux __146: bool
+findAux __147: int(1..3)
+findAux __148: bool
+findAux __149: int(1..3)
+findAux __150: bool
+findAux __151: int(1..3)
+findAux __152: bool
+findAux __153: int(1..3)
+findAux __154: bool
+findAux __155: int(1..3)
+findAux __156: bool
+findAux __157: int(1..3)
+findAux __158: bool
+findAux __159: int(1..3)
+findAux __160: bool
+findAux __161: int(1..3)
+findAux __162: bool
+findAux __163: int(1..3)
+findAux __164: bool
+findAux __165: int(1..3)
+findAux __166: bool
+findAux __167: int(1..3)
+findAux __168: bool
+findAux __169: int(1..3)
+findAux __170: bool
+findAux __171: int(1..3)
+findAux __172: bool
+findAux __173: int(1..3)
+findAux __174: bool
+findAux __175: int(0..2)
+findAux __176: int(0..2)
+findAux __177: int(0..2)
+findAux __178: int(0..2)
+findAux __179: int(0..2)
+findAux __180: int(0..2)
+findAux __181: int(0..2)
+findAux __182: int(0..2)
+findAux __183: int(0..2)
+findAux __184: int(0..2)
+findAux __185: int(0..2)
+findAux __186: int(0..2)
+findAux __187: int(0..2)
+findAux __188: int(0..2)
+findAux __189: int(0..2)
+findAux __190: int(0..2)
+findAux __191: int(0..2)
+findAux __192: int(0..2)
+findAux __193: int(0..2)
+findAux __194: int(0..2)
+findAux __195: int(0..2)
+findAux __196: int(0..2)
+findAux __197: int(0..2)
+findAux __198: int(0..2)
+findAux __199: int(0..2)
+findAux __200: int(0..2)
+findAux __201: int(0..2)
+findAux __202: int(0..8)
+findAux __203: int(0..8)
+findAux __204: int(0..8)
+findAux __205: int(0..8)
+findAux __206: int(0..8)
+findAux __207: int(0..8)
+findAux __208: int(0..8)
+findAux __209: int(0..8)
+findAux __210: int(0..8)
+
+such that
+
+and([x = __0,__1;int(1..)]),
+x != 1,
+true,
+and([WatchedLiteral(__55,1),__56,WatchedLiteral(__57,2),__58,WatchedLiteral(__59,3),__60;int(1..)]),
+and([WatchedLiteral(__133,1),__134,WatchedLiteral(__135,2),__136,WatchedLiteral(__137,3),__138;int(1..)]),
+__21 != __22,
+__25 != __26,
+__29 != __30,
+or([and([SumLeq([1, __3], 1),SumGeq([1, __3], 1);int(1..)]),and([SumLeq([1, __4], 1),SumGeq([1, __4], 1);int(1..)]),and([SumLeq([1, __5], 1),SumGeq([1, __5], 1);int(1..)]);int(1..)]),
+or([and([SumLeq([1, __6], 2),SumGeq([1, __6], 2);int(1..)]),and([SumLeq([1, __7], 2),SumGeq([1, __7], 2);int(1..)]),and([SumLeq([1, __8], 2),SumGeq([1, __8], 2);int(1..)]);int(1..)]),
+or([and([SumLeq([1, __9], 3),SumGeq([1, __9], 3);int(1..)]),and([SumLeq([1, __10], 3),SumGeq([1, __10], 3);int(1..)]),and([SumLeq([1, __11], 3),SumGeq([1, __11], 3);int(1..)]);int(1..)]),
+__33 != __34,
+__37 != __38,
+__41 != __42,
+or([and([SumLeq([1, __12], 1),SumGeq([1, __12], 1);int(1..)]),and([SumLeq([1, __13], 1),SumGeq([1, __13], 1);int(1..)]),and([SumLeq([1, __14], 1),SumGeq([1, __14], 1);int(1..)]);int(1..)]),
+or([and([SumLeq([1, __15], 2),SumGeq([1, __15], 2);int(1..)]),and([SumLeq([1, __16], 2),SumGeq([1, __16], 2);int(1..)]),and([SumLeq([1, __17], 2),SumGeq([1, __17], 2);int(1..)]);int(1..)]),
+or([and([SumLeq([1, __18], 3),SumGeq([1, __18], 3);int(1..)]),and([SumLeq([1, __19], 3),SumGeq([1, __19], 3);int(1..)]),and([SumLeq([1, __20], 3),SumGeq([1, __20], 3);int(1..)]);int(1..)]),
+__1,
+ReifyImply(and([SumLeq([1, __2], __0),SumGeq([1, __2], __0);int(1..)]), __1),
+DivEq(p#function_1#packed_1, 9, __2),
+DivEq(p#function_1#packed_1, 9, __3),
+ModEq(__45, 3, __4),
+ModEq(p#function_1#packed_1, 3, __5),
+DivEq(p#function_1#packed_1, 9, __6),
+ModEq(__46, 3, __7),
+ModEq(p#function_1#packed_1, 3, __8),
+DivEq(p#function_1#packed_1, 9, __9),
+ModEq(__47, 3, __10),
+ModEq(p#function_1#packed_1, 3, __11),
+DivEq(p#function_2#packed_1, 9, __12),
+ModEq(__48, 3, __13),
+ModEq(p#function_2#packed_1, 3, __14),
+DivEq(p#function_2#packed_1, 9, __15),
+ModEq(__49, 3, __16),
+ModEq(p#function_2#packed_1, 3, __17),
+DivEq(p#function_2#packed_1, 9, __18),
+ModEq(__50, 3, __19),
+ModEq(p#function_2#packed_1, 3, __20),
+and([SumLeq([1, __23], __21),SumGeq([1, __23], __21);int(1..)]),
+and([SumLeq([1, __24], __22),SumGeq([1, __24], __22);int(1..)]),
+DivEq(p#function_1#packed_1, 9, __23),
+ModEq(__51, 3, __24),
+and([SumLeq([1, __27], __25),SumGeq([1, __27], __25);int(1..)]),
+and([SumLeq([1, __28], __26),SumGeq([1, __28], __26);int(1..)]),
+DivEq(p#function_1#packed_1, 9, __27),
+ModEq(p#function_1#packed_1, 3, __28),
+and([SumLeq([1, __31], __29),SumGeq([1, __31], __29);int(1..)]),
+and([SumLeq([1, __32], __30),SumGeq([1, __32], __30);int(1..)]),
+ModEq(__52, 3, __31),
+ModEq(p#function_1#packed_1, 3, __32),
+and([SumLeq([1, __35], __33),SumGeq([1, __35], __33);int(1..)]),
+and([SumLeq([1, __36], __34),SumGeq([1, __36], __34);int(1..)]),
+DivEq(p#function_2#packed_1, 9, __35),
+ModEq(__53, 3, __36),
+and([SumLeq([1, __39], __37),SumGeq([1, __39], __37);int(1..)]),
+and([SumLeq([1, __40], __38),SumGeq([1, __40], __38);int(1..)]),
+DivEq(p#function_2#packed_1, 9, __39),
+ModEq(p#function_2#packed_1, 3, __40),
+and([SumLeq([1, __43], __41),SumGeq([1, __43], __41);int(1..)]),
+and([SumLeq([1, __44], __42),SumGeq([1, __44], __42);int(1..)]),
+ModEq(__54, 3, __43),
+ModEq(p#function_2#packed_1, 3, __44),
+DivEq(p#function_1#packed_1, 3, __45),
+DivEq(p#function_1#packed_1, 3, __46),
+DivEq(p#function_1#packed_1, 3, __47),
+DivEq(p#function_2#packed_1, 3, __48),
+DivEq(p#function_2#packed_1, 3, __49),
+DivEq(p#function_2#packed_1, 3, __50),
+DivEq(p#function_1#packed_1, 3, __51),
+DivEq(p#function_1#packed_1, 3, __52),
+DivEq(p#function_2#packed_1, 3, __53),
+DivEq(p#function_2#packed_1, 3, __54),
+Reify(or([and([WatchedLiteral(__61,1),__62;int(1..)]),and([WatchedLiteral(__63,2),__64;int(1..)]),and([WatchedLiteral(__65,3),__66;int(1..)]);int(1..)]), __56),
+ReifyImply(or([and([WatchedLiteral(__67,1),__68,SumLeq([1, __115], __55),SumGeq([1, __115], __55);int(1..)]),and([WatchedLiteral(__69,2),__70,SumLeq([1, __121], __55),SumGeq([1, __121], __55);int(1..)]),and([WatchedLiteral(__71,3),__72,SumLeq([1, __116], __55),SumGeq([1, __116], __55);int(1..)]);int(1..)]), __56),
+Reify(or([and([WatchedLiteral(__73,1),__74;int(1..)]),and([WatchedLiteral(__75,2),__76;int(1..)]),and([WatchedLiteral(__77,3),__78;int(1..)]);int(1..)]), __58),
+ReifyImply(or([and([WatchedLiteral(__79,1),__80,SumLeq([1, __117], __57),SumGeq([1, __117], __57);int(1..)]),and([WatchedLiteral(__81,2),__82,SumLeq([1, __122], __57),SumGeq([1, __122], __57);int(1..)]),and([WatchedLiteral(__83,3),__84,SumLeq([1, __118], __57),SumGeq([1, __118], __57);int(1..)]);int(1..)]), __58),
+Reify(or([and([WatchedLiteral(__85,1),__86;int(1..)]),and([WatchedLiteral(__87,2),__88;int(1..)]),and([WatchedLiteral(__89,3),__90;int(1..)]);int(1..)]), __60),
+ReifyImply(or([and([WatchedLiteral(__91,1),__92,SumLeq([1, __119], __59),SumGeq([1, __119], __59);int(1..)]),and([WatchedLiteral(__93,2),__94,SumLeq([1, __123], __59),SumGeq([1, __123], __59);int(1..)]),and([WatchedLiteral(__95,3),__96,SumLeq([1, __120], __59),SumGeq([1, __120], __59);int(1..)]);int(1..)]), __60),
+__62,
+ReifyImply(and([SumLeq([1, __108], __61),SumGeq([1, __108], __61);int(1..)]), __62),
+__64,
+ReifyImply(and([SumLeq([1, __97], __63),SumGeq([1, __97], __63);int(1..)]), __64),
+__66,
+ReifyImply(and([SumLeq([1, __98], __65),SumGeq([1, __98], __65);int(1..)]), __66),
+__68,
+ReifyImply(and([SumLeq([1, __99], __67),SumGeq([1, __99], __67);int(1..)]), __68),
+__70,
+ReifyImply(and([SumLeq([1, __100], __69),SumGeq([1, __100], __69);int(1..)]), __70),
+__72,
+ReifyImply(and([SumLeq([1, __101], __71),SumGeq([1, __101], __71);int(1..)]), __72),
+__74,
+ReifyImply(and([SumLeq([1, __109], __73),SumGeq([1, __109], __73);int(1..)]), __74),
+__76,
+ReifyImply(and([SumLeq([1, __110], __75),SumGeq([1, __110], __75);int(1..)]), __76),
+__78,
+ReifyImply(and([SumLeq([1, __111], __77),SumGeq([1, __111], __77);int(1..)]), __78),
+__80,
+ReifyImply(and([SumLeq([1, __112], __79),SumGeq([1, __112], __79);int(1..)]), __80),
+__82,
+ReifyImply(and([SumLeq([1, __113], __81),SumGeq([1, __113], __81);int(1..)]), __82),
+__84,
+ReifyImply(and([SumLeq([1, __114], __83),SumGeq([1, __114], __83);int(1..)]), __84),
+__86,
+ReifyImply(and([SumLeq([1, __102], __85),SumGeq([1, __102], __85);int(1..)]), __86),
+__88,
+ReifyImply(and([SumLeq([1, __103], __87),SumGeq([1, __103], __87);int(1..)]), __88),
+__90,
+ReifyImply(and([SumLeq([1, __104], __89),SumGeq([1, __104], __89);int(1..)]), __90),
+__92,
+ReifyImply(and([SumLeq([1, __105], __91),SumGeq([1, __105], __91);int(1..)]), __92),
+__94,
+ReifyImply(and([SumLeq([1, __106], __93),SumGeq([1, __106], __93);int(1..)]), __94),
+__96,
+ReifyImply(and([SumLeq([1, __107], __95),SumGeq([1, __107], __95);int(1..)]), __96),
+DivEq(p#function_1#packed_1, 9, __97),
+DivEq(p#function_1#packed_1, 9, __98),
+DivEq(p#function_1#packed_1, 9, __99),
+DivEq(p#function_1#packed_1, 9, __100),
+DivEq(p#function_1#packed_1, 9, __101),
+ModEq(p#function_1#packed_1, 3, __102),
+ModEq(p#function_1#packed_1, 3, __103),
+ModEq(p#function_1#packed_1, 3, __104),
+ModEq(p#function_1#packed_1, 3, __105),
+ModEq(p#function_1#packed_1, 3, __106),
+ModEq(p#function_1#packed_1, 3, __107),
+DivEq(p#function_1#packed_1, 9, __108),
+ModEq(__124, 3, __109),
+ModEq(__125, 3, __110),
+ModEq(__126, 3, __111),
+ModEq(__127, 3, __112),
+ModEq(__128, 3, __113),
+ModEq(__129, 3, __114),
+DivEq(p#function_2#packed_1, 9, __115),
+ModEq(p#function_2#packed_1, 3, __116),
+DivEq(p#function_2#packed_1, 9, __117),
+ModEq(p#function_2#packed_1, 3, __118),
+DivEq(p#function_2#packed_1, 9, __119),
+ModEq(p#function_2#packed_1, 3, __120),
+ModEq(__130, 3, __121),
+ModEq(__131, 3, __122),
+ModEq(__132, 3, __123),
+DivEq(p#function_1#packed_1, 3, __124),
+DivEq(p#function_1#packed_1, 3, __125),
+DivEq(p#function_1#packed_1, 3, __126),
+DivEq(p#function_1#packed_1, 3, __127),
+DivEq(p#function_1#packed_1, 3, __128),
+DivEq(p#function_1#packed_1, 3, __129),
+DivEq(p#function_2#packed_1, 3, __130),
+DivEq(p#function_2#packed_1, 3, __131),
+DivEq(p#function_2#packed_1, 3, __132),
+Reify(or([and([WatchedLiteral(__139,1),__140;int(1..)]),and([WatchedLiteral(__141,2),__142;int(1..)]),and([WatchedLiteral(__143,3),__144;int(1..)]);int(1..)]), __134),
+ReifyImply(or([and([WatchedLiteral(__145,1),__146,SumLeq([1, __193], __133),SumGeq([1, __193], __133);int(1..)]),and([WatchedLiteral(__147,2),__148,SumLeq([1, __199], __133),SumGeq([1, __199], __133);int(1..)]),and([WatchedLiteral(__149,3),__150,SumLeq([1, __194], __133),SumGeq([1, __194], __133);int(1..)]);int(1..)]), __134),
+Reify(or([and([WatchedLiteral(__151,1),__152;int(1..)]),and([WatchedLiteral(__153,2),__154;int(1..)]),and([WatchedLiteral(__155,3),__156;int(1..)]);int(1..)]), __136),
+ReifyImply(or([and([WatchedLiteral(__157,1),__158,SumLeq([1, __195], __135),SumGeq([1, __195], __135);int(1..)]),and([WatchedLiteral(__159,2),__160,SumLeq([1, __200], __135),SumGeq([1, __200], __135);int(1..)]),and([WatchedLiteral(__161,3),__162,SumLeq([1, __196], __135),SumGeq([1, __196], __135);int(1..)]);int(1..)]), __136),
+Reify(or([and([WatchedLiteral(__163,1),__164;int(1..)]),and([WatchedLiteral(__165,2),__166;int(1..)]),and([WatchedLiteral(__167,3),__168;int(1..)]);int(1..)]), __138),
+ReifyImply(or([and([WatchedLiteral(__169,1),__170,SumLeq([1, __197], __137),SumGeq([1, __197], __137);int(1..)]),and([WatchedLiteral(__171,2),__172,SumLeq([1, __201], __137),SumGeq([1, __201], __137);int(1..)]),and([WatchedLiteral(__173,3),__174,SumLeq([1, __198], __137),SumGeq([1, __198], __137);int(1..)]);int(1..)]), __138),
+__140,
+ReifyImply(and([SumLeq([1, __186], __139),SumGeq([1, __186], __139);int(1..)]), __140),
+__142,
+ReifyImply(and([SumLeq([1, __175], __141),SumGeq([1, __175], __141);int(1..)]), __142),
+__144,
+ReifyImply(and([SumLeq([1, __176], __143),SumGeq([1, __176], __143);int(1..)]), __144),
+__146,
+ReifyImply(and([SumLeq([1, __177], __145),SumGeq([1, __177], __145);int(1..)]), __146),
+__148,
+ReifyImply(and([SumLeq([1, __178], __147),SumGeq([1, __178], __147);int(1..)]), __148),
+__150,
+ReifyImply(and([SumLeq([1, __179], __149),SumGeq([1, __179], __149);int(1..)]), __150),
+__152,
+ReifyImply(and([SumLeq([1, __187], __151),SumGeq([1, __187], __151);int(1..)]), __152),
+__154,
+ReifyImply(and([SumLeq([1, __188], __153),SumGeq([1, __188], __153);int(1..)]), __154),
+__156,
+ReifyImply(and([SumLeq([1, __189], __155),SumGeq([1, __189], __155);int(1..)]), __156),
+__158,
+ReifyImply(and([SumLeq([1, __190], __157),SumGeq([1, __190], __157);int(1..)]), __158),
+__160,
+ReifyImply(and([SumLeq([1, __191], __159),SumGeq([1, __191], __159);int(1..)]), __160),
+__162,
+ReifyImply(and([SumLeq([1, __192], __161),SumGeq([1, __192], __161);int(1..)]), __162),
+__164,
+ReifyImply(and([SumLeq([1, __180], __163),SumGeq([1, __180], __163);int(1..)]), __164),
+__166,
+ReifyImply(and([SumLeq([1, __181], __165),SumGeq([1, __181], __165);int(1..)]), __166),
+__168,
+ReifyImply(and([SumLeq([1, __182], __167),SumGeq([1, __182], __167);int(1..)]), __168),
+__170,
+ReifyImply(and([SumLeq([1, __183], __169),SumGeq([1, __183], __169);int(1..)]), __170),
+__172,
+ReifyImply(and([SumLeq([1, __184], __171),SumGeq([1, __184], __171);int(1..)]), __172),
+__174,
+ReifyImply(and([SumLeq([1, __185], __173),SumGeq([1, __185], __173);int(1..)]), __174),
+DivEq(p#function_2#packed_1, 9, __175),
+DivEq(p#function_2#packed_1, 9, __176),
+DivEq(p#function_2#packed_1, 9, __177),
+DivEq(p#function_2#packed_1, 9, __178),
+DivEq(p#function_2#packed_1, 9, __179),
+ModEq(p#function_2#packed_1, 3, __180),
+ModEq(p#function_2#packed_1, 3, __181),
+ModEq(p#function_2#packed_1, 3, __182),
+ModEq(p#function_2#packed_1, 3, __183),
+ModEq(p#function_2#packed_1, 3, __184),
+ModEq(p#function_2#packed_1, 3, __185),
+DivEq(p#function_2#packed_1, 9, __186),
+ModEq(__202, 3, __187),
+ModEq(__203, 3, __188),
+ModEq(__204, 3, __189),
+ModEq(__205, 3, __190),
+ModEq(__206, 3, __191),
+ModEq(__207, 3, __192),
+DivEq(p#function_1#packed_1, 9, __193),
+ModEq(p#function_1#packed_1, 3, __194),
+DivEq(p#function_1#packed_1, 9, __195),
+ModEq(p#function_1#packed_1, 3, __196),
+DivEq(p#function_1#packed_1, 9, __197),
+ModEq(p#function_1#packed_1, 3, __198),
+ModEq(__208, 3, __199),
+ModEq(__209, 3, __200),
+ModEq(__210, 3, __201),
+DivEq(p#function_2#packed_1, 3, __202),
+DivEq(p#function_2#packed_1, 3, __203),
+DivEq(p#function_2#packed_1, 3, __204),
+DivEq(p#function_2#packed_1, 3, __205),
+DivEq(p#function_2#packed_1, 3, __206),
+DivEq(p#function_2#packed_1, 3, __207),
+DivEq(p#function_1#packed_1, 3, __208),
+DivEq(p#function_1#packed_1, 3, __209),
+DivEq(p#function_1#packed_1, 3, __210)
+

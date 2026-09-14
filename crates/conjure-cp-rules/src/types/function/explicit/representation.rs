@@ -58,6 +58,27 @@ register_representation!(
             }
         }
 
+        /// Return the codomain value at a position that is not known until solving.
+        pub fn value_expr_at(&self, index: Expression) -> Expression {
+            Expression::SafeIndex(
+                Metadata::new(),
+                Moo::new(Reference::new(self.values_matrix.clone()).into()),
+                vec![index],
+            )
+        }
+
+        /// Return whether a position that is not known until solving is defined.
+        pub fn defined_expr_at(&self, index: Expression) -> Expression {
+            match &self.flags_matrix {
+                Some(flags) => Expression::SafeIndex(
+                    Metadata::new(),
+                    Moo::new(Reference::new(flags.clone()).into()),
+                    vec![index],
+                ),
+                None => true.into(),
+            }
+        }
+
         /// The number of defined entries, as `sum(toInt(flags_matrix[i]))` unrolled over every
         /// position (avoiding a comprehension, since `essence_expr!` cannot build one and this
         /// representation otherwise unrolls structural constraints by static position anyway).
@@ -134,6 +155,24 @@ register_representation!(
                 Range::Bounded(min, max) => {
                     constraints.push(essence_expr!(r"(&count >= &min) /\ (&count <= &max)"));
                 }
+            }
+        }
+
+        // Undefined positions hold one canonical value, so that a function value has exactly one
+        // representation: without this every undefined position is free to take any codomain
+        // value, and each real solution comes back once per combination of those don't-cares.
+        if state.flags_matrix.is_some() {
+            for index in 1..=n {
+                let defined = state.defined_expr(index);
+                let value = state.value_expr(index);
+                let padding: Expression = state.padding.clone().into();
+                constraints.push(Expression::Or(
+                    Metadata::new(),
+                    Moo::new(matrix_expr![
+                        defined,
+                        Expression::Eq(Metadata::new(), Moo::new(value), Moo::new(padding)),
+                    ]),
+                ));
             }
         }
 

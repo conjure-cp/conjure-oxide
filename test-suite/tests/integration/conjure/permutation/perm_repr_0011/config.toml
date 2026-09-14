@@ -2,6 +2,13 @@
 parser = "tree-sitter"
 rewriter = "optimised"
 comprehension-expander = "auto"
+# PermutationAsFunction channels a permutation through Function-typed auxiliaries, so every
+# representation choice (`heuristic = "x"`) includes FunctionAsRelation for them. A relation of
+# decision-variable tuples is a poor fit for the total, bijective functions a permutation needs:
+# the search is over sets of pairs, with only pairwise well-formedness to prune it, and every
+# permutation case here slowed by five- to twenty-fold under it. Take the compact choice
+# instead -- `basic/function/sparse-partial` keeps FunctionAsRelation covered on a domain that
+# suits it.
 heuristic = "x"
 solver = "minion"
 number-of-solutions = "all"
