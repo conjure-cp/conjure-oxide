@@ -411,6 +411,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::Subset(_, _, _) => Err(RuleNotApplicable),
         Expr::SubsetEq(_, _, _) => Err(RuleNotApplicable),
         Expr::AbstractLiteral(_, _) => Err(RuleNotApplicable),
+        Expr::CatchUndef(_, _, _) => Err(RuleNotApplicable),
         Expr::Comprehension(_, _) => Err(RuleNotApplicable),
         Expr::DominanceRelation(_, _) => Err(RuleNotApplicable),
         Expr::TypeAnnotation(_, _, _) => Err(RuleNotApplicable),

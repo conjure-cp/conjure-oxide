@@ -643,6 +643,16 @@ module.exports = grammar ({
 
     toInt_expr: $ => seq("toInt","(", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)), ")"),
 
+    // catchUndef(e, d): e when e is defined, d when it is not.
+    catch_undef_expr: $ => seq(
+      "catchUndef",
+      "(",
+      field("expression", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("default", choice($.arithmetic_expr, $.atom)),
+      ")"
+    ),
+
     list_combining_expr_bool: $ => prec(-10, seq(
       field("operator", choice("and", "or")),
       "(",
@@ -769,6 +779,7 @@ module.exports = grammar ({
     
     arithmetic_expr: $ => prec(3, choice(
       field("toInt_expr", $.toInt_expr),
+      field("catch_undef_expr", $.catch_undef_expr),
       field("negative_expression", $.negative_expr),
       field("absolute_value", $.abs_value),
       field("factorial_expression", $.factorial_expr),

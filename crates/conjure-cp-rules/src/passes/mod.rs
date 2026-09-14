@@ -2,6 +2,7 @@ mod attribute_as_constraint;
 mod attribute_as_constraint_fallback;
 mod base;
 mod bubble;
+mod catch_undef;
 mod comprehensions;
 mod lex;
 mod normalisers;

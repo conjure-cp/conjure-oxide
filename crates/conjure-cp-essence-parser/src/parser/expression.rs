@@ -163,6 +163,7 @@ fn parse_arithmetic_expression(
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_unary_expression(ctx, &inner)
         }
+        "catch_undef_expr" => parse_catch_undef_expression(ctx, &inner),
         "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_arith" => {
             // list-combining arithmetic operators accept either set or matrix operands
@@ -1088,4 +1089,33 @@ fn set_comprehension_skip_operator(
     } else {
         Expression::Comprehension(meta, comprehension)
     }
+}
+
+/// Parses `catchUndef(expression, default)`.
+fn parse_catch_undef_expression(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    ctx.typechecking_context = TypecheckingContext::Arithmetic;
+
+    let Some(expression_node) = field!(recover, ctx, node, "expression") else {
+        return Ok(None);
+    };
+    let Some(default_node) = field!(recover, ctx, node, "default") else {
+        return Ok(None);
+    };
+
+    let Some(expression) = parse_expression(ctx, expression_node)? else {
+        return Ok(None);
+    };
+    ctx.typechecking_context = TypecheckingContext::Arithmetic;
+    let Some(default) = parse_expression(ctx, default_node)? else {
+        return Ok(None);
+    };
+
+    Ok(Some(Expression::CatchUndef(
+        Metadata::new(),
+        Moo::new(expression),
+        Moo::new(default),
+    )))
 }

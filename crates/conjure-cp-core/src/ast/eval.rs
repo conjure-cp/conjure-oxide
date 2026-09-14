@@ -684,6 +684,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), es.as_ref()).map(Lit::Bool)
         }
+        // A `catchUndef` still standing at constant-folding time has no bubble to consult, so the
+        // inner expression is total here and the default is unreachable.
+        Expr::CatchUndef(_, a, _) => eval_constant(a),
         Expr::Imply(_, a, b) => bin_op::<bool, bool>(|a, b| !a || b, a, b).map(Lit::Bool),
         Expr::Iff(_, a, b) => bin_op::<bool, bool>(|a, b| a == b, a, b).map(Lit::Bool),
         Expr::Sum(_, exprs) => vec_lit_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
