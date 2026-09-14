@@ -324,7 +324,9 @@ fn load_intdomain_var(
         Range::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
         Range::Single(x) => Ok((x.to_owned(), x.to_owned())),
         #[allow(unreachable_patterns)]
-        x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
+        x => Err(ModelFeatureNotSupported(format!(
+            "variable {name} has a non-finite int domain: {x:?}"
+        ))),
     }?;
 
     let size = i64::from(high) - i64::from(low) + 1;
