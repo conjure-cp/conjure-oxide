@@ -403,6 +403,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr {
+        Expr::Difference(_, _, _) => Err(RuleNotApplicable),
         Expr::Union(_, _, _) => Err(RuleNotApplicable),
         Expr::In(_, _, _) => Err(RuleNotApplicable),
         Expr::Intersect(_, _, _) => Err(RuleNotApplicable),

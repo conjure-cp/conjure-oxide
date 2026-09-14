@@ -492,6 +492,23 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
             Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
         }
+        Expr::Difference(_, a, b) => {
+            let (
+                Lit::AbstractLiteral(AbstractLiteral::Set(a)),
+                Lit::AbstractLiteral(AbstractLiteral::Set(b)),
+            ) = (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?)
+            else {
+                return None;
+            };
+
+            let mut res: Vec<Lit> = Vec::new();
+            for lit in a {
+                if !b.contains(&lit) && !res.contains(&lit) {
+                    res.push(lit);
+                }
+            }
+            Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+        }
         Expr::Union(_, a, b) => {
             let (
                 Lit::AbstractLiteral(AbstractLiteral::Set(a)),
