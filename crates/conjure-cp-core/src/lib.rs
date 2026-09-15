@@ -11,6 +11,7 @@ pub mod ast;
 pub mod bug;
 
 pub mod context;
+pub mod domain_tightening;
 pub mod error;
 pub mod instantiate;
 pub mod objective;

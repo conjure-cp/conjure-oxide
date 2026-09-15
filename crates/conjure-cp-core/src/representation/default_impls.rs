@@ -61,10 +61,16 @@ where
     let repr_name = <DomL as ReprDomainLevel>::RULE.id();
     let mut symtab = SymbolTable::new();
     let mut counter = 1;
+    let element_domains = decl.as_find().and_then(|var| var.element_domains.clone());
 
     match &decl.kind() as &DeclarationKind {
         DeclarationKind::Find(_) | DeclarationKind::FindAuxiliary(_) => {
             let declare_field_var = |dom: DomainPtr| {
+                let dom = element_domains
+                    .as_ref()
+                    .and_then(|domains| domains.get(counter - 1))
+                    .cloned()
+                    .unwrap_or(dom);
                 let name = Name::repr(src_name.clone(), repr_name, &counter.to_string());
                 let mut field_decl = if decl.is_find_auxiliary() {
                     DeclarationPtr::new_find_auxiliary(name, dom)
