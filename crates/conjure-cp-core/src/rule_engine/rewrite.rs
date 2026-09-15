@@ -10,6 +10,7 @@ use crate::{
         normalise_root_constraint_deep,
     },
     bug,
+    domain_tightening::tighten_domains_from_constraints,
     objective::introduce_objective_auxiliary,
     rule_engine::{
         get_rules_grouped,
@@ -1815,6 +1816,7 @@ pub fn rewrite_model<'a>(
         .collect_vec();
 
     let mut model = introduce_objective_auxiliary(model.clone());
+    tighten_domains_from_constraints(&mut model);
     let mut rewriter_stats = RewriterStats::new();
     rewriter_stats.is_optimisation_enabled = Some(!config.is_baseline());
     let mut dirty_trace = DirtyTrace::from_env();

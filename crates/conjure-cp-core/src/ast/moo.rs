@@ -214,6 +214,18 @@ where
             }
             return true;
         }
+        if std::any::TypeId::of::<U>() == std::any::TypeId::of::<To>() {
+            if index != 0 {
+                return false;
+            }
+            // The child is the whole pointee, not a child inside it. Replace the pointer
+            // directly: make_mut would clone the old shared value only to discard it.
+            // SAFETY: TypeId equality means U and To are the same type.
+            let value = unsafe { std::mem::transmute_copy::<To, U>(&child) };
+            std::mem::forget(child);
+            *self = Moo::new(value);
+            return true;
+        }
         <U as Biplate<To>>::try_replace_child_at_bi(Moo::make_mut(self), index, child)
     }
 }
@@ -308,5 +320,57 @@ where
     {
         let wrap = DeserializeAsWrap::<T, As>::deserialize(deserializer)?;
         Ok(Moo::new(wrap.into_inner()))
+    }
+}
+
+#[cfg(test)]
+mod replacement_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static CLONES: AtomicUsize = AtomicUsize::new(0);
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct CloneProbe(i32);
+
+    impl Clone for CloneProbe {
+        fn clone(&self) -> Self {
+            CLONES.fetch_add(1, Ordering::Relaxed);
+            Self(self.0)
+        }
+    }
+
+    impl Uniplate for CloneProbe {
+        fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+            let value = self.0;
+            (Tree::Zero, Box::new(move |_| Self(value)))
+        }
+    }
+
+    impl Biplate<CloneProbe> for CloneProbe {
+        fn biplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+            (
+                Tree::One(self.clone()),
+                Box::new(|tree| {
+                    let Tree::One(value) = tree else {
+                        panic!("expected one child")
+                    };
+                    value
+                }),
+            )
+        }
+    }
+
+    #[test]
+    fn replacing_shared_pointee_does_not_clone_the_discarded_value() {
+        let mut value = Moo::new(CloneProbe(1));
+        let shared = value.clone();
+        CLONES.store(0, Ordering::Relaxed);
+        assert!(!value.try_replace_child_at_bi(1, CloneProbe(2)));
+        assert_eq!(value.0, 1);
+        assert!(value.try_replace_child_at_bi(0, CloneProbe(2)));
+        assert_eq!(value.0, 2);
+        assert_eq!(shared.0, 1);
+        assert_eq!(CLONES.load(Ordering::Relaxed), 0);
     }
 }

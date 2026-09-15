@@ -226,6 +226,38 @@ fn matrix_representation_initialises_and_maps_indices() {
 }
 
 #[test]
+fn matrix_components_instantiate_uses_per_cell_element_domains() {
+    let inner = Domain::sequence(sequence_attr(range!(0..10)), domain_int!(1..9));
+    let domain = Domain::matrix(inner, vec![domain_int!(1..2)]);
+    let mut symbols = SymbolTable::new();
+    let mut declaration = symbols.gen_find(&domain);
+    {
+        let mut var = declaration.as_find_mut().expect("find");
+        var.element_domains = Some(vec![
+            Domain::sequence(sequence_attr(range!(3)), domain_int!(1..9)).into(),
+            Domain::sequence(sequence_attr(range!(5)), domain_int!(1..9)).into(),
+        ]);
+    }
+
+    MatrixComponents::init_for(&mut declaration).unwrap();
+    let components = declaration
+        .get_repr::<MatrixComponents>()
+        .expect("MatrixComponents");
+    let sizes: Vec<_> = components
+        .elements
+        .iter()
+        .map(|elem| {
+            let domain = elem.domain().unwrap();
+            let GroundDomain::Sequence(attr, _) = domain.as_ground().unwrap() else {
+                panic!("expected a sequence component domain, got {domain}");
+            };
+            attr.size.clone()
+        })
+        .collect();
+    assert_eq!(sizes, vec![range!(3), range!(5)]);
+}
+
+#[test]
 fn record_components_round_trip_values_in_canonical_field_order() {
     let domain = Domain::record(vec![
         Field {
