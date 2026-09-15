@@ -2425,7 +2425,8 @@ impl Expression {
 /// A function is defined only on its own domain -- `total` means defined for every value *in* that
 /// domain, not defined everywhere -- so an argument that can fall outside it has no image there. A
 /// partial function may also be undefined inside its domain, and a sequence is defined only on
-/// `1..|s|`, which for a sequence whose length varies is not known until solving.
+/// `1..|s|`. When the length varies, every member of the domain still has the prefix `1..minSize`;
+/// positions past that prefix are not known until solving.
 ///
 /// Anything this cannot work out counts as undefinable. Safety has to be conservative: treating a
 /// partial application as total lets its definedness be reasoned away, and the constraint it sits
@@ -2441,13 +2442,16 @@ pub fn image_can_be_undefined(subject: &Expression, argument: &Expression) -> bo
         }
         // A permutation is total on its own domain, which is also where its image lands.
         GroundDomain::Permutation(_, inner) => !argument_always_in(argument, inner),
-        GroundDomain::Sequence(attr, _) => match attr.size {
-            Range::Single(size) => {
-                !argument_always_in(argument, &GroundDomain::Int(vec![Range::Bounded(1, size)]))
-            }
-            // The active length, and so the set of defined positions, is a decision.
-            _ => true,
-        },
+        GroundDomain::Sequence(attr, _) => {
+            // Positions `1..=min_length` exist in every member of the domain. Anything past that
+            // may sit in the allocated matrix and still be undefined if `|s|` is shorter.
+            let min_length = attr.size.low().copied().unwrap_or(0);
+            min_length <= 0
+                || !argument_always_in(
+                    argument,
+                    &GroundDomain::Int(vec![Range::Bounded(1, min_length)]),
+                )
+        }
         _ => true,
     }
 }
