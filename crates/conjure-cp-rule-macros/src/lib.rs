@@ -258,9 +258,6 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
     let expanded = quote! {
         #func
 
-        use ::conjure_cp::rule_engine::_dependencies::*; // ToDo idk if we need to explicitly do that?
-
-        #[::conjure_cp::rule_engine::_dependencies::distributed_slice(::conjure_cp::rule_engine::RULES_DISTRIBUTED_SLICE)]
         pub static #static_ident: ::conjure_cp::rule_engine::Rule<'static> = ::conjure_cp::rule_engine::Rule {
             name: stringify!(#rule_ident),
             application: #rule_ident,
@@ -268,6 +265,10 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             prefilters: #prefilters,
             failure_invalidation: #failure_invalidation,
         };
+
+        ::conjure_cp::rule_engine::_dependencies::inventory::submit! {
+            &#static_ident
+        }
     };
 
     TokenStream::from(expanded)
@@ -535,7 +536,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         }
     });
 
-    // Static name for distributed_slice entry
+    // Static name for the registry entry
     let dist_slice_name = format!("CONJURE_GEN_REPR_{}", repr_name_str).to_uppercase();
     let dist_slice_ident = Ident::new(&dist_slice_name, repr_ident.span());
 
@@ -648,8 +649,11 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         }
 
         // -- Registry entry
-        #[::conjure_cp::representation::_dependencies::distributed_slice(::conjure_cp::representation::_dependencies::REPR_RULES_DISTRIBUTED_SLICE)]
         pub static #dist_slice_ident: &'static dyn ReprRuleStored = &#repr_ident;
+
+        ::conjure_cp::representation::_dependencies::inventory::submit! {
+            #dist_slice_ident
+        }
     };
 
     TokenStream::from(expanded)
@@ -922,10 +926,12 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        use ::conjure_cp::rule_engine::_dependencies::*; // ToDo idk if we need to explicitly do that?
-        #[::conjure_cp::rule_engine::_dependencies::distributed_slice(::conjure_cp::rule_engine::RULE_SETS_DISTRIBUTED_SLICE)]
         pub static #static_ident: ::conjure_cp::rule_engine::RuleSet<'static> =
             ::conjure_cp::rule_engine::RuleSet::new(#name, &[#dependencies], #applies_to_family);
+
+        ::conjure_cp::rule_engine::_dependencies::inventory::submit! {
+            &#static_ident
+        }
     };
 
     TokenStream::from(expanded)

@@ -25,7 +25,6 @@ pub use types::{ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprResult, Repr
 pub mod _dependencies {
     pub use super::default_impls;
     pub use super::errors::*;
-    pub use super::registry::REPR_RULES_DISTRIBUTED_SLICE;
     pub use super::serde::ReprStateSerde;
     pub use super::stored::{ReprRuleStored, ReprStateStored};
     pub use super::types::{

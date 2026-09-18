@@ -1,19 +1,8 @@
-pub use linkme::distributed_slice;
-
 /// This procedural macro registers a decorated function with `conjure_cp_rules`' global registry, and
 /// adds the rule to one or more `RuleSet`'s.
 ///
 /// It may be used in any downstream crate.
-/// For more information on linker magic, see the [`linkme`](https://docs.rs/linkme/latest/linkme/) crate.
-///
-/// **IMPORTANT**: Since the resulting rule may not be explicitly referenced, it may be removed by the compiler's dead code elimination.
-/// To prevent this, you must ensure that either:
-/// 1. codegen-units is set to 1, i.e. in Cargo.toml:
-/// ```toml
-/// [profile.release]
-/// codegen-units = 1
-/// ```
-/// 2. The function is included somewhere else in the code
+/// For more information on registration, see the [`inventory`](https://docs.rs/inventory/latest/inventory/) crate.
 ///
 /// <hr>
 ///
@@ -46,7 +35,7 @@ pub use conjure_cp_rule_macros::register_rule;
 /// This procedural macro registers a rule set with the global registry.
 /// It may be used in any downstream crate.
 ///
-/// For more information on linker magic, see the [`linkme`](https://docs.rs/linkme/latest/linkme/) crate.
+/// For more information on registration, see the [`inventory`](https://docs.rs/inventory/latest/inventory/) crate.
 ///
 /// This macro uses the following syntax:
 ///
@@ -105,17 +94,12 @@ mod rewriter_common;
 mod rule;
 mod rule_set;
 
-#[doc(hidden)]
-#[distributed_slice]
-pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
+inventory::collect!(&'static Rule<'static>);
 
-#[doc(hidden)]
-#[distributed_slice]
-pub static RULE_SETS_DISTRIBUTED_SLICE: [RuleSet<'static>];
+inventory::collect!(&'static RuleSet<'static>);
 
 pub mod _dependencies {
-    pub use linkme;
-    pub use linkme::distributed_slice;
+    pub use inventory;
 }
 
 /// Returns a copied `Vec` of all rules registered with the `register_rule` macro.
@@ -145,7 +129,10 @@ pub mod _dependencies {
 /// ```
 /// Where `MEM` is the memory address of the `identity` function.
 pub fn get_all_rules() -> Vec<&'static Rule<'static>> {
-    RULES_DISTRIBUTED_SLICE.iter().collect()
+    inventory::iter::<&'static Rule<'static>>
+        .into_iter()
+        .copied()
+        .collect()
 }
 
 /// Get a rule by name.
@@ -203,7 +190,10 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// ```
 ///
 pub fn get_all_rule_sets() -> Vec<&'static RuleSet<'static>> {
-    RULE_SETS_DISTRIBUTED_SLICE.iter().collect()
+    inventory::iter::<&'static RuleSet<'static>>
+        .into_iter()
+        .copied()
+        .collect()
 }
 
 /// Rewrites a model using the supplied rewriter configuration.
