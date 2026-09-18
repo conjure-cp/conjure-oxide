@@ -4,7 +4,9 @@ version = "0.0.1"
 edition = "2024"
 
 [features]
-default = ["z3"]
+default = ["sat-cadical", "z3"]
+sat-cadical = ["dep:rustsat-cadical"]
+sat-batsat = ["dep:rustsat-batsat"]
 z3 = ["dep:z3"]
 z3-bundled = ["z3", "z3/bundled"]
 extra-rule-checks = []
@@ -35,7 +37,7 @@ project-root = { workspace = true }
 quote = { workspace = true }
 regex = { workspace = true }
 rustsat = { workspace = true }
-rustsat-cadical = { workspace = true }
+rustsat-batsat = { workspace = true, optional = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -52,6 +54,9 @@ ustr = { workspace = true }
 versions = { workspace = true }
 walkdir = { workspace = true }
 z3 = { version = "0.21.0", default-features = false, optional = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+rustsat-cadical = { workspace = true, optional = true }
 
 [dev-dependencies]
 conjure-cp = { path = "../conjure-cp", default-features = false }

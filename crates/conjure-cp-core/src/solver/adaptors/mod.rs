@@ -29,11 +29,19 @@ impl SolveTimeBudget {
 }
 
 pub mod minion;
+#[cfg(any(
+    feature = "sat-batsat",
+    all(feature = "sat-cadical", not(target_family = "wasm"))
+))]
 pub mod rustsat;
 
 #[doc(inline)]
 pub use minion::{Minion, MinionValueOrder, MinionVariableOrder};
 
+#[cfg(any(
+    feature = "sat-batsat",
+    all(feature = "sat-cadical", not(target_family = "wasm"))
+))]
 #[doc(inline)]
 pub use rustsat::Sat;
 
