@@ -233,6 +233,7 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 
 /// Get all rule sets for a given solver family.
 /// Returns a `Vec` of static references to all rule sets that are applicable to the given solver family.
+/// Rule sets are not guaranteed to be in any particular order.
 ///
 /// # Example
 ///
@@ -241,10 +242,11 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 /// use conjure_cp_core::rule_engine::{get_rule_sets_for_solver_family, register_rule_set};
 ///
 /// register_rule_set!("CNF", (), |f: &SolverFamily| matches!(f, SolverFamily::Sat));
+/// register_rule_set!("MinionOnly", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion));
 ///
 /// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::Sat);
-/// assert_eq!(rule_sets.len(), 2);
-/// assert_eq!(rule_sets[0].name, "CNF");
+/// assert!(rule_sets.iter().any(|rule_set| rule_set.name == "CNF"));
+/// assert!(!rule_sets.iter().any(|rule_set| rule_set.name == "MinionOnly"));
 /// ```
 pub fn get_rule_sets_for_solver_family(
     solver_family: SolverFamily,
