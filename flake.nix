@@ -5,9 +5,10 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
+
   };
 
-  outputs = { self, nixpkgs, utils, rust-overlay, ... }:
+  outputs = { self, nixpkgs, utils, ... }:
     utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -43,18 +44,19 @@
 
         conjure = pkgs.stdenv.mkDerivation rec {
           pname = "conjure";
-          version = "nightly";
+          version = "v2.6.1";
+          zipfile = "conjure-v2.6.1-linux-with-solvers.zip";
 
           src = pkgs.fetchzip {
 
             # NOTE: here, there is some scope for changes in future
             # we can use the following line in order to always use the latest release
             # url = "https://github.com/conjure-cp/conjure/releases/latest/conjure-nightly-linux-with-solvers.zip";
-            # However, this is not `nix-like' because the source is not immutable. 
+            # However, this is not `nix-like' because the source is not immutable.
 
-            url = "https://github.com/conjure-cp/conjure/releases/download/nightly/conjure-nightly-linux-with-solvers.zip";
+            url = "https://github.com/conjure-cp/conjure/releases/download/" + version + "/" + zipfile;
             # Replace with the hash `nix build` reports on first run.
-            sha256 = "sha256-5G9id0dYRqL56RMNbM6vWwE5lev62prtN4a18N4pNtI=";
+            sha256 = "sha256-+pc634fz3cqsFuXiUbtj/jrMPbGZMrye7pANNaw+ejE=";
           };
 
           nativeBuildInputs = [ pkgs.autoPatchelfHook ];
