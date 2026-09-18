@@ -37,8 +37,10 @@ pub use minion::{Minion, MinionValueOrder, MinionVariableOrder};
 #[doc(inline)]
 pub use rustsat::Sat;
 
+#[cfg(feature = "z3")]
 pub mod smt;
 
+#[cfg(feature = "z3")]
 #[doc(inline)]
 pub use smt::Smt;
 

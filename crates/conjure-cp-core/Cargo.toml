@@ -4,8 +4,9 @@ version = "0.0.1"
 edition = "2024"
 
 [features]
-default = []
-z3-bundled = ["z3/bundled"]
+default = ["z3"]
+z3 = ["dep:z3"]
+z3-bundled = ["z3", "z3/bundled"]
 extra-rule-checks = []
 
 [dependencies]
@@ -50,10 +51,10 @@ uniplate = { workspace = true }
 ustr = { workspace = true }
 versions = { workspace = true }
 walkdir = { workspace = true }
-z3 = { version = "0.21.0", default-features = false }
+z3 = { version = "0.21.0", default-features = false, optional = true }
 
 [dev-dependencies]
-conjure-cp = { path = "../conjure-cp" }
+conjure-cp = { path = "../conjure-cp", default-features = false }
 
 [lints]
 workspace = true
