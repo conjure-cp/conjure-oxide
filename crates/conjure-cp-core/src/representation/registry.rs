@@ -1,21 +1,18 @@
 use super::stored::ReprRuleStored;
 use crate::bug;
-use crate::rule_engine::distributed_slice;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub type ReprRulePtr = &'static dyn ReprRuleStored;
 
-#[doc(hidden)]
-#[distributed_slice]
-pub static REPR_RULES_DISTRIBUTED_SLICE: [ReprRulePtr];
+inventory::collect!(ReprRulePtr);
 
 pub fn get_repr_rules() -> impl Iterator<Item = ReprRulePtr> {
-    REPR_RULES_DISTRIBUTED_SLICE.iter().copied()
+    inventory::iter::<ReprRulePtr>.into_iter().copied()
 }
 
 pub fn get_repr_by_name(name: &str) -> Option<ReprRulePtr> {
-    REPR_RULES_DISTRIBUTED_SLICE
-        .iter()
+    inventory::iter::<ReprRulePtr>
+        .into_iter()
         .copied()
         .find(|rule| rule.name() == name)
 }
@@ -29,8 +26,8 @@ pub fn get_applicable_repr_by_short_name(
     decl: &crate::ast::DeclarationPtr,
     short_name: &str,
 ) -> Option<ReprRulePtr> {
-    REPR_RULES_DISTRIBUTED_SLICE
-        .iter()
+    inventory::iter::<ReprRulePtr>
+        .into_iter()
         .copied()
         .find(|rule| rule.short_name() == short_name && rule.probe_for(decl).is_ok())
 }
