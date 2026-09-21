@@ -8,14 +8,13 @@
 
   };
 
-  outputs = { self, nixpkgs, utils, ... }:
+  outputs = { self, nixpkgs, utils, rust-overlay, ... }:
     utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs { inherit system; overlays = [ rust-overlay.overlays.default ]; };
       in
       {
         devShells.default =
           import ./shell.nix { inherit pkgs; };
       });
 }
-
