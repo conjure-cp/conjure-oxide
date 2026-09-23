@@ -19,26 +19,20 @@ new variables:
 --
 
 m#matrix_to_atom != m2#matrix_to_atom
-   ~~> matrix_ref_to_atom ([("Base", 2000)])
-[m#matrix_to_atom_1;int(1..)] != m2#matrix_to_atom
+   ~~> flatten_matrix_eq_neq ([("Base", 3000)])
+or([m#matrix_to_atom[1] != m2#matrix_to_atom[1];int(1..)])
 
 --
 
-[m#matrix_to_atom_1;int(1..)] != m2#matrix_to_atom
-   ~~> flatten_matrix_eq_neq ([("OrToolsCpSat", 3000)])
-or([[m#matrix_to_atom_1;int(1..)][1] != m2#matrix_to_atom[1];int(1..)])
-
---
-
-or([[m#matrix_to_atom_1;int(1..)][1] != m2#matrix_to_atom[1];int(1..)])
+or([m#matrix_to_atom[1] != m2#matrix_to_atom[1];int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-[m#matrix_to_atom_1;int(1..)][1] != m2#matrix_to_atom[1]
+m#matrix_to_atom[1] != m2#matrix_to_atom[1]
 
 --
 
-[m#matrix_to_atom_1;int(1..)][1]
+m#matrix_to_atom[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
-SafeIndex([m#matrix_to_atom_1;int(1..)],[1])
+SafeIndex(m#matrix_to_atom,[1])
 
 --
 
@@ -48,7 +42,7 @@ SafeIndex(m2#matrix_to_atom,[1])
 
 --
 
-m#matrix_to_atom_1 != SafeIndex(m2#matrix_to_atom,[1])
+SafeIndex(m#matrix_to_atom,[1]) != SafeIndex(m2#matrix_to_atom,[1])
    ~~> index_matrix_to_atom ([("Base", 5000)])
 m#matrix_to_atom_1 != m2#matrix_to_atom_1
 

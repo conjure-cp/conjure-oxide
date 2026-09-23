@@ -432,7 +432,8 @@ fn integration_test_inner_with_status(
                                         .into());
                                     }
                                 };
-                                let res = Some((Arc::new(conjure_run.solutions), conjure_run.timings));
+                                let res =
+                                    Some((Arc::new(conjure_run.solutions), conjure_run.timings));
                                 conjure_solutions_cache.insert(solver, res.clone());
                                 res
                             }
@@ -731,7 +732,6 @@ fn integration_test_inner(
         if let serde_json::Value::Array(arr) = &mut username_solutions_json {
             arr.sort_by_key(|v| serde_json::to_string(v).unwrap());
         }
-
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
