@@ -70,8 +70,9 @@ impl SolverAdaptor for OrToolsCpSat {
         let user_terminated = std::sync::atomic::AtomicBool::new(false);
         let num_solutions = std::sync::atomic::AtomicUsize::new(0);
 
-        let seen_solutions = std::sync::Mutex::new(Vec::new());
-        let consecutive_duplicates = std::sync::atomic::AtomicUsize::new(0);
+        let seen_solutions: std::sync::Mutex<
+            std::collections::HashSet<std::collections::BTreeMap<Name, Literal>>,
+        > = std::sync::Mutex::new(std::collections::HashSet::new());
 
         let cb = |response_proto: &[u8]| -> bool {
             if user_terminated.load(std::sync::atomic::Ordering::Relaxed) {
@@ -98,11 +99,12 @@ impl SolverAdaptor for OrToolsCpSat {
             };
 
             if self.enumerate_all {
+                let key: std::collections::BTreeMap<Name, Literal> =
+                    solution.clone().into_iter().collect();
                 let mut seen = seen_solutions.lock().unwrap();
-                if seen.contains(&solution) {
+                if !seen.insert(key) {
                     return true;
                 }
-                seen.push(solution.clone());
             }
 
             num_solutions.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
@@ -116,13 +118,8 @@ impl SolverAdaptor for OrToolsCpSat {
         let cb_dyn: &dyn Fn(&[u8]) -> bool = &cb;
         let callback_ptr = &cb_dyn as *const &dyn Fn(&[u8]) -> bool as usize;
 
-
-
-        let mut decision_vars: Vec<usize> = self
-            .solution_vars
-            .iter()
-            .map(|v| v.var_index)
-            .collect();
+        let mut decision_vars: Vec<usize> =
+            self.solution_vars.iter().map(|v| v.var_index).collect();
         decision_vars.sort_unstable();
         decision_vars.dedup();
 

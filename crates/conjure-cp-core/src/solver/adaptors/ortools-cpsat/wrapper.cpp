@@ -33,6 +33,7 @@ rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes,
     parameters.set_enumerate_all_solutions(false);
     parameters.set_max_memory_in_mb(1024);
     parameters.set_random_seed(1);
+    parameters.set_num_search_workers(1);
     if (model_proto.search_strategy_size() > 0) {
       parameters.set_search_branching(sat::SatParameters::FIXED_SEARCH);
     } else {
@@ -129,6 +130,7 @@ rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes,
   }
   parameters.set_max_memory_in_mb(1024);
   parameters.set_random_seed(1);
+  parameters.set_num_search_workers(1);
   if (!enumerate_all && !model_proto.has_objective()) {
     parameters.set_stop_after_first_solution(true);
   }

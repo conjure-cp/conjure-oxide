@@ -270,9 +270,10 @@ fn extract_linear_parts(
 > {
     let result = match expr {
         Expression::Eq(_, lhs, rhs) | Expression::Iff(_, lhs, rhs) => {
-            let (Ok(lhs_lin), Ok(rhs_lin)) =
-                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
-            else {
+            let (Ok(lhs_lin), Ok(rhs_lin)) = (
+                expr_to_linear(lhs.as_ref(), ctx),
+                expr_to_linear(rhs.as_ref(), ctx),
+            ) else {
                 return Ok(None);
             };
             (
@@ -283,9 +284,10 @@ fn extract_linear_parts(
             )
         }
         Expression::Neq(_, lhs, rhs) => {
-            let (Ok(lhs_lin), Ok(rhs_lin)) =
-                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
-            else {
+            let (Ok(lhs_lin), Ok(rhs_lin)) = (
+                expr_to_linear(lhs.as_ref(), ctx),
+                expr_to_linear(rhs.as_ref(), ctx),
+            ) else {
                 return Ok(None);
             };
             (
@@ -296,9 +298,10 @@ fn extract_linear_parts(
             )
         }
         Expression::Leq(_, lhs, rhs) => {
-            let (Ok(lhs_lin), Ok(rhs_lin)) =
-                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
-            else {
+            let (Ok(lhs_lin), Ok(rhs_lin)) = (
+                expr_to_linear(lhs.as_ref(), ctx),
+                expr_to_linear(rhs.as_ref(), ctx),
+            ) else {
                 return Ok(None);
             };
             (
@@ -309,9 +312,10 @@ fn extract_linear_parts(
             )
         }
         Expression::Geq(_, lhs, rhs) => {
-            let (Ok(lhs_lin), Ok(rhs_lin)) =
-                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
-            else {
+            let (Ok(lhs_lin), Ok(rhs_lin)) = (
+                expr_to_linear(lhs.as_ref(), ctx),
+                expr_to_linear(rhs.as_ref(), ctx),
+            ) else {
                 return Ok(None);
             };
             (
@@ -322,9 +326,10 @@ fn extract_linear_parts(
             )
         }
         Expression::Lt(_, lhs, rhs) => {
-            let (Ok(lhs_lin), Ok(rhs_lin)) =
-                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
-            else {
+            let (Ok(lhs_lin), Ok(rhs_lin)) = (
+                expr_to_linear(lhs.as_ref(), ctx),
+                expr_to_linear(rhs.as_ref(), ctx),
+            ) else {
                 return Ok(None);
             };
             (
@@ -335,9 +340,10 @@ fn extract_linear_parts(
             )
         }
         Expression::Gt(_, lhs, rhs) => {
-            let (Ok(lhs_lin), Ok(rhs_lin)) =
-                (expr_to_linear(lhs.as_ref(), ctx), expr_to_linear(rhs.as_ref(), ctx))
-            else {
+            let (Ok(lhs_lin), Ok(rhs_lin)) = (
+                expr_to_linear(lhs.as_ref(), ctx),
+                expr_to_linear(rhs.as_ref(), ctx),
+            ) else {
                 return Ok(None);
             };
             (
@@ -627,21 +633,103 @@ fn eval_element_id_constant(expr: &Expression) -> Option<Literal> {
     match expr {
         Expression::ElementId(_, matrix, idx_expr) => {
             let idx_lit = eval_element_id_constant(idx_expr)?;
-            let Literal::Int(idx_val) = idx_lit else { return None; };
-            if let Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) = matrix.as_ref() {
+            let Literal::Int(idx_val) = idx_lit else {
+                return None;
+            };
+            if let Expression::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, domain))),
+            ) = matrix.as_ref()
+            {
+                if let Ok(indices) = domain.values_i32() {
+                    if indices.len() == elems.len() {
+                        if let Some(pos) = indices.iter().position(|&idx| idx == idx_val) {
+                            return Some(elems[pos].clone());
+                        } else {
+                            return Some(Literal::Int(idx_val));
+                        }
+                    }
+                }
                 let p = idx_val as usize;
                 if p >= 1 && p <= elems.len() {
                     return Some(elems[p - 1].clone());
+                } else {
+                    return Some(Literal::Int(idx_val));
+                }
+            } else if let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain)) =
+                matrix.as_ref()
+            {
+                let mut lit_elems = Vec::new();
+                for e in elems {
+                    if let Some(lit) = eval_constant(e) {
+                        lit_elems.push(lit);
+                    } else {
+                        return None;
+                    }
+                }
+                if let Some(ground) = domain.as_ground() {
+                    if let Ok(indices) = ground.values_i32() {
+                        if indices.len() == lit_elems.len() {
+                            if let Some(pos) = indices.iter().position(|&idx| idx == idx_val) {
+                                return Some(lit_elems[pos].clone());
+                            } else {
+                                return Some(Literal::Int(idx_val));
+                            }
+                        }
+                    }
+                }
+                let p = idx_val as usize;
+                if p >= 1 && p <= lit_elems.len() {
+                    return Some(lit_elems[p - 1].clone());
+                } else {
+                    return Some(Literal::Int(idx_val));
                 }
             }
         }
         Expression::SafeIndex(_, matrix, indices) if indices.len() == 1 => {
             let idx_lit = eval_element_id_constant(&indices[0])?;
-            let Literal::Int(idx_val) = idx_lit else { return None; };
-            if let Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) = matrix.as_ref() {
+            let Literal::Int(idx_val) = idx_lit else {
+                return None;
+            };
+            if let Expression::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, domain))),
+            ) = matrix.as_ref()
+            {
+                if let Ok(indices) = domain.values_i32() {
+                    if indices.len() == elems.len() {
+                        if let Some(pos) = indices.iter().position(|&idx| idx == idx_val) {
+                            return Some(elems[pos].clone());
+                        }
+                    }
+                }
                 let p = idx_val as usize;
                 if p >= 1 && p <= elems.len() {
                     return Some(elems[p - 1].clone());
+                }
+            } else if let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain)) =
+                matrix.as_ref()
+            {
+                let mut lit_elems = Vec::new();
+                for e in elems {
+                    if let Some(lit) = eval_constant(e) {
+                        lit_elems.push(lit);
+                    } else {
+                        return None;
+                    }
+                }
+                if let Some(ground) = domain.as_ground() {
+                    if let Ok(indices) = ground.values_i32() {
+                        if indices.len() == lit_elems.len() {
+                            if let Some(pos) = indices.iter().position(|&idx| idx == idx_val) {
+                                return Some(lit_elems[pos].clone());
+                            }
+                        }
+                    }
+                }
+                let p = idx_val as usize;
+                if p >= 1 && p <= lit_elems.len() {
+                    return Some(lit_elems[p - 1].clone());
                 }
             }
         }
@@ -1400,7 +1488,10 @@ fn resolve_var_index(name: &Name, ctx: &TranslationContext) -> SolverResult<i32>
             return Ok(idx);
         }
     }
-    Err(SolverError::ModelInvalid(format!("Unknown variable in constraint: {}", name)))
+    Err(SolverError::ModelInvalid(format!(
+        "Unknown variable in constraint: {}",
+        name
+    )))
 }
 
 fn get_literal_strict(expr: &Expression, ctx: &TranslationContext) -> SolverResult<i32> {
@@ -1801,7 +1892,9 @@ fn translate_lex_comparison(
         });
     }
 
-    Err(SolverError::OpNotSupported("Matrix lex comparison too large for base encoding".into()))
+    Err(SolverError::OpNotSupported(
+        "Matrix lex comparison too large for base encoding".into(),
+    ))
 }
 
 fn bind_reified_constraint(
@@ -1850,20 +1943,24 @@ fn bind_reified_constraint(
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![ref_var],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: lin.vars.clone(),
-                coeffs: lin.coeffs.clone(),
-                domain: lin.domain,
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: lin.vars.clone(),
+                    coeffs: lin.coeffs.clone(),
+                    domain: lin.domain,
+                },
+            )),
         });
         cp_model.constraints.push(ConstraintProto {
             name: String::new(),
             enforcement_literal: vec![-ref_var - 1],
-            constraint: Some(constraint_proto::Constraint::Linear(LinearConstraintProto {
-                vars: lin.vars,
-                coeffs: lin.coeffs,
-                domain: comp_domain,
-            })),
+            constraint: Some(constraint_proto::Constraint::Linear(
+                LinearConstraintProto {
+                    vars: lin.vars,
+                    coeffs: lin.coeffs,
+                    domain: comp_domain,
+                },
+            )),
         });
         return Ok(exact_linear_constraint(
             LinearExpr {
@@ -2000,7 +2097,6 @@ fn translate_reified_constraint(
             ));
         }
 
-
         Expression::Lt(_, lhs, rhs) | Expression::LexLt(_, lhs, rhs) => {
             if let (Some(elems_l), Some(elems_r)) = (
                 expr_to_linear_list(lhs.as_ref(), ctx),
@@ -2013,14 +2109,24 @@ fn translate_reified_constraint(
             }
         }
         Expression::FlatLexLt(_, a, b) | Expression::FlatLexLeq(_, a, b) => {
-            let op = if matches!(inner_expr, Expression::FlatLexLt(..)) { "<" } else { "<=" };
+            let op = if matches!(inner_expr, Expression::FlatLexLt(..)) {
+                "<"
+            } else {
+                "<="
+            };
             let mut elems_l = Vec::new();
             for atom in a {
-                elems_l.push(expr_to_linear(&Expression::Atomic(Metadata::default(), atom.clone()), ctx)?);
+                elems_l.push(expr_to_linear(
+                    &Expression::Atomic(Metadata::default(), atom.clone()),
+                    ctx,
+                )?);
             }
             let mut elems_r = Vec::new();
             for atom in b {
-                elems_r.push(expr_to_linear(&Expression::Atomic(Metadata::default(), atom.clone()), ctx)?);
+                elems_r.push(expr_to_linear(
+                    &Expression::Atomic(Metadata::default(), atom.clone()),
+                    ctx,
+                )?);
             }
             let lex_proto = translate_lex_comparison(op, elems_l, elems_r, cp_model, ctx)?;
             return bind_reified_constraint(ref_var, lex_proto, cp_model);
@@ -2031,7 +2137,8 @@ fn translate_reified_constraint(
                 expr_to_linear_list(rhs.as_ref(), ctx),
             ) {
                 if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
-                    let lex_proto = translate_lex_comparison("<=", elems_l, elems_r, cp_model, ctx)?;
+                    let lex_proto =
+                        translate_lex_comparison("<=", elems_l, elems_r, cp_model, ctx)?;
                     return bind_reified_constraint(ref_var, lex_proto, cp_model);
                 }
             }
@@ -2053,7 +2160,8 @@ fn translate_reified_constraint(
                 expr_to_linear_list(rhs.as_ref(), ctx),
             ) {
                 if elems_l.len() > 1 || elems_r.len() > 1 || elems_l.len() != elems_r.len() {
-                    let lex_proto = translate_lex_comparison(">=", elems_l, elems_r, cp_model, ctx)?;
+                    let lex_proto =
+                        translate_lex_comparison(">=", elems_l, elems_r, cp_model, ctx)?;
                     return bind_reified_constraint(ref_var, lex_proto, cp_model);
                 }
             }
@@ -2281,7 +2389,8 @@ fn translate_reified_constraint(
                 expr_to_linear_list(rhs.as_ref(), ctx),
             ) {
                 if elems_l.len() != elems_r.len() {
-                    let lex_proto = translate_lex_comparison("!=", elems_l, elems_r, cp_model, ctx)?;
+                    let lex_proto =
+                        translate_lex_comparison("!=", elems_l, elems_r, cp_model, ctx)?;
                     return bind_reified_constraint(ref_var, lex_proto, cp_model);
                 }
                 let mut aux_vars = Vec::new();
@@ -2955,17 +3064,21 @@ fn translate_reified_constraint(
             ))
         }
         Expression::ElementId(_, matrix, value) => {
-            translate_element_id_aux(ref_var, matrix.as_ref(), value.as_ref(), cp_model, ctx)
+            translate_element_id(ref_var, matrix.as_ref(), value.as_ref(), cp_model, ctx)
         }
         Expression::SafeIndex(_, matrix, indices) if indices.len() == 1 => {
-            translate_element_id_aux(ref_var, matrix.as_ref(), &indices[0], cp_model, ctx)
+            translate_safe_index_aux(ref_var, matrix.as_ref(), &indices[0], cp_model, ctx)
         }
         Expression::ToInt(_, inner) => {
             translate_reified_constraint(ref_var, inner.as_ref(), cp_model, ctx)
         }
-        Expression::Table(_, tuple, allowed_rows) => {
-            translate_table_reified(ref_var, tuple.as_ref(), allowed_rows.as_ref(), cp_model, ctx)
-        }
+        Expression::Table(_, tuple, allowed_rows) => translate_table_reified(
+            ref_var,
+            tuple.as_ref(),
+            allowed_rows.as_ref(),
+            cp_model,
+            ctx,
+        ),
         _ => {
             if let Ok(linear_expr) = expr_to_linear(inner_expr, ctx) {
                 let ref_linear = LinearExpr {
@@ -3007,7 +3120,10 @@ fn translate_reified_constraint(
 
 fn get_constant_int_vector(expr: &Expression) -> Option<Vec<i64>> {
     match expr {
-        Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)))) => {
+        Expression::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _))),
+        ) => {
             let mut vec = Vec::new();
             for elem in elems {
                 if let Literal::Int(val) = elem {
@@ -3035,7 +3151,10 @@ fn get_constant_int_vector(expr: &Expression) -> Option<Vec<i64>> {
 
 fn compose_matrix_with_indices(matrix: &Expression, indices: &[i64]) -> Option<Expression> {
     match matrix {
-        Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, domain)))) => {
+        Expression::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, domain))),
+        ) => {
             let mut min_idx: i64 = 1;
             if let Ok(intervals) = extract_domain_intervals(domain) {
                 if let Some(&start) = intervals.first() {
@@ -3046,7 +3165,10 @@ fn compose_matrix_with_indices(matrix: &Expression, indices: &[i64]) -> Option<E
             for &idx in indices {
                 let pos = (idx - min_idx) as usize;
                 if pos < elems.len() {
-                    composed_elems.push(Expression::Atomic(Metadata::default(), Atom::Literal(elems[pos].clone())));
+                    composed_elems.push(Expression::Atomic(
+                        Metadata::default(),
+                        Atom::Literal(elems[pos].clone()),
+                    ));
                 } else {
                     return None;
                 }
@@ -3076,7 +3198,178 @@ fn compose_matrix_with_indices(matrix: &Expression, indices: &[i64]) -> Option<E
     }
 }
 
-fn translate_element_id_aux(
+fn extract_matrix_elements_and_indices(
+    matrix: &Expression,
+    ctx: &TranslationContext,
+) -> SolverResult<(Vec<LinearExpr>, Vec<i32>)> {
+    let element_linears = expr_to_linear_list(matrix, ctx)
+        .ok_or_else(|| SolverError::ModelFeatureNotSupported("ElementId matrix argument".into()))?;
+
+    let mut index_values: Option<Vec<i32>> = None;
+    if let Expression::Atomic(
+        _,
+        Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(_, domain))),
+    ) = matrix
+    {
+        if let Ok(vals) = domain.values_i32() {
+            if vals.len() == element_linears.len() {
+                index_values = Some(vals);
+            }
+        }
+    } else if let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(_, domain)) = matrix {
+        if let Some(ground) = domain.as_ground() {
+            if let Ok(vals) = ground.values_i32() {
+                if vals.len() == element_linears.len() {
+                    index_values = Some(vals);
+                }
+            }
+        }
+    }
+
+    let indices = if let Some(vals) = index_values {
+        vals
+    } else {
+        let mut repr_indices = Vec::new();
+        let var_map = ctx.var_mapping.borrow();
+        for lin in &element_linears {
+            let mut found_pos = None;
+            if lin.vars.len() == 1 {
+                let var_idx = lin.vars[0];
+                for (name, &mapped_idx) in var_map.iter() {
+                    if mapped_idx == var_idx {
+                        if let Name::Represented(box_tuple) = name {
+                            let (_, repr_name, suffix) = box_tuple.as_ref();
+                            if repr_name.as_str() == "matrix_to_atom" {
+                                if let Ok(p) = suffix.as_str().parse::<i32>() {
+                                    found_pos = Some(p);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if let Some(p) = found_pos {
+                repr_indices.push(p);
+            } else {
+                break;
+            }
+        }
+        if repr_indices.len() == element_linears.len() {
+            repr_indices
+        } else {
+            (1..=element_linears.len() as i32).collect()
+        }
+    };
+
+    Ok((element_linears, indices))
+}
+
+fn translate_element_id(
+    ref_var: i32,
+    matrix: &Expression,
+    value: &Expression,
+    cp_model: &mut CpModelProto,
+    ctx: &TranslationContext,
+) -> SolverResult<ConstraintProto> {
+    use super::proto::ElementConstraintProto;
+
+    // Check if value can be folded as constant
+    if let Some(lit) = eval_element_id_constant(&Expression::ElementId(
+        Metadata::default(),
+        matrix.clone().into(),
+        value.clone().into(),
+    )) {
+        if let Literal::Int(val) = lit {
+            let val_var = get_or_create_var_for_linear(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: val as i64,
+                },
+                cp_model,
+            );
+            return Ok(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: vec![ref_var, val_var],
+                        coeffs: vec![1, -1],
+                        domain: vec![0, 0],
+                    },
+                )),
+            });
+        }
+    }
+
+    let index_linear = expr_to_linear(value, ctx)?;
+    let index_1_var = get_or_create_var_for_linear(index_linear, cp_model);
+    let target_var = ref_var;
+
+    let (element_linears, index_values) = extract_matrix_elements_and_indices(matrix, ctx)?;
+
+    let index_domain = cp_model.variables[index_1_var as usize].domain.clone();
+    let min_val = index_domain.first().copied().unwrap_or(1);
+    let max_val = index_domain.last().copied().unwrap_or(1);
+    let count = if max_val >= min_val {
+        (max_val - min_val + 1) as usize
+    } else {
+        1
+    };
+
+    let mut vars = Vec::with_capacity(count);
+    for p in min_val..=max_val {
+        let var = if let Some(pos) = index_values.iter().position(|&v| v == p as i32) {
+            get_or_create_var_for_linear(element_linears[pos].clone(), cp_model)
+        } else {
+            // Identity mapping for values not in the matrix domain
+            get_or_create_var_for_linear(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: p,
+                },
+                cp_model,
+            )
+        };
+        vars.push(var);
+    }
+
+    let index_0_var = cp_model.variables.len() as i32;
+    let mut index_0_proto = IntegerVariableProto::default();
+    index_0_proto.domain = vec![0, (vars.len() - 1) as i64];
+    cp_model.variables.push(index_0_proto);
+
+    cp_model.constraints.push(ConstraintProto {
+        name: String::new(),
+        enforcement_literal: vec![],
+        constraint: Some(constraint_proto::Constraint::Linear(
+            LinearConstraintProto {
+                vars: vec![index_1_var, index_0_var],
+                coeffs: vec![1, -1],
+                domain: vec![min_val, min_val],
+            },
+        )),
+    });
+
+    Ok(ConstraintProto {
+        name: String::new(),
+        enforcement_literal: vec![],
+        constraint: Some(constraint_proto::Constraint::Element(
+            ElementConstraintProto {
+                index: index_0_var,
+                target: target_var,
+                vars,
+                linear_index: None,
+                linear_target: None,
+                exprs: vec![],
+            },
+        )),
+    })
+}
+
+fn translate_safe_index_aux(
     ref_var: i32,
     matrix: &Expression,
     value: &Expression,
@@ -3089,7 +3382,13 @@ fn translate_element_id_aux(
     if let Expression::ElementId(_, inner_matrix, inner_k) = value {
         if let Some(a_consts) = get_constant_int_vector(inner_matrix.as_ref()) {
             if let Some(composed_matrix) = compose_matrix_with_indices(matrix, &a_consts) {
-                return translate_element_id_aux(ref_var, &composed_matrix, inner_k.as_ref(), cp_model, ctx);
+                return translate_safe_index_aux(
+                    ref_var,
+                    &composed_matrix,
+                    inner_k.as_ref(),
+                    cp_model,
+                    ctx,
+                );
             }
         }
     }
@@ -3097,7 +3396,13 @@ fn translate_element_id_aux(
         if inner_indices.len() == 1 {
             if let Some(a_consts) = get_constant_int_vector(inner_matrix.as_ref()) {
                 if let Some(composed_matrix) = compose_matrix_with_indices(matrix, &a_consts) {
-                    return translate_element_id_aux(ref_var, &composed_matrix, &inner_indices[0], cp_model, ctx);
+                    return translate_safe_index_aux(
+                        ref_var,
+                        &composed_matrix,
+                        &inner_indices[0],
+                        cp_model,
+                        ctx,
+                    );
                 }
             }
         }
@@ -3108,7 +3413,7 @@ fn translate_element_id_aux(
     let target_var = ref_var;
 
     let element_linears = expr_to_linear_list(matrix, ctx)
-        .ok_or_else(|| SolverError::ModelFeatureNotSupported("ElementId matrix argument".into()))?;
+        .ok_or_else(|| SolverError::ModelFeatureNotSupported("SafeIndex matrix argument".into()))?;
 
     let mut pos_and_vars = Vec::new();
     let mut max_pos: usize = 0;
@@ -3170,7 +3475,11 @@ fn translate_element_id_aux(
     cp_model.variables.push(index_0_proto);
 
     let mut min_idx: i64 = 1;
-    if let Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(_, domain)))) = matrix {
+    if let Expression::Atomic(
+        _,
+        Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(_, domain))),
+    ) = matrix
+    {
         if let Ok(intervals) = extract_domain_intervals(domain) {
             if let Some(&start) = intervals.first() {
                 min_idx = start;
@@ -3213,8 +3522,9 @@ fn translate_table_reified(
     cp_model: &mut CpModelProto,
     ctx: &TranslationContext,
 ) -> SolverResult<ConstraintProto> {
-    let tuple_linears = expr_to_linear_list(tuple_expr, ctx)
-        .ok_or_else(|| SolverError::ModelFeatureNotSupported("Complex expression in Table constraint tuple".into()))?;
+    let tuple_linears = expr_to_linear_list(tuple_expr, ctx).ok_or_else(|| {
+        SolverError::ModelFeatureNotSupported("Complex expression in Table constraint tuple".into())
+    })?;
 
     let Some(Literal::AbstractLiteral(AbstractLiteral::Matrix(rows, _))) = eval_constant(rows_expr)
     else {
@@ -3391,18 +3701,27 @@ fn translate_aux_declaration(
                     let var_idx = get_or_create_var_for_linear(inner_lin, cp_model);
                     let suffix = format!("{}", i + 1);
                     let elem_name = match &*reference.name() {
-                        Name::WithRepresentation(box_name, reprs) => {
+                        Name::WithRepresentation(box_name, reprs) => Name::Represented(Box::new((
+                            box_name.as_ref().clone(),
+                            reprs
+                                .first()
+                                .cloned()
+                                .unwrap_or_else(|| "matrix_to_atom".into()),
+                            suffix.into(),
+                        ))),
+                        Name::Represented(box_tuple) => {
+                            let (r_var, r_name, _) = box_tuple.as_ref();
                             Name::Represented(Box::new((
-                                box_name.as_ref().clone(),
-                                reprs.first().cloned().unwrap_or_else(|| "matrix_to_atom".into()),
+                                r_var.clone(),
+                                r_name.clone(),
                                 suffix.into(),
                             )))
                         }
-                        Name::Represented(box_tuple) => {
-                            let (r_var, r_name, _) = box_tuple.as_ref();
-                            Name::Represented(Box::new((r_var.clone(), r_name.clone(), suffix.into())))
-                        }
-                        name => Name::Represented(Box::new((name.clone(), "matrix_to_atom".into(), suffix.into()))),
+                        name => Name::Represented(Box::new((
+                            name.clone(),
+                            "matrix_to_atom".into(),
+                            suffix.into(),
+                        ))),
                     };
                     ctx.var_mapping.borrow_mut().insert(elem_name, var_idx);
                 }
@@ -3415,8 +3734,13 @@ fn translate_aux_declaration(
                     0,
                 ));
             } else if inner_linears.len() == 1 {
-                let var_idx = get_or_create_var_for_linear(inner_linears.into_iter().next().unwrap(), cp_model);
-                ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
+                let var_idx = get_or_create_var_for_linear(
+                    inner_linears.into_iter().next().unwrap(),
+                    cp_model,
+                );
+                ctx.var_mapping
+                    .borrow_mut()
+                    .insert(reference.name().clone(), var_idx);
                 return Ok(exact_linear_constraint(
                     LinearExpr {
                         vars: vec![],
@@ -3436,7 +3760,9 @@ fn translate_aux_declaration(
                 })
             })?;
             let var_idx = get_or_create_var_for_linear(inner_linear, cp_model);
-            ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
+            ctx.var_mapping
+                .borrow_mut()
+                .insert(reference.name().clone(), var_idx);
             return Ok(exact_linear_constraint(
                 LinearExpr {
                     vars: vec![],
@@ -3447,7 +3773,9 @@ fn translate_aux_declaration(
             ));
         } else if let Ok(inner_linear) = expr_to_linear(inner_expr, ctx) {
             let var_idx = get_or_create_var_for_linear(inner_linear, cp_model);
-            ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
+            ctx.var_mapping
+                .borrow_mut()
+                .insert(reference.name().clone(), var_idx);
             return Ok(exact_linear_constraint(
                 LinearExpr {
                     vars: vec![],
@@ -3458,22 +3786,85 @@ fn translate_aux_declaration(
             ));
         } else if let Expression::Eq(_, lhs, rhs) = inner_expr {
             let elem_opt = match lhs.as_ref() {
-                Expression::ElementId(_, m, v) => Some((m.as_ref(), v.as_ref())),
-                Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => Some((m.as_ref(), &idxs[0])),
+                Expression::ElementId(_, m, v) => {
+                    Some((rhs.as_ref(), m.as_ref(), v.as_ref(), true))
+                }
+                Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => {
+                    Some((rhs.as_ref(), m.as_ref(), &idxs[0], false))
+                }
                 _ => None,
-            }.or_else(|| match rhs.as_ref() {
-                Expression::ElementId(_, m, v) => Some((m.as_ref(), v.as_ref())),
-                Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => Some((m.as_ref(), &idxs[0])),
+            }
+            .or_else(|| match rhs.as_ref() {
+                Expression::ElementId(_, m, v) => {
+                    Some((lhs.as_ref(), m.as_ref(), v.as_ref(), true))
+                }
+                Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => {
+                    Some((lhs.as_ref(), m.as_ref(), &idxs[0], false))
+                }
                 _ => None,
             });
-            if let Some((matrix, value)) = elem_opt {
-                let var_idx = get_or_create_literal(
+            if let Some((other_expr, matrix, value, is_element_id)) = elem_opt {
+                let ref_var = get_or_create_literal(
                     &Expression::Atomic(Metadata::default(), Atom::Reference(reference.clone())),
                     cp_model,
                     ctx,
                 )?;
-                ctx.var_mapping.borrow_mut().insert(reference.name().clone(), var_idx);
-                return translate_element_id_aux(var_idx, matrix, value, cp_model, ctx);
+                ctx.var_mapping
+                    .borrow_mut()
+                    .insert(reference.name().clone(), ref_var);
+
+                let other_linear = expr_to_linear(other_expr, ctx)?;
+                let elem_var = cp_model.variables.len() as i32;
+                cp_model.variables.push(IntegerVariableProto {
+                    name: format!("elem_val_{}", elem_var),
+                    domain: vec![i32::MIN as i64, i32::MAX as i64],
+                });
+
+                let elem_constraint = if is_element_id {
+                    translate_element_id(elem_var, matrix, value, cp_model, ctx)?
+                } else {
+                    translate_safe_index_aux(elem_var, matrix, value, cp_model, ctx)?
+                };
+                cp_model.constraints.push(elem_constraint);
+
+                let elem_linear = LinearExpr {
+                    vars: vec![elem_var],
+                    coeffs: vec![1],
+                    offset: 0,
+                };
+                let diff = subtract_linear_exprs(other_linear, elem_linear);
+
+                cp_model.constraints.push(ConstraintProto {
+                    name: String::new(),
+                    enforcement_literal: vec![ref_var],
+                    constraint: Some(constraint_proto::Constraint::Linear(
+                        LinearConstraintProto {
+                            vars: diff.vars.clone(),
+                            coeffs: diff.coeffs.clone(),
+                            domain: vec![-diff.offset, -diff.offset],
+                        },
+                    )),
+                });
+                cp_model.constraints.push(ConstraintProto {
+                    name: String::new(),
+                    enforcement_literal: vec![-ref_var - 1],
+                    constraint: Some(constraint_proto::Constraint::Linear(
+                        LinearConstraintProto {
+                            vars: diff.vars,
+                            coeffs: diff.coeffs,
+                            domain: vec![i64::MIN, -diff.offset - 1, -diff.offset + 1, i64::MAX],
+                        },
+                    )),
+                });
+
+                return Ok(exact_linear_constraint(
+                    LinearExpr {
+                        vars: vec![],
+                        coeffs: vec![],
+                        offset: 0,
+                    },
+                    0,
+                ));
             }
         } else if let Expression::MinionElementOne(..) = inner_expr {
             let int_var = cp_model.variables.len() as i32;
@@ -3481,7 +3872,9 @@ fn translate_aux_declaration(
                 name: reference.name().to_string(),
                 domain: vec![i32::MIN as i64, i32::MAX as i64],
             });
-            ctx.var_mapping.borrow_mut().insert(reference.name().clone(), int_var);
+            ctx.var_mapping
+                .borrow_mut()
+                .insert(reference.name().clone(), int_var);
             return translate_constraint(inner_expr, cp_model, ctx);
         } else if let Expression::FlatProductEq(..) = inner_expr {
             return translate_constraint(inner_expr, cp_model, ctx);
@@ -3500,7 +3893,11 @@ fn translate_aux_declaration(
                 let index_expr = Expression::ElementId(
                     Metadata::default(),
                     inner_expr.clone().into(),
-                    Expression::Atomic(Metadata::default(), Atom::Literal(Literal::Int((i + 1) as i32))).into(),
+                    Expression::Atomic(
+                        Metadata::default(),
+                        Atom::Literal(Literal::Int((i + 1) as i32)),
+                    )
+                    .into(),
                 );
                 if let Ok(lin) = expr_to_linear(&index_expr, ctx) {
                     list.push(lin);
@@ -3520,7 +3917,11 @@ fn translate_aux_declaration(
         if let Some(inner_linears) = inner_linears {
             let count = ref_vars.len().min(inner_linears.len());
             if count > 0 {
-                for (ref_v, inner_lin) in ref_vars.into_iter().take(count).zip(inner_linears.into_iter().take(count)) {
+                for (ref_v, inner_lin) in ref_vars
+                    .into_iter()
+                    .take(count)
+                    .zip(inner_linears.into_iter().take(count))
+                {
                     let ref_linear = LinearExpr {
                         vars: vec![ref_v],
                         coeffs: vec![1],
@@ -3551,36 +3952,94 @@ fn translate_aux_declaration(
     };
 
     if let Expression::ElementId(_, matrix, value) = inner_expr {
-        return translate_element_id_aux(ref_var, matrix.as_ref(), value.as_ref(), cp_model, ctx);
+        return translate_element_id(ref_var, matrix.as_ref(), value.as_ref(), cp_model, ctx);
     }
     if let Expression::SafeIndex(_, matrix, indices) = inner_expr {
         if indices.len() == 1 {
-            return translate_element_id_aux(ref_var, matrix.as_ref(), &indices[0], cp_model, ctx);
+            return translate_safe_index_aux(ref_var, matrix.as_ref(), &indices[0], cp_model, ctx);
         }
     }
     if let Expression::Eq(_, lhs, rhs) = inner_expr {
-        let lhs_elem = match lhs.as_ref() {
-            Expression::ElementId(_, m, v) => Some((m.as_ref(), v.as_ref())),
-            Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => Some((m.as_ref(), &idxs[0])),
+        let elem_opt = match lhs.as_ref() {
+            Expression::ElementId(_, m, v) => Some((rhs.as_ref(), m.as_ref(), v.as_ref(), true)),
+            Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => {
+                Some((rhs.as_ref(), m.as_ref(), &idxs[0], false))
+            }
             _ => None,
-        };
-        if let Some((matrix, value)) = lhs_elem {
-            return translate_element_id_aux(ref_var, matrix, value, cp_model, ctx);
         }
-        let rhs_elem = match rhs.as_ref() {
-            Expression::ElementId(_, m, v) => Some((m.as_ref(), v.as_ref())),
-            Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => Some((m.as_ref(), &idxs[0])),
+        .or_else(|| match rhs.as_ref() {
+            Expression::ElementId(_, m, v) => Some((lhs.as_ref(), m.as_ref(), v.as_ref(), true)),
+            Expression::SafeIndex(_, m, idxs) if idxs.len() == 1 => {
+                Some((lhs.as_ref(), m.as_ref(), &idxs[0], false))
+            }
             _ => None,
-        };
-        if let Some((matrix, value)) = rhs_elem {
-            return translate_element_id_aux(ref_var, matrix, value, cp_model, ctx);
+        });
+        if let Some((other_expr, matrix, value, is_element_id)) = elem_opt {
+            let other_linear = expr_to_linear(other_expr, ctx)?;
+            let elem_var = cp_model.variables.len() as i32;
+            cp_model.variables.push(IntegerVariableProto {
+                name: format!("elem_val_{}", elem_var),
+                domain: vec![i32::MIN as i64, i32::MAX as i64],
+            });
+
+            let elem_constraint = if is_element_id {
+                translate_element_id(elem_var, matrix, value, cp_model, ctx)?
+            } else {
+                translate_safe_index_aux(elem_var, matrix, value, cp_model, ctx)?
+            };
+            cp_model.constraints.push(elem_constraint);
+
+            let elem_linear = LinearExpr {
+                vars: vec![elem_var],
+                coeffs: vec![1],
+                offset: 0,
+            };
+            let diff = subtract_linear_exprs(other_linear, elem_linear);
+
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![ref_var],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff.vars.clone(),
+                        coeffs: diff.coeffs.clone(),
+                        domain: vec![-diff.offset, -diff.offset],
+                    },
+                )),
+            });
+            cp_model.constraints.push(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![-ref_var - 1],
+                constraint: Some(constraint_proto::Constraint::Linear(
+                    LinearConstraintProto {
+                        vars: diff.vars,
+                        coeffs: diff.coeffs,
+                        domain: vec![i64::MIN, -diff.offset - 1, -diff.offset + 1, i64::MAX],
+                    },
+                )),
+            });
+
+            return Ok(exact_linear_constraint(
+                LinearExpr {
+                    vars: vec![],
+                    coeffs: vec![],
+                    offset: 0,
+                },
+                0,
+            ));
         }
     }
     if let Expression::FlatProductEq(..) = inner_expr {
         return translate_constraint(inner_expr, cp_model, ctx);
     }
     if let Expression::Table(_, tuple, allowed_rows) = inner_expr {
-        return translate_table_reified(ref_var, tuple.as_ref(), allowed_rows.as_ref(), cp_model, ctx);
+        return translate_table_reified(
+            ref_var,
+            tuple.as_ref(),
+            allowed_rows.as_ref(),
+            cp_model,
+            ctx,
+        );
     }
     if let Ok(inner_linear) = expr_to_linear(inner_expr, ctx) {
         let ref_linear = LinearExpr {
@@ -4079,8 +4538,6 @@ fn translate_constraint(
         _ => {}
     }
 
-
-
     // 1. Matrix Equality/Inequality, Neq, and In constraints
     match expr {
         Expression::Lt(_, lhs, rhs) | Expression::LexLt(_, lhs, rhs) => {
@@ -4468,14 +4925,24 @@ fn translate_constraint(
             return Ok(constraint);
         }
         Expression::FlatLexLt(_, a, b) | Expression::FlatLexLeq(_, a, b) => {
-            let op = if matches!(expr, Expression::FlatLexLt(..)) { "<" } else { "<=" };
+            let op = if matches!(expr, Expression::FlatLexLt(..)) {
+                "<"
+            } else {
+                "<="
+            };
             let mut elems_l = Vec::new();
             for atom in a {
-                elems_l.push(expr_to_linear(&Expression::Atomic(Metadata::default(), atom.clone()), ctx)?);
+                elems_l.push(expr_to_linear(
+                    &Expression::Atomic(Metadata::default(), atom.clone()),
+                    ctx,
+                )?);
             }
             let mut elems_r = Vec::new();
             for atom in b {
-                elems_r.push(expr_to_linear(&Expression::Atomic(Metadata::default(), atom.clone()), ctx)?);
+                elems_r.push(expr_to_linear(
+                    &Expression::Atomic(Metadata::default(), atom.clone()),
+                    ctx,
+                )?);
             }
             return translate_lex_comparison(op, elems_l, elems_r, cp_model, ctx);
         }

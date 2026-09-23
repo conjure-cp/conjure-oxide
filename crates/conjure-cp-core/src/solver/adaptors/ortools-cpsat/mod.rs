@@ -7,6 +7,7 @@ mod convs;
 pub use adaptor::OrToolsCpSat;
 
 #[cfg(not(no_ortools))]
+#[allow(clippy::all)]
 pub mod proto {
     include!(concat!(env!("OUT_DIR"), "/operations_research.sat.rs"));
 }
