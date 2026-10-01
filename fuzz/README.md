@@ -16,6 +16,9 @@ To make the fuzzer stop manually, use the following limits:
 - Time (seconds): `-max_total_time=N`
 - Maximum input length: `-max_len=N`
 
+### A note on rustup
+`cargo fuzz` requires the nightly compiler release which may be overwridden with your toolchain. To resolve this, please append `+nightly` to the previous command, for example: `cargo +nightly fuzz run detect_errors -- -max_len=4096 -max_total_time=3600`
+
 ### Licence
 
 This project is licenced under the [Mozilla Public Licence
