@@ -94,6 +94,7 @@ impl FromStr for Channelling {
 pub const DEFAULT_HEURISTIC_SEED: u64 = 0;
 
 thread_local! {
+    static PB_ENCODING: Cell<Option<crate::ast::sat_decision::PbEncoding>> = const { Cell::new(None) };
     static CARDINALITY_ENCODING: Cell<Option<crate::ast::sat_decision::CardinalityEncoding>> = const { Cell::new(None) };
     static AMO_ENCODING: Cell<Option<crate::ast::sat_decision::AmoEncoding>> = const { Cell::new(None) };
     static HEURISTIC: Cell<Heuristic> = const { Cell::new(Heuristic::Compact) };
@@ -968,4 +969,13 @@ pub fn set_cardinality_encoding(encoding: Option<crate::ast::sat_decision::Cardi
 /// Explicit cardinality encoder override for this compilation thread.
 pub fn cardinality_encoding() -> Option<crate::ast::sat_decision::CardinalityEncoding> {
     CARDINALITY_ENCODING.with(Cell::get)
+}
+
+/// Pin a pseudo-Boolean provider/algorithm, or let the heuristic select it.
+pub fn set_pb_encoding(encoding: Option<crate::ast::sat_decision::PbEncoding>) {
+    PB_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit pseudo-Boolean encoder override for this compilation thread.
+pub fn pb_encoding() -> Option<crate::ast::sat_decision::PbEncoding> {
+    PB_ENCODING.with(Cell::get)
 }

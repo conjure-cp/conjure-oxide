@@ -25,16 +25,24 @@ Branch: `sat-ir`. Conventional commits; never push.
 - Production Boolean and integer gate rules now emit semantic `SatEncodingDecision` assertions/definitions through `RuleEffect::sat`. Model CNF fields, `CnfClause` and the legacy clause converter have been removed. RustSAT generates all clauses at load time; dominance injection uses the same allocation frontier as encoder auxiliaries.
 - Asserted AMO decisions carry a selectable algorithm and explicit/heuristic provenance. `--amo-encoding` pins pairwise, ladder, bitwise, commander, bimander or two-product. Otherwise the existing first/random/compact/interactive/all heuristics choose one AMO algorithm per model. Compact uses pairwise through five inputs and ladder above that; this is an initial policy, not a performance claim.
 - Direct integer domain constraints and direct division quotient constraints retain AMO semantics until library generation. All-mode integration portfolios enumerate encoder choices alongside uniform representation choices.
-- `EncodingSelection<T>` records a resolved algorithm and its provenance without tying the choice container to AMO. Cardinality now reuses that selection container; weighted PB and the remaining classes are subsequent work.
+- `EncodingSelection<T>` records a resolved algorithm and its provenance without tying the choice container to AMO. Cardinality and weighted PB reuse that selection container.
 
 - Asserted cardinality decisions retain upper/lower/exact bounds and occurrence multiplicity. `--cardinality-encoding` selects RustSAT totalizer or Pindakaas sorting network. Heuristics resolve one cardinality choice per model; compact initially selects totalizer.
 - Pindakaas 0.5.1 is pinned with its default solver features disabled. Its clause sink shares the RustSAT allocator, including every encoder auxiliary. Constants and impossible/trivial bounds are normalised before dispatch.
+
+- Asserted pseudo-Boolean decisions retain signed weights, upper/lower/exact bounds and selected provider provenance. `--pb-encoding` pins RustSAT generalised totalizer, RustSAT binary adder or Pindakaas BDD. Explicit overrides take precedence; all-mode shares one choice per model. Compact initially uses GTE through a coefficient sum of 4096 and the adder above that.
+- Linear extraction uses Direct, Order and BinaryValue views, retaining numeric values for sparse domains. Checked coefficient arithmetic precedes library dispatch; constants, repeated/complementary literals, negative weights and trivial bounds are normalised in the adaptor. Library-range overflow is reported rather than wrapped.
+- Signed BinaryValue multiplication includes sign extension. Division bounds and circuits follow Essence floor semantics, including negative operands and minimum-value magnitudes. The three previous solution mismatches now pass uniform portfolios.
+
+## Original decision family catalogue
+
+The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boolean, linear integer, allDifferent, table, element, integer equality and integer comparison plans. The remaining dedicated choices are linear-integer strategies (including order-tree and mixed forms), allDifferent decompositions, table encodings (tuple/MDD/binary support), element, equality/disequality and comparisons. Reification/guards, domain membership, channelling, objective tightening and proof-producing variants are supporting capabilities across these families.
 
 ## Coverage investigation
 
 - Production SAT integer representations remain IntDirect, IntOrder, and IntLog (two's-complement actual value). BinaryOffset and BinaryRank currently exist only as IR kinds.
 - An initial short CLI survey of 45 CNF inputs found six timeouts and the dropped residual false regression. The premature probe-choice bug meant this survey did not exercise all integer choices; integration portfolio enumeration supersedes its apparent coverage.
-- Longer acceptance and normal regression runs enabled comparison/sparse_direct, comparison/sparse_log, int_direct/06-add, and integer/05-product. At that stage, integer/10-div and neg-div exceeded a 180-second per-test limit. The later cardinality coverage expansion enables integer/10-div; neg-div now exposes a reference-solution mismatch and remains disabled.
+- Longer acceptance and normal regression runs enabled comparison/sparse_direct, comparison/sparse_log, int_direct/06-add, and integer/05-product. At that stage, integer/10-div and neg-div exceeded a 180-second per-test limit. The later cardinality coverage expansion enables integer/10-div; the later signed arithmetic fixes enable neg-div as well.
 - cnf/cnf2 contains two Essence files, so the current integration test discovery skips that directory; split these inputs before enabling them.
 
 - The [cardinality coverage survey](sat_coverage_survey.md) tried all 489 previously SAT-disabled runnable fixtures. It enables 191 existing fixtures plus a new cardinality fixture: 322 SAT-enabled fixtures out of 620 runnable, with 1,931 SAT portfolios (1,836 uniform portfolios across 234 fixtures). All enabled SAT run records are successful.
@@ -42,11 +50,11 @@ Branch: `sat-ir`. Conventional commits; never push.
 
 ## Outstanding
 
-- Extend the decision mechanism to pseudo-Boolean and the remaining encoding classes, with explicit user overrides and heuristic selection.
+- Extend the decision mechanism to the remaining encoding classes, with explicit user overrides and heuristic selection.
 - Extend decisions to the other encoding classes and implement shared representation materialisation, decoding, and domain constraints. Unify the explicit Boolean arena and production gate/AMO payloads as those plans are migrated.
 - Add BinaryOffset and BinaryRank; expose the existing actual-value encoding as BinaryValue in the new production pipeline.
 - Add lazy multi-representation materialisation, channelling, and exhaustive semantic tests before enabling mixed representations.
-- The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. The Pindakaas clause-sink bridge and cardinality provider choices are implemented; expand provider coverage to weighted PB next.
+- The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. The Pindakaas clause-sink bridge and cardinality provider choices are implemented; weighted PB now has GTE, adder and BDD providers; SWC, DPW and the remaining provider alternatives are subsequent work.
 - Expand verified portfolios beyond the CNF corpus and investigate the remaining slow fixtures.
 
 ## Validation

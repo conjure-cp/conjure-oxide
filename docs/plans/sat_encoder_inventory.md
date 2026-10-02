@@ -8,7 +8,7 @@ Sources: [RustSAT 0.7.5 source](https://docs.rs/crate/rustsat/0.7.5/source/src/e
 
 The model AST records mathematical operands, occurrence identities, representation choices, selected algorithms, options, and provenance. A terminal decision AST contains no SAT literals, clauses, or library objects. Compilation allocates and shares representations, then dispatches the already selected algorithms into a library-owned clause collector or solver. Generated CNF is an adaptor artifact and can be exported as DIMACS; it never becomes a model field or expression.
 
-The new `ast::encoding_plan` nodes are the first implementation of this boundary. `Model::sat_encoding` owns the decision arena. The SAT adaptor accepts explicit Boolean decision ASTs and rejects mixed terminal payloads. Production gates, AMO and cardinality constraints use `Model::sat_decisions`; all generated clauses belong to the adaptor. `CnfClause` and the model CNF fields have been removed.
+The new `ast::encoding_plan` nodes are the first implementation of this boundary. `Model::sat_encoding` owns the decision arena. The SAT adaptor accepts explicit Boolean decision ASTs and rejects mixed terminal payloads. Production gates, AMO, cardinality and weighted pseudo-Boolean constraints use `Model::sat_decisions`; all generated clauses belong to the adaptor. `CnfClause` and the model CNF fields have been removed.
 
 ## RustSAT: concrete public algorithms
 
@@ -86,6 +86,12 @@ The workspace now uses `pindakaas = { version = "=0.5.1", default-features = fal
 The private Pindakaas `ClauseDatabase` bridge is backed by the RustSAT instance and its authoritative allocator. Every semantic, representation and auxiliary variable shares that allocator. Pindakaas literals use signed nonzero, one-based variable numbers; RustSAT's variable indices are zero-based. The bridge translates signed identifiers, handles zero-length ranges, and preserves an empty clause when Pindakaas reports `Unsatisfiable`. There is no second independently allocating CNF buffer.
 
 Cardinality decisions cover asserted upper, lower and exact bounds. Repeated or complementary operand occurrences retain their multiplicity; the Pindakaas provider allocates equivalent proxy literals before normalisation so weighted aggregation cannot silently select a different encoder. Exhaustive projected-solution tests cover both providers, constants and boundary bounds. All-mode selects one algorithm per encoding class across the model; explicit pins override heuristic selection.
+
+Weighted decisions now expose `--pb-encoding` with `rustsat-generalized-totalizer`, `rustsat-binary-adder` and `pindakaas-bdd`. Upper/lower/exact bounds share signed coefficient, constant and complement normalisation. RustSAT uses the selected `BoundBoth` implementation directly; Pindakaas BDD handles linear and specialised cardinality variants explicitly, avoiding a silent provider switch. Compact uses GTE for coefficient sums up to 4096 and the adder above that as an initial policy; all-mode enumerates all three.
+
+Integer linear views preserve actual values: Direct uses each value in the domain span as its coefficient, Order uses its minimum plus the non-anchor threshold bits, and BinaryValue uses powers of two with a negative sign-bit coefficient. Structural domain constraints continue to exclude sparse-domain gaps. BinaryOffset and BinaryRank are not yet production representations.
+
+All six RustSAT AMO algorithm families are available. Commander and bimander currently use group size four and their default pairwise sub-encoder; two-product also uses pairwise. Alternative grouping parameters/sub-encoders and Pindakaas's public pairwise, ladder and bitwise providers remain unwired.
 
 Both libraries support clause sinks: RustSAT `CollectClauses` with `ManageVars`, and Pindakaas `ClauseDatabase` with allocation in `new_var_range`. This is the bridge boundary; their literal types never escape into the AST. [RustSAT collector](https://docs.rs/rustsat/0.7.5/rustsat/encodings/trait.CollectClauses.html), [Pindakaas database](https://docs.rs/crate/pindakaas/0.5.1/source/src/lib.rs), [Pindakaas features](https://docs.rs/crate/pindakaas/0.5.1/source/Cargo.toml)
 

@@ -36,6 +36,26 @@ pub fn compile_decisions(
     };
     for decision in decisions {
         match decision {
+            SatEncodingDecision::PseudoBoolean {
+                terms,
+                relation,
+                bound,
+                encoding,
+            } => {
+                let algorithm = encoding
+                    .as_ref()
+                    .ok_or_else(|| {
+                        SolverError::ModelInvalid(
+                            "Unresolved pseudo-Boolean encoding decision".into(),
+                        )
+                    })?
+                    .algorithm;
+                let terms = terms
+                    .iter()
+                    .map(|(weight, input)| compiler.encode(input).map(|term| (*weight, term)))
+                    .collect::<Result<Vec<_>, _>>()?;
+                compiler.pseudo_boolean(algorithm, *relation, *bound, terms)?;
+            }
             SatEncodingDecision::Cardinality {
                 inputs,
                 relation,
@@ -116,6 +136,169 @@ struct Compiler<'a> {
     variables: &'a mut HashMap<Name, Lit>,
 }
 impl Compiler<'_> {
+    fn pseudo_boolean(
+        &mut self,
+        algorithm: crate::ast::sat_decision::PbEncoding,
+        relation: crate::ast::sat_decision::CardinalityRelation,
+        bound: i64,
+        terms: Vec<(i64, Term)>,
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::{CardinalityRelation, PbEncoding};
+        // Aggregate by variable before making weights positive, retaining multiplicity
+        // and cancelling complements. Widening keeps signed boundary values safe.
+        let mut bound = i128::from(bound);
+        let mut coefficients = std::collections::BTreeMap::<Lit, i128>::new();
+        for (weight, term) in terms {
+            let weight = i128::from(weight);
+            match term {
+                Term::Constant(true) => bound -= weight,
+                Term::Constant(false) => (),
+                Term::Literal(literal) => {
+                    let (literal, weight) = if literal.is_neg() {
+                        bound -= weight;
+                        (!literal, -weight)
+                    } else {
+                        (literal, weight)
+                    };
+                    *coefficients.entry(literal).or_default() += weight;
+                }
+            }
+        }
+        let mut total = 0i128;
+        let mut positive = Vec::new();
+        for (literal, weight) in coefficients {
+            if weight == 0 {
+                continue;
+            }
+            let (literal, weight) = if weight < 0 {
+                bound -= weight;
+                (!literal, -weight)
+            } else {
+                (literal, weight)
+            };
+            total += weight;
+            positive.push((literal, weight));
+        }
+        let impossible = match relation {
+            CardinalityRelation::AtMost => bound < 0,
+            CardinalityRelation::AtLeast => bound > total,
+            CardinalityRelation::Exactly => bound < 0 || bound > total,
+        };
+        if impossible {
+            self.assert(Term::Constant(false));
+            return Ok(());
+        }
+        if (relation == CardinalityRelation::AtMost && bound >= total)
+            || (relation == CardinalityRelation::AtLeast && bound <= 0)
+        {
+            return Ok(());
+        }
+        if bound == 0 || bound == total {
+            for (literal, _) in positive {
+                self.assert(Term::Literal(if bound == total {
+                    literal
+                } else {
+                    !literal
+                }));
+            }
+            return Ok(());
+        }
+        // Both libraries use signed machine-sized bounds and may calculate bound + 1.
+        if total >= isize::MAX as i128 || total >= i128::from(i64::MAX) {
+            return Err(SolverError::ModelInvalid(
+                "Pseudo-Boolean coefficient sum exceeds the library range".into(),
+            ));
+        }
+        let positive: Vec<_> = positive
+            .into_iter()
+            .map(|(literal, weight)| (literal, weight as usize))
+            .collect();
+        match algorithm {
+            PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder => {
+                use rustsat::{
+                    encodings::pb::{BinaryAdder, BoundBoth, DoubleGeneralizedTotalizer},
+                    types::constraints::PbConstraint,
+                };
+                let constraint = match relation {
+                    CardinalityRelation::AtMost => {
+                        PbConstraint::new_ub_unsigned(positive, bound as isize)
+                    }
+                    CardinalityRelation::AtLeast => {
+                        PbConstraint::new_lb_unsigned(positive, bound as isize)
+                    }
+                    CardinalityRelation::Exactly => {
+                        PbConstraint::new_eq_unsigned(positive, bound as isize)
+                    }
+                };
+                let mut cnf = Cnf::new();
+                // Use the selected implementation directly, avoiding the convenience
+                // dispatcher's implicit switch to its default cardinality encoder.
+                let result = match algorithm {
+                    PbEncoding::RustsatGeneralizedTotalizer => {
+                        DoubleGeneralizedTotalizer::encode_constr(
+                            constraint,
+                            &mut cnf,
+                            self.instance.var_manager_mut(),
+                        )
+                    }
+                    PbEncoding::RustsatBinaryAdder => BinaryAdder::encode_constr(
+                        constraint,
+                        &mut cnf,
+                        self.instance.var_manager_mut(),
+                    ),
+                    _ => unreachable!(),
+                };
+                result.map_err(|error| {
+                    SolverError::Runtime(format!("Pseudo-Boolean encoder failed: {error}"))
+                })?;
+                for clause in cnf {
+                    self.instance.add_clause(clause);
+                }
+            }
+            PbEncoding::PindakaasBdd => {
+                use pindakaas::{
+                    Encoder,
+                    bool_linear::{
+                        BddEncoder, BoolLinAggregator, BoolLinExp, BoolLinVariant, BoolLinear,
+                        Comparator,
+                    },
+                };
+                let comparison = match relation {
+                    CardinalityRelation::AtMost => Comparator::LessEq,
+                    CardinalityRelation::AtLeast => Comparator::GreaterEq,
+                    CardinalityRelation::Exactly => Comparator::Equal,
+                };
+                let expression = BoolLinExp::from_terms(
+                    &positive
+                        .into_iter()
+                        .map(|(literal, weight)| (pind_lit(literal), weight as i64))
+                        .collect::<Vec<_>>(),
+                );
+                let mut sink = PindakaasSink(self.instance);
+                let variant = BoolLinAggregator::default().aggregate(
+                    &mut sink,
+                    &BoolLinear::new(expression, comparison, bound as i64),
+                );
+                let encoder = BddEncoder::default();
+                let result = match variant {
+                    Ok(BoolLinVariant::Linear(linear)) => encoder.encode(&mut sink, &linear),
+                    Ok(BoolLinVariant::Cardinality(cardinality)) => {
+                        encoder.encode(&mut sink, &cardinality)
+                    }
+                    Ok(BoolLinVariant::CardinalityOne(cardinality)) => encoder.encode(
+                        &mut sink,
+                        &pindakaas::cardinality::Cardinality::from(cardinality),
+                    ),
+                    Ok(BoolLinVariant::Trivial) => Ok(()),
+                    Err(error) => Err(error),
+                };
+                if result.is_err() {
+                    self.assert(Term::Constant(false));
+                }
+            }
+        }
+        Ok(())
+    }
     fn cardinality(
         &mut self,
         algorithm: crate::ast::sat_decision::CardinalityEncoding,
@@ -385,7 +568,12 @@ impl pindakaas::ClauseDatabase for PindakaasSink<'_> {
                 })
                 .collect(),
         );
-        Ok(())
+        // Pindakaas normalisation relies on contradiction() returning this error.
+        if clause.is_empty() {
+            Err(pindakaas::Unsatisfiable)
+        } else {
+            Ok(())
+        }
     }
     fn new_var_range(&mut self, len: usize) -> pindakaas::VarRange {
         if len == 0 {
@@ -691,6 +879,145 @@ mod cardinality_tests {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+#[cfg(test)]
+mod pseudo_boolean_tests {
+    use super::*;
+    use crate::ast::sat_decision::{
+        CardinalityRelation, EncodingSelection, PbEncoding, SelectionProvenance,
+    };
+    use crate::ast::{DeclarationPtr, Domain, Metadata, Moo, Reference};
+    use rustsat::{
+        instances::{BasicVarManager, ManageVars},
+        solvers::{Solve, SolveIncremental, SolverResult},
+    };
+    use rustsat_cadical::CaDiCaL;
+
+    #[test]
+    fn weighted_providers_preserve_signed_bounds_constants_and_multiplicities() {
+        let variables: Vec<_> = (0..3)
+            .map(|index| {
+                DeclarationPtr::new_find(Name::User(format!("w{index}").into()), Domain::bool())
+            })
+            .collect();
+        let inputs: Vec<Expression> = variables
+            .iter()
+            .map(|variable| Reference::new(variable.clone()).into())
+            .collect();
+        for algorithm in PbEncoding::ALL {
+            for weights in [[3, 5, -2], [0, 1, 1], [-3, -2, -1], [2, 2, 2]] {
+                for special in [false, true] {
+                    let mut terms: Vec<_> =
+                        weights.into_iter().zip(inputs.iter().cloned()).collect();
+                    if special {
+                        terms.extend([
+                            (4, true.into()),
+                            (-3, false.into()),
+                            (2, inputs[0].clone()),
+                            (
+                                -3,
+                                Expression::Not(Metadata::new(), Moo::new(inputs[0].clone())),
+                            ),
+                        ]);
+                    }
+                    for relation in [
+                        CardinalityRelation::AtMost,
+                        CardinalityRelation::AtLeast,
+                        CardinalityRelation::Exactly,
+                    ] {
+                        for bound in -12..=20 {
+                            let mut instance = SatInstance::new();
+                            let mut map = HashMap::new();
+                            for variable in &variables {
+                                map.insert(variable.name().clone(), instance.new_lit());
+                            }
+                            compile_decisions(
+                                &[SatEncodingDecision::PseudoBoolean {
+                                    terms: terms.clone(),
+                                    relation,
+                                    bound,
+                                    encoding: Some(EncodingSelection {
+                                        algorithm,
+                                        provenance: SelectionProvenance::ExplicitConfiguration,
+                                    }),
+                                }],
+                                &mut instance,
+                                &mut map,
+                            )
+                            .unwrap();
+                            let used = instance.var_manager_mut().n_used();
+                            assert_eq!(instance.new_lit().var().idx32(), used);
+                            let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                            let mut solver = CaDiCaL::default();
+                            solver.add_cnf(cnf).unwrap();
+                            for assignment in 0..8 {
+                                let active = |index| i64::from(assignment & (1 << index) != 0);
+                                let mut value: i64 = weights
+                                    .into_iter()
+                                    .enumerate()
+                                    .map(|(index, weight)| weight * active(index))
+                                    .sum();
+                                if special {
+                                    value += 4 + 2 * active(0) - 3 * (1 - active(0));
+                                }
+                                let expected = match relation {
+                                    CardinalityRelation::AtMost => value <= bound,
+                                    CardinalityRelation::AtLeast => value >= bound,
+                                    CardinalityRelation::Exactly => value == bound,
+                                };
+                                let assumptions: Vec<_> = variables
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(index, variable)| {
+                                        let literal = map[&variable.name()];
+                                        if active(index) == 1 {
+                                            literal
+                                        } else {
+                                            !literal
+                                        }
+                                    })
+                                    .collect();
+                                assert_eq!(
+                                    solver.solve_assumps(&assumptions).unwrap()
+                                        == SolverResult::Sat,
+                                    expected,
+                                    "{algorithm} {relation:?} weights={weights:?} special={special} bound={bound} assignment={assignment}"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    #[test]
+    fn weighted_overflow_is_reported_without_wrapping_or_panicking() {
+        let variable = DeclarationPtr::new_find(Name::User("overflow".into()), Domain::bool());
+        let input: Expression = Reference::new(variable).into();
+        for algorithm in PbEncoding::ALL {
+            for (terms, bound) in [
+                (vec![(i64::MAX, input.clone())], 1),
+                (vec![(i64::MIN, input.clone())], -1),
+            ] {
+                assert!(
+                    compile_decisions(
+                        &[SatEncodingDecision::PseudoBoolean {
+                            terms,
+                            relation: CardinalityRelation::Exactly,
+                            bound,
+                            encoding: Some(EncodingSelection {
+                                algorithm,
+                                provenance: SelectionProvenance::ExplicitConfiguration
+                            })
+                        }],
+                        &mut SatInstance::new(),
+                        &mut HashMap::new()
+                    )
+                    .is_err()
+                );
             }
         }
     }
