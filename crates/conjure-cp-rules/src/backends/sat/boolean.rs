@@ -344,7 +344,8 @@ fn select_at_most_one(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             .iter()
             .map(|term| match term {
                 Expr::ToInt(_, input)
-                    if input.domain_of().is_some_and(|domain| domain.is_bool()) =>
+                    if is_literal(input)
+                        && input.domain_of().is_some_and(|domain| domain.is_bool()) =>
                 {
                     Some(input.as_ref().clone())
                 }
@@ -366,4 +367,21 @@ fn select_at_most_one(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         ));
     }
     Err(RuleNotApplicable)
+}
+
+#[cfg(test)]
+mod amo_lowering_tests {
+    use super::*;
+    #[test]
+    fn amo_waits_until_boolean_operands_have_been_lowered() {
+        let complex = Expr::Eq(Metadata::new(), Moo::new(2.into()), Moo::new(3.into()));
+        let indicator = Expr::ToInt(Metadata::new(), Moo::new(complex));
+        let sum = Expr::Sum(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(vec![indicator])),
+        );
+        let cardinality = Expr::Leq(Metadata::new(), Moo::new(sum), Moo::new(1.into()));
+        let root = Expr::Root(Metadata::new(), vec![cardinality]);
+        assert!(select_at_most_one(&root, &SymbolTable::new()).is_err());
+    }
 }
