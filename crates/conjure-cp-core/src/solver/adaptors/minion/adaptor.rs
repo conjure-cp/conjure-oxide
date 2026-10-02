@@ -343,6 +343,11 @@ impl SolverAdaptor for Minion {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
+        if model.sat_encoding().is_some() {
+            return Err(SolverError::ModelFeatureNotSupported(
+                "SAT encoding decisions must be loaded by the SAT adaptor".into(),
+            ));
+        }
         self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
             Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
             _ => expr.clone(),

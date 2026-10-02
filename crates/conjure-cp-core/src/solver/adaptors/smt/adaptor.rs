@@ -399,6 +399,11 @@ impl SolverAdaptor for Smt {
     }
 
     fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
+        if model.sat_encoding().is_some() {
+            return Err(SolverError::ModelFeatureNotSupported(
+                "SAT encoding decisions must be loaded by the SAT adaptor".into(),
+            ));
+        }
         // Fail fast if an older system or precompiled Z3 was linked in.
         ensure_supported_z3_runtime()?;
         self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {

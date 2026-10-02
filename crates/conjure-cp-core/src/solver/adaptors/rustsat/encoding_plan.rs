@@ -1,13 +1,14 @@
 //! First clause generator for the SAT encoding-plan IR.
 //!
 //! The selected Boolean Tseitin algorithm is realised directly in RustSAT, without constructing
-//! CNF AST expressions. External literals remain private to this adapter. The CLI still uses
-//! the legacy translator; integer plans and production-pipeline integration are subsequent work.
-use crate::solver::encoding_plan::{
+//! CNF AST expressions. External literals remain private to this adapter. The adaptor accepts explicit terminal decision ASTs. The CLI still builds legacy clauses;
+//! integer plans and automatic decision selection are subsequent work.
+use crate::ast::encoding_plan::{
     BooleanFormula, EncodingDecision, EncodingPlanKind, RepresentationKind, SemanticDomain,
     SemanticVarId,
 };
 use anyhow::{Result, anyhow};
+use rustsat::encodings::atomics;
 use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
 use rustsat::solvers::{Solve, SolveIncremental, SolverResult};
 use rustsat::types::{Clause, Lit};
@@ -34,6 +35,10 @@ impl Term {
 }
 
 impl CompiledBooleanDecision {
+    pub(super) fn into_parts(self) -> (SatInstance, HashMap<SemanticVarId, Lit>) {
+        (self.instance, self.variables)
+    }
+
     pub fn compile(decision: &EncodingDecision) -> Result<Self> {
         decision.validate()?;
         // Check capabilities before allocating literals. No implicit integer representation.
@@ -97,20 +102,19 @@ impl CompiledBooleanDecision {
                     [literal] => Ok(Term::Literal(*literal)),
                     _ => {
                         let output = self.instance.new_lit();
-                        // AND: output -> each input; all inputs -> output.
-                        // OR: each input -> output; output -> disjunction of inputs.
-                        for input in &literals {
-                            let clause = if and {
-                                [!output, *input]
-                            } else {
-                                [output, !*input]
-                            };
-                            self.instance.add_clause(clause.into_iter().collect());
+                        if and {
+                            for clause in atomics::lit_impl_cube(output, &literals) {
+                                self.instance.add_clause(clause);
+                            }
+                            self.instance
+                                .add_clause(atomics::cube_impl_lit(&literals, output));
+                        } else {
+                            for clause in atomics::clause_impl_lit(&literals, output) {
+                                self.instance.add_clause(clause);
+                            }
+                            self.instance
+                                .add_clause(atomics::lit_impl_clause(output, &literals));
                         }
-                        let last: Clause = std::iter::once(if and { output } else { !output })
-                            .chain(literals.into_iter().map(|lit| if and { !lit } else { lit }))
-                            .collect();
-                        self.instance.add_clause(last);
                         Ok(Term::Literal(output))
                     }
                 }
@@ -150,10 +154,10 @@ impl CompiledBooleanDecision {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{DeclarationPtr, Domain, Name};
-    use crate::solver::encoding_plan::{
+    use crate::ast::encoding_plan::{
         EncodingPlan, PlanProvenance, ReferenceContext, RepresentationRequest, VariableOrigin,
     };
+    use crate::ast::{DeclarationPtr, Domain, Name};
 
     #[test]
     fn nested_boolean_plans_match_the_semantics_for_every_input_assignment() {

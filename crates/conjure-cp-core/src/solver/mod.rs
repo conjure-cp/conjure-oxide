@@ -124,7 +124,6 @@ use self::model_modifier::ModelModifier;
 use self::states::{ExecutionSuccess, Init, ModelLoaded, SolverState};
 
 pub mod adaptors;
-pub mod encoding_plan;
 pub mod model_modifier;
 
 #[doc(hidden)]

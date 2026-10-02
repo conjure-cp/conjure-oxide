@@ -6,6 +6,7 @@ mod cnf_clause;
 pub mod comprehension;
 pub mod declaration;
 mod domains;
+pub mod encoding_plan;
 pub mod eval;
 mod expression_arena;
 mod expressions;

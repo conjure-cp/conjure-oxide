@@ -3,7 +3,7 @@
 //! Declaration object IDs identify mathematical variables. References identify individual uses;
 //! each use can request its own representation kind, while materialisation will share instances
 //! by `(SemanticVarId, RepresentationKind)`. This initial IR deliberately has no SAT literals or
-//! external encoder types. It is not yet used by the production SAT translation pipeline.
+//! external encoder types. These nodes are owned by the model AST. Clause generation belongs to the SAT adaptor.
 use crate::ast::serde::{HasId, ObjId};
 use crate::ast::{DeclarationPtr, GroundDomain, Range};
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ pub enum RepresentationKind {
     BinaryRank,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum VariableOrigin {
     User,
     RewriteAuxiliary,
@@ -33,7 +33,7 @@ pub enum VariableOrigin {
 }
 
 /// Canonical finite domains without enumerating large intervals.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SemanticDomain {
     Boolean,
     Integer { ranges: Vec<(i32, i32)> },
@@ -56,19 +56,19 @@ impl SemanticDomain {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SemanticVariable {
     pub source: ObjId,
     pub name: String,
     pub domain: SemanticDomain,
     pub origin: VariableOrigin,
 }
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct VariableReference {
     pub variable: SemanticVarId,
     pub context: ReferenceContext,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ReferenceContext {
     BooleanOperand,
     EqualityOperand,
@@ -77,14 +77,14 @@ pub enum ReferenceContext {
     AllDifferentMember,
     ObjectiveTerm,
 }
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RepresentationRequest {
     pub reference: VarRefId,
     pub kind: RepresentationKind,
 }
 
 /// Boolean structure retained until the explicitly chosen Tseitin generator runs.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum BooleanFormula {
     Constant(bool),
     Reference(VarRefId),
@@ -92,17 +92,17 @@ pub enum BooleanFormula {
     And(Vec<BooleanFormula>),
     Or(Vec<BooleanFormula>),
 }
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EncodingPlanKind {
     BooleanTseitin { formula: BooleanFormula },
 }
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PlanProvenance {
     DefaultRule { rule: String },
     ExplicitConfiguration,
     Heuristic { heuristic: String },
 }
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct EncodingPlan {
     pub source_constraint: usize,
     pub kind: EncodingPlanKind,
@@ -111,7 +111,7 @@ pub struct EncodingPlan {
 }
 
 /// Dense IDs and ordered vectors make plan allocation and diagnostics deterministic.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct EncodingDecision {
     variables: Vec<SemanticVariable>,
     references: Vec<VariableReference>,
@@ -334,6 +334,30 @@ mod tests {
 
     fn declared(name: &str, domain: crate::ast::DomainPtr) -> DeclarationPtr {
         DeclarationPtr::new_find(Name::User(name.into()), domain)
+    }
+
+    #[test]
+    fn decision_nodes_roundtrip_as_part_of_the_model_ast() {
+        let mut model = crate::ast::Model::default();
+        let p = declared("p", Domain::bool());
+        model.add_symbol(p.clone()).unwrap();
+        let mut decision = EncodingDecision::default();
+        decision.intern(&p, VariableOrigin::User).unwrap();
+        model.set_sat_encoding(decision.clone()).unwrap();
+        let json = serde_json::to_string(&crate::ast::SerdeModel::from(model.clone())).unwrap();
+        let restored: crate::ast::SerdeModel = serde_json::from_str(&json).unwrap();
+        let restored = restored.initialise(Default::default()).unwrap();
+        assert_eq!(restored.sat_encoding(), Some(&decision));
+        assert!(restored.clauses().is_empty());
+        assert!(restored.to_string().contains("sat encoding decisions"));
+        let sources = restored.collect_stable_id_mapping();
+        assert!(sources.contains_key(&decision.variables()[0].source));
+        let source = restored
+            .symbols()
+            .lookup(&Name::User("p".into()))
+            .unwrap()
+            .id();
+        assert_eq!(source, decision.variables()[0].source);
     }
 
     #[test]
