@@ -195,21 +195,14 @@ new SAT encoding decisions:
 
 --
 
-x
-   ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [x#int_direct_1,x#int_direct_2;int(1..)] [1, 2])
-
---
-
-__19
-   ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3])
-
---
-
-__20
-   ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3])
+x = sum([__19,__20;int(1..)]),
+or([and([SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]) >= 1,SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)]),
+or([and([SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]) >= 1,SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+or([and([SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]) >= 1,SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)]),
+or([and([SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]) >= 1,SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  weighted(1*x#int_direct_1, 2*x#int_direct_2, -1*__19#int_direct_1, -2*__19#int_direct_2, -3*__19#int_direct_3, -1*__20#int_direct_1, -2*__20#int_direct_2, -3*__20#int_direct_3) Exactly 0 using None
 
 --
 
@@ -237,9 +230,9 @@ SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] 
 
 --
 
-sum([SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]),SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]);int(1..)])
-   ~~> add_sat_direct ([("SAT", 9100)])
-SATInt(Direct, [__22,__26,__32,__36,__38;int(1..)] [2, 6])
+SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]) <= SATInt(Direct, [true;int(1..)] [3, 3])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__33
 new variables:
   findAux __21: bool
   findAux __22: bool
@@ -254,37 +247,32 @@ new variables:
   findAux __31: bool
   findAux __32: bool
   findAux __33: bool
+new SAT encoding decisions:
+  define(__21 <-> or([false,__19#int_direct_1;int(1..)])) using tseitin
+  define(__22 <-> !(__21)) using tseitin
+  define(__23 <-> and([false,__22;int(1..)])) using tseitin
+  define(__24 <-> or([false,__23;int(1..)])) using tseitin
+  define(__25 <-> or([__21,__19#int_direct_2;int(1..)])) using tseitin
+  define(__26 <-> !(__25)) using tseitin
+  define(__27 <-> and([false,__26;int(1..)])) using tseitin
+  define(__28 <-> or([__24,__27;int(1..)])) using tseitin
+  define(__29 <-> or([__25,__19#int_direct_3;int(1..)])) using tseitin
+  define(__30 <-> !(__29)) using tseitin
+  define(__31 <-> and([true,__30;int(1..)])) using tseitin
+  define(__32 <-> or([__28,__31;int(1..)])) using tseitin
+  define(__33 <-> !(__32)) using tseitin
+
+--
+
+SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]) >= SATInt(Direct, [true;int(1..)] [1, 1])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__46
+new variables:
   findAux __34: bool
   findAux __35: bool
   findAux __36: bool
   findAux __37: bool
   findAux __38: bool
-new SAT encoding decisions:
-  define(__21 <-> and([__19#int_direct_1,__20#int_direct_1;int(1..)])) using tseitin
-  define(__22 <-> or([false,__21;int(1..)])) using tseitin
-  define(__23 <-> and([__19#int_direct_1,__20#int_direct_2;int(1..)])) using tseitin
-  define(__24 <-> or([false,__23;int(1..)])) using tseitin
-  define(__25 <-> and([__19#int_direct_2,__20#int_direct_1;int(1..)])) using tseitin
-  define(__26 <-> or([__24,__25;int(1..)])) using tseitin
-  define(__27 <-> and([__19#int_direct_1,__20#int_direct_3;int(1..)])) using tseitin
-  define(__28 <-> or([false,__27;int(1..)])) using tseitin
-  define(__29 <-> and([__19#int_direct_2,__20#int_direct_2;int(1..)])) using tseitin
-  define(__30 <-> or([__28,__29;int(1..)])) using tseitin
-  define(__31 <-> and([__19#int_direct_3,__20#int_direct_1;int(1..)])) using tseitin
-  define(__32 <-> or([__30,__31;int(1..)])) using tseitin
-  define(__33 <-> and([__19#int_direct_2,__20#int_direct_3;int(1..)])) using tseitin
-  define(__34 <-> or([false,__33;int(1..)])) using tseitin
-  define(__35 <-> and([__19#int_direct_3,__20#int_direct_2;int(1..)])) using tseitin
-  define(__36 <-> or([__34,__35;int(1..)])) using tseitin
-  define(__37 <-> and([__19#int_direct_3,__20#int_direct_3;int(1..)])) using tseitin
-  define(__38 <-> or([false,__37;int(1..)])) using tseitin
-
---
-
-SATInt(Direct, [x#int_direct_1,x#int_direct_2;int(1..)] [1, 2]) = SATInt(Direct, [__22,__26,__32,__36,__38;int(1..)] [2, 6])
-   ~~> eq_sat_direct ([("SAT", 9100)])
-__50
-new variables:
   findAux __39: bool
   findAux __40: bool
   findAux __41: bool
@@ -293,30 +281,31 @@ new variables:
   findAux __44: bool
   findAux __45: bool
   findAux __46: bool
+new SAT encoding decisions:
+  define(__34 <-> or([false,true;int(1..)])) using tseitin
+  define(__35 <-> !(__34)) using tseitin
+  define(__36 <-> and([__20#int_direct_1,__35;int(1..)])) using tseitin
+  define(__37 <-> or([false,__36;int(1..)])) using tseitin
+  define(__38 <-> or([__34,false;int(1..)])) using tseitin
+  define(__39 <-> !(__38)) using tseitin
+  define(__40 <-> and([__20#int_direct_2,__39;int(1..)])) using tseitin
+  define(__41 <-> or([__37,__40;int(1..)])) using tseitin
+  define(__42 <-> or([__38,false;int(1..)])) using tseitin
+  define(__43 <-> !(__42)) using tseitin
+  define(__44 <-> and([__20#int_direct_3,__43;int(1..)])) using tseitin
+  define(__45 <-> or([__41,__44;int(1..)])) using tseitin
+  define(__46 <-> !(__45)) using tseitin
+
+--
+
+SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]) <= SATInt(Direct, [true;int(1..)] [3, 3])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__59
+new variables:
   findAux __47: bool
   findAux __48: bool
   findAux __49: bool
   findAux __50: bool
-new SAT encoding decisions:
-  define(__39 <-> (x#int_direct_1) <-> (false)) using tseitin
-  define(__40 <-> and([__39,true;int(1..)])) using tseitin
-  define(__41 <-> (x#int_direct_2) <-> (__22)) using tseitin
-  define(__42 <-> and([__41,__40;int(1..)])) using tseitin
-  define(__43 <-> (false) <-> (__26)) using tseitin
-  define(__44 <-> and([__43,__42;int(1..)])) using tseitin
-  define(__45 <-> (false) <-> (__32)) using tseitin
-  define(__46 <-> and([__45,__44;int(1..)])) using tseitin
-  define(__47 <-> (false) <-> (__36)) using tseitin
-  define(__48 <-> and([__47,__46;int(1..)])) using tseitin
-  define(__49 <-> (false) <-> (__38)) using tseitin
-  define(__50 <-> and([__49,__48;int(1..)])) using tseitin
-
---
-
-SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]) <= SATInt(Direct, [true;int(1..)] [3, 3])
-   ~~> ineq_sat_direct ([("SAT", 9100)])
-__63
-new variables:
   findAux __51: bool
   findAux __52: bool
   findAux __53: bool
@@ -326,31 +315,31 @@ new variables:
   findAux __57: bool
   findAux __58: bool
   findAux __59: bool
+new SAT encoding decisions:
+  define(__47 <-> or([false,__20#int_direct_1;int(1..)])) using tseitin
+  define(__48 <-> !(__47)) using tseitin
+  define(__49 <-> and([false,__48;int(1..)])) using tseitin
+  define(__50 <-> or([false,__49;int(1..)])) using tseitin
+  define(__51 <-> or([__47,__20#int_direct_2;int(1..)])) using tseitin
+  define(__52 <-> !(__51)) using tseitin
+  define(__53 <-> and([false,__52;int(1..)])) using tseitin
+  define(__54 <-> or([__50,__53;int(1..)])) using tseitin
+  define(__55 <-> or([__51,__20#int_direct_3;int(1..)])) using tseitin
+  define(__56 <-> !(__55)) using tseitin
+  define(__57 <-> and([true,__56;int(1..)])) using tseitin
+  define(__58 <-> or([__54,__57;int(1..)])) using tseitin
+  define(__59 <-> !(__58)) using tseitin
+
+--
+
+SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]) >= SATInt(Direct, [true;int(1..)] [1, 1])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__72
+new variables:
   findAux __60: bool
   findAux __61: bool
   findAux __62: bool
   findAux __63: bool
-new SAT encoding decisions:
-  define(__51 <-> or([false,__19#int_direct_1;int(1..)])) using tseitin
-  define(__52 <-> !(__51)) using tseitin
-  define(__53 <-> and([false,__52;int(1..)])) using tseitin
-  define(__54 <-> or([false,__53;int(1..)])) using tseitin
-  define(__55 <-> or([__51,__19#int_direct_2;int(1..)])) using tseitin
-  define(__56 <-> !(__55)) using tseitin
-  define(__57 <-> and([false,__56;int(1..)])) using tseitin
-  define(__58 <-> or([__54,__57;int(1..)])) using tseitin
-  define(__59 <-> or([__55,__19#int_direct_3;int(1..)])) using tseitin
-  define(__60 <-> !(__59)) using tseitin
-  define(__61 <-> and([true,__60;int(1..)])) using tseitin
-  define(__62 <-> or([__58,__61;int(1..)])) using tseitin
-  define(__63 <-> !(__62)) using tseitin
-
---
-
-SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]) >= SATInt(Direct, [true;int(1..)] [1, 1])
-   ~~> ineq_sat_direct ([("SAT", 9100)])
-__76
-new variables:
   findAux __64: bool
   findAux __65: bool
   findAux __66: bool
@@ -360,152 +349,69 @@ new variables:
   findAux __70: bool
   findAux __71: bool
   findAux __72: bool
-  findAux __73: bool
-  findAux __74: bool
-  findAux __75: bool
-  findAux __76: bool
 new SAT encoding decisions:
-  define(__64 <-> or([false,true;int(1..)])) using tseitin
+  define(__60 <-> or([false,true;int(1..)])) using tseitin
+  define(__61 <-> !(__60)) using tseitin
+  define(__62 <-> and([__19#int_direct_1,__61;int(1..)])) using tseitin
+  define(__63 <-> or([false,__62;int(1..)])) using tseitin
+  define(__64 <-> or([__60,false;int(1..)])) using tseitin
   define(__65 <-> !(__64)) using tseitin
-  define(__66 <-> and([__20#int_direct_1,__65;int(1..)])) using tseitin
-  define(__67 <-> or([false,__66;int(1..)])) using tseitin
+  define(__66 <-> and([__19#int_direct_2,__65;int(1..)])) using tseitin
+  define(__67 <-> or([__63,__66;int(1..)])) using tseitin
   define(__68 <-> or([__64,false;int(1..)])) using tseitin
   define(__69 <-> !(__68)) using tseitin
-  define(__70 <-> and([__20#int_direct_2,__69;int(1..)])) using tseitin
+  define(__70 <-> and([__19#int_direct_3,__69;int(1..)])) using tseitin
   define(__71 <-> or([__67,__70;int(1..)])) using tseitin
-  define(__72 <-> or([__68,false;int(1..)])) using tseitin
-  define(__73 <-> !(__72)) using tseitin
-  define(__74 <-> and([__20#int_direct_3,__73;int(1..)])) using tseitin
-  define(__75 <-> or([__71,__74;int(1..)])) using tseitin
-  define(__76 <-> !(__75)) using tseitin
+  define(__72 <-> !(__71)) using tseitin
 
 --
 
-SATInt(Direct, [__20#int_direct_1,__20#int_direct_2,__20#int_direct_3;int(1..)] [1, 3]) <= SATInt(Direct, [true;int(1..)] [3, 3])
-   ~~> ineq_sat_direct ([("SAT", 9100)])
-__89
-new variables:
-  findAux __77: bool
-  findAux __78: bool
-  findAux __79: bool
-  findAux __80: bool
-  findAux __81: bool
-  findAux __82: bool
-  findAux __83: bool
-  findAux __84: bool
-  findAux __85: bool
-  findAux __86: bool
-  findAux __87: bool
-  findAux __88: bool
-  findAux __89: bool
-new SAT encoding decisions:
-  define(__77 <-> or([false,__20#int_direct_1;int(1..)])) using tseitin
-  define(__78 <-> !(__77)) using tseitin
-  define(__79 <-> and([false,__78;int(1..)])) using tseitin
-  define(__80 <-> or([false,__79;int(1..)])) using tseitin
-  define(__81 <-> or([__77,__20#int_direct_2;int(1..)])) using tseitin
-  define(__82 <-> !(__81)) using tseitin
-  define(__83 <-> and([false,__82;int(1..)])) using tseitin
-  define(__84 <-> or([__80,__83;int(1..)])) using tseitin
-  define(__85 <-> or([__81,__20#int_direct_3;int(1..)])) using tseitin
-  define(__86 <-> !(__85)) using tseitin
-  define(__87 <-> and([true,__86;int(1..)])) using tseitin
-  define(__88 <-> or([__84,__87;int(1..)])) using tseitin
-  define(__89 <-> !(__88)) using tseitin
-
---
-
-SATInt(Direct, [__19#int_direct_1,__19#int_direct_2,__19#int_direct_3;int(1..)] [1, 3]) >= SATInt(Direct, [true;int(1..)] [1, 1])
-   ~~> ineq_sat_direct ([("SAT", 9100)])
-__102
-new variables:
-  findAux __90: bool
-  findAux __91: bool
-  findAux __92: bool
-  findAux __93: bool
-  findAux __94: bool
-  findAux __95: bool
-  findAux __96: bool
-  findAux __97: bool
-  findAux __98: bool
-  findAux __99: bool
-  findAux __100: bool
-  findAux __101: bool
-  findAux __102: bool
-new SAT encoding decisions:
-  define(__90 <-> or([false,true;int(1..)])) using tseitin
-  define(__91 <-> !(__90)) using tseitin
-  define(__92 <-> and([__19#int_direct_1,__91;int(1..)])) using tseitin
-  define(__93 <-> or([false,__92;int(1..)])) using tseitin
-  define(__94 <-> or([__90,false;int(1..)])) using tseitin
-  define(__95 <-> !(__94)) using tseitin
-  define(__96 <-> and([__19#int_direct_2,__95;int(1..)])) using tseitin
-  define(__97 <-> or([__93,__96;int(1..)])) using tseitin
-  define(__98 <-> or([__94,false;int(1..)])) using tseitin
-  define(__99 <-> !(__98)) using tseitin
-  define(__100 <-> and([__19#int_direct_3,__99;int(1..)])) using tseitin
-  define(__101 <-> or([__97,__100;int(1..)])) using tseitin
-  define(__102 <-> !(__101)) using tseitin
-
---
-
-or([and([__102,__63;int(1..)]);int(1..)])
+or([and([__72,__33;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__102,__63;int(1..)])
+and([__72,__33;int(1..)])
 
 --
 
-or([and([__76,__89;int(1..)]);int(1..)])
+or([and([__46,__59;int(1..)]);int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__76,__89;int(1..)])
+and([__46,__59;int(1..)])
 
 --
 
-and([__76,__89;int(1..)])
+and([__46,__59;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__103
+__73
 new variables:
-  findAux __103: bool
+  findAux __73: bool
 new SAT encoding decisions:
-  define(__103 <-> and([__76,__89;int(1..)])) using tseitin
+  define(__73 <-> and([__46,__59;int(1..)])) using tseitin
 
 --
 
-and([__102,__63;int(1..)])
+and([__72,__33;int(1..)])
    ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__104
+__74
 new variables:
-  findAux __104: bool
+  findAux __74: bool
 new SAT encoding decisions:
-  define(__104 <-> and([__102,__63;int(1..)])) using tseitin
+  define(__74 <-> and([__72,__33;int(1..)])) using tseitin
 
 --
 
-__50,
-__104,
-__103
+__74,
+__73
    ~~> remove_single_atom ([("SAT", 8400)])
-__104,
-__103
+__73
 new SAT encoding decisions:
-  assert(__50) using tseitin
+  assert(__74) using tseitin
 
 --
 
-__104,
-__103
-   ~~> remove_single_atom ([("SAT", 8400)])
-__103
-new SAT encoding decisions:
-  assert(__104) using tseitin
-
---
-
-__103
+__73
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__103) using tseitin
+  assert(__73) using tseitin
 
 --
 
@@ -595,36 +501,6 @@ findAux __71: bool
 findAux __72: bool
 findAux __73: bool
 findAux __74: bool
-findAux __75: bool
-findAux __76: bool
-findAux __77: bool
-findAux __78: bool
-findAux __79: bool
-findAux __80: bool
-findAux __81: bool
-findAux __82: bool
-findAux __83: bool
-findAux __84: bool
-findAux __85: bool
-findAux __86: bool
-findAux __87: bool
-findAux __88: bool
-findAux __89: bool
-findAux __90: bool
-findAux __91: bool
-findAux __92: bool
-findAux __93: bool
-findAux __94: bool
-findAux __95: bool
-findAux __96: bool
-findAux __97: bool
-findAux __98: bool
-findAux __99: bool
-findAux __100: bool
-findAux __101: bool
-findAux __102: bool
-findAux __103: bool
-findAux __104: bool
 
 such that
 
@@ -655,91 +531,61 @@ define(__18 <-> and([__17,__8;int(1..)])) using tseitin,
 assert(__18) using tseitin,
 at-most-one(__19#int_direct_1, __19#int_direct_2, __19#int_direct_3) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
 at-most-one(__20#int_direct_1, __20#int_direct_2, __20#int_direct_3) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
-define(__21 <-> and([__19#int_direct_1,__20#int_direct_1;int(1..)])) using tseitin,
-define(__22 <-> or([false,__21;int(1..)])) using tseitin,
-define(__23 <-> and([__19#int_direct_1,__20#int_direct_2;int(1..)])) using tseitin,
+weighted(1*x#int_direct_1, 2*x#int_direct_2, -1*__19#int_direct_1, -2*__19#int_direct_2, -3*__19#int_direct_3, -1*__20#int_direct_1, -2*__20#int_direct_2, -3*__20#int_direct_3) Exactly 0 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }),
+define(__21 <-> or([false,__19#int_direct_1;int(1..)])) using tseitin,
+define(__22 <-> !(__21)) using tseitin,
+define(__23 <-> and([false,__22;int(1..)])) using tseitin,
 define(__24 <-> or([false,__23;int(1..)])) using tseitin,
-define(__25 <-> and([__19#int_direct_2,__20#int_direct_1;int(1..)])) using tseitin,
-define(__26 <-> or([__24,__25;int(1..)])) using tseitin,
-define(__27 <-> and([__19#int_direct_1,__20#int_direct_3;int(1..)])) using tseitin,
-define(__28 <-> or([false,__27;int(1..)])) using tseitin,
-define(__29 <-> and([__19#int_direct_2,__20#int_direct_2;int(1..)])) using tseitin,
-define(__30 <-> or([__28,__29;int(1..)])) using tseitin,
-define(__31 <-> and([__19#int_direct_3,__20#int_direct_1;int(1..)])) using tseitin,
-define(__32 <-> or([__30,__31;int(1..)])) using tseitin,
-define(__33 <-> and([__19#int_direct_2,__20#int_direct_3;int(1..)])) using tseitin,
-define(__34 <-> or([false,__33;int(1..)])) using tseitin,
-define(__35 <-> and([__19#int_direct_3,__20#int_direct_2;int(1..)])) using tseitin,
-define(__36 <-> or([__34,__35;int(1..)])) using tseitin,
-define(__37 <-> and([__19#int_direct_3,__20#int_direct_3;int(1..)])) using tseitin,
-define(__38 <-> or([false,__37;int(1..)])) using tseitin,
-define(__39 <-> (x#int_direct_1) <-> (false)) using tseitin,
-define(__40 <-> and([__39,true;int(1..)])) using tseitin,
-define(__41 <-> (x#int_direct_2) <-> (__22)) using tseitin,
-define(__42 <-> and([__41,__40;int(1..)])) using tseitin,
-define(__43 <-> (false) <-> (__26)) using tseitin,
-define(__44 <-> and([__43,__42;int(1..)])) using tseitin,
-define(__45 <-> (false) <-> (__32)) using tseitin,
-define(__46 <-> and([__45,__44;int(1..)])) using tseitin,
-define(__47 <-> (false) <-> (__36)) using tseitin,
-define(__48 <-> and([__47,__46;int(1..)])) using tseitin,
-define(__49 <-> (false) <-> (__38)) using tseitin,
-define(__50 <-> and([__49,__48;int(1..)])) using tseitin,
-define(__51 <-> or([false,__19#int_direct_1;int(1..)])) using tseitin,
+define(__25 <-> or([__21,__19#int_direct_2;int(1..)])) using tseitin,
+define(__26 <-> !(__25)) using tseitin,
+define(__27 <-> and([false,__26;int(1..)])) using tseitin,
+define(__28 <-> or([__24,__27;int(1..)])) using tseitin,
+define(__29 <-> or([__25,__19#int_direct_3;int(1..)])) using tseitin,
+define(__30 <-> !(__29)) using tseitin,
+define(__31 <-> and([true,__30;int(1..)])) using tseitin,
+define(__32 <-> or([__28,__31;int(1..)])) using tseitin,
+define(__33 <-> !(__32)) using tseitin,
+define(__34 <-> or([false,true;int(1..)])) using tseitin,
+define(__35 <-> !(__34)) using tseitin,
+define(__36 <-> and([__20#int_direct_1,__35;int(1..)])) using tseitin,
+define(__37 <-> or([false,__36;int(1..)])) using tseitin,
+define(__38 <-> or([__34,false;int(1..)])) using tseitin,
+define(__39 <-> !(__38)) using tseitin,
+define(__40 <-> and([__20#int_direct_2,__39;int(1..)])) using tseitin,
+define(__41 <-> or([__37,__40;int(1..)])) using tseitin,
+define(__42 <-> or([__38,false;int(1..)])) using tseitin,
+define(__43 <-> !(__42)) using tseitin,
+define(__44 <-> and([__20#int_direct_3,__43;int(1..)])) using tseitin,
+define(__45 <-> or([__41,__44;int(1..)])) using tseitin,
+define(__46 <-> !(__45)) using tseitin,
+define(__47 <-> or([false,__20#int_direct_1;int(1..)])) using tseitin,
+define(__48 <-> !(__47)) using tseitin,
+define(__49 <-> and([false,__48;int(1..)])) using tseitin,
+define(__50 <-> or([false,__49;int(1..)])) using tseitin,
+define(__51 <-> or([__47,__20#int_direct_2;int(1..)])) using tseitin,
 define(__52 <-> !(__51)) using tseitin,
 define(__53 <-> and([false,__52;int(1..)])) using tseitin,
-define(__54 <-> or([false,__53;int(1..)])) using tseitin,
-define(__55 <-> or([__51,__19#int_direct_2;int(1..)])) using tseitin,
+define(__54 <-> or([__50,__53;int(1..)])) using tseitin,
+define(__55 <-> or([__51,__20#int_direct_3;int(1..)])) using tseitin,
 define(__56 <-> !(__55)) using tseitin,
-define(__57 <-> and([false,__56;int(1..)])) using tseitin,
+define(__57 <-> and([true,__56;int(1..)])) using tseitin,
 define(__58 <-> or([__54,__57;int(1..)])) using tseitin,
-define(__59 <-> or([__55,__19#int_direct_3;int(1..)])) using tseitin,
-define(__60 <-> !(__59)) using tseitin,
-define(__61 <-> and([true,__60;int(1..)])) using tseitin,
-define(__62 <-> or([__58,__61;int(1..)])) using tseitin,
-define(__63 <-> !(__62)) using tseitin,
-define(__64 <-> or([false,true;int(1..)])) using tseitin,
+define(__59 <-> !(__58)) using tseitin,
+define(__60 <-> or([false,true;int(1..)])) using tseitin,
+define(__61 <-> !(__60)) using tseitin,
+define(__62 <-> and([__19#int_direct_1,__61;int(1..)])) using tseitin,
+define(__63 <-> or([false,__62;int(1..)])) using tseitin,
+define(__64 <-> or([__60,false;int(1..)])) using tseitin,
 define(__65 <-> !(__64)) using tseitin,
-define(__66 <-> and([__20#int_direct_1,__65;int(1..)])) using tseitin,
-define(__67 <-> or([false,__66;int(1..)])) using tseitin,
+define(__66 <-> and([__19#int_direct_2,__65;int(1..)])) using tseitin,
+define(__67 <-> or([__63,__66;int(1..)])) using tseitin,
 define(__68 <-> or([__64,false;int(1..)])) using tseitin,
 define(__69 <-> !(__68)) using tseitin,
-define(__70 <-> and([__20#int_direct_2,__69;int(1..)])) using tseitin,
+define(__70 <-> and([__19#int_direct_3,__69;int(1..)])) using tseitin,
 define(__71 <-> or([__67,__70;int(1..)])) using tseitin,
-define(__72 <-> or([__68,false;int(1..)])) using tseitin,
-define(__73 <-> !(__72)) using tseitin,
-define(__74 <-> and([__20#int_direct_3,__73;int(1..)])) using tseitin,
-define(__75 <-> or([__71,__74;int(1..)])) using tseitin,
-define(__76 <-> !(__75)) using tseitin,
-define(__77 <-> or([false,__20#int_direct_1;int(1..)])) using tseitin,
-define(__78 <-> !(__77)) using tseitin,
-define(__79 <-> and([false,__78;int(1..)])) using tseitin,
-define(__80 <-> or([false,__79;int(1..)])) using tseitin,
-define(__81 <-> or([__77,__20#int_direct_2;int(1..)])) using tseitin,
-define(__82 <-> !(__81)) using tseitin,
-define(__83 <-> and([false,__82;int(1..)])) using tseitin,
-define(__84 <-> or([__80,__83;int(1..)])) using tseitin,
-define(__85 <-> or([__81,__20#int_direct_3;int(1..)])) using tseitin,
-define(__86 <-> !(__85)) using tseitin,
-define(__87 <-> and([true,__86;int(1..)])) using tseitin,
-define(__88 <-> or([__84,__87;int(1..)])) using tseitin,
-define(__89 <-> !(__88)) using tseitin,
-define(__90 <-> or([false,true;int(1..)])) using tseitin,
-define(__91 <-> !(__90)) using tseitin,
-define(__92 <-> and([__19#int_direct_1,__91;int(1..)])) using tseitin,
-define(__93 <-> or([false,__92;int(1..)])) using tseitin,
-define(__94 <-> or([__90,false;int(1..)])) using tseitin,
-define(__95 <-> !(__94)) using tseitin,
-define(__96 <-> and([__19#int_direct_2,__95;int(1..)])) using tseitin,
-define(__97 <-> or([__93,__96;int(1..)])) using tseitin,
-define(__98 <-> or([__94,false;int(1..)])) using tseitin,
-define(__99 <-> !(__98)) using tseitin,
-define(__100 <-> and([__19#int_direct_3,__99;int(1..)])) using tseitin,
-define(__101 <-> or([__97,__100;int(1..)])) using tseitin,
-define(__102 <-> !(__101)) using tseitin,
-define(__103 <-> and([__76,__89;int(1..)])) using tseitin,
-define(__104 <-> and([__102,__63;int(1..)])) using tseitin,
-assert(__50) using tseitin,
-assert(__104) using tseitin,
-assert(__103) using tseitin
+define(__72 <-> !(__71)) using tseitin,
+define(__73 <-> and([__46,__59;int(1..)])) using tseitin,
+define(__74 <-> and([__72,__33;int(1..)])) using tseitin,
+assert(__74) using tseitin,
+assert(__73) using tseitin
 

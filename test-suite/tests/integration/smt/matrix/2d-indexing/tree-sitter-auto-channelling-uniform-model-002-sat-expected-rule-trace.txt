@@ -619,67 +619,11 @@ m#components_4
 
 --
 
-m#components_4
-   ~~> integer_decision_representation_direct ([("SAT", 9500)])
-SATInt(Direct, [m#components_4#int_direct_1,m#components_4#int_direct_2;int(1..)] [0, 1])
+sum([SATInt(Direct, [m#components_1#int_direct_1,m#components_1#int_direct_2;int(1..)] [0, 1]),m#components_4;int(1..)]) = 2
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
 
---
-
-sum([SATInt(Direct, [m#components_1#int_direct_1,m#components_1#int_direct_2;int(1..)] [0, 1]),SATInt(Direct, [m#components_4#int_direct_1,m#components_4#int_direct_2;int(1..)] [0, 1]);int(1..)])
-   ~~> add_sat_direct ([("SAT", 9100)])
-SATInt(Direct, [__81,__85,__87;int(1..)] [0, 2])
-new variables:
-  findAux __80: bool
-  findAux __81: bool
-  findAux __82: bool
-  findAux __83: bool
-  findAux __84: bool
-  findAux __85: bool
-  findAux __86: bool
-  findAux __87: bool
 new SAT encoding decisions:
-  define(__80 <-> and([m#components_1#int_direct_1,m#components_4#int_direct_1;int(1..)])) using tseitin
-  define(__81 <-> or([false,__80;int(1..)])) using tseitin
-  define(__82 <-> and([m#components_1#int_direct_1,m#components_4#int_direct_2;int(1..)])) using tseitin
-  define(__83 <-> or([false,__82;int(1..)])) using tseitin
-  define(__84 <-> and([m#components_1#int_direct_2,m#components_4#int_direct_1;int(1..)])) using tseitin
-  define(__85 <-> or([__83,__84;int(1..)])) using tseitin
-  define(__86 <-> and([m#components_1#int_direct_2,m#components_4#int_direct_2;int(1..)])) using tseitin
-  define(__87 <-> or([false,__86;int(1..)])) using tseitin
-
---
-
-SATInt(Direct, [__81,__85,__87;int(1..)] [0, 2]) = 2
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Direct, [__81,__85,__87;int(1..)] [0, 2]) = SATInt(Direct, [true;int(1..)] [2, 2])
-
---
-
-SATInt(Direct, [__81,__85,__87;int(1..)] [0, 2]) = SATInt(Direct, [true;int(1..)] [2, 2])
-   ~~> eq_sat_direct ([("SAT", 9100)])
-__93
-new variables:
-  findAux __88: bool
-  findAux __89: bool
-  findAux __90: bool
-  findAux __91: bool
-  findAux __92: bool
-  findAux __93: bool
-new SAT encoding decisions:
-  define(__88 <-> (__81) <-> (false)) using tseitin
-  define(__89 <-> and([__88,true;int(1..)])) using tseitin
-  define(__90 <-> (__85) <-> (false)) using tseitin
-  define(__91 <-> and([__90,__89;int(1..)])) using tseitin
-  define(__92 <-> (__87) <-> (true)) using tseitin
-  define(__93 <-> and([__92,__91;int(1..)])) using tseitin
-
---
-
-__93
-   ~~> remove_single_atom ([("SAT", 8400)])
-true
-new SAT encoding decisions:
-  assert(__93) using tseitin
+  weighted(0*m#components_1#int_direct_1, 1*m#components_1#int_direct_2, 0*m#components_4#int_direct_1, 1*m#components_4#int_direct_2) Exactly 2 using None
 
 --
 
@@ -778,20 +722,6 @@ findAux __76: bool
 findAux __77: bool
 findAux __78: bool
 findAux __79: bool
-findAux __80: bool
-findAux __81: bool
-findAux __82: bool
-findAux __83: bool
-findAux __84: bool
-findAux __85: bool
-findAux __86: bool
-findAux __87: bool
-findAux __88: bool
-findAux __89: bool
-findAux __90: bool
-findAux __91: bool
-findAux __92: bool
-findAux __93: bool
 
 such that
 
@@ -888,19 +818,5 @@ define(__77 <-> and([__76,true;int(1..)])) using tseitin,
 define(__78 <-> (m#components_2#int_direct_2) <-> (m#components_3#int_direct_2)) using tseitin,
 define(__79 <-> and([__78,__77;int(1..)])) using tseitin,
 assert(__79) using tseitin,
-define(__80 <-> and([m#components_1#int_direct_1,m#components_4#int_direct_1;int(1..)])) using tseitin,
-define(__81 <-> or([false,__80;int(1..)])) using tseitin,
-define(__82 <-> and([m#components_1#int_direct_1,m#components_4#int_direct_2;int(1..)])) using tseitin,
-define(__83 <-> or([false,__82;int(1..)])) using tseitin,
-define(__84 <-> and([m#components_1#int_direct_2,m#components_4#int_direct_1;int(1..)])) using tseitin,
-define(__85 <-> or([__83,__84;int(1..)])) using tseitin,
-define(__86 <-> and([m#components_1#int_direct_2,m#components_4#int_direct_2;int(1..)])) using tseitin,
-define(__87 <-> or([false,__86;int(1..)])) using tseitin,
-define(__88 <-> (__81) <-> (false)) using tseitin,
-define(__89 <-> and([__88,true;int(1..)])) using tseitin,
-define(__90 <-> (__85) <-> (false)) using tseitin,
-define(__91 <-> and([__90,__89;int(1..)])) using tseitin,
-define(__92 <-> (__87) <-> (true)) using tseitin,
-define(__93 <-> and([__92,__91;int(1..)])) using tseitin,
-assert(__93) using tseitin
+weighted(0*m#components_1#int_direct_1, 1*m#components_1#int_direct_2, 0*m#components_4#int_direct_1, 1*m#components_4#int_direct_2) Exactly 2 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic })
 
