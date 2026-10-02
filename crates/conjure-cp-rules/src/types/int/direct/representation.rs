@@ -62,19 +62,10 @@ register_representation!(
             .map(|declaration| Reference::new(declaration.clone()).into())
             .collect();
 
-        // At most one value is taken. Pairwise, matching what the encoding's operation rules
-        // assume when they read a bit as "x equals this value".
-        let mut constraints = Vec::new();
-        for (index, bit) in bits.iter().enumerate() {
-            for other in &bits[index + 1..] {
-                let bit = Expression::Not(Metadata::new(), Moo::new(bit.clone()));
-                let other = Expression::Not(Metadata::new(), Moo::new(other.clone()));
-                constraints.push(Expression::Or(
-                    Metadata::new(),
-                    Moo::new(into_matrix_expr!(vec![bit, other])),
-                ));
-            }
-        }
+        // Preserve cardinality semantics until the SAT backend chooses an AMO encoder.
+        let indicators = bits.iter().cloned().map(|bit| Expression::ToInt(Metadata::new(), Moo::new(bit))).collect::<Vec<_>>();
+        let count = Expression::Sum(Metadata::new(), Moo::new(into_matrix_expr!(indicators)));
+        let mut constraints = vec![Expression::Leq(Metadata::new(), Moo::new(count), Moo::new(1.into()))];
 
         // ...and the value taken is one the domain allows, which also forces at least one bit.
         constraints.push(int_domain_to_expr(state.sat_int_expr(), &state.ranges));

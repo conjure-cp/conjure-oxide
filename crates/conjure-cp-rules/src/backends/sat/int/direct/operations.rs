@@ -355,22 +355,10 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         }
     }
 
-    // The quotient takes at most one value; migrated to a selectable AMO decision next.
-    for a in 0..quot_bits.len() {
-        for b in (a + 1)..quot_bits.len() {
-            let simultaneous = Expr::And(
-                Metadata::new(),
-                Moo::new(into_matrix_expr!(vec![
-                    quot_bits[a].clone(),
-                    quot_bits[b].clone()
-                ])),
-            );
-            new_sat_decisions.push(SatEncodingDecision::Assert(Expr::Not(
-                Metadata::new(),
-                Moo::new(simultaneous),
-            )));
-        }
-    }
+    new_sat_decisions.push(SatEncodingDecision::AtMostOne {
+        inputs: quot_bits.clone(),
+        encoding: None,
+    });
 
     let quot_int = Expr::SATInt(
         Metadata::new(),

@@ -219,6 +219,11 @@ pub struct GlobalArgs {
     )]
     pub channelling: Channelling,
 
+    /// Pin the SAT AMO encoder: pairwise, ladder, bitwise, commander, bimander, or two-product.
+    /// If omitted, the modelling heuristic chooses one algorithm for the model.
+    #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub amo_encoding: Option<conjure_cp::ast::sat_decision::AmoEncoding>,
+
     /// Solver to use.
     ///
     /// Possible values: `minion`, `sat`, `z3`.

@@ -94,6 +94,7 @@ impl FromStr for Channelling {
 pub const DEFAULT_HEURISTIC_SEED: u64 = 0;
 
 thread_local! {
+    static AMO_ENCODING: Cell<Option<crate::ast::sat_decision::AmoEncoding>> = const { Cell::new(None) };
     static HEURISTIC: Cell<Heuristic> = const { Cell::new(Heuristic::Compact) };
     static CHANNELLING: Cell<Channelling> = const { Cell::new(Channelling::No) };
     static HEURISTIC_RANDOM_STATE: Cell<u64> = const { Cell::new(DEFAULT_HEURISTIC_SEED) };
@@ -948,4 +949,13 @@ mod tests {
         assert!(Rewriter::from_str("dirty").is_err());
         assert!(Rewriter::from_str("baseline+dirty").is_err());
     }
+}
+
+/// Pin the AMO algorithm, or allow the modelling heuristic to choose.
+pub fn set_amo_encoding(encoding: Option<crate::ast::sat_decision::AmoEncoding>) {
+    AMO_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit AMO algorithm override for this compilation thread.
+pub fn amo_encoding() -> Option<crate::ast::sat_decision::AmoEncoding> {
+    AMO_ENCODING.with(Cell::get)
 }

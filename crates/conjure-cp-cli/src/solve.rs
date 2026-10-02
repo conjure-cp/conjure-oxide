@@ -381,6 +381,7 @@ pub(crate) fn rewrite(
     set_heuristic_seed(global_args.seed);
     set_heuristic_responses(global_args.responses.clone());
     set_channelling(global_args.channelling);
+    conjure_cp::settings::set_amo_encoding(global_args.amo_encoding);
     tracing::debug!(
         "Heuristic: {}, seed: {}, responses: {:?}, channelling: {}, solver seed: {}",
         global_args.heuristic,

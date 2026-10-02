@@ -320,3 +320,50 @@ fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
 }
+
+/// Retain an asserted cardinality-one constraint as a selectable AMO decision.
+#[register_rule("SAT", 20000, [Root])]
+fn select_at_most_one(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Root(_, children) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    for (index, child) in children.iter().enumerate() {
+        let Expr::Leq(_, left, right) = child else {
+            continue;
+        };
+        if right.as_ref() != &Expr::from(1) {
+            continue;
+        }
+        let Expr::Sum(_, terms) = left.as_ref() else {
+            continue;
+        };
+        let Expr::AbstractLiteral(_, Matrix(terms, _)) = terms.as_ref() else {
+            continue;
+        };
+        let inputs = terms
+            .iter()
+            .map(|term| match term {
+                Expr::ToInt(_, input)
+                    if input.domain_of().is_some_and(|domain| domain.is_bool()) =>
+                {
+                    Some(input.as_ref().clone())
+                }
+                _ => None,
+            })
+            .collect::<Option<Vec<_>>>();
+        let Some(inputs) = inputs else {
+            continue;
+        };
+        let mut children = children.clone();
+        children.remove(index);
+        return Ok(RuleEffect::sat(
+            Expr::Root(Metadata::new(), children),
+            vec![SatEncodingDecision::AtMostOne {
+                inputs,
+                encoding: None,
+            }],
+            symbols.clone(),
+        ));
+    }
+    Err(RuleNotApplicable)
+}
