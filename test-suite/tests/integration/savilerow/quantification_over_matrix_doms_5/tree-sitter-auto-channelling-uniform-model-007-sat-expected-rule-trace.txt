@@ -1,0 +1,208 @@
+Model before rewriting:
+
+letting k be 2
+letting n be 2
+find x: int(1..n)
+
+such that
+
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ])
+
+--
+
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ])
+new variables:
+  find x#int_order_1: bool
+  find x#int_order_2: bool
+new constraints:
+  x#int_order_1
+  or([!(x#int_order_2),x#int_order_1;int(1..)])
+  or([and([SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) >= 1,SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) <= 2;int(1..)]);int(1..)])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) >= 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) >= SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) <= 2
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) <= SATInt(Order, [true;int(1..)] [2, 2])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) <= SATInt(Order, [true;int(1..)] [2, 2])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__6
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__0 <-> !(true)) using tseitin
+  define(__1 <-> and([__0,x#int_order_1;int(1..)])) using tseitin
+  define(__2 <-> or([false,__1;int(1..)])) using tseitin
+  define(__3 <-> !(true)) using tseitin
+  define(__4 <-> and([__3,x#int_order_2;int(1..)])) using tseitin
+  define(__5 <-> or([__2,__4;int(1..)])) using tseitin
+  define(__6 <-> !(__5)) using tseitin
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2;int(1..)] [1, 2]) >= SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__13
+new variables:
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__7 <-> !(x#int_order_1)) using tseitin
+  define(__8 <-> and([__7,true;int(1..)])) using tseitin
+  define(__9 <-> or([false,__8;int(1..)])) using tseitin
+  define(__10 <-> !(x#int_order_2)) using tseitin
+  define(__11 <-> and([__10,false;int(1..)])) using tseitin
+  define(__12 <-> or([__9,__11;int(1..)])) using tseitin
+  define(__13 <-> !(__12)) using tseitin
+
+--
+
+!(x#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> !(x#int_order_2)) using tseitin
+
+--
+
+or([and([__13,__6;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__13,__6;int(1..)])
+
+--
+
+and([__13,__6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> and([__13,__6;int(1..)])) using tseitin
+
+--
+
+or([__14,x#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> or([__14,x#int_order_1;int(1..)])) using tseitin
+
+--
+
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
+x#int_order_1,
+__16,
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
+__16,
+__15
+new SAT encoding decisions:
+  assert(x#int_order_1) using tseitin
+
+--
+
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
+__16,
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
+__15
+new SAT encoding decisions:
+  assert(__16) using tseitin
+
+--
+
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]),
+__15
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ])
+new SAT encoding decisions:
+  assert(__15) using tseitin
+
+--
+
+[ or([ and([ (matrix_bools[v__0]) -> (x = 1) | v__0 : int(1..(product([k,product([k,n;int(1..)]);int(1..)]))) ]) | matrix_bools : matrix indexed by [int(1..(product([k,product([k,n;int(1..)]);int(1..)])))] of bool ]) | m : int(1..n) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true;int(1..)]
+
+--
+
+Final model:
+
+letting k be 2
+letting n be 2
+find x: int(1..n)
+find x#int_order_1: bool
+find x#int_order_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> !(true)) using tseitin,
+define(__1 <-> and([__0,x#int_order_1;int(1..)])) using tseitin,
+define(__2 <-> or([false,__1;int(1..)])) using tseitin,
+define(__3 <-> !(true)) using tseitin,
+define(__4 <-> and([__3,x#int_order_2;int(1..)])) using tseitin,
+define(__5 <-> or([__2,__4;int(1..)])) using tseitin,
+define(__6 <-> !(__5)) using tseitin,
+define(__7 <-> !(x#int_order_1)) using tseitin,
+define(__8 <-> and([__7,true;int(1..)])) using tseitin,
+define(__9 <-> or([false,__8;int(1..)])) using tseitin,
+define(__10 <-> !(x#int_order_2)) using tseitin,
+define(__11 <-> and([__10,false;int(1..)])) using tseitin,
+define(__12 <-> or([__9,__11;int(1..)])) using tseitin,
+define(__13 <-> !(__12)) using tseitin,
+define(__14 <-> !(x#int_order_2)) using tseitin,
+define(__15 <-> and([__13,__6;int(1..)])) using tseitin,
+define(__16 <-> or([__14,x#int_order_1;int(1..)])) using tseitin,
+assert(x#int_order_1) using tseitin,
+assert(__16) using tseitin,
+assert(__15) using tseitin
+

@@ -1,0 +1,37 @@
+Model before rewriting:
+
+letting i be 1
+letting p be permutation(1,3,4)
+find j: int(0..10)
+
+such that
+
+j = image(p,i)
+
+--
+
+j
+   ~~> select_representation ([("ReprGeneral", 10000)])
+j
+new variables:
+  find j#bv_1: int(0..10)
+
+--
+
+j
+   ~~> smt_int_bv_variable ([("Smt", 9500)])
+j#bv_1
+
+--
+
+Final model:
+
+letting i be 1
+letting p be permutation(1,3,4)
+find j: int(0..10)
+find j#bv_1: int(0..10)
+
+such that
+
+j#bv_1 = 3
+

@@ -1,0 +1,98 @@
+Model before rewriting:
+
+letting a be {1,2,3,4}
+find x: int((|a|))
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#int_log_1: bool
+  find x#int_log_2: bool
+  find x#int_log_3: bool
+  find x#int_log_4: bool
+new constraints:
+  or([SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [4, 4]) = 4;int(1..)])
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [4, 4]) = 4
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [4, 4]) = SATInt(Log, [false,false,true,false;int(1..)] [4, 4])
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4;int(1..)] [4, 4]) = SATInt(Log, [false,false,true,false;int(1..)] [4, 4])
+   ~~> cnf_int_eq ([("SAT", 9100)])
+__7
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__0 <-> (x#int_log_1) <-> (false)) using tseitin
+  define(__1 <-> and([__0,true;int(1..)])) using tseitin
+  define(__2 <-> (x#int_log_2) <-> (false)) using tseitin
+  define(__3 <-> and([__2,__1;int(1..)])) using tseitin
+  define(__4 <-> (x#int_log_3) <-> (true)) using tseitin
+  define(__5 <-> and([__4,__3;int(1..)])) using tseitin
+  define(__6 <-> (x#int_log_4) <-> (false)) using tseitin
+  define(__7 <-> and([__6,__5;int(1..)])) using tseitin
+
+--
+
+or([__7;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__7
+
+--
+
+true,
+__7
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__7) using tseitin
+
+--
+
+Final model:
+
+letting a be {1,2,3,4}
+find x: int((|a|))
+find x#int_log_1: bool
+find x#int_log_2: bool
+find x#int_log_3: bool
+find x#int_log_4: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> (x#int_log_1) <-> (false)) using tseitin,
+define(__1 <-> and([__0,true;int(1..)])) using tseitin,
+define(__2 <-> (x#int_log_2) <-> (false)) using tseitin,
+define(__3 <-> and([__2,__1;int(1..)])) using tseitin,
+define(__4 <-> (x#int_log_3) <-> (true)) using tseitin,
+define(__5 <-> and([__4,__3;int(1..)])) using tseitin,
+define(__6 <-> (x#int_log_4) <-> (false)) using tseitin,
+define(__7 <-> and([__6,__5;int(1..)])) using tseitin,
+assert(__7) using tseitin
+

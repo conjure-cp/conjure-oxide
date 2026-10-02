@@ -25,22 +25,28 @@ Branch: `sat-ir`. Conventional commits; never push.
 - Production Boolean and integer gate rules now emit semantic `SatEncodingDecision` assertions/definitions through `RuleEffect::sat`. Model CNF fields, `CnfClause` and the legacy clause converter have been removed. RustSAT generates all clauses at load time; dominance injection uses the same allocation frontier as encoder auxiliaries.
 - Asserted AMO decisions carry a selectable algorithm and explicit/heuristic provenance. `--amo-encoding` pins pairwise, ladder, bitwise, commander, bimander or two-product. Otherwise the existing first/random/compact/interactive/all heuristics choose one AMO algorithm per model. Compact uses pairwise through five inputs and ladder above that; this is an initial policy, not a performance claim.
 - Direct integer domain constraints and direct division quotient constraints retain AMO semantics until library generation. All-mode integration portfolios enumerate encoder choices alongside uniform representation choices.
-- `EncodingSelection<T>` records a resolved algorithm and its provenance without tying the choice container to AMO. Pindakaas providers and the other encoding classes remain subsequent work.
+- `EncodingSelection<T>` records a resolved algorithm and its provenance without tying the choice container to AMO. Cardinality now reuses that selection container; weighted PB and the remaining classes are subsequent work.
+
+- Asserted cardinality decisions retain upper/lower/exact bounds and occurrence multiplicity. `--cardinality-encoding` selects RustSAT totalizer or Pindakaas sorting network. Heuristics resolve one cardinality choice per model; compact initially selects totalizer.
+- Pindakaas 0.5.1 is pinned with its default solver features disabled. Its clause sink shares the RustSAT allocator, including every encoder auxiliary. Constants and impossible/trivial bounds are normalised before dispatch.
 
 ## Coverage investigation
 
 - Production SAT integer representations remain IntDirect, IntOrder, and IntLog (two's-complement actual value). BinaryOffset and BinaryRank currently exist only as IR kinds.
 - An initial short CLI survey of 45 CNF inputs found six timeouts and the dropped residual false regression. The premature probe-choice bug meant this survey did not exercise all integer choices; integration portfolio enumeration supersedes its apparent coverage.
-- Longer acceptance and normal regression runs enabled comparison/sparse_direct, comparison/sparse_log, int_direct/06-add, and integer/05-product. The integer/10-div and neg-div fixtures still exceeded a 180-second per-test limit and retain their previous solver configuration. These timeouts do not establish unsupported semantics.
+- Longer acceptance and normal regression runs enabled comparison/sparse_direct, comparison/sparse_log, int_direct/06-add, and integer/05-product. At that stage, integer/10-div and neg-div exceeded a 180-second per-test limit. The later cardinality coverage expansion enables integer/10-div; neg-div now exposes a reference-solution mismatch and remains disabled.
 - cnf/cnf2 contains two Essence files, so the current integration test discovery skips that directory; split these inputs before enabling them.
+
+- The [cardinality coverage survey](sat_coverage_survey.md) tried all 489 previously SAT-disabled runnable fixtures. It enables 191 existing fixtures plus a new cardinality fixture: 322 SAT-enabled fixtures out of 620 runnable, with 1,931 SAT portfolios (1,836 uniform portfolios across 234 fixtures). All enabled SAT run records are successful.
+- A BinaryValue division-bound fix removes panics for zero-containing divisor intervals and checks quotient extrema without overflowing. Nine additional division fixtures now pass all uniform portfolios.
 
 ## Outstanding
 
-- Extend the decision mechanism from the AMO proof of concept to cardinality, pseudo-Boolean and other encoding classes, with explicit user overrides and heuristic selection.
+- Extend the decision mechanism to pseudo-Boolean and the remaining encoding classes, with explicit user overrides and heuristic selection.
 - Extend decisions to the other encoding classes and implement shared representation materialisation, decoding, and domain constraints. Unify the explicit Boolean arena and production gate/AMO payloads as those plans are migrated.
 - Add BinaryOffset and BinaryRank; expose the existing actual-value encoding as BinaryValue in the new production pipeline.
 - Add lazy multi-representation materialisation, channelling, and exhaustive semantic tests before enabling mixed representations.
-- The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. Implement the Pindakaas clause-sink bridge and controlled provider choices; no new dependency has been added yet.
+- The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. The Pindakaas clause-sink bridge and cardinality provider choices are implemented; expand provider coverage to weighted PB next.
 - Expand verified portfolios beyond the CNF corpus and investigate the remaining slow fixtures.
 
 ## Validation
@@ -50,3 +56,6 @@ Branch: `sat-ir`. Conventional commits; never push.
 - Exhaustive AMO checks cover all six algorithms, sizes zero through nine (including group boundaries), every input assignment, constants and repeated inputs. Tests also cover global user overrides, one all-mode choice per model, unresolved-decision rejection and postponing extraction until Boolean operands are lowered.
 - Production Clippy and formatting checks pass. Strict workspace Clippy additionally encounters an existing needless-borrow lint in `fuzz/fuzz_targets/fuzz_detect_errors.rs`; that unrelated file is unchanged.
 - Acceptance artefacts are committed separately from code. The contribution guide's cleanup script discarded 493 timing-only files; existing timing fields were preserved in the 130 files with semantic statistics changes. Unrelated non-SAT golden deletions are excluded.
+
+- Cardinality-stage verification: full workspace acceptance passed 1,497 tests with 14 skipped, plus all workspace doctests. Core library: 222 unit tests; rules: 131. Exhaustive cardinality checks cover both providers, upper/lower/exact bounds, constants, repeated/complementary operands and the shared allocation frontier. Choice tests cover group sharing, explicit overrides and retained node pins.
+- Final normal golden verification passed 770 tests, covering all 322 SAT-enabled fixture directories and core/rule tests. Timing cleanup restored 402 timing-only files and preserved existing measurements in 218 semantic-statistics files; seven expanded fixtures received deliberate expected-time budget increases.

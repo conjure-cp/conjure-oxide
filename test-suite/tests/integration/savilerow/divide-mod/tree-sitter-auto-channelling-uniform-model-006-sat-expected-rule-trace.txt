@@ -1,0 +1,128 @@
+Model before rewriting:
+
+find x: int(1..1)
+
+such that
+
+(3 / 2) = 1,
+(-3 / 2) = -2,
+(3 / -2) = -2,
+(-3 / -2) = 1,
+3 % 2 = 1,
+3 % -2 = -1,
+-3 % 2 = 1,
+-3 % -2 = -1,
+true
+
+--
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new variables:
+  find x#int_log_1: bool
+  find x#int_log_2: bool
+new constraints:
+  or([SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = 1;int(1..)])
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = SATInt(Log, [true,false;int(1..)] [1, 1])
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2;int(1..)] [1, 1]) = SATInt(Log, [true,false;int(1..)] [1, 1])
+   ~~> cnf_int_eq ([("SAT", 9100)])
+__3
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__0 <-> (x#int_log_1) <-> (true)) using tseitin
+  define(__1 <-> and([__0,true;int(1..)])) using tseitin
+  define(__2 <-> (x#int_log_2) <-> (false)) using tseitin
+  define(__3 <-> and([__2,__1;int(1..)])) using tseitin
+
+--
+
+or([__3;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__3
+
+--
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+Final model:
+
+find x: int(1..1)
+find x#int_log_1: bool
+find x#int_log_2: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> (x#int_log_1) <-> (true)) using tseitin,
+define(__1 <-> and([__0,true;int(1..)])) using tseitin,
+define(__2 <-> (x#int_log_2) <-> (false)) using tseitin,
+define(__3 <-> and([__2,__1;int(1..)])) using tseitin,
+assert(__3) using tseitin
+

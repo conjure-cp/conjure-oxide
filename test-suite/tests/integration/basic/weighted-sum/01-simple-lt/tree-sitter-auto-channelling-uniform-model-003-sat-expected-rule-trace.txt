@@ -1,0 +1,2608 @@
+Model before rewriting:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#int_direct_1: bool
+  find z#int_direct_2: bool
+  find z#int_direct_3: bool
+new constraints:
+  sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3);int(1..)]) <= 1
+  or([and([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_direct_1: bool
+  find x#int_direct_2: bool
+  find x#int_direct_3: bool
+new constraints:
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3);int(1..)]) <= 1
+  or([and([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_direct_1: bool
+  find y#int_direct_2: bool
+  find y#int_direct_3: bool
+new constraints:
+  sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1
+  or([and([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14,
+sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14,
+or([and([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3) using None
+
+--
+
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14,
+or([and([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14,
+or([and([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+or([and([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3) using None
+
+--
+
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14,
+or([and([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+or([and([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1,
+or([and([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+sum([sum([product([2,x;int(1..)]),product([3,y;int(1..)]);int(1..)]),z;int(1..)]) < 14,
+or([and([SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+or([and([SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)]),
+or([and([SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= 2,SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= 4;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3) using None
+
+--
+
+z
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4])
+
+--
+
+x
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4])
+
+--
+
+y
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4])
+
+--
+
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= 2
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= SATInt(Direct, [true;int(1..)] [2, 2])
+
+--
+
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= 4
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= SATInt(Direct, [true;int(1..)] [4, 4])
+
+--
+
+SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= 2
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= SATInt(Direct, [true;int(1..)] [2, 2])
+
+--
+
+SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= 4
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= SATInt(Direct, [true;int(1..)] [4, 4])
+
+--
+
+SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= 2
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= SATInt(Direct, [true;int(1..)] [2, 2])
+
+--
+
+SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= 4
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= SATInt(Direct, [true;int(1..)] [4, 4])
+
+--
+
+product([2,SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)])
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)])
+
+--
+
+product([3,SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)])
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)])
+
+--
+
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) <= SATInt(Direct, [true;int(1..)] [4, 4])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__12
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__0 <-> or([false,z#int_direct_1;int(1..)])) using tseitin
+  define(__1 <-> !(__0)) using tseitin
+  define(__2 <-> and([false,__1;int(1..)])) using tseitin
+  define(__3 <-> or([false,__2;int(1..)])) using tseitin
+  define(__4 <-> or([__0,z#int_direct_2;int(1..)])) using tseitin
+  define(__5 <-> !(__4)) using tseitin
+  define(__6 <-> and([false,__5;int(1..)])) using tseitin
+  define(__7 <-> or([__3,__6;int(1..)])) using tseitin
+  define(__8 <-> or([__4,z#int_direct_3;int(1..)])) using tseitin
+  define(__9 <-> !(__8)) using tseitin
+  define(__10 <-> and([true,__9;int(1..)])) using tseitin
+  define(__11 <-> or([__7,__10;int(1..)])) using tseitin
+  define(__12 <-> !(__11)) using tseitin
+
+--
+
+SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) >= SATInt(Direct, [true;int(1..)] [2, 2])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__25
+new variables:
+  findAux __13: bool
+  findAux __14: bool
+  findAux __15: bool
+  findAux __16: bool
+  findAux __17: bool
+  findAux __18: bool
+  findAux __19: bool
+  findAux __20: bool
+  findAux __21: bool
+  findAux __22: bool
+  findAux __23: bool
+  findAux __24: bool
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__13 <-> or([false,true;int(1..)])) using tseitin
+  define(__14 <-> !(__13)) using tseitin
+  define(__15 <-> and([x#int_direct_1,__14;int(1..)])) using tseitin
+  define(__16 <-> or([false,__15;int(1..)])) using tseitin
+  define(__17 <-> or([__13,false;int(1..)])) using tseitin
+  define(__18 <-> !(__17)) using tseitin
+  define(__19 <-> and([x#int_direct_2,__18;int(1..)])) using tseitin
+  define(__20 <-> or([__16,__19;int(1..)])) using tseitin
+  define(__21 <-> or([__17,false;int(1..)])) using tseitin
+  define(__22 <-> !(__21)) using tseitin
+  define(__23 <-> and([x#int_direct_3,__22;int(1..)])) using tseitin
+  define(__24 <-> or([__20,__23;int(1..)])) using tseitin
+  define(__25 <-> !(__24)) using tseitin
+
+--
+
+SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]) <= SATInt(Direct, [true;int(1..)] [4, 4])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__38
+new variables:
+  findAux __26: bool
+  findAux __27: bool
+  findAux __28: bool
+  findAux __29: bool
+  findAux __30: bool
+  findAux __31: bool
+  findAux __32: bool
+  findAux __33: bool
+  findAux __34: bool
+  findAux __35: bool
+  findAux __36: bool
+  findAux __37: bool
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__26 <-> or([false,x#int_direct_1;int(1..)])) using tseitin
+  define(__27 <-> !(__26)) using tseitin
+  define(__28 <-> and([false,__27;int(1..)])) using tseitin
+  define(__29 <-> or([false,__28;int(1..)])) using tseitin
+  define(__30 <-> or([__26,x#int_direct_2;int(1..)])) using tseitin
+  define(__31 <-> !(__30)) using tseitin
+  define(__32 <-> and([false,__31;int(1..)])) using tseitin
+  define(__33 <-> or([__29,__32;int(1..)])) using tseitin
+  define(__34 <-> or([__30,x#int_direct_3;int(1..)])) using tseitin
+  define(__35 <-> !(__34)) using tseitin
+  define(__36 <-> and([true,__35;int(1..)])) using tseitin
+  define(__37 <-> or([__33,__36;int(1..)])) using tseitin
+  define(__38 <-> !(__37)) using tseitin
+
+--
+
+SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) >= SATInt(Direct, [true;int(1..)] [2, 2])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__51
+new variables:
+  findAux __39: bool
+  findAux __40: bool
+  findAux __41: bool
+  findAux __42: bool
+  findAux __43: bool
+  findAux __44: bool
+  findAux __45: bool
+  findAux __46: bool
+  findAux __47: bool
+  findAux __48: bool
+  findAux __49: bool
+  findAux __50: bool
+  findAux __51: bool
+new SAT encoding decisions:
+  define(__39 <-> or([false,true;int(1..)])) using tseitin
+  define(__40 <-> !(__39)) using tseitin
+  define(__41 <-> and([y#int_direct_1,__40;int(1..)])) using tseitin
+  define(__42 <-> or([false,__41;int(1..)])) using tseitin
+  define(__43 <-> or([__39,false;int(1..)])) using tseitin
+  define(__44 <-> !(__43)) using tseitin
+  define(__45 <-> and([y#int_direct_2,__44;int(1..)])) using tseitin
+  define(__46 <-> or([__42,__45;int(1..)])) using tseitin
+  define(__47 <-> or([__43,false;int(1..)])) using tseitin
+  define(__48 <-> !(__47)) using tseitin
+  define(__49 <-> and([y#int_direct_3,__48;int(1..)])) using tseitin
+  define(__50 <-> or([__46,__49;int(1..)])) using tseitin
+  define(__51 <-> !(__50)) using tseitin
+
+--
+
+SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]) <= SATInt(Direct, [true;int(1..)] [4, 4])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__64
+new variables:
+  findAux __52: bool
+  findAux __53: bool
+  findAux __54: bool
+  findAux __55: bool
+  findAux __56: bool
+  findAux __57: bool
+  findAux __58: bool
+  findAux __59: bool
+  findAux __60: bool
+  findAux __61: bool
+  findAux __62: bool
+  findAux __63: bool
+  findAux __64: bool
+new SAT encoding decisions:
+  define(__52 <-> or([false,y#int_direct_1;int(1..)])) using tseitin
+  define(__53 <-> !(__52)) using tseitin
+  define(__54 <-> and([false,__53;int(1..)])) using tseitin
+  define(__55 <-> or([false,__54;int(1..)])) using tseitin
+  define(__56 <-> or([__52,y#int_direct_2;int(1..)])) using tseitin
+  define(__57 <-> !(__56)) using tseitin
+  define(__58 <-> and([false,__57;int(1..)])) using tseitin
+  define(__59 <-> or([__55,__58;int(1..)])) using tseitin
+  define(__60 <-> or([__56,y#int_direct_3;int(1..)])) using tseitin
+  define(__61 <-> !(__60)) using tseitin
+  define(__62 <-> and([true,__61;int(1..)])) using tseitin
+  define(__63 <-> or([__59,__62;int(1..)])) using tseitin
+  define(__64 <-> !(__63)) using tseitin
+
+--
+
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]) >= SATInt(Direct, [true;int(1..)] [2, 2])
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__77
+new variables:
+  findAux __65: bool
+  findAux __66: bool
+  findAux __67: bool
+  findAux __68: bool
+  findAux __69: bool
+  findAux __70: bool
+  findAux __71: bool
+  findAux __72: bool
+  findAux __73: bool
+  findAux __74: bool
+  findAux __75: bool
+  findAux __76: bool
+  findAux __77: bool
+new SAT encoding decisions:
+  define(__65 <-> or([false,true;int(1..)])) using tseitin
+  define(__66 <-> !(__65)) using tseitin
+  define(__67 <-> and([z#int_direct_1,__66;int(1..)])) using tseitin
+  define(__68 <-> or([false,__67;int(1..)])) using tseitin
+  define(__69 <-> or([__65,false;int(1..)])) using tseitin
+  define(__70 <-> !(__69)) using tseitin
+  define(__71 <-> and([z#int_direct_2,__70;int(1..)])) using tseitin
+  define(__72 <-> or([__68,__71;int(1..)])) using tseitin
+  define(__73 <-> or([__69,false;int(1..)])) using tseitin
+  define(__74 <-> !(__73)) using tseitin
+  define(__75 <-> and([z#int_direct_3,__74;int(1..)])) using tseitin
+  define(__76 <-> or([__72,__75;int(1..)])) using tseitin
+  define(__77 <-> !(__76)) using tseitin
+
+--
+
+sum([sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)])
+
+--
+
+or([and([__77,__12;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__77,__12;int(1..)])
+
+--
+
+or([and([__25,__38;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__25,__38;int(1..)])
+
+--
+
+or([and([__51,__64;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__51,__64;int(1..)])
+
+--
+
+and([__25,__38;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__78
+new variables:
+  findAux __78: bool
+new SAT encoding decisions:
+  define(__78 <-> and([__25,__38;int(1..)])) using tseitin
+
+--
+
+and([__51,__64;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__79
+new variables:
+  findAux __79: bool
+new SAT encoding decisions:
+  define(__79 <-> and([__51,__64;int(1..)])) using tseitin
+
+--
+
+and([__77,__12;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__80
+new variables:
+  findAux __80: bool
+new SAT encoding decisions:
+  define(__80 <-> and([__77,__12;int(1..)])) using tseitin
+
+--
+
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)]) < 14,
+__80,
+__78,
+__79
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)]) < 14,
+__78,
+__79
+new SAT encoding decisions:
+  assert(__80) using tseitin
+
+--
+
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)]) < 14,
+__78,
+__79
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)]) < 14,
+__79
+new SAT encoding decisions:
+  assert(__78) using tseitin
+
+--
+
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)]) < 14,
+__79
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)]) < 14
+new SAT encoding decisions:
+  assert(__79) using tseitin
+
+--
+
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)] [2, 4]);int(1..)])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+sum([product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)]),product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)]),SATInt(Log, [z#int_direct_2,__81,z#int_direct_3,false;int(1..)] [2, 4]);int(1..)])
+new variables:
+  findAux __81: bool
+new SAT encoding decisions:
+  define(__81 <-> or([z#int_direct_1,z#int_direct_2;int(1..)])) using tseitin
+
+--
+
+product([SATInt(Direct, [true;int(1..)] [2, 2]),SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)] [2, 4]);int(1..)])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+product([SATInt(Log, [false,true,false;int(1..)] [2, 2]),SATInt(Log, [x#int_direct_2,__82,x#int_direct_3,false;int(1..)] [2, 4]);int(1..)])
+new variables:
+  findAux __82: bool
+new SAT encoding decisions:
+  define(__82 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin
+
+--
+
+product([SATInt(Log, [false,true,false;int(1..)] [2, 2]),SATInt(Log, [x#int_direct_2,__82,x#int_direct_3,false;int(1..)] [2, 4]);int(1..)])
+   ~~> cnf_int_product ([("SAT", 9000)])
+SATInt(Log, [__255,__258,__261,__264,__267;int(1..)] [4, 8])
+new variables:
+  findAux __83: bool
+  findAux __84: bool
+  findAux __85: bool
+  findAux __86: bool
+  findAux __87: bool
+  findAux __88: bool
+  findAux __89: bool
+  findAux __90: bool
+  findAux __91: bool
+  findAux __92: bool
+  findAux __93: bool
+  findAux __94: bool
+  findAux __95: bool
+  findAux __96: bool
+  findAux __97: bool
+  findAux __98: bool
+  findAux __99: bool
+  findAux __100: bool
+  findAux __101: bool
+  findAux __102: bool
+  findAux __103: bool
+  findAux __104: bool
+  findAux __105: bool
+  findAux __106: bool
+  findAux __107: bool
+  findAux __108: bool
+  findAux __109: bool
+  findAux __110: bool
+  findAux __111: bool
+  findAux __112: bool
+  findAux __113: bool
+  findAux __114: bool
+  findAux __115: bool
+  findAux __116: bool
+  findAux __117: bool
+  findAux __118: bool
+  findAux __119: bool
+  findAux __120: bool
+  findAux __121: bool
+  findAux __122: bool
+  findAux __123: bool
+  findAux __124: bool
+  findAux __125: bool
+  findAux __126: bool
+  findAux __127: bool
+  findAux __128: bool
+  findAux __129: bool
+  findAux __130: bool
+  findAux __131: bool
+  findAux __132: bool
+  findAux __133: bool
+  findAux __134: bool
+  findAux __135: bool
+  findAux __136: bool
+  findAux __137: bool
+  findAux __138: bool
+  findAux __139: bool
+  findAux __140: bool
+  findAux __141: bool
+  findAux __142: bool
+  findAux __143: bool
+  findAux __144: bool
+  findAux __145: bool
+  findAux __146: bool
+  findAux __147: bool
+  findAux __148: bool
+  findAux __149: bool
+  findAux __150: bool
+  findAux __151: bool
+  findAux __152: bool
+  findAux __153: bool
+  findAux __154: bool
+  findAux __155: bool
+  findAux __156: bool
+  findAux __157: bool
+  findAux __158: bool
+  findAux __159: bool
+  findAux __160: bool
+  findAux __161: bool
+  findAux __162: bool
+  findAux __163: bool
+  findAux __164: bool
+  findAux __165: bool
+  findAux __166: bool
+  findAux __167: bool
+  findAux __168: bool
+  findAux __169: bool
+  findAux __170: bool
+  findAux __171: bool
+  findAux __172: bool
+  findAux __173: bool
+  findAux __174: bool
+  findAux __175: bool
+  findAux __176: bool
+  findAux __177: bool
+  findAux __178: bool
+  findAux __179: bool
+  findAux __180: bool
+  findAux __181: bool
+  findAux __182: bool
+  findAux __183: bool
+  findAux __184: bool
+  findAux __185: bool
+  findAux __186: bool
+  findAux __187: bool
+  findAux __188: bool
+  findAux __189: bool
+  findAux __190: bool
+  findAux __191: bool
+  findAux __192: bool
+  findAux __193: bool
+  findAux __194: bool
+  findAux __195: bool
+  findAux __196: bool
+  findAux __197: bool
+  findAux __198: bool
+  findAux __199: bool
+  findAux __200: bool
+  findAux __201: bool
+  findAux __202: bool
+  findAux __203: bool
+  findAux __204: bool
+  findAux __205: bool
+  findAux __206: bool
+  findAux __207: bool
+  findAux __208: bool
+  findAux __209: bool
+  findAux __210: bool
+  findAux __211: bool
+  findAux __212: bool
+  findAux __213: bool
+  findAux __214: bool
+  findAux __215: bool
+  findAux __216: bool
+  findAux __217: bool
+  findAux __218: bool
+  findAux __219: bool
+  findAux __220: bool
+  findAux __221: bool
+  findAux __222: bool
+  findAux __223: bool
+  findAux __224: bool
+  findAux __225: bool
+  findAux __226: bool
+  findAux __227: bool
+  findAux __228: bool
+  findAux __229: bool
+  findAux __230: bool
+  findAux __231: bool
+  findAux __232: bool
+  findAux __233: bool
+  findAux __234: bool
+  findAux __235: bool
+  findAux __236: bool
+  findAux __237: bool
+  findAux __238: bool
+  findAux __239: bool
+  findAux __240: bool
+  findAux __241: bool
+  findAux __242: bool
+  findAux __243: bool
+  findAux __244: bool
+  findAux __245: bool
+  findAux __246: bool
+  findAux __247: bool
+  findAux __248: bool
+  findAux __249: bool
+  findAux __250: bool
+  findAux __251: bool
+  findAux __252: bool
+  findAux __253: bool
+  findAux __254: bool
+  findAux __255: bool
+  findAux __256: bool
+  findAux __257: bool
+  findAux __258: bool
+  findAux __259: bool
+  findAux __260: bool
+  findAux __261: bool
+  findAux __262: bool
+  findAux __263: bool
+  findAux __264: bool
+  findAux __265: bool
+  findAux __266: bool
+  findAux __267: bool
+  findAux __268: bool
+  findAux __269: bool
+  findAux __270: bool
+  findAux __271: bool
+  findAux __272: bool
+  findAux __273: bool
+  findAux __274: bool
+  findAux __275: bool
+  findAux __276: bool
+new SAT encoding decisions:
+  define(__83 <-> and([false,x#int_direct_2;int(1..)])) using tseitin
+  define(__84 <-> and([false,__82;int(1..)])) using tseitin
+  define(__85 <-> and([false,x#int_direct_3;int(1..)])) using tseitin
+  define(__86 <-> and([false,false;int(1..)])) using tseitin
+  define(__87 <-> and([false,false;int(1..)])) using tseitin
+  define(__88 <-> and([false,false;int(1..)])) using tseitin
+  define(__89 <-> and([false,false;int(1..)])) using tseitin
+  define(__90 <-> and([false,false;int(1..)])) using tseitin
+  define(__91 <-> !((__83) <-> (false))) using tseitin
+  define(__92 <-> and([__83,false;int(1..)])) using tseitin
+  define(__93 <-> !((__84) <-> (x#int_direct_2))) using tseitin
+  define(__94 <-> !((__93) <-> (__92))) using tseitin
+  define(__95 <-> and([__84,x#int_direct_2;int(1..)])) using tseitin
+  define(__96 <-> and([__92,__93;int(1..)])) using tseitin
+  define(__97 <-> or([__95,__96;int(1..)])) using tseitin
+  define(__98 <-> !((__85) <-> (__82))) using tseitin
+  define(__99 <-> !((__98) <-> (__97))) using tseitin
+  define(__100 <-> and([__85,__82;int(1..)])) using tseitin
+  define(__101 <-> and([__97,__98;int(1..)])) using tseitin
+  define(__102 <-> or([__100,__101;int(1..)])) using tseitin
+  define(__103 <-> !((__86) <-> (x#int_direct_3))) using tseitin
+  define(__104 <-> !((__103) <-> (__102))) using tseitin
+  define(__105 <-> and([__86,x#int_direct_3;int(1..)])) using tseitin
+  define(__106 <-> and([__102,__103;int(1..)])) using tseitin
+  define(__107 <-> or([__105,__106;int(1..)])) using tseitin
+  define(__108 <-> !((__87) <-> (false))) using tseitin
+  define(__109 <-> !((__108) <-> (__107))) using tseitin
+  define(__110 <-> and([__87,false;int(1..)])) using tseitin
+  define(__111 <-> and([__107,__108;int(1..)])) using tseitin
+  define(__112 <-> or([__110,__111;int(1..)])) using tseitin
+  define(__113 <-> !((__88) <-> (false))) using tseitin
+  define(__114 <-> !((__113) <-> (__112))) using tseitin
+  define(__115 <-> and([__88,false;int(1..)])) using tseitin
+  define(__116 <-> and([__112,__113;int(1..)])) using tseitin
+  define(__117 <-> or([__115,__116;int(1..)])) using tseitin
+  define(__118 <-> !((__89) <-> (false))) using tseitin
+  define(__119 <-> !((__118) <-> (__117))) using tseitin
+  define(__120 <-> and([__89,false;int(1..)])) using tseitin
+  define(__121 <-> and([__117,__118;int(1..)])) using tseitin
+  define(__122 <-> or([__120,__121;int(1..)])) using tseitin
+  define(__123 <-> !((__90) <-> (false))) using tseitin
+  define(__124 <-> !((__123) <-> (__122))) using tseitin
+  define(__125 <-> and([__90,false;int(1..)])) using tseitin
+  define(__126 <-> and([__122,__123;int(1..)])) using tseitin
+  define(__127 <-> or([__125,__126;int(1..)])) using tseitin
+  define(__128 <-> !(true)) using tseitin
+  define(__129 <-> and([true,__91;int(1..)])) using tseitin
+  define(__130 <-> and([__128,__83;int(1..)])) using tseitin
+  define(__131 <-> or([__129,__130;int(1..)])) using tseitin
+  define(__132 <-> and([true,__94;int(1..)])) using tseitin
+  define(__133 <-> and([__128,__84;int(1..)])) using tseitin
+  define(__134 <-> or([__132,__133;int(1..)])) using tseitin
+  define(__135 <-> and([true,__99;int(1..)])) using tseitin
+  define(__136 <-> and([__128,__85;int(1..)])) using tseitin
+  define(__137 <-> or([__135,__136;int(1..)])) using tseitin
+  define(__138 <-> and([true,__104;int(1..)])) using tseitin
+  define(__139 <-> and([__128,__86;int(1..)])) using tseitin
+  define(__140 <-> or([__138,__139;int(1..)])) using tseitin
+  define(__141 <-> and([true,__109;int(1..)])) using tseitin
+  define(__142 <-> and([__128,__87;int(1..)])) using tseitin
+  define(__143 <-> or([__141,__142;int(1..)])) using tseitin
+  define(__144 <-> and([true,__114;int(1..)])) using tseitin
+  define(__145 <-> and([__128,__88;int(1..)])) using tseitin
+  define(__146 <-> or([__144,__145;int(1..)])) using tseitin
+  define(__147 <-> and([true,__119;int(1..)])) using tseitin
+  define(__148 <-> and([__128,__89;int(1..)])) using tseitin
+  define(__149 <-> or([__147,__148;int(1..)])) using tseitin
+  define(__150 <-> and([true,__124;int(1..)])) using tseitin
+  define(__151 <-> and([__128,__90;int(1..)])) using tseitin
+  define(__152 <-> or([__150,__151;int(1..)])) using tseitin
+  define(__153 <-> !((__131) <-> (false))) using tseitin
+  define(__154 <-> and([__131,false;int(1..)])) using tseitin
+  define(__155 <-> !((__134) <-> (false))) using tseitin
+  define(__156 <-> !((__155) <-> (__154))) using tseitin
+  define(__157 <-> and([__134,false;int(1..)])) using tseitin
+  define(__158 <-> and([__154,__155;int(1..)])) using tseitin
+  define(__159 <-> or([__157,__158;int(1..)])) using tseitin
+  define(__160 <-> !((__137) <-> (x#int_direct_2))) using tseitin
+  define(__161 <-> !((__160) <-> (__159))) using tseitin
+  define(__162 <-> and([__137,x#int_direct_2;int(1..)])) using tseitin
+  define(__163 <-> and([__159,__160;int(1..)])) using tseitin
+  define(__164 <-> or([__162,__163;int(1..)])) using tseitin
+  define(__165 <-> !((__140) <-> (__82))) using tseitin
+  define(__166 <-> !((__165) <-> (__164))) using tseitin
+  define(__167 <-> and([__140,__82;int(1..)])) using tseitin
+  define(__168 <-> and([__164,__165;int(1..)])) using tseitin
+  define(__169 <-> or([__167,__168;int(1..)])) using tseitin
+  define(__170 <-> !((__143) <-> (x#int_direct_3))) using tseitin
+  define(__171 <-> !((__170) <-> (__169))) using tseitin
+  define(__172 <-> and([__143,x#int_direct_3;int(1..)])) using tseitin
+  define(__173 <-> and([__169,__170;int(1..)])) using tseitin
+  define(__174 <-> or([__172,__173;int(1..)])) using tseitin
+  define(__175 <-> !((__146) <-> (false))) using tseitin
+  define(__176 <-> !((__175) <-> (__174))) using tseitin
+  define(__177 <-> and([__146,false;int(1..)])) using tseitin
+  define(__178 <-> and([__174,__175;int(1..)])) using tseitin
+  define(__179 <-> or([__177,__178;int(1..)])) using tseitin
+  define(__180 <-> !((__149) <-> (false))) using tseitin
+  define(__181 <-> !((__180) <-> (__179))) using tseitin
+  define(__182 <-> and([__149,false;int(1..)])) using tseitin
+  define(__183 <-> and([__179,__180;int(1..)])) using tseitin
+  define(__184 <-> or([__182,__183;int(1..)])) using tseitin
+  define(__185 <-> !((__152) <-> (false))) using tseitin
+  define(__186 <-> !((__185) <-> (__184))) using tseitin
+  define(__187 <-> and([__152,false;int(1..)])) using tseitin
+  define(__188 <-> and([__184,__185;int(1..)])) using tseitin
+  define(__189 <-> or([__187,__188;int(1..)])) using tseitin
+  define(__190 <-> !(false)) using tseitin
+  define(__191 <-> and([false,__153;int(1..)])) using tseitin
+  define(__192 <-> and([__190,__131;int(1..)])) using tseitin
+  define(__193 <-> or([__191,__192;int(1..)])) using tseitin
+  define(__194 <-> and([false,__156;int(1..)])) using tseitin
+  define(__195 <-> and([__190,__134;int(1..)])) using tseitin
+  define(__196 <-> or([__194,__195;int(1..)])) using tseitin
+  define(__197 <-> and([false,__161;int(1..)])) using tseitin
+  define(__198 <-> and([__190,__137;int(1..)])) using tseitin
+  define(__199 <-> or([__197,__198;int(1..)])) using tseitin
+  define(__200 <-> and([false,__166;int(1..)])) using tseitin
+  define(__201 <-> and([__190,__140;int(1..)])) using tseitin
+  define(__202 <-> or([__200,__201;int(1..)])) using tseitin
+  define(__203 <-> and([false,__171;int(1..)])) using tseitin
+  define(__204 <-> and([__190,__143;int(1..)])) using tseitin
+  define(__205 <-> or([__203,__204;int(1..)])) using tseitin
+  define(__206 <-> and([false,__176;int(1..)])) using tseitin
+  define(__207 <-> and([__190,__146;int(1..)])) using tseitin
+  define(__208 <-> or([__206,__207;int(1..)])) using tseitin
+  define(__209 <-> and([false,__181;int(1..)])) using tseitin
+  define(__210 <-> and([__190,__149;int(1..)])) using tseitin
+  define(__211 <-> or([__209,__210;int(1..)])) using tseitin
+  define(__212 <-> and([false,__186;int(1..)])) using tseitin
+  define(__213 <-> and([__190,__152;int(1..)])) using tseitin
+  define(__214 <-> or([__212,__213;int(1..)])) using tseitin
+  define(__215 <-> !((__193) <-> (false))) using tseitin
+  define(__216 <-> and([__193,false;int(1..)])) using tseitin
+  define(__217 <-> !((__196) <-> (false))) using tseitin
+  define(__218 <-> !((__217) <-> (__216))) using tseitin
+  define(__219 <-> and([__196,false;int(1..)])) using tseitin
+  define(__220 <-> and([__216,__217;int(1..)])) using tseitin
+  define(__221 <-> or([__219,__220;int(1..)])) using tseitin
+  define(__222 <-> !((__199) <-> (false))) using tseitin
+  define(__223 <-> !((__222) <-> (__221))) using tseitin
+  define(__224 <-> and([__199,false;int(1..)])) using tseitin
+  define(__225 <-> and([__221,__222;int(1..)])) using tseitin
+  define(__226 <-> or([__224,__225;int(1..)])) using tseitin
+  define(__227 <-> !((__202) <-> (x#int_direct_2))) using tseitin
+  define(__228 <-> !((__227) <-> (__226))) using tseitin
+  define(__229 <-> and([__202,x#int_direct_2;int(1..)])) using tseitin
+  define(__230 <-> and([__226,__227;int(1..)])) using tseitin
+  define(__231 <-> or([__229,__230;int(1..)])) using tseitin
+  define(__232 <-> !((__205) <-> (__82))) using tseitin
+  define(__233 <-> !((__232) <-> (__231))) using tseitin
+  define(__234 <-> and([__205,__82;int(1..)])) using tseitin
+  define(__235 <-> and([__231,__232;int(1..)])) using tseitin
+  define(__236 <-> or([__234,__235;int(1..)])) using tseitin
+  define(__237 <-> !((__208) <-> (x#int_direct_3))) using tseitin
+  define(__238 <-> !((__237) <-> (__236))) using tseitin
+  define(__239 <-> and([__208,x#int_direct_3;int(1..)])) using tseitin
+  define(__240 <-> and([__236,__237;int(1..)])) using tseitin
+  define(__241 <-> or([__239,__240;int(1..)])) using tseitin
+  define(__242 <-> !((__211) <-> (false))) using tseitin
+  define(__243 <-> !((__242) <-> (__241))) using tseitin
+  define(__244 <-> and([__211,false;int(1..)])) using tseitin
+  define(__245 <-> and([__241,__242;int(1..)])) using tseitin
+  define(__246 <-> or([__244,__245;int(1..)])) using tseitin
+  define(__247 <-> !((__214) <-> (false))) using tseitin
+  define(__248 <-> !((__247) <-> (__246))) using tseitin
+  define(__249 <-> and([__214,false;int(1..)])) using tseitin
+  define(__250 <-> and([__246,__247;int(1..)])) using tseitin
+  define(__251 <-> or([__249,__250;int(1..)])) using tseitin
+  define(__252 <-> !(false)) using tseitin
+  define(__253 <-> and([false,__215;int(1..)])) using tseitin
+  define(__254 <-> and([__252,__193;int(1..)])) using tseitin
+  define(__255 <-> or([__253,__254;int(1..)])) using tseitin
+  define(__256 <-> and([false,__218;int(1..)])) using tseitin
+  define(__257 <-> and([__252,__196;int(1..)])) using tseitin
+  define(__258 <-> or([__256,__257;int(1..)])) using tseitin
+  define(__259 <-> and([false,__223;int(1..)])) using tseitin
+  define(__260 <-> and([__252,__199;int(1..)])) using tseitin
+  define(__261 <-> or([__259,__260;int(1..)])) using tseitin
+  define(__262 <-> and([false,__228;int(1..)])) using tseitin
+  define(__263 <-> and([__252,__202;int(1..)])) using tseitin
+  define(__264 <-> or([__262,__263;int(1..)])) using tseitin
+  define(__265 <-> and([false,__233;int(1..)])) using tseitin
+  define(__266 <-> and([__252,__205;int(1..)])) using tseitin
+  define(__267 <-> or([__265,__266;int(1..)])) using tseitin
+  define(__268 <-> and([false,__238;int(1..)])) using tseitin
+  define(__269 <-> and([__252,__208;int(1..)])) using tseitin
+  define(__270 <-> or([__268,__269;int(1..)])) using tseitin
+  define(__271 <-> and([false,__243;int(1..)])) using tseitin
+  define(__272 <-> and([__252,__211;int(1..)])) using tseitin
+  define(__273 <-> or([__271,__272;int(1..)])) using tseitin
+  define(__274 <-> and([false,__248;int(1..)])) using tseitin
+  define(__275 <-> and([__252,__214;int(1..)])) using tseitin
+  define(__276 <-> or([__274,__275;int(1..)])) using tseitin
+
+--
+
+product([SATInt(Direct, [true;int(1..)] [3, 3]),SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)] [2, 4]);int(1..)])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+product([SATInt(Log, [true,true,false;int(1..)] [3, 3]),SATInt(Log, [y#int_direct_2,__277,y#int_direct_3,false;int(1..)] [2, 4]);int(1..)])
+new variables:
+  findAux __277: bool
+new SAT encoding decisions:
+  define(__277 <-> or([y#int_direct_1,y#int_direct_2;int(1..)])) using tseitin
+
+--
+
+product([SATInt(Log, [true,true,false;int(1..)] [3, 3]),SATInt(Log, [y#int_direct_2,__277,y#int_direct_3,false;int(1..)] [2, 4]);int(1..)])
+   ~~> cnf_int_product ([("SAT", 9000)])
+SATInt(Log, [__450,__453,__456,__459,__462;int(1..)] [6, 12])
+new variables:
+  findAux __278: bool
+  findAux __279: bool
+  findAux __280: bool
+  findAux __281: bool
+  findAux __282: bool
+  findAux __283: bool
+  findAux __284: bool
+  findAux __285: bool
+  findAux __286: bool
+  findAux __287: bool
+  findAux __288: bool
+  findAux __289: bool
+  findAux __290: bool
+  findAux __291: bool
+  findAux __292: bool
+  findAux __293: bool
+  findAux __294: bool
+  findAux __295: bool
+  findAux __296: bool
+  findAux __297: bool
+  findAux __298: bool
+  findAux __299: bool
+  findAux __300: bool
+  findAux __301: bool
+  findAux __302: bool
+  findAux __303: bool
+  findAux __304: bool
+  findAux __305: bool
+  findAux __306: bool
+  findAux __307: bool
+  findAux __308: bool
+  findAux __309: bool
+  findAux __310: bool
+  findAux __311: bool
+  findAux __312: bool
+  findAux __313: bool
+  findAux __314: bool
+  findAux __315: bool
+  findAux __316: bool
+  findAux __317: bool
+  findAux __318: bool
+  findAux __319: bool
+  findAux __320: bool
+  findAux __321: bool
+  findAux __322: bool
+  findAux __323: bool
+  findAux __324: bool
+  findAux __325: bool
+  findAux __326: bool
+  findAux __327: bool
+  findAux __328: bool
+  findAux __329: bool
+  findAux __330: bool
+  findAux __331: bool
+  findAux __332: bool
+  findAux __333: bool
+  findAux __334: bool
+  findAux __335: bool
+  findAux __336: bool
+  findAux __337: bool
+  findAux __338: bool
+  findAux __339: bool
+  findAux __340: bool
+  findAux __341: bool
+  findAux __342: bool
+  findAux __343: bool
+  findAux __344: bool
+  findAux __345: bool
+  findAux __346: bool
+  findAux __347: bool
+  findAux __348: bool
+  findAux __349: bool
+  findAux __350: bool
+  findAux __351: bool
+  findAux __352: bool
+  findAux __353: bool
+  findAux __354: bool
+  findAux __355: bool
+  findAux __356: bool
+  findAux __357: bool
+  findAux __358: bool
+  findAux __359: bool
+  findAux __360: bool
+  findAux __361: bool
+  findAux __362: bool
+  findAux __363: bool
+  findAux __364: bool
+  findAux __365: bool
+  findAux __366: bool
+  findAux __367: bool
+  findAux __368: bool
+  findAux __369: bool
+  findAux __370: bool
+  findAux __371: bool
+  findAux __372: bool
+  findAux __373: bool
+  findAux __374: bool
+  findAux __375: bool
+  findAux __376: bool
+  findAux __377: bool
+  findAux __378: bool
+  findAux __379: bool
+  findAux __380: bool
+  findAux __381: bool
+  findAux __382: bool
+  findAux __383: bool
+  findAux __384: bool
+  findAux __385: bool
+  findAux __386: bool
+  findAux __387: bool
+  findAux __388: bool
+  findAux __389: bool
+  findAux __390: bool
+  findAux __391: bool
+  findAux __392: bool
+  findAux __393: bool
+  findAux __394: bool
+  findAux __395: bool
+  findAux __396: bool
+  findAux __397: bool
+  findAux __398: bool
+  findAux __399: bool
+  findAux __400: bool
+  findAux __401: bool
+  findAux __402: bool
+  findAux __403: bool
+  findAux __404: bool
+  findAux __405: bool
+  findAux __406: bool
+  findAux __407: bool
+  findAux __408: bool
+  findAux __409: bool
+  findAux __410: bool
+  findAux __411: bool
+  findAux __412: bool
+  findAux __413: bool
+  findAux __414: bool
+  findAux __415: bool
+  findAux __416: bool
+  findAux __417: bool
+  findAux __418: bool
+  findAux __419: bool
+  findAux __420: bool
+  findAux __421: bool
+  findAux __422: bool
+  findAux __423: bool
+  findAux __424: bool
+  findAux __425: bool
+  findAux __426: bool
+  findAux __427: bool
+  findAux __428: bool
+  findAux __429: bool
+  findAux __430: bool
+  findAux __431: bool
+  findAux __432: bool
+  findAux __433: bool
+  findAux __434: bool
+  findAux __435: bool
+  findAux __436: bool
+  findAux __437: bool
+  findAux __438: bool
+  findAux __439: bool
+  findAux __440: bool
+  findAux __441: bool
+  findAux __442: bool
+  findAux __443: bool
+  findAux __444: bool
+  findAux __445: bool
+  findAux __446: bool
+  findAux __447: bool
+  findAux __448: bool
+  findAux __449: bool
+  findAux __450: bool
+  findAux __451: bool
+  findAux __452: bool
+  findAux __453: bool
+  findAux __454: bool
+  findAux __455: bool
+  findAux __456: bool
+  findAux __457: bool
+  findAux __458: bool
+  findAux __459: bool
+  findAux __460: bool
+  findAux __461: bool
+  findAux __462: bool
+  findAux __463: bool
+  findAux __464: bool
+  findAux __465: bool
+  findAux __466: bool
+  findAux __467: bool
+  findAux __468: bool
+  findAux __469: bool
+  findAux __470: bool
+  findAux __471: bool
+new SAT encoding decisions:
+  define(__278 <-> and([true,y#int_direct_2;int(1..)])) using tseitin
+  define(__279 <-> and([true,__277;int(1..)])) using tseitin
+  define(__280 <-> and([true,y#int_direct_3;int(1..)])) using tseitin
+  define(__281 <-> and([true,false;int(1..)])) using tseitin
+  define(__282 <-> and([true,false;int(1..)])) using tseitin
+  define(__283 <-> and([true,false;int(1..)])) using tseitin
+  define(__284 <-> and([true,false;int(1..)])) using tseitin
+  define(__285 <-> and([true,false;int(1..)])) using tseitin
+  define(__286 <-> !((__278) <-> (false))) using tseitin
+  define(__287 <-> and([__278,false;int(1..)])) using tseitin
+  define(__288 <-> !((__279) <-> (y#int_direct_2))) using tseitin
+  define(__289 <-> !((__288) <-> (__287))) using tseitin
+  define(__290 <-> and([__279,y#int_direct_2;int(1..)])) using tseitin
+  define(__291 <-> and([__287,__288;int(1..)])) using tseitin
+  define(__292 <-> or([__290,__291;int(1..)])) using tseitin
+  define(__293 <-> !((__280) <-> (__277))) using tseitin
+  define(__294 <-> !((__293) <-> (__292))) using tseitin
+  define(__295 <-> and([__280,__277;int(1..)])) using tseitin
+  define(__296 <-> and([__292,__293;int(1..)])) using tseitin
+  define(__297 <-> or([__295,__296;int(1..)])) using tseitin
+  define(__298 <-> !((__281) <-> (y#int_direct_3))) using tseitin
+  define(__299 <-> !((__298) <-> (__297))) using tseitin
+  define(__300 <-> and([__281,y#int_direct_3;int(1..)])) using tseitin
+  define(__301 <-> and([__297,__298;int(1..)])) using tseitin
+  define(__302 <-> or([__300,__301;int(1..)])) using tseitin
+  define(__303 <-> !((__282) <-> (false))) using tseitin
+  define(__304 <-> !((__303) <-> (__302))) using tseitin
+  define(__305 <-> and([__282,false;int(1..)])) using tseitin
+  define(__306 <-> and([__302,__303;int(1..)])) using tseitin
+  define(__307 <-> or([__305,__306;int(1..)])) using tseitin
+  define(__308 <-> !((__283) <-> (false))) using tseitin
+  define(__309 <-> !((__308) <-> (__307))) using tseitin
+  define(__310 <-> and([__283,false;int(1..)])) using tseitin
+  define(__311 <-> and([__307,__308;int(1..)])) using tseitin
+  define(__312 <-> or([__310,__311;int(1..)])) using tseitin
+  define(__313 <-> !((__284) <-> (false))) using tseitin
+  define(__314 <-> !((__313) <-> (__312))) using tseitin
+  define(__315 <-> and([__284,false;int(1..)])) using tseitin
+  define(__316 <-> and([__312,__313;int(1..)])) using tseitin
+  define(__317 <-> or([__315,__316;int(1..)])) using tseitin
+  define(__318 <-> !((__285) <-> (false))) using tseitin
+  define(__319 <-> !((__318) <-> (__317))) using tseitin
+  define(__320 <-> and([__285,false;int(1..)])) using tseitin
+  define(__321 <-> and([__317,__318;int(1..)])) using tseitin
+  define(__322 <-> or([__320,__321;int(1..)])) using tseitin
+  define(__323 <-> !(true)) using tseitin
+  define(__324 <-> and([true,__286;int(1..)])) using tseitin
+  define(__325 <-> and([__323,__278;int(1..)])) using tseitin
+  define(__326 <-> or([__324,__325;int(1..)])) using tseitin
+  define(__327 <-> and([true,__289;int(1..)])) using tseitin
+  define(__328 <-> and([__323,__279;int(1..)])) using tseitin
+  define(__329 <-> or([__327,__328;int(1..)])) using tseitin
+  define(__330 <-> and([true,__294;int(1..)])) using tseitin
+  define(__331 <-> and([__323,__280;int(1..)])) using tseitin
+  define(__332 <-> or([__330,__331;int(1..)])) using tseitin
+  define(__333 <-> and([true,__299;int(1..)])) using tseitin
+  define(__334 <-> and([__323,__281;int(1..)])) using tseitin
+  define(__335 <-> or([__333,__334;int(1..)])) using tseitin
+  define(__336 <-> and([true,__304;int(1..)])) using tseitin
+  define(__337 <-> and([__323,__282;int(1..)])) using tseitin
+  define(__338 <-> or([__336,__337;int(1..)])) using tseitin
+  define(__339 <-> and([true,__309;int(1..)])) using tseitin
+  define(__340 <-> and([__323,__283;int(1..)])) using tseitin
+  define(__341 <-> or([__339,__340;int(1..)])) using tseitin
+  define(__342 <-> and([true,__314;int(1..)])) using tseitin
+  define(__343 <-> and([__323,__284;int(1..)])) using tseitin
+  define(__344 <-> or([__342,__343;int(1..)])) using tseitin
+  define(__345 <-> and([true,__319;int(1..)])) using tseitin
+  define(__346 <-> and([__323,__285;int(1..)])) using tseitin
+  define(__347 <-> or([__345,__346;int(1..)])) using tseitin
+  define(__348 <-> !((__326) <-> (false))) using tseitin
+  define(__349 <-> and([__326,false;int(1..)])) using tseitin
+  define(__350 <-> !((__329) <-> (false))) using tseitin
+  define(__351 <-> !((__350) <-> (__349))) using tseitin
+  define(__352 <-> and([__329,false;int(1..)])) using tseitin
+  define(__353 <-> and([__349,__350;int(1..)])) using tseitin
+  define(__354 <-> or([__352,__353;int(1..)])) using tseitin
+  define(__355 <-> !((__332) <-> (y#int_direct_2))) using tseitin
+  define(__356 <-> !((__355) <-> (__354))) using tseitin
+  define(__357 <-> and([__332,y#int_direct_2;int(1..)])) using tseitin
+  define(__358 <-> and([__354,__355;int(1..)])) using tseitin
+  define(__359 <-> or([__357,__358;int(1..)])) using tseitin
+  define(__360 <-> !((__335) <-> (__277))) using tseitin
+  define(__361 <-> !((__360) <-> (__359))) using tseitin
+  define(__362 <-> and([__335,__277;int(1..)])) using tseitin
+  define(__363 <-> and([__359,__360;int(1..)])) using tseitin
+  define(__364 <-> or([__362,__363;int(1..)])) using tseitin
+  define(__365 <-> !((__338) <-> (y#int_direct_3))) using tseitin
+  define(__366 <-> !((__365) <-> (__364))) using tseitin
+  define(__367 <-> and([__338,y#int_direct_3;int(1..)])) using tseitin
+  define(__368 <-> and([__364,__365;int(1..)])) using tseitin
+  define(__369 <-> or([__367,__368;int(1..)])) using tseitin
+  define(__370 <-> !((__341) <-> (false))) using tseitin
+  define(__371 <-> !((__370) <-> (__369))) using tseitin
+  define(__372 <-> and([__341,false;int(1..)])) using tseitin
+  define(__373 <-> and([__369,__370;int(1..)])) using tseitin
+  define(__374 <-> or([__372,__373;int(1..)])) using tseitin
+  define(__375 <-> !((__344) <-> (false))) using tseitin
+  define(__376 <-> !((__375) <-> (__374))) using tseitin
+  define(__377 <-> and([__344,false;int(1..)])) using tseitin
+  define(__378 <-> and([__374,__375;int(1..)])) using tseitin
+  define(__379 <-> or([__377,__378;int(1..)])) using tseitin
+  define(__380 <-> !((__347) <-> (false))) using tseitin
+  define(__381 <-> !((__380) <-> (__379))) using tseitin
+  define(__382 <-> and([__347,false;int(1..)])) using tseitin
+  define(__383 <-> and([__379,__380;int(1..)])) using tseitin
+  define(__384 <-> or([__382,__383;int(1..)])) using tseitin
+  define(__385 <-> !(false)) using tseitin
+  define(__386 <-> and([false,__348;int(1..)])) using tseitin
+  define(__387 <-> and([__385,__326;int(1..)])) using tseitin
+  define(__388 <-> or([__386,__387;int(1..)])) using tseitin
+  define(__389 <-> and([false,__351;int(1..)])) using tseitin
+  define(__390 <-> and([__385,__329;int(1..)])) using tseitin
+  define(__391 <-> or([__389,__390;int(1..)])) using tseitin
+  define(__392 <-> and([false,__356;int(1..)])) using tseitin
+  define(__393 <-> and([__385,__332;int(1..)])) using tseitin
+  define(__394 <-> or([__392,__393;int(1..)])) using tseitin
+  define(__395 <-> and([false,__361;int(1..)])) using tseitin
+  define(__396 <-> and([__385,__335;int(1..)])) using tseitin
+  define(__397 <-> or([__395,__396;int(1..)])) using tseitin
+  define(__398 <-> and([false,__366;int(1..)])) using tseitin
+  define(__399 <-> and([__385,__338;int(1..)])) using tseitin
+  define(__400 <-> or([__398,__399;int(1..)])) using tseitin
+  define(__401 <-> and([false,__371;int(1..)])) using tseitin
+  define(__402 <-> and([__385,__341;int(1..)])) using tseitin
+  define(__403 <-> or([__401,__402;int(1..)])) using tseitin
+  define(__404 <-> and([false,__376;int(1..)])) using tseitin
+  define(__405 <-> and([__385,__344;int(1..)])) using tseitin
+  define(__406 <-> or([__404,__405;int(1..)])) using tseitin
+  define(__407 <-> and([false,__381;int(1..)])) using tseitin
+  define(__408 <-> and([__385,__347;int(1..)])) using tseitin
+  define(__409 <-> or([__407,__408;int(1..)])) using tseitin
+  define(__410 <-> !((__388) <-> (false))) using tseitin
+  define(__411 <-> and([__388,false;int(1..)])) using tseitin
+  define(__412 <-> !((__391) <-> (false))) using tseitin
+  define(__413 <-> !((__412) <-> (__411))) using tseitin
+  define(__414 <-> and([__391,false;int(1..)])) using tseitin
+  define(__415 <-> and([__411,__412;int(1..)])) using tseitin
+  define(__416 <-> or([__414,__415;int(1..)])) using tseitin
+  define(__417 <-> !((__394) <-> (false))) using tseitin
+  define(__418 <-> !((__417) <-> (__416))) using tseitin
+  define(__419 <-> and([__394,false;int(1..)])) using tseitin
+  define(__420 <-> and([__416,__417;int(1..)])) using tseitin
+  define(__421 <-> or([__419,__420;int(1..)])) using tseitin
+  define(__422 <-> !((__397) <-> (y#int_direct_2))) using tseitin
+  define(__423 <-> !((__422) <-> (__421))) using tseitin
+  define(__424 <-> and([__397,y#int_direct_2;int(1..)])) using tseitin
+  define(__425 <-> and([__421,__422;int(1..)])) using tseitin
+  define(__426 <-> or([__424,__425;int(1..)])) using tseitin
+  define(__427 <-> !((__400) <-> (__277))) using tseitin
+  define(__428 <-> !((__427) <-> (__426))) using tseitin
+  define(__429 <-> and([__400,__277;int(1..)])) using tseitin
+  define(__430 <-> and([__426,__427;int(1..)])) using tseitin
+  define(__431 <-> or([__429,__430;int(1..)])) using tseitin
+  define(__432 <-> !((__403) <-> (y#int_direct_3))) using tseitin
+  define(__433 <-> !((__432) <-> (__431))) using tseitin
+  define(__434 <-> and([__403,y#int_direct_3;int(1..)])) using tseitin
+  define(__435 <-> and([__431,__432;int(1..)])) using tseitin
+  define(__436 <-> or([__434,__435;int(1..)])) using tseitin
+  define(__437 <-> !((__406) <-> (false))) using tseitin
+  define(__438 <-> !((__437) <-> (__436))) using tseitin
+  define(__439 <-> and([__406,false;int(1..)])) using tseitin
+  define(__440 <-> and([__436,__437;int(1..)])) using tseitin
+  define(__441 <-> or([__439,__440;int(1..)])) using tseitin
+  define(__442 <-> !((__409) <-> (false))) using tseitin
+  define(__443 <-> !((__442) <-> (__441))) using tseitin
+  define(__444 <-> and([__409,false;int(1..)])) using tseitin
+  define(__445 <-> and([__441,__442;int(1..)])) using tseitin
+  define(__446 <-> or([__444,__445;int(1..)])) using tseitin
+  define(__447 <-> !(false)) using tseitin
+  define(__448 <-> and([false,__410;int(1..)])) using tseitin
+  define(__449 <-> and([__447,__388;int(1..)])) using tseitin
+  define(__450 <-> or([__448,__449;int(1..)])) using tseitin
+  define(__451 <-> and([false,__413;int(1..)])) using tseitin
+  define(__452 <-> and([__447,__391;int(1..)])) using tseitin
+  define(__453 <-> or([__451,__452;int(1..)])) using tseitin
+  define(__454 <-> and([false,__418;int(1..)])) using tseitin
+  define(__455 <-> and([__447,__394;int(1..)])) using tseitin
+  define(__456 <-> or([__454,__455;int(1..)])) using tseitin
+  define(__457 <-> and([false,__423;int(1..)])) using tseitin
+  define(__458 <-> and([__447,__397;int(1..)])) using tseitin
+  define(__459 <-> or([__457,__458;int(1..)])) using tseitin
+  define(__460 <-> and([false,__428;int(1..)])) using tseitin
+  define(__461 <-> and([__447,__400;int(1..)])) using tseitin
+  define(__462 <-> or([__460,__461;int(1..)])) using tseitin
+  define(__463 <-> and([false,__433;int(1..)])) using tseitin
+  define(__464 <-> and([__447,__403;int(1..)])) using tseitin
+  define(__465 <-> or([__463,__464;int(1..)])) using tseitin
+  define(__466 <-> and([false,__438;int(1..)])) using tseitin
+  define(__467 <-> and([__447,__406;int(1..)])) using tseitin
+  define(__468 <-> or([__466,__467;int(1..)])) using tseitin
+  define(__469 <-> and([false,__443;int(1..)])) using tseitin
+  define(__470 <-> and([__447,__409;int(1..)])) using tseitin
+  define(__471 <-> or([__469,__470;int(1..)])) using tseitin
+
+--
+
+sum([SATInt(Log, [__255,__258,__261,__264,__267;int(1..)] [4, 8]),SATInt(Log, [__450,__453,__456,__459,__462;int(1..)] [6, 12]),SATInt(Log, [z#int_direct_2,__81,z#int_direct_3,false;int(1..)] [2, 4]);int(1..)])
+   ~~> cnf_int_sum ([("SAT", 4100)])
+SATInt(Log, [__499,__502,__507,__512,__517,__522;int(1..)] [12, 24])
+new variables:
+  findAux __472: bool
+  findAux __473: bool
+  findAux __474: bool
+  findAux __475: bool
+  findAux __476: bool
+  findAux __477: bool
+  findAux __478: bool
+  findAux __479: bool
+  findAux __480: bool
+  findAux __481: bool
+  findAux __482: bool
+  findAux __483: bool
+  findAux __484: bool
+  findAux __485: bool
+  findAux __486: bool
+  findAux __487: bool
+  findAux __488: bool
+  findAux __489: bool
+  findAux __490: bool
+  findAux __491: bool
+  findAux __492: bool
+  findAux __493: bool
+  findAux __494: bool
+  findAux __495: bool
+  findAux __496: bool
+  findAux __497: bool
+  findAux __498: bool
+  findAux __499: bool
+  findAux __500: bool
+  findAux __501: bool
+  findAux __502: bool
+  findAux __503: bool
+  findAux __504: bool
+  findAux __505: bool
+  findAux __506: bool
+  findAux __507: bool
+  findAux __508: bool
+  findAux __509: bool
+  findAux __510: bool
+  findAux __511: bool
+  findAux __512: bool
+  findAux __513: bool
+  findAux __514: bool
+  findAux __515: bool
+  findAux __516: bool
+  findAux __517: bool
+  findAux __518: bool
+  findAux __519: bool
+  findAux __520: bool
+  findAux __521: bool
+  findAux __522: bool
+  findAux __523: bool
+  findAux __524: bool
+  findAux __525: bool
+new SAT encoding decisions:
+  define(__472 <-> !((__255) <-> (__450))) using tseitin
+  define(__473 <-> and([__255,__450;int(1..)])) using tseitin
+  define(__474 <-> !((__258) <-> (__453))) using tseitin
+  define(__475 <-> !((__474) <-> (__473))) using tseitin
+  define(__476 <-> and([__258,__453;int(1..)])) using tseitin
+  define(__477 <-> and([__473,__474;int(1..)])) using tseitin
+  define(__478 <-> or([__476,__477;int(1..)])) using tseitin
+  define(__479 <-> !((__261) <-> (__456))) using tseitin
+  define(__480 <-> !((__479) <-> (__478))) using tseitin
+  define(__481 <-> and([__261,__456;int(1..)])) using tseitin
+  define(__482 <-> and([__478,__479;int(1..)])) using tseitin
+  define(__483 <-> or([__481,__482;int(1..)])) using tseitin
+  define(__484 <-> !((__264) <-> (__459))) using tseitin
+  define(__485 <-> !((__484) <-> (__483))) using tseitin
+  define(__486 <-> and([__264,__459;int(1..)])) using tseitin
+  define(__487 <-> and([__483,__484;int(1..)])) using tseitin
+  define(__488 <-> or([__486,__487;int(1..)])) using tseitin
+  define(__489 <-> !((__267) <-> (__462))) using tseitin
+  define(__490 <-> !((__489) <-> (__488))) using tseitin
+  define(__491 <-> and([__267,__462;int(1..)])) using tseitin
+  define(__492 <-> and([__488,__489;int(1..)])) using tseitin
+  define(__493 <-> or([__491,__492;int(1..)])) using tseitin
+  define(__494 <-> !((__267) <-> (__462))) using tseitin
+  define(__495 <-> !((__494) <-> (__493))) using tseitin
+  define(__496 <-> and([__267,__462;int(1..)])) using tseitin
+  define(__497 <-> and([__493,__494;int(1..)])) using tseitin
+  define(__498 <-> or([__496,__497;int(1..)])) using tseitin
+  define(__499 <-> !((__472) <-> (z#int_direct_2))) using tseitin
+  define(__500 <-> and([__472,z#int_direct_2;int(1..)])) using tseitin
+  define(__501 <-> !((__475) <-> (__81))) using tseitin
+  define(__502 <-> !((__501) <-> (__500))) using tseitin
+  define(__503 <-> and([__475,__81;int(1..)])) using tseitin
+  define(__504 <-> and([__500,__501;int(1..)])) using tseitin
+  define(__505 <-> or([__503,__504;int(1..)])) using tseitin
+  define(__506 <-> !((__480) <-> (z#int_direct_3))) using tseitin
+  define(__507 <-> !((__506) <-> (__505))) using tseitin
+  define(__508 <-> and([__480,z#int_direct_3;int(1..)])) using tseitin
+  define(__509 <-> and([__505,__506;int(1..)])) using tseitin
+  define(__510 <-> or([__508,__509;int(1..)])) using tseitin
+  define(__511 <-> !((__485) <-> (false))) using tseitin
+  define(__512 <-> !((__511) <-> (__510))) using tseitin
+  define(__513 <-> and([__485,false;int(1..)])) using tseitin
+  define(__514 <-> and([__510,__511;int(1..)])) using tseitin
+  define(__515 <-> or([__513,__514;int(1..)])) using tseitin
+  define(__516 <-> !((__490) <-> (false))) using tseitin
+  define(__517 <-> !((__516) <-> (__515))) using tseitin
+  define(__518 <-> and([__490,false;int(1..)])) using tseitin
+  define(__519 <-> and([__515,__516;int(1..)])) using tseitin
+  define(__520 <-> or([__518,__519;int(1..)])) using tseitin
+  define(__521 <-> !((__495) <-> (false))) using tseitin
+  define(__522 <-> !((__521) <-> (__520))) using tseitin
+  define(__523 <-> and([__495,false;int(1..)])) using tseitin
+  define(__524 <-> and([__520,__521;int(1..)])) using tseitin
+  define(__525 <-> or([__523,__524;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__499,__502,__507,__512,__517,__522;int(1..)] [12, 24]) < 14
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [__499,__502,__507,__512,__517,__522;int(1..)] [12, 24]) < SATInt(Log, [false,true,true,true,false;int(1..)] [14, 14])
+
+--
+
+SATInt(Log, [__499,__502,__507,__512,__517,__522;int(1..)] [12, 24]) < SATInt(Log, [false,true,true,true,false;int(1..)] [14, 14])
+   ~~> cnf_int_ineq ([("SAT", 4100)])
+__552
+new variables:
+  findAux __526: bool
+  findAux __527: bool
+  findAux __528: bool
+  findAux __529: bool
+  findAux __530: bool
+  findAux __531: bool
+  findAux __532: bool
+  findAux __533: bool
+  findAux __534: bool
+  findAux __535: bool
+  findAux __536: bool
+  findAux __537: bool
+  findAux __538: bool
+  findAux __539: bool
+  findAux __540: bool
+  findAux __541: bool
+  findAux __542: bool
+  findAux __543: bool
+  findAux __544: bool
+  findAux __545: bool
+  findAux __546: bool
+  findAux __547: bool
+  findAux __548: bool
+  findAux __549: bool
+  findAux __550: bool
+  findAux __551: bool
+  findAux __552: bool
+new SAT encoding decisions:
+  define(__526 <-> !(__499)) using tseitin
+  define(__527 <-> and([false,__526;int(1..)])) using tseitin
+  define(__528 <-> !(__502)) using tseitin
+  define(__529 <-> and([true,__528;int(1..)])) using tseitin
+  define(__530 <-> (true) <-> (__502)) using tseitin
+  define(__531 <-> and([__530,__527;int(1..)])) using tseitin
+  define(__532 <-> or([__529,__531;int(1..)])) using tseitin
+  define(__533 <-> !(__507)) using tseitin
+  define(__534 <-> and([true,__533;int(1..)])) using tseitin
+  define(__535 <-> (true) <-> (__507)) using tseitin
+  define(__536 <-> and([__535,__532;int(1..)])) using tseitin
+  define(__537 <-> or([__534,__536;int(1..)])) using tseitin
+  define(__538 <-> !(__512)) using tseitin
+  define(__539 <-> and([true,__538;int(1..)])) using tseitin
+  define(__540 <-> (true) <-> (__512)) using tseitin
+  define(__541 <-> and([__540,__537;int(1..)])) using tseitin
+  define(__542 <-> or([__539,__541;int(1..)])) using tseitin
+  define(__543 <-> !(__517)) using tseitin
+  define(__544 <-> and([false,__543;int(1..)])) using tseitin
+  define(__545 <-> (false) <-> (__517)) using tseitin
+  define(__546 <-> and([__545,__542;int(1..)])) using tseitin
+  define(__547 <-> or([__544,__546;int(1..)])) using tseitin
+  define(__548 <-> !(false)) using tseitin
+  define(__549 <-> and([__548,__522;int(1..)])) using tseitin
+  define(__550 <-> (false) <-> (__522)) using tseitin
+  define(__551 <-> and([__550,__547;int(1..)])) using tseitin
+  define(__552 <-> or([__549,__551;int(1..)])) using tseitin
+
+--
+
+__552
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__552) using tseitin
+
+--
+
+Final model:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+find z#int_direct_1: bool
+find z#int_direct_2: bool
+find z#int_direct_3: bool
+find x#int_direct_1: bool
+find x#int_direct_2: bool
+find x#int_direct_3: bool
+find y#int_direct_1: bool
+find y#int_direct_2: bool
+find y#int_direct_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: bool
+findAux __98: bool
+findAux __99: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+findAux __105: bool
+findAux __106: bool
+findAux __107: bool
+findAux __108: bool
+findAux __109: bool
+findAux __110: bool
+findAux __111: bool
+findAux __112: bool
+findAux __113: bool
+findAux __114: bool
+findAux __115: bool
+findAux __116: bool
+findAux __117: bool
+findAux __118: bool
+findAux __119: bool
+findAux __120: bool
+findAux __121: bool
+findAux __122: bool
+findAux __123: bool
+findAux __124: bool
+findAux __125: bool
+findAux __126: bool
+findAux __127: bool
+findAux __128: bool
+findAux __129: bool
+findAux __130: bool
+findAux __131: bool
+findAux __132: bool
+findAux __133: bool
+findAux __134: bool
+findAux __135: bool
+findAux __136: bool
+findAux __137: bool
+findAux __138: bool
+findAux __139: bool
+findAux __140: bool
+findAux __141: bool
+findAux __142: bool
+findAux __143: bool
+findAux __144: bool
+findAux __145: bool
+findAux __146: bool
+findAux __147: bool
+findAux __148: bool
+findAux __149: bool
+findAux __150: bool
+findAux __151: bool
+findAux __152: bool
+findAux __153: bool
+findAux __154: bool
+findAux __155: bool
+findAux __156: bool
+findAux __157: bool
+findAux __158: bool
+findAux __159: bool
+findAux __160: bool
+findAux __161: bool
+findAux __162: bool
+findAux __163: bool
+findAux __164: bool
+findAux __165: bool
+findAux __166: bool
+findAux __167: bool
+findAux __168: bool
+findAux __169: bool
+findAux __170: bool
+findAux __171: bool
+findAux __172: bool
+findAux __173: bool
+findAux __174: bool
+findAux __175: bool
+findAux __176: bool
+findAux __177: bool
+findAux __178: bool
+findAux __179: bool
+findAux __180: bool
+findAux __181: bool
+findAux __182: bool
+findAux __183: bool
+findAux __184: bool
+findAux __185: bool
+findAux __186: bool
+findAux __187: bool
+findAux __188: bool
+findAux __189: bool
+findAux __190: bool
+findAux __191: bool
+findAux __192: bool
+findAux __193: bool
+findAux __194: bool
+findAux __195: bool
+findAux __196: bool
+findAux __197: bool
+findAux __198: bool
+findAux __199: bool
+findAux __200: bool
+findAux __201: bool
+findAux __202: bool
+findAux __203: bool
+findAux __204: bool
+findAux __205: bool
+findAux __206: bool
+findAux __207: bool
+findAux __208: bool
+findAux __209: bool
+findAux __210: bool
+findAux __211: bool
+findAux __212: bool
+findAux __213: bool
+findAux __214: bool
+findAux __215: bool
+findAux __216: bool
+findAux __217: bool
+findAux __218: bool
+findAux __219: bool
+findAux __220: bool
+findAux __221: bool
+findAux __222: bool
+findAux __223: bool
+findAux __224: bool
+findAux __225: bool
+findAux __226: bool
+findAux __227: bool
+findAux __228: bool
+findAux __229: bool
+findAux __230: bool
+findAux __231: bool
+findAux __232: bool
+findAux __233: bool
+findAux __234: bool
+findAux __235: bool
+findAux __236: bool
+findAux __237: bool
+findAux __238: bool
+findAux __239: bool
+findAux __240: bool
+findAux __241: bool
+findAux __242: bool
+findAux __243: bool
+findAux __244: bool
+findAux __245: bool
+findAux __246: bool
+findAux __247: bool
+findAux __248: bool
+findAux __249: bool
+findAux __250: bool
+findAux __251: bool
+findAux __252: bool
+findAux __253: bool
+findAux __254: bool
+findAux __255: bool
+findAux __256: bool
+findAux __257: bool
+findAux __258: bool
+findAux __259: bool
+findAux __260: bool
+findAux __261: bool
+findAux __262: bool
+findAux __263: bool
+findAux __264: bool
+findAux __265: bool
+findAux __266: bool
+findAux __267: bool
+findAux __268: bool
+findAux __269: bool
+findAux __270: bool
+findAux __271: bool
+findAux __272: bool
+findAux __273: bool
+findAux __274: bool
+findAux __275: bool
+findAux __276: bool
+findAux __277: bool
+findAux __278: bool
+findAux __279: bool
+findAux __280: bool
+findAux __281: bool
+findAux __282: bool
+findAux __283: bool
+findAux __284: bool
+findAux __285: bool
+findAux __286: bool
+findAux __287: bool
+findAux __288: bool
+findAux __289: bool
+findAux __290: bool
+findAux __291: bool
+findAux __292: bool
+findAux __293: bool
+findAux __294: bool
+findAux __295: bool
+findAux __296: bool
+findAux __297: bool
+findAux __298: bool
+findAux __299: bool
+findAux __300: bool
+findAux __301: bool
+findAux __302: bool
+findAux __303: bool
+findAux __304: bool
+findAux __305: bool
+findAux __306: bool
+findAux __307: bool
+findAux __308: bool
+findAux __309: bool
+findAux __310: bool
+findAux __311: bool
+findAux __312: bool
+findAux __313: bool
+findAux __314: bool
+findAux __315: bool
+findAux __316: bool
+findAux __317: bool
+findAux __318: bool
+findAux __319: bool
+findAux __320: bool
+findAux __321: bool
+findAux __322: bool
+findAux __323: bool
+findAux __324: bool
+findAux __325: bool
+findAux __326: bool
+findAux __327: bool
+findAux __328: bool
+findAux __329: bool
+findAux __330: bool
+findAux __331: bool
+findAux __332: bool
+findAux __333: bool
+findAux __334: bool
+findAux __335: bool
+findAux __336: bool
+findAux __337: bool
+findAux __338: bool
+findAux __339: bool
+findAux __340: bool
+findAux __341: bool
+findAux __342: bool
+findAux __343: bool
+findAux __344: bool
+findAux __345: bool
+findAux __346: bool
+findAux __347: bool
+findAux __348: bool
+findAux __349: bool
+findAux __350: bool
+findAux __351: bool
+findAux __352: bool
+findAux __353: bool
+findAux __354: bool
+findAux __355: bool
+findAux __356: bool
+findAux __357: bool
+findAux __358: bool
+findAux __359: bool
+findAux __360: bool
+findAux __361: bool
+findAux __362: bool
+findAux __363: bool
+findAux __364: bool
+findAux __365: bool
+findAux __366: bool
+findAux __367: bool
+findAux __368: bool
+findAux __369: bool
+findAux __370: bool
+findAux __371: bool
+findAux __372: bool
+findAux __373: bool
+findAux __374: bool
+findAux __375: bool
+findAux __376: bool
+findAux __377: bool
+findAux __378: bool
+findAux __379: bool
+findAux __380: bool
+findAux __381: bool
+findAux __382: bool
+findAux __383: bool
+findAux __384: bool
+findAux __385: bool
+findAux __386: bool
+findAux __387: bool
+findAux __388: bool
+findAux __389: bool
+findAux __390: bool
+findAux __391: bool
+findAux __392: bool
+findAux __393: bool
+findAux __394: bool
+findAux __395: bool
+findAux __396: bool
+findAux __397: bool
+findAux __398: bool
+findAux __399: bool
+findAux __400: bool
+findAux __401: bool
+findAux __402: bool
+findAux __403: bool
+findAux __404: bool
+findAux __405: bool
+findAux __406: bool
+findAux __407: bool
+findAux __408: bool
+findAux __409: bool
+findAux __410: bool
+findAux __411: bool
+findAux __412: bool
+findAux __413: bool
+findAux __414: bool
+findAux __415: bool
+findAux __416: bool
+findAux __417: bool
+findAux __418: bool
+findAux __419: bool
+findAux __420: bool
+findAux __421: bool
+findAux __422: bool
+findAux __423: bool
+findAux __424: bool
+findAux __425: bool
+findAux __426: bool
+findAux __427: bool
+findAux __428: bool
+findAux __429: bool
+findAux __430: bool
+findAux __431: bool
+findAux __432: bool
+findAux __433: bool
+findAux __434: bool
+findAux __435: bool
+findAux __436: bool
+findAux __437: bool
+findAux __438: bool
+findAux __439: bool
+findAux __440: bool
+findAux __441: bool
+findAux __442: bool
+findAux __443: bool
+findAux __444: bool
+findAux __445: bool
+findAux __446: bool
+findAux __447: bool
+findAux __448: bool
+findAux __449: bool
+findAux __450: bool
+findAux __451: bool
+findAux __452: bool
+findAux __453: bool
+findAux __454: bool
+findAux __455: bool
+findAux __456: bool
+findAux __457: bool
+findAux __458: bool
+findAux __459: bool
+findAux __460: bool
+findAux __461: bool
+findAux __462: bool
+findAux __463: bool
+findAux __464: bool
+findAux __465: bool
+findAux __466: bool
+findAux __467: bool
+findAux __468: bool
+findAux __469: bool
+findAux __470: bool
+findAux __471: bool
+findAux __472: bool
+findAux __473: bool
+findAux __474: bool
+findAux __475: bool
+findAux __476: bool
+findAux __477: bool
+findAux __478: bool
+findAux __479: bool
+findAux __480: bool
+findAux __481: bool
+findAux __482: bool
+findAux __483: bool
+findAux __484: bool
+findAux __485: bool
+findAux __486: bool
+findAux __487: bool
+findAux __488: bool
+findAux __489: bool
+findAux __490: bool
+findAux __491: bool
+findAux __492: bool
+findAux __493: bool
+findAux __494: bool
+findAux __495: bool
+findAux __496: bool
+findAux __497: bool
+findAux __498: bool
+findAux __499: bool
+findAux __500: bool
+findAux __501: bool
+findAux __502: bool
+findAux __503: bool
+findAux __504: bool
+findAux __505: bool
+findAux __506: bool
+findAux __507: bool
+findAux __508: bool
+findAux __509: bool
+findAux __510: bool
+findAux __511: bool
+findAux __512: bool
+findAux __513: bool
+findAux __514: bool
+findAux __515: bool
+findAux __516: bool
+findAux __517: bool
+findAux __518: bool
+findAux __519: bool
+findAux __520: bool
+findAux __521: bool
+findAux __522: bool
+findAux __523: bool
+findAux __524: bool
+findAux __525: bool
+findAux __526: bool
+findAux __527: bool
+findAux __528: bool
+findAux __529: bool
+findAux __530: bool
+findAux __531: bool
+findAux __532: bool
+findAux __533: bool
+findAux __534: bool
+findAux __535: bool
+findAux __536: bool
+findAux __537: bool
+findAux __538: bool
+findAux __539: bool
+findAux __540: bool
+findAux __541: bool
+findAux __542: bool
+findAux __543: bool
+findAux __544: bool
+findAux __545: bool
+findAux __546: bool
+findAux __547: bool
+findAux __548: bool
+findAux __549: bool
+findAux __550: bool
+findAux __551: bool
+findAux __552: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__0 <-> or([false,z#int_direct_1;int(1..)])) using tseitin,
+define(__1 <-> !(__0)) using tseitin,
+define(__2 <-> and([false,__1;int(1..)])) using tseitin,
+define(__3 <-> or([false,__2;int(1..)])) using tseitin,
+define(__4 <-> or([__0,z#int_direct_2;int(1..)])) using tseitin,
+define(__5 <-> !(__4)) using tseitin,
+define(__6 <-> and([false,__5;int(1..)])) using tseitin,
+define(__7 <-> or([__3,__6;int(1..)])) using tseitin,
+define(__8 <-> or([__4,z#int_direct_3;int(1..)])) using tseitin,
+define(__9 <-> !(__8)) using tseitin,
+define(__10 <-> and([true,__9;int(1..)])) using tseitin,
+define(__11 <-> or([__7,__10;int(1..)])) using tseitin,
+define(__12 <-> !(__11)) using tseitin,
+define(__13 <-> or([false,true;int(1..)])) using tseitin,
+define(__14 <-> !(__13)) using tseitin,
+define(__15 <-> and([x#int_direct_1,__14;int(1..)])) using tseitin,
+define(__16 <-> or([false,__15;int(1..)])) using tseitin,
+define(__17 <-> or([__13,false;int(1..)])) using tseitin,
+define(__18 <-> !(__17)) using tseitin,
+define(__19 <-> and([x#int_direct_2,__18;int(1..)])) using tseitin,
+define(__20 <-> or([__16,__19;int(1..)])) using tseitin,
+define(__21 <-> or([__17,false;int(1..)])) using tseitin,
+define(__22 <-> !(__21)) using tseitin,
+define(__23 <-> and([x#int_direct_3,__22;int(1..)])) using tseitin,
+define(__24 <-> or([__20,__23;int(1..)])) using tseitin,
+define(__25 <-> !(__24)) using tseitin,
+define(__26 <-> or([false,x#int_direct_1;int(1..)])) using tseitin,
+define(__27 <-> !(__26)) using tseitin,
+define(__28 <-> and([false,__27;int(1..)])) using tseitin,
+define(__29 <-> or([false,__28;int(1..)])) using tseitin,
+define(__30 <-> or([__26,x#int_direct_2;int(1..)])) using tseitin,
+define(__31 <-> !(__30)) using tseitin,
+define(__32 <-> and([false,__31;int(1..)])) using tseitin,
+define(__33 <-> or([__29,__32;int(1..)])) using tseitin,
+define(__34 <-> or([__30,x#int_direct_3;int(1..)])) using tseitin,
+define(__35 <-> !(__34)) using tseitin,
+define(__36 <-> and([true,__35;int(1..)])) using tseitin,
+define(__37 <-> or([__33,__36;int(1..)])) using tseitin,
+define(__38 <-> !(__37)) using tseitin,
+define(__39 <-> or([false,true;int(1..)])) using tseitin,
+define(__40 <-> !(__39)) using tseitin,
+define(__41 <-> and([y#int_direct_1,__40;int(1..)])) using tseitin,
+define(__42 <-> or([false,__41;int(1..)])) using tseitin,
+define(__43 <-> or([__39,false;int(1..)])) using tseitin,
+define(__44 <-> !(__43)) using tseitin,
+define(__45 <-> and([y#int_direct_2,__44;int(1..)])) using tseitin,
+define(__46 <-> or([__42,__45;int(1..)])) using tseitin,
+define(__47 <-> or([__43,false;int(1..)])) using tseitin,
+define(__48 <-> !(__47)) using tseitin,
+define(__49 <-> and([y#int_direct_3,__48;int(1..)])) using tseitin,
+define(__50 <-> or([__46,__49;int(1..)])) using tseitin,
+define(__51 <-> !(__50)) using tseitin,
+define(__52 <-> or([false,y#int_direct_1;int(1..)])) using tseitin,
+define(__53 <-> !(__52)) using tseitin,
+define(__54 <-> and([false,__53;int(1..)])) using tseitin,
+define(__55 <-> or([false,__54;int(1..)])) using tseitin,
+define(__56 <-> or([__52,y#int_direct_2;int(1..)])) using tseitin,
+define(__57 <-> !(__56)) using tseitin,
+define(__58 <-> and([false,__57;int(1..)])) using tseitin,
+define(__59 <-> or([__55,__58;int(1..)])) using tseitin,
+define(__60 <-> or([__56,y#int_direct_3;int(1..)])) using tseitin,
+define(__61 <-> !(__60)) using tseitin,
+define(__62 <-> and([true,__61;int(1..)])) using tseitin,
+define(__63 <-> or([__59,__62;int(1..)])) using tseitin,
+define(__64 <-> !(__63)) using tseitin,
+define(__65 <-> or([false,true;int(1..)])) using tseitin,
+define(__66 <-> !(__65)) using tseitin,
+define(__67 <-> and([z#int_direct_1,__66;int(1..)])) using tseitin,
+define(__68 <-> or([false,__67;int(1..)])) using tseitin,
+define(__69 <-> or([__65,false;int(1..)])) using tseitin,
+define(__70 <-> !(__69)) using tseitin,
+define(__71 <-> and([z#int_direct_2,__70;int(1..)])) using tseitin,
+define(__72 <-> or([__68,__71;int(1..)])) using tseitin,
+define(__73 <-> or([__69,false;int(1..)])) using tseitin,
+define(__74 <-> !(__73)) using tseitin,
+define(__75 <-> and([z#int_direct_3,__74;int(1..)])) using tseitin,
+define(__76 <-> or([__72,__75;int(1..)])) using tseitin,
+define(__77 <-> !(__76)) using tseitin,
+define(__78 <-> and([__25,__38;int(1..)])) using tseitin,
+define(__79 <-> and([__51,__64;int(1..)])) using tseitin,
+define(__80 <-> and([__77,__12;int(1..)])) using tseitin,
+assert(__80) using tseitin,
+assert(__78) using tseitin,
+assert(__79) using tseitin,
+define(__81 <-> or([z#int_direct_1,z#int_direct_2;int(1..)])) using tseitin,
+define(__82 <-> or([x#int_direct_1,x#int_direct_2;int(1..)])) using tseitin,
+define(__83 <-> and([false,x#int_direct_2;int(1..)])) using tseitin,
+define(__84 <-> and([false,__82;int(1..)])) using tseitin,
+define(__85 <-> and([false,x#int_direct_3;int(1..)])) using tseitin,
+define(__86 <-> and([false,false;int(1..)])) using tseitin,
+define(__87 <-> and([false,false;int(1..)])) using tseitin,
+define(__88 <-> and([false,false;int(1..)])) using tseitin,
+define(__89 <-> and([false,false;int(1..)])) using tseitin,
+define(__90 <-> and([false,false;int(1..)])) using tseitin,
+define(__91 <-> !((__83) <-> (false))) using tseitin,
+define(__92 <-> and([__83,false;int(1..)])) using tseitin,
+define(__93 <-> !((__84) <-> (x#int_direct_2))) using tseitin,
+define(__94 <-> !((__93) <-> (__92))) using tseitin,
+define(__95 <-> and([__84,x#int_direct_2;int(1..)])) using tseitin,
+define(__96 <-> and([__92,__93;int(1..)])) using tseitin,
+define(__97 <-> or([__95,__96;int(1..)])) using tseitin,
+define(__98 <-> !((__85) <-> (__82))) using tseitin,
+define(__99 <-> !((__98) <-> (__97))) using tseitin,
+define(__100 <-> and([__85,__82;int(1..)])) using tseitin,
+define(__101 <-> and([__97,__98;int(1..)])) using tseitin,
+define(__102 <-> or([__100,__101;int(1..)])) using tseitin,
+define(__103 <-> !((__86) <-> (x#int_direct_3))) using tseitin,
+define(__104 <-> !((__103) <-> (__102))) using tseitin,
+define(__105 <-> and([__86,x#int_direct_3;int(1..)])) using tseitin,
+define(__106 <-> and([__102,__103;int(1..)])) using tseitin,
+define(__107 <-> or([__105,__106;int(1..)])) using tseitin,
+define(__108 <-> !((__87) <-> (false))) using tseitin,
+define(__109 <-> !((__108) <-> (__107))) using tseitin,
+define(__110 <-> and([__87,false;int(1..)])) using tseitin,
+define(__111 <-> and([__107,__108;int(1..)])) using tseitin,
+define(__112 <-> or([__110,__111;int(1..)])) using tseitin,
+define(__113 <-> !((__88) <-> (false))) using tseitin,
+define(__114 <-> !((__113) <-> (__112))) using tseitin,
+define(__115 <-> and([__88,false;int(1..)])) using tseitin,
+define(__116 <-> and([__112,__113;int(1..)])) using tseitin,
+define(__117 <-> or([__115,__116;int(1..)])) using tseitin,
+define(__118 <-> !((__89) <-> (false))) using tseitin,
+define(__119 <-> !((__118) <-> (__117))) using tseitin,
+define(__120 <-> and([__89,false;int(1..)])) using tseitin,
+define(__121 <-> and([__117,__118;int(1..)])) using tseitin,
+define(__122 <-> or([__120,__121;int(1..)])) using tseitin,
+define(__123 <-> !((__90) <-> (false))) using tseitin,
+define(__124 <-> !((__123) <-> (__122))) using tseitin,
+define(__125 <-> and([__90,false;int(1..)])) using tseitin,
+define(__126 <-> and([__122,__123;int(1..)])) using tseitin,
+define(__127 <-> or([__125,__126;int(1..)])) using tseitin,
+define(__128 <-> !(true)) using tseitin,
+define(__129 <-> and([true,__91;int(1..)])) using tseitin,
+define(__130 <-> and([__128,__83;int(1..)])) using tseitin,
+define(__131 <-> or([__129,__130;int(1..)])) using tseitin,
+define(__132 <-> and([true,__94;int(1..)])) using tseitin,
+define(__133 <-> and([__128,__84;int(1..)])) using tseitin,
+define(__134 <-> or([__132,__133;int(1..)])) using tseitin,
+define(__135 <-> and([true,__99;int(1..)])) using tseitin,
+define(__136 <-> and([__128,__85;int(1..)])) using tseitin,
+define(__137 <-> or([__135,__136;int(1..)])) using tseitin,
+define(__138 <-> and([true,__104;int(1..)])) using tseitin,
+define(__139 <-> and([__128,__86;int(1..)])) using tseitin,
+define(__140 <-> or([__138,__139;int(1..)])) using tseitin,
+define(__141 <-> and([true,__109;int(1..)])) using tseitin,
+define(__142 <-> and([__128,__87;int(1..)])) using tseitin,
+define(__143 <-> or([__141,__142;int(1..)])) using tseitin,
+define(__144 <-> and([true,__114;int(1..)])) using tseitin,
+define(__145 <-> and([__128,__88;int(1..)])) using tseitin,
+define(__146 <-> or([__144,__145;int(1..)])) using tseitin,
+define(__147 <-> and([true,__119;int(1..)])) using tseitin,
+define(__148 <-> and([__128,__89;int(1..)])) using tseitin,
+define(__149 <-> or([__147,__148;int(1..)])) using tseitin,
+define(__150 <-> and([true,__124;int(1..)])) using tseitin,
+define(__151 <-> and([__128,__90;int(1..)])) using tseitin,
+define(__152 <-> or([__150,__151;int(1..)])) using tseitin,
+define(__153 <-> !((__131) <-> (false))) using tseitin,
+define(__154 <-> and([__131,false;int(1..)])) using tseitin,
+define(__155 <-> !((__134) <-> (false))) using tseitin,
+define(__156 <-> !((__155) <-> (__154))) using tseitin,
+define(__157 <-> and([__134,false;int(1..)])) using tseitin,
+define(__158 <-> and([__154,__155;int(1..)])) using tseitin,
+define(__159 <-> or([__157,__158;int(1..)])) using tseitin,
+define(__160 <-> !((__137) <-> (x#int_direct_2))) using tseitin,
+define(__161 <-> !((__160) <-> (__159))) using tseitin,
+define(__162 <-> and([__137,x#int_direct_2;int(1..)])) using tseitin,
+define(__163 <-> and([__159,__160;int(1..)])) using tseitin,
+define(__164 <-> or([__162,__163;int(1..)])) using tseitin,
+define(__165 <-> !((__140) <-> (__82))) using tseitin,
+define(__166 <-> !((__165) <-> (__164))) using tseitin,
+define(__167 <-> and([__140,__82;int(1..)])) using tseitin,
+define(__168 <-> and([__164,__165;int(1..)])) using tseitin,
+define(__169 <-> or([__167,__168;int(1..)])) using tseitin,
+define(__170 <-> !((__143) <-> (x#int_direct_3))) using tseitin,
+define(__171 <-> !((__170) <-> (__169))) using tseitin,
+define(__172 <-> and([__143,x#int_direct_3;int(1..)])) using tseitin,
+define(__173 <-> and([__169,__170;int(1..)])) using tseitin,
+define(__174 <-> or([__172,__173;int(1..)])) using tseitin,
+define(__175 <-> !((__146) <-> (false))) using tseitin,
+define(__176 <-> !((__175) <-> (__174))) using tseitin,
+define(__177 <-> and([__146,false;int(1..)])) using tseitin,
+define(__178 <-> and([__174,__175;int(1..)])) using tseitin,
+define(__179 <-> or([__177,__178;int(1..)])) using tseitin,
+define(__180 <-> !((__149) <-> (false))) using tseitin,
+define(__181 <-> !((__180) <-> (__179))) using tseitin,
+define(__182 <-> and([__149,false;int(1..)])) using tseitin,
+define(__183 <-> and([__179,__180;int(1..)])) using tseitin,
+define(__184 <-> or([__182,__183;int(1..)])) using tseitin,
+define(__185 <-> !((__152) <-> (false))) using tseitin,
+define(__186 <-> !((__185) <-> (__184))) using tseitin,
+define(__187 <-> and([__152,false;int(1..)])) using tseitin,
+define(__188 <-> and([__184,__185;int(1..)])) using tseitin,
+define(__189 <-> or([__187,__188;int(1..)])) using tseitin,
+define(__190 <-> !(false)) using tseitin,
+define(__191 <-> and([false,__153;int(1..)])) using tseitin,
+define(__192 <-> and([__190,__131;int(1..)])) using tseitin,
+define(__193 <-> or([__191,__192;int(1..)])) using tseitin,
+define(__194 <-> and([false,__156;int(1..)])) using tseitin,
+define(__195 <-> and([__190,__134;int(1..)])) using tseitin,
+define(__196 <-> or([__194,__195;int(1..)])) using tseitin,
+define(__197 <-> and([false,__161;int(1..)])) using tseitin,
+define(__198 <-> and([__190,__137;int(1..)])) using tseitin,
+define(__199 <-> or([__197,__198;int(1..)])) using tseitin,
+define(__200 <-> and([false,__166;int(1..)])) using tseitin,
+define(__201 <-> and([__190,__140;int(1..)])) using tseitin,
+define(__202 <-> or([__200,__201;int(1..)])) using tseitin,
+define(__203 <-> and([false,__171;int(1..)])) using tseitin,
+define(__204 <-> and([__190,__143;int(1..)])) using tseitin,
+define(__205 <-> or([__203,__204;int(1..)])) using tseitin,
+define(__206 <-> and([false,__176;int(1..)])) using tseitin,
+define(__207 <-> and([__190,__146;int(1..)])) using tseitin,
+define(__208 <-> or([__206,__207;int(1..)])) using tseitin,
+define(__209 <-> and([false,__181;int(1..)])) using tseitin,
+define(__210 <-> and([__190,__149;int(1..)])) using tseitin,
+define(__211 <-> or([__209,__210;int(1..)])) using tseitin,
+define(__212 <-> and([false,__186;int(1..)])) using tseitin,
+define(__213 <-> and([__190,__152;int(1..)])) using tseitin,
+define(__214 <-> or([__212,__213;int(1..)])) using tseitin,
+define(__215 <-> !((__193) <-> (false))) using tseitin,
+define(__216 <-> and([__193,false;int(1..)])) using tseitin,
+define(__217 <-> !((__196) <-> (false))) using tseitin,
+define(__218 <-> !((__217) <-> (__216))) using tseitin,
+define(__219 <-> and([__196,false;int(1..)])) using tseitin,
+define(__220 <-> and([__216,__217;int(1..)])) using tseitin,
+define(__221 <-> or([__219,__220;int(1..)])) using tseitin,
+define(__222 <-> !((__199) <-> (false))) using tseitin,
+define(__223 <-> !((__222) <-> (__221))) using tseitin,
+define(__224 <-> and([__199,false;int(1..)])) using tseitin,
+define(__225 <-> and([__221,__222;int(1..)])) using tseitin,
+define(__226 <-> or([__224,__225;int(1..)])) using tseitin,
+define(__227 <-> !((__202) <-> (x#int_direct_2))) using tseitin,
+define(__228 <-> !((__227) <-> (__226))) using tseitin,
+define(__229 <-> and([__202,x#int_direct_2;int(1..)])) using tseitin,
+define(__230 <-> and([__226,__227;int(1..)])) using tseitin,
+define(__231 <-> or([__229,__230;int(1..)])) using tseitin,
+define(__232 <-> !((__205) <-> (__82))) using tseitin,
+define(__233 <-> !((__232) <-> (__231))) using tseitin,
+define(__234 <-> and([__205,__82;int(1..)])) using tseitin,
+define(__235 <-> and([__231,__232;int(1..)])) using tseitin,
+define(__236 <-> or([__234,__235;int(1..)])) using tseitin,
+define(__237 <-> !((__208) <-> (x#int_direct_3))) using tseitin,
+define(__238 <-> !((__237) <-> (__236))) using tseitin,
+define(__239 <-> and([__208,x#int_direct_3;int(1..)])) using tseitin,
+define(__240 <-> and([__236,__237;int(1..)])) using tseitin,
+define(__241 <-> or([__239,__240;int(1..)])) using tseitin,
+define(__242 <-> !((__211) <-> (false))) using tseitin,
+define(__243 <-> !((__242) <-> (__241))) using tseitin,
+define(__244 <-> and([__211,false;int(1..)])) using tseitin,
+define(__245 <-> and([__241,__242;int(1..)])) using tseitin,
+define(__246 <-> or([__244,__245;int(1..)])) using tseitin,
+define(__247 <-> !((__214) <-> (false))) using tseitin,
+define(__248 <-> !((__247) <-> (__246))) using tseitin,
+define(__249 <-> and([__214,false;int(1..)])) using tseitin,
+define(__250 <-> and([__246,__247;int(1..)])) using tseitin,
+define(__251 <-> or([__249,__250;int(1..)])) using tseitin,
+define(__252 <-> !(false)) using tseitin,
+define(__253 <-> and([false,__215;int(1..)])) using tseitin,
+define(__254 <-> and([__252,__193;int(1..)])) using tseitin,
+define(__255 <-> or([__253,__254;int(1..)])) using tseitin,
+define(__256 <-> and([false,__218;int(1..)])) using tseitin,
+define(__257 <-> and([__252,__196;int(1..)])) using tseitin,
+define(__258 <-> or([__256,__257;int(1..)])) using tseitin,
+define(__259 <-> and([false,__223;int(1..)])) using tseitin,
+define(__260 <-> and([__252,__199;int(1..)])) using tseitin,
+define(__261 <-> or([__259,__260;int(1..)])) using tseitin,
+define(__262 <-> and([false,__228;int(1..)])) using tseitin,
+define(__263 <-> and([__252,__202;int(1..)])) using tseitin,
+define(__264 <-> or([__262,__263;int(1..)])) using tseitin,
+define(__265 <-> and([false,__233;int(1..)])) using tseitin,
+define(__266 <-> and([__252,__205;int(1..)])) using tseitin,
+define(__267 <-> or([__265,__266;int(1..)])) using tseitin,
+define(__268 <-> and([false,__238;int(1..)])) using tseitin,
+define(__269 <-> and([__252,__208;int(1..)])) using tseitin,
+define(__270 <-> or([__268,__269;int(1..)])) using tseitin,
+define(__271 <-> and([false,__243;int(1..)])) using tseitin,
+define(__272 <-> and([__252,__211;int(1..)])) using tseitin,
+define(__273 <-> or([__271,__272;int(1..)])) using tseitin,
+define(__274 <-> and([false,__248;int(1..)])) using tseitin,
+define(__275 <-> and([__252,__214;int(1..)])) using tseitin,
+define(__276 <-> or([__274,__275;int(1..)])) using tseitin,
+define(__277 <-> or([y#int_direct_1,y#int_direct_2;int(1..)])) using tseitin,
+define(__278 <-> and([true,y#int_direct_2;int(1..)])) using tseitin,
+define(__279 <-> and([true,__277;int(1..)])) using tseitin,
+define(__280 <-> and([true,y#int_direct_3;int(1..)])) using tseitin,
+define(__281 <-> and([true,false;int(1..)])) using tseitin,
+define(__282 <-> and([true,false;int(1..)])) using tseitin,
+define(__283 <-> and([true,false;int(1..)])) using tseitin,
+define(__284 <-> and([true,false;int(1..)])) using tseitin,
+define(__285 <-> and([true,false;int(1..)])) using tseitin,
+define(__286 <-> !((__278) <-> (false))) using tseitin,
+define(__287 <-> and([__278,false;int(1..)])) using tseitin,
+define(__288 <-> !((__279) <-> (y#int_direct_2))) using tseitin,
+define(__289 <-> !((__288) <-> (__287))) using tseitin,
+define(__290 <-> and([__279,y#int_direct_2;int(1..)])) using tseitin,
+define(__291 <-> and([__287,__288;int(1..)])) using tseitin,
+define(__292 <-> or([__290,__291;int(1..)])) using tseitin,
+define(__293 <-> !((__280) <-> (__277))) using tseitin,
+define(__294 <-> !((__293) <-> (__292))) using tseitin,
+define(__295 <-> and([__280,__277;int(1..)])) using tseitin,
+define(__296 <-> and([__292,__293;int(1..)])) using tseitin,
+define(__297 <-> or([__295,__296;int(1..)])) using tseitin,
+define(__298 <-> !((__281) <-> (y#int_direct_3))) using tseitin,
+define(__299 <-> !((__298) <-> (__297))) using tseitin,
+define(__300 <-> and([__281,y#int_direct_3;int(1..)])) using tseitin,
+define(__301 <-> and([__297,__298;int(1..)])) using tseitin,
+define(__302 <-> or([__300,__301;int(1..)])) using tseitin,
+define(__303 <-> !((__282) <-> (false))) using tseitin,
+define(__304 <-> !((__303) <-> (__302))) using tseitin,
+define(__305 <-> and([__282,false;int(1..)])) using tseitin,
+define(__306 <-> and([__302,__303;int(1..)])) using tseitin,
+define(__307 <-> or([__305,__306;int(1..)])) using tseitin,
+define(__308 <-> !((__283) <-> (false))) using tseitin,
+define(__309 <-> !((__308) <-> (__307))) using tseitin,
+define(__310 <-> and([__283,false;int(1..)])) using tseitin,
+define(__311 <-> and([__307,__308;int(1..)])) using tseitin,
+define(__312 <-> or([__310,__311;int(1..)])) using tseitin,
+define(__313 <-> !((__284) <-> (false))) using tseitin,
+define(__314 <-> !((__313) <-> (__312))) using tseitin,
+define(__315 <-> and([__284,false;int(1..)])) using tseitin,
+define(__316 <-> and([__312,__313;int(1..)])) using tseitin,
+define(__317 <-> or([__315,__316;int(1..)])) using tseitin,
+define(__318 <-> !((__285) <-> (false))) using tseitin,
+define(__319 <-> !((__318) <-> (__317))) using tseitin,
+define(__320 <-> and([__285,false;int(1..)])) using tseitin,
+define(__321 <-> and([__317,__318;int(1..)])) using tseitin,
+define(__322 <-> or([__320,__321;int(1..)])) using tseitin,
+define(__323 <-> !(true)) using tseitin,
+define(__324 <-> and([true,__286;int(1..)])) using tseitin,
+define(__325 <-> and([__323,__278;int(1..)])) using tseitin,
+define(__326 <-> or([__324,__325;int(1..)])) using tseitin,
+define(__327 <-> and([true,__289;int(1..)])) using tseitin,
+define(__328 <-> and([__323,__279;int(1..)])) using tseitin,
+define(__329 <-> or([__327,__328;int(1..)])) using tseitin,
+define(__330 <-> and([true,__294;int(1..)])) using tseitin,
+define(__331 <-> and([__323,__280;int(1..)])) using tseitin,
+define(__332 <-> or([__330,__331;int(1..)])) using tseitin,
+define(__333 <-> and([true,__299;int(1..)])) using tseitin,
+define(__334 <-> and([__323,__281;int(1..)])) using tseitin,
+define(__335 <-> or([__333,__334;int(1..)])) using tseitin,
+define(__336 <-> and([true,__304;int(1..)])) using tseitin,
+define(__337 <-> and([__323,__282;int(1..)])) using tseitin,
+define(__338 <-> or([__336,__337;int(1..)])) using tseitin,
+define(__339 <-> and([true,__309;int(1..)])) using tseitin,
+define(__340 <-> and([__323,__283;int(1..)])) using tseitin,
+define(__341 <-> or([__339,__340;int(1..)])) using tseitin,
+define(__342 <-> and([true,__314;int(1..)])) using tseitin,
+define(__343 <-> and([__323,__284;int(1..)])) using tseitin,
+define(__344 <-> or([__342,__343;int(1..)])) using tseitin,
+define(__345 <-> and([true,__319;int(1..)])) using tseitin,
+define(__346 <-> and([__323,__285;int(1..)])) using tseitin,
+define(__347 <-> or([__345,__346;int(1..)])) using tseitin,
+define(__348 <-> !((__326) <-> (false))) using tseitin,
+define(__349 <-> and([__326,false;int(1..)])) using tseitin,
+define(__350 <-> !((__329) <-> (false))) using tseitin,
+define(__351 <-> !((__350) <-> (__349))) using tseitin,
+define(__352 <-> and([__329,false;int(1..)])) using tseitin,
+define(__353 <-> and([__349,__350;int(1..)])) using tseitin,
+define(__354 <-> or([__352,__353;int(1..)])) using tseitin,
+define(__355 <-> !((__332) <-> (y#int_direct_2))) using tseitin,
+define(__356 <-> !((__355) <-> (__354))) using tseitin,
+define(__357 <-> and([__332,y#int_direct_2;int(1..)])) using tseitin,
+define(__358 <-> and([__354,__355;int(1..)])) using tseitin,
+define(__359 <-> or([__357,__358;int(1..)])) using tseitin,
+define(__360 <-> !((__335) <-> (__277))) using tseitin,
+define(__361 <-> !((__360) <-> (__359))) using tseitin,
+define(__362 <-> and([__335,__277;int(1..)])) using tseitin,
+define(__363 <-> and([__359,__360;int(1..)])) using tseitin,
+define(__364 <-> or([__362,__363;int(1..)])) using tseitin,
+define(__365 <-> !((__338) <-> (y#int_direct_3))) using tseitin,
+define(__366 <-> !((__365) <-> (__364))) using tseitin,
+define(__367 <-> and([__338,y#int_direct_3;int(1..)])) using tseitin,
+define(__368 <-> and([__364,__365;int(1..)])) using tseitin,
+define(__369 <-> or([__367,__368;int(1..)])) using tseitin,
+define(__370 <-> !((__341) <-> (false))) using tseitin,
+define(__371 <-> !((__370) <-> (__369))) using tseitin,
+define(__372 <-> and([__341,false;int(1..)])) using tseitin,
+define(__373 <-> and([__369,__370;int(1..)])) using tseitin,
+define(__374 <-> or([__372,__373;int(1..)])) using tseitin,
+define(__375 <-> !((__344) <-> (false))) using tseitin,
+define(__376 <-> !((__375) <-> (__374))) using tseitin,
+define(__377 <-> and([__344,false;int(1..)])) using tseitin,
+define(__378 <-> and([__374,__375;int(1..)])) using tseitin,
+define(__379 <-> or([__377,__378;int(1..)])) using tseitin,
+define(__380 <-> !((__347) <-> (false))) using tseitin,
+define(__381 <-> !((__380) <-> (__379))) using tseitin,
+define(__382 <-> and([__347,false;int(1..)])) using tseitin,
+define(__383 <-> and([__379,__380;int(1..)])) using tseitin,
+define(__384 <-> or([__382,__383;int(1..)])) using tseitin,
+define(__385 <-> !(false)) using tseitin,
+define(__386 <-> and([false,__348;int(1..)])) using tseitin,
+define(__387 <-> and([__385,__326;int(1..)])) using tseitin,
+define(__388 <-> or([__386,__387;int(1..)])) using tseitin,
+define(__389 <-> and([false,__351;int(1..)])) using tseitin,
+define(__390 <-> and([__385,__329;int(1..)])) using tseitin,
+define(__391 <-> or([__389,__390;int(1..)])) using tseitin,
+define(__392 <-> and([false,__356;int(1..)])) using tseitin,
+define(__393 <-> and([__385,__332;int(1..)])) using tseitin,
+define(__394 <-> or([__392,__393;int(1..)])) using tseitin,
+define(__395 <-> and([false,__361;int(1..)])) using tseitin,
+define(__396 <-> and([__385,__335;int(1..)])) using tseitin,
+define(__397 <-> or([__395,__396;int(1..)])) using tseitin,
+define(__398 <-> and([false,__366;int(1..)])) using tseitin,
+define(__399 <-> and([__385,__338;int(1..)])) using tseitin,
+define(__400 <-> or([__398,__399;int(1..)])) using tseitin,
+define(__401 <-> and([false,__371;int(1..)])) using tseitin,
+define(__402 <-> and([__385,__341;int(1..)])) using tseitin,
+define(__403 <-> or([__401,__402;int(1..)])) using tseitin,
+define(__404 <-> and([false,__376;int(1..)])) using tseitin,
+define(__405 <-> and([__385,__344;int(1..)])) using tseitin,
+define(__406 <-> or([__404,__405;int(1..)])) using tseitin,
+define(__407 <-> and([false,__381;int(1..)])) using tseitin,
+define(__408 <-> and([__385,__347;int(1..)])) using tseitin,
+define(__409 <-> or([__407,__408;int(1..)])) using tseitin,
+define(__410 <-> !((__388) <-> (false))) using tseitin,
+define(__411 <-> and([__388,false;int(1..)])) using tseitin,
+define(__412 <-> !((__391) <-> (false))) using tseitin,
+define(__413 <-> !((__412) <-> (__411))) using tseitin,
+define(__414 <-> and([__391,false;int(1..)])) using tseitin,
+define(__415 <-> and([__411,__412;int(1..)])) using tseitin,
+define(__416 <-> or([__414,__415;int(1..)])) using tseitin,
+define(__417 <-> !((__394) <-> (false))) using tseitin,
+define(__418 <-> !((__417) <-> (__416))) using tseitin,
+define(__419 <-> and([__394,false;int(1..)])) using tseitin,
+define(__420 <-> and([__416,__417;int(1..)])) using tseitin,
+define(__421 <-> or([__419,__420;int(1..)])) using tseitin,
+define(__422 <-> !((__397) <-> (y#int_direct_2))) using tseitin,
+define(__423 <-> !((__422) <-> (__421))) using tseitin,
+define(__424 <-> and([__397,y#int_direct_2;int(1..)])) using tseitin,
+define(__425 <-> and([__421,__422;int(1..)])) using tseitin,
+define(__426 <-> or([__424,__425;int(1..)])) using tseitin,
+define(__427 <-> !((__400) <-> (__277))) using tseitin,
+define(__428 <-> !((__427) <-> (__426))) using tseitin,
+define(__429 <-> and([__400,__277;int(1..)])) using tseitin,
+define(__430 <-> and([__426,__427;int(1..)])) using tseitin,
+define(__431 <-> or([__429,__430;int(1..)])) using tseitin,
+define(__432 <-> !((__403) <-> (y#int_direct_3))) using tseitin,
+define(__433 <-> !((__432) <-> (__431))) using tseitin,
+define(__434 <-> and([__403,y#int_direct_3;int(1..)])) using tseitin,
+define(__435 <-> and([__431,__432;int(1..)])) using tseitin,
+define(__436 <-> or([__434,__435;int(1..)])) using tseitin,
+define(__437 <-> !((__406) <-> (false))) using tseitin,
+define(__438 <-> !((__437) <-> (__436))) using tseitin,
+define(__439 <-> and([__406,false;int(1..)])) using tseitin,
+define(__440 <-> and([__436,__437;int(1..)])) using tseitin,
+define(__441 <-> or([__439,__440;int(1..)])) using tseitin,
+define(__442 <-> !((__409) <-> (false))) using tseitin,
+define(__443 <-> !((__442) <-> (__441))) using tseitin,
+define(__444 <-> and([__409,false;int(1..)])) using tseitin,
+define(__445 <-> and([__441,__442;int(1..)])) using tseitin,
+define(__446 <-> or([__444,__445;int(1..)])) using tseitin,
+define(__447 <-> !(false)) using tseitin,
+define(__448 <-> and([false,__410;int(1..)])) using tseitin,
+define(__449 <-> and([__447,__388;int(1..)])) using tseitin,
+define(__450 <-> or([__448,__449;int(1..)])) using tseitin,
+define(__451 <-> and([false,__413;int(1..)])) using tseitin,
+define(__452 <-> and([__447,__391;int(1..)])) using tseitin,
+define(__453 <-> or([__451,__452;int(1..)])) using tseitin,
+define(__454 <-> and([false,__418;int(1..)])) using tseitin,
+define(__455 <-> and([__447,__394;int(1..)])) using tseitin,
+define(__456 <-> or([__454,__455;int(1..)])) using tseitin,
+define(__457 <-> and([false,__423;int(1..)])) using tseitin,
+define(__458 <-> and([__447,__397;int(1..)])) using tseitin,
+define(__459 <-> or([__457,__458;int(1..)])) using tseitin,
+define(__460 <-> and([false,__428;int(1..)])) using tseitin,
+define(__461 <-> and([__447,__400;int(1..)])) using tseitin,
+define(__462 <-> or([__460,__461;int(1..)])) using tseitin,
+define(__463 <-> and([false,__433;int(1..)])) using tseitin,
+define(__464 <-> and([__447,__403;int(1..)])) using tseitin,
+define(__465 <-> or([__463,__464;int(1..)])) using tseitin,
+define(__466 <-> and([false,__438;int(1..)])) using tseitin,
+define(__467 <-> and([__447,__406;int(1..)])) using tseitin,
+define(__468 <-> or([__466,__467;int(1..)])) using tseitin,
+define(__469 <-> and([false,__443;int(1..)])) using tseitin,
+define(__470 <-> and([__447,__409;int(1..)])) using tseitin,
+define(__471 <-> or([__469,__470;int(1..)])) using tseitin,
+define(__472 <-> !((__255) <-> (__450))) using tseitin,
+define(__473 <-> and([__255,__450;int(1..)])) using tseitin,
+define(__474 <-> !((__258) <-> (__453))) using tseitin,
+define(__475 <-> !((__474) <-> (__473))) using tseitin,
+define(__476 <-> and([__258,__453;int(1..)])) using tseitin,
+define(__477 <-> and([__473,__474;int(1..)])) using tseitin,
+define(__478 <-> or([__476,__477;int(1..)])) using tseitin,
+define(__479 <-> !((__261) <-> (__456))) using tseitin,
+define(__480 <-> !((__479) <-> (__478))) using tseitin,
+define(__481 <-> and([__261,__456;int(1..)])) using tseitin,
+define(__482 <-> and([__478,__479;int(1..)])) using tseitin,
+define(__483 <-> or([__481,__482;int(1..)])) using tseitin,
+define(__484 <-> !((__264) <-> (__459))) using tseitin,
+define(__485 <-> !((__484) <-> (__483))) using tseitin,
+define(__486 <-> and([__264,__459;int(1..)])) using tseitin,
+define(__487 <-> and([__483,__484;int(1..)])) using tseitin,
+define(__488 <-> or([__486,__487;int(1..)])) using tseitin,
+define(__489 <-> !((__267) <-> (__462))) using tseitin,
+define(__490 <-> !((__489) <-> (__488))) using tseitin,
+define(__491 <-> and([__267,__462;int(1..)])) using tseitin,
+define(__492 <-> and([__488,__489;int(1..)])) using tseitin,
+define(__493 <-> or([__491,__492;int(1..)])) using tseitin,
+define(__494 <-> !((__267) <-> (__462))) using tseitin,
+define(__495 <-> !((__494) <-> (__493))) using tseitin,
+define(__496 <-> and([__267,__462;int(1..)])) using tseitin,
+define(__497 <-> and([__493,__494;int(1..)])) using tseitin,
+define(__498 <-> or([__496,__497;int(1..)])) using tseitin,
+define(__499 <-> !((__472) <-> (z#int_direct_2))) using tseitin,
+define(__500 <-> and([__472,z#int_direct_2;int(1..)])) using tseitin,
+define(__501 <-> !((__475) <-> (__81))) using tseitin,
+define(__502 <-> !((__501) <-> (__500))) using tseitin,
+define(__503 <-> and([__475,__81;int(1..)])) using tseitin,
+define(__504 <-> and([__500,__501;int(1..)])) using tseitin,
+define(__505 <-> or([__503,__504;int(1..)])) using tseitin,
+define(__506 <-> !((__480) <-> (z#int_direct_3))) using tseitin,
+define(__507 <-> !((__506) <-> (__505))) using tseitin,
+define(__508 <-> and([__480,z#int_direct_3;int(1..)])) using tseitin,
+define(__509 <-> and([__505,__506;int(1..)])) using tseitin,
+define(__510 <-> or([__508,__509;int(1..)])) using tseitin,
+define(__511 <-> !((__485) <-> (false))) using tseitin,
+define(__512 <-> !((__511) <-> (__510))) using tseitin,
+define(__513 <-> and([__485,false;int(1..)])) using tseitin,
+define(__514 <-> and([__510,__511;int(1..)])) using tseitin,
+define(__515 <-> or([__513,__514;int(1..)])) using tseitin,
+define(__516 <-> !((__490) <-> (false))) using tseitin,
+define(__517 <-> !((__516) <-> (__515))) using tseitin,
+define(__518 <-> and([__490,false;int(1..)])) using tseitin,
+define(__519 <-> and([__515,__516;int(1..)])) using tseitin,
+define(__520 <-> or([__518,__519;int(1..)])) using tseitin,
+define(__521 <-> !((__495) <-> (false))) using tseitin,
+define(__522 <-> !((__521) <-> (__520))) using tseitin,
+define(__523 <-> and([__495,false;int(1..)])) using tseitin,
+define(__524 <-> and([__520,__521;int(1..)])) using tseitin,
+define(__525 <-> or([__523,__524;int(1..)])) using tseitin,
+define(__526 <-> !(__499)) using tseitin,
+define(__527 <-> and([false,__526;int(1..)])) using tseitin,
+define(__528 <-> !(__502)) using tseitin,
+define(__529 <-> and([true,__528;int(1..)])) using tseitin,
+define(__530 <-> (true) <-> (__502)) using tseitin,
+define(__531 <-> and([__530,__527;int(1..)])) using tseitin,
+define(__532 <-> or([__529,__531;int(1..)])) using tseitin,
+define(__533 <-> !(__507)) using tseitin,
+define(__534 <-> and([true,__533;int(1..)])) using tseitin,
+define(__535 <-> (true) <-> (__507)) using tseitin,
+define(__536 <-> and([__535,__532;int(1..)])) using tseitin,
+define(__537 <-> or([__534,__536;int(1..)])) using tseitin,
+define(__538 <-> !(__512)) using tseitin,
+define(__539 <-> and([true,__538;int(1..)])) using tseitin,
+define(__540 <-> (true) <-> (__512)) using tseitin,
+define(__541 <-> and([__540,__537;int(1..)])) using tseitin,
+define(__542 <-> or([__539,__541;int(1..)])) using tseitin,
+define(__543 <-> !(__517)) using tseitin,
+define(__544 <-> and([false,__543;int(1..)])) using tseitin,
+define(__545 <-> (false) <-> (__517)) using tseitin,
+define(__546 <-> and([__545,__542;int(1..)])) using tseitin,
+define(__547 <-> or([__544,__546;int(1..)])) using tseitin,
+define(__548 <-> !(false)) using tseitin,
+define(__549 <-> and([__548,__522;int(1..)])) using tseitin,
+define(__550 <-> (false) <-> (__522)) using tseitin,
+define(__551 <-> and([__550,__547;int(1..)])) using tseitin,
+define(__552 <-> or([__549,__551;int(1..)])) using tseitin,
+assert(__552) using tseitin
+

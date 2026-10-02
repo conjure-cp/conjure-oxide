@@ -1,0 +1,170 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: int(42)
+
+such that
+
+x = true,
+y != false
+
+--
+
+x,
+y != false
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x,
+y != false
+new variables:
+  find z#int_log_1: bool
+  find z#int_log_2: bool
+  find z#int_log_3: bool
+  find z#int_log_4: bool
+  find z#int_log_5: bool
+  find z#int_log_6: bool
+  find z#int_log_7: bool
+new constraints:
+  or([SATInt(Log, [z#int_log_1,z#int_log_2,z#int_log_3,z#int_log_4,z#int_log_5,z#int_log_6,z#int_log_7;int(1..)] [42, 42]) = 42;int(1..)])
+
+--
+
+SATInt(Log, [z#int_log_1,z#int_log_2,z#int_log_3,z#int_log_4,z#int_log_5,z#int_log_6,z#int_log_7;int(1..)] [42, 42]) = 42
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [z#int_log_1,z#int_log_2,z#int_log_3,z#int_log_4,z#int_log_5,z#int_log_6,z#int_log_7;int(1..)] [42, 42]) = SATInt(Log, [false,true,false,true,false,true,false;int(1..)] [42, 42])
+
+--
+
+SATInt(Log, [z#int_log_1,z#int_log_2,z#int_log_3,z#int_log_4,z#int_log_5,z#int_log_6,z#int_log_7;int(1..)] [42, 42]) = SATInt(Log, [false,true,false,true,false,true,false;int(1..)] [42, 42])
+   ~~> cnf_int_eq ([("SAT", 9100)])
+__13
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__0 <-> (z#int_log_1) <-> (false)) using tseitin
+  define(__1 <-> and([__0,true;int(1..)])) using tseitin
+  define(__2 <-> (z#int_log_2) <-> (true)) using tseitin
+  define(__3 <-> and([__2,__1;int(1..)])) using tseitin
+  define(__4 <-> (z#int_log_3) <-> (false)) using tseitin
+  define(__5 <-> and([__4,__3;int(1..)])) using tseitin
+  define(__6 <-> (z#int_log_4) <-> (true)) using tseitin
+  define(__7 <-> and([__6,__5;int(1..)])) using tseitin
+  define(__8 <-> (z#int_log_5) <-> (false)) using tseitin
+  define(__9 <-> and([__8,__7;int(1..)])) using tseitin
+  define(__10 <-> (z#int_log_6) <-> (true)) using tseitin
+  define(__11 <-> and([__10,__9;int(1..)])) using tseitin
+  define(__12 <-> (z#int_log_7) <-> (false)) using tseitin
+  define(__13 <-> and([__12,__11;int(1..)])) using tseitin
+
+--
+
+or([__13;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__13
+
+--
+
+y != false
+   ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> !((y) <-> (false))) using tseitin
+
+--
+
+x,
+__14,
+__13
+   ~~> remove_single_atom ([("SAT", 8400)])
+__14,
+__13
+new SAT encoding decisions:
+  assert(x) using tseitin
+
+--
+
+__14,
+__13
+   ~~> remove_single_atom ([("SAT", 8400)])
+__13
+new SAT encoding decisions:
+  assert(__14) using tseitin
+
+--
+
+__13
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__13) using tseitin
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: int(42)
+find z#int_log_1: bool
+find z#int_log_2: bool
+find z#int_log_3: bool
+find z#int_log_4: bool
+find z#int_log_5: bool
+find z#int_log_6: bool
+find z#int_log_7: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> (z#int_log_1) <-> (false)) using tseitin,
+define(__1 <-> and([__0,true;int(1..)])) using tseitin,
+define(__2 <-> (z#int_log_2) <-> (true)) using tseitin,
+define(__3 <-> and([__2,__1;int(1..)])) using tseitin,
+define(__4 <-> (z#int_log_3) <-> (false)) using tseitin,
+define(__5 <-> and([__4,__3;int(1..)])) using tseitin,
+define(__6 <-> (z#int_log_4) <-> (true)) using tseitin,
+define(__7 <-> and([__6,__5;int(1..)])) using tseitin,
+define(__8 <-> (z#int_log_5) <-> (false)) using tseitin,
+define(__9 <-> and([__8,__7;int(1..)])) using tseitin,
+define(__10 <-> (z#int_log_6) <-> (true)) using tseitin,
+define(__11 <-> and([__10,__9;int(1..)])) using tseitin,
+define(__12 <-> (z#int_log_7) <-> (false)) using tseitin,
+define(__13 <-> and([__12,__11;int(1..)])) using tseitin,
+define(__14 <-> !((y) <-> (false))) using tseitin,
+assert(x) using tseitin,
+assert(__14) using tseitin,
+assert(__13) using tseitin
+

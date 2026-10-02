@@ -8,13 +8,13 @@ Sources: [RustSAT 0.7.5 source](https://docs.rs/crate/rustsat/0.7.5/source/src/e
 
 The model AST records mathematical operands, occurrence identities, representation choices, selected algorithms, options, and provenance. A terminal decision AST contains no SAT literals, clauses, or library objects. Compilation allocates and shares representations, then dispatches the already selected algorithms into a library-owned clause collector or solver. Generated CNF is an adaptor artifact and can be exported as DIMACS; it never becomes a model field or expression.
 
-The new `ast::encoding_plan` nodes are the first implementation of this boundary. `Model::sat_encoding` owns the decision arena. The SAT adaptor already accepts explicit Boolean decision ASTs and rejects mixed legacy inputs. Automatic production selection and migration of integer rules remain necessary before removing legacy `CnfClause` completely.
+The new `ast::encoding_plan` nodes are the first implementation of this boundary. `Model::sat_encoding` owns the decision arena. The SAT adaptor accepts explicit Boolean decision ASTs and rejects mixed terminal payloads. Production gates, AMO and cardinality constraints use `Model::sat_decisions`; all generated clauses belong to the adaptor. `CnfClause` and the model CNF fields have been removed.
 
 ## RustSAT: concrete public algorithms
 
 | Constraint | Algorithm / public type | Capabilities and likely Oxide uses |
 | --- | --- | --- |
-| At most one | `am1::Pairwise` | Direct representation uniqueness; small AMO constraints. Current default AMO. |
+| At most one | `am1::Pairwise` | Direct representation uniqueness; small AMO constraints. Compact selects it through five inputs. |
 | At most one | `am1::Ladder` | Alternative for direct uniqueness and flattened AMO. |
 | At most one | `am1::Bitwise` | Logarithmic selector alternative. This is an AMO algorithm, not BinaryValue integer representation. |
 | At most one | `am1::Commander<N, Sub>` | Grouping algorithm; group size and sub-encoder must be recorded in the decision. |
@@ -81,9 +81,11 @@ Source: [public integer views](https://docs.rs/crate/pindakaas/0.5.1/source/src/
 
 Use RustSAT for the existing solver integration, variable allocation, clause storage and DIMACS output. Add Pindakaas selectively for sorting networks, BDD and SWC first; compare its totalizer and adder implementations after the common semantic interface is verified. Overlapping algorithms remain separate provider/algorithm choices for benchmarking. Do not switch solver libraries just to gain an encoder.
 
-Use `pindakaas = { version = "=0.5.1", default-features = false }` when an adapter is ready. Its default enables its own CaDiCaL binding, which is unnecessary alongside the existing RustSAT binding. No Pindakaas dependency is added by this investigation.
+The workspace now uses `pindakaas = { version = "=0.5.1", default-features = false }`. Its default enables its own CaDiCaL binding, which is unnecessary alongside the existing RustSAT binding. Its sorting-network cardinality encoder is available through `--cardinality-encoding=pindakaas-sorting-network`; `rustsat-totalizer` selects the RustSAT provider.
 
-Implement a private Pindakaas `ClauseDatabase` backed by the RustSAT collector and the same authoritative allocator. It must reserve every semantic, representation, channel and auxiliary variable from that allocator. Pindakaas literals use signed nonzero, one-based variable numbers; RustSAT's variable indices are zero-based. Translate signs and indices explicitly, enforce both libraries' identifier limits, handle zero-length ranges, and preserve an empty clause when Pindakaas reports `Unsatisfiable`. Avoid a second independently allocating CNF buffer.
+The private Pindakaas `ClauseDatabase` bridge is backed by the RustSAT instance and its authoritative allocator. Every semantic, representation and auxiliary variable shares that allocator. Pindakaas literals use signed nonzero, one-based variable numbers; RustSAT's variable indices are zero-based. The bridge translates signed identifiers, handles zero-length ranges, and preserves an empty clause when Pindakaas reports `Unsatisfiable`. There is no second independently allocating CNF buffer.
+
+Cardinality decisions cover asserted upper, lower and exact bounds. Repeated or complementary operand occurrences retain their multiplicity; the Pindakaas provider allocates equivalent proxy literals before normalisation so weighted aggregation cannot silently select a different encoder. Exhaustive projected-solution tests cover both providers, constants and boundary bounds. All-mode selects one algorithm per encoding class across the model; explicit pins override heuristic selection.
 
 Both libraries support clause sinks: RustSAT `CollectClauses` with `ManageVars`, and Pindakaas `ClauseDatabase` with allocation in `new_var_range`. This is the bridge boundary; their literal types never escape into the AST. [RustSAT collector](https://docs.rs/rustsat/0.7.5/rustsat/encodings/trait.CollectClauses.html), [Pindakaas database](https://docs.rs/crate/pindakaas/0.5.1/source/src/lib.rs), [Pindakaas features](https://docs.rs/crate/pindakaas/0.5.1/source/Cargo.toml)
 
