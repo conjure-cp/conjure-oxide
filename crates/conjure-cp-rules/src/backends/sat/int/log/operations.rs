@@ -373,7 +373,8 @@ fn cnf_shift_add_multiply(
     let mut not_x_n;
     let mut if_false;
 
-    for item in x.iter().take(bits).skip(1) {
+    // Include the extended sign bits in the full-width modular product.
+    for item in x.iter().take(bits * 2).skip(1) {
         // y << 1
         for i in (1..bits * 2).rev() {
             y[i] = y[i - 1].clone();
@@ -381,7 +382,6 @@ fn cnf_shift_add_multiply(
         y[0] = false.into();
 
         // TODO switch to multiplexer
-        // TODO Add negatives support once MUX is added
         sum = tseytin_int_adder(&s, &y, bits * 2, clauses, symbols);
         not_x_n = tseytin_not(item.clone(), clauses, symbols);
 
@@ -845,6 +845,11 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
+    // Widen before taking absolute values: abs(MIN) needs an additional sign bit.
+    let mut numer_bits = numer_bits.clone();
+    let mut denom_bits = denom_bits.clone();
+    numer_bits.push(numer_bits.last().unwrap().clone());
+    denom_bits.push(denom_bits.last().unwrap().clone());
     let bit_count = numer_bits.len();
 
     // TODO: Separate into division/mod function
@@ -936,6 +941,24 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         }
     }
 
+    // Opposite signs and a nonzero remainder require one more unit of magnitude
+    // before negation to obtain floor division rather than truncating division.
+    let remainder_nonzero = tseytin_or(&r, &mut new_sat_decisions, &mut new_symbols);
+    let round_down = tseytin_and(
+        &[sign_bit.clone(), remainder_nonzero],
+        &mut new_sat_decisions,
+        &mut new_symbols,
+    );
+    let mut correction = vec![false.into(); bit_count];
+    correction[0] = round_down;
+    quotient = tseytin_int_adder(
+        &quotient,
+        &correction,
+        bit_count,
+        &mut new_sat_decisions,
+        &mut new_symbols,
+    );
+
     let minus_quotient = tseytin_negate(
         &quotient.clone(),
         bit_count,
@@ -971,7 +994,7 @@ fn division_bounds(numerator: (i32, i32), denominator: (i32, i32)) -> Option<(i3
             continue;
         }
         for dividend in [numerator.0, numerator.1] {
-            values.push(i32::try_from(i64::from(dividend) / i64::from(divisor)).ok()?);
+            values.push(super::super::floor_div(dividend, divisor)?);
         }
     }
     if denominator.0 <= 0 && denominator.1 >= 0 {
@@ -993,7 +1016,7 @@ mod division_bounds_tests {
                         let quotient = if denominator == 0 {
                             0
                         } else {
-                            numerator / denominator
+                            super::super::super::floor_div(numerator, denominator).unwrap()
                         };
                         assert!((min..=max).contains(&quotient));
                     }
