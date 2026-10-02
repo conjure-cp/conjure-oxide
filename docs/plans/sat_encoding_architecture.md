@@ -7,6 +7,24 @@ The initial test portfolio uses `channelling = "uniform"`: one representation ki
 The existing AST already gives declarations stable object identities; implementation should reuse those identities at the SAT IR boundary rather than replacing identities with names or unnecessarily migrating the entire AST.
 
 
+## AST ownership and clause-generation boundary (2026-10-02)
+
+Modelling and encoding decisions are first-class, serialisable AST nodes owned by the model. They retain semantic operands, per-use representation requests, decomposition choices, algorithm/provider/options, assertion or reification mode, and provenance. Rewriting ends with these decisions; it does not construct CNF expression trees.
+
+```text
+semantic model AST
+  → modelling decisions (decomposition, representations, channelling)
+  → encoding decisions (constraint, selected algorithm, options)
+  → SAT adaptor: shared literal allocation + RustSAT/Pindakaas encoding
+  → library-owned clauses / solver / DIMACS
+```
+
+The target `Model` and `SerdeModel` have no CNF field. Remove `CnfClause`, `RuleEffect::new_clauses`, clause-producing Boolean/integer rules and the legacy converters after migrating their semantic decisions. Encoding auxiliaries created only by a library remain in the adaptor and never become model declarations. Clause statistics and DIMACS are solver artifacts, separate from AST snapshots.
+
+The initial implementation places the typed decision arena in `Model::sat_encoding`; the existing clause field remains temporarily for the production integer path. The SAT adaptor accepts terminal Boolean decision ASTs directly and rejects mixed legacy inputs. This is a migration step, not completion of CNF removal. Non-SAT adaptors reject SAT decision inputs.
+
+Reuse the verified encoders in [the library inventory](sat_encoder_inventory.md). Keep RustSAT as solver/allocation infrastructure and evaluate Pindakaas as an additional encoding provider, starting with sorting networks, BDD and SWC. Selection stays visible in Oxide's AST; library defaults or normalization must not silently substitute an unrecorded algorithm or representation.
+
 ## 1. Objective
 
 Extend Oxide so that:
