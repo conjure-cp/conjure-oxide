@@ -4,7 +4,7 @@
   - [Purpose]()
   - [Reading This Book]()
 - [Side Projects](welcome/side-projects.md)
-- [Useful Links](welcome/useful-links.md)
+<!-- - [Useful Links](welcome/useful-links.md) -->
 - [For Interested Students](welcome/for-interested-students.md)
 - [Glossary](welcome/glossary.md)
 
