@@ -176,7 +176,6 @@ pub fn cnf_clause_to_sat_clause(
     var_map: &HashMap<Name, Lit>,
 ) -> Result<Option<Clause>, SolverError> {
     let mut sat_clause = Clause::new();
-    let mut has_false_only = false;
 
     for literal in clause.iter() {
         match literal {
@@ -185,20 +184,14 @@ pub fn cnf_clause_to_sat_clause(
                 return Ok(None);
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(false))) => {
-                has_false_only = true;
+                // A false literal contributes nothing to the disjunction.
             }
             _ => {
                 if let Some(lit) = cnf_literal_to_sat_lit(literal, var_map)? {
                     sat_clause.add(lit);
-                    has_false_only = false;
                 }
             }
         }
-    }
-
-    if sat_clause.iter().next().is_none() && !has_false_only {
-        // Empty after simplification and no explicit false literal => tautology.
-        return Ok(None);
     }
 
     Ok(Some(sat_clause))
@@ -241,6 +234,15 @@ mod tests {
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(0))),
         );
         Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)))
+    }
+
+    #[test]
+    fn an_empty_clause_remains_a_contradiction() {
+        let clause = CnfClause::new(Vec::new());
+        let sat_clause = cnf_clause_to_sat_clause(&clause, &HashMap::new())
+            .unwrap()
+            .expect("an empty clause must not be dropped");
+        assert!(sat_clause.is_empty());
     }
 
     #[test]

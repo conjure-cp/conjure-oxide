@@ -589,6 +589,21 @@ impl SolverAdaptor for Sat {
         });
         self.dominance_model_template = self.dominance_expression.as_ref().map(|_| model.clone());
 
+        // A residual false constraint makes the whole model unsatisfiable, even when previous
+        // rewrites already emitted clauses. Preserve it before inspecting unencoded finds.
+        if model
+            .constraints()
+            .iter()
+            .any(|constraint| *constraint == false.into())
+        {
+            let mut inst = SatInstance::new();
+            inst.add_clause(Clause::new());
+            self.decision_refs = Some(Vec::new());
+            self.var_map = Some(HashMap::new());
+            self.model_inst = Some(inst);
+            return Ok(());
+        }
+
         let sym_tab = model.symbols().deref().clone();
 
         let mut finds: Vec<Name> = Vec::new();
@@ -759,7 +774,28 @@ fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Lit
 mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
+    use crate::range;
     use rustsat::types::Var as SatVar;
+
+    #[test]
+    fn residual_false_is_unsatisfiable_even_with_existing_clauses_and_unencoded_finds() {
+        let mut model = ConjureModel::new(Default::default());
+        let boolean = model.symbols_mut().gen_find(&Domain::bool());
+        model.symbols_mut().gen_find(&crate::domain_int!(0..5));
+        model.add_clause(crate::ast::CnfClause::new(vec![
+            Reference::new(boolean).into(),
+        ]));
+        model.add_constraints(vec![false.into()]);
+        let mut sat = Sat::default();
+        sat.load_model(model, private::Internal).unwrap();
+        let result = sat
+            .solve(
+                Box::new(|_| panic!("an inconsistent model has no solutions")),
+                private::Internal,
+            )
+            .unwrap();
+        assert_eq!(result.status, SearchStatus::Complete(NoSolutions));
+    }
 
     #[test]
     fn zero_timeout_stops_before_first_sat_call() {
