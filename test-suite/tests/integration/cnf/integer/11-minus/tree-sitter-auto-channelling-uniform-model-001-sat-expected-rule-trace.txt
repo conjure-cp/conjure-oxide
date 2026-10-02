@@ -1,0 +1,1178 @@
+Model before rewriting:
+
+find a: int(1..10)
+find b: int(1..10)
+
+such that
+
+(a - b) = 4
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#int_log_1: bool
+  find a#int_log_2: bool
+  find a#int_log_3: bool
+  find a#int_log_4: bool
+  find a#int_log_5: bool
+new constraints:
+  or([and([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) >= 1,SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) <= 10;int(1..)]);int(1..)])
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#int_log_1: bool
+  find b#int_log_2: bool
+  find b#int_log_3: bool
+  find b#int_log_4: bool
+  find b#int_log_5: bool
+new constraints:
+  or([and([SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) >= 1,SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) <= 10;int(1..)]);int(1..)])
+
+--
+
+a
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10])
+
+--
+
+b
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10])
+
+--
+
+SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) >= 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1])
+
+--
+
+SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) <= 10
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10])
+
+--
+
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) >= 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1])
+
+--
+
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) <= 10
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10])
+
+--
+
+or([and([SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1]),SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)])
+
+--
+
+or([and([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)])
+
+--
+
+(SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) - SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]))
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]),-(SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]));int(1..)])
+
+--
+
+SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1])
+   ~~> cnf_int_ineq ([("SAT", 4100)])
+__20
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+  findAux __14: bool
+  findAux __15: bool
+  findAux __16: bool
+  findAux __17: bool
+  findAux __18: bool
+  findAux __19: bool
+  findAux __20: bool
+new clauses:
+  (¬__0 \/ b#int_log_1)
+  (__0 \/ ¬b#int_log_1)
+  (__1)
+  (¬__2 \/ b#int_log_2)
+  (¬__2 \/ __1)
+  (__2 \/ ¬b#int_log_2 \/ ¬__1)
+  (b#int_log_2 \/ __3)
+  (¬b#int_log_2 \/ ¬__3)
+  (¬__4 \/ __3)
+  (¬__4 \/ __0)
+  (__4 \/ ¬__3 \/ ¬__0)
+  (¬__2 \/ __5)
+  (¬__4 \/ __5)
+  (¬__5 \/ __2 \/ __4)
+  (__6)
+  (¬__7 \/ b#int_log_3)
+  (¬__7 \/ __6)
+  (__7 \/ ¬b#int_log_3 \/ ¬__6)
+  (b#int_log_3 \/ __8)
+  (¬b#int_log_3 \/ ¬__8)
+  (¬__9 \/ __8)
+  (¬__9 \/ __5)
+  (__9 \/ ¬__8 \/ ¬__5)
+  (¬__7 \/ __10)
+  (¬__9 \/ __10)
+  (¬__10 \/ __7 \/ __9)
+  (__11)
+  (¬__12 \/ b#int_log_4)
+  (¬__12 \/ __11)
+  (__12 \/ ¬b#int_log_4 \/ ¬__11)
+  (b#int_log_4 \/ __13)
+  (¬b#int_log_4 \/ ¬__13)
+  (¬__14 \/ __13)
+  (¬__14 \/ __10)
+  (__14 \/ ¬__13 \/ ¬__10)
+  (¬__12 \/ __15)
+  (¬__14 \/ __15)
+  (¬__15 \/ __12 \/ __14)
+  (¬b#int_log_5 \/ ¬__16)
+  (b#int_log_5 \/ __16)
+  (¬__17 \/ __16)
+  (¬__17)
+  (b#int_log_5 \/ __18)
+  (¬b#int_log_5 \/ ¬__18)
+  (¬__19 \/ __18)
+  (¬__19 \/ __15)
+  (__19 \/ ¬__18 \/ ¬__15)
+  (¬__17 \/ __20)
+  (¬__19 \/ __20)
+  (¬__20 \/ __17 \/ __19)
+
+--
+
+SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10])
+   ~~> cnf_int_ineq ([("SAT", 4100)])
+__41
+new variables:
+  findAux __21: bool
+  findAux __22: bool
+  findAux __23: bool
+  findAux __24: bool
+  findAux __25: bool
+  findAux __26: bool
+  findAux __27: bool
+  findAux __28: bool
+  findAux __29: bool
+  findAux __30: bool
+  findAux __31: bool
+  findAux __32: bool
+  findAux __33: bool
+  findAux __34: bool
+  findAux __35: bool
+  findAux __36: bool
+  findAux __37: bool
+  findAux __38: bool
+  findAux __39: bool
+  findAux __40: bool
+  findAux __41: bool
+new clauses:
+  (¬__21 \/ ¬b#int_log_1)
+  (__21 \/ b#int_log_1)
+  (¬b#int_log_2 \/ ¬__22)
+  (b#int_log_2 \/ __22)
+  (¬__23 \/ __22)
+  (__23 \/ ¬__22)
+  (¬b#int_log_2 \/ __24)
+  (b#int_log_2 \/ ¬__24)
+  (¬__25 \/ __24)
+  (¬__25 \/ __21)
+  (__25 \/ ¬__24 \/ ¬__21)
+  (¬__23 \/ __26)
+  (¬__25 \/ __26)
+  (¬__26 \/ __23 \/ __25)
+  (¬b#int_log_3 \/ ¬__27)
+  (b#int_log_3 \/ __27)
+  (¬__28)
+  (¬__28 \/ __27)
+  (b#int_log_3 \/ __29)
+  (¬b#int_log_3 \/ ¬__29)
+  (¬__30 \/ __29)
+  (¬__30 \/ __26)
+  (__30 \/ ¬__29 \/ ¬__26)
+  (¬__28 \/ __31)
+  (¬__30 \/ __31)
+  (¬__31 \/ __28 \/ __30)
+  (¬b#int_log_4 \/ ¬__32)
+  (b#int_log_4 \/ __32)
+  (¬__33 \/ __32)
+  (__33 \/ ¬__32)
+  (¬b#int_log_4 \/ __34)
+  (b#int_log_4 \/ ¬__34)
+  (¬__35 \/ __34)
+  (¬__35 \/ __31)
+  (__35 \/ ¬__34 \/ ¬__31)
+  (¬__33 \/ __36)
+  (¬__35 \/ __36)
+  (¬__36 \/ __33 \/ __35)
+  (__37)
+  (¬__38 \/ __37)
+  (¬__38 \/ b#int_log_5)
+  (__38 \/ ¬__37 \/ ¬b#int_log_5)
+  (b#int_log_5 \/ __39)
+  (¬b#int_log_5 \/ ¬__39)
+  (¬__40 \/ __39)
+  (¬__40 \/ __36)
+  (__40 \/ ¬__39 \/ ¬__36)
+  (¬__38 \/ __41)
+  (¬__40 \/ __41)
+  (¬__41 \/ __38 \/ __40)
+
+--
+
+and([__20,__41;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__42
+new variables:
+  findAux __42: bool
+new clauses:
+  (¬__42 \/ __20)
+  (¬__42 \/ __41)
+  (__42 \/ ¬__20 \/ ¬__41)
+
+--
+
+sum([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]),-(SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]));int(1..)]) = 4,
+and([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)]),
+__42
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]),-(SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]));int(1..)]) = 4,
+and([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1]),SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10]);int(1..)])
+new clauses:
+  (__42)
+
+--
+
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) >= SATInt(Log, [true,false;int(1..)] [1, 1])
+   ~~> cnf_int_ineq ([("SAT", 4100)])
+__63
+new variables:
+  findAux __43: bool
+  findAux __44: bool
+  findAux __45: bool
+  findAux __46: bool
+  findAux __47: bool
+  findAux __48: bool
+  findAux __49: bool
+  findAux __50: bool
+  findAux __51: bool
+  findAux __52: bool
+  findAux __53: bool
+  findAux __54: bool
+  findAux __55: bool
+  findAux __56: bool
+  findAux __57: bool
+  findAux __58: bool
+  findAux __59: bool
+  findAux __60: bool
+  findAux __61: bool
+  findAux __62: bool
+  findAux __63: bool
+new clauses:
+  (¬__43 \/ a#int_log_1)
+  (__43 \/ ¬a#int_log_1)
+  (__44)
+  (¬__45 \/ a#int_log_2)
+  (¬__45 \/ __44)
+  (__45 \/ ¬a#int_log_2 \/ ¬__44)
+  (a#int_log_2 \/ __46)
+  (¬a#int_log_2 \/ ¬__46)
+  (¬__47 \/ __46)
+  (¬__47 \/ __43)
+  (__47 \/ ¬__46 \/ ¬__43)
+  (¬__45 \/ __48)
+  (¬__47 \/ __48)
+  (¬__48 \/ __45 \/ __47)
+  (__49)
+  (¬__50 \/ a#int_log_3)
+  (¬__50 \/ __49)
+  (__50 \/ ¬a#int_log_3 \/ ¬__49)
+  (a#int_log_3 \/ __51)
+  (¬a#int_log_3 \/ ¬__51)
+  (¬__52 \/ __51)
+  (¬__52 \/ __48)
+  (__52 \/ ¬__51 \/ ¬__48)
+  (¬__50 \/ __53)
+  (¬__52 \/ __53)
+  (¬__53 \/ __50 \/ __52)
+  (__54)
+  (¬__55 \/ a#int_log_4)
+  (¬__55 \/ __54)
+  (__55 \/ ¬a#int_log_4 \/ ¬__54)
+  (a#int_log_4 \/ __56)
+  (¬a#int_log_4 \/ ¬__56)
+  (¬__57 \/ __56)
+  (¬__57 \/ __53)
+  (__57 \/ ¬__56 \/ ¬__53)
+  (¬__55 \/ __58)
+  (¬__57 \/ __58)
+  (¬__58 \/ __55 \/ __57)
+  (¬a#int_log_5 \/ ¬__59)
+  (a#int_log_5 \/ __59)
+  (¬__60 \/ __59)
+  (¬__60)
+  (a#int_log_5 \/ __61)
+  (¬a#int_log_5 \/ ¬__61)
+  (¬__62 \/ __61)
+  (¬__62 \/ __58)
+  (__62 \/ ¬__61 \/ ¬__58)
+  (¬__60 \/ __63)
+  (¬__62 \/ __63)
+  (¬__63 \/ __60 \/ __62)
+
+--
+
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]) <= SATInt(Log, [false,true,false,true,false;int(1..)] [10, 10])
+   ~~> cnf_int_ineq ([("SAT", 4100)])
+__84
+new variables:
+  findAux __64: bool
+  findAux __65: bool
+  findAux __66: bool
+  findAux __67: bool
+  findAux __68: bool
+  findAux __69: bool
+  findAux __70: bool
+  findAux __71: bool
+  findAux __72: bool
+  findAux __73: bool
+  findAux __74: bool
+  findAux __75: bool
+  findAux __76: bool
+  findAux __77: bool
+  findAux __78: bool
+  findAux __79: bool
+  findAux __80: bool
+  findAux __81: bool
+  findAux __82: bool
+  findAux __83: bool
+  findAux __84: bool
+new clauses:
+  (¬__64 \/ ¬a#int_log_1)
+  (__64 \/ a#int_log_1)
+  (¬a#int_log_2 \/ ¬__65)
+  (a#int_log_2 \/ __65)
+  (¬__66 \/ __65)
+  (__66 \/ ¬__65)
+  (¬a#int_log_2 \/ __67)
+  (a#int_log_2 \/ ¬__67)
+  (¬__68 \/ __67)
+  (¬__68 \/ __64)
+  (__68 \/ ¬__67 \/ ¬__64)
+  (¬__66 \/ __69)
+  (¬__68 \/ __69)
+  (¬__69 \/ __66 \/ __68)
+  (¬a#int_log_3 \/ ¬__70)
+  (a#int_log_3 \/ __70)
+  (¬__71)
+  (¬__71 \/ __70)
+  (a#int_log_3 \/ __72)
+  (¬a#int_log_3 \/ ¬__72)
+  (¬__73 \/ __72)
+  (¬__73 \/ __69)
+  (__73 \/ ¬__72 \/ ¬__69)
+  (¬__71 \/ __74)
+  (¬__73 \/ __74)
+  (¬__74 \/ __71 \/ __73)
+  (¬a#int_log_4 \/ ¬__75)
+  (a#int_log_4 \/ __75)
+  (¬__76 \/ __75)
+  (__76 \/ ¬__75)
+  (¬a#int_log_4 \/ __77)
+  (a#int_log_4 \/ ¬__77)
+  (¬__78 \/ __77)
+  (¬__78 \/ __74)
+  (__78 \/ ¬__77 \/ ¬__74)
+  (¬__76 \/ __79)
+  (¬__78 \/ __79)
+  (¬__79 \/ __76 \/ __78)
+  (__80)
+  (¬__81 \/ __80)
+  (¬__81 \/ a#int_log_5)
+  (__81 \/ ¬__80 \/ ¬a#int_log_5)
+  (a#int_log_5 \/ __82)
+  (¬a#int_log_5 \/ ¬__82)
+  (¬__83 \/ __82)
+  (¬__83 \/ __79)
+  (__83 \/ ¬__82 \/ ¬__79)
+  (¬__81 \/ __84)
+  (¬__83 \/ __84)
+  (¬__84 \/ __81 \/ __83)
+
+--
+
+and([__63,__84;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__85
+new variables:
+  findAux __85: bool
+new clauses:
+  (¬__85 \/ __63)
+  (¬__85 \/ __84)
+  (__85 \/ ¬__63 \/ ¬__84)
+
+--
+
+sum([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]),-(SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]));int(1..)]) = 4,
+__85
+   ~~> remove_single_atom ([("SAT", 8400)])
+sum([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]),-(SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]));int(1..)]) = 4
+new clauses:
+  (__85)
+
+--
+
+-(SATInt(Log, [b#int_log_1,b#int_log_2,b#int_log_3,b#int_log_4,b#int_log_5;int(1..)] [1, 10]))
+   ~~> cnf_int_neg ([("SAT", 4100)])
+SATInt(Log, [__91,__92,__94,__96,__98;int(1..)] [-10, -1])
+new variables:
+  findAux __86: bool
+  findAux __87: bool
+  findAux __88: bool
+  findAux __89: bool
+  findAux __90: bool
+  findAux __91: bool
+  findAux __92: bool
+  findAux __93: bool
+  findAux __94: bool
+  findAux __95: bool
+  findAux __96: bool
+  findAux __97: bool
+  findAux __98: bool
+  findAux __99: bool
+new clauses:
+  (¬b#int_log_1 \/ ¬__86)
+  (b#int_log_1 \/ __86)
+  (¬b#int_log_2 \/ ¬__87)
+  (b#int_log_2 \/ __87)
+  (¬b#int_log_3 \/ ¬__88)
+  (b#int_log_3 \/ __88)
+  (¬b#int_log_4 \/ ¬__89)
+  (b#int_log_4 \/ __89)
+  (¬b#int_log_5 \/ ¬__90)
+  (b#int_log_5 \/ __90)
+  (¬__86 \/ ¬__91)
+  (__86 \/ __91)
+  (¬__86 \/ ¬__87 \/ ¬__92)
+  (__86 \/ __87 \/ ¬__92)
+  (__86 \/ ¬__87 \/ __92)
+  (¬__86 \/ __87 \/ __92)
+  (¬__93 \/ __86)
+  (¬__93 \/ __87)
+  (__93 \/ ¬__86 \/ ¬__87)
+  (¬__93 \/ ¬__88 \/ ¬__94)
+  (__93 \/ __88 \/ ¬__94)
+  (__93 \/ ¬__88 \/ __94)
+  (¬__93 \/ __88 \/ __94)
+  (¬__95 \/ __93)
+  (¬__95 \/ __88)
+  (__95 \/ ¬__93 \/ ¬__88)
+  (¬__95 \/ ¬__89 \/ ¬__96)
+  (__95 \/ __89 \/ ¬__96)
+  (__95 \/ ¬__89 \/ __96)
+  (¬__95 \/ __89 \/ __96)
+  (¬__97 \/ __95)
+  (¬__97 \/ __89)
+  (__97 \/ ¬__95 \/ ¬__89)
+  (¬__97 \/ ¬__90 \/ ¬__98)
+  (__97 \/ __90 \/ ¬__98)
+  (__97 \/ ¬__90 \/ __98)
+  (¬__97 \/ __90 \/ __98)
+  (¬__99 \/ __97)
+  (¬__99 \/ __90)
+  (__99 \/ ¬__97 \/ ¬__90)
+
+--
+
+sum([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4,a#int_log_5;int(1..)] [1, 10]),SATInt(Log, [__91,__92,__94,__96,__98;int(1..)] [-10, -1]);int(1..)])
+   ~~> cnf_int_sum ([("SAT", 4100)])
+SATInt(Log, [__100,__103,__108,__113,__118;int(1..)] [-9, 9])
+new variables:
+  findAux __100: bool
+  findAux __101: bool
+  findAux __102: bool
+  findAux __103: bool
+  findAux __104: bool
+  findAux __105: bool
+  findAux __106: bool
+  findAux __107: bool
+  findAux __108: bool
+  findAux __109: bool
+  findAux __110: bool
+  findAux __111: bool
+  findAux __112: bool
+  findAux __113: bool
+  findAux __114: bool
+  findAux __115: bool
+  findAux __116: bool
+  findAux __117: bool
+  findAux __118: bool
+  findAux __119: bool
+  findAux __120: bool
+  findAux __121: bool
+new clauses:
+  (¬a#int_log_1 \/ ¬__91 \/ ¬__100)
+  (a#int_log_1 \/ __91 \/ ¬__100)
+  (a#int_log_1 \/ ¬__91 \/ __100)
+  (¬a#int_log_1 \/ __91 \/ __100)
+  (¬__101 \/ a#int_log_1)
+  (¬__101 \/ __91)
+  (__101 \/ ¬a#int_log_1 \/ ¬__91)
+  (¬a#int_log_2 \/ ¬__92 \/ ¬__102)
+  (a#int_log_2 \/ __92 \/ ¬__102)
+  (a#int_log_2 \/ ¬__92 \/ __102)
+  (¬a#int_log_2 \/ __92 \/ __102)
+  (¬__102 \/ ¬__101 \/ ¬__103)
+  (__102 \/ __101 \/ ¬__103)
+  (__102 \/ ¬__101 \/ __103)
+  (¬__102 \/ __101 \/ __103)
+  (¬__104 \/ a#int_log_2)
+  (¬__104 \/ __92)
+  (__104 \/ ¬a#int_log_2 \/ ¬__92)
+  (¬__105 \/ __101)
+  (¬__105 \/ __102)
+  (__105 \/ ¬__101 \/ ¬__102)
+  (¬__104 \/ __106)
+  (¬__105 \/ __106)
+  (¬__106 \/ __104 \/ __105)
+  (¬a#int_log_3 \/ ¬__94 \/ ¬__107)
+  (a#int_log_3 \/ __94 \/ ¬__107)
+  (a#int_log_3 \/ ¬__94 \/ __107)
+  (¬a#int_log_3 \/ __94 \/ __107)
+  (¬__107 \/ ¬__106 \/ ¬__108)
+  (__107 \/ __106 \/ ¬__108)
+  (__107 \/ ¬__106 \/ __108)
+  (¬__107 \/ __106 \/ __108)
+  (¬__109 \/ a#int_log_3)
+  (¬__109 \/ __94)
+  (__109 \/ ¬a#int_log_3 \/ ¬__94)
+  (¬__110 \/ __106)
+  (¬__110 \/ __107)
+  (__110 \/ ¬__106 \/ ¬__107)
+  (¬__109 \/ __111)
+  (¬__110 \/ __111)
+  (¬__111 \/ __109 \/ __110)
+  (¬a#int_log_4 \/ ¬__96 \/ ¬__112)
+  (a#int_log_4 \/ __96 \/ ¬__112)
+  (a#int_log_4 \/ ¬__96 \/ __112)
+  (¬a#int_log_4 \/ __96 \/ __112)
+  (¬__112 \/ ¬__111 \/ ¬__113)
+  (__112 \/ __111 \/ ¬__113)
+  (__112 \/ ¬__111 \/ __113)
+  (¬__112 \/ __111 \/ __113)
+  (¬__114 \/ a#int_log_4)
+  (¬__114 \/ __96)
+  (__114 \/ ¬a#int_log_4 \/ ¬__96)
+  (¬__115 \/ __111)
+  (¬__115 \/ __112)
+  (__115 \/ ¬__111 \/ ¬__112)
+  (¬__114 \/ __116)
+  (¬__115 \/ __116)
+  (¬__116 \/ __114 \/ __115)
+  (¬a#int_log_5 \/ ¬__98 \/ ¬__117)
+  (a#int_log_5 \/ __98 \/ ¬__117)
+  (a#int_log_5 \/ ¬__98 \/ __117)
+  (¬a#int_log_5 \/ __98 \/ __117)
+  (¬__117 \/ ¬__116 \/ ¬__118)
+  (__117 \/ __116 \/ ¬__118)
+  (__117 \/ ¬__116 \/ __118)
+  (¬__117 \/ __116 \/ __118)
+  (¬__119 \/ a#int_log_5)
+  (¬__119 \/ __98)
+  (__119 \/ ¬a#int_log_5 \/ ¬__98)
+  (¬__120 \/ __116)
+  (¬__120 \/ __117)
+  (__120 \/ ¬__116 \/ ¬__117)
+  (¬__119 \/ __121)
+  (¬__120 \/ __121)
+  (¬__121 \/ __119 \/ __120)
+
+--
+
+SATInt(Log, [__100,__103,__108,__113,__118;int(1..)] [-9, 9]) = 4
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [__100,__103,__108,__113,__118;int(1..)] [-9, 9]) = SATInt(Log, [false,false,true,false;int(1..)] [4, 4])
+
+--
+
+SATInt(Log, [__100,__103,__108,__113,__118;int(1..)] [-9, 9]) = SATInt(Log, [false,false,true,false;int(1..)] [4, 4])
+   ~~> cnf_int_eq ([("SAT", 9100)])
+__131
+new variables:
+  findAux __122: bool
+  findAux __123: bool
+  findAux __124: bool
+  findAux __125: bool
+  findAux __126: bool
+  findAux __127: bool
+  findAux __128: bool
+  findAux __129: bool
+  findAux __130: bool
+  findAux __131: bool
+new clauses:
+  (__100 \/ __122)
+  (¬__100 \/ ¬__122)
+  (¬__123 \/ __122)
+  (__123 \/ ¬__122)
+  (__103 \/ __124)
+  (¬__103 \/ ¬__124)
+  (¬__125 \/ __124)
+  (¬__125 \/ __123)
+  (__125 \/ ¬__124 \/ ¬__123)
+  (¬__108 \/ __126)
+  (__108 \/ ¬__126)
+  (¬__127 \/ __126)
+  (¬__127 \/ __125)
+  (__127 \/ ¬__126 \/ ¬__125)
+  (__113 \/ __128)
+  (¬__113 \/ ¬__128)
+  (¬__129 \/ __128)
+  (¬__129 \/ __127)
+  (__129 \/ ¬__128 \/ ¬__127)
+  (__118 \/ __130)
+  (¬__118 \/ ¬__130)
+  (¬__131 \/ __130)
+  (¬__131 \/ __129)
+  (__131 \/ ¬__130 \/ ¬__129)
+
+--
+
+__131
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__131)
+
+--
+
+Final model:
+
+find a: int(1..10)
+find b: int(1..10)
+find a#int_log_1: bool
+find a#int_log_2: bool
+find a#int_log_3: bool
+find a#int_log_4: bool
+find a#int_log_5: bool
+find b#int_log_1: bool
+find b#int_log_2: bool
+find b#int_log_3: bool
+find b#int_log_4: bool
+find b#int_log_5: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: bool
+findAux __98: bool
+findAux __99: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+findAux __105: bool
+findAux __106: bool
+findAux __107: bool
+findAux __108: bool
+findAux __109: bool
+findAux __110: bool
+findAux __111: bool
+findAux __112: bool
+findAux __113: bool
+findAux __114: bool
+findAux __115: bool
+findAux __116: bool
+findAux __117: bool
+findAux __118: bool
+findAux __119: bool
+findAux __120: bool
+findAux __121: bool
+findAux __122: bool
+findAux __123: bool
+findAux __124: bool
+findAux __125: bool
+findAux __126: bool
+findAux __127: bool
+findAux __128: bool
+findAux __129: bool
+findAux __130: bool
+findAux __131: bool
+
+such that
+
+true
+
+clauses:
+
+(¬__0 \/ b#int_log_1),
+(__0 \/ ¬b#int_log_1),
+(__1),
+(¬__2 \/ b#int_log_2),
+(¬__2 \/ __1),
+(__2 \/ ¬b#int_log_2 \/ ¬__1),
+(b#int_log_2 \/ __3),
+(¬b#int_log_2 \/ ¬__3),
+(¬__4 \/ __3),
+(¬__4 \/ __0),
+(__4 \/ ¬__3 \/ ¬__0),
+(¬__2 \/ __5),
+(¬__4 \/ __5),
+(¬__5 \/ __2 \/ __4),
+(__6),
+(¬__7 \/ b#int_log_3),
+(¬__7 \/ __6),
+(__7 \/ ¬b#int_log_3 \/ ¬__6),
+(b#int_log_3 \/ __8),
+(¬b#int_log_3 \/ ¬__8),
+(¬__9 \/ __8),
+(¬__9 \/ __5),
+(__9 \/ ¬__8 \/ ¬__5),
+(¬__7 \/ __10),
+(¬__9 \/ __10),
+(¬__10 \/ __7 \/ __9),
+(__11),
+(¬__12 \/ b#int_log_4),
+(¬__12 \/ __11),
+(__12 \/ ¬b#int_log_4 \/ ¬__11),
+(b#int_log_4 \/ __13),
+(¬b#int_log_4 \/ ¬__13),
+(¬__14 \/ __13),
+(¬__14 \/ __10),
+(__14 \/ ¬__13 \/ ¬__10),
+(¬__12 \/ __15),
+(¬__14 \/ __15),
+(¬__15 \/ __12 \/ __14),
+(¬b#int_log_5 \/ ¬__16),
+(b#int_log_5 \/ __16),
+(¬__17 \/ __16),
+(¬__17),
+(b#int_log_5 \/ __18),
+(¬b#int_log_5 \/ ¬__18),
+(¬__19 \/ __18),
+(¬__19 \/ __15),
+(__19 \/ ¬__18 \/ ¬__15),
+(¬__17 \/ __20),
+(¬__19 \/ __20),
+(¬__20 \/ __17 \/ __19),
+(¬__21 \/ ¬b#int_log_1),
+(__21 \/ b#int_log_1),
+(¬b#int_log_2 \/ ¬__22),
+(b#int_log_2 \/ __22),
+(¬__23 \/ __22),
+(__23 \/ ¬__22),
+(¬b#int_log_2 \/ __24),
+(b#int_log_2 \/ ¬__24),
+(¬__25 \/ __24),
+(¬__25 \/ __21),
+(__25 \/ ¬__24 \/ ¬__21),
+(¬__23 \/ __26),
+(¬__25 \/ __26),
+(¬__26 \/ __23 \/ __25),
+(¬b#int_log_3 \/ ¬__27),
+(b#int_log_3 \/ __27),
+(¬__28),
+(¬__28 \/ __27),
+(b#int_log_3 \/ __29),
+(¬b#int_log_3 \/ ¬__29),
+(¬__30 \/ __29),
+(¬__30 \/ __26),
+(__30 \/ ¬__29 \/ ¬__26),
+(¬__28 \/ __31),
+(¬__30 \/ __31),
+(¬__31 \/ __28 \/ __30),
+(¬b#int_log_4 \/ ¬__32),
+(b#int_log_4 \/ __32),
+(¬__33 \/ __32),
+(__33 \/ ¬__32),
+(¬b#int_log_4 \/ __34),
+(b#int_log_4 \/ ¬__34),
+(¬__35 \/ __34),
+(¬__35 \/ __31),
+(__35 \/ ¬__34 \/ ¬__31),
+(¬__33 \/ __36),
+(¬__35 \/ __36),
+(¬__36 \/ __33 \/ __35),
+(__37),
+(¬__38 \/ __37),
+(¬__38 \/ b#int_log_5),
+(__38 \/ ¬__37 \/ ¬b#int_log_5),
+(b#int_log_5 \/ __39),
+(¬b#int_log_5 \/ ¬__39),
+(¬__40 \/ __39),
+(¬__40 \/ __36),
+(__40 \/ ¬__39 \/ ¬__36),
+(¬__38 \/ __41),
+(¬__40 \/ __41),
+(¬__41 \/ __38 \/ __40),
+(¬__42 \/ __20),
+(¬__42 \/ __41),
+(__42 \/ ¬__20 \/ ¬__41),
+(__42),
+(¬__43 \/ a#int_log_1),
+(__43 \/ ¬a#int_log_1),
+(__44),
+(¬__45 \/ a#int_log_2),
+(¬__45 \/ __44),
+(__45 \/ ¬a#int_log_2 \/ ¬__44),
+(a#int_log_2 \/ __46),
+(¬a#int_log_2 \/ ¬__46),
+(¬__47 \/ __46),
+(¬__47 \/ __43),
+(__47 \/ ¬__46 \/ ¬__43),
+(¬__45 \/ __48),
+(¬__47 \/ __48),
+(¬__48 \/ __45 \/ __47),
+(__49),
+(¬__50 \/ a#int_log_3),
+(¬__50 \/ __49),
+(__50 \/ ¬a#int_log_3 \/ ¬__49),
+(a#int_log_3 \/ __51),
+(¬a#int_log_3 \/ ¬__51),
+(¬__52 \/ __51),
+(¬__52 \/ __48),
+(__52 \/ ¬__51 \/ ¬__48),
+(¬__50 \/ __53),
+(¬__52 \/ __53),
+(¬__53 \/ __50 \/ __52),
+(__54),
+(¬__55 \/ a#int_log_4),
+(¬__55 \/ __54),
+(__55 \/ ¬a#int_log_4 \/ ¬__54),
+(a#int_log_4 \/ __56),
+(¬a#int_log_4 \/ ¬__56),
+(¬__57 \/ __56),
+(¬__57 \/ __53),
+(__57 \/ ¬__56 \/ ¬__53),
+(¬__55 \/ __58),
+(¬__57 \/ __58),
+(¬__58 \/ __55 \/ __57),
+(¬a#int_log_5 \/ ¬__59),
+(a#int_log_5 \/ __59),
+(¬__60 \/ __59),
+(¬__60),
+(a#int_log_5 \/ __61),
+(¬a#int_log_5 \/ ¬__61),
+(¬__62 \/ __61),
+(¬__62 \/ __58),
+(__62 \/ ¬__61 \/ ¬__58),
+(¬__60 \/ __63),
+(¬__62 \/ __63),
+(¬__63 \/ __60 \/ __62),
+(¬__64 \/ ¬a#int_log_1),
+(__64 \/ a#int_log_1),
+(¬a#int_log_2 \/ ¬__65),
+(a#int_log_2 \/ __65),
+(¬__66 \/ __65),
+(__66 \/ ¬__65),
+(¬a#int_log_2 \/ __67),
+(a#int_log_2 \/ ¬__67),
+(¬__68 \/ __67),
+(¬__68 \/ __64),
+(__68 \/ ¬__67 \/ ¬__64),
+(¬__66 \/ __69),
+(¬__68 \/ __69),
+(¬__69 \/ __66 \/ __68),
+(¬a#int_log_3 \/ ¬__70),
+(a#int_log_3 \/ __70),
+(¬__71),
+(¬__71 \/ __70),
+(a#int_log_3 \/ __72),
+(¬a#int_log_3 \/ ¬__72),
+(¬__73 \/ __72),
+(¬__73 \/ __69),
+(__73 \/ ¬__72 \/ ¬__69),
+(¬__71 \/ __74),
+(¬__73 \/ __74),
+(¬__74 \/ __71 \/ __73),
+(¬a#int_log_4 \/ ¬__75),
+(a#int_log_4 \/ __75),
+(¬__76 \/ __75),
+(__76 \/ ¬__75),
+(¬a#int_log_4 \/ __77),
+(a#int_log_4 \/ ¬__77),
+(¬__78 \/ __77),
+(¬__78 \/ __74),
+(__78 \/ ¬__77 \/ ¬__74),
+(¬__76 \/ __79),
+(¬__78 \/ __79),
+(¬__79 \/ __76 \/ __78),
+(__80),
+(¬__81 \/ __80),
+(¬__81 \/ a#int_log_5),
+(__81 \/ ¬__80 \/ ¬a#int_log_5),
+(a#int_log_5 \/ __82),
+(¬a#int_log_5 \/ ¬__82),
+(¬__83 \/ __82),
+(¬__83 \/ __79),
+(__83 \/ ¬__82 \/ ¬__79),
+(¬__81 \/ __84),
+(¬__83 \/ __84),
+(¬__84 \/ __81 \/ __83),
+(¬__85 \/ __63),
+(¬__85 \/ __84),
+(__85 \/ ¬__63 \/ ¬__84),
+(__85),
+(¬b#int_log_1 \/ ¬__86),
+(b#int_log_1 \/ __86),
+(¬b#int_log_2 \/ ¬__87),
+(b#int_log_2 \/ __87),
+(¬b#int_log_3 \/ ¬__88),
+(b#int_log_3 \/ __88),
+(¬b#int_log_4 \/ ¬__89),
+(b#int_log_4 \/ __89),
+(¬b#int_log_5 \/ ¬__90),
+(b#int_log_5 \/ __90),
+(¬__86 \/ ¬__91),
+(__86 \/ __91),
+(¬__86 \/ ¬__87 \/ ¬__92),
+(__86 \/ __87 \/ ¬__92),
+(__86 \/ ¬__87 \/ __92),
+(¬__86 \/ __87 \/ __92),
+(¬__93 \/ __86),
+(¬__93 \/ __87),
+(__93 \/ ¬__86 \/ ¬__87),
+(¬__93 \/ ¬__88 \/ ¬__94),
+(__93 \/ __88 \/ ¬__94),
+(__93 \/ ¬__88 \/ __94),
+(¬__93 \/ __88 \/ __94),
+(¬__95 \/ __93),
+(¬__95 \/ __88),
+(__95 \/ ¬__93 \/ ¬__88),
+(¬__95 \/ ¬__89 \/ ¬__96),
+(__95 \/ __89 \/ ¬__96),
+(__95 \/ ¬__89 \/ __96),
+(¬__95 \/ __89 \/ __96),
+(¬__97 \/ __95),
+(¬__97 \/ __89),
+(__97 \/ ¬__95 \/ ¬__89),
+(¬__97 \/ ¬__90 \/ ¬__98),
+(__97 \/ __90 \/ ¬__98),
+(__97 \/ ¬__90 \/ __98),
+(¬__97 \/ __90 \/ __98),
+(¬__99 \/ __97),
+(¬__99 \/ __90),
+(__99 \/ ¬__97 \/ ¬__90),
+(¬a#int_log_1 \/ ¬__91 \/ ¬__100),
+(a#int_log_1 \/ __91 \/ ¬__100),
+(a#int_log_1 \/ ¬__91 \/ __100),
+(¬a#int_log_1 \/ __91 \/ __100),
+(¬__101 \/ a#int_log_1),
+(¬__101 \/ __91),
+(__101 \/ ¬a#int_log_1 \/ ¬__91),
+(¬a#int_log_2 \/ ¬__92 \/ ¬__102),
+(a#int_log_2 \/ __92 \/ ¬__102),
+(a#int_log_2 \/ ¬__92 \/ __102),
+(¬a#int_log_2 \/ __92 \/ __102),
+(¬__102 \/ ¬__101 \/ ¬__103),
+(__102 \/ __101 \/ ¬__103),
+(__102 \/ ¬__101 \/ __103),
+(¬__102 \/ __101 \/ __103),
+(¬__104 \/ a#int_log_2),
+(¬__104 \/ __92),
+(__104 \/ ¬a#int_log_2 \/ ¬__92),
+(¬__105 \/ __101),
+(¬__105 \/ __102),
+(__105 \/ ¬__101 \/ ¬__102),
+(¬__104 \/ __106),
+(¬__105 \/ __106),
+(¬__106 \/ __104 \/ __105),
+(¬a#int_log_3 \/ ¬__94 \/ ¬__107),
+(a#int_log_3 \/ __94 \/ ¬__107),
+(a#int_log_3 \/ ¬__94 \/ __107),
+(¬a#int_log_3 \/ __94 \/ __107),
+(¬__107 \/ ¬__106 \/ ¬__108),
+(__107 \/ __106 \/ ¬__108),
+(__107 \/ ¬__106 \/ __108),
+(¬__107 \/ __106 \/ __108),
+(¬__109 \/ a#int_log_3),
+(¬__109 \/ __94),
+(__109 \/ ¬a#int_log_3 \/ ¬__94),
+(¬__110 \/ __106),
+(¬__110 \/ __107),
+(__110 \/ ¬__106 \/ ¬__107),
+(¬__109 \/ __111),
+(¬__110 \/ __111),
+(¬__111 \/ __109 \/ __110),
+(¬a#int_log_4 \/ ¬__96 \/ ¬__112),
+(a#int_log_4 \/ __96 \/ ¬__112),
+(a#int_log_4 \/ ¬__96 \/ __112),
+(¬a#int_log_4 \/ __96 \/ __112),
+(¬__112 \/ ¬__111 \/ ¬__113),
+(__112 \/ __111 \/ ¬__113),
+(__112 \/ ¬__111 \/ __113),
+(¬__112 \/ __111 \/ __113),
+(¬__114 \/ a#int_log_4),
+(¬__114 \/ __96),
+(__114 \/ ¬a#int_log_4 \/ ¬__96),
+(¬__115 \/ __111),
+(¬__115 \/ __112),
+(__115 \/ ¬__111 \/ ¬__112),
+(¬__114 \/ __116),
+(¬__115 \/ __116),
+(¬__116 \/ __114 \/ __115),
+(¬a#int_log_5 \/ ¬__98 \/ ¬__117),
+(a#int_log_5 \/ __98 \/ ¬__117),
+(a#int_log_5 \/ ¬__98 \/ __117),
+(¬a#int_log_5 \/ __98 \/ __117),
+(¬__117 \/ ¬__116 \/ ¬__118),
+(__117 \/ __116 \/ ¬__118),
+(__117 \/ ¬__116 \/ __118),
+(¬__117 \/ __116 \/ __118),
+(¬__119 \/ a#int_log_5),
+(¬__119 \/ __98),
+(__119 \/ ¬a#int_log_5 \/ ¬__98),
+(¬__120 \/ __116),
+(¬__120 \/ __117),
+(__120 \/ ¬__116 \/ ¬__117),
+(¬__119 \/ __121),
+(¬__120 \/ __121),
+(¬__121 \/ __119 \/ __120),
+(__100 \/ __122),
+(¬__100 \/ ¬__122),
+(¬__123 \/ __122),
+(__123 \/ ¬__122),
+(__103 \/ __124),
+(¬__103 \/ ¬__124),
+(¬__125 \/ __124),
+(¬__125 \/ __123),
+(__125 \/ ¬__124 \/ ¬__123),
+(¬__108 \/ __126),
+(__108 \/ ¬__126),
+(¬__127 \/ __126),
+(¬__127 \/ __125),
+(__127 \/ ¬__126 \/ ¬__125),
+(__113 \/ __128),
+(¬__113 \/ ¬__128),
+(¬__129 \/ __128),
+(¬__129 \/ __127),
+(__129 \/ ¬__128 \/ ¬__127),
+(__118 \/ __130),
+(¬__118 \/ ¬__130),
+(¬__131 \/ __130),
+(¬__131 \/ __129),
+(__131 \/ ¬__130 \/ ¬__129),
+(__131)
+

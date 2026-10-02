@@ -1,0 +1,182 @@
+Model before rewriting:
+
+find a: int(0..0)
+find b: int(0..0)
+
+such that
+
+b = |a|
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#int_direct_1: bool
+new constraints:
+  or([SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)])
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#int_direct_1: bool
+new constraints:
+  or([SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)])
+
+--
+
+b
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0])
+
+--
+
+a
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0])
+
+--
+
+SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = 0
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = SATInt(Direct, [true;int(1..)] [0, 0])
+
+--
+
+SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = 0
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = SATInt(Direct, [true;int(1..)] [0, 0])
+
+--
+
+|SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0])|
+   ~~> abs_value_sat_direct ([("SAT", 9100)])
+SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0])
+
+--
+
+SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = SATInt(Direct, [true;int(1..)] [0, 0])
+   ~~> eq_sat_direct ([("SAT", 9100)])
+__1
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+new clauses:
+  (¬b#int_direct_1 \/ __0)
+  (b#int_direct_1 \/ ¬__0)
+  (¬__1 \/ __0)
+  (__1 \/ ¬__0)
+
+--
+
+SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = SATInt(Direct, [true;int(1..)] [0, 0])
+   ~~> eq_sat_direct ([("SAT", 9100)])
+__3
+new variables:
+  findAux __2: bool
+  findAux __3: bool
+new clauses:
+  (¬a#int_direct_1 \/ __2)
+  (a#int_direct_1 \/ ¬__2)
+  (¬__3 \/ __2)
+  (__3 \/ ¬__2)
+
+--
+
+SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0])
+   ~~> eq_sat_direct ([("SAT", 9100)])
+__5
+new variables:
+  findAux __4: bool
+  findAux __5: bool
+new clauses:
+  (¬b#int_direct_1 \/ ¬a#int_direct_1 \/ __4)
+  (b#int_direct_1 \/ a#int_direct_1 \/ __4)
+  (b#int_direct_1 \/ ¬a#int_direct_1 \/ ¬__4)
+  (¬b#int_direct_1 \/ a#int_direct_1 \/ ¬__4)
+  (¬__5 \/ __4)
+  (__5 \/ ¬__4)
+
+--
+
+or([__1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__1
+
+--
+
+or([__3;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__3
+
+--
+
+__5,
+__1,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1,
+__3
+new clauses:
+  (__5)
+
+--
+
+__1,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+__3
+new clauses:
+  (__1)
+
+--
+
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__3)
+
+--
+
+Final model:
+
+find a: int(0..0)
+find b: int(0..0)
+find b#int_direct_1: bool
+find a#int_direct_1: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+
+such that
+
+true
+
+clauses:
+
+(¬b#int_direct_1 \/ __0),
+(b#int_direct_1 \/ ¬__0),
+(¬__1 \/ __0),
+(__1 \/ ¬__0),
+(¬a#int_direct_1 \/ __2),
+(a#int_direct_1 \/ ¬__2),
+(¬__3 \/ __2),
+(__3 \/ ¬__2),
+(¬b#int_direct_1 \/ ¬a#int_direct_1 \/ __4),
+(b#int_direct_1 \/ a#int_direct_1 \/ __4),
+(b#int_direct_1 \/ ¬a#int_direct_1 \/ ¬__4),
+(¬b#int_direct_1 \/ a#int_direct_1 \/ ¬__4),
+(¬__5 \/ __4),
+(__5 \/ ¬__4),
+(__5),
+(__1),
+(__3)
+

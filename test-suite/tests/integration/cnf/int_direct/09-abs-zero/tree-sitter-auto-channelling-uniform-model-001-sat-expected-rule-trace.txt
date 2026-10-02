@@ -1,0 +1,210 @@
+Model before rewriting:
+
+find a: int(0..0)
+find b: int(0..0)
+
+such that
+
+b = |a|
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#int_log_1: bool
+new constraints:
+  or([SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = 0;int(1..)])
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#int_log_1: bool
+new constraints:
+  or([SATInt(Log, [a#int_log_1;int(1..)] [0, 0]) = 0;int(1..)])
+
+--
+
+b
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0])
+
+--
+
+a
+   ~~> integer_decision_representation_log ([("SAT", 9500)])
+SATInt(Log, [a#int_log_1;int(1..)] [0, 0])
+
+--
+
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = 0
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = SATInt(Log, [false;int(1..)] [0, 0])
+
+--
+
+SATInt(Log, [a#int_log_1;int(1..)] [0, 0]) = 0
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Log, [a#int_log_1;int(1..)] [0, 0]) = SATInt(Log, [false;int(1..)] [0, 0])
+
+--
+
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = SATInt(Log, [false;int(1..)] [0, 0])
+   ~~> cnf_int_eq ([("SAT", 9100)])
+__1
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+new clauses:
+  (b#int_log_1 \/ __0)
+  (¬b#int_log_1 \/ ¬__0)
+  (¬__1 \/ __0)
+  (__1 \/ ¬__0)
+
+--
+
+SATInt(Log, [a#int_log_1;int(1..)] [0, 0]) = SATInt(Log, [false;int(1..)] [0, 0])
+   ~~> cnf_int_eq ([("SAT", 9100)])
+__3
+new variables:
+  findAux __2: bool
+  findAux __3: bool
+new clauses:
+  (a#int_log_1 \/ __2)
+  (¬a#int_log_1 \/ ¬__2)
+  (¬__3 \/ __2)
+  (__3 \/ ¬__2)
+
+--
+
+or([__3;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__3
+
+--
+
+or([__1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__1
+
+--
+
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = |SATInt(Log, [a#int_log_1;int(1..)] [0, 0])|,
+__1,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = |SATInt(Log, [a#int_log_1;int(1..)] [0, 0])|,
+__3
+new clauses:
+  (__1)
+
+--
+
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = |SATInt(Log, [a#int_log_1;int(1..)] [0, 0])|,
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = |SATInt(Log, [a#int_log_1;int(1..)] [0, 0])|
+new clauses:
+  (__3)
+
+--
+
+|SATInt(Log, [a#int_log_1;int(1..)] [0, 0])|
+   ~~> cnf_int_abs ([("SAT", 4100)])
+SATInt(Log, [__6;int(1..)] [0, 0])
+new variables:
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+new clauses:
+  (¬a#int_log_1 \/ ¬__4)
+  (a#int_log_1 \/ __4)
+  (¬__4 \/ ¬__5)
+  (__4 \/ __5)
+  (¬__6 \/ a#int_log_1 \/ a#int_log_1)
+  (¬__6 \/ ¬a#int_log_1 \/ __5)
+  (¬__6 \/ a#int_log_1 \/ __5)
+  (__6 \/ a#int_log_1 \/ ¬a#int_log_1)
+  (__6 \/ ¬a#int_log_1 \/ ¬__5)
+  (__6 \/ ¬a#int_log_1 \/ ¬__5)
+
+--
+
+SATInt(Log, [b#int_log_1;int(1..)] [0, 0]) = SATInt(Log, [__6;int(1..)] [0, 0])
+   ~~> cnf_int_eq ([("SAT", 9100)])
+__8
+new variables:
+  findAux __7: bool
+  findAux __8: bool
+new clauses:
+  (¬b#int_log_1 \/ ¬__6 \/ __7)
+  (b#int_log_1 \/ __6 \/ __7)
+  (b#int_log_1 \/ ¬__6 \/ ¬__7)
+  (¬b#int_log_1 \/ __6 \/ ¬__7)
+  (¬__8 \/ __7)
+  (__8 \/ ¬__7)
+
+--
+
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__8)
+
+--
+
+Final model:
+
+find a: int(0..0)
+find b: int(0..0)
+find b#int_log_1: bool
+find a#int_log_1: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+
+such that
+
+true
+
+clauses:
+
+(b#int_log_1 \/ __0),
+(¬b#int_log_1 \/ ¬__0),
+(¬__1 \/ __0),
+(__1 \/ ¬__0),
+(a#int_log_1 \/ __2),
+(¬a#int_log_1 \/ ¬__2),
+(¬__3 \/ __2),
+(__3 \/ ¬__2),
+(__1),
+(__3),
+(¬a#int_log_1 \/ ¬__4),
+(a#int_log_1 \/ __4),
+(¬__4 \/ ¬__5),
+(__4 \/ __5),
+(¬__6 \/ a#int_log_1 \/ a#int_log_1),
+(¬__6 \/ ¬a#int_log_1 \/ __5),
+(¬__6 \/ a#int_log_1 \/ __5),
+(__6 \/ a#int_log_1 \/ ¬a#int_log_1),
+(__6 \/ ¬a#int_log_1 \/ ¬__5),
+(__6 \/ ¬a#int_log_1 \/ ¬__5),
+(¬b#int_log_1 \/ ¬__6 \/ __7),
+(b#int_log_1 \/ __6 \/ __7),
+(b#int_log_1 \/ ¬__6 \/ ¬__7),
+(¬b#int_log_1 \/ __6 \/ ¬__7),
+(¬__8 \/ __7),
+(__8 \/ ¬__7),
+(__8)
+
