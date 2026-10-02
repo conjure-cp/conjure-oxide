@@ -36,6 +36,24 @@ pub fn compile_decisions(
     };
     for decision in decisions {
         match decision {
+            SatEncodingDecision::Cardinality {
+                inputs,
+                relation,
+                bound,
+                encoding,
+            } => {
+                let algorithm = encoding
+                    .as_ref()
+                    .ok_or_else(|| {
+                        SolverError::ModelInvalid("Unresolved cardinality encoding decision".into())
+                    })?
+                    .algorithm;
+                let terms = inputs
+                    .iter()
+                    .map(|input| compiler.encode(input))
+                    .collect::<Result<Vec<_>, _>>()?;
+                compiler.cardinality(algorithm, *relation, *bound, terms)?;
+            }
             SatEncodingDecision::AtMostOne { inputs, encoding } => {
                 let algorithm = encoding
                     .as_ref()
@@ -98,6 +116,141 @@ struct Compiler<'a> {
     variables: &'a mut HashMap<Name, Lit>,
 }
 impl Compiler<'_> {
+    fn cardinality(
+        &mut self,
+        algorithm: crate::ast::sat_decision::CardinalityEncoding,
+        relation: crate::ast::sat_decision::CardinalityRelation,
+        bound: i64,
+        terms: Vec<Term>,
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::{CardinalityEncoding, CardinalityRelation};
+        let constants = terms
+            .iter()
+            .filter(|term| matches!(term, Term::Constant(true)))
+            .count() as i64;
+        let bound = bound
+            .checked_sub(constants)
+            .ok_or_else(|| SolverError::ModelInvalid("Cardinality bound overflow".into()))?;
+        let literals: Vec<_> = terms
+            .into_iter()
+            .filter_map(|term| match term {
+                Term::Literal(lit) => Some(lit),
+                _ => None,
+            })
+            .collect();
+        let size = literals.len() as i64;
+        let impossible = match relation {
+            CardinalityRelation::AtMost => bound < 0,
+            CardinalityRelation::AtLeast => bound > size,
+            CardinalityRelation::Exactly => bound < 0 || bound > size,
+        };
+        if impossible {
+            self.assert(Term::Constant(false));
+            return Ok(());
+        }
+        if (relation == CardinalityRelation::AtMost && bound >= size)
+            || (relation == CardinalityRelation::AtLeast && bound <= 0)
+        {
+            return Ok(());
+        }
+        if bound == 0 || bound == size {
+            for literal in literals {
+                self.assert(Term::Literal(if bound == size {
+                    literal
+                } else {
+                    !literal
+                }));
+            }
+            return Ok(());
+        }
+        match algorithm {
+            CardinalityEncoding::RustsatTotalizer => {
+                use rustsat::{
+                    encodings::card::{Totalizer, encode_cardinality_constraint},
+                    types::constraints::CardConstraint,
+                };
+                let constraint = match relation {
+                    CardinalityRelation::AtMost => CardConstraint::new_ub(literals, bound as usize),
+                    CardinalityRelation::AtLeast => {
+                        CardConstraint::new_lb(literals, bound as usize)
+                    }
+                    CardinalityRelation::Exactly => {
+                        CardConstraint::new_eq(literals, bound as usize)
+                    }
+                };
+                let mut cnf = Cnf::new();
+                encode_cardinality_constraint::<Totalizer, _>(
+                    constraint,
+                    &mut cnf,
+                    self.instance.var_manager_mut(),
+                )
+                .map_err(|error| SolverError::Runtime(format!("Totalizer failed: {error}")))?;
+                for clause in cnf {
+                    self.instance.add_clause(clause);
+                }
+            }
+            CardinalityEncoding::PindakaasSortingNetwork => {
+                use pindakaas::{
+                    Encoder,
+                    bool_linear::{
+                        BoolLinAggregator, BoolLinExp, BoolLinVariant, BoolLinear, Comparator,
+                    },
+                    cardinality::SortingNetworkEncoder,
+                };
+                // Pindakaas cardinality inputs must use distinct variables. Alias repeats and
+                // opposite polarities instead of allowing aggregation into weighted PB terms.
+                let mut seen = std::collections::HashSet::new();
+                let literals = literals
+                    .into_iter()
+                    .map(|literal| {
+                        let literal = if seen.insert(literal.var()) {
+                            literal
+                        } else {
+                            let alias = self.instance.new_lit();
+                            self.instance
+                                .add_clause(atomics::lit_impl_lit(alias, literal));
+                            self.instance
+                                .add_clause(atomics::lit_impl_lit(literal, alias));
+                            alias
+                        };
+                        pind_lit(literal)
+                    })
+                    .collect::<Vec<_>>();
+                let comparison = match relation {
+                    CardinalityRelation::AtMost => Comparator::LessEq,
+                    CardinalityRelation::AtLeast => Comparator::GreaterEq,
+                    CardinalityRelation::Exactly => Comparator::Equal,
+                };
+                let expression = BoolLinExp::from_terms(
+                    &literals.into_iter().map(|lit| (lit, 1)).collect::<Vec<_>>(),
+                );
+                let mut sink = PindakaasSink(self.instance);
+                let variant = BoolLinAggregator::default()
+                    .aggregate(&mut sink, &BoolLinear::new(expression, comparison, bound));
+                let encoder = SortingNetworkEncoder::default();
+                let result = match variant {
+                    Ok(BoolLinVariant::Cardinality(cardinality)) => {
+                        encoder.encode(&mut sink, &cardinality)
+                    }
+                    Ok(BoolLinVariant::CardinalityOne(cardinality)) => encoder.encode(
+                        &mut sink,
+                        &pindakaas::cardinality::Cardinality::from(cardinality),
+                    ),
+                    Ok(BoolLinVariant::Trivial) => Ok(()),
+                    Ok(BoolLinVariant::Linear(_)) => {
+                        return Err(SolverError::ModelInvalid(
+                            "Cardinality normalisation unexpectedly produced weighted terms".into(),
+                        ));
+                    }
+                    Err(error) => Err(error),
+                };
+                if result.is_err() {
+                    self.assert(Term::Constant(false));
+                }
+            }
+        }
+        Ok(())
+    }
     fn amo(
         &mut self,
         algorithm: crate::ast::sat_decision::AmoEncoding,
@@ -210,6 +363,40 @@ impl Compiler<'_> {
                 )));
             }
         })
+    }
+}
+
+fn pind_lit(literal: Lit) -> pindakaas::Lit {
+    pindakaas::Lit::from_raw(std::num::NonZeroI32::new(literal.to_ipasir()).unwrap())
+}
+/// Bridge both providers to the RustSAT allocator; no independent variable namespace.
+struct PindakaasSink<'a>(&'a mut SatInstance);
+impl pindakaas::ClauseDatabase for PindakaasSink<'_> {
+    fn add_clause_from_slice(
+        &mut self,
+        clause: &[pindakaas::Lit],
+    ) -> Result<(), pindakaas::Unsatisfiable> {
+        self.0.add_clause(
+            clause
+                .iter()
+                .map(|lit| {
+                    let raw: std::num::NonZeroI32 = (*lit).into();
+                    Lit::from_ipasir(raw.get()).unwrap()
+                })
+                .collect(),
+        );
+        Ok(())
+    }
+    fn new_var_range(&mut self, len: usize) -> pindakaas::VarRange {
+        if len == 0 {
+            return pindakaas::VarRange::empty();
+        }
+        let first = pind_lit(self.0.new_lit()).var();
+        let mut last = first;
+        for _ in 1..len {
+            last = pind_lit(self.0.new_lit()).var();
+        }
+        pindakaas::VarRange::new(first, last)
     }
 }
 
@@ -399,5 +586,112 @@ mod amo_tests {
             )
             .is_err()
         );
+    }
+}
+
+#[cfg(test)]
+mod cardinality_tests {
+    use super::*;
+    use crate::ast::sat_decision::{
+        CardinalityEncoding, CardinalityRelation, EncodingSelection, SelectionProvenance,
+    };
+    use crate::ast::{DeclarationPtr, Domain, Reference};
+    use rustsat::{
+        instances::{BasicVarManager, ManageVars},
+        solvers::{Solve, SolveIncremental, SolverResult},
+    };
+    use rustsat_cadical::CaDiCaL;
+    #[test]
+    fn cardinality_providers_preserve_all_bounds_assignments_and_multiplicities() {
+        for algorithm in CardinalityEncoding::ALL {
+            for size in 0..=7 {
+                let vars: Vec<_> = (0..size)
+                    .map(|i| {
+                        DeclarationPtr::new_find(Name::User(format!("b{i}").into()), Domain::bool())
+                    })
+                    .collect();
+                let original: Vec<Expression> = vars
+                    .iter()
+                    .map(|var| Reference::new(var.clone()).into())
+                    .collect();
+                for special in [false, true] {
+                    let mut inputs = original.clone();
+                    if special {
+                        inputs.extend([true.into(), false.into()]);
+                        if let Some(first) = original.first() {
+                            inputs.push(first.clone());
+                            inputs.push(Expression::Not(
+                                crate::ast::Metadata::new(),
+                                crate::ast::Moo::new(first.clone()),
+                            ));
+                        }
+                    }
+                    for relation in [
+                        CardinalityRelation::AtMost,
+                        CardinalityRelation::AtLeast,
+                        CardinalityRelation::Exactly,
+                    ] {
+                        for bound in -1..=inputs.len() as i64 + 1 {
+                            let mut instance = SatInstance::new();
+                            let mut map = HashMap::new();
+                            for var in &vars {
+                                map.insert(var.name().clone(), instance.new_lit());
+                            }
+                            compile_decisions(
+                                &[SatEncodingDecision::Cardinality {
+                                    inputs: inputs.clone(),
+                                    relation,
+                                    bound,
+                                    encoding: Some(EncodingSelection {
+                                        algorithm,
+                                        provenance: SelectionProvenance::ExplicitConfiguration,
+                                    }),
+                                }],
+                                &mut instance,
+                                &mut map,
+                            )
+                            .unwrap();
+                            // Later named allocations must remain beyond either provider's auxiliaries.
+                            let used = instance.var_manager_mut().n_used();
+                            assert_eq!(instance.new_lit().var().idx32(), used);
+                            let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                            let mut solver = CaDiCaL::default();
+                            solver.add_cnf(cnf).unwrap();
+                            for assignment in 0..(1usize << size) {
+                                let count = assignment.count_ones() as i64
+                                    + if special {
+                                        if size > 0 { 2 } else { 1 }
+                                    } else {
+                                        0
+                                    };
+                                let expected = match relation {
+                                    CardinalityRelation::AtMost => count <= bound,
+                                    CardinalityRelation::AtLeast => count >= bound,
+                                    CardinalityRelation::Exactly => count == bound,
+                                };
+                                let assumptions: Vec<_> = vars
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(i, var)| {
+                                        let lit = map[&var.name()];
+                                        if assignment & (1 << i) != 0 {
+                                            lit
+                                        } else {
+                                            !lit
+                                        }
+                                    })
+                                    .collect();
+                                assert_eq!(
+                                    solver.solve_assumps(&assumptions).unwrap()
+                                        == SolverResult::Sat,
+                                    expected,
+                                    "{algorithm} {relation:?} n={size} special={special} bound={bound} bits={assignment}"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

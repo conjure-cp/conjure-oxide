@@ -94,6 +94,7 @@ impl FromStr for Channelling {
 pub const DEFAULT_HEURISTIC_SEED: u64 = 0;
 
 thread_local! {
+    static CARDINALITY_ENCODING: Cell<Option<crate::ast::sat_decision::CardinalityEncoding>> = const { Cell::new(None) };
     static AMO_ENCODING: Cell<Option<crate::ast::sat_decision::AmoEncoding>> = const { Cell::new(None) };
     static HEURISTIC: Cell<Heuristic> = const { Cell::new(Heuristic::Compact) };
     static CHANNELLING: Cell<Channelling> = const { Cell::new(Channelling::No) };
@@ -958,4 +959,13 @@ pub fn set_amo_encoding(encoding: Option<crate::ast::sat_decision::AmoEncoding>)
 /// Explicit AMO algorithm override for this compilation thread.
 pub fn amo_encoding() -> Option<crate::ast::sat_decision::AmoEncoding> {
     AMO_ENCODING.with(Cell::get)
+}
+
+/// Pin a cardinality provider/algorithm, or let the heuristic select it.
+pub fn set_cardinality_encoding(encoding: Option<crate::ast::sat_decision::CardinalityEncoding>) {
+    CARDINALITY_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit cardinality encoder override for this compilation thread.
+pub fn cardinality_encoding() -> Option<crate::ast::sat_decision::CardinalityEncoding> {
+    CARDINALITY_ENCODING.with(Cell::get)
 }

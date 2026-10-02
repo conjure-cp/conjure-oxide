@@ -321,23 +321,39 @@ fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
 }
 
-/// Retain an asserted cardinality-one constraint as a selectable AMO decision.
+/// Preserve asserted Boolean counts until a library encoder is selected.
 #[register_rule("SAT", 20000, [Root])]
-fn select_at_most_one(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    use conjure_cp::ast::sat_decision::CardinalityRelation;
     let Expr::Root(_, children) = expr else {
         return Err(RuleNotApplicable);
     };
     for (index, child) in children.iter().enumerate() {
-        let Expr::Leq(_, left, right) = child else {
-            continue;
+        let (left, right, mut relation) = match child {
+            Expr::Leq(_, left, right) => (left, right, CardinalityRelation::AtMost),
+            Expr::Geq(_, left, right) => (left, right, CardinalityRelation::AtLeast),
+            Expr::Eq(_, left, right) => (left, right, CardinalityRelation::Exactly),
+            _ => continue,
         };
-        if right.as_ref() != &Expr::from(1) {
-            continue;
-        }
-        let Expr::Sum(_, terms) = left.as_ref() else {
-            continue;
+        let (sum, bound) = match (left.as_ref(), right.as_ref()) {
+            (
+                Expr::Sum(_, terms),
+                Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(bound))),
+            ) => (terms, *bound),
+            (
+                Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(bound))),
+                Expr::Sum(_, terms),
+            ) => {
+                relation = match relation {
+                    CardinalityRelation::AtMost => CardinalityRelation::AtLeast,
+                    CardinalityRelation::AtLeast => CardinalityRelation::AtMost,
+                    other => other,
+                };
+                (terms, *bound)
+            }
+            _ => continue,
         };
-        let Expr::AbstractLiteral(_, Matrix(terms, _)) = terms.as_ref() else {
+        let Expr::AbstractLiteral(_, Matrix(terms, _)) = sum.as_ref() else {
             continue;
         };
         let inputs = terms
@@ -349,20 +365,35 @@ fn select_at_most_one(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 {
                     Some(input.as_ref().clone())
                 }
+                Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(value)))
+                    if *value == 0 || *value == 1 =>
+                {
+                    Some((*value == 1).into())
+                }
                 _ => None,
             })
             .collect::<Option<Vec<_>>>();
         let Some(inputs) = inputs else {
             continue;
         };
+        let decision = if relation == CardinalityRelation::AtMost && bound == 1 {
+            SatEncodingDecision::AtMostOne {
+                inputs,
+                encoding: None,
+            }
+        } else {
+            SatEncodingDecision::Cardinality {
+                inputs,
+                relation,
+                bound: i64::from(bound),
+                encoding: None,
+            }
+        };
         let mut children = children.clone();
         children.remove(index);
         return Ok(RuleEffect::sat(
             Expr::Root(Metadata::new(), children),
-            vec![SatEncodingDecision::AtMostOne {
-                inputs,
-                encoding: None,
-            }],
+            vec![decision],
             symbols.clone(),
         ));
     }
@@ -373,6 +404,25 @@ fn select_at_most_one(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 mod amo_lowering_tests {
     use super::*;
     #[test]
+    fn cardinality_accepts_simplified_constants_and_reversed_bounds() {
+        use conjure_cp::ast::sat_decision::CardinalityRelation;
+        let sum = Expr::Sum(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(vec![1.into(), 0.into()])),
+        );
+        let comparison = Expr::Leq(Metadata::new(), Moo::new(2.into()), Moo::new(sum));
+        let effect = select_cardinality(
+            &Expr::Root(Metadata::new(), vec![comparison]),
+            &SymbolTable::new(),
+        )
+        .unwrap();
+        assert!(
+            matches!(&effect.new_sat_decisions[0], SatEncodingDecision::Cardinality {
+            inputs, relation: CardinalityRelation::AtLeast, bound: 2, ..
+        } if inputs == &vec![true.into(), false.into()])
+        );
+    }
+    #[test]
     fn amo_waits_until_boolean_operands_have_been_lowered() {
         let complex = Expr::Eq(Metadata::new(), Moo::new(2.into()), Moo::new(3.into()));
         let indicator = Expr::ToInt(Metadata::new(), Moo::new(complex));
@@ -382,6 +432,6 @@ mod amo_lowering_tests {
         );
         let cardinality = Expr::Leq(Metadata::new(), Moo::new(sum), Moo::new(1.into()));
         let root = Expr::Root(Metadata::new(), vec![cardinality]);
-        assert!(select_at_most_one(&root, &SymbolTable::new()).is_err());
+        assert!(select_cardinality(&root, &SymbolTable::new()).is_err());
     }
 }

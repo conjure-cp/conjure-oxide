@@ -224,6 +224,10 @@ pub struct GlobalArgs {
     #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub amo_encoding: Option<conjure_cp::ast::sat_decision::AmoEncoding>,
 
+    /// Pin the SAT cardinality encoder: rustsat-totalizer or pindakaas-sorting-network.
+    #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub cardinality_encoding: Option<conjure_cp::ast::sat_decision::CardinalityEncoding>,
+
     /// Solver to use.
     ///
     /// Possible values: `minion`, `sat`, `z3`.
