@@ -21,19 +21,16 @@ or([x,y,z;int(1..)])
 __0
 new variables:
   findAux __0: bool
-new clauses:
-  (¬x \/ __0)
-  (¬y \/ __0)
-  (¬z \/ __0)
-  (¬__0 \/ x \/ y \/ z)
+new SAT encoding decisions:
+  define(__0 <-> or([x,y,z;int(1..)])) using tseitin
 
 --
 
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (__0)
+new SAT encoding decisions:
+  assert(__0) using tseitin
 
 --
 
@@ -48,11 +45,8 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(¬x \/ __0),
-(¬y \/ __0),
-(¬z \/ __0),
-(¬__0 \/ x \/ y \/ z),
-(__0)
+define(__0 <-> or([x,y,z;int(1..)])) using tseitin,
+assert(__0) using tseitin
 

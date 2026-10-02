@@ -15,10 +15,8 @@ and([x,y;int(1..)])
 __0
 new variables:
   findAux __0: bool
-new clauses:
-  (¬__0 \/ x)
-  (¬__0 \/ y)
-  (__0 \/ ¬x \/ ¬y)
+new SAT encoding decisions:
+  define(__0 <-> and([x,y;int(1..)])) using tseitin
 
 --
 
@@ -27,10 +25,8 @@ and([y,z;int(1..)])
 __1
 new variables:
   findAux __1: bool
-new clauses:
-  (¬__1 \/ y)
-  (¬__1 \/ z)
-  (__1 \/ ¬y \/ ¬z)
+new SAT encoding decisions:
+  define(__1 <-> and([y,z;int(1..)])) using tseitin
 
 --
 
@@ -39,19 +35,16 @@ __0 = __1
 __2
 new variables:
   findAux __2: bool
-new clauses:
-  (¬__0 \/ ¬__1 \/ __2)
-  (__0 \/ __1 \/ __2)
-  (__0 \/ ¬__1 \/ ¬__2)
-  (¬__0 \/ __1 \/ ¬__2)
+new SAT encoding decisions:
+  define(__2 <-> (__0) <-> (__1)) using tseitin
 
 --
 
 __2
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (__2)
+new SAT encoding decisions:
+  assert(__2) using tseitin
 
 --
 
@@ -68,17 +61,10 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(¬__0 \/ x),
-(¬__0 \/ y),
-(__0 \/ ¬x \/ ¬y),
-(¬__1 \/ y),
-(¬__1 \/ z),
-(__1 \/ ¬y \/ ¬z),
-(¬__0 \/ ¬__1 \/ __2),
-(__0 \/ __1 \/ __2),
-(__0 \/ ¬__1 \/ ¬__2),
-(¬__0 \/ __1 \/ ¬__2),
-(__2)
+define(__0 <-> and([x,y;int(1..)])) using tseitin,
+define(__1 <-> and([y,z;int(1..)])) using tseitin,
+define(__2 <-> (__0) <-> (__1)) using tseitin,
+assert(__2) using tseitin
 

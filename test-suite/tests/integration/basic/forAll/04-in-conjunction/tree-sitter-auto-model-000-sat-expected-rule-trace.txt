@@ -14,18 +14,16 @@ and([a,b;int(1..)])
 __0
 new variables:
   findAux __0: bool
-new clauses:
-  (¬__0 \/ a)
-  (¬__0 \/ b)
-  (__0 \/ ¬a \/ ¬b)
+new SAT encoding decisions:
+  define(__0 <-> and([a,b;int(1..)])) using tseitin
 
 --
 
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (__0)
+new SAT encoding decisions:
+  assert(__0) using tseitin
 
 --
 
@@ -39,10 +37,8 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(¬__0 \/ a),
-(¬__0 \/ b),
-(__0 \/ ¬a \/ ¬b),
-(__0)
+define(__0 <-> and([a,b;int(1..)])) using tseitin,
+assert(__0) using tseitin
 

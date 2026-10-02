@@ -19,9 +19,8 @@ or([d,c;int(1..)])
 __0
 new variables:
   findAux __0: bool
-new clauses:
-  (¬c \/ ¬__0)
-  (c \/ __0)
+new SAT encoding decisions:
+  define(__0 <-> !(c)) using tseitin
 
 --
 
@@ -30,10 +29,8 @@ or([a,b;int(1..)])
 __1
 new variables:
   findAux __1: bool
-new clauses:
-  (¬a \/ __1)
-  (¬b \/ __1)
-  (¬__1 \/ a \/ b)
+new SAT encoding decisions:
+  define(__1 <-> or([a,b;int(1..)])) using tseitin
 
 --
 
@@ -42,10 +39,8 @@ or([d,c;int(1..)])
 __2
 new variables:
   findAux __2: bool
-new clauses:
-  (¬d \/ __2)
-  (¬c \/ __2)
-  (¬__2 \/ d \/ c)
+new SAT encoding decisions:
+  define(__2 <-> or([d,c;int(1..)])) using tseitin
 
 --
 
@@ -54,10 +49,8 @@ and([b,d;int(1..)])
 __3
 new variables:
   findAux __3: bool
-new clauses:
-  (¬__3 \/ b)
-  (¬__3 \/ d)
-  (__3 \/ ¬b \/ ¬d)
+new SAT encoding decisions:
+  define(__3 <-> and([b,d;int(1..)])) using tseitin
 
 --
 
@@ -66,10 +59,8 @@ or([__0,__3;int(1..)])
 __4
 new variables:
   findAux __4: bool
-new clauses:
-  (¬__0 \/ __4)
-  (¬__3 \/ __4)
-  (¬__4 \/ __0 \/ __3)
+new SAT encoding decisions:
+  define(__4 <-> or([__0,__3;int(1..)])) using tseitin
 
 --
 
@@ -81,8 +72,8 @@ __2
 __4,
 b,
 __2
-new clauses:
-  (__1)
+new SAT encoding decisions:
+  assert(__1) using tseitin
 
 --
 
@@ -92,8 +83,8 @@ __2
    ~~> remove_single_atom ([("SAT", 8400)])
 b,
 __2
-new clauses:
-  (__4)
+new SAT encoding decisions:
+  assert(__4) using tseitin
 
 --
 
@@ -101,16 +92,16 @@ b,
 __2
    ~~> remove_single_atom ([("SAT", 8400)])
 __2
-new clauses:
-  (b)
+new SAT encoding decisions:
+  assert(b) using tseitin
 
 --
 
 __2
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (__2)
+new SAT encoding decisions:
+  assert(__2) using tseitin
 
 --
 
@@ -130,24 +121,15 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(¬c \/ ¬__0),
-(c \/ __0),
-(¬a \/ __1),
-(¬b \/ __1),
-(¬__1 \/ a \/ b),
-(¬d \/ __2),
-(¬c \/ __2),
-(¬__2 \/ d \/ c),
-(¬__3 \/ b),
-(¬__3 \/ d),
-(__3 \/ ¬b \/ ¬d),
-(¬__0 \/ __4),
-(¬__3 \/ __4),
-(¬__4 \/ __0 \/ __3),
-(__1),
-(__4),
-(b),
-(__2)
+define(__0 <-> !(c)) using tseitin,
+define(__1 <-> or([a,b;int(1..)])) using tseitin,
+define(__2 <-> or([d,c;int(1..)])) using tseitin,
+define(__3 <-> and([b,d;int(1..)])) using tseitin,
+define(__4 <-> or([__0,__3;int(1..)])) using tseitin,
+assert(__1) using tseitin,
+assert(__4) using tseitin,
+assert(b) using tseitin,
+assert(__2) using tseitin
 

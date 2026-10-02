@@ -17,9 +17,8 @@ c = false
 __0
 new variables:
   findAux __0: bool
-new clauses:
-  (c \/ __0)
-  (¬c \/ ¬__0)
+new SAT encoding decisions:
+  define(__0 <-> (c) <-> (false)) using tseitin
 
 --
 
@@ -29,8 +28,8 @@ __0
    ~~> remove_single_atom ([("SAT", 8400)])
 b,
 __0
-new clauses:
-  (a)
+new SAT encoding decisions:
+  assert(a) using tseitin
 
 --
 
@@ -38,16 +37,16 @@ b,
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
 __0
-new clauses:
-  (b)
+new SAT encoding decisions:
+  assert(b) using tseitin
 
 --
 
 __0
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (__0)
+new SAT encoding decisions:
+  assert(__0) using tseitin
 
 --
 
@@ -62,11 +61,10 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(c \/ __0),
-(¬c \/ ¬__0),
-(a),
-(b),
-(__0)
+define(__0 <-> (c) <-> (false)) using tseitin,
+assert(a) using tseitin,
+assert(b) using tseitin,
+assert(__0) using tseitin
 

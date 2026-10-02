@@ -16,9 +16,8 @@ and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
 __0
 new variables:
   findAux __0: bool
-new clauses:
-  (¬b \/ ¬__0)
-  (b \/ __0)
+new SAT encoding decisions:
+  define(__0 <-> !(b)) using tseitin
 
 --
 
@@ -27,9 +26,8 @@ new clauses:
 __1
 new variables:
   findAux __1: bool
-new clauses:
-  (¬b \/ ¬__1)
-  (b \/ __1)
+new SAT encoding decisions:
+  define(__1 <-> !(b)) using tseitin
 
 --
 
@@ -38,10 +36,8 @@ or([a,a;int(1..)])
 __2
 new variables:
   findAux __2: bool
-new clauses:
-  (¬a \/ __2)
-  (¬a \/ __2)
-  (¬__2 \/ a \/ a)
+new SAT encoding decisions:
+  define(__2 <-> or([a,a;int(1..)])) using tseitin
 
 --
 
@@ -50,10 +46,8 @@ or([__0,__1;int(1..)])
 __3
 new variables:
   findAux __3: bool
-new clauses:
-  (¬__0 \/ __3)
-  (¬__1 \/ __3)
-  (¬__3 \/ __0 \/ __1)
+new SAT encoding decisions:
+  define(__3 <-> or([__0,__1;int(1..)])) using tseitin
 
 --
 
@@ -62,18 +56,16 @@ and([__2,__3;int(1..)])
 __4
 new variables:
   findAux __4: bool
-new clauses:
-  (¬__4 \/ __2)
-  (¬__4 \/ __3)
-  (__4 \/ ¬__2 \/ ¬__3)
+new SAT encoding decisions:
+  define(__4 <-> and([__2,__3;int(1..)])) using tseitin
 
 --
 
 __4
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (__4)
+new SAT encoding decisions:
+  assert(__4) using tseitin
 
 --
 
@@ -93,20 +85,12 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(¬b \/ ¬__0),
-(b \/ __0),
-(¬b \/ ¬__1),
-(b \/ __1),
-(¬a \/ __2),
-(¬a \/ __2),
-(¬__2 \/ a \/ a),
-(¬__0 \/ __3),
-(¬__1 \/ __3),
-(¬__3 \/ __0 \/ __1),
-(¬__4 \/ __2),
-(¬__4 \/ __3),
-(__4 \/ ¬__2 \/ ¬__3),
-(__4)
+define(__0 <-> !(b)) using tseitin,
+define(__1 <-> !(b)) using tseitin,
+define(__2 <-> or([a,a;int(1..)])) using tseitin,
+define(__3 <-> or([__0,__1;int(1..)])) using tseitin,
+define(__4 <-> and([__2,__3;int(1..)])) using tseitin,
+assert(__4) using tseitin
 

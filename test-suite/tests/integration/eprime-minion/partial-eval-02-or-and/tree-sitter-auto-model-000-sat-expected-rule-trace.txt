@@ -29,10 +29,8 @@ or([a,b;int(1..)])
 __0
 new variables:
   findAux __0: bool
-new clauses:
-  (¬a \/ __0)
-  (¬b \/ __0)
-  (¬__0 \/ a \/ b)
+new SAT encoding decisions:
+  define(__0 <-> or([a,b;int(1..)])) using tseitin
 
 --
 
@@ -42,8 +40,8 @@ c
    ~~> remove_single_atom ([("SAT", 8400)])
 true,
 c
-new clauses:
-  (__0)
+new SAT encoding decisions:
+  assert(__0) using tseitin
 
 --
 
@@ -51,8 +49,8 @@ true,
 c
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (c)
+new SAT encoding decisions:
+  assert(c) using tseitin
 
 --
 
@@ -67,11 +65,9 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(¬a \/ __0),
-(¬b \/ __0),
-(¬__0 \/ a \/ b),
-(__0),
-(c)
+define(__0 <-> or([a,b;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(c) using tseitin
 

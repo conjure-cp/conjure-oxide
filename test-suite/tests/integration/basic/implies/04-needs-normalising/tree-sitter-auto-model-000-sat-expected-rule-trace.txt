@@ -25,9 +25,8 @@ such that
 __0
 new variables:
   findAux __0: bool
-new clauses:
-  (¬a \/ ¬__0)
-  (a \/ __0)
+new SAT encoding decisions:
+  define(__0 <-> !(a)) using tseitin
 
 --
 
@@ -36,9 +35,8 @@ new clauses:
 __1
 new variables:
   findAux __1: bool
-new clauses:
-  (¬b \/ ¬__1)
-  (b \/ __1)
+new SAT encoding decisions:
+  define(__1 <-> !(b)) using tseitin
 
 --
 
@@ -47,9 +45,8 @@ new clauses:
 __2
 new variables:
   findAux __2: bool
-new clauses:
-  (¬x \/ ¬__2)
-  (x \/ __2)
+new SAT encoding decisions:
+  define(__2 <-> !(x)) using tseitin
 
 --
 
@@ -58,9 +55,8 @@ new clauses:
 __3
 new variables:
   findAux __3: bool
-new clauses:
-  (¬y \/ ¬__3)
-  (y \/ __3)
+new SAT encoding decisions:
+  define(__3 <-> !(y)) using tseitin
 
 --
 
@@ -75,9 +71,8 @@ and([__2,!(__3);int(1..)])
 __4
 new variables:
   findAux __4: bool
-new clauses:
-  (¬__3 \/ ¬__4)
-  (__3 \/ __4)
+new SAT encoding decisions:
+  define(__4 <-> !(__3)) using tseitin
 
 --
 
@@ -92,10 +87,8 @@ and([__2,__4;int(1..)])
 __5
 new variables:
   findAux __5: bool
-new clauses:
-  (¬__5 \/ __2)
-  (¬__5 \/ __4)
-  (__5 \/ ¬__2 \/ ¬__4)
+new SAT encoding decisions:
+  define(__5 <-> and([__2,__4;int(1..)])) using tseitin
 
 --
 
@@ -104,10 +97,8 @@ new clauses:
 __6
 new variables:
   findAux __6: bool
-new clauses:
-  (¬__6 \/ ¬__0 \/ __1)
-  (__6 \/ __0)
-  (__6 \/ ¬__1)
+new SAT encoding decisions:
+  define(__6 <-> (__0) -> (__1)) using tseitin
 
 --
 
@@ -116,10 +107,8 @@ new clauses:
 __7
 new variables:
   findAux __7: bool
-new clauses:
-  (¬__7 \/ ¬f \/ g)
-  (__7 \/ f)
-  (__7 \/ ¬g)
+new SAT encoding decisions:
+  define(__7 <-> (f) -> (g)) using tseitin
 
 --
 
@@ -128,10 +117,8 @@ new clauses:
 __8
 new variables:
   findAux __8: bool
-new clauses:
-  (¬__8 \/ ¬h \/ __7)
-  (__8 \/ h)
-  (__8 \/ ¬__7)
+new SAT encoding decisions:
+  define(__8 <-> (h) -> (__7)) using tseitin
 
 --
 
@@ -140,10 +127,8 @@ new clauses:
 __9
 new variables:
   findAux __9: bool
-new clauses:
-  (¬__9 \/ ¬d \/ e)
-  (__9 \/ d)
-  (__9 \/ ¬e)
+new SAT encoding decisions:
+  define(__9 <-> (d) -> (e)) using tseitin
 
 --
 
@@ -152,10 +137,8 @@ new clauses:
 __10
 new variables:
   findAux __10: bool
-new clauses:
-  (¬__10 \/ ¬c \/ __9)
-  (__10 \/ c)
-  (__10 \/ ¬__9)
+new SAT encoding decisions:
+  define(__10 <-> (c) -> (__9)) using tseitin
 
 --
 
@@ -167,8 +150,8 @@ __8
 __6,
 __10,
 __8
-new clauses:
-  (__5)
+new SAT encoding decisions:
+  assert(__5) using tseitin
 
 --
 
@@ -178,8 +161,8 @@ __8
    ~~> remove_single_atom ([("SAT", 8400)])
 __10,
 __8
-new clauses:
-  (__6)
+new SAT encoding decisions:
+  assert(__6) using tseitin
 
 --
 
@@ -187,16 +170,16 @@ __10,
 __8
    ~~> remove_single_atom ([("SAT", 8400)])
 __8
-new clauses:
-  (__10)
+new SAT encoding decisions:
+  assert(__10) using tseitin
 
 --
 
 __8
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (__8)
+new SAT encoding decisions:
+  assert(__8) using tseitin
 
 --
 
@@ -228,38 +211,21 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(¬a \/ ¬__0),
-(a \/ __0),
-(¬b \/ ¬__1),
-(b \/ __1),
-(¬x \/ ¬__2),
-(x \/ __2),
-(¬y \/ ¬__3),
-(y \/ __3),
-(¬__3 \/ ¬__4),
-(__3 \/ __4),
-(¬__5 \/ __2),
-(¬__5 \/ __4),
-(__5 \/ ¬__2 \/ ¬__4),
-(¬__6 \/ ¬__0 \/ __1),
-(__6 \/ __0),
-(__6 \/ ¬__1),
-(¬__7 \/ ¬f \/ g),
-(__7 \/ f),
-(__7 \/ ¬g),
-(¬__8 \/ ¬h \/ __7),
-(__8 \/ h),
-(__8 \/ ¬__7),
-(¬__9 \/ ¬d \/ e),
-(__9 \/ d),
-(__9 \/ ¬e),
-(¬__10 \/ ¬c \/ __9),
-(__10 \/ c),
-(__10 \/ ¬__9),
-(__5),
-(__6),
-(__10),
-(__8)
+define(__0 <-> !(a)) using tseitin,
+define(__1 <-> !(b)) using tseitin,
+define(__2 <-> !(x)) using tseitin,
+define(__3 <-> !(y)) using tseitin,
+define(__4 <-> !(__3)) using tseitin,
+define(__5 <-> and([__2,__4;int(1..)])) using tseitin,
+define(__6 <-> (__0) -> (__1)) using tseitin,
+define(__7 <-> (f) -> (g)) using tseitin,
+define(__8 <-> (h) -> (__7)) using tseitin,
+define(__9 <-> (d) -> (e)) using tseitin,
+define(__10 <-> (c) -> (__9)) using tseitin,
+assert(__5) using tseitin,
+assert(__6) using tseitin,
+assert(__10) using tseitin,
+assert(__8) using tseitin
 

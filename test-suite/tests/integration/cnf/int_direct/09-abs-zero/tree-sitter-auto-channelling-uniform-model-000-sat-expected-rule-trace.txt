@@ -15,6 +15,7 @@ b
 new variables:
   find b#int_direct_1: bool
 new constraints:
+  sum([toInt(b#int_direct_1);int(1..)]) <= 1
   or([SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)])
 
 --
@@ -25,7 +26,36 @@ a
 new variables:
   find a#int_direct_1: bool
 new constraints:
+  sum([toInt(a#int_direct_1);int(1..)]) <= 1
   or([SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)])
+
+--
+
+b = |a|,
+sum([toInt(b#int_direct_1);int(1..)]) <= 1,
+or([SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)]),
+sum([toInt(a#int_direct_1);int(1..)]) <= 1,
+or([SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)])
+   ~~> select_at_most_one ([("SAT", 20000)])
+b = |a|,
+or([SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)]),
+sum([toInt(a#int_direct_1);int(1..)]) <= 1,
+or([SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)])
+new SAT encoding decisions:
+  at-most-one(b#int_direct_1) using None
+
+--
+
+b = |a|,
+or([SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)]),
+sum([toInt(a#int_direct_1);int(1..)]) <= 1,
+or([SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)])
+   ~~> select_at_most_one ([("SAT", 20000)])
+b = |a|,
+or([SATInt(Direct, [b#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)]),
+or([SATInt(Direct, [a#int_direct_1;int(1..)] [0, 0]) = 0;int(1..)])
+new SAT encoding decisions:
+  at-most-one(a#int_direct_1) using None
 
 --
 
@@ -65,11 +95,9 @@ __1
 new variables:
   findAux __0: bool
   findAux __1: bool
-new clauses:
-  (¬b#int_direct_1 \/ __0)
-  (b#int_direct_1 \/ ¬__0)
-  (¬__1 \/ __0)
-  (__1 \/ ¬__0)
+new SAT encoding decisions:
+  define(__0 <-> (b#int_direct_1) <-> (true)) using tseitin
+  define(__1 <-> and([__0,true;int(1..)])) using tseitin
 
 --
 
@@ -79,11 +107,9 @@ __3
 new variables:
   findAux __2: bool
   findAux __3: bool
-new clauses:
-  (¬a#int_direct_1 \/ __2)
-  (a#int_direct_1 \/ ¬__2)
-  (¬__3 \/ __2)
-  (__3 \/ ¬__2)
+new SAT encoding decisions:
+  define(__2 <-> (a#int_direct_1) <-> (true)) using tseitin
+  define(__3 <-> and([__2,true;int(1..)])) using tseitin
 
 --
 
@@ -93,13 +119,9 @@ __5
 new variables:
   findAux __4: bool
   findAux __5: bool
-new clauses:
-  (¬b#int_direct_1 \/ ¬a#int_direct_1 \/ __4)
-  (b#int_direct_1 \/ a#int_direct_1 \/ __4)
-  (b#int_direct_1 \/ ¬a#int_direct_1 \/ ¬__4)
-  (¬b#int_direct_1 \/ a#int_direct_1 \/ ¬__4)
-  (¬__5 \/ __4)
-  (__5 \/ ¬__4)
+new SAT encoding decisions:
+  define(__4 <-> (b#int_direct_1) <-> (a#int_direct_1)) using tseitin
+  define(__5 <-> and([__4,true;int(1..)])) using tseitin
 
 --
 
@@ -121,8 +143,8 @@ __3
    ~~> remove_single_atom ([("SAT", 8400)])
 __1,
 __3
-new clauses:
-  (__5)
+new SAT encoding decisions:
+  assert(__5) using tseitin
 
 --
 
@@ -130,16 +152,16 @@ __1,
 __3
    ~~> remove_single_atom ([("SAT", 8400)])
 __3
-new clauses:
-  (__1)
+new SAT encoding decisions:
+  assert(__1) using tseitin
 
 --
 
 __3
    ~~> remove_single_atom ([("SAT", 8400)])
 true
-new clauses:
-  (__3)
+new SAT encoding decisions:
+  assert(__3) using tseitin
 
 --
 
@@ -160,23 +182,17 @@ such that
 
 true
 
-clauses:
+sat encoding decisions:
 
-(¬b#int_direct_1 \/ __0),
-(b#int_direct_1 \/ ¬__0),
-(¬__1 \/ __0),
-(__1 \/ ¬__0),
-(¬a#int_direct_1 \/ __2),
-(a#int_direct_1 \/ ¬__2),
-(¬__3 \/ __2),
-(__3 \/ ¬__2),
-(¬b#int_direct_1 \/ ¬a#int_direct_1 \/ __4),
-(b#int_direct_1 \/ a#int_direct_1 \/ __4),
-(b#int_direct_1 \/ ¬a#int_direct_1 \/ ¬__4),
-(¬b#int_direct_1 \/ a#int_direct_1 \/ ¬__4),
-(¬__5 \/ __4),
-(__5 \/ ¬__4),
-(__5),
-(__1),
-(__3)
+at-most-one(b#int_direct_1) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+at-most-one(a#int_direct_1) using Some(EncodingSelection { algorithm: Pairwise, provenance: Heuristic }),
+define(__0 <-> (b#int_direct_1) <-> (true)) using tseitin,
+define(__1 <-> and([__0,true;int(1..)])) using tseitin,
+define(__2 <-> (a#int_direct_1) <-> (true)) using tseitin,
+define(__3 <-> and([__2,true;int(1..)])) using tseitin,
+define(__4 <-> (b#int_direct_1) <-> (a#int_direct_1)) using tseitin,
+define(__5 <-> and([__4,true;int(1..)])) using tseitin,
+assert(__5) using tseitin,
+assert(__1) using tseitin,
+assert(__3) using tseitin
 
