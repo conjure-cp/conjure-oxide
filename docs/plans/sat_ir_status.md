@@ -30,7 +30,7 @@ Branch: `sat-ir`. Conventional commits; never push.
 - Asserted cardinality decisions retain upper/lower/exact bounds and occurrence multiplicity. `--cardinality-encoding` selects RustSAT totalizer or Pindakaas sorting network. Heuristics resolve one cardinality choice per model; compact initially selects totalizer.
 - Pindakaas 0.5.1 is pinned with its default solver features disabled. Its clause sink shares the RustSAT allocator, including every encoder auxiliary. Constants and impossible/trivial bounds are normalised before dispatch.
 
-- Asserted pseudo-Boolean decisions retain signed weights, upper/lower/exact bounds and selected provider provenance. `--pb-encoding` pins RustSAT generalised totalizer, RustSAT binary adder or Pindakaas BDD. Explicit overrides take precedence; all-mode shares one choice per model. Compact initially uses GTE through a coefficient sum of 4096 and the adder above that.
+- Asserted pseudo-Boolean decisions retain signed weights, upper/lower/exact bounds and selected provider provenance. `--pb-encoding` pins RustSAT generalised totalizer, RustSAT binary adder, Pindakaas BDD, RustSAT dynamic polynomial watchdog or Pindakaas SWC. Explicit overrides take precedence; all-mode shares one choice per model. Compact initially uses GTE through a coefficient sum of 4096 and the adder above that.
 - Linear extraction uses Direct, Order and BinaryValue views, retaining numeric values for sparse domains. Checked coefficient arithmetic precedes library dispatch; constants, repeated/complementary literals, negative weights and trivial bounds are normalised in the adaptor. Library-range overflow is reported rather than wrapped.
 - Signed BinaryValue multiplication includes sign extension. Division bounds and circuits follow Essence floor semantics, including negative operands and minimum-value magnitudes. The three previous solution mismatches now pass uniform portfolios.
 
@@ -54,7 +54,7 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 - Extend decisions to the other encoding classes and implement shared representation materialisation, decoding, and domain constraints. Unify the explicit Boolean arena and production gate/AMO payloads as those plans are migrated.
 - Add BinaryOffset and BinaryRank; expose the existing actual-value encoding as BinaryValue in the new production pipeline.
 - Add lazy multi-representation materialisation, channelling, and exhaustive semantic tests before enabling mixed representations.
-- The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. The Pindakaas clause-sink bridge and cardinality provider choices are implemented; weighted PB now has GTE, adder and BDD providers; SWC, DPW and the remaining provider alternatives are subsequent work.
+- The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. The Pindakaas clause-sink bridge and cardinality provider choices are implemented; weighted PB now has GTE, adder, BDD, DPW and SWC providers. Pindakaas adder and totaliser are deferred as overlapping algorithm families; alternate provider implementations and tuning remain future work.
 - Expand verified portfolios beyond the CNF corpus and investigate the remaining slow fixtures.
 
 ## Validation history
@@ -71,5 +71,5 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 ## Weighted-stage validation
 
 - Weighted-stage verification: complete `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,505 tests with 14 skipped, plus all workspace doctests. Normal golden verification passed 781 tests across every enabled SAT fixture and the core/rule packages. Production Clippy and formatting passed.
-- Current coverage is 327 of 622 runnable fixtures, with 2,663 SAT portfolios and 2,568 uniform portfolios across 239 fixtures. The three former mismatches are enabled; new fixtures cover all 48 signed-arithmetic operand pairs and five solutions of sparse weighted constraints. The signed fixture uses Conjure/Minion references because existing Z3 Euclidean division differs for negative divisors.
+- Weighted-stage coverage was 327 of 622 runnable fixtures, with 2,663 SAT portfolios and 2,568 uniform portfolios across 239 fixtures. The three former mismatches are enabled; new fixtures cover all 48 signed-arithmetic operand pairs and five solutions of sparse weighted constraints. The signed fixture uses Conjure/Minion references because existing Z3 Euclidean division differs for negative divisors.
 - Weighted-stage timing cleanup restored 300 timing-only files and retained prior measurements in 325 semantic-statistics files. The newly expanded signed-division fixture deliberately raises its expected-time budget from one to ten seconds. Generated artefacts are committed separately from implementation.

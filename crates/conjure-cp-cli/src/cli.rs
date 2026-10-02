@@ -228,7 +228,7 @@ pub struct GlobalArgs {
     #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub cardinality_encoding: Option<conjure_cp::ast::sat_decision::CardinalityEncoding>,
 
-    /// Pin the SAT weighted encoder: rustsat-generalized-totalizer, rustsat-binary-adder, or pindakaas-bdd.
+    /// Pin the SAT weighted encoder: rustsat-generalized-totalizer, rustsat-binary-adder, pindakaas-bdd, rustsat-dynamic-poly-watchdog, or pindakaas-swc.
     #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub pb_encoding: Option<conjure_cp::ast::sat_decision::PbEncoding>,
 

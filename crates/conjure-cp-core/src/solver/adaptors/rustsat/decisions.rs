@@ -214,9 +214,14 @@ impl Compiler<'_> {
             .map(|(literal, weight)| (literal, weight as usize))
             .collect();
         match algorithm {
-            PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder => {
+            PbEncoding::RustsatGeneralizedTotalizer
+            | PbEncoding::RustsatBinaryAdder
+            | PbEncoding::RustsatDynamicPolyWatchdog => {
                 use rustsat::{
-                    encodings::pb::{BinaryAdder, BoundBoth, DoubleGeneralizedTotalizer},
+                    encodings::pb::{
+                        BinaryAdder, BoundBoth, DoubleGeneralizedTotalizer, DynamicPolyWatchdog,
+                        simulators::{Double, Inverted},
+                    },
                     types::constraints::PbConstraint,
                 };
                 let constraint = match relation {
@@ -246,6 +251,14 @@ impl Compiler<'_> {
                         &mut cnf,
                         self.instance.var_manager_mut(),
                     ),
+                    PbEncoding::RustsatDynamicPolyWatchdog => {
+                        // The inverted copy supplies lower bounds; precision remains exact.
+                        Double::<DynamicPolyWatchdog, Inverted<DynamicPolyWatchdog>>::encode_constr(
+                            constraint,
+                            &mut cnf,
+                            self.instance.var_manager_mut(),
+                        )
+                    }
                     _ => unreachable!(),
                 };
                 result.map_err(|error| {
@@ -255,12 +268,12 @@ impl Compiler<'_> {
                     self.instance.add_clause(clause);
                 }
             }
-            PbEncoding::PindakaasBdd => {
+            PbEncoding::PindakaasBdd | PbEncoding::PindakaasSwc => {
                 use pindakaas::{
                     Encoder,
                     bool_linear::{
                         BddEncoder, BoolLinAggregator, BoolLinExp, BoolLinVariant, BoolLinear,
-                        Comparator,
+                        Comparator, SwcEncoder,
                     },
                 };
                 let comparison = match relation {
@@ -279,18 +292,29 @@ impl Compiler<'_> {
                     &mut sink,
                     &BoolLinear::new(expression, comparison, bound as i64),
                 );
-                let encoder = BddEncoder::default();
-                let result = match variant {
-                    Ok(BoolLinVariant::Linear(linear)) => encoder.encode(&mut sink, &linear),
-                    Ok(BoolLinVariant::Cardinality(cardinality)) => {
-                        encoder.encode(&mut sink, &cardinality)
-                    }
-                    Ok(BoolLinVariant::CardinalityOne(cardinality)) => encoder.encode(
-                        &mut sink,
-                        &pindakaas::cardinality::Cardinality::from(cardinality),
-                    ),
-                    Ok(BoolLinVariant::Trivial) => Ok(()),
-                    Err(error) => Err(error),
+                macro_rules! encode_variant {
+                    ($encoder:expr) => {{
+                        let encoder = $encoder;
+                        match variant {
+                            Ok(BoolLinVariant::Linear(linear)) => {
+                                encoder.encode(&mut sink, &linear)
+                            }
+                            Ok(BoolLinVariant::Cardinality(cardinality)) => {
+                                encoder.encode(&mut sink, &cardinality)
+                            }
+                            Ok(BoolLinVariant::CardinalityOne(cardinality)) => encoder.encode(
+                                &mut sink,
+                                &pindakaas::cardinality::Cardinality::from(cardinality),
+                            ),
+                            Ok(BoolLinVariant::Trivial) => Ok(()),
+                            Err(error) => Err(error),
+                        }
+                    }};
+                }
+                let result = match algorithm {
+                    PbEncoding::PindakaasBdd => encode_variant!(BddEncoder::default()),
+                    PbEncoding::PindakaasSwc => encode_variant!(SwcEncoder::default()),
+                    _ => unreachable!(),
                 };
                 if result.is_err() {
                     self.assert(Term::Constant(false));
@@ -908,7 +932,7 @@ mod pseudo_boolean_tests {
             .map(|variable| Reference::new(variable.clone()).into())
             .collect();
         for algorithm in PbEncoding::ALL {
-            for weights in [[3, 5, -2], [0, 1, 1], [-3, -2, -1], [2, 2, 2]] {
+            for weights in [[3, 5, -2], [0, 1, 1], [-3, -2, -1], [2, 2, 2], [1, 64, 257]] {
                 for special in [false, true] {
                     let mut terms: Vec<_> =
                         weights.into_iter().zip(inputs.iter().cloned()).collect();
@@ -928,7 +952,7 @@ mod pseudo_boolean_tests {
                         CardinalityRelation::AtLeast,
                         CardinalityRelation::Exactly,
                     ] {
-                        for bound in -12..=20 {
+                        for bound in (-12..=20).chain([63, 64, 65, 256, 257, 258, 320, 321, 322]) {
                             let mut instance = SatInstance::new();
                             let mut map = HashMap::new();
                             for variable in &variables {

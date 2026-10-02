@@ -408,17 +408,23 @@ pub enum PbEncoding {
     RustsatGeneralizedTotalizer,
     RustsatBinaryAdder,
     PindakaasBdd,
+    RustsatDynamicPolyWatchdog,
+    PindakaasSwc,
 }
 impl PbEncoding {
-    pub const ALL: [Self; 3] = [
+    pub const ALL: [Self; 5] = [
         Self::RustsatGeneralizedTotalizer,
         Self::RustsatBinaryAdder,
         Self::PindakaasBdd,
+        Self::RustsatDynamicPolyWatchdog,
+        Self::PindakaasSwc,
     ];
-    pub const LABELS: [&'static str; 3] = [
+    pub const LABELS: [&'static str; 5] = [
         "rustsat-generalized-totalizer",
         "rustsat-binary-adder",
         "pindakaas-bdd",
+        "rustsat-dynamic-poly-watchdog",
+        "pindakaas-swc",
     ];
 }
 impl Display for PbEncoding {
