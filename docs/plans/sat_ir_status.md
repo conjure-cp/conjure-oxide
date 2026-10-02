@@ -20,7 +20,7 @@ Branch: `sat-ir`. Conventional commits; never push.
 - Validated, serialisable `ast::encoding_plan` decision nodes owned by `Model::sat_encoding`, independent of literal allocation. Existing declaration identities are interned as semantic variables; fresh reference IDs distinguish individual uses. Domains are canonicalised without enumerating intervals. Representation requests and encoding provenance are explicit.
 - The SAT adaptor loads explicit terminal Boolean decision ASTs and rejects mixed terminal payloads, residual constraints, missing/stale variables, objectives and dominance. Non-SAT adaptors reject SAT decisions. Model serialization, cloning, hashing and stable-ID collection retain the decision nodes.
 - A first generator realises explicitly selected Boolean Tseitin plans directly as RustSAT clauses, reusing RustSAT atomic gate helpers. Literal types stay private to the adapter. Exhaustive assignment tests check semantic projection, repeated uses, constants, empty conjunctions/disjunctions, and deterministic clause output.
-- Uniform SAT portfolios enabled in 41 existing CNF fixture directories plus the unequal-domain fixture. The suite now contains 245 uniform SAT portfolios across these 42 fixtures, including all six AMO choices where applicable. Reference solutions are checked before accepting goldens.
+- The initial uniform SAT expansion enabled 41 existing CNF fixture directories plus the unequal-domain fixture. That stage contained 245 uniform SAT portfolios across these 42 fixtures, including all six AMO choices where applicable. Reference solutions are checked before accepting goldens.
 
 - Production Boolean and integer gate rules now emit semantic `SatEncodingDecision` assertions/definitions through `RuleEffect::sat`. Model CNF fields, `CnfClause` and the legacy clause converter have been removed. RustSAT generates all clauses at load time; dominance injection uses the same allocation frontier as encoder auxiliaries.
 - Asserted AMO decisions carry a selectable algorithm and explicit/heuristic provenance. `--amo-encoding` pins pairwise, ladder, bitwise, commander, bimander or two-product. Otherwise the existing first/random/compact/interactive/all heuristics choose one AMO algorithm per model. Compact uses pairwise through five inputs and ladder above that; this is an initial policy, not a performance claim.
@@ -45,7 +45,7 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 - Longer acceptance and normal regression runs enabled comparison/sparse_direct, comparison/sparse_log, int_direct/06-add, and integer/05-product. At that stage, integer/10-div and neg-div exceeded a 180-second per-test limit. The later cardinality coverage expansion enables integer/10-div; the later signed arithmetic fixes enable neg-div as well.
 - cnf/cnf2 contains two Essence files, so the current integration test discovery skips that directory; split these inputs before enabling them.
 
-- The [cardinality coverage survey](sat_coverage_survey.md) tried all 489 previously SAT-disabled runnable fixtures. It enables 191 existing fixtures plus a new cardinality fixture: 322 SAT-enabled fixtures out of 620 runnable, with 1,931 SAT portfolios (1,836 uniform portfolios across 234 fixtures). All enabled SAT run records are successful.
+- The [cardinality coverage survey](sat_coverage_survey.md) initially tried all 489 previously SAT-disabled runnable fixtures. That stage enabled 191 existing fixtures plus a new cardinality fixture: 322 SAT-enabled fixtures out of 620 runnable, with 1,931 SAT portfolios (1,836 uniform portfolios across 234 fixtures). All enabled SAT run records are successful.
 - A BinaryValue division-bound fix removes panics for zero-containing divisor intervals and checks quotient extrema without overflowing. Nine additional division fixtures now pass all uniform portfolios.
 
 ## Outstanding
@@ -57,7 +57,7 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 - The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. The Pindakaas clause-sink bridge and cardinality provider choices are implemented; weighted PB now has GTE, adder and BDD providers; SWC, DPW and the remaining provider alternatives are subsequent work.
 - Expand verified portfolios beyond the CNF corpus and investigate the remaining slow fixtures.
 
-## Validation
+## Validation history
 
 - The requested `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,491 workspace tests, with 14 skipped. Workspace doctests also passed.
 - After the final AMO lowering guard, focused acceptance and normal golden verification each passed 574 tests: core/rule tests and all 130 fixture directories with existing SAT goldens. Core library: 220 unit tests; rules: 129 unit tests.
@@ -67,3 +67,9 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 
 - Cardinality-stage verification: full workspace acceptance passed 1,497 tests with 14 skipped, plus all workspace doctests. Core library: 222 unit tests; rules: 131. Exhaustive cardinality checks cover both providers, upper/lower/exact bounds, constants, repeated/complementary operands and the shared allocation frontier. Choice tests cover group sharing, explicit overrides and retained node pins.
 - Final normal golden verification passed 770 tests, covering all 322 SAT-enabled fixture directories and core/rule tests. Timing cleanup restored 402 timing-only files and preserved existing measurements in 218 semantic-statistics files; seven expanded fixtures received deliberate expected-time budget increases.
+
+## Weighted-stage validation
+
+- Weighted-stage verification: complete `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,505 tests with 14 skipped, plus all workspace doctests. Normal golden verification passed 781 tests across every enabled SAT fixture and the core/rule packages. Production Clippy and formatting passed.
+- Current coverage is 327 of 622 runnable fixtures, with 2,663 SAT portfolios and 2,568 uniform portfolios across 239 fixtures. The three former mismatches are enabled; new fixtures cover all 48 signed-arithmetic operand pairs and five solutions of sparse weighted constraints. The signed fixture uses Conjure/Minion references because existing Z3 Euclidean division differs for negative divisors.
+- Weighted-stage timing cleanup restored 300 timing-only files and retained prior measurements in 325 semantic-statistics files. The newly expanded signed-division fixture deliberately raises its expected-time budget from one to ten seconds. Generated artefacts are committed separately from implementation.
