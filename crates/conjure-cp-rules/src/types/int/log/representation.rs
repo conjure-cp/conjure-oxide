@@ -102,6 +102,7 @@ register_representation!(
     fn compactness(state: &State<DomainPtr>) -> usize {
         1usize << state.bits.len().min(usize::BITS as usize - 1)
     }
+    fn integer_encoding() -> bool { true }
     fn applies(family: SolverFamily) -> bool {
         matches!(family, SolverFamily::Sat)
     }

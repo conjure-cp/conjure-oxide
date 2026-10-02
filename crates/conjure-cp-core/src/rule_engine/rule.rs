@@ -64,6 +64,7 @@ pub struct RuleEffect {
     /// Shared declarations to update if this effect is selected.
     pub(crate) declaration_updates: Vec<DeclarationUpdate>,
     materialise: Option<DeferredRuleEffect>,
+    pub(crate) uniform_choices: crate::representation::uniform::Choices,
 }
 
 /// An in-place update to a shared declaration, applied only after its rule is selected.
@@ -127,6 +128,7 @@ impl RuleEffect {
             new_clauses: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -139,6 +141,7 @@ impl RuleEffect {
             new_clauses: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -151,6 +154,7 @@ impl RuleEffect {
             new_clauses: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -163,6 +167,7 @@ impl RuleEffect {
             new_clauses: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -179,6 +184,7 @@ impl RuleEffect {
             new_clauses,
             declaration_updates: Vec::new(),
             materialise: None,
+            uniform_choices: Default::default(),
         }
     }
 
@@ -197,6 +203,7 @@ impl RuleEffect {
             new_clauses: Vec::new(),
             declaration_updates: Vec::new(),
             materialise: Some(Arc::new(materialise)),
+            uniform_choices: Default::default(),
         }
     }
 
@@ -206,6 +213,7 @@ impl RuleEffect {
     /// top-level constraints, clauses, and speculative symbol table. Before returning, the symbol
     /// snapshot is reduced to the bindings that the effect actually changes.
     pub fn materialise(mut self, symbols: &SymbolTable) -> Self {
+        crate::representation::uniform::commit(std::mem::take(&mut self.uniform_choices));
         if let Some(materialise) = self.materialise.take() {
             return materialise(symbols).materialise(symbols);
         }
@@ -244,7 +252,8 @@ impl RuleEffect {
     }
 
     /// Applies side-effects (e.g. symbol table updates)
-    pub fn apply(self, model: &mut Model) {
+    pub fn apply(mut self, model: &mut Model) {
+        crate::representation::uniform::commit(std::mem::take(&mut self.uniform_choices));
         debug_assert!(
             self.materialise.is_none(),
             "deferred rule effects must be materialised before being applied"
@@ -377,7 +386,7 @@ impl<'a> Rule<'a> {
     }
 
     pub fn apply(&self, expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-        (self.application)(expr, symbols)
+        crate::representation::uniform::attempt(|| (self.application)(expr, symbols))
     }
 }
 

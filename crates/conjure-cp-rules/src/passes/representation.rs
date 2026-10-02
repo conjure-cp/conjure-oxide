@@ -206,7 +206,7 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
         return None;
     }
 
-    if channelling() == Channelling::No
+    if channelling() != Channelling::Yes
         && let Some(existing) = decl.reprs().iter().next().map(|(_, state)| state.rule())
     {
         return Some(existing);
@@ -237,6 +237,20 @@ fn choose_representation_rule(decl: &DeclarationPtr, symbols: &SymbolTable) -> O
         // per entry under `components`, a single packed integer under `packed`, or the matrix
         // itself under `array`. Offering both questions at once would make them look like one.
         candidates.retain(|(rule, _)| !is_encoding_repr(*rule));
+    }
+
+    if channelling() == Channelling::Uniform
+        && let Some(dom) = decl.domain()
+        && let Some(selected) = conjure_cp::representation::uniform::selected(
+            &dom,
+            settled_layout || is_int_domain(&dom),
+        )
+    {
+        // Do not silently fall back when the model's choice cannot represent this domain.
+        return candidates
+            .iter()
+            .find(|(rule, _)| rule.id() == selected.id())
+            .map(|(rule, _)| *rule);
     }
 
     // User-specified representation preference on the domain (e.g. set (representation packed)) defaults the choice
@@ -532,6 +546,77 @@ mod tests {
     use conjure_cp::ast::{Domain, MSetAttr, SetAttr};
     use conjure_cp::settings::set_heuristic;
     use conjure_cp::{domain_int, range};
+
+    #[test]
+    fn uniform_reuses_a_type_family_across_different_domains_and_element_types() {
+        use crate::types::set::SetExplicit;
+        use conjure_cp::settings::set_channelling;
+        set_channelling(Channelling::Uniform);
+        set_heuristic(Heuristic::All);
+        let mut symbols = SymbolTable::new();
+        let mut first = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(1, 2),
+            domain_int!(1..3),
+        ));
+        SetExplicit::init_for(&mut first).unwrap();
+        let second = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(0, 3),
+            domain_int!(-2..5),
+        ));
+        let booleans = symbols.gen_find(&Domain::set(
+            SetAttr::new_min_max_size(0, 2),
+            Domain::bool(),
+        ));
+        for declaration in [second, booleans] {
+            assert_eq!(
+                choose_representation_rule(&declaration, &symbols)
+                    .unwrap()
+                    .id(),
+                SetExplicit::id()
+            );
+        }
+        set_channelling(Channelling::No);
+        set_heuristic(Heuristic::Compact);
+    }
+
+    #[test]
+    fn uniform_integer_choice_reuses_encoding_and_rejects_direct_initialisation() {
+        use conjure_cp::settings::{SolverFamily, set_channelling, with_solver_family};
+        with_solver_family(SolverFamily::Sat, || {
+            set_channelling(Channelling::Uniform);
+            let mut symbols = SymbolTable::new();
+            let mut first = symbols.gen_find(&domain_int!(0..3));
+            IntOrder::init_for(&mut first).unwrap();
+            let mut second = symbols.gen_find(&domain_int!(-5..7));
+            assert_eq!(
+                choose_representation_rule(&second, &symbols).unwrap().id(),
+                IntOrder::id()
+            );
+            let err = IntLog::init_for(&mut second).unwrap_err();
+            assert!(err.to_string().contains("uniform representation conflict"));
+            assert!(second.reprs().is_empty());
+            IntOrder::init_for(&mut second).unwrap();
+            assert_eq!(second.reprs().iter().count(), 1);
+            set_channelling(Channelling::No);
+        });
+    }
+
+    #[test]
+    fn uniform_does_not_fall_back_for_an_incompatible_domain() {
+        use crate::types::set::SetOccurrence;
+        use conjure_cp::settings::set_channelling;
+        set_channelling(Channelling::Uniform);
+        let mut symbols = SymbolTable::new();
+        let mut first = symbols.gen_find(&Domain::set(SetAttr::new_max_size(2), domain_int!(1..3)));
+        SetOccurrence::init_for(&mut first).unwrap();
+        // Occurrence requires enumerating the element domain, unlike explicit.
+        let second = symbols.gen_find(&Domain::set(
+            SetAttr::new_max_size(2),
+            Domain::int(vec![conjure_cp::ast::Range::<i32>::Unbounded]),
+        ));
+        assert!(choose_representation_rule(&second, &symbols).is_none());
+        set_channelling(Channelling::No);
+    }
 
     #[test]
     fn compact_prefers_the_smallest_representation_domain() {

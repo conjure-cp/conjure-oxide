@@ -206,7 +206,8 @@ pub struct GlobalArgs {
 
     /// Whether multiple representations of the same declaration may be channelled together.
     ///
-    /// Possible values: `no`, `yes`. Channelling is disabled by default. Enable `yes` to allow
+    /// Possible values: `no`, `yes`, `uniform`. Channelling is disabled by default. Enable `yes` to allow
+    /// `uniform` uses one representation kind per type family throughout the model. Enable `yes` for
     /// different representations of the same variable at different call sites, e.g.
     /// `1 in (x :: set (representation packed) of int) /\ 2 in (x :: set (representation occurrence) of int)`.
     #[arg(

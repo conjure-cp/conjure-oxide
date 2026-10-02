@@ -62,6 +62,8 @@ pub enum Channelling {
     #[default]
     No,
     Yes,
+    /// One representation kind per type family throughout a model, without channelling.
+    Uniform,
 }
 
 impl Display for Channelling {
@@ -69,6 +71,7 @@ impl Display for Channelling {
         f.write_str(match self {
             Self::No => "no",
             Self::Yes => "yes",
+            Self::Uniform => "uniform",
         })
     }
 }
@@ -80,8 +83,9 @@ impl FromStr for Channelling {
         match value.trim().to_ascii_lowercase().as_str() {
             "no" => Ok(Self::No),
             "yes" => Ok(Self::Yes),
+            "uniform" => Ok(Self::Uniform),
             other => Err(format!(
-                "unknown channelling setting '{other}'; expected yes or no"
+                "unknown channelling setting '{other}'; expected yes, no, or uniform"
             )),
         }
     }
@@ -130,6 +134,7 @@ pub fn heuristic() -> Heuristic {
 
 pub fn set_channelling(channelling: Channelling) {
     CHANNELLING.with(|current| current.set(channelling));
+    crate::representation::uniform::reset();
 }
 
 pub fn channelling() -> Channelling {
@@ -808,6 +813,8 @@ mod tests {
         assert_eq!(Heuristic::from_str("x"), Ok(Heuristic::All));
         assert_eq!(Channelling::from_str("no"), Ok(Channelling::No));
         assert_eq!(Channelling::from_str("yes"), Ok(Channelling::Yes));
+        assert_eq!(Channelling::from_str("uniform"), Ok(Channelling::Uniform));
+        assert_eq!(Channelling::Uniform.to_string(), "uniform");
     }
 
     #[test]

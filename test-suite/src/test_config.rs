@@ -829,6 +829,26 @@ mod tests {
     use super::*;
 
     #[test]
+    fn uniform_is_accepted_without_changing_existing_configuration() {
+        assert_eq!(
+            TestConfig::default().configured_channelling().unwrap(),
+            vec![Channelling::No]
+        );
+        let config: TestConfig = toml::from_str("channelling = 'uniform'").unwrap();
+        assert_eq!(
+            config.configured_channelling().unwrap(),
+            vec![Channelling::Uniform]
+        );
+        let config: TestConfig = toml::from_str("channelling = 'no'").unwrap();
+        assert_eq!(
+            config.configured_channelling().unwrap(),
+            vec![Channelling::No]
+        );
+        let config: TestConfig = toml::from_str("channelling = 'yes'").unwrap();
+        assert!(config.configured_channelling().is_err());
+    }
+
+    #[test]
     fn records_runs_in_the_canonical_shape() {
         let temp_dir = tempfile::tempdir().unwrap();
         let path = temp_dir.path().join(STATS_FILE_NAME);

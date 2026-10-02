@@ -336,7 +336,7 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
                 let ctx = ctx.clone();
 
                 for rd in rules {
-                    match (rd.rule.application)(&expr, &symbols) {
+                    match rd.rule.apply(&expr, &symbols) {
                         Ok(effect) => {
                             observer.attempted(*priority, rd, &expr, RuleAttemptStatus::Success);
                             results.push((
@@ -394,6 +394,8 @@ pub(crate) fn try_rewrite_value_letting_once<O: RuleAttemptObserver>(
 /// Represents errors that can occur during the model rewriting process.
 #[derive(Debug, Error)]
 pub enum RewriteError {
+    #[error("{0}")]
+    UniformRepresentation(String),
     #[error("Error resolving rules {0}")]
     ResolveRulesError(ResolveRulesError),
 }

@@ -26,6 +26,24 @@ representation choices made per declaration, exactly like choosing `occurrence` 
 set, and both are steered with `--heuristic` (see the modelling-choices guide). Variables in
 different encodings are channelled together automatically where a constraint needs them to agree.
 
+### Uniform representation choices
+
+Use `--channelling uniform` to choose one representation kind for each type family throughout
+one model. All integers use the same encoding regardless of their bounds; all sets use the same
+layout regardless of their element domains. Nested representation variables follow the same
+policy. Matrix layout and integer encoding are separate choices.
+
+```bash
+cargo run -- solve --solver sat --channelling uniform --heuristic i my_problem.essence
+```
+
+The interactive heuristic prompts once for each undecided type family. An incompatible domain is reported
+rather than silently switching representation. `--channelling no` keeps the existing policy of
+one representation per variable, and `yes` permits multiple channelled representations.
+
+Integration-test configurations can use `channelling = "uniform"` with `heuristic = "x"` to
+exercise the available combinations without choosing independently for each integer variable.
+
 ### SAT Solver
 
 ```bash

@@ -325,6 +325,7 @@ struct ReprDefArgs {
     /// Restricting this representation to some solver families:
     /// `applies: (SolverFamily) -> bool`. If omitted, the representation is solver-independent.
     applies_fn: Option<ItemFn>,
+    integer_encoding_fn: Option<ItemFn>,
 }
 
 impl Parse for ReprDefArgs {
@@ -339,7 +340,7 @@ impl Parse for ReprDefArgs {
 
         let mut funcs = HashMap::<String, ItemFn>::new();
         let mut errors: Vec<syn::Error> = Vec::new();
-        for _ in 0..7 {
+        for _ in 0..8 {
             match input.parse::<ItemFn>() {
                 Ok(func) => {
                     let ident = func.sig.ident.to_string();
@@ -371,6 +372,7 @@ impl Parse for ReprDefArgs {
         let repr_vars_fn = funcs.remove("repr_vars");
         let compactness_fn = funcs.remove("compactness");
         let applies_fn = funcs.remove("applies");
+        let integer_encoding_fn = funcs.remove("integer_encoding");
 
         if repr_vars_fn.is_none() && matches!(state_ty, ReprStateType::Path(..)) {
             return Err(input.error("A repr_vars implementation is required for external types"));
@@ -387,6 +389,7 @@ impl Parse for ReprDefArgs {
             repr_vars_fn,
             compactness_fn,
             applies_fn,
+            integer_encoding_fn,
         })
     }
 }
@@ -476,6 +479,11 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         },
         None => quote! {},
     };
+
+    let integer_encoding_impl = args.integer_encoding_fn.map(|mut f| {
+        f.sig.ident = Ident::new("is_integer_encoding", f.sig.ident.span());
+        quote! { #f }
+    });
 
     let mut init_fn = rename_fn(args.init_fn, &prefixed_init);
     let mut structural_fn = rename_fn(args.structural_fn, &prefixed_structural);
@@ -646,6 +654,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             type DomainLevel = #state_ident<DomainPtr>;
 
             #applies_impl
+            #integer_encoding_impl
         }
 
         // -- Registry entry

@@ -130,6 +130,7 @@ register_representation!(
     fn compactness(state: &State<DomainPtr>) -> usize {
         1usize.checked_shl(state.bits.len() as u32).unwrap_or(usize::MAX)
     }
+    fn integer_encoding() -> bool { true }
     fn applies(family: SolverFamily) -> bool {
         matches!(family, SolverFamily::Sat)
     }

@@ -1793,6 +1793,18 @@ pub fn rewrite_model<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
     config: RewriteConfig,
 ) -> Result<Model, RewriteError> {
+    let _uniform_scope = crate::representation::uniform::Scope::new();
+    if crate::settings::channelling() == crate::settings::Channelling::Uniform {
+        for (_, decl) in model.symbols().iter_local() {
+            if let Some(dom) = decl.domain() {
+                for (_, state) in decl.reprs().iter() {
+                    crate::representation::uniform::check_choice(&dom, state.rule())
+                        .map_err(|e| RewriteError::UniformRepresentation(e.to_string()))?;
+                    crate::representation::uniform::record_choice(&dom, state.rule());
+                }
+            }
+        }
+    }
     set_current_rewriter(Rewriter::Rewrite(config));
 
     let needs_abstract_repr = model_needs_abstract_repr_rules(model);
@@ -1905,6 +1917,23 @@ pub fn rewrite_model<'a>(
         model.replace_root(normalised_root);
     }
 
+    if crate::settings::channelling() == crate::settings::Channelling::Uniform {
+        for (_, decl) in model.symbols().iter_local() {
+            if decl.as_find().is_some()
+                && decl.reprs().is_empty()
+                && let Some(dom) = decl.domain()
+                && let Some(selected) = crate::representation::uniform::selected(&dom, false)
+                && selected.probe_for(decl).is_err()
+            {
+                return Err(RewriteError::UniformRepresentation(format!(
+                    "uniform representation `{}` does not support `{}` with domain `{}`",
+                    selected.name(),
+                    decl.name(),
+                    dom,
+                )));
+            }
+        }
+    }
     Ok(model)
 }
 
@@ -1980,7 +2009,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                         ctx.stats.rewriter_rule_application_attempts =
                             Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
 
-                        match (rd.rule.application)(expr, &submodel.symbols()) {
+                        match rd.rule.apply(expr, &submodel.symbols()) {
                             Ok(red) => {
                                 ctx.attempt_observer.attempted(
                                     rule_group.priority,
@@ -2217,7 +2246,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
                 ctx.stats.rewriter_rule_application_attempts =
                     Some(ctx.stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
 
-                match (rd.rule.application)(expr, &submodel.symbols()) {
+                match rd.rule.apply(expr, &submodel.symbols()) {
                     Ok(red) => {
                         ctx.attempt_observer.attempted(
                             rule_group.priority,

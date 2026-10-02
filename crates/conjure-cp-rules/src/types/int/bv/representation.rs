@@ -54,6 +54,7 @@ register_representation!(
         conjure_cp::representation::default_impls::domain_size(&state.value)
             .saturating_mul(1 << 16)
     }
+    fn integer_encoding() -> bool { true }
     fn applies(family: SolverFamily) -> bool {
         matches!(family, SolverFamily::Z3)
     }
