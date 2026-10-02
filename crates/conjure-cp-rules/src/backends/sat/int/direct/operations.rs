@@ -111,7 +111,7 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_symbols,
         );
         output = tseytin_and(
-            &vec![comparison, output],
+            &[comparison, output],
             &mut new_sat_decisions,
             &mut new_symbols,
         );
@@ -155,7 +155,7 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_symbols,
         );
         output = tseytin_or(
-            &vec![comparison, output],
+            &[comparison, output],
             &mut new_sat_decisions,
             &mut new_symbols,
         );
@@ -220,14 +220,14 @@ fn sat_direct_lt(
 
     for (a_i, b_i) in a.iter().zip(b.iter()) {
         // b_or is prefix_or of b up to index i: B_i = b_0 | ... | b_i
-        b_or = tseytin_or(&vec![b_or, b_i.clone()], clauses, symbols);
+        b_or = tseytin_or(&[b_or, b_i.clone()], clauses, symbols);
 
         // a < b if there exists i such that a=i and b > i.
         // b > i is equivalent to NOT(B_i) assuming one-hotness.
         let not_b_or = tseytin_not(b_or.clone(), clauses, symbols);
-        let a_i_and_not_b_i = tseytin_and(&vec![a_i.clone(), not_b_or], clauses, symbols);
+        let a_i_and_not_b_i = tseytin_and(&[a_i.clone(), not_b_or], clauses, symbols);
 
-        cum_result = tseytin_or(&vec![cum_result, a_i_and_not_b_i], clauses, symbols);
+        cum_result = tseytin_or(&[cum_result, a_i_and_not_b_i], clauses, symbols);
     }
 
     cum_result
@@ -427,9 +427,9 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 let a = acc_bits[(i - acc_min) as usize].clone();
                 let b = right_bits[(j - right_min) as usize].clone();
 
-                let and_ab = tseytin_and(&vec![a, b], &mut new_sat_decisions, &mut new_symbols);
+                let and_ab = tseytin_and(&[a, b], &mut new_sat_decisions, &mut new_symbols);
                 sum_expr = tseytin_or(
-                    &vec![sum_expr, and_ab],
+                    &[sum_expr, and_ab],
                     &mut new_sat_decisions,
                     &mut new_symbols,
                 );

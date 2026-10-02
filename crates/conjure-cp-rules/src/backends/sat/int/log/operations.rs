@@ -88,7 +88,7 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_symbols,
         );
         output = tseytin_and(
-            &vec![comparison, output],
+            &[comparison, output],
             &mut new_sat_decisions,
             &mut new_symbols,
         );
@@ -130,7 +130,7 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_symbols,
         );
         output = tseytin_or(
-            &vec![comparison, output],
+            &[comparison, output],
             &mut new_sat_decisions,
             &mut new_symbols,
         );
@@ -155,7 +155,7 @@ fn inequality_boolean(
 
     if strict {
         notb = tseytin_not(b[0].clone(), clauses, symbols);
-        output = tseytin_and(&vec![a[0].clone(), notb], clauses, symbols);
+        output = tseytin_and(&[a[0].clone(), notb], clauses, symbols);
     } else {
         output = tseytin_imply(b[0].clone(), a[0].clone(), clauses, symbols);
     }
@@ -169,23 +169,23 @@ fn inequality_boolean(
     let mut iff;
     for n in 1..(bit_count - 1) {
         notb = tseytin_not(b[n].clone(), clauses, symbols);
-        lhs = tseytin_and(&vec![a[n].clone(), notb.clone()], clauses, symbols);
+        lhs = tseytin_and(&[a[n].clone(), notb.clone()], clauses, symbols);
         iff = tseytin_iff(a[n].clone(), b[n].clone(), clauses, symbols);
-        rhs = tseytin_and(&vec![iff.clone(), output.clone()], clauses, symbols);
-        output = tseytin_or(&vec![lhs.clone(), rhs.clone()], clauses, symbols);
+        rhs = tseytin_and(&[iff.clone(), output.clone()], clauses, symbols);
+        output = tseytin_or(&[lhs.clone(), rhs.clone()], clauses, symbols);
     }
 
     // final bool is the sign bit and should be handled inversely
     let nota = tseytin_not(a[bit_count - 1].clone(), clauses, symbols);
-    lhs = tseytin_and(&vec![nota, b[bit_count - 1].clone()], clauses, symbols);
+    lhs = tseytin_and(&[nota, b[bit_count - 1].clone()], clauses, symbols);
     iff = tseytin_iff(
         a[bit_count - 1].clone(),
         b[bit_count - 1].clone(),
         clauses,
         symbols,
     );
-    rhs = tseytin_and(&vec![iff, output.clone()], clauses, symbols);
-    output = tseytin_or(&vec![lhs, rhs], clauses, symbols);
+    rhs = tseytin_and(&[iff, output.clone()], clauses, symbols);
+    output = tseytin_or(&[lhs, rhs], clauses, symbols);
 
     output
 }
@@ -297,9 +297,9 @@ fn tseytin_full_adder(
 ) -> (Expr, Expr) {
     let axorb = tseytin_xor(a.clone(), b.clone(), clauses, symbols);
     let result = tseytin_xor(axorb.clone(), carry.clone(), clauses, symbols);
-    let aandb = tseytin_and(&vec![a, b], clauses, symbols);
-    let carryandaxorb = tseytin_and(&vec![carry, axorb], clauses, symbols);
-    let carryout = tseytin_or(&vec![aandb, carryandaxorb], clauses, symbols);
+    let aandb = tseytin_and(&[a, b], clauses, symbols);
+    let carryandaxorb = tseytin_and(&[carry, axorb], clauses, symbols);
+    let carryout = tseytin_or(&[aandb, carryandaxorb], clauses, symbols);
 
     (result, carryout)
 }
@@ -312,7 +312,7 @@ fn tseytin_half_adder(
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
     let result = tseytin_xor(a.clone(), b.clone(), clauses, symbols);
-    let carry = tseytin_and(&vec![a, b], clauses, symbols);
+    let carry = tseytin_and(&[a, b], clauses, symbols);
 
     (result, carry)
 }
@@ -336,7 +336,7 @@ fn tseytin_add_two_power(
 
     for item in expr.iter().take(bits).skip(exponent + 1) {
         result.push(tseytin_xor(product.clone(), item.clone(), clauses, symbols));
-        product = tseytin_and(&vec![product, item.clone()], clauses, symbols);
+        product = tseytin_and(&[product, item.clone()], clauses, symbols);
     }
 
     result
@@ -364,7 +364,7 @@ fn cnf_shift_add_multiply(
     let mut x_0andy_i;
 
     for bit in &y {
-        x_0andy_i = tseytin_and(&vec![x[0].clone(), bit.clone()], clauses, symbols);
+        x_0andy_i = tseytin_and(&[x[0].clone(), bit.clone()], clauses, symbols);
         s.push(x_0andy_i);
     }
 
@@ -386,9 +386,9 @@ fn cnf_shift_add_multiply(
         not_x_n = tseytin_not(item.clone(), clauses, symbols);
 
         for i in 0..(bits * 2) {
-            if_true = tseytin_and(&vec![item.clone(), sum[i].clone()], clauses, symbols);
-            if_false = tseytin_and(&vec![not_x_n.clone(), s[i].clone()], clauses, symbols);
-            s[i] = tseytin_or(&vec![if_true.clone(), if_false.clone()], clauses, symbols);
+            if_true = tseytin_and(&[item.clone(), sum[i].clone()], clauses, symbols);
+            if_false = tseytin_and(&[not_x_n.clone(), s[i].clone()], clauses, symbols);
+            s[i] = tseytin_or(&[if_true.clone(), if_false.clone()], clauses, symbols);
         }
     }
 

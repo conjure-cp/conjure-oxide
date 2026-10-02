@@ -24,14 +24,14 @@ fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
 
 /// Record an AND gate without generating clauses.
 pub fn tseytin_and(
-    exprs: &Vec<Expr>,
+    exprs: &[Expr],
     decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
     gate(
         Expr::And(
             Metadata::new(),
-            Moo::new(conjure_cp::into_matrix_expr!(exprs.clone())),
+            Moo::new(conjure_cp::into_matrix_expr!(exprs.to_vec())),
         ),
         decisions,
         symbols,
@@ -49,14 +49,14 @@ pub fn tseytin_not(
 
 /// Record an OR gate without generating clauses.
 pub fn tseytin_or(
-    exprs: &Vec<Expr>,
+    exprs: &[Expr],
     decisions: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
     gate(
         Expr::Or(
             Metadata::new(),
-            Moo::new(conjure_cp::into_matrix_expr!(exprs.clone())),
+            Moo::new(conjure_cp::into_matrix_expr!(exprs.to_vec())),
         ),
         decisions,
         symbols,

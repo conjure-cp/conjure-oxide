@@ -81,10 +81,10 @@ fn sat_order_lt(
     for (a_i, b_i) in a_bits.iter().zip(b_bits.iter()) {
         // (NOT a_i AND b_i)
         let not_a_i = tseytin_not(a_i.clone(), clauses, symbols);
-        let current_term = tseytin_and(&vec![not_a_i, b_i.clone()], clauses, symbols);
+        let current_term = tseytin_and(&[not_a_i, b_i.clone()], clauses, symbols);
 
         // accumulate (NOT a_i AND b_i) into OR term
-        result = tseytin_or(&vec![result, current_term], clauses, symbols);
+        result = tseytin_or(&[result, current_term], clauses, symbols);
     }
     result
 }
@@ -111,7 +111,7 @@ fn sat_order_eq_expr(
             &mut new_symbols,
         );
         output = tseytin_and(
-            &vec![comparison, output],
+            &[comparison, output],
             &mut new_sat_decisions,
             &mut new_symbols,
         );

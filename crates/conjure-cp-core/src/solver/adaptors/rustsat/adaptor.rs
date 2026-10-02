@@ -325,7 +325,7 @@ impl Sat {
             rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
                 .map_err(|e| {
                     SolverError::Runtime(format!(
-                        "Failed to rewrite dominance constraint into CNF clauses: {e}"
+                        "Failed to rewrite dominance constraint into SAT decisions: {e}"
                     ))
                 })?;
 
@@ -546,7 +546,7 @@ impl SolverAdaptor for Sat {
 
         if let Some(decision) = model.sat_encoding() {
             // Decision ASTs are terminal inputs. Never silently ignore residual constraints or
-            // mix clauses from the old pipeline with freshly compiled decisions.
+            // mix the two terminal decision payloads.
             if !model.constraints().is_empty()
                 || !model.sat_decisions().is_empty()
                 || !model.instantiation_conditions().is_empty()
@@ -554,7 +554,7 @@ impl SolverAdaptor for Sat {
                 || model.objective.is_some()
             {
                 return Err(SolverError::ModelFeatureNotSupported(
-                    "SAT decision AST cannot be mixed with residual constraints, legacy clauses, objectives, or dominance".into(),
+                    "SAT decision AST cannot be mixed with residual constraints, semantic gate decisions, objectives, or dominance".into(),
                 ));
             }
             let compiled = super::encoding_plan::CompiledBooleanDecision::compile(decision)
@@ -616,7 +616,7 @@ impl SolverAdaptor for Sat {
         }
 
         // A residual false constraint makes the whole model unsatisfiable, even when previous
-        // rewrites already emitted clauses. Preserve it before inspecting unencoded finds.
+        // rewrites already emitted decisions. Preserve it before inspecting unencoded finds.
         if model
             .constraints()
             .iter()
@@ -668,7 +668,7 @@ impl SolverAdaptor for Sat {
 
         let m_clone = model;
 
-        // all constraints should be encoded as clauses
+        // All constraints should have terminal encoding decisions.
         // the remaining constraint (if it exists) should just be a true/false expression
         let constraints = m_clone.constraints();
         bug_assert!(
@@ -679,14 +679,14 @@ impl SolverAdaptor for Sat {
             pretty_vec(constraints)
         );
 
-        let clauses = m_clone.sat_decisions();
+        let decisions = m_clone.sat_decisions();
 
         let mut inst = SatInstance::new();
         finds.sort_by_key(ToString::to_string);
         for name in finds {
             var_map.insert(name, inst.new_lit());
         }
-        compile_decisions(clauses, &mut inst, &mut var_map)?;
+        compile_decisions(decisions, &mut inst, &mut var_map)?;
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();

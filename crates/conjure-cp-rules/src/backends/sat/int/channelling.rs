@@ -172,7 +172,7 @@ fn order_to_value_bits(
         .map(|(index, threshold)| match thresholds.get(index + 1) {
             Some(next) => {
                 let not_next = tseytin_not(next.clone(), clauses, symbols);
-                tseytin_and(&vec![threshold.clone(), not_next], clauses, symbols)
+                tseytin_and(&[threshold.clone(), not_next], clauses, symbols)
             }
             None => threshold.clone(),
         })

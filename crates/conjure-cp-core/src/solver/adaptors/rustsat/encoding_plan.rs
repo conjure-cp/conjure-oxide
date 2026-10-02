@@ -1,8 +1,8 @@
 //! First clause generator for the SAT encoding-plan IR.
 //!
 //! The selected Boolean Tseitin algorithm is realised directly in RustSAT, without constructing
-//! CNF AST expressions. External literals remain private to this adapter. The adaptor accepts explicit terminal decision ASTs. The CLI still builds legacy clauses;
-//! integer plans and automatic decision selection are subsequent work.
+//! CNF AST expressions. External literals remain private to this adaptor. This compiler handles
+//! the explicit Boolean arena; the production compiler handles semantic gate and AMO decisions.
 use crate::ast::encoding_plan::{
     BooleanFormula, EncodingDecision, EncodingPlanKind, RepresentationKind, SemanticDomain,
     SemanticVarId,

@@ -135,7 +135,7 @@ impl Model {
         self.sat_encoding.as_ref()
     }
 
-    /// Attach a validated decision AST. The SAT adaptor rejects mixed legacy/decision inputs.
+    /// Attach a validated decision AST. The SAT adaptor rejects mixed terminal inputs.
     pub fn set_sat_encoding(&mut self, decision: EncodingDecision) -> Result<(), PlanError> {
         decision.validate()?;
         self.sat_encoding = Some(decision);
@@ -180,8 +180,8 @@ impl Model {
     }
 
     /// Adds a SAT encoding decision.
-    pub fn add_sat_decision(&mut self, clause: SatEncodingDecision) {
-        self.sat_decisions_mut().push(clause);
+    pub fn add_sat_decision(&mut self, decision: SatEncodingDecision) {
+        self.sat_decisions_mut().push(decision);
     }
 
     /// Adds top-level constraints.
@@ -205,8 +205,8 @@ impl Model {
     }
 
     /// Adds SAT encoding decisions.
-    pub fn add_sat_decisions(&mut self, clauses: Vec<SatEncodingDecision>) {
-        self.sat_decisions_mut().extend(clauses);
+    pub fn add_sat_decisions(&mut self, decisions: Vec<SatEncodingDecision>) {
+        self.sat_decisions_mut().extend(decisions);
     }
 
     /// Adds a new symbol to the symbol table.
