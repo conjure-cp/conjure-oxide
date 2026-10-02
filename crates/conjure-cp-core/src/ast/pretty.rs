@@ -5,7 +5,7 @@
 
 use std::fmt::Display;
 
-use super::{Atom, CnfClause, Expression, Name, SymbolTable};
+use super::{Atom, Expression, Name, SatEncodingDecision, SymbolTable};
 use crate::ast::domains::HasDomain;
 use itertools::Itertools;
 
@@ -25,19 +25,8 @@ pub fn pretty_expressions_as_top_level(expressions: &[Expression]) -> String {
     expressions.iter().map(|x| format!("{x}")).join(",\n")
 }
 
-/// Pretty prints a `Vec<CnfClause>` as a list of clauses as disjunctions
-///
-/// Each clause is printed on a new line, and expressions are delimited by commas.
-///
-/// For some input expressions A,B,C:
-/// ```text
-/// (a_0 \/ ¬a_1 ...),
-/// (b_0 \/ b_1 ...),
-/// (¬c_0 \/ c_1 ...)
-/// ```
-///
-/// Each `Expression` is printed using its underlying `Display` implementation.
-pub fn pretty_clauses(clauses: &[CnfClause]) -> String {
+/// Pretty-print semantic SAT encoding decisions.
+pub fn pretty_sat_decisions(clauses: &[SatEncodingDecision]) -> String {
     clauses.iter().map(|clause| format!("{clause}")).join(",\n")
 }
 

@@ -12,8 +12,8 @@
 use std::collections::{HashSet, VecDeque};
 
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, CnfClause, DomainPtr, Expression as Expr, Literal, Metadata, Moo,
-    SATIntEncoding, SymbolTable,
+    AbstractLiteral, Atom, DomainPtr, Expression as Expr, Literal, Metadata, Moo, SATIntEncoding,
+    SatEncodingDecision, SymbolTable,
 };
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
@@ -67,7 +67,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         })
         .collect();
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         expr.with_children(children),
         clauses,
         new_symbols,
@@ -110,7 +110,7 @@ fn operands(expr: &Expr) -> impl Iterator<Item = Expr> {
 }
 
 /// Re-encode one operand into the logarithmic encoding, leaving anything else alone.
-fn to_log(expr: Expr, clauses: &mut Vec<CnfClause>, symbols: &mut SymbolTable) -> Expr {
+fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut SymbolTable) -> Expr {
     let Expr::SATInt(_, encoding, bits, bounds) = &expr else {
         return expr;
     };
@@ -163,7 +163,7 @@ fn to_log(expr: Expr, clauses: &mut Vec<CnfClause>, symbols: &mut SymbolTable) -
 /// threshold there is nothing left to exclude.
 fn order_to_value_bits(
     thresholds: &[Expr],
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     thresholds

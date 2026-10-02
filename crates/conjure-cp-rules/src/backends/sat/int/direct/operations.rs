@@ -13,7 +13,7 @@ use crate::backends::sat::boolean::{
     tseytin_and, tseytin_iff, tseytin_not, tseytin_or, tseytin_xor,
 };
 
-use conjure_cp::ast::CnfClause;
+use conjure_cp::ast::SatEncodingDecision;
 /// This function confirms that all of the input expressions are direct SATInts, and returns vectors for each input of their bits
 /// This function also normalizes direct SATInt operands to a common value range by zero-padding.
 pub fn validate_direct_int_operands(
@@ -100,24 +100,24 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut output = true.into();
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut comparison;
 
     for i in 0..bit_count {
         comparison = tseytin_iff(
             lhs_bits[i].clone(),
             rhs_bits[i].clone(),
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
         output = tseytin_and(
             &vec![comparison, output],
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
     }
 
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 /// Converts a != expression between two direct SATInts to a boolean expression in cnf
@@ -144,24 +144,24 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut output = false.into();
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut comparison;
 
     for i in 0..bit_count {
         comparison = tseytin_xor(
             lhs_bits[i].clone(),
             rhs_bits[i].clone(),
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
         output = tseytin_or(
             &vec![comparison, output],
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
     }
 
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 /// Converts a </>/<=/>= expression between two direct SATInts to a boolean expression in cnf
@@ -192,27 +192,27 @@ fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     let mut output = sat_direct_lt(
         lhs_bits.clone(),
         rhs_bits.clone(),
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
     if negate {
-        output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
+        output = tseytin_not(output, &mut new_sat_decisions, &mut new_symbols);
     }
 
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 /// Encodes a < b for one-hot direct integers using prefix OR logic.
 fn sat_direct_lt(
     a: Vec<Expr>,
     b: Vec<Expr>,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
     let mut b_or = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
@@ -328,7 +328,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         ));
     }
 
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     // generate the lookup table clauses: (n_i AND d_j) => q_k
     for i in *numer_min..=*numer_max {
@@ -340,21 +340,35 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
             let quot_bit = &quot_bits[(k - quot_min) as usize];
 
-            new_clauses.push(CnfClause::new(vec![
-                Expr::Not(Metadata::new(), Moo::new(numer_bit.clone())),
-                Expr::Not(Metadata::new(), Moo::new(denom_bit.clone())),
-                quot_bit.clone(),
-            ]));
+            let premise = Expr::And(
+                Metadata::new(),
+                Moo::new(into_matrix_expr!(vec![
+                    numer_bit.clone(),
+                    denom_bit.clone()
+                ])),
+            );
+            new_sat_decisions.push(SatEncodingDecision::Assert(Expr::Imply(
+                Metadata::new(),
+                Moo::new(premise),
+                Moo::new(quot_bit.clone()),
+            )));
         }
     }
 
-    // the quotient cannot take more than one value simultaneously.
+    // The quotient takes at most one value; migrated to a selectable AMO decision next.
     for a in 0..quot_bits.len() {
         for b in (a + 1)..quot_bits.len() {
-            new_clauses.push(CnfClause::new(vec![
-                Expr::Not(Metadata::new(), Moo::new(quot_bits[a].clone())),
-                Expr::Not(Metadata::new(), Moo::new(quot_bits[b].clone())),
-            ]));
+            let simultaneous = Expr::And(
+                Metadata::new(),
+                Moo::new(into_matrix_expr!(vec![
+                    quot_bits[a].clone(),
+                    quot_bits[b].clone()
+                ])),
+            );
+            new_sat_decisions.push(SatEncodingDecision::Assert(Expr::Not(
+                Metadata::new(),
+                Moo::new(simultaneous),
+            )));
         }
     }
 
@@ -365,7 +379,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         (quot_min, quot_max),
     );
 
-    Ok(RuleEffect::cnf(quot_int, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(quot_int, new_sat_decisions, new_symbols))
 }
 
 #[register_rule("SAT", 9100, [Sum])]
@@ -392,7 +406,7 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses: Vec<CnfClause> = vec![];
+    let mut new_sat_decisions: Vec<SatEncodingDecision> = vec![];
 
     // Validate all operands are direct SATInts and extract their bit vectors, also calculate a common min and max for all operands to normalize them to the same size by padding with zeroes as needed to simplify the addition logic.
     let (mut operands, common_min, common_max) =
@@ -425,8 +439,12 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 let a = acc_bits[(i - acc_min) as usize].clone();
                 let b = right_bits[(j - right_min) as usize].clone();
 
-                let and_ab = tseytin_and(&vec![a, b], &mut new_clauses, &mut new_symbols);
-                sum_expr = tseytin_or(&vec![sum_expr, and_ab], &mut new_clauses, &mut new_symbols);
+                let and_ab = tseytin_and(&vec![a, b], &mut new_sat_decisions, &mut new_symbols);
+                sum_expr = tseytin_or(
+                    &vec![sum_expr, and_ab],
+                    &mut new_sat_decisions,
+                    &mut new_symbols,
+                );
             }
 
             out_bits.push(sum_expr);
@@ -437,14 +455,14 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         acc_max = new_max;
     }
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Direct,
             Moo::new(into_matrix_expr!(acc_bits)),
             (acc_min, acc_max),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }
@@ -472,7 +490,7 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     let new_max = old_min.abs().max(old_max.abs());
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     let bucket_count = (new_max - new_min + 1) as usize;
     let mut buckets: Vec<Vec<Expr>> = vec![Vec::new(); bucket_count];
@@ -491,7 +509,7 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         let out_bit = match bucket.len() {
             0 => Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
             1 => bucket[0].clone(),
-            _ => tseytin_or(&bucket, &mut new_clauses, &mut new_symbols),
+            _ => tseytin_or(&bucket, &mut new_sat_decisions, &mut new_symbols),
         };
 
         abs_bits.push(out_bit);
@@ -504,5 +522,5 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         (new_min, new_max),
     );
 
-    Ok(RuleEffect::cnf(abs_int, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(abs_int, new_sat_decisions, new_symbols))
 }

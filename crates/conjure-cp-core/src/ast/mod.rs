@@ -2,7 +2,6 @@ pub mod ac_operators;
 pub mod assertions;
 mod atom;
 pub mod categories;
-mod cnf_clause;
 pub mod comprehension;
 pub mod declaration;
 mod domains;
@@ -19,6 +18,7 @@ mod objective;
 pub mod pretty;
 pub mod records;
 mod reference;
+pub mod sat_decision;
 mod sat_encoding;
 pub mod serde;
 mod symbol_table;
@@ -30,7 +30,6 @@ mod moo;
 mod partial_eval;
 
 pub use atom::Atom;
-pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::domain_has_int_from_values;
 pub use domains::{
@@ -58,6 +57,7 @@ pub use partial_eval::{
 };
 pub use records::Field;
 pub use reference::Reference;
+pub use sat_decision::SatEncodingDecision;
 pub use sat_encoding::SATIntEncoding;
 pub use symbol_table::{SymbolTable, SymbolTablePtr};
 pub use types::*;

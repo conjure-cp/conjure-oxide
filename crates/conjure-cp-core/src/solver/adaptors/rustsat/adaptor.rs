@@ -28,7 +28,7 @@ use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_con
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::SolveTimeBudget;
-use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
+use crate::solver::adaptors::rustsat::decisions::compile_decisions;
 use crate::solver::{
     self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
     SolverMutCallback, private,
@@ -290,6 +290,7 @@ impl Sat {
         solver: &mut CaDiCaL<'static, 'static>,
         solution: &HashMap<Name, Literal>,
         var_map: &mut HashMap<Name, Lit>,
+        next_free: &mut u32,
     ) -> Result<(), SolverError> {
         let Some(dominance_expression) = dominance_expression else {
             return Ok(());
@@ -304,7 +305,7 @@ impl Sat {
 
         let mut dominance_model = model_template.clone();
         dominance_model.replace_constraints(vec![]);
-        dominance_model.replace_clauses(vec![]);
+        dominance_model.replace_sat_decisions(vec![]);
         dominance_model.dominance = None;
         dominance_model.add_constraint(rewritten_dominance);
 
@@ -328,72 +329,23 @@ impl Sat {
                     ))
                 })?;
 
-        for clause in rewritten.clauses() {
-            let mut missing_refs: Vec<Name> = Vec::new();
-            let mut largest_new_var: Option<satVar> = None;
-            for literal in clause.iter() {
-                let maybe_name = match literal {
-                    Expression::Atomic(_, Atom::Reference(reference)) => {
-                        Some(reference.name().clone())
-                    }
-                    Expression::Not(_, inner) => {
-                        if let Expression::Atomic(_, Atom::Reference(reference)) = inner.as_ref() {
-                            Some(reference.name().clone())
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                };
-
-                if let Some(name) = maybe_name
-                    && !var_map.contains_key(&name)
-                {
-                    missing_refs.push(name);
-                }
-            }
-
-            if !missing_refs.is_empty() {
-                missing_refs.sort_by_key(|name| name.to_string());
-                missing_refs.dedup();
-
-                for name in &missing_refs {
-                    if var_map.contains_key(name) {
-                        continue;
-                    }
-                    let next_idx = var_map
-                        .values()
-                        .map(|lit| lit.var().idx32())
-                        .max()
-                        .map(|idx| idx + 1)
-                        .unwrap_or(0);
-                    let new_var = satVar::new(next_idx);
-                    let new_lit = new_var.pos_lit();
-                    var_map.insert(name.clone(), new_lit);
-                    largest_new_var = Some(new_var);
-                }
-            }
-
-            if let Some(max_var) = largest_new_var {
-                solver.reserve(max_var).map_err(|e| {
-                    SolverError::Runtime(format!(
-                        "Failed reserving SAT variable capacity up to {max_var} for dominance clauses: {e}"
-                    ))
-                })?;
-            }
-
-            if let Some(sat_clause) = cnf_clause_to_sat_clause(clause, var_map).map_err(|e| {
-                SolverError::Runtime(format!(
-                    "Failed converting dominance CNF clause to SAT clause. clause={clause:?}; error={e}"
-                ))
-            })? {
-                solver.add_clause(sat_clause).map_err(|e| {
-                    SolverError::Runtime(format!(
-                        "Failed adding dominance clause to SAT solver: {e}"
-                    ))
-                })?;
-            }
+        let mut instance: SatInstance = SatInstance::new();
+        instance
+            .var_manager_mut()
+            .increase_next_free(satVar::new(*next_free));
+        compile_decisions(rewritten.sat_decisions(), &mut instance, var_map)?;
+        for constraint in rewritten.constraints() {
+            compile_decisions(
+                &[crate::ast::SatEncodingDecision::Assert(constraint.clone())],
+                &mut instance,
+                var_map,
+            )?;
         }
+        let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
+        *next_free = manager.n_used();
+        solver
+            .add_cnf(cnf)
+            .map_err(|e| SolverError::Runtime(format!("Failed adding dominance encoding: {e}")))?;
 
         Ok(())
     }
@@ -430,6 +382,7 @@ impl SolverAdaptor for Sat {
             .ok_or_else(|| SolverError::Runtime("Model instance is missing".to_string()))?
             .into_cnf();
 
+        let mut next_free = cnf.1.n_used();
         solver.add_cnf(cnf.0).map_err(|e| {
             SolverError::Runtime(format!("Failed adding CNF to SAT solver before solve: {e}"))
         })?;
@@ -562,6 +515,7 @@ impl SolverAdaptor for Sat {
                     solver,
                     &dominance_solution,
                     &mut var_map,
+                    &mut next_free,
                 )?;
 
                 let blocking_cl = blocking_clause_for_solution(&solution, &var_map)?;
@@ -594,7 +548,7 @@ impl SolverAdaptor for Sat {
             // Decision ASTs are terminal inputs. Never silently ignore residual constraints or
             // mix clauses from the old pipeline with freshly compiled decisions.
             if !model.constraints().is_empty()
-                || !model.clauses().is_empty()
+                || !model.sat_decisions().is_empty()
                 || !model.instantiation_conditions().is_empty()
                 || model.dominance.is_some()
                 || model.objective.is_some()
@@ -725,9 +679,14 @@ impl SolverAdaptor for Sat {
             pretty_vec(constraints)
         );
 
-        let clauses = m_clone.clauses();
+        let clauses = m_clone.sat_decisions();
 
-        let inst: SatInstance = handle_cnf(clauses, &mut var_map, finds.clone());
+        let mut inst = SatInstance::new();
+        finds.sort_by_key(ToString::to_string);
+        for name in finds {
+            var_map.insert(name, inst.new_lit());
+        }
+        compile_decisions(clauses, &mut inst, &mut var_map)?;
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
@@ -879,7 +838,7 @@ mod tests {
     #[test]
     fn decision_ast_is_solved_without_model_cnf() {
         let model = boolean_decision_model();
-        assert!(model.clauses().is_empty());
+        assert!(model.sat_decisions().is_empty());
         let serialized = serde_json::to_string(&crate::ast::SerdeModel::from(model)).unwrap();
         let imported: crate::ast::SerdeModel = serde_json::from_str(&serialized).unwrap();
         let mut sat = Sat::default();
@@ -932,9 +891,9 @@ mod tests {
         let mut model = ConjureModel::new(Default::default());
         let boolean = model.symbols_mut().gen_find(&Domain::bool());
         model.symbols_mut().gen_find(&crate::domain_int!(0..5));
-        model.add_clause(crate::ast::CnfClause::new(vec![
+        model.add_sat_decision(crate::ast::SatEncodingDecision::Assert(
             Reference::new(boolean).into(),
-        ]));
+        ));
         model.add_constraints(vec![false.into()]);
         let mut sat = Sat::default();
         sat.load_model(model, private::Internal).unwrap();

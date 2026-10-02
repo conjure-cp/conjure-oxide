@@ -17,12 +17,12 @@ use uniplate::{Biplate, Tree, Uniplate};
 
 use super::serde::{HasId, ObjId, PtrAsInner};
 use super::{
-    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, Objective,
-    ReturnType, SymbolTable, SymbolTablePtr, Typeable,
+    Atom, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, Objective, ReturnType,
+    SatEncodingDecision, SymbolTable, SymbolTablePtr, Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
-        pretty_clauses, pretty_domain_letting_declaration, pretty_expressions_as_top_level,
+        pretty_domain_letting_declaration, pretty_expressions_as_top_level, pretty_sat_decisions,
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
 };
@@ -37,8 +37,8 @@ pub struct Model {
     instantiation_conditions: Vec<Expression>,
     #[serde_as(as = "PtrAsInner")]
     symbols: SymbolTablePtr,
-    // Legacy SAT pipeline; removed after all clause-producing rules migrate to decisions.
-    cnf_clauses: Vec<CnfClause>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    sat_decisions: Vec<SatEncodingDecision>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sat_encoding: Option<EncodingDecision>,
 
@@ -61,7 +61,7 @@ impl Model {
             constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
             instantiation_conditions: Vec::new(),
             symbols,
-            cnf_clauses: Vec::new(),
+            sat_decisions: Vec::new(),
             sat_encoding: None,
             search_order: None,
             dominance: None,
@@ -142,9 +142,9 @@ impl Model {
         Ok(())
     }
 
-    /// The cnf clauses in this model.
-    pub fn clauses(&self) -> &Vec<CnfClause> {
-        &self.cnf_clauses
+    /// The SAT encoding decisions in this model.
+    pub fn sat_decisions(&self) -> &Vec<SatEncodingDecision> {
+        &self.sat_decisions
     }
 
     /// The top-level constraints in this model as a mutable vector.
@@ -156,9 +156,9 @@ impl Model {
         constraints
     }
 
-    /// The cnf clauses in this model as a mutable vector.
-    pub fn clauses_mut(&mut self) -> &mut Vec<CnfClause> {
-        &mut self.cnf_clauses
+    /// The SAT encoding decisions in this model as a mutable vector.
+    pub fn sat_decisions_mut(&mut self) -> &mut Vec<SatEncodingDecision> {
+        &mut self.sat_decisions
     }
 
     /// Replaces the top-level constraints with `new_constraints`, returning the old ones.
@@ -166,9 +166,12 @@ impl Model {
         std::mem::replace(self.constraints_mut(), new_constraints)
     }
 
-    /// Replaces the cnf clauses with `new_clauses`, returning the old ones.
-    pub fn replace_clauses(&mut self, new_clauses: Vec<CnfClause>) -> Vec<CnfClause> {
-        std::mem::replace(self.clauses_mut(), new_clauses)
+    /// Replaces the SAT encoding decisions with `new_sat_decisions`, returning the old ones.
+    pub fn replace_sat_decisions(
+        &mut self,
+        new_sat_decisions: Vec<SatEncodingDecision>,
+    ) -> Vec<SatEncodingDecision> {
+        std::mem::replace(self.sat_decisions_mut(), new_sat_decisions)
     }
 
     /// Adds a top-level constraint.
@@ -176,9 +179,9 @@ impl Model {
         self.constraints_mut().push(constraint);
     }
 
-    /// Adds a cnf clause.
-    pub fn add_clause(&mut self, clause: CnfClause) {
-        self.clauses_mut().push(clause);
+    /// Adds a SAT encoding decision.
+    pub fn add_sat_decision(&mut self, clause: SatEncodingDecision) {
+        self.sat_decisions_mut().push(clause);
     }
 
     /// Adds top-level constraints.
@@ -201,9 +204,9 @@ impl Model {
         std::mem::take(&mut self.instantiation_conditions)
     }
 
-    /// Adds cnf clauses.
-    pub fn add_clauses(&mut self, clauses: Vec<CnfClause>) {
-        self.clauses_mut().extend(clauses);
+    /// Adds SAT encoding decisions.
+    pub fn add_sat_decisions(&mut self, clauses: Vec<SatEncodingDecision>) {
+        self.sat_decisions_mut().extend(clauses);
     }
 
     /// Adds a new symbol to the symbol table.
@@ -240,6 +243,7 @@ impl Model {
         visit_symbol_table(self.symbols_ptr_unchecked().clone(), &mut id_list);
 
         let mut exprs: VecDeque<Expression> = self.universe_bi();
+        exprs.extend(self.sat_decisions.universe_bi());
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
         }
@@ -296,7 +300,7 @@ impl Hash for Model {
         self.constraints.hash(state);
         self.instantiation_conditions.hash(state);
         self.symbols.hash(state);
-        self.cnf_clauses.hash(state);
+        self.sat_decisions.hash(state);
         if let Some(decision) = &self.sat_encoding {
             decision.hash(state);
         }
@@ -530,9 +534,9 @@ impl Display for Model {
             )?;
         }
 
-        if !self.clauses().is_empty() {
-            writeln!(f, "\nclauses:\n")?;
-            writeln!(f, "{}", pretty_clauses(self.clauses()))?;
+        if !self.sat_decisions().is_empty() {
+            writeln!(f, "\nsat encoding decisions:\n")?;
+            writeln!(f, "{}", pretty_sat_decisions(self.sat_decisions()))?;
         }
         if let Some(decision) = &self.sat_encoding {
             writeln!(f, "\nsat encoding decisions:\n{decision:#?}")?;
@@ -553,8 +557,8 @@ pub struct SerdeModel {
     instantiation_conditions: Vec<Expression>,
     #[serde_as(as = "PtrAsInner")]
     symbols: SymbolTablePtr,
-    // Legacy SAT pipeline; removed after all clause-producing rules migrate to decisions.
-    cnf_clauses: Vec<CnfClause>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    sat_decisions: Vec<SatEncodingDecision>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sat_encoding: Option<EncodingDecision>,
     search_order: Option<Vec<Name>>,
@@ -571,6 +575,7 @@ impl SerdeModel {
         tables.insert(self.symbols.id(), self.symbols.clone());
 
         let mut exprs: VecDeque<Expression> = self.constraints.universe_bi();
+        exprs.extend(self.sat_decisions.universe_bi());
         exprs.extend(self.instantiation_conditions.clone());
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
@@ -603,7 +608,7 @@ impl SerdeModel {
             }
         }
 
-        self.constraints = self.constraints.transform_bi(&move |decl: DeclarationPtr| {
+        let rebind = |decl: DeclarationPtr| {
             let id = decl.id();
             all_declarations
                 .get(&id)
@@ -613,13 +618,15 @@ impl SerdeModel {
                     )
                 })
                 .clone()
-        });
+        };
+        self.constraints = self.constraints.transform_bi(&rebind);
+        self.sat_decisions = self.sat_decisions.transform_bi(&rebind);
 
         Some(Model {
             constraints: self.constraints,
             instantiation_conditions: self.instantiation_conditions,
             symbols: self.symbols,
-            cnf_clauses: self.cnf_clauses,
+            sat_decisions: self.sat_decisions,
             sat_encoding: self.sat_encoding,
             search_order: self.search_order,
             dominance: self.dominance,
@@ -635,7 +642,7 @@ impl From<Model> for SerdeModel {
             constraints: val.constraints,
             instantiation_conditions: val.instantiation_conditions,
             symbols: val.symbols,
-            cnf_clauses: val.cnf_clauses,
+            sat_decisions: val.sat_decisions,
             sat_encoding: val.sat_encoding,
             search_order: val.search_order,
             dominance: val.dominance,
@@ -650,7 +657,7 @@ impl Display for SerdeModel {
             constraints: self.constraints.clone(),
             instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
-            cnf_clauses: self.cnf_clauses.clone(),
+            sat_decisions: self.sat_decisions.clone(),
             sat_encoding: self.sat_encoding.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
@@ -668,7 +675,7 @@ impl SerdeModel {
             constraints: self.constraints.clone(),
             instantiation_conditions: self.instantiation_conditions.clone(),
             symbols: self.symbols.clone(),
-            cnf_clauses: self.cnf_clauses.clone(),
+            sat_decisions: self.sat_decisions.clone(),
             sat_encoding: self.sat_encoding.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),

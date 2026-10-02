@@ -1619,7 +1619,7 @@ struct RuleEffectImpact {
     changed_names: Vec<Name>,
     invalidated_reference_names: Vec<Name>,
     has_new_top: bool,
-    has_new_clauses: bool,
+    has_new_sat_decisions: bool,
 }
 
 impl RuleEffectImpact {
@@ -1664,12 +1664,12 @@ impl RuleEffectImpact {
             changed_names,
             invalidated_reference_names,
             has_new_top: !effect.new_top.is_empty(),
-            has_new_clauses: !effect.new_clauses.is_empty(),
+            has_new_sat_decisions: !effect.new_sat_decisions.is_empty(),
         }
     }
 
     fn has_model_side_effects(&self) -> bool {
-        self.has_new_top || self.has_new_clauses || self.has_symbol_changes()
+        self.has_new_top || self.has_new_sat_decisions || self.has_symbol_changes()
     }
 
     fn has_symbol_changes(&self) -> bool {
@@ -2099,7 +2099,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                     new_expression,
                     new_top,
                     symbols,
-                    new_clauses,
+                    new_sat_decisions,
                     declaration_updates,
                     ..
                 } = effect;
@@ -2116,7 +2116,7 @@ fn try_rewrite_model<'ctx, 'rules, O: RuleAttemptObserver>(
                 if effect_impact.has_new_top {
                     arena.add_root_children(new_top);
                 }
-                submodel.add_clauses(new_clauses);
+                submodel.add_sat_decisions(new_sat_decisions);
                 let _ =
                     normalise_evaluators_from_node_to_root(&mut arena, node_id, ctx.dirty_trace);
                 if has_model_side_effects {
@@ -2340,7 +2340,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
             new_expression,
             new_top,
             symbols,
-            new_clauses,
+            new_sat_decisions,
             declaration_updates,
             ..
         } = effect;
@@ -2360,7 +2360,7 @@ fn try_rewrite_model_with_worklist<'ctx, 'rules, O: RuleAttemptObserver>(
         } else {
             Vec::new()
         };
-        submodel.add_clauses(new_clauses);
+        submodel.add_sat_decisions(new_sat_decisions);
         let rewrite_impact_node_id = {
             let arena = &mut surfaces[surface_index].arena;
             normalise_evaluators_subtree_bottom_up(arena, node_id, ctx.dirty_trace);

@@ -73,7 +73,7 @@ pub fn validate_order_int_operands(
 fn sat_order_lt(
     a_bits: Vec<Expr>,
     b_bits: Vec<Expr>,
-    clauses: &mut Vec<conjure_cp::ast::CnfClause>,
+    clauses: &mut Vec<conjure_cp::ast::SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
     let mut result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
@@ -96,28 +96,28 @@ fn sat_order_eq_expr(
     lhs_bits: &[Expr],
     rhs_bits: &[Expr],
     symbols: &SymbolTable,
-) -> (Expr, Vec<conjure_cp::ast::CnfClause>, SymbolTable) {
+) -> (Expr, Vec<conjure_cp::ast::SatEncodingDecision>, SymbolTable) {
     let bit_count = lhs_bits.len();
 
     let mut output = true.into();
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     for i in 0..bit_count {
         let comparison = tseytin_iff(
             lhs_bits[i].clone(),
             rhs_bits[i].clone(),
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
         output = tseytin_and(
             &vec![comparison, output],
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
     }
 
-    (output, new_clauses, new_symbols)
+    (output, new_sat_decisions, new_symbols)
 }
 
 /// Converts a = expression between two order SATInts to a boolean expression in cnf
@@ -137,9 +137,9 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let (output, new_clauses, new_symbols) = sat_order_eq_expr(lhs_bits, rhs_bits, symbols);
+    let (output, new_sat_decisions, new_symbols) = sat_order_eq_expr(lhs_bits, rhs_bits, symbols);
 
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 /// Converts a != expression between two order SATInts to a boolean expression in cnf
@@ -155,12 +155,12 @@ fn neq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable); // consider covered
     };
 
-    let (mut output, mut new_clauses, mut new_symbols) =
+    let (mut output, mut new_sat_decisions, mut new_symbols) =
         sat_order_eq_expr(lhs_bits, rhs_bits, symbols);
 
-    output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
+    output = tseytin_not(output, &mut new_sat_decisions, &mut new_symbols);
 
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 /// Converts a </>/<=/>= expression between two order SATInts to a boolean expression in cnf
@@ -191,20 +191,20 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     let mut output = sat_order_lt(
         lhs_bits.clone(),
         rhs_bits.clone(),
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
     if negate {
-        output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
+        output = tseytin_not(output, &mut new_sat_decisions, &mut new_symbols);
     }
 
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 /// Converts a - expression for a SATInt to a new SATInt
@@ -231,25 +231,25 @@ fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut out: Vec<Expr> = Vec::with_capacity(n);
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     let ff = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
-    out.push(tseytin_not(ff, &mut new_clauses, &mut new_symbols));
+    out.push(tseytin_not(ff, &mut new_sat_decisions, &mut new_symbols));
 
     for i in 1..n {
         let src = val_bits[n - i].clone();
-        let neg_bit = tseytin_not(src, &mut new_clauses, &mut new_symbols);
+        let neg_bit = tseytin_not(src, &mut new_sat_decisions, &mut new_symbols);
         out.push(neg_bit);
     }
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Order,
             Moo::new(into_matrix_expr!(out)),
             (new_min, new_max),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }

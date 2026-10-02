@@ -348,7 +348,7 @@ mod tests {
         let restored: crate::ast::SerdeModel = serde_json::from_str(&json).unwrap();
         let restored = restored.initialise(Default::default()).unwrap();
         assert_eq!(restored.sat_encoding(), Some(&decision));
-        assert!(restored.clauses().is_empty());
+        assert!(restored.sat_decisions().is_empty());
         assert!(restored.to_string().contains("sat encoding decisions"));
         let sources = restored.collect_stable_id_mapping();
         assert!(sources.contains_key(&decision.variables()[0].source));

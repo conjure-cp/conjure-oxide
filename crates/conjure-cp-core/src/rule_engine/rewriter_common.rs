@@ -203,7 +203,7 @@ pub fn log_rule_application(
         let new_top = if !red.new_top.is_empty() {
             pretty_vec(&red.new_top)
         } else {
-            pretty_vec(&red.new_clauses)
+            pretty_vec(&red.new_sat_decisions)
         };
 
         debug!(
@@ -225,13 +225,13 @@ pub fn log_rule_application(
             }
             let exprs = exprs.iter().join("\n");
             format!("new constraints:\n{exprs}\n")
-        } else if !red.new_clauses.is_empty() {
+        } else if !red.new_sat_decisions.is_empty() {
             let mut exprs: Vec<String> = vec![];
-            for clause in &red.new_clauses {
+            for clause in &red.new_sat_decisions {
                 exprs.push(format!("  {clause}"));
             }
             let exprs = exprs.iter().join("\n");
-            format!("new clauses:\n{exprs}\n")
+            format!("new SAT encoding decisions:\n{exprs}\n")
         } else {
             String::new()
         };

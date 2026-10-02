@@ -639,7 +639,7 @@ pub(super) fn add_dominance_constraints_for_solution(
 
     let mut dominance_model = model_template.clone();
     dominance_model.replace_constraints(vec![]);
-    dominance_model.replace_clauses(vec![]);
+    dominance_model.replace_sat_decisions(vec![]);
     dominance_model.dominance = None;
     dominance_model.add_constraint(rewritten_dominance);
 

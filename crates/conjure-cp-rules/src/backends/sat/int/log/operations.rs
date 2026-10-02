@@ -16,7 +16,7 @@ use crate::backends::sat::boolean::{
     tseytin_and, tseytin_iff, tseytin_imply, tseytin_mux, tseytin_not, tseytin_or, tseytin_xor,
 };
 
-use conjure_cp::ast::CnfClause;
+use conjure_cp::ast::SatEncodingDecision;
 
 use std::cmp;
 
@@ -43,16 +43,16 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     let output = inequality_boolean(
         lhs_bits.clone(),
         rhs_bits.clone(),
         strict,
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 /// Converts a = expression between two SATInts to a boolean expression in cnf
@@ -77,24 +77,24 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut output = true.into();
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut comparison;
 
     for i in 0..bit_count {
         comparison = tseytin_iff(
             lhs_bits[i].clone(),
             rhs_bits[i].clone(),
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
         output = tseytin_and(
             &vec![comparison, output],
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
     }
 
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 /// Converts a != expression between two SATInts to a boolean expression in cnf
@@ -119,24 +119,24 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut output = false.into();
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut comparison;
 
     for i in 0..bit_count {
         comparison = tseytin_xor(
             lhs_bits[i].clone(),
             rhs_bits[i].clone(),
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
         output = tseytin_or(
             &vec![comparison, output],
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
     }
 
-    Ok(RuleEffect::cnf(output, new_clauses, new_symbols))
+    Ok(RuleEffect::sat(output, new_sat_decisions, new_symbols))
 }
 
 // Creates a boolean expression for > or >=
@@ -147,7 +147,7 @@ fn inequality_boolean(
     a: Vec<Expr>,
     b: Vec<Expr>,
     strict: bool,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Expr {
     let mut notb;
@@ -227,7 +227,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut new_symbols = symbols.clone();
     let mut values;
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     while exprs_bits.len() > 1 {
         let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
@@ -235,7 +235,13 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                values = tseytin_int_adder(&a, &b, output_size, &mut new_clauses, &mut new_symbols);
+                values = tseytin_int_adder(
+                    &a,
+                    &b,
+                    output_size,
+                    &mut new_sat_decisions,
+                    &mut new_symbols,
+                );
                 next.push(values);
             } else {
                 next.push(a);
@@ -247,14 +253,14 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let result = exprs_bits.pop().unwrap();
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(result)),
             (min, max),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }
@@ -265,7 +271,7 @@ fn tseytin_int_adder(
     x: &[Expr],
     y: &[Expr],
     bits: usize,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     //TODO: Optimizing for constants
@@ -286,7 +292,7 @@ fn tseytin_full_adder(
     a: Expr,
     b: Expr,
     carry: Expr,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
     let axorb = tseytin_xor(a.clone(), b.clone(), clauses, symbols);
@@ -302,7 +308,7 @@ fn tseytin_full_adder(
 fn tseytin_half_adder(
     a: Expr,
     b: Expr,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
     let result = tseytin_xor(a.clone(), b.clone(), clauses, symbols);
@@ -316,7 +322,7 @@ fn tseytin_add_two_power(
     expr: &[Expr],
     exponent: usize,
     bits: usize,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut result = vec![];
@@ -341,7 +347,7 @@ fn cnf_shift_add_multiply(
     x: &[Expr],
     y: &[Expr],
     bits: usize,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut x = x.to_owned();
@@ -440,7 +446,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let exprs_bits = validate_log_int_operands(exprs_list.clone(), None)?;
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     let (result, _) = exprs_bits
         .iter()
@@ -455,7 +461,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 &lhs_bits,
                 &rhs_bits,
                 lhs_bits.len(),
-                &mut new_clauses,
+                &mut new_sat_decisions,
                 &mut new_symbols,
             );
 
@@ -477,14 +483,14 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         })
         .unwrap();
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(result)),
             (min, max),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }
@@ -510,19 +516,19 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut new_symbols = symbols.clone();
 
-    let result = tseytin_negate(bits, bits.len(), &mut new_clauses, &mut new_symbols);
+    let result = tseytin_negate(bits, bits.len(), &mut new_sat_decisions, &mut new_symbols);
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(result)),
             (-max, -min),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }
@@ -530,7 +536,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 fn tseytin_negate(
     expr: &Vec<Expr>,
     bits: usize,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut result = vec![];
@@ -579,7 +585,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut new_symbols = symbols.clone();
     let mut values;
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     while exprs_bits.len() > 1 {
         let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
@@ -587,7 +593,8 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                values = tseytin_binary_min_max(&a, &b, true, &mut new_clauses, &mut new_symbols);
+                values =
+                    tseytin_binary_min_max(&a, &b, true, &mut new_sat_decisions, &mut new_symbols);
                 next.push(values);
             } else {
                 next.push(a);
@@ -599,14 +606,14 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let result = exprs_bits.pop().unwrap();
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(result)),
             (min, max),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }
@@ -616,7 +623,7 @@ fn tseytin_binary_min_max(
     x: &[Expr],
     y: &[Expr],
     min: bool,
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mask = if min {
@@ -639,7 +646,7 @@ fn tseytin_select_array(
     cond: Expr,
     a: &[Expr],
     b: &[Expr],
-    clauses: &mut Vec<CnfClause>,
+    clauses: &mut Vec<SatEncodingDecision>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     assert_eq!(
@@ -699,7 +706,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut new_symbols = symbols.clone();
     let mut values;
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
 
     while exprs_bits.len() > 1 {
         let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
@@ -707,7 +714,8 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                values = tseytin_binary_min_max(&a, &b, false, &mut new_clauses, &mut new_symbols);
+                values =
+                    tseytin_binary_min_max(&a, &b, false, &mut new_sat_decisions, &mut new_symbols);
                 next.push(values);
             } else {
                 next.push(a);
@@ -719,14 +727,14 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let result = exprs_bits.pop().unwrap();
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(result)),
             (min, max),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }
@@ -757,7 +765,7 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut new_symbols = symbols.clone();
 
     let mut result = vec![];
@@ -766,32 +774,42 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // invert bits
     for bit in bits {
-        result.push(tseytin_not(bit.clone(), &mut new_clauses, &mut new_symbols));
+        result.push(tseytin_not(
+            bit.clone(),
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        ));
     }
 
     let bit_count = result.len();
 
     // add one
-    result = tseytin_add_two_power(&result, 0, bit_count, &mut new_clauses, &mut new_symbols);
+    result = tseytin_add_two_power(
+        &result,
+        0,
+        bit_count,
+        &mut new_sat_decisions,
+        &mut new_symbols,
+    );
 
     for i in 0..bit_count {
         result[i] = tseytin_mux(
             bits[bit_count - 1].clone(),
             bits[i].clone(),
             result[i].clone(),
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         )
     }
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(result)),
             range,
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }
@@ -839,26 +857,26 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // TODO: Separate into division/mod function
 
     let mut new_symbols = symbols.clone();
-    let mut new_clauses = vec![];
+    let mut new_sat_decisions = vec![];
     let mut quotient = vec![false.into(); bit_count];
 
     let minus_numer = tseytin_negate(
         &numer_bits.clone(),
         bit_count,
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
     let minus_denom = tseytin_negate(
         &denom_bits.clone(),
         bit_count,
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
     let sign_bit = tseytin_xor(
         numer_bits[bit_count - 1].clone(),
         denom_bits[bit_count - 1].clone(),
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
@@ -866,14 +884,14 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         numer_bits[bit_count - 1].clone(),
         &numer_bits.clone(),
         &minus_numer,
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
     let denom_bits = tseytin_select_array(
         denom_bits[bit_count - 1].clone(),
         &denom_bits.clone(),
         &minus_denom,
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
@@ -885,7 +903,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let minus_d = tseytin_negate(
         &d.clone(),
         2 * bit_count,
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
     let mut rminusd;
@@ -901,7 +919,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &r.clone(),
             &minus_d.clone(),
             2 * bit_count,
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
 
@@ -909,7 +927,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         quotient[i] = tseytin_not(
             // q[i] = inverse of sign bit - 1 if positive, 0 if negative
             rminusd[2 * bit_count - 1].clone(),
-            &mut new_clauses,
+            &mut new_sat_decisions,
             &mut new_symbols,
         );
 
@@ -919,7 +937,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 quotient[i].clone(),
                 r[j].clone(),       // use r if negative
                 rminusd[j].clone(), // use r-d if positive
-                &mut new_clauses,
+                &mut new_sat_decisions,
                 &mut new_symbols,
             );
         }
@@ -928,7 +946,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let minus_quotient = tseytin_negate(
         &quotient.clone(),
         bit_count,
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
@@ -936,18 +954,18 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         sign_bit,
         &quotient,
         &minus_quotient,
-        &mut new_clauses,
+        &mut new_sat_decisions,
         &mut new_symbols,
     );
 
-    Ok(RuleEffect::cnf(
+    Ok(RuleEffect::sat(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
             Moo::new(into_matrix_expr!(out)),
             (min, max),
         ),
-        new_clauses,
+        new_sat_decisions,
         new_symbols,
     ))
 }
