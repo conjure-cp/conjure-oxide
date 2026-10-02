@@ -836,15 +836,8 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let candidates = [
-        numer_min / denom_min,
-        numer_min / denom_max,
-        numer_max / denom_min,
-        numer_max / denom_max,
-    ];
-
-    let min = *candidates.iter().min().unwrap();
-    let max = *candidates.iter().max().unwrap();
+    let (min, max) = division_bounds((*numer_min, *numer_max), (*denom_min, *denom_max))
+        .ok_or(RuleNotApplicable)?;
 
     let binding =
         validate_log_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()], None)?;
@@ -968,6 +961,48 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         new_sat_decisions,
         new_symbols,
     ))
+}
+
+// Quotient extrema can occur at the nonzero denominators closest to zero.
+fn division_bounds(numerator: (i32, i32), denominator: (i32, i32)) -> Option<(i32, i32)> {
+    let mut values = Vec::new();
+    for divisor in [denominator.0, denominator.1, -1, 1] {
+        if divisor == 0 || divisor < denominator.0 || divisor > denominator.1 {
+            continue;
+        }
+        for dividend in [numerator.0, numerator.1] {
+            values.push(i32::try_from(i64::from(dividend) / i64::from(divisor)).ok()?);
+        }
+    }
+    if denominator.0 <= 0 && denominator.1 >= 0 {
+        values.push(0);
+    }
+    Some((*values.iter().min()?, *values.iter().max()?))
+}
+
+#[cfg(test)]
+mod division_bounds_tests {
+    use super::division_bounds;
+    #[test]
+    fn bounds_cover_zero_endpoints_and_denominators_near_zero() {
+        for low in -4..=4 {
+            for high in low..=4 {
+                let (min, max) = division_bounds((-5, 7), (low, high)).unwrap();
+                for numerator in -5..=7 {
+                    for denominator in low..=high {
+                        let quotient = if denominator == 0 {
+                            0
+                        } else {
+                            numerator / denominator
+                        };
+                        assert!((min..=max).contains(&quotient));
+                    }
+                }
+            }
+        }
+        assert_eq!(division_bounds((0, 4), (0, 4)), Some((0, 4)));
+        assert_eq!(division_bounds((i32::MIN, 0), (-1, -1)), None);
+    }
 }
 
 /*
