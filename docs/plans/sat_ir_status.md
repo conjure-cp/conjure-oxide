@@ -20,7 +20,7 @@ Branch: `sat-ir`. Conventional commits; never push.
 - Validated, serialisable `ast::encoding_plan` decision nodes owned by `Model::sat_encoding`, independent of literal allocation. Existing declaration identities are interned as semantic variables; fresh reference IDs distinguish individual uses. Domains are canonicalised without enumerating intervals. Representation requests and encoding provenance are explicit.
 - The SAT adaptor loads explicit terminal Boolean decision ASTs and rejects mixed terminal payloads, residual constraints, missing/stale variables, objectives and dominance. Non-SAT adaptors reject SAT decisions. Model serialization, cloning, hashing and stable-ID collection retain the decision nodes.
 - A first generator realises explicitly selected Boolean Tseitin plans directly as RustSAT clauses, reusing RustSAT atomic gate helpers. Literal types stay private to the adapter. Exhaustive assignment tests check semantic projection, repeated uses, constants, empty conjunctions/disjunctions, and deterministic clause output.
-- Uniform SAT portfolios enabled in 41 existing CNF fixture directories (97 SAT portfolios), with reference solution checks and normal golden verification.
+- Uniform SAT portfolios enabled in 41 existing CNF fixture directories plus the unequal-domain fixture. The suite now contains 245 uniform SAT portfolios across these 42 fixtures, including all six AMO choices where applicable. Reference solutions are checked before accepting goldens.
 
 - Production Boolean and integer gate rules now emit semantic `SatEncodingDecision` assertions/definitions through `RuleEffect::sat`. Model CNF fields, `CnfClause` and the legacy clause converter have been removed. RustSAT generates all clauses at load time; dominance injection uses the same allocation frontier as encoder auxiliaries.
 - Asserted AMO decisions carry a selectable algorithm and explicit/heuristic provenance. `--amo-encoding` pins pairwise, ladder, bitwise, commander, bimander or two-product. Otherwise the existing first/random/compact/interactive/all heuristics choose one AMO algorithm per model. Compact uses pairwise through five inputs and ladder above that; this is an initial policy, not a performance claim.
@@ -37,7 +37,7 @@ Branch: `sat-ir`. Conventional commits; never push.
 ## Outstanding
 
 - Extend the decision mechanism from the AMO proof of concept to cardinality, pseudo-Boolean and other encoding classes, with explicit user overrides and heuristic selection.
-- Extend plans beyond Boolean Tseitin and implement shared representation materialisation, decoding, and domain constraints.
+- Extend decisions to the other encoding classes and implement shared representation materialisation, decoding, and domain constraints. Unify the explicit Boolean arena and production gate/AMO payloads as those plans are migrated.
 - Add BinaryOffset and BinaryRank; expose the existing actual-value encoding as BinaryValue in the new production pipeline.
 - Add lazy multi-representation materialisation, channelling, and exhaustive semantic tests before enabling mixed representations.
 - The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. Implement the Pindakaas clause-sink bridge and controlled provider choices; no new dependency has been added yet.
@@ -45,7 +45,8 @@ Branch: `sat-ir`. Conventional commits; never push.
 
 ## Validation
 
-- Core: 218 unit tests passed, including decision-AST serialization and direct solving without model clauses. Rules: 128 passed. Tester: 7 passed.
-- Final CNF group verification passed all 43 discovered tests with `TEST_CASE_TIMEOUT=180` (about 90 seconds after moving decisions into the AST). Every enabled SAT portfolio was accepted against reference solutions and passed normal golden verification. The new unequal-domain fixture also passed its final regression run.
-- Production Clippy (`--lib --bins -- -D warnings`) and formatting checks pass. Strict all-target Clippy is blocked by existing test lints in unchanged code (redundant clones, useless conversions, items after test modules, unnecessary mutable arguments, and a useless vector).
-- The sparse/negative/unequal-domain fixture adds three SAT portfolios beyond the 97 in the existing CNF corpus.
+- The requested `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,491 workspace tests, with 14 skipped. Workspace doctests also passed.
+- After the final AMO lowering guard, focused acceptance and normal golden verification each passed 574 tests: core/rule tests and all 130 fixture directories with existing SAT goldens. Core library: 220 unit tests; rules: 129 unit tests.
+- Exhaustive AMO checks cover all six algorithms, sizes zero through nine (including group boundaries), every input assignment, constants and repeated inputs. Tests also cover global user overrides, one all-mode choice per model, unresolved-decision rejection and postponing extraction until Boolean operands are lowered.
+- Production Clippy and formatting checks pass. Strict workspace Clippy additionally encounters an existing needless-borrow lint in `fuzz/fuzz_targets/fuzz_detect_errors.rs`; that unrelated file is unchanged.
+- Acceptance artefacts are committed separately from code. The contribution guide's cleanup script discarded 493 timing-only files; existing timing fields were preserved in the 130 files with semantic statistics changes. Unrelated non-SAT golden deletions are excluded.
