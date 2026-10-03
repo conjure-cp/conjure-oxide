@@ -1,0 +1,1211 @@
+Model before rewriting:
+
+find f: function (size 1) int(1..2) --> int(1) 
+find y: int(1..2)
+
+such that
+
+image(f,y) = 1
+
+--
+
+f
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f
+new variables:
+  find f#as_relation_1: relation (size 1) of (int(1..2) * int(1))
+new constraints:
+  and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ])
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_rank_1: bool
+new constraints:
+  or([!(y#int_rank_1),true;int(1..)])
+
+--
+
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true
+new variables:
+  find f#as_relation_1#as_set_1: set (size 1) of tuple (int(1..2), int(1))
+
+--
+
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true
+new variables:
+  find f#as_relation_1#as_set_1#explicit_1: matrix indexed by [int(1..1)] of tuple (int(1..2), int(1))
+new constraints:
+  or([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,1);int(1..)])
+
+--
+
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true,
+true
+new variables:
+  find f#as_relation_1#as_set_1#explicit_1#components_1: tuple (int(1..2), int(1))
+
+--
+
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true,
+true
+new variables:
+  find f#as_relation_1#as_set_1#explicit_1#components_1#components_1: int(1..2)
+  find f#as_relation_1#as_set_1#explicit_1#components_1#components_2: int(1)
+
+--
+
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true,
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+image(f,y) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]),
+true,
+true
+new variables:
+  find f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1: bool
+  find f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1: bool
+new constraints:
+  or([!(f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1),true;int(1..)])
+  and([!(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1),true;int(1..)])
+
+--
+
+y
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+
+--
+
+!(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1)) using tseitin
+
+--
+
+and([__0;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__0
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1, j <- f#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i <- f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j <- f#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]
+
+--
+
+image(f,SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]),
+true,
+true,
+true,
+__0
+   ~~> remove_single_atom ([("SAT", 8400)])
+image(f,SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])) = 1,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]),
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+image(f,SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]))
+   ~~> image_function_as_relation ([("Base", 8400)])
+{__1 @ __2}
+new variables:
+  findAux __1: int(1)
+  findAux __2: bool
+new constraints:
+  (__2) <-> (or([ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e <- f#as_relation_1 ]))
+  (__2) -> ((SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),__1) in f#as_relation_1)
+
+--
+
+__1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__1
+new variables:
+  findAux __1#int_rank_1: bool
+new constraints:
+  and([!(__1#int_rank_1),true;int(1..)])
+
+--
+
+f#as_relation_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1
+
+--
+
+__1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__1
+
+--
+
+__1
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1])
+
+--
+
+__1
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1])
+
+--
+
+!(__1#int_rank_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> !(__1#int_rank_1)) using tseitin
+
+--
+
+{SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) @ __2} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) = 1 @ __2}
+
+--
+
+SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) = 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
+
+--
+
+{SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) @ __2}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]),__2;int(1..)])
+
+--
+
+and([__3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__3
+
+--
+
+(SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1])) in f#as_relation_1
+   ~~> membership_relation_as_set ([("Base", 8650)])
+(SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1])) in f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+(SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1])) in f#as_relation_1#as_set_1
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]));int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1
+
+--
+
+or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]));int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]));int(1..)])
+
+--
+
+and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]));int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]))
+
+--
+
+[ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e <- f#as_relation_1 ]
+   ~~> lower_relation_as_set_expression_generator ([("Base", 8650)])
+[ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e <- f#as_relation_1#as_set_1 ]
+
+--
+
+[ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e <- f#as_relation_1#as_set_1 ]
+   ~~> lower_set_expression_generator ([("Base", 8600)])
+[ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e : tuple (int(1..2), int(1)), e in f#as_relation_1#as_set_1 ]
+
+--
+
+and([SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]),__2;int(1..)]),
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]),
+true,
+true,
+true,
+(__2) <-> (or([ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e : tuple (int(1..2), int(1)), e in f#as_relation_1#as_set_1 ])),
+(__2) -> (SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]))),
+__3
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]),__2;int(1..)]),
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]),
+true,
+true,
+true,
+(__2) <-> (or([ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e : tuple (int(1..2), int(1)), e in f#as_relation_1#as_set_1 ])),
+(__2) -> (SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1])))
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1 = (SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]))
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_2
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 1)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1;int(1..)] [1, 1])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2])
+
+--
+
+SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__5,__7;int(1..)] [1, 1]) = SATInt(Log, [__10,__12;int(1..)] [1, 1])
+new variables:
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__4 <-> !((__1#int_rank_1) <-> (false))) using tseitin
+  define(__5 <-> !(__4)) using tseitin
+  define(__6 <-> or([__1#int_rank_1,false;int(1..)])) using tseitin
+  define(__7 <-> !((false) <-> (__6))) using tseitin
+  define(__8 <-> and([false,__6;int(1..)])) using tseitin
+  define(__9 <-> !((false) <-> (false))) using tseitin
+  define(__10 <-> !(__9)) using tseitin
+  define(__11 <-> or([false,false;int(1..)])) using tseitin
+  define(__12 <-> !((false) <-> (__11))) using tseitin
+  define(__13 <-> and([false,__11;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__5,__7;int(1..)] [1, 1]) = SATInt(Log, [__10,__12;int(1..)] [1, 1])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> integer-weighted(1*__5, -2*__7, -1*__10, 2*__12) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: -1 } }]
+
+--
+
+and([__14,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> and([__14,__2;int(1..)])) using tseitin
+
+--
+
+__15,
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]),
+true,
+true,
+true,
+(__2) <-> (or([ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e : tuple (int(1..2), int(1)), e in f#as_relation_1#as_set_1 ])),
+(__2) -> (and([SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]);int(1..)]))
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]),
+true,
+true,
+true,
+(__2) <-> (or([ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e : tuple (int(1..2), int(1)), e in f#as_relation_1#as_set_1 ])),
+(__2) -> (and([SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]),SATInt(Rank([(1, 1)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1]);int(1..)]))
+new SAT encoding decisions:
+  assert(__15) using tseitin
+
+--
+
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__17,__19,__21;int(1..)] [1, 2]) = SATInt(Log, [__24,__26,__28;int(1..)] [1, 2])
+new variables:
+  findAux __16: bool
+  findAux __17: bool
+  findAux __18: bool
+  findAux __19: bool
+  findAux __20: bool
+  findAux __21: bool
+  findAux __22: bool
+  findAux __23: bool
+  findAux __24: bool
+  findAux __25: bool
+  findAux __26: bool
+  findAux __27: bool
+  findAux __28: bool
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__16 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1) <-> (false))) using tseitin
+  define(__17 <-> !(__16)) using tseitin
+  define(__18 <-> or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1,false;int(1..)])) using tseitin
+  define(__19 <-> !((false) <-> (__18))) using tseitin
+  define(__20 <-> and([false,__18;int(1..)])) using tseitin
+  define(__21 <-> !((false) <-> (__20))) using tseitin
+  define(__22 <-> and([false,__20;int(1..)])) using tseitin
+  define(__23 <-> !((y#int_rank_1) <-> (false))) using tseitin
+  define(__24 <-> !(__23)) using tseitin
+  define(__25 <-> or([y#int_rank_1,false;int(1..)])) using tseitin
+  define(__26 <-> !((false) <-> (__25))) using tseitin
+  define(__27 <-> and([false,__25;int(1..)])) using tseitin
+  define(__28 <-> !((false) <-> (__27))) using tseitin
+  define(__29 <-> and([false,__27;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__17,__19,__21;int(1..)] [1, 2]) = SATInt(Log, [__24,__26,__28;int(1..)] [1, 2])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> integer-weighted(1*__17, 2*__19, -4*__21, -1*__24, -2*__26, 4*__28) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+SATInt(Rank([(1, 1)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1;int(1..)] [1, 1]) = SATInt(Rank([(1, 1)]), [__1#int_rank_1;int(1..)] [1, 1])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__32,__34;int(1..)] [1, 1]) = SATInt(Log, [__37,__39;int(1..)] [1, 1])
+new variables:
+  findAux __31: bool
+  findAux __32: bool
+  findAux __33: bool
+  findAux __34: bool
+  findAux __35: bool
+  findAux __36: bool
+  findAux __37: bool
+  findAux __38: bool
+  findAux __39: bool
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__31 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1) <-> (false))) using tseitin
+  define(__32 <-> !(__31)) using tseitin
+  define(__33 <-> or([f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1,false;int(1..)])) using tseitin
+  define(__34 <-> !((false) <-> (__33))) using tseitin
+  define(__35 <-> and([false,__33;int(1..)])) using tseitin
+  define(__36 <-> !((__1#int_rank_1) <-> (false))) using tseitin
+  define(__37 <-> !(__36)) using tseitin
+  define(__38 <-> or([__1#int_rank_1,false;int(1..)])) using tseitin
+  define(__39 <-> !((false) <-> (__38))) using tseitin
+  define(__40 <-> and([false,__38;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__32,__34;int(1..)] [1, 1]) = SATInt(Log, [__37,__39;int(1..)] [1, 1])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> integer-weighted(1*__32, -2*__34, -1*__37, 2*__39) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: -1 } }]
+
+--
+
+and([__30,__41;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> and([__30,__41;int(1..)])) using tseitin
+
+--
+
+(__2) -> (__42)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> (__2) -> (__42)) using tseitin
+
+--
+
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]),
+true,
+true,
+true,
+(__2) <-> (or([ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e : tuple (int(1..2), int(1)), e in f#as_relation_1#as_set_1 ])),
+__43
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]),
+true,
+true,
+true,
+(__2) <-> (or([ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e : tuple (int(1..2), int(1)), e in f#as_relation_1#as_set_1 ]))
+new SAT encoding decisions:
+  assert(__43) using tseitin
+
+--
+
+[ (SafeIndex(i,[1]) = SafeIndex(j,[1])) -> (SafeIndex(i,[2]) = SafeIndex(j,[2])) | i : tuple (int(1..2), int(1)), i in f#as_relation_1#as_set_1, j : tuple (int(1..2), int(1)), j in f#as_relation_1#as_set_1 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true;int(1..)]
+
+--
+
+[ SafeIndex(e,[1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]) | e : tuple (int(1..2), int(1)), e in f#as_relation_1#as_set_1 ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[and([(1,1) in f#as_relation_1#as_set_1,or([1 = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]);int(1..)]);int(1..)]),and([(2,1) in f#as_relation_1#as_set_1,or([2 = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]);int(1..)]);int(1..)]);int(1..)]
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+f#as_relation_1#as_set_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1
+
+--
+
+(1,1) in f#as_relation_1#as_set_1
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,1);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1
+
+--
+
+(2,1) in f#as_relation_1#as_set_1
+   ~~> in_explicit ([("ReprGeneral", 9500)])
+or([and([1 <= 1,SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (2,1);int(1..)]);int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1
+
+--
+
+1 = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+
+--
+
+2 = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+
+--
+
+or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (2,1);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (2,1);int(1..)])
+
+--
+
+or([and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,1);int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,1);int(1..)])
+
+--
+
+or([SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+
+--
+
+or([SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+
+--
+
+and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (2,1);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (2,1)
+
+--
+
+and([SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,1);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1]) = (1,1)
+
+--
+
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1 = (2,1)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 2,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = 1;int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2])
+
+--
+
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = 2
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
+
+--
+
+and([SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
+
+--
+
+SafeIndex(f#as_relation_1#as_set_1#explicit_1,[1])
+   ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1 = (1,1)
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 9400)])
+and([f#as_relation_1#as_set_1#explicit_1#components_1#components_1 = 1,f#as_relation_1#as_set_1#explicit_1#components_1#components_2 = 1;int(1..)])
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+
+--
+
+f#as_relation_1#as_set_1#explicit_1#components_1#components_1
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2])
+
+--
+
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
+
+--
+
+and([SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]);int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
+
+--
+
+SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__44,__47,__49;int(1..)] [2, 2]) = SATInt(Log, [__52,__54,__56;int(1..)] [1, 2])
+new variables:
+  findAux __44: bool
+  findAux __45: bool
+  findAux __46: bool
+  findAux __47: bool
+  findAux __48: bool
+  findAux __49: bool
+  findAux __50: bool
+  findAux __51: bool
+  findAux __52: bool
+  findAux __53: bool
+  findAux __54: bool
+  findAux __55: bool
+  findAux __56: bool
+  findAux __57: bool
+new SAT encoding decisions:
+  define(__44 <-> !((false) <-> (false))) using tseitin
+  define(__45 <-> and([false,false;int(1..)])) using tseitin
+  define(__46 <-> !((false) <-> (__45))) using tseitin
+  define(__47 <-> !(__46)) using tseitin
+  define(__48 <-> or([false,__45;int(1..)])) using tseitin
+  define(__49 <-> !((false) <-> (__48))) using tseitin
+  define(__50 <-> and([false,__48;int(1..)])) using tseitin
+  define(__51 <-> !((y#int_rank_1) <-> (false))) using tseitin
+  define(__52 <-> !(__51)) using tseitin
+  define(__53 <-> or([y#int_rank_1,false;int(1..)])) using tseitin
+  define(__54 <-> !((false) <-> (__53))) using tseitin
+  define(__55 <-> and([false,__53;int(1..)])) using tseitin
+  define(__56 <-> !((false) <-> (__55))) using tseitin
+  define(__57 <-> and([false,__55;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__44,__47,__49;int(1..)] [2, 2]) = SATInt(Log, [__52,__54,__56;int(1..)] [1, 2])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__58
+new variables:
+  findAux __58: bool
+new SAT encoding decisions:
+  define(__58 <-> integer-weighted(1*__44, 2*__47, -4*__49, -1*__52, -2*__54, 4*__56) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]) = SATInt(Rank([(1, 2)]), [y#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__60,__62;int(1..)] [1, 1]) = SATInt(Log, [__65,__67,__69;int(1..)] [1, 2])
+new variables:
+  findAux __59: bool
+  findAux __60: bool
+  findAux __61: bool
+  findAux __62: bool
+  findAux __63: bool
+  findAux __64: bool
+  findAux __65: bool
+  findAux __66: bool
+  findAux __67: bool
+  findAux __68: bool
+  findAux __69: bool
+  findAux __70: bool
+new SAT encoding decisions:
+  define(__59 <-> !((false) <-> (false))) using tseitin
+  define(__60 <-> !(__59)) using tseitin
+  define(__61 <-> or([false,false;int(1..)])) using tseitin
+  define(__62 <-> !((false) <-> (__61))) using tseitin
+  define(__63 <-> and([false,__61;int(1..)])) using tseitin
+  define(__64 <-> !((y#int_rank_1) <-> (false))) using tseitin
+  define(__65 <-> !(__64)) using tseitin
+  define(__66 <-> or([y#int_rank_1,false;int(1..)])) using tseitin
+  define(__67 <-> !((false) <-> (__66))) using tseitin
+  define(__68 <-> and([false,__66;int(1..)])) using tseitin
+  define(__69 <-> !((false) <-> (__68))) using tseitin
+  define(__70 <-> and([false,__68;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__60,__62;int(1..)] [1, 1]) = SATInt(Log, [__65,__67,__69;int(1..)] [1, 2])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__71
+new variables:
+  findAux __71: bool
+new SAT encoding decisions:
+  define(__71 <-> integer-weighted(1*__60, -2*__62, -1*__65, -2*__67, 4*__69) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -2, upper: -1 } }]
+
+--
+
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__73,__75,__77;int(1..)] [1, 2]) = SATInt(Log, [__79,__82,__84;int(1..)] [2, 2])
+new variables:
+  findAux __72: bool
+  findAux __73: bool
+  findAux __74: bool
+  findAux __75: bool
+  findAux __76: bool
+  findAux __77: bool
+  findAux __78: bool
+  findAux __79: bool
+  findAux __80: bool
+  findAux __81: bool
+  findAux __82: bool
+  findAux __83: bool
+  findAux __84: bool
+  findAux __85: bool
+new SAT encoding decisions:
+  define(__72 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1) <-> (false))) using tseitin
+  define(__73 <-> !(__72)) using tseitin
+  define(__74 <-> or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1,false;int(1..)])) using tseitin
+  define(__75 <-> !((false) <-> (__74))) using tseitin
+  define(__76 <-> and([false,__74;int(1..)])) using tseitin
+  define(__77 <-> !((false) <-> (__76))) using tseitin
+  define(__78 <-> and([false,__76;int(1..)])) using tseitin
+  define(__79 <-> !((false) <-> (false))) using tseitin
+  define(__80 <-> and([false,false;int(1..)])) using tseitin
+  define(__81 <-> !((false) <-> (__80))) using tseitin
+  define(__82 <-> !(__81)) using tseitin
+  define(__83 <-> or([false,__80;int(1..)])) using tseitin
+  define(__84 <-> !((false) <-> (__83))) using tseitin
+  define(__85 <-> and([false,__83;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__73,__75,__77;int(1..)] [1, 2]) = SATInt(Log, [__79,__82,__84;int(1..)] [2, 2])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__86
+new variables:
+  findAux __86: bool
+new SAT encoding decisions:
+  define(__86 <-> integer-weighted(1*__73, 2*__75, -4*__77, -1*__79, -2*__82, 4*__84) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -2 } }]
+
+--
+
+and([__86,__58;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__87
+new variables:
+  findAux __87: bool
+new SAT encoding decisions:
+  define(__87 <-> and([__86,__58;int(1..)])) using tseitin
+
+--
+
+or([and([SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]),__71;int(1..)]),__87;int(1..)])
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([__87,SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1]);int(1..)]),or([__87,__71;int(1..)]);int(1..)])
+
+--
+
+or([__87,__71;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__88
+new variables:
+  findAux __88: bool
+new SAT encoding decisions:
+  define(__88 <-> or([__87,__71;int(1..)])) using tseitin
+
+--
+
+SATInt(Rank([(1, 2)]), [f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1;int(1..)] [1, 2]) = SATInt(Rank([(1, 1)]), [false;int(1..)] [1, 1])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__90,__92,__94;int(1..)] [1, 2]) = SATInt(Log, [__97,__99;int(1..)] [1, 1])
+new variables:
+  findAux __89: bool
+  findAux __90: bool
+  findAux __91: bool
+  findAux __92: bool
+  findAux __93: bool
+  findAux __94: bool
+  findAux __95: bool
+  findAux __96: bool
+  findAux __97: bool
+  findAux __98: bool
+  findAux __99: bool
+  findAux __100: bool
+new SAT encoding decisions:
+  define(__89 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1) <-> (false))) using tseitin
+  define(__90 <-> !(__89)) using tseitin
+  define(__91 <-> or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1,false;int(1..)])) using tseitin
+  define(__92 <-> !((false) <-> (__91))) using tseitin
+  define(__93 <-> and([false,__91;int(1..)])) using tseitin
+  define(__94 <-> !((false) <-> (__93))) using tseitin
+  define(__95 <-> and([false,__93;int(1..)])) using tseitin
+  define(__96 <-> !((false) <-> (false))) using tseitin
+  define(__97 <-> !(__96)) using tseitin
+  define(__98 <-> or([false,false;int(1..)])) using tseitin
+  define(__99 <-> !((false) <-> (__98))) using tseitin
+  define(__100 <-> and([false,__98;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__90,__92,__94;int(1..)] [1, 2]) = SATInt(Log, [__97,__99;int(1..)] [1, 1])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__101
+new variables:
+  findAux __101: bool
+new SAT encoding decisions:
+  define(__101 <-> integer-weighted(1*__90, 2*__92, -4*__94, -1*__97, 2*__99) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: -1 } }]
+
+--
+
+or([__87,__101;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__102
+new variables:
+  findAux __102: bool
+new SAT encoding decisions:
+  define(__102 <-> or([__87,__101;int(1..)])) using tseitin
+
+--
+
+and([__102,__88;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__103
+new variables:
+  findAux __103: bool
+new SAT encoding decisions:
+  define(__103 <-> and([__102,__88;int(1..)])) using tseitin
+
+--
+
+(__2) <-> (__103)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__104
+new variables:
+  findAux __104: bool
+new SAT encoding decisions:
+  define(__104 <-> (__2) <-> (__103)) using tseitin
+
+--
+
+true,
+true,
+true,
+true,
+__104
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__104) using tseitin
+
+--
+
+Final model:
+
+find f: function (size 1) int(1..2) --> int(1) 
+find y: int(1..2)
+find f#as_relation_1: relation (size 1) of (int(1..2) * int(1))
+find y#int_rank_1: bool
+find f#as_relation_1#as_set_1: set (representation explicit, size 1) of tuple (int(1..2), int(1))
+find f#as_relation_1#as_set_1#explicit_1: matrix indexed by [int(1..1)] of tuple (int(1..2), int(1))
+find f#as_relation_1#as_set_1#explicit_1#components_1: tuple (int(1..2), int(1))
+find f#as_relation_1#as_set_1#explicit_1#components_1#components_1: int(1..2)
+find f#as_relation_1#as_set_1#explicit_1#components_1#components_2: int(1)
+find f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1: bool
+find f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1: bool
+findAux __0: bool
+findAux __1: int(1)
+findAux __2: bool
+findAux __1#int_rank_1: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: bool
+findAux __98: bool
+findAux __99: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+
+such that
+
+true,
+true,
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> !(f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1)) using tseitin,
+assert(__0) using tseitin,
+define(__3 <-> !(__1#int_rank_1)) using tseitin,
+assert(__3) using tseitin,
+define(__4 <-> !((__1#int_rank_1) <-> (false))) using tseitin,
+define(__5 <-> !(__4)) using tseitin,
+define(__6 <-> or([__1#int_rank_1,false;int(1..)])) using tseitin,
+define(__7 <-> !((false) <-> (__6))) using tseitin,
+define(__8 <-> and([false,__6;int(1..)])) using tseitin,
+define(__9 <-> !((false) <-> (false))) using tseitin,
+define(__10 <-> !(__9)) using tseitin,
+define(__11 <-> or([false,false;int(1..)])) using tseitin,
+define(__12 <-> !((false) <-> (__11))) using tseitin,
+define(__13 <-> and([false,__11;int(1..)])) using tseitin,
+define(__14 <-> integer-weighted(1*__5, -2*__7, -1*__10, 2*__12) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: -1 } }],
+define(__15 <-> and([__14,__2;int(1..)])) using tseitin,
+assert(__15) using tseitin,
+define(__16 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1) <-> (false))) using tseitin,
+define(__17 <-> !(__16)) using tseitin,
+define(__18 <-> or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1,false;int(1..)])) using tseitin,
+define(__19 <-> !((false) <-> (__18))) using tseitin,
+define(__20 <-> and([false,__18;int(1..)])) using tseitin,
+define(__21 <-> !((false) <-> (__20))) using tseitin,
+define(__22 <-> and([false,__20;int(1..)])) using tseitin,
+define(__23 <-> !((y#int_rank_1) <-> (false))) using tseitin,
+define(__24 <-> !(__23)) using tseitin,
+define(__25 <-> or([y#int_rank_1,false;int(1..)])) using tseitin,
+define(__26 <-> !((false) <-> (__25))) using tseitin,
+define(__27 <-> and([false,__25;int(1..)])) using tseitin,
+define(__28 <-> !((false) <-> (__27))) using tseitin,
+define(__29 <-> and([false,__27;int(1..)])) using tseitin,
+define(__30 <-> integer-weighted(1*__17, 2*__19, -4*__21, -1*__24, -2*__26, 4*__28) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
+define(__31 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1) <-> (false))) using tseitin,
+define(__32 <-> !(__31)) using tseitin,
+define(__33 <-> or([f#as_relation_1#as_set_1#explicit_1#components_1#components_2#int_rank_1,false;int(1..)])) using tseitin,
+define(__34 <-> !((false) <-> (__33))) using tseitin,
+define(__35 <-> and([false,__33;int(1..)])) using tseitin,
+define(__36 <-> !((__1#int_rank_1) <-> (false))) using tseitin,
+define(__37 <-> !(__36)) using tseitin,
+define(__38 <-> or([__1#int_rank_1,false;int(1..)])) using tseitin,
+define(__39 <-> !((false) <-> (__38))) using tseitin,
+define(__40 <-> and([false,__38;int(1..)])) using tseitin,
+define(__41 <-> integer-weighted(1*__32, -2*__34, -1*__37, 2*__39) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -1, upper: -1 } }],
+define(__42 <-> and([__30,__41;int(1..)])) using tseitin,
+define(__43 <-> (__2) -> (__42)) using tseitin,
+assert(__43) using tseitin,
+define(__44 <-> !((false) <-> (false))) using tseitin,
+define(__45 <-> and([false,false;int(1..)])) using tseitin,
+define(__46 <-> !((false) <-> (__45))) using tseitin,
+define(__47 <-> !(__46)) using tseitin,
+define(__48 <-> or([false,__45;int(1..)])) using tseitin,
+define(__49 <-> !((false) <-> (__48))) using tseitin,
+define(__50 <-> and([false,__48;int(1..)])) using tseitin,
+define(__51 <-> !((y#int_rank_1) <-> (false))) using tseitin,
+define(__52 <-> !(__51)) using tseitin,
+define(__53 <-> or([y#int_rank_1,false;int(1..)])) using tseitin,
+define(__54 <-> !((false) <-> (__53))) using tseitin,
+define(__55 <-> and([false,__53;int(1..)])) using tseitin,
+define(__56 <-> !((false) <-> (__55))) using tseitin,
+define(__57 <-> and([false,__55;int(1..)])) using tseitin,
+define(__58 <-> integer-weighted(1*__44, 2*__47, -4*__49, -1*__52, -2*__54, 4*__56) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 2, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -1 } }],
+define(__59 <-> !((false) <-> (false))) using tseitin,
+define(__60 <-> !(__59)) using tseitin,
+define(__61 <-> or([false,false;int(1..)])) using tseitin,
+define(__62 <-> !((false) <-> (__61))) using tseitin,
+define(__63 <-> and([false,__61;int(1..)])) using tseitin,
+define(__64 <-> !((y#int_rank_1) <-> (false))) using tseitin,
+define(__65 <-> !(__64)) using tseitin,
+define(__66 <-> or([y#int_rank_1,false;int(1..)])) using tseitin,
+define(__67 <-> !((false) <-> (__66))) using tseitin,
+define(__68 <-> and([false,__66;int(1..)])) using tseitin,
+define(__69 <-> !((false) <-> (__68))) using tseitin,
+define(__70 <-> and([false,__68;int(1..)])) using tseitin,
+define(__71 <-> integer-weighted(1*__60, -2*__62, -1*__65, -2*__67, 4*__69) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 1, upper: 1 } }, PbTermGroup { start: 2, end: 5, structure: BoundedBinary { lower: -2, upper: -1 } }],
+define(__72 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1) <-> (false))) using tseitin,
+define(__73 <-> !(__72)) using tseitin,
+define(__74 <-> or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1,false;int(1..)])) using tseitin,
+define(__75 <-> !((false) <-> (__74))) using tseitin,
+define(__76 <-> and([false,__74;int(1..)])) using tseitin,
+define(__77 <-> !((false) <-> (__76))) using tseitin,
+define(__78 <-> and([false,__76;int(1..)])) using tseitin,
+define(__79 <-> !((false) <-> (false))) using tseitin,
+define(__80 <-> and([false,false;int(1..)])) using tseitin,
+define(__81 <-> !((false) <-> (__80))) using tseitin,
+define(__82 <-> !(__81)) using tseitin,
+define(__83 <-> or([false,__80;int(1..)])) using tseitin,
+define(__84 <-> !((false) <-> (__83))) using tseitin,
+define(__85 <-> and([false,__83;int(1..)])) using tseitin,
+define(__86 <-> integer-weighted(1*__73, 2*__75, -4*__77, -1*__79, -2*__82, 4*__84) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -2 } }],
+define(__87 <-> and([__86,__58;int(1..)])) using tseitin,
+define(__88 <-> or([__87,__71;int(1..)])) using tseitin,
+define(__89 <-> !((f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1) <-> (false))) using tseitin,
+define(__90 <-> !(__89)) using tseitin,
+define(__91 <-> or([f#as_relation_1#as_set_1#explicit_1#components_1#components_1#int_rank_1,false;int(1..)])) using tseitin,
+define(__92 <-> !((false) <-> (__91))) using tseitin,
+define(__93 <-> and([false,__91;int(1..)])) using tseitin,
+define(__94 <-> !((false) <-> (__93))) using tseitin,
+define(__95 <-> and([false,__93;int(1..)])) using tseitin,
+define(__96 <-> !((false) <-> (false))) using tseitin,
+define(__97 <-> !(__96)) using tseitin,
+define(__98 <-> or([false,false;int(1..)])) using tseitin,
+define(__99 <-> !((false) <-> (__98))) using tseitin,
+define(__100 <-> and([false,__98;int(1..)])) using tseitin,
+define(__101 <-> integer-weighted(1*__90, 2*__92, -4*__94, -1*__97, 2*__99) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: -1 } }],
+define(__102 <-> or([__87,__101;int(1..)])) using tseitin,
+define(__103 <-> and([__102,__88;int(1..)])) using tseitin,
+define(__104 <-> (__2) <-> (__103)) using tseitin,
+assert(__104) using tseitin
+
