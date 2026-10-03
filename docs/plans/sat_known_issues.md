@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after constant-row table decisions were connected.
+Inventory date: 2026-10-03, branch `sat-ir` after scalar element decisions and index membership guards were connected.
 
-343 of 626 runnable integration fixtures have SAT enabled. All 343 passed full acceptance, exercising 12,473 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 283 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+356 of 627 runnable integration fixtures have SAT enabled. All 356 passed full acceptance, exercising 13,797 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 271 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -10,19 +10,21 @@ Scalar integer/Boolean allDifferent now passes pairwise and eligible value-AMO p
 
 Constant-row positive/negative tables now pass tuple and MDD portfolios, including reification. Short tables, binary-support encodings and non-constant row relations remain gaps. A fresh compact screen of `savilerow/sportsScheduling2` lowers its tables but leaves `flatten` inside allDifferent; that fixture remains disabled.
 
+Scalar element definitions now pass implication/support portfolios across all five integer representations and five PB providers. Internal scalar index-membership guards lower through existing numeric relations, retaining definedness for nested, negated, reified and masked lookups. Twelve existing fixtures are enabled; `sat-ir/element` adds sparse and masked regression coverage. ElementId and compound-valued lookups remain gaps. A compact rewrite of `savilerow/simpleElementId` still leaves ElementId and lexicographic constraints. Mixed representations and channelling remain deferred.
+
 ## Summary of last recorded outcomes
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 206 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 194 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 29 | Initial screen passed, but another representation/portfolio failed. |
 | Panics | 3 | Two reconfirmed today; one historical full-portfolio failure needs retesting. |
 | Model-loading errors | 5 | All five reconfirmed today. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
-| Total SAT-disabled runnable fixtures | 283 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 271 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 235 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 223 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -91,7 +93,7 @@ Last tested with a 120-second per-fixture bound.
 - [hakank-eprime/xkcd](../../test-suite/tests/integration/hakank-eprime/xkcd/xkcd.essence)
 - [savilerow/absBug](../../test-suite/tests/integration/savilerow/absBug/input.essence)
 
-## Initial-screen residual constraints (206)
+## Initial-screen residual constraints (194)
 
 Last recorded in the compact/first screen, before the weighted PB changes. Each fixture below remains SAT-disabled; a fresh screen may move cases out of this list.
 
@@ -112,16 +114,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [basic/lex/short-lt-long](../../test-suite/tests/integration/basic/lex/short-lt-long/input.essence)
 - [basic/matrix/02-2d-slicing](../../test-suite/tests/integration/basic/matrix/02-2d-slicing/input.essence)
 - [basic/matrix/03-domain-letting](../../test-suite/tests/integration/basic/matrix/03-domain-letting/input.essence)
-- [basic/matrix/08-index-is-expr](../../test-suite/tests/integration/basic/matrix/08-index-is-expr/input.essence)
-- [basic/matrix/09-index-is-expr-offset](../../test-suite/tests/integration/basic/matrix/09-index-is-expr-offset/input.essence)
-- [basic/matrix/10-value-letting-index-is-expr](../../test-suite/tests/integration/basic/matrix/10-value-letting-index-is-expr/input.essence)
-- [basic/matrix/11-index-matrix-literal](../../test-suite/tests/integration/basic/matrix/11-index-matrix-literal/input.essence)
-- [basic/matrix/13-index-matrix-literal-2d](../../test-suite/tests/integration/basic/matrix/13-index-matrix-literal-2d/input.essence)
-- [basic/matrix/14-matrix-index-matrix](../../test-suite/tests/integration/basic/matrix/14-matrix-index-matrix/matrix-index-matrix.essence)
-- [basic/matrix/15-matrix-index-matrix-with-offset](../../test-suite/tests/integration/basic/matrix/15-matrix-index-matrix-with-offset/matrix-index-matrix.essence)
-- [basic/matrix/16-matrix-out-bounds](../../test-suite/tests/integration/basic/matrix/16-matrix-out-bounds/input.essence)
-- [basic/matrix/17-matrix-out-bounds-reify](../../test-suite/tests/integration/basic/matrix/17-matrix-out-bounds-reify/input.essence)
-- [basic/matrix/18-matrix-out-bounds-possibly-undef](../../test-suite/tests/integration/basic/matrix/18-matrix-out-bounds-possibly-undef/input.essence)
 - [basic/mod/01](../../test-suite/tests/integration/basic/mod/01/input.essence)
 - [basic/mod/03](../../test-suite/tests/integration/basic/mod/03/input.essence)
 - [basic/mod/04](../../test-suite/tests/integration/basic/mod/04/input.essence)
@@ -267,7 +259,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [savilerow/test-holey-matrix](../../test-suite/tests/integration/savilerow/test-holey-matrix/input.essence)
 - [savilerow/test-power](../../test-suite/tests/integration/savilerow/test-power/input.essence)
 - [savilerow/test_comprehension_functions](../../test-suite/tests/integration/savilerow/test_comprehension_functions/input.essence)
-- [savilerow/test_element_simplify](../../test-suite/tests/integration/savilerow/test_element_simplify/input.essence)
 - [savilerow/test_power_raw](../../test-suite/tests/integration/savilerow/test_power_raw/input.essence)
 - [savilerow/tictactoe](../../test-suite/tests/integration/savilerow/tictactoe/input.essence)
 - [savilerow/valsymElementId](../../test-suite/tests/integration/savilerow/valsymElementId/input.essence)
@@ -297,7 +288,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [smt/matrix/lex-lt](../../test-suite/tests/integration/smt/matrix/lex-lt/input.essence)
 - [smt/matrix/magic-square-flatten](../../test-suite/tests/integration/smt/matrix/magic-square-flatten/input.essence)
 - [smt/matrix/nqueens-4](../../test-suite/tests/integration/smt/matrix/nqueens-4/input.essence)
-- [smt/matrix/undefined-index-var](../../test-suite/tests/integration/smt/matrix/undefined-index-var/input.essence)
 - [smt/set/eq](../../test-suite/tests/integration/smt/set/eq/input.essence)
 - [smt/set/eq_overlap](../../test-suite/tests/integration/smt/set/eq_overlap/input.essence)
 - [smt/set/subset-sum](../../test-suite/tests/integration/smt/set/subset-sum/input.essence)

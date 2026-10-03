@@ -14,6 +14,25 @@ SafeIndex([false,false;int(1..2)],[5 % 1 % 0])
 
 --
 
+SafeIndex([false,false;int(1..2)],[5 % 1 % 0])
+   ~~> introduce_element ([("SAT", 18400)])
+__0
+new variables:
+  findAux __0: bool
+new constraints:
+  satElement([false,false;int(1..2)], 5 % 1 % 0, __0)
+
+--
+
+__0,
+satElement([false,false;int(1..2)], 5 % 1 % 0, __0)
+   ~~> remove_single_atom ([("SAT", 8400)])
+satElement([false,false;int(1..2)], 5 % 1 % 0, __0)
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
 1 % 0
    ~~> mod_to_bubble ([("Bubble", 6000)])
 {SafeMod(1,0) @ 0 != 0}
@@ -26,23 +45,28 @@ SafeIndex([false,false;int(1..2)],[5 % 1 % 0])
 
 --
 
-SafeIndex([false,false;int(1..2)],[{5 % SafeMod(1,0) @ false}])
+satElement([false,false;int(1..2)], {5 % SafeMod(1,0) @ false}, __0)
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex([false,false;int(1..2)],[5 % SafeMod(1,0)]) @ false}
+{satElement([false,false;int(1..2)], 5 % SafeMod(1,0), __0) @ false}
 
 --
 
-{SafeIndex([false,false;int(1..2)],[5 % SafeMod(1,0)]) @ false}
+{satElement([false,false;int(1..2)], 5 % SafeMod(1,0), __0) @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex([false,false;int(1..2)],[5 % SafeMod(1,0)]),false;int(1..)])
+and([satElement([false,false;int(1..2)], 5 % SafeMod(1,0), __0),false;int(1..)])
 
 --
 
 Final model:
 
 find unused: bool
+findAux __0: bool
 
 such that
 
 false
+
+sat encoding decisions:
+
+assert(__0) using tseitin
 
