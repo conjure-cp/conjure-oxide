@@ -1,6 +1,6 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after the BinaryOffset/Rank additions.
+Inventory date: 2026-10-03, branch `sat-ir` after the structured PB input connection.
 
 328 of 623 runnable integration fixtures have SAT enabled. All 328 passed the latest full acceptance and normal golden checks, exercising 4,333 SAT portfolios. The remaining 295 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 

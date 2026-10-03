@@ -27,7 +27,7 @@ The former mismatches in `basic/weighted-sum/04-needs-normalising`, `cnf/neg-div
 
 ## Verification and limits
 
-The full acceptance workflow, `NEXTEST_TEST_THREADS=4 make test-accept` with nextest's no-fail-fast option, passed **1,511 tests**, with **14 skipped**. Workspace doctests passed. Production Clippy and formatting checks passed. Core and rule libraries contain 227 and 137 unit tests respectively. Weighted PB uses RustSAT GTE, RustSAT binary adder, Pindakaas BDD, RustSAT DPW and Pindakaas SWC, with exhaustive signed-weight, constant, complement, bound and allocation checks.
+The full acceptance workflow, `NEXTEST_TEST_THREADS=4 make test-accept` with nextest's no-fail-fast option, passed **1,517 tests**, with **14 skipped**. Workspace doctests passed. Production Clippy and formatting checks passed. Core and rule libraries contain 232 and 138 unit tests respectively. Weighted PB uses RustSAT GTE, RustSAT binary adder, Pindakaas BDD, RustSAT DPW and Pindakaas SWC, with exhaustive signed-weight, constant, complement, bound and allocation checks.
 
 Uniform all-mode exercises Direct, Order, BinaryValue (`IntLog`), BinaryOffset (`IntOffset`) and BinaryRank (`IntRank`), together with available composite layouts and encoding-algorithm choices. Representation selection is shared across each type family throughout a model.
 
@@ -44,3 +44,7 @@ DPW/SWC expansion: full workspace acceptance again passed 1,505 tests (14 skippe
 BinaryOffset/Rank expansion: the unsigned-integers fixture checks five integer representations, six AMO choices, two cardinality choices and five PB choices (300 SAT portfolios), each matching six reference solutions. Sparse, mixed-sign and singleton domains are covered. Unit tests also check unsigned code bounds and mapping at signed 32-bit endpoints. Free Boolean completions are streamed, avoiding eager exponential allocation, and dominance constraints trigger re-solving before further completions. Timing cleanup restored 299 timing-only files and retained prior measurements in 327 files with semantic changes.
 
 Final normal golden verification passed **787 tests**, covering every SAT-enabled fixture and the core/rule packages.
+
+Structured-input stage: Direct choice groups, Order chains and compatible BinaryValue/Offset bounds now reach Pindakaas BDD/SWC. Exhaustive projection checks cover mixed-sign sparse choices, signed binary values, scaled bounds, repeated/complementary terms, all bound directions and the shared allocator. Structured equality uses both inequality directions because Pindakaas 0.5.1's direct choice equality path can reject valid assignments. A choice-bound regression also verifies that an already implied bound needs no extra clauses. Full acceptance passed 1,517 tests and workspace doctests; production Clippy and formatting passed. Coverage remains 328 successful SAT fixtures and 4,333 portfolios. Timing cleanup restored 625 timing-only files; no semantic statistics changed.
+
+Structured-input normal golden verification passed **793 tests**, covering every enabled SAT fixture and all core/rule unit tests. Artefact changes are confined to 48 SAT-enabled directories: 2,295 traces expose the term groups, and 12 capped solution files retain 100 solutions while recording different search subsets.
