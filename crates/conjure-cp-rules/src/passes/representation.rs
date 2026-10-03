@@ -1,6 +1,6 @@
 use crate::guard;
 use crate::shared::utils::as_cmp_or_lex_op;
-use crate::types::int::{IntDirect, IntLog, IntOrder, SmtBv, SmtLia};
+use crate::types::int::{IntDirect, IntLog, IntOffset, IntOrder, IntRank, SmtBv, SmtLia};
 use conjure_cp::ast::pretty::pretty_find_with_representation;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
 use conjure_cp::representation::ReprRule;
@@ -332,6 +332,8 @@ fn is_encoding_repr(rule: ReprRulePtr) -> bool {
         SmtLia::id(),
         SmtBv::id(),
         IntLog::id(),
+        IntOffset::id(),
+        IntRank::id(),
         IntDirect::id(),
         IntOrder::id(),
     ]

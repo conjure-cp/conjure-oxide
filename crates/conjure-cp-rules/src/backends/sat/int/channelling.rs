@@ -5,9 +5,9 @@
 //! decline in that case -- each only knows how to read its own layout -- so a mixed operation is
 //! first rewritten to put every operand in the same encoding.
 //!
-//! Everything is channelled into the logarithmic encoding. Reaching it from the other two is a
-//! disjunction per bit, whereas going the other way costs a variable per value of the operand's
-//! range, and the log encoding is the one whose width does not grow with the domain.
+//! Fallback operations use actual-value binary circuits. Direct and Order supply value
+//! indicators; Offset adds the domain minimum and Rank maps canonical intervals to their
+//! numeric values. These temporary circuit operands do not create additional representations.
 
 use std::collections::{HashSet, VecDeque};
 
@@ -20,7 +20,9 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-use crate::backends::sat::boolean::{tseytin_and, tseytin_not, tseytin_or};
+use crate::backends::sat::boolean::{
+    tseytin_and, tseytin_mux, tseytin_not, tseytin_or, tseytin_xor,
+};
 use crate::backends::sat::int::log::bit_magnitude;
 use uniplate::Uniplate;
 
@@ -121,16 +123,47 @@ fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut Symb
         return expr;
     };
 
+    let (low, high) = *bounds;
+    let width = bit_magnitude(low).max(bit_magnitude(high));
+    if matches!(encoding, SATIntEncoding::Offset | SATIntEncoding::Rank(_)) {
+        let mut decoded = add_unsigned_constant(&bits, i64::from(low), width, clauses, symbols);
+        if let SATIntEncoding::Rank(ranges) = encoding {
+            let mut start = 0u64;
+            for (index, &(range_low, range_high)) in ranges.iter().enumerate() {
+                if index > 0 {
+                    let selector = unsigned_at_least(&bits, start, clauses, symbols);
+                    let candidate = add_unsigned_constant(
+                        &bits,
+                        i64::from(range_low) - start as i64,
+                        width,
+                        clauses,
+                        symbols,
+                    );
+                    decoded = decoded
+                        .into_iter()
+                        .zip(candidate)
+                        .map(|(old, new)| tseytin_mux(selector.clone(), old, new, clauses, symbols))
+                        .collect();
+                }
+                start += (i64::from(range_high) - i64::from(range_low) + 1) as u64;
+            }
+        }
+        return Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(decoded)),
+            (low, high),
+        );
+    }
+
     // Both remaining encodings lay out one bit per value; order does so cumulatively, so take the
     // difference between neighbouring thresholds to recover "x is exactly this value".
     let value_bits = match encoding {
         SATIntEncoding::Direct => bits,
         SATIntEncoding::Order => order_to_value_bits(&bits, clauses, symbols),
-        SATIntEncoding::Log => return expr,
+        SATIntEncoding::Log | SATIntEncoding::Offset | SATIntEncoding::Rank(_) => return expr,
     };
 
-    let (low, high) = *bounds;
-    let width = bit_magnitude(low).max(bit_magnitude(high));
     let log_bits: Vec<Expr> = (0..width)
         .map(|index| {
             // Bit `index` of `x` is set exactly when `x` takes one of the values whose two's
@@ -186,6 +219,7 @@ fn order_to_value_bits(
 pub(super) fn sat_int_literal(encoding: &SATIntEncoding, value: i32) -> Expr {
     let bits = match encoding {
         SATIntEncoding::Log => log_literal_bits(value),
+        SATIntEncoding::Offset | SATIntEncoding::Rank(_) => vec![false.into()],
         SATIntEncoding::Direct | SATIntEncoding::Order => {
             vec![Expr::Atomic(
                 Metadata::new(),
@@ -196,7 +230,10 @@ pub(super) fn sat_int_literal(encoding: &SATIntEncoding, value: i32) -> Expr {
 
     Expr::SATInt(
         Metadata::new(),
-        encoding.clone(),
+        match encoding {
+            SATIntEncoding::Rank(_) => SATIntEncoding::Rank(vec![(value, value)]),
+            other => other.clone(),
+        },
         Moo::new(into_matrix_expr!(bits)),
         (value, value),
     )
@@ -259,4 +296,176 @@ fn encode_sat_int_literals(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .collect();
 
     Ok(RuleEffect::pure(expr.with_children(children)))
+}
+
+/// Add a constant modulo the semantic width; structural constraints exclude unused codes.
+fn add_unsigned_constant(
+    bits: &[Expr],
+    constant: i64,
+    width: usize,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Vec<Expr> {
+    let mut carry: Expr = false.into();
+    let mut out = Vec::with_capacity(width);
+    for index in 0..width {
+        let bit = bits.get(index).cloned().unwrap_or_else(|| false.into());
+        let sum = tseytin_xor(bit.clone(), carry.clone(), decisions, symbols);
+        if (constant as u32 >> index) & 1 == 1 {
+            out.push(tseytin_not(sum, decisions, symbols));
+            carry = tseytin_or(&[bit, carry], decisions, symbols);
+        } else {
+            out.push(sum);
+            carry = tseytin_and(&[bit, carry], decisions, symbols);
+        }
+    }
+    out
+}
+/// Compare an unsigned code with an interval's starting rank.
+fn unsigned_at_least(
+    bits: &[Expr],
+    minimum: u64,
+    decisions: &mut Vec<SatEncodingDecision>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    let maximum = minimum - 1;
+    let mut leq: Expr = true.into();
+    for (index, bit) in bits.iter().enumerate() {
+        let not = tseytin_not(bit.clone(), decisions, symbols);
+        leq = if (maximum >> index) & 1 == 1 {
+            tseytin_or(&[not, leq], decisions, symbols)
+        } else {
+            tseytin_and(&[not, leq], decisions, symbols)
+        };
+    }
+    tseytin_not(leq, decisions, symbols)
+}
+
+#[cfg(test)]
+mod unsigned_tests {
+    use super::*;
+    use crate::types::int::unsigned::{unsigned_capacity, unsigned_width, value_at_rank};
+    use conjure_cp::ast::Name;
+    use std::collections::HashMap;
+
+    fn evaluate(expr: &Expr, values: &HashMap<Name, bool>) -> bool {
+        match expr {
+            Expr::Atomic(_, Atom::Literal(Literal::Bool(value))) => *value,
+            Expr::Atomic(_, Atom::Reference(reference)) => values[&reference.name()],
+            Expr::Not(_, input) => !evaluate(input, values),
+            Expr::Iff(_, left, right) => evaluate(left, values) == evaluate(right, values),
+            Expr::And(_, inner) => inner
+                .unwrap_list_ref()
+                .unwrap()
+                .iter()
+                .all(|x| evaluate(x, values)),
+            Expr::Or(_, inner) => inner
+                .unwrap_list_ref()
+                .unwrap()
+                .iter()
+                .any(|x| evaluate(x, values)),
+            other => panic!("unexpected Boolean gate: {other}"),
+        }
+    }
+
+    #[test]
+    fn unused_unsigned_codes_are_excluded_even_for_singletons() {
+        use crate::types::int::unsigned::unsigned_bound;
+        use conjure_cp::ast::{DeclarationPtr, Domain};
+        for maximum in [0, 1, 2, 5, 7, 8, 17, u32::MAX as u64] {
+            let bits: Vec<_> = (0..unsigned_width(maximum))
+                .map(|i| {
+                    DeclarationPtr::new_find(Name::User(format!("b{i}").into()), Domain::bool())
+                })
+                .collect();
+            let bound = unsigned_bound(&bits, maximum);
+            let codes: Vec<u64> = if maximum < 32 {
+                (0..1u64 << bits.len()).collect()
+            } else {
+                vec![0, 1, 1 << 31, u32::MAX as u64]
+            };
+            for code in codes {
+                let values: HashMap<_, _> = bits
+                    .iter()
+                    .enumerate()
+                    .map(|(i, decl)| (decl.name().clone(), (code >> i) & 1 != 0))
+                    .collect();
+                assert_eq!(evaluate(&bound, &values), code <= maximum);
+            }
+        }
+    }
+
+    #[test]
+    fn unsigned_codes_decode_to_actual_values_including_sparse_and_extreme_domains() {
+        let domains = [
+            vec![(-3, -3), (-1, -1), (2, 2)],
+            vec![(-8, -6), (3, 5)],
+            vec![(100, 105)],
+            vec![(-100, -93)],
+            vec![(-4, 3)],
+            vec![(i32::MIN, i32::MIN)],
+            vec![(i32::MAX, i32::MAX)],
+            vec![(i32::MIN, i32::MAX)],
+            vec![(i32::MIN, i32::MIN), (i32::MAX, i32::MAX)],
+        ];
+        for ranges in domains {
+            let low = ranges[0].0;
+            let high = ranges.last().unwrap().1;
+            for rank in [false, true] {
+                let capacity = unsigned_capacity(&ranges, rank);
+                let codes: Vec<u64> = if capacity <= 128 {
+                    (0..capacity).collect()
+                } else {
+                    vec![0, 1, capacity / 2, capacity - 2, capacity - 1]
+                };
+                for code in codes {
+                    let expected = if rank {
+                        i64::from(value_at_rank(&ranges, code).unwrap())
+                    } else {
+                        i64::from(low) + code as i64
+                    };
+                    let bits: Vec<Expr> = (0..unsigned_width(capacity - 1))
+                        .map(|i| ((code >> i) & 1 == 1).into())
+                        .collect();
+                    let encoding = if rank {
+                        SATIntEncoding::Rank(ranges.clone())
+                    } else {
+                        SATIntEncoding::Offset
+                    };
+                    let operand = Expr::SATInt(
+                        Metadata::new(),
+                        encoding,
+                        Moo::new(into_matrix_expr!(bits)),
+                        (low, high),
+                    );
+                    let mut decisions = Vec::new();
+                    let decoded = to_log(operand, &mut decisions, &mut SymbolTable::new());
+                    let mut values = HashMap::new();
+                    for decision in decisions {
+                        let SatEncodingDecision::Boolean { output, expression } = decision else {
+                            panic!("unexpected decision")
+                        };
+                        let Expr::Atomic(_, Atom::Reference(reference)) = output else {
+                            panic!("unexpected output")
+                        };
+                        values.insert(reference.name().clone(), evaluate(&expression, &values));
+                    }
+                    let Expr::SATInt(_, SATIntEncoding::Log, inner, _) = decoded else {
+                        panic!("expected actual-value binary")
+                    };
+                    let bits = inner.unwrap_list_ref().unwrap();
+                    let width = bits.len();
+                    let mut value: i64 = bits
+                        .iter()
+                        .enumerate()
+                        .map(|(i, bit)| i64::from(evaluate(bit, &values)) << i)
+                        .sum();
+                    if value & (1i64 << (width - 1)) != 0 {
+                        value -= 1i64 << width;
+                    }
+                    assert_eq!(value, expected, "rank={rank} ranges={ranges:?} code={code}");
+                }
+            }
+        }
+    }
 }

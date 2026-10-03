@@ -28,10 +28,12 @@ impl Linear {
                     .checked_add(scale.checked_mul(i128::from(*value))?)?
             }
             Expr::Atomic(_, Atom::Reference(reference)) => {
-                use crate::types::int::{IntDirect, IntLog, IntOrder};
+                use crate::types::int::{IntDirect, IntLog, IntOffset, IntOrder};
                 let represented = if let Some(state) = reference.get_repr_as::<IntDirect>() {
                     state.sat_int_expr()
                 } else if let Some(state) = reference.get_repr_as::<IntOrder>() {
+                    state.sat_int_expr()
+                } else if let Some(state) = reference.get_repr_as::<IntOffset>() {
                     state.sat_int_expr()
                 } else {
                     reference.get_repr_as::<IntLog>()?.sat_int_expr()
@@ -105,6 +107,20 @@ impl Linear {
                             self.terms.push((scale, bit.clone()));
                         }
                     }
+                    SATIntEncoding::Offset => {
+                        if bits.is_empty() || bits.len() > 32 {
+                            return None;
+                        }
+                        self.constant = self
+                            .constant
+                            .checked_add(scale.checked_mul(i128::from(*low))?)?;
+                        for (index, bit) in bits.iter().enumerate() {
+                            self.terms
+                                .push((scale.checked_mul(1i128 << index)?, bit.clone()));
+                        }
+                    }
+                    // Sparse rank is not a linear numeric view of its code bits.
+                    SATIntEncoding::Rank(_) => return None,
                     SATIntEncoding::Log => {
                         if bits.is_empty() || bits.len() > 32 {
                             return None;
@@ -216,8 +232,9 @@ mod tests {
             SATIntEncoding::Direct,
             SATIntEncoding::Order,
             SATIntEncoding::Log,
+            SATIntEncoding::Offset,
         ] {
-            let width = if encoding == SATIntEncoding::Log {
+            let width = if matches!(encoding, SATIntEncoding::Log | SATIntEncoding::Offset) {
                 3
             } else {
                 6
@@ -245,6 +262,8 @@ mod tests {
                         SATIntEncoding::Direct => value == low + index as i32,
                         SATIntEncoding::Order => value >= low + index as i32,
                         SATIntEncoding::Log => (value >> index) & 1 != 0,
+                        SATIntEncoding::Offset => ((value - low) >> index) & 1 != 0,
+                        SATIntEncoding::Rank(_) => unreachable!(),
                     })
                     .collect();
                 let actual = linear.constant

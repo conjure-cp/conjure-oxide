@@ -40,7 +40,7 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 
 ## Coverage investigation
 
-- Production SAT integer representations remain IntDirect, IntOrder, and IntLog (two's-complement actual value). BinaryOffset and BinaryRank currently exist only as IR kinds.
+- Production SAT integer representations are IntDirect, IntOrder, IntLog (two's-complement actual value), IntOffset (unsigned displacement from minimum) and IntRank (unsigned sorted-domain index).
 - An initial short CLI survey of 45 CNF inputs found six timeouts and the dropped residual false regression. The premature probe-choice bug meant this survey did not exercise all integer choices; integration portfolio enumeration supersedes its apparent coverage.
 - Longer acceptance and normal regression runs enabled comparison/sparse_direct, comparison/sparse_log, int_direct/06-add, and integer/05-product. At that stage, integer/10-div and neg-div exceeded a 180-second per-test limit. The later cardinality coverage expansion enables integer/10-div; the later signed arithmetic fixes enable neg-div as well.
 - cnf/cnf2 contains two Essence files, so the current integration test discovery skips that directory; split these inputs before enabling them.
@@ -52,7 +52,7 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 
 - Extend the decision mechanism to the remaining encoding classes, with explicit user overrides and heuristic selection.
 - Extend decisions to the other encoding classes and implement shared representation materialisation, decoding, and domain constraints. Unify the explicit Boolean arena and production gate/AMO payloads as those plans are migrated.
-- Add BinaryOffset and BinaryRank; expose the existing actual-value encoding as BinaryValue in the new production pipeline.
+- Expose the existing actual-value `IntLog` naming as BinaryValue in the new production pipeline; BinaryOffset and BinaryRank are implemented.
 - Add lazy multi-representation materialisation, channelling, and exhaustive semantic tests before enabling mixed representations.
 - The versioned [RustSAT/Pindakaas inventory](sat_encoder_inventory.md) covers public algorithms, compositions, integer views and internal-only machinery. The Pindakaas clause-sink bridge and cardinality provider choices are implemented; weighted PB now has GTE, adder, BDD, DPW and SWC providers. Pindakaas adder and totaliser are deferred as overlapping algorithm families; alternate provider implementations and tuning remain future work.
 - Expand verified portfolios beyond the CNF corpus and investigate the remaining slow fixtures.
@@ -80,3 +80,9 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 - Full `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,505 tests with 14 skipped, plus workspace doctests. Production Clippy and formatting passed. Exhaustive PB projection now also covers weights 1, 64 and 257 and their bound transitions.
 - All 327 SAT-enabled fixtures remain successful, with 3,355 SAT portfolios (3,260 uniform across 239 fixtures), an increase of 692 portfolios. Timing cleanup restored 578 timing-only files and retained previous timing fields in the 44 files with semantic statistics changes.
 - Normal golden verification passed 781 tests, covering every enabled SAT fixture and the core/rule packages.
+
+## BinaryOffset and BinaryRank
+
+- Added `int_offset` and `int_rank` production representations, with finite-domain initialisation, canonical sparse intervals, uniform family selection, structural code bounds and solution encoding/decoding. Singletons use one constrained zero bit. Full signed 32-bit endpoints are handled with widened unsigned-code arithmetic.
+- Offset linear views use the domain minimum plus positive powers of two, so all PB algorithms consume the actual numeric expression directly. Rank maps interval ranks to actual values before arithmetic; sparse codes are never substituted for values. Fallback arithmetic uses temporary actual-value binary circuit operands rather than materialising another semantic representation.
+- AMO/cardinality/PB algorithms remain Boolean encoders. Binary representations do not need Direct's one-hot domain AMO, but explicit AMO and cardinality constraints remain available with every integer representation.

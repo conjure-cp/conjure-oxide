@@ -1,6 +1,6 @@
 //! Helpers shared by the SAT integer representations.
 //!
-//! The three encodings differ in how they lay out bits, but agree on which domains they accept
+//! The encodings differ in how they lay out bits, but agree on which domains they accept
 //! and on how a domain is restated as a constraint over the encoded value.
 
 use conjure_cp::ast::{DomainPtr, Expression, GroundDomain, Metadata, Moo, Range};
