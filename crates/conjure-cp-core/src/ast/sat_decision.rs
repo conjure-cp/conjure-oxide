@@ -59,6 +59,14 @@ pub enum SatEncodingDecision {
         encoding: Option<EncodingSelection<TableEncoding>>,
         pb_encoding: Option<EncodingSelection<PbEncoding>>,
     },
+    /// Define a selected scalar value; out-of-domain indices leave it unconstrained.
+    Element {
+        index_view: SatIntegerView,
+        value: SatIntegerView,
+        entries: Vec<(i64, SatIntegerView)>,
+        encoding: Option<EncodingSelection<ElementEncoding>>,
+        pb_encoding: Option<EncodingSelection<PbEncoding>>,
+    },
     /// Define an output as equivalent to a semantic Boolean expression.
     Boolean {
         output: Expression,
@@ -162,6 +170,21 @@ impl Display for SatEncodingDecision {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
+            Self::Element {
+                index_view,
+                value,
+                entries,
+                encoding,
+                pb_encoding,
+            } => write!(
+                f,
+                "element(index={index_view}, value={value}, entries=[{}]) using {encoding:?}, PB {pb_encoding:?}",
+                entries
+                    .iter()
+                    .map(|(label, view)| format!("{label}: {view}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
             Self::Assert(expression) => write!(f, "assert({expression}) using tseitin"),
             Self::Boolean { output, expression } => {
                 write!(f, "define({output} <-> {expression}) using tseitin")
@@ -225,6 +248,21 @@ impl SatEncodingDecision {
                     }))
                     .collect()
             }
+            Self::Element {
+                index_view,
+                value,
+                entries,
+                ..
+            } => std::iter::once(index_view)
+                .chain(std::iter::once(value))
+                .chain(entries.iter().map(|(_, entry)| entry))
+                .flat_map(|view| {
+                    view.terms
+                        .iter()
+                        .map(|(_, term)| term)
+                        .chain(view.choices.iter().flatten().map(|(_, term)| term))
+                })
+                .collect(),
             Self::Assert(expression) => vec![expression],
             Self::Boolean { output, expression } => vec![output, expression],
         }
@@ -271,6 +309,39 @@ impl Display for SatIntegerView {
             )?;
         }
         Ok(())
+    }
+}
+
+/// Library compositions available for element.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ElementEncoding {
+    /// Each valid index selector implies its scalar equality.
+    Implication,
+    /// One support disjunction, with an explicit out-of-domain alternative.
+    Support,
+}
+impl ElementEncoding {
+    pub const ALL: [Self; 2] = [Self::Implication, Self::Support];
+    pub const LABELS: [&'static str; 2] = ["implication", "support"];
+}
+impl Display for ElementEncoding {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(Self::LABELS[Self::ALL.iter().position(|value| value == self).unwrap()])
+    }
+}
+impl std::str::FromStr for ElementEncoding {
+    type Err = String;
+    fn from_str(value: &str) -> Result<Self, String> {
+        Self::LABELS
+            .iter()
+            .position(|label| *label == value)
+            .map(|index| Self::ALL[index])
+            .ok_or_else(|| {
+                format!(
+                    "unknown element encoding '{value}'; expected {}",
+                    Self::LABELS.join(", ")
+                )
+            })
     }
 }
 
@@ -410,11 +481,58 @@ impl std::str::FromStr for AmoEncoding {
 
 /// Resolve unpinned encoding classes once per model through the configured heuristic.
 pub fn resolve_encoding_choices(decisions: &mut [SatEncodingDecision]) {
+    resolve_element_choices(decisions);
     resolve_table_choices(decisions);
     resolve_alldifferent_choices(decisions);
     resolve_pb_choices(decisions);
     resolve_cardinality_choices(decisions);
     resolve_amo_choices(decisions);
+}
+fn resolve_element_choices(decisions: &mut [SatEncodingDecision]) {
+    use crate::settings::{self, Heuristic};
+    let sizes = decisions
+        .iter()
+        .filter_map(|decision| match decision {
+            SatEncodingDecision::Element {
+                entries,
+                encoding: None,
+                ..
+            } => Some(entries.len()),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    if sizes.is_empty() {
+        return;
+    }
+    let algorithms = &ElementEncoding::ALL;
+    let (algorithm, provenance) = if let Some(algorithm) = settings::element_encoding() {
+        (algorithm, SelectionProvenance::ExplicitConfiguration)
+    } else {
+        let index = if algorithms.len() == 1 {
+            0
+        } else {
+            match settings::heuristic() {
+                Heuristic::First => 0,
+                Heuristic::Compact => usize::from(sizes.iter().any(|size| *size > 4)),
+                Heuristic::Random => settings::next_heuristic_random_index(algorithms.len()),
+                Heuristic::Interactive => {
+                    settings::next_heuristic_interactive_index(&ElementEncoding::LABELS)
+                }
+                Heuristic::All => settings::next_heuristic_all_index(&ElementEncoding::LABELS),
+            }
+        };
+        (algorithms[index], SelectionProvenance::Heuristic)
+    };
+    for decision in decisions {
+        if let SatEncodingDecision::Element { encoding, .. } = decision
+            && encoding.is_none()
+        {
+            *encoding = Some(EncodingSelection {
+                algorithm,
+                provenance,
+            });
+        }
+    }
 }
 fn resolve_table_choices(decisions: &mut [SatEncodingDecision]) {
     use crate::settings::{self, Heuristic};
@@ -833,6 +951,22 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
                         .sum::<i128>()
                 })
                 .map(|input| &input.terms),
+            SatEncodingDecision::Element {
+                index_view,
+                value,
+                entries,
+                pb_encoding: None,
+                ..
+            } => std::iter::once(index_view)
+                .chain(std::iter::once(value))
+                .chain(entries.iter().map(|(_, entry)| entry))
+                .max_by_key(|view| {
+                    view.terms
+                        .iter()
+                        .map(|(weight, _)| i128::from(*weight).abs())
+                        .sum::<i128>()
+                })
+                .map(|view| &view.terms),
             _ => None,
         })
         .collect();
@@ -868,6 +1002,10 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
             ..
         }
         | SatEncodingDecision::Table {
+            pb_encoding: encoding,
+            ..
+        }
+        | SatEncodingDecision::Element {
             pb_encoding: encoding,
             ..
         } = decision
@@ -1103,6 +1241,72 @@ mod table_choice_tests {
             }
         )));
         settings::set_table_encoding(None);
+        settings::set_heuristic(Heuristic::First);
+    }
+}
+#[cfg(test)]
+mod element_choice_tests {
+    use super::*;
+    use crate::settings::{self, Heuristic};
+    #[test]
+    fn element_choices_are_shared_and_explicit_requests_have_provenance() {
+        let build = |size| SatEncodingDecision::Element {
+            index_view: SatIntegerView {
+                constant: 0,
+                terms: vec![],
+                groups: vec![],
+                choices: None,
+            },
+            value: SatIntegerView {
+                constant: 0,
+                terms: vec![],
+                groups: vec![],
+                choices: None,
+            },
+            entries: (0..size)
+                .map(|label| {
+                    (
+                        label,
+                        SatIntegerView {
+                            constant: 0,
+                            terms: vec![],
+                            groups: vec![],
+                            choices: None,
+                        },
+                    )
+                })
+                .collect(),
+            encoding: None,
+            pb_encoding: None,
+        };
+        settings::set_element_encoding(None);
+        settings::set_heuristic(Heuristic::Compact);
+        let mut decisions = vec![build(1), build(5)];
+        resolve_encoding_choices(&mut decisions);
+        assert!(decisions.iter().all(|d| matches!(
+            d,
+            SatEncodingDecision::Element {
+                encoding: Some(EncodingSelection {
+                    algorithm: ElementEncoding::Support,
+                    provenance: SelectionProvenance::Heuristic
+                }),
+                ..
+            }
+        )));
+        settings::set_element_encoding(Some(ElementEncoding::Implication));
+        let mut decisions = vec![build(1), build(5)];
+        resolve_encoding_choices(&mut decisions);
+        assert!(decisions.iter().all(|d| matches!(
+            d,
+            SatEncodingDecision::Element {
+                encoding: Some(EncodingSelection {
+                    algorithm: ElementEncoding::Implication,
+                    provenance: SelectionProvenance::ExplicitConfiguration
+                }),
+                ..
+            }
+        )));
+        settings::set_element_encoding(None);
         settings::set_heuristic(Heuristic::First);
     }
 }

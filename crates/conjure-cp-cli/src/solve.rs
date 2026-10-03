@@ -383,6 +383,7 @@ pub(crate) fn rewrite(
     set_channelling(global_args.channelling);
     conjure_cp::settings::set_amo_encoding(global_args.amo_encoding);
     conjure_cp::settings::set_pb_encoding(global_args.pb_encoding);
+    conjure_cp::settings::set_element_encoding(global_args.element_encoding);
     conjure_cp::settings::set_table_encoding(global_args.table_encoding);
     conjure_cp::settings::set_alldifferent_encoding(global_args.alldifferent_encoding);
     conjure_cp::settings::set_cardinality_encoding(global_args.cardinality_encoding);

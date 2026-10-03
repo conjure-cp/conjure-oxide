@@ -94,6 +94,7 @@ impl FromStr for Channelling {
 pub const DEFAULT_HEURISTIC_SEED: u64 = 0;
 
 thread_local! {
+    static ELEMENT_ENCODING: Cell<Option<crate::ast::sat_decision::ElementEncoding>> = const { Cell::new(None) };
     static TABLE_ENCODING: Cell<Option<crate::ast::sat_decision::TableEncoding>> = const { Cell::new(None) };
     static ALLDIFFERENT_ENCODING: Cell<Option<crate::ast::sat_decision::AllDifferentEncoding>> = const { Cell::new(None) };
     static PB_ENCODING: Cell<Option<crate::ast::sat_decision::PbEncoding>> = const { Cell::new(None) };
@@ -998,4 +999,13 @@ pub fn set_table_encoding(encoding: Option<crate::ast::sat_decision::TableEncodi
 /// Explicit table strategy override for this compilation thread.
 pub fn table_encoding() -> Option<crate::ast::sat_decision::TableEncoding> {
     TABLE_ENCODING.with(Cell::get)
+}
+
+/// Pin the element composition, or let the modelling heuristic select it.
+pub fn set_element_encoding(encoding: Option<crate::ast::sat_decision::ElementEncoding>) {
+    ELEMENT_ENCODING.with(|current| current.set(encoding));
+}
+/// Explicit element strategy override for this compilation thread.
+pub fn element_encoding() -> Option<crate::ast::sat_decision::ElementEncoding> {
+    ELEMENT_ENCODING.with(Cell::get)
 }

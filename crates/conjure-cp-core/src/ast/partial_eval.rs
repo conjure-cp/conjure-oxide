@@ -1188,7 +1188,9 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::LexGeq(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLeq(_, _, _) => Err(RuleNotApplicable),
-        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => Err(RuleNotApplicable),
+        Expr::AllDifferentExcept(_, _, _)
+        | Expr::ElementId(_, _, _)
+        | Expr::SatElement(_, _, _, _) => Err(RuleNotApplicable),
     }
 }
 

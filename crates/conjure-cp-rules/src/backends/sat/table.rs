@@ -4,7 +4,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-fn materialise(expression: &Expr) -> Expr {
+pub(super) fn materialise(expression: &Expr) -> Expr {
     if let Expr::Atomic(_, Atom::Reference(reference)) = expression {
         if let Some(value) = reference.resolve_expression() {
             return value;

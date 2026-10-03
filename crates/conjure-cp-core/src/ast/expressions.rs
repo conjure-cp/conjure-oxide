@@ -152,6 +152,11 @@ pub enum Expression {
     #[compatible(SMT)]
     SafeIndex(Metadata, Moo<Expression>, Vec<Expression>),
 
+    /// Internal total element definition. Outside the index domain, the value is unconstrained.
+    /// Safe indexing introduces this before numeric representation materialisation finishes.
+    #[polyquine_skip]
+    SatElement(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
+
     /// A matrix slice: `a[indices]`.
     ///
     /// One of the indicies may be `None`, representing the dimension of the matrix we want to take
@@ -1388,6 +1393,7 @@ impl Expression {
                     Some(Domain::int(vec![Range::Bounded(1, num_elems)]))
                 }
             }
+            Expression::SatElement(_, _, _, _) => Some(Domain::bool()),
             Expression::Table(_, _, _) => Some(Domain::bool()),
             Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
             Expression::AtLeast(_, _, _, _) => Some(Domain::bool()),
@@ -2006,6 +2012,7 @@ impl Expression {
             RecordField,
             UnsafeIndex,
             SafeIndex,
+            SatElement,
             UnsafeSlice,
             SafeSlice,
             InDomain,
@@ -2796,6 +2803,9 @@ impl Display for Expression {
             Expression::ElementId(_, matrix, value) => {
                 write!(f, "elementId({matrix}, {value})")
             }
+            Expression::SatElement(_, matrix, index, value) => {
+                write!(f, "satElement({matrix}, {index}, {value})")
+            }
             Expression::Table(_, tuple_expr, rows_expr) => {
                 write!(f, "table({tuple_expr}, {rows_expr})")
             }
@@ -3144,6 +3154,7 @@ impl Typeable for Expression {
             Expression::SmtDistinct(_, _) => ReturnType::Bool,
             Expression::AllDifferentExcept(_, _, _) => ReturnType::Bool,
             Expression::ElementId(_, _, _) => ReturnType::Int,
+            Expression::SatElement(_, _, _, _) => ReturnType::Bool,
             Expression::Table(_, _, _) => ReturnType::Bool,
             Expression::NegativeTable(_, _, _) => ReturnType::Bool,
             Expression::AtLeast(_, _, _, _) => ReturnType::Bool,
@@ -3497,7 +3508,8 @@ impl Expression {
             }
 
             // Moo<Expression> + Moo<Expression> + Moo<Expression>
-            Expression::AtLeast(_, m1, m2, m3)
+            Expression::SatElement(_, m1, m2, m3)
+            | Expression::AtLeast(_, m1, m2, m3)
             | Expression::AtMost(_, m1, m2, m3)
             | Expression::Gcc(_, m1, m2, m3)
             | Expression::GccWeak(_, m1, m2, m3) => {
@@ -3820,7 +3832,8 @@ impl Expression {
             }
 
             // Moo<Expression> + Moo<Expression> + Moo<Expression>
-            Expression::AtLeast(_, m1, m2, m3)
+            Expression::SatElement(_, m1, m2, m3)
+            | Expression::AtLeast(_, m1, m2, m3)
             | Expression::AtMost(_, m1, m2, m3)
             | Expression::Gcc(_, m1, m2, m3)
             | Expression::GccWeak(_, m1, m2, m3) => {

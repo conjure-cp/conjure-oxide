@@ -219,6 +219,10 @@ pub struct GlobalArgs {
     )]
     pub channelling: Channelling,
 
+    /// Pin the SAT element composition: implication or support.
+    #[arg(long = "sat-encoding-element", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub element_encoding: Option<conjure_cp::ast::sat_decision::ElementEncoding>,
+
     /// Pin the SAT table composition: tuple or mdd.
     #[arg(long = "sat-encoding-table", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub table_encoding: Option<conjure_cp::ast::sat_decision::TableEncoding>,
