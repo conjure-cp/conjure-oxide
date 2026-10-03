@@ -33,7 +33,7 @@ use uniplate::Uniplate;
 /// never reaches this rule; what is left over is the two cases that would otherwise be stuck --
 /// operands in different encodings, and an operation the operands' shared encoding has no rule
 /// for, such as a sum of order-encoded variables.
-#[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
+#[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, AllDiff, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
 fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let encodings: HashSet<SATIntEncoding> = operands(expr)
         .filter_map(|operand| match operand {

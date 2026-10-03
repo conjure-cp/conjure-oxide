@@ -157,6 +157,62 @@ impl Linear {
         Some(())
     }
 }
+/// Extract an actual-value view without folding representation bounds to constants.
+pub(super) fn integer_view(
+    expression: &Expr,
+) -> Option<conjure_cp::ast::sat_decision::SatIntegerView> {
+    use conjure_cp::ast::{Moo, sat_decision::SatIntegerView};
+    if expression
+        .domain_of()
+        .is_some_and(|domain| domain.is_bool())
+        && crate::shared::utils::is_literal(expression)
+    {
+        return Some(SatIntegerView {
+            constant: 0,
+            terms: vec![(1, expression.clone())],
+            groups: vec![],
+            choices: Some(vec![
+                (0, Expr::Not(Metadata::new(), Moo::new(expression.clone()))),
+                (1, expression.clone()),
+            ]),
+        });
+    }
+    let mut linear = Linear::default();
+    linear.add(expression, 1)?;
+    let constant = i64::try_from(linear.constant).ok()?;
+    let terms = linear
+        .terms
+        .into_iter()
+        .map(|(weight, input)| i64::try_from(weight).ok().map(|weight| (weight, input)))
+        .collect::<Option<Vec<_>>>()?;
+    let choices = if terms.is_empty() {
+        Some(vec![(constant, true.into())])
+    } else if linear.groups.len() == 1
+        && linear.groups[0].start == 0
+        && linear.groups[0].end == terms.len()
+        && linear.groups[0].structure == PbTermStructure::Choice
+    {
+        Some(
+            terms
+                .iter()
+                .map(|(weight, input)| {
+                    constant
+                        .checked_add(*weight)
+                        .map(|value| (value, input.clone()))
+                })
+                .collect::<Option<Vec<_>>>()?,
+        )
+    } else {
+        None
+    };
+    Some(SatIntegerView {
+        constant,
+        terms,
+        groups: linear.groups,
+        choices,
+    })
+}
+
 fn binary_structure(scale: i128, low: i128, high: i128) -> Option<PbTermStructure> {
     let a = scale.checked_mul(low)?;
     let b = scale.checked_mul(high)?;

@@ -85,6 +85,21 @@ pub fn compile_decisions(
                         .integer_relation(algorithm, output, *relation, *bound, &terms, groups)?;
                 }
             }
+            SatEncodingDecision::AllDifferent {
+                output,
+                inputs,
+                encoding,
+                amo_encoding,
+                pb_encoding,
+            } => {
+                let output = compiler.encode(output)?;
+                let output = match output {
+                    Term::Literal(literal) if asserted.contains(&literal) => Term::Constant(true),
+                    Term::Literal(literal) if asserted.contains(&!literal) => Term::Constant(false),
+                    output => output,
+                };
+                compiler.alldifferent(output, inputs, encoding, amo_encoding, pb_encoding)?;
+            }
             SatEncodingDecision::PseudoBoolean {
                 terms,
                 groups,
@@ -136,26 +151,7 @@ pub fn compile_decisions(
                     .iter()
                     .map(|input| compiler.encode(input))
                     .collect::<Result<Vec<_>, _>>()?;
-                let true_count = terms
-                    .iter()
-                    .filter(|term| matches!(term, Term::Constant(true)))
-                    .count();
-                let literals = terms
-                    .into_iter()
-                    .filter_map(|term| match term {
-                        Term::Literal(lit) => Some(lit),
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>();
-                if true_count >= 2 {
-                    compiler.assert(Term::Constant(false));
-                } else if true_count == 1 {
-                    for lit in literals {
-                        compiler.assert(Term::Literal(!lit));
-                    }
-                } else {
-                    compiler.amo(algorithm, literals)?;
-                }
+                compiler.asserted_amo(algorithm, terms)?;
             }
             SatEncodingDecision::Assert(expression) => {
                 let term = compiler.encode(expression)?;
@@ -220,6 +216,187 @@ struct Compiler<'a> {
     variables: &'a mut HashMap<Name, Lit>,
 }
 impl Compiler<'_> {
+    fn asserted_amo(
+        &mut self,
+        algorithm: crate::ast::sat_decision::AmoEncoding,
+        terms: Vec<Term>,
+    ) -> Result<(), SolverError> {
+        let true_count = terms
+            .iter()
+            .filter(|term| matches!(term, Term::Constant(true)))
+            .count();
+        let literals: Vec<_> = terms
+            .into_iter()
+            .filter_map(|term| match term {
+                Term::Literal(literal) => Some(literal),
+                _ => None,
+            })
+            .collect();
+        if true_count >= 2 {
+            self.assert(Term::Constant(false));
+        } else if true_count == 1 {
+            for literal in literals {
+                self.assert(Term::Literal(!literal));
+            }
+        } else {
+            self.amo(algorithm, literals)?;
+        }
+        Ok(())
+    }
+
+    fn alldifferent(
+        &mut self,
+        output: Term,
+        inputs: &[crate::ast::sat_decision::SatIntegerView],
+        encoding: &Option<
+            crate::ast::sat_decision::EncodingSelection<
+                crate::ast::sat_decision::AllDifferentEncoding,
+            >,
+        >,
+        amo_encoding: &Option<
+            crate::ast::sat_decision::EncodingSelection<crate::ast::sat_decision::AmoEncoding>,
+        >,
+        pb_encoding: &Option<
+            crate::ast::sat_decision::EncodingSelection<crate::ast::sat_decision::PbEncoding>,
+        >,
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::{AllDifferentEncoding, IntegerRelation, PbTermStructure};
+        let algorithm = encoding
+            .as_ref()
+            .ok_or_else(|| {
+                SolverError::ModelInvalid("Unresolved allDifferent encoding decision".into())
+            })?
+            .algorithm;
+        if inputs.len() < 2 {
+            self.equate(output, Term::Constant(true));
+            return Ok(());
+        }
+        let mut truths = Vec::new();
+        if algorithm == AllDifferentEncoding::ValueAmo {
+            let amo = amo_encoding
+                .as_ref()
+                .ok_or_else(|| {
+                    SolverError::ModelInvalid(
+                        "Unresolved allDifferent AMO encoding decision".into(),
+                    )
+                })?
+                .algorithm;
+            let mut by_value = std::collections::BTreeMap::<i64, Vec<Term>>::new();
+            for input in inputs {
+                let choices = input.choices.as_ref().ok_or_else(|| SolverError::ModelInvalid(
+                    "allDifferent value-amo requires value indicators for every operand (Direct or Boolean views)".into()))?;
+                for (value, expression) in choices {
+                    by_value
+                        .entry(*value)
+                        .or_default()
+                        .push(self.encode(expression)?);
+                }
+            }
+            for terms in by_value.into_values().filter(|terms| terms.len() >= 2) {
+                if matches!(output, Term::Constant(true)) {
+                    self.asserted_amo(amo, terms)?;
+                } else {
+                    let pb = pb_encoding
+                        .as_ref()
+                        .ok_or_else(|| {
+                            SolverError::ModelInvalid(
+                                "Unresolved allDifferent PB encoding decision".into(),
+                            )
+                        })?
+                        .algorithm;
+                    let truth = self.instance.new_lit();
+                    let terms: Vec<_> = terms.into_iter().map(|term| (1, term)).collect();
+                    self.integer_relation(
+                        pb,
+                        Term::Literal(truth),
+                        IntegerRelation::LessEqual,
+                        1,
+                        &terms,
+                        &[],
+                    )?;
+                    truths.push(Term::Literal(truth));
+                }
+            }
+        } else {
+            let pb = pb_encoding
+                .as_ref()
+                .ok_or_else(|| {
+                    SolverError::ModelInvalid("Unresolved allDifferent PB encoding decision".into())
+                })?
+                .algorithm;
+            let views = inputs
+                .iter()
+                .map(|input| {
+                    validate_pb_groups(&input.groups, input.terms.len())?;
+                    let terms = input
+                        .terms
+                        .iter()
+                        .map(|(weight, expression)| {
+                            self.encode(expression).map(|term| (*weight, term))
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
+                    Ok((input, terms))
+                })
+                .collect::<Result<Vec<_>, SolverError>>()?;
+            for (index, (left, lhs)) in views.iter().enumerate() {
+                for (right, rhs) in &views[index + 1..] {
+                    let range_error = || {
+                        SolverError::ModelInvalid(
+                            "allDifferent numeric difference exceeds the library range".into(),
+                        )
+                    };
+                    let bound =
+                        i64::try_from(i128::from(right.constant) - i128::from(left.constant))
+                            .map_err(|_| range_error())?;
+                    let mut terms = lhs.clone();
+                    for &(weight, term) in rhs {
+                        terms.push((weight.checked_neg().ok_or_else(range_error)?, term));
+                    }
+                    let mut groups = left.groups.clone();
+                    for group in &right.groups {
+                        let mut group = group.clone();
+                        group.start += lhs.len();
+                        group.end += lhs.len();
+                        if let PbTermStructure::BoundedBinary { lower, upper } = group.structure {
+                            group.structure = PbTermStructure::BoundedBinary {
+                                lower: upper.checked_neg().ok_or_else(range_error)?,
+                                upper: lower.checked_neg().ok_or_else(range_error)?,
+                            };
+                        }
+                        groups.push(group);
+                    }
+                    let truth = if matches!(output, Term::Constant(true)) {
+                        output
+                    } else {
+                        Term::Literal(self.instance.new_lit())
+                    };
+                    if !self.choice_relation(
+                        truth,
+                        IntegerRelation::NotEqual,
+                        bound,
+                        &terms,
+                        &groups,
+                    ) {
+                        self.integer_relation(
+                            pb,
+                            truth,
+                            IntegerRelation::NotEqual,
+                            bound,
+                            &terms,
+                            &groups,
+                        )?;
+                    }
+                    truths.push(truth);
+                }
+            }
+        }
+        if !matches!(output, Term::Constant(true)) {
+            let value = self.combine(true, truths);
+            self.equate(output, value);
+        }
+        Ok(())
+    }
+
     /// Preserve one-hot numeric choices instead of constructing a weighted counter.
     fn choice_relation(
         &mut self,
@@ -1652,6 +1829,165 @@ mod pseudo_boolean_tests {
         solvers::{Solve, SolveIncremental, SolverResult},
     };
     use rustsat_cadical::CaDiCaL;
+
+    #[test]
+    fn alldifferent_preserves_sparse_values_repetition_and_both_truth_values() {
+        use crate::ast::sat_decision::{AllDifferentEncoding, AmoEncoding, SatIntegerView};
+        let variables: Vec<_> = (0..10)
+            .map(|index| {
+                DeclarationPtr::new_find(Name::User(format!("ad{index}").into()), Domain::bool())
+            })
+            .collect();
+        let expressions: Vec<Expression> = variables
+            .iter()
+            .map(|variable| Reference::new(variable.clone()).into())
+            .collect();
+        let values = [[-2, 0, 3], [-1, 0, 3], [-2, 0, 2]];
+        let views: Vec<_> = values
+            .iter()
+            .enumerate()
+            .map(|(row, values)| {
+                let terms: Vec<_> = values
+                    .iter()
+                    .zip(&expressions[row * 3..row * 3 + 3])
+                    .map(|(value, expression)| (*value, expression.clone()))
+                    .collect();
+                SatIntegerView {
+                    constant: 0,
+                    choices: Some(terms.clone()),
+                    terms,
+                    groups: vec![PbTermGroup {
+                        start: 0,
+                        end: 3,
+                        structure: PbTermStructure::Choice,
+                    }],
+                }
+            })
+            .collect();
+        for strategy in AllDifferentEncoding::ALL {
+            for pb in PbEncoding::ALL {
+                for amo in AmoEncoding::ALL {
+                    for kind in 0..3 {
+                        let mut inputs = views.clone();
+                        match kind {
+                            1 => inputs[2] = inputs[0].clone(),
+                            2 => {
+                                inputs[2] = SatIntegerView {
+                                    constant: 0,
+                                    terms: vec![],
+                                    groups: vec![],
+                                    choices: Some(vec![(0, true.into())]),
+                                }
+                            }
+                            _ => (),
+                        }
+                        for assertion in [None, Some(false), Some(true)] {
+                            let mut instance = SatInstance::new();
+                            let mut map = HashMap::new();
+                            for variable in &variables {
+                                map.insert(variable.name().clone(), instance.new_lit());
+                            }
+                            for row in 0..3 {
+                                let literals: Vec<_> = variables[row * 3..row * 3 + 3]
+                                    .iter()
+                                    .map(|variable| map[&variable.name()])
+                                    .collect();
+                                instance.add_clause(literals.iter().copied().collect());
+                                for a in 0..3 {
+                                    for b in a + 1..3 {
+                                        instance.add_clause(
+                                            [!literals[a], !literals[b]].into_iter().collect(),
+                                        );
+                                    }
+                                }
+                            }
+                            let mut decisions = vec![SatEncodingDecision::AllDifferent {
+                                output: expressions[9].clone(),
+                                inputs: inputs.clone(),
+                                encoding: Some(EncodingSelection {
+                                    algorithm: strategy,
+                                    provenance: SelectionProvenance::ExplicitConfiguration,
+                                }),
+                                amo_encoding: Some(EncodingSelection {
+                                    algorithm: amo,
+                                    provenance: SelectionProvenance::ExplicitConfiguration,
+                                }),
+                                pb_encoding: Some(EncodingSelection {
+                                    algorithm: pb,
+                                    provenance: SelectionProvenance::ExplicitConfiguration,
+                                }),
+                            }];
+                            if let Some(value) = assertion {
+                                decisions.push(SatEncodingDecision::Assert(if value {
+                                    expressions[9].clone()
+                                } else {
+                                    Expression::Not(
+                                        Metadata::new(),
+                                        Moo::new(expressions[9].clone()),
+                                    )
+                                }));
+                            }
+                            assert_eq!(
+                                serde_json::from_str::<SatEncodingDecision>(
+                                    &serde_json::to_string(&decisions[0]).unwrap()
+                                )
+                                .unwrap(),
+                                decisions[0]
+                            );
+                            compile_decisions(&decisions, &mut instance, &mut map).unwrap();
+                            let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                            let mut solver = CaDiCaL::default();
+                            solver.add_cnf(cnf).unwrap();
+                            for assignment in 0usize..512 {
+                                let set = |index| assignment & (1usize << index) != 0;
+                                let valid = (0..3)
+                                    .all(|row| ((assignment >> (row * 3)) & 7).count_ones() == 1);
+                                let mut numeric = [0; 3];
+                                for row in 0..3 {
+                                    for column in 0..3 {
+                                        numeric[row] +=
+                                            values[row][column] * i64::from(set(row * 3 + column));
+                                    }
+                                }
+                                if kind == 1 {
+                                    numeric[2] = numeric[0];
+                                }
+                                if kind == 2 {
+                                    numeric[2] = 0;
+                                }
+                                let truth = numeric[0] != numeric[1]
+                                    && numeric[0] != numeric[2]
+                                    && numeric[1] != numeric[2];
+                                for output in [false, true] {
+                                    let assumptions: Vec<_> = variables
+                                        .iter()
+                                        .enumerate()
+                                        .map(|(index, variable)| {
+                                            let literal = map[&variable.name()];
+                                            if if index == 9 { output } else { set(index) } {
+                                                literal
+                                            } else {
+                                                !literal
+                                            }
+                                        })
+                                        .collect();
+                                    let expected = valid
+                                        && output == truth
+                                        && assertion.is_none_or(|value| value == output);
+                                    assert_eq!(
+                                        solver.solve_assumps(&assumptions).unwrap()
+                                            == SolverResult::Sat,
+                                        expected,
+                                        "{strategy} {pb} {amo} kind={kind} assertion={assertion:?} bits={assignment} output={output}"
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn integer_relations_preserve_both_truth_values_for_every_provider() {

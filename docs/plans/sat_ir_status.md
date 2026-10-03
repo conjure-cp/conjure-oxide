@@ -105,7 +105,7 @@ Finish major encoding features and known missing library connections first, incl
 ## Active follow-up priorities
 
 - Keep the implementation and integration campaign on `channelling=uniform` for now. Lazy mixed-representation materialisation, sharing and channelling remain deferred; revisit them explicitly after the uniform backend is broadly working.
-- Migrate the remaining decision families: allDifferent, table, element and remaining linear-integer strategies. Integer equality/disequality and comparisons are connected. Prefer public RustSAT/Pindakaas encoders and remove superseded Oxide circuits rather than retaining duplicate implementations.
+- Migrate the remaining decision families: table, element and remaining linear-integer strategies; complete the remaining allDifferent variants. Integer equality/disequality and comparisons are connected. Prefer public RustSAT/Pindakaas encoders and remove superseded Oxide circuits rather than retaining duplicate implementations.
 - Keep guarded/reified AMO/cardinality/PB constraints, reusable incremental bounds and objective tightening on the work list. Integer relation reification is the first supporting connection, not completion of this whole gap.
 - Keep encoder tuning, proof-producing variants, Boolean-arena unification and the fixture-discovery gap visible. Alternate Pindakaas implementations of already connected algorithms remain deferred.
 - Reconfirm historical failures before the smallest-failing-fixture loop. Library bugs require a standalone reproducer and upstream-status report before adding an adaptor workaround. Local upstream reporting material in `bug-reports/` must not be committed.
@@ -117,7 +117,7 @@ Finish major encoding features and known missing library connections first, incl
 - Removed the representation-specific Direct, Order and BinaryValue equality/comparison rewrite circuits. The internal binary comparator used by min/max arithmetic remains to be migrated with those arithmetic strategies; it is not a public comparison fallback.
 - Direct domain constraints now require an allowed indicator explicitly, so their exactly-one invariant no longer depends on an equality encoding. Numeric zero must not make an all-false one-hot code valid.
 - Rank comparisons continue to use the actual-value mapping before numeric encoding. Relation decisions retain numeric term groups. One Direct choice against a constant and equality/disequality between two Direct choices use library Boolean gates over the value indicators, avoiding unnecessarily large weighted counters. Other integer relation views now retain compatible groups through native asserted PB calls and both directions of reification for Pindakaas BDD/SWC. RustSAT keeps its flat PB input. General guarded/reified AMO/cardinality/PB remains a separate follow-up.
-- Next dedicated families: allDifferent (library AMO and disequality compositions), table, element, and additional linear-integer strategies. Remain on uniform representations throughout this work.
+- Next dedicated families: table, element, and additional linear-integer strategies; scalar allDifferent now uses library AMO and disequality compositions. Remain on uniform representations throughout this work.
 
 - Encoding CLI flags use the common `--sat-encoding-<family>` prefix: `amo`, `cardinality` and `pb`. The former flag names are removed; no compatibility aliases are retained. New family selectors should follow this naming convention.
 
@@ -136,3 +136,12 @@ Finish major encoding features and known missing library connections first, incl
 - Verification: `NEXTEST_TEST_THREADS=4 make test-accept` with nextest no-fail-fast passed all 1,524 tests (14 skipped), including workspace doctests. Production Clippy, formatting and whitespace checks passed. Coverage remains 329/624 fixtures and 11,183 SAT portfolios.
 - Timing cleanup restored 624 timing-only files and preserved old timings in the one mixed statistics record. Record the changed bounded-search solution samples separately: clause generation can change the selected subset, so capped searches compare solution counts rather than exact subsets.
 - Normal verification passed four focused checks (including the 50-portfolio relation fixture) and all six fixtures with changed bounded-search records. The latter reused the already built integration test binary, with four workers. No new upstream library bug was confirmed.
+
+## allDifferent decision family
+
+- Scalar integer and Boolean allDifferent now retains actual-value views in a semantic decision, with strategy and component encoder provenance. No CNF is stored in the model.
+- `--sat-encoding-alldifferent` selects `pairwise` or `value-amo`. Pairwise works with all numeric representations and composes the existing library-backed integer disequalities. Value-AMO requires exactly-one value indicators for every operand (Direct or Boolean views); an incompatible explicit request produces a clear model error.
+- The compact heuristic prefers value-AMO when every unresolved allDifferent has choice views, otherwise pairwise. First uses pairwise; all/random/interactive choose from the strategies applicable throughout the model. AMO and PB component choices follow the existing global family selectors.
+- Asserted value-AMO uses the selected RustSAT AMO encoder once per shared value. Reified and negated value groups use selected PB count bounds in both directions, combined with library Boolean gates. Repeated operands and constants retain their multiplicity.
+- BinaryRank operands use the existing actual-value mapping before pairwise numeric encoding. Sparse Direct indicators retain their actual values and independent domain constraints.
+- Remaining allDifferent scope: allDifferentExcept and compound-valued operands. Table, element, remaining arithmetic and general guarded/reified AMO/cardinality/PB remain on the work list. Keep mixed representations and channelling deferred; continue uniform verification.

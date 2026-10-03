@@ -42,6 +42,14 @@ pub enum SatEncodingDecision {
         bound: i64,
         encoding: Option<EncodingSelection<PbEncoding>>,
     },
+    /// Define whether every numeric operand has a different value.
+    AllDifferent {
+        output: Expression,
+        inputs: Vec<SatIntegerView>,
+        encoding: Option<EncodingSelection<AllDifferentEncoding>>,
+        amo_encoding: Option<EncodingSelection<AmoEncoding>>,
+        pb_encoding: Option<EncodingSelection<PbEncoding>>,
+    },
     /// Define an output as equivalent to a semantic Boolean expression.
     Boolean {
         output: Expression,
@@ -114,6 +122,16 @@ impl Display for SatEncodingDecision {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
+            Self::AllDifferent {
+                output,
+                inputs,
+                encoding,
+                amo_encoding,
+                pb_encoding,
+            } => write!(
+                f,
+                "define({output} <-> allDifferent({inputs:?})) using {encoding:?}, AMO {amo_encoding:?}, PB {pb_encoding:?}"
+            ),
             Self::Assert(expression) => write!(f, "assert({expression}) using tseitin"),
             Self::Boolean { output, expression } => {
                 write!(f, "define({output} <-> {expression}) using tseitin")
@@ -166,9 +184,66 @@ impl SatEncodingDecision {
             Self::IntegerRelation { output, terms, .. } => std::iter::once(output)
                 .chain(terms.iter().map(|(_, input)| input))
                 .collect(),
+            Self::AllDifferent { output, inputs, .. } => std::iter::once(output)
+                .chain(inputs.iter().flat_map(|input| {
+                    input
+                        .terms
+                        .iter()
+                        .map(|(_, term)| term)
+                        .chain(input.choices.iter().flatten().map(|(_, term)| term))
+                }))
+                .collect(),
             Self::Assert(expression) => vec![expression],
             Self::Boolean { output, expression } => vec![output, expression],
         }
+    }
+}
+
+/// A numeric view whose representation constraints remain independently enforced.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=crate::ast::DeclarationPtr)]
+pub struct SatIntegerView {
+    /// Constant contribution to the actual numeric value.
+    pub constant: i64,
+    /// Signed weights over Boolean representation operands.
+    pub terms: Vec<(i64, Expression)>,
+    /// Independently guaranteed representation structure.
+    pub groups: Vec<PbTermGroup>,
+    /// Actual values and their exactly-one indicators, when available.
+    pub choices: Option<Vec<(i64, Expression)>>,
+}
+
+/// Library compositions available for allDifferent.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum AllDifferentEncoding {
+    /// Pairwise numeric disequalities, for every numeric representation.
+    Pairwise,
+    /// AMO over equal-value indicators; requires choice views for all operands.
+    ValueAmo,
+}
+impl AllDifferentEncoding {
+    pub const ALL: [Self; 2] = [Self::Pairwise, Self::ValueAmo];
+    pub const LABELS: [&'static str; 2] = ["pairwise", "value-amo"];
+}
+impl Display for AllDifferentEncoding {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(Self::LABELS[Self::ALL.iter().position(|value| value == self).unwrap()])
+    }
+}
+impl std::str::FromStr for AllDifferentEncoding {
+    type Err = String;
+    fn from_str(value: &str) -> Result<Self, String> {
+        Self::LABELS
+            .iter()
+            .position(|label| *label == value)
+            .map(|index| Self::ALL[index])
+            .ok_or_else(|| {
+                format!(
+                    "unknown allDifferent encoding '{value}'; expected {}",
+                    Self::LABELS.join(", ")
+                )
+            })
     }
 }
 
@@ -242,9 +317,60 @@ impl std::str::FromStr for AmoEncoding {
 
 /// Resolve unpinned encoding classes once per model through the configured heuristic.
 pub fn resolve_encoding_choices(decisions: &mut [SatEncodingDecision]) {
+    resolve_alldifferent_choices(decisions);
     resolve_pb_choices(decisions);
     resolve_cardinality_choices(decisions);
     resolve_amo_choices(decisions);
+}
+fn resolve_alldifferent_choices(decisions: &mut [SatEncodingDecision]) {
+    use crate::settings::{self, Heuristic};
+    let eligible: Vec<_> = decisions
+        .iter()
+        .filter_map(|decision| match decision {
+            SatEncodingDecision::AllDifferent {
+                inputs,
+                encoding: None,
+                ..
+            } => Some(inputs.iter().all(|input| input.choices.is_some())),
+            _ => None,
+        })
+        .collect();
+    if eligible.is_empty() {
+        return;
+    }
+    let algorithms = if eligible.iter().all(|eligible| *eligible) {
+        &AllDifferentEncoding::ALL[..]
+    } else {
+        &AllDifferentEncoding::ALL[..1]
+    };
+    let (algorithm, provenance) = if let Some(algorithm) = settings::alldifferent_encoding() {
+        (algorithm, SelectionProvenance::ExplicitConfiguration)
+    } else {
+        let index = if algorithms.len() == 1 {
+            0
+        } else {
+            match settings::heuristic() {
+                Heuristic::First => 0,
+                Heuristic::Compact => 1,
+                Heuristic::Random => settings::next_heuristic_random_index(algorithms.len()),
+                Heuristic::Interactive => {
+                    settings::next_heuristic_interactive_index(&AllDifferentEncoding::LABELS)
+                }
+                Heuristic::All => settings::next_heuristic_all_index(&AllDifferentEncoding::LABELS),
+            }
+        };
+        (algorithms[index], SelectionProvenance::Heuristic)
+    };
+    for decision in decisions {
+        if let SatEncodingDecision::AllDifferent { encoding, .. } = decision
+            && encoding.is_none()
+        {
+            *encoding = Some(EncodingSelection {
+                algorithm,
+                provenance,
+            });
+        }
+    }
 }
 fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
     use crate::settings::{self, Heuristic};
@@ -255,6 +381,12 @@ fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
                 inputs,
                 encoding: None,
             } => Some(inputs.len()),
+            SatEncodingDecision::AllDifferent {
+                inputs,
+                encoding: Some(selection),
+                amo_encoding: None,
+                ..
+            } if selection.algorithm == AllDifferentEncoding::ValueAmo => Some(inputs.len()),
             _ => None,
         })
         .max();
@@ -282,7 +414,16 @@ fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
         (AmoEncoding::ALL[index], SelectionProvenance::Heuristic)
     };
     for decision in decisions {
-        if let SatEncodingDecision::AtMostOne { encoding, .. } = decision
+        if let SatEncodingDecision::AtMostOne { encoding, .. }
+        | SatEncodingDecision::AllDifferent {
+            amo_encoding: encoding,
+            encoding:
+                Some(EncodingSelection {
+                    algorithm: AllDifferentEncoding::ValueAmo,
+                    ..
+                }),
+            ..
+        } = decision
             && encoding.is_none()
         {
             *encoding = Some(EncodingSelection {
@@ -533,6 +674,20 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
                 encoding: None,
                 ..
             } => Some(terms),
+            SatEncodingDecision::AllDifferent {
+                inputs,
+                pb_encoding: None,
+                ..
+            } => inputs
+                .iter()
+                .max_by_key(|input| {
+                    input
+                        .terms
+                        .iter()
+                        .map(|(weight, _)| i128::from(*weight).abs())
+                        .sum::<i128>()
+                })
+                .map(|input| &input.terms),
             _ => None,
         })
         .collect();
@@ -562,7 +717,11 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
     };
     for decision in decisions {
         if let SatEncodingDecision::PseudoBoolean { encoding, .. }
-        | SatEncodingDecision::IntegerRelation { encoding, .. } = decision
+        | SatEncodingDecision::IntegerRelation { encoding, .. }
+        | SatEncodingDecision::AllDifferent {
+            pb_encoding: encoding,
+            ..
+        } = decision
             && encoding.is_none()
         {
             *encoding = Some(EncodingSelection {
@@ -662,5 +821,74 @@ mod pb_choice_tests {
         );
         settings::set_pb_encoding(None);
         settings::set_heuristic(Heuristic::Compact);
+    }
+}
+
+#[cfg(test)]
+mod alldifferent_choice_tests {
+    use super::*;
+    use crate::settings::{self, Heuristic};
+
+    #[test]
+    fn alldifferent_choices_respect_views_and_explicit_provenance() {
+        let choice = SatIntegerView {
+            constant: 0,
+            terms: vec![(1, true.into())],
+            groups: vec![],
+            choices: Some(vec![(1, true.into())]),
+        };
+        let build = |input: SatIntegerView| SatEncodingDecision::AllDifferent {
+            output: true.into(),
+            inputs: vec![input.clone(), input],
+            encoding: None,
+            amo_encoding: None,
+            pb_encoding: None,
+        };
+        settings::set_heuristic(Heuristic::Compact);
+        settings::set_alldifferent_encoding(None);
+        settings::set_amo_encoding(None);
+        settings::set_pb_encoding(None);
+        let mut decisions = vec![build(choice.clone())];
+        resolve_encoding_choices(&mut decisions);
+        assert!(matches!(
+            &decisions[0],
+            SatEncodingDecision::AllDifferent {
+                encoding: Some(EncodingSelection {
+                    algorithm: AllDifferentEncoding::ValueAmo,
+                    provenance: SelectionProvenance::Heuristic
+                }),
+                amo_encoding: Some(_),
+                pb_encoding: Some(_),
+                ..
+            }
+        ));
+        let mut numeric = choice.clone();
+        numeric.choices = None;
+        let mut decisions = vec![build(choice.clone()), build(numeric)];
+        resolve_encoding_choices(&mut decisions);
+        assert!(decisions.iter().all(|decision| matches!(
+            decision,
+            SatEncodingDecision::AllDifferent {
+                encoding: Some(EncodingSelection {
+                    algorithm: AllDifferentEncoding::Pairwise,
+                    ..
+                }),
+                ..
+            }
+        )));
+        settings::set_alldifferent_encoding(Some(AllDifferentEncoding::Pairwise));
+        let mut decisions = vec![build(choice)];
+        resolve_encoding_choices(&mut decisions);
+        assert!(matches!(
+            &decisions[0],
+            SatEncodingDecision::AllDifferent {
+                encoding: Some(EncodingSelection {
+                    algorithm: AllDifferentEncoding::Pairwise,
+                    provenance: SelectionProvenance::ExplicitConfiguration
+                }),
+                ..
+            }
+        ));
+        settings::set_alldifferent_encoding(None);
     }
 }

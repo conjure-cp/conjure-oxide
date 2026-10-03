@@ -219,6 +219,10 @@ pub struct GlobalArgs {
     )]
     pub channelling: Channelling,
 
+    /// Pin allDifferent: pairwise, or value-amo (requires Direct or Boolean value indicators).
+    #[arg(long = "sat-encoding-alldifferent", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub alldifferent_encoding: Option<conjure_cp::ast::sat_decision::AllDifferentEncoding>,
+
     /// Pin the SAT AMO encoder: pairwise, ladder, bitwise, commander, bimander, or two-product.
     /// If omitted, the modelling heuristic chooses one algorithm for the model.
     #[arg(long = "sat-encoding-amo", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
