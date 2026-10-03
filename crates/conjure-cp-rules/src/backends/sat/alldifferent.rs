@@ -67,6 +67,15 @@ mod tests {
             if inputs[0].choices.as_ref().unwrap().iter().map(|(value, _)| *value).collect::<Vec<_>>() == vec![-1, 0]
                 && inputs[1].constant == 0)
         );
+        let constant = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(matrix(vec![Expr::from(false)])),
+            (42, 42),
+        );
+        let view = super::super::pseudo_boolean::integer_view(&constant).unwrap();
+        assert_eq!(view.constant, 0, "Read literal bits, not the bounds");
+        assert!(view.choices.is_some());
         let compound = Expr::AllDiff(
             Metadata::new(),
             Moo::new(matrix(vec![matrix(vec![bit.clone()]), matrix(vec![bit])])),

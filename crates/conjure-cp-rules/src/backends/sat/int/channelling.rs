@@ -42,6 +42,16 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         })
         .collect();
 
+    // Partially materialised allDifferent operands must retain their ready value views.
+    // Only rank codes need conversion; the decision rule handles the other encodings.
+    let alldifferent = matches!(expr, Expr::AllDiff(..));
+    if alldifferent
+        && !encodings
+            .iter()
+            .any(|encoding| matches!(encoding, SATIntEncoding::Rank(_)))
+    {
+        return Err(RuleNotApplicable);
+    }
     // Nothing to do when every operand is already logarithmic, which includes having no `SATInt`
     // operands at all.
     if encodings
@@ -54,18 +64,22 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     let mut clauses = Vec::new();
     let mut new_symbols = symbols.clone();
 
+    let mut convert = |input: Expr| {
+        if alldifferent && !matches!(&input, Expr::SATInt(_, SATIntEncoding::Rank(_), _, _)) {
+            input
+        } else {
+            to_log(input, &mut clauses, &mut new_symbols)
+        }
+    };
     let children: VecDeque<Expr> = expr
         .children()
         .into_iter()
         .map(|child| match matrix_child(&child) {
             Some((elements, index_domain)) => {
-                let converted: Vec<Expr> = elements
-                    .into_iter()
-                    .map(|element| to_log(element, &mut clauses, &mut new_symbols))
-                    .collect();
+                let converted: Vec<Expr> = elements.into_iter().map(&mut convert).collect();
                 rebuild_matrix_child(converted, index_domain)
             }
-            None => to_log(child, &mut clauses, &mut new_symbols),
+            None => convert(child),
         })
         .collect();
 
@@ -347,6 +361,57 @@ mod unsigned_tests {
     use crate::types::int::unsigned::{unsigned_capacity, unsigned_width, value_at_rank};
     use conjure_cp::ast::Name;
     use std::collections::HashMap;
+
+    #[test]
+    fn alldifferent_waits_for_value_views_and_only_converts_rank_codes() {
+        use conjure_cp::ast::{DeclarationPtr, Domain, Reference};
+        let bit: Expr = Reference::new(DeclarationPtr::new_find(
+            Name::User("choice".into()),
+            Domain::bool(),
+        ))
+        .into();
+        let pending: Expr = Reference::new(DeclarationPtr::new_find(
+            Name::User("pending".into()),
+            Domain::int(vec![conjure_cp::ast::Range::Bounded(1, 3)]),
+        ))
+        .into();
+        let direct = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Direct,
+            Moo::new(into_matrix_expr!(vec![bit.clone()])),
+            (0, 0),
+        );
+        let build = |inputs| Expr::AllDiff(Metadata::new(), Moo::new(into_matrix_expr!(inputs)));
+        assert!(
+            unify_sat_int_encodings(
+                &build(vec![direct.clone(), pending.clone()]),
+                &SymbolTable::new()
+            )
+            .is_err()
+        );
+        let rank = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Rank(vec![(1, 1), (3, 3)]),
+            Moo::new(into_matrix_expr!(vec![bit])),
+            (1, 3),
+        );
+        let effect =
+            unify_sat_int_encodings(&build(vec![direct, rank, pending]), &SymbolTable::new())
+                .unwrap();
+        let Expr::AllDiff(_, matrix) = effect.new_expression else {
+            panic!("allDifferent must remain semantic")
+        };
+        let inputs = matrix.unwrap_list_cow().unwrap();
+        assert!(matches!(
+            &inputs[0],
+            Expr::SATInt(_, SATIntEncoding::Direct, _, _)
+        ));
+        assert!(matches!(
+            &inputs[1],
+            Expr::SATInt(_, SATIntEncoding::Log, _, _)
+        ));
+        assert!(matches!(&inputs[2], Expr::Atomic(_, Atom::Reference(_))));
+    }
 
     fn evaluate(expr: &Expr, values: &HashMap<Name, bool>) -> bool {
         match expr {

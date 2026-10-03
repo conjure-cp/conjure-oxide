@@ -185,6 +185,27 @@ pub(super) fn integer_view(
         .into_iter()
         .map(|(weight, input)| i64::try_from(weight).ok().map(|weight| (weight, input)))
         .collect::<Option<Vec<_>>>()?;
+    // Literal code bits establish the actual value; singleton bounds alone do not.
+    if terms
+        .iter()
+        .all(|(_, input)| matches!(input, Expr::Atomic(_, Atom::Literal(Literal::Bool(_)))))
+    {
+        let value = terms
+            .iter()
+            .try_fold(i128::from(constant), |value, (weight, input)| {
+                let Expr::Atomic(_, Atom::Literal(Literal::Bool(bit))) = input else {
+                    unreachable!()
+                };
+                value.checked_add(i128::from(*weight) * i128::from(*bit))
+            })
+            .and_then(|value| i64::try_from(value).ok())?;
+        return Some(SatIntegerView {
+            constant: value,
+            terms: vec![],
+            groups: vec![],
+            choices: Some(vec![(value, true.into())]),
+        });
+    }
     let choices = if terms.is_empty() {
         Some(vec![(constant, true.into())])
     } else if linear.groups.len() == 1

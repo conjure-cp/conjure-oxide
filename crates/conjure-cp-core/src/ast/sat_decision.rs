@@ -130,7 +130,12 @@ impl Display for SatEncodingDecision {
                 pb_encoding,
             } => write!(
                 f,
-                "define({output} <-> allDifferent({inputs:?})) using {encoding:?}, AMO {amo_encoding:?}, PB {pb_encoding:?}"
+                "define({output} <-> allDifferent({})) using {encoding:?}, AMO {amo_encoding:?}, PB {pb_encoding:?}",
+                inputs
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
             Self::Assert(expression) => write!(f, "assert({expression}) using tseitin"),
             Self::Boolean { output, expression } => {
@@ -212,6 +217,34 @@ pub struct SatIntegerView {
     pub groups: Vec<PbTermGroup>,
     /// Actual values and their exactly-one indicators, when available.
     pub choices: Option<Vec<(i64, Expression)>>,
+}
+
+impl Display for SatIntegerView {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}+weighted({}) with {:?}",
+            self.constant,
+            self.terms
+                .iter()
+                .map(|(weight, input)| format!("{weight}*{input}"))
+                .collect::<Vec<_>>()
+                .join(", "),
+            self.groups
+        )?;
+        if let Some(choices) = &self.choices {
+            write!(
+                f,
+                " choices({})",
+                choices
+                    .iter()
+                    .map(|(value, input)| format!("{value}:{input}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )?;
+        }
+        Ok(())
+    }
 }
 
 /// Library compositions available for allDifferent.
@@ -828,6 +861,25 @@ mod pb_choice_tests {
 mod alldifferent_choice_tests {
     use super::*;
     use crate::settings::{self, Heuristic};
+
+    #[test]
+    fn alldifferent_display_is_independent_of_internal_declaration_identity() {
+        use crate::ast::{DeclarationPtr, Domain, Name, Reference};
+        let view = || {
+            let input: Expression = Reference::new(DeclarationPtr::new_find(
+                Name::User("same".into()),
+                Domain::bool(),
+            ))
+            .into();
+            SatIntegerView {
+                constant: 0,
+                terms: vec![(1, input.clone())],
+                groups: vec![],
+                choices: Some(vec![(1, input)]),
+            }
+        };
+        assert_eq!(view().to_string(), view().to_string());
+    }
 
     #[test]
     fn alldifferent_choices_respect_views_and_explicit_provenance() {
