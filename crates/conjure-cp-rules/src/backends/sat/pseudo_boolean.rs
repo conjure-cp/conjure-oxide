@@ -80,9 +80,7 @@ impl Linear {
                 self.terms.push((scale, input.as_ref().clone()))
             }
             Expr::SATInt(_, encoding, inner, (low, high)) => {
-                let Expr::AbstractLiteral(_, Matrix(bits, _)) = inner.as_ref() else {
-                    return None;
-                };
+                let bits = inner.unwrap_list_cow()?;
                 let start = self.terms.len();
                 let structure = match encoding {
                     SATIntEncoding::Direct => {
@@ -170,7 +168,6 @@ fn binary_structure(scale: i128, low: i128, high: i128) -> Option<PbTermStructur
 fn constant_int(expression: &Expr) -> Option<i32> {
     match expression {
         Expr::Atomic(_, Atom::Literal(Literal::Int(value))) => Some(*value),
-        Expr::SATInt(_, _, _, (low, high)) if low == high => Some(*low),
         _ => None,
     }
 }
@@ -243,11 +240,153 @@ fn select_pseudo_boolean(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     }
     Err(RuleNotApplicable)
 }
+/// Preserve numeric equality and comparison, including nested Boolean uses, for library encoding.
+#[register_rule("SAT", 18500, [Eq, Neq, Lt, Leq, Gt, Geq])]
+fn select_integer_relation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    use conjure_cp::ast::sat_decision::IntegerRelation;
+    let (left, right, relation) = match expr {
+        Expr::Eq(_, left, right) => (left, right, IntegerRelation::Equal),
+        Expr::Neq(_, left, right) => (left, right, IntegerRelation::NotEqual),
+        Expr::Lt(_, left, right) => (left, right, IntegerRelation::Less),
+        Expr::Leq(_, left, right) => (left, right, IntegerRelation::LessEqual),
+        Expr::Gt(_, left, right) => (left, right, IntegerRelation::Greater),
+        Expr::Geq(_, left, right) => (left, right, IntegerRelation::GreaterEqual),
+        _ => return Err(RuleNotApplicable),
+    };
+    // Do not consume ready Boolean counts before Root can select AMO/cardinality.
+    let count = |expression: &Expr| {
+        matches!(expression, Expr::Sum(_, inputs)
+        if super::boolean::count_inputs(inputs).is_some())
+    };
+    if (count(left) && constant_int(right).is_some())
+        || (count(right) && constant_int(left).is_some())
+    {
+        return Err(RuleNotApplicable);
+    }
+    // Boolean equality stays in the Boolean family. Ready SATInt views are already numeric.
+    if !matches!(left.as_ref(), Expr::SATInt(..))
+        && !left.domain_of().is_some_and(|domain| domain.is_int())
+    {
+        return Err(RuleNotApplicable);
+    }
+    let mut linear = Linear::default();
+    linear.add(left, 1).ok_or(RuleNotApplicable)?;
+    linear.add(right, -1).ok_or(RuleNotApplicable)?;
+    let bound = linear
+        .constant
+        .checked_neg()
+        .and_then(|n| i64::try_from(n).ok())
+        .ok_or(RuleNotApplicable)?;
+    let terms = linear
+        .terms
+        .into_iter()
+        .map(|(weight, input)| i64::try_from(weight).map(|weight| (weight, input)))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| RuleNotApplicable)?;
+    let mut symbols = symbols.clone();
+    let output = super::boolean::create_bool_aux(&mut symbols);
+    Ok(RuleEffect::sat(
+        output.clone(),
+        vec![SatEncodingDecision::IntegerRelation {
+            output,
+            terms,
+            groups: linear.groups,
+            relation,
+            bound,
+            encoding: None,
+        }],
+        symbols,
+    ))
+}
 #[cfg(test)]
 mod tests {
     use super::*;
     use conjure_cp::ast::{DeclarationPtr, Domain, Moo, Name, Reference};
     use conjure_cp::into_matrix_expr;
+    #[test]
+    fn relations_use_numeric_views_and_leave_boolean_equality_alone() {
+        use conjure_cp::ast::sat_decision::IntegerRelation;
+        let symbols = SymbolTable::new();
+        let singleton = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(vec![Expr::from(false); 7])),
+            (42, 42),
+        );
+        let mut linear = Linear::default();
+        linear.add(&singleton, 1).unwrap();
+        assert_eq!(linear.constant, 0);
+        assert_eq!(
+            linear.terms.len(),
+            7,
+            "Domain bounds do not establish the representation bits"
+        );
+        let literal_bits = Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::AbstractLiteral(
+                conjure_cp::ast::AbstractLiteral::matrix_implied_indices(vec![Literal::Bool(
+                    false,
+                )]),
+            )),
+        );
+        let literal_integer = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(literal_bits),
+            (0, 0),
+        );
+        assert!(
+            select_integer_relation(
+                &Expr::Eq(
+                    Metadata::new(),
+                    Moo::new(literal_integer),
+                    Moo::new(0.into())
+                ),
+                &symbols
+            )
+            .is_ok(),
+            "Constant bit vectors may be stored as literal matrices"
+        );
+        let integer = Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Offset,
+            Moo::new(into_matrix_expr!(vec![true.into(), false.into()])),
+            (-2, 1),
+        );
+        let count = Expr::Sum(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(vec![Expr::ToInt(
+                Metadata::new(),
+                Moo::new(true.into())
+            )])),
+        );
+        assert!(
+            select_integer_relation(
+                &Expr::Leq(Metadata::new(), Moo::new(count), Moo::new(1.into())),
+                &symbols
+            )
+            .is_err()
+        );
+        let relation = Expr::Neq(Metadata::new(), Moo::new(integer), Moo::new(Expr::from(0)));
+        let effect = select_integer_relation(&relation, &symbols).unwrap();
+        assert!(
+            matches!(&effect.new_sat_decisions[0], SatEncodingDecision::IntegerRelation {
+            relation: IntegerRelation::NotEqual, terms, bound: 2, encoding: None, ..
+        } if terms.iter().map(|(weight, _)| *weight).collect::<Vec<_>>() == vec![1, 2])
+        );
+        assert!(
+            select_integer_relation(
+                &Expr::Eq(
+                    Metadata::new(),
+                    Moo::new(true.into()),
+                    Moo::new(false.into())
+                ),
+                &symbols
+            )
+            .is_err()
+        );
+    }
+
     #[test]
     fn integer_views_preserve_values_including_sparse_domain_gaps() {
         let low = -3;

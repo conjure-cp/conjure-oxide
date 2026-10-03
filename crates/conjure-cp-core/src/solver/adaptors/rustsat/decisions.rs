@@ -34,8 +34,56 @@ pub fn compile_decisions(
         instance,
         variables,
     };
+    // Direct assertions determine whether a relation needs an assertion or equivalence.
+    // Keep their units in the model so output literals remain correctly constrained.
+    let mut asserted = std::collections::HashSet::new();
+    for decision in decisions {
+        let SatEncodingDecision::Assert(expression) = decision else {
+            continue;
+        };
+        let input = match expression {
+            Expression::Not(_, input) => input.as_ref(),
+            input => input,
+        };
+        if matches!(input, Expression::Atomic(_, Atom::Reference(_)))
+            && let Term::Literal(literal) = compiler.encode(expression)?
+        {
+            asserted.insert(literal);
+        }
+    }
     for decision in decisions {
         match decision {
+            SatEncodingDecision::IntegerRelation {
+                output,
+                terms,
+                groups,
+                relation,
+                bound,
+                encoding,
+            } => {
+                let algorithm = encoding
+                    .as_ref()
+                    .ok_or_else(|| {
+                        SolverError::ModelInvalid(
+                            "Unresolved integer relation encoding decision".into(),
+                        )
+                    })?
+                    .algorithm;
+                let output = compiler.encode(output)?;
+                let output = match output {
+                    Term::Literal(literal) if asserted.contains(&literal) => Term::Constant(true),
+                    Term::Literal(literal) if asserted.contains(&!literal) => Term::Constant(false),
+                    output => output,
+                };
+                let terms = terms
+                    .iter()
+                    .map(|(weight, input)| compiler.encode(input).map(|term| (*weight, term)))
+                    .collect::<Result<Vec<_>, _>>()?;
+                validate_pb_groups(groups, terms.len())?;
+                if !compiler.choice_relation(output, *relation, *bound, &terms, groups) {
+                    compiler.integer_relation(algorithm, output, *relation, *bound, &terms)?;
+                }
+            }
             SatEncodingDecision::PseudoBoolean {
                 terms,
                 groups,
@@ -115,23 +163,36 @@ pub fn compile_decisions(
             SatEncodingDecision::Boolean { output, expression } => {
                 let output = compiler.encode(output)?;
                 let value = compiler.encode(expression)?;
-                match (output, value) {
-                    (Term::Literal(output), Term::Literal(value)) => {
-                        compiler
-                            .instance
-                            .add_clause(atomics::lit_impl_lit(output, value));
-                        compiler
-                            .instance
-                            .add_clause(atomics::lit_impl_lit(value, output));
-                    }
-                    (Term::Constant(value), term) | (term, Term::Constant(value)) => {
-                        compiler.assert(if value { term } else { term.negated() })
-                    }
-                }
+                compiler.equate(output, value);
             }
         }
     }
     Ok(())
+}
+// Canonical positive variables retain signed coefficients for structured input handling.
+fn canonical_pb_terms(
+    bound: i64,
+    terms: &[(i64, Term)],
+) -> (i128, std::collections::BTreeMap<Lit, i128>) {
+    let mut bound = i128::from(bound);
+    let mut coefficients = std::collections::BTreeMap::<Lit, i128>::new();
+    for &(weight, term) in terms {
+        let weight = i128::from(weight);
+        match term {
+            Term::Constant(true) => bound -= weight,
+            Term::Constant(false) => (),
+            Term::Literal(literal) => {
+                let (literal, weight) = if literal.is_neg() {
+                    bound -= weight;
+                    (!literal, -weight)
+                } else {
+                    (literal, weight)
+                };
+                *coefficients.entry(literal).or_default() += weight;
+            }
+        }
+    }
+    (bound, coefficients)
 }
 fn validate_pb_groups(
     groups: &[crate::ast::sat_decision::PbTermGroup],
@@ -158,6 +219,272 @@ struct Compiler<'a> {
     variables: &'a mut HashMap<Name, Lit>,
 }
 impl Compiler<'_> {
+    /// Preserve one-hot numeric choices instead of constructing a weighted counter.
+    fn choice_relation(
+        &mut self,
+        output: Term,
+        relation: crate::ast::sat_decision::IntegerRelation,
+        bound: i64,
+        terms: &[(i64, Term)],
+        groups: &[crate::ast::sat_decision::PbTermGroup],
+    ) -> bool {
+        use crate::ast::sat_decision::{IntegerRelation, PbTermStructure};
+        if groups.is_empty()
+            || groups.len() > 2
+            || groups[0].start != 0
+            || groups.last().is_none_or(|group| group.end != terms.len())
+            || groups
+                .iter()
+                .any(|group| group.structure != PbTermStructure::Choice)
+            || (groups.len() == 2 && groups[0].end != groups[1].start)
+        {
+            return false;
+        }
+        let mut alternatives = Vec::new();
+        if groups.len() == 1 {
+            for &(value, term) in terms {
+                let matches = match relation {
+                    IntegerRelation::Equal => value == bound,
+                    IntegerRelation::NotEqual => value != bound,
+                    IntegerRelation::Less => value < bound,
+                    IntegerRelation::LessEqual => value <= bound,
+                    IntegerRelation::Greater => value > bound,
+                    IntegerRelation::GreaterEqual => value >= bound,
+                };
+                if matches {
+                    alternatives.push(term);
+                }
+            }
+        } else {
+            if !matches!(relation, IntegerRelation::Equal | IntegerRelation::NotEqual) {
+                return false;
+            }
+            let mut right = HashMap::<i128, Vec<Term>>::new();
+            for &(weight, term) in &terms[groups[1].start..] {
+                right.entry(i128::from(weight)).or_default().push(term);
+            }
+            for &(weight, term) in &terms[..groups[0].end] {
+                if let Some(matches) = right.get(&(i128::from(bound) - i128::from(weight))) {
+                    let matches = self.combine(false, matches.clone());
+                    alternatives.push(self.combine(true, vec![term, matches]));
+                }
+            }
+        }
+        let value = self.combine(false, alternatives);
+        self.equate(
+            output,
+            if groups.len() == 2 && relation == IntegerRelation::NotEqual {
+                value.negated()
+            } else {
+                value
+            },
+        );
+        true
+    }
+
+    fn equate(&mut self, output: Term, value: Term) {
+        match (output, value) {
+            (Term::Literal(output), Term::Literal(value)) => {
+                self.instance
+                    .add_clause(atomics::lit_impl_lit(output, value));
+                self.instance
+                    .add_clause(atomics::lit_impl_lit(value, output));
+            }
+            (Term::Constant(value), term) | (term, Term::Constant(value)) => {
+                self.assert(if value { term } else { term.negated() })
+            }
+        }
+    }
+
+    fn integer_relation(
+        &mut self,
+        algorithm: crate::ast::sat_decision::PbEncoding,
+        output: Term,
+        relation: crate::ast::sat_decision::IntegerRelation,
+        bound: i64,
+        terms: &[(i64, Term)],
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::IntegerRelation;
+        let (mut bound, coefficients) = canonical_pb_terms(bound, terms);
+        let mut total = 0i128;
+        let mut positive = Vec::new();
+        for (literal, weight) in coefficients {
+            if weight == 0 {
+                continue;
+            }
+            let (literal, weight) = if weight < 0 {
+                bound -= weight;
+                (!literal, -weight)
+            } else {
+                (literal, weight)
+            };
+            total += weight;
+            positive.push((literal, weight));
+        }
+        if matches!(
+            (relation, output),
+            (IntegerRelation::Equal, Term::Constant(true))
+                | (IntegerRelation::NotEqual, Term::Constant(false))
+        ) {
+            if bound < 0 || bound > total {
+                self.assert(Term::Constant(false));
+                return Ok(());
+            }
+            if total >= (isize::MAX as i128).min(i128::from(i64::MAX)) {
+                return Err(SolverError::ModelInvalid(
+                    "Integer coefficient sum exceeds the library range".into(),
+                ));
+            }
+            return self.pseudo_boolean(
+                algorithm,
+                crate::ast::sat_decision::CardinalityRelation::Exactly,
+                bound as i64,
+                positive
+                    .iter()
+                    .map(|(lit, weight)| (*weight as i64, Term::Literal(*lit)))
+                    .collect(),
+                &[],
+            );
+        }
+        match relation {
+            IntegerRelation::Less => {
+                self.reified_upper(algorithm, output, bound - 1, &positive, total)
+            }
+            IntegerRelation::LessEqual => {
+                self.reified_upper(algorithm, output, bound, &positive, total)
+            }
+            IntegerRelation::Greater => {
+                self.reified_upper(algorithm, output.negated(), bound, &positive, total)
+            }
+            IntegerRelation::GreaterEqual => {
+                self.reified_upper(algorithm, output.negated(), bound - 1, &positive, total)
+            }
+            IntegerRelation::Equal | IntegerRelation::NotEqual => {
+                let upper = self.instance.new_lit();
+                let lower = self.instance.new_lit();
+                self.reified_upper(algorithm, Term::Literal(upper), bound, &positive, total)?;
+                let inverted: Vec<_> = positive
+                    .iter()
+                    .map(|(lit, weight)| (!*lit, *weight))
+                    .collect();
+                self.reified_upper(
+                    algorithm,
+                    Term::Literal(lower),
+                    total - bound,
+                    &inverted,
+                    total,
+                )?;
+                let conjunction = self.instance.new_lit();
+                for clause in atomics::lit_impl_cube(conjunction, &[upper, lower]) {
+                    self.instance.add_clause(clause);
+                }
+                self.instance
+                    .add_clause(atomics::cube_impl_lit(&[upper, lower], conjunction));
+                self.equate(
+                    output,
+                    Term::Literal(if relation == IntegerRelation::Equal {
+                        conjunction
+                    } else {
+                        !conjunction
+                    }),
+                );
+                Ok(())
+            }
+        }
+    }
+
+    fn reified_upper(
+        &mut self,
+        algorithm: crate::ast::sat_decision::PbEncoding,
+        output: Term,
+        bound: i128,
+        positive: &[(Lit, i128)],
+        total: i128,
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::CardinalityRelation;
+        use rustsat::types::constraints::PbConstraint;
+        if bound < 0 || bound >= total {
+            self.equate(output, Term::Constant(bound >= total));
+            return Ok(());
+        }
+        if let Term::Constant(value) = output {
+            let (terms, bound) = if value {
+                (
+                    positive
+                        .iter()
+                        .map(|(lit, weight)| (*weight as i64, Term::Literal(*lit)))
+                        .collect(),
+                    bound,
+                )
+            } else {
+                (
+                    positive
+                        .iter()
+                        .map(|(lit, weight)| (*weight as i64, Term::Literal(!*lit)))
+                        .collect(),
+                    total - bound - 1,
+                )
+            };
+            if total >= (isize::MAX as i128).min(i128::from(i64::MAX)) {
+                return Err(SolverError::ModelInvalid(
+                    "Integer coefficient sum exceeds the library range".into(),
+                ));
+            }
+            return self.pseudo_boolean(
+                algorithm,
+                CardinalityRelation::AtMost,
+                bound as i64,
+                terms,
+                &[],
+            );
+        }
+        // RustSAT's reverse implication computes twice the coefficient sum.
+        if total >= (isize::MAX as i128).min(i128::from(i64::MAX)) / 2 {
+            return Err(SolverError::ModelInvalid(
+                "Reified integer coefficient sum exceeds the library range".into(),
+            ));
+        }
+        let Term::Literal(literal) = output else {
+            unreachable!()
+        };
+        let constraint = PbConstraint::new_ub_unsigned(
+            positive
+                .iter()
+                .map(|(lit, weight)| (*lit, *weight as usize)),
+            bound as isize,
+        );
+        // Library implication transformations supply both directions of equivalence.
+        for constraint in [
+            atomics::lit_impl_pb(literal, &constraint),
+            atomics::pb_impl_lit(&constraint, literal),
+        ] {
+            let (terms, bound, relation) = match constraint {
+                PbConstraint::Ub(c) => {
+                    let (terms, bound) = c.decompose();
+                    (terms, bound, CardinalityRelation::AtMost)
+                }
+                PbConstraint::Lb(c) => {
+                    let (terms, bound) = c.decompose();
+                    (terms, bound, CardinalityRelation::AtLeast)
+                }
+                PbConstraint::Eq(_) => {
+                    unreachable!("Implication of an upper bound remains an inequality")
+                }
+            };
+            self.pseudo_boolean(
+                algorithm,
+                relation,
+                bound as i64,
+                terms
+                    .into_iter()
+                    .map(|(lit, weight)| (weight as i64, Term::Literal(lit)))
+                    .collect(),
+                &[],
+            )?;
+        }
+        Ok(())
+    }
+
     fn pseudo_boolean(
         &mut self,
         algorithm: crate::ast::sat_decision::PbEncoding,
@@ -193,24 +520,7 @@ impl Compiler<'_> {
         }
         // Aggregate by variable before making weights positive, retaining multiplicity
         // and cancelling complements. Widening keeps signed boundary values safe.
-        let mut bound = i128::from(bound);
-        let mut coefficients = std::collections::BTreeMap::<Lit, i128>::new();
-        for &(weight, term) in &terms {
-            let weight = i128::from(weight);
-            match term {
-                Term::Constant(true) => bound -= weight,
-                Term::Constant(false) => (),
-                Term::Literal(literal) => {
-                    let (literal, weight) = if literal.is_neg() {
-                        bound -= weight;
-                        (!literal, -weight)
-                    } else {
-                        (literal, weight)
-                    };
-                    *coefficients.entry(literal).or_default() += weight;
-                }
-            }
-        }
+        let (mut bound, coefficients) = canonical_pb_terms(bound, &terms);
         let structured_input = (!groups.is_empty()
             && matches!(
                 algorithm,
@@ -246,6 +556,37 @@ impl Compiler<'_> {
         {
             return Ok(());
         }
+        // Preserve the checked library range for nontrivial bounds before pruning.
+        if bound != 0
+            && bound != total
+            && (total >= isize::MAX as i128 || total >= i128::from(i64::MAX))
+        {
+            return Err(SolverError::ModelInvalid(
+                "Pseudo-Boolean coefficient sum exceeds the library range".into(),
+            ));
+        }
+        // An upper/equality bound forbids every individual positive term above it.
+        // Remove those terms before constructing a counter, including its inverted lower side.
+        if structured_input.is_none() && relation != CardinalityRelation::AtLeast {
+            let mut retained = Vec::new();
+            total = 0;
+            for (literal, weight) in positive {
+                if weight > bound {
+                    self.assert(Term::Literal(!literal));
+                } else {
+                    total += weight;
+                    retained.push((literal, weight));
+                }
+            }
+            positive = retained;
+            if relation == CardinalityRelation::Exactly && bound > total {
+                self.assert(Term::Constant(false));
+                return Ok(());
+            }
+            if relation == CardinalityRelation::AtMost && bound >= total {
+                return Ok(());
+            }
+        }
         if bound == 0 || bound == total {
             for (literal, _) in positive {
                 self.assert(Term::Literal(if bound == total {
@@ -255,12 +596,6 @@ impl Compiler<'_> {
                 }));
             }
             return Ok(());
-        }
-        // Both libraries use signed machine-sized bounds and may calculate bound + 1.
-        if total >= isize::MAX as i128 || total >= i128::from(i64::MAX) {
-            return Err(SolverError::ModelInvalid(
-                "Pseudo-Boolean coefficient sum exceeds the library range".into(),
-            ));
         }
         let positive: Vec<_> = positive
             .into_iter()
@@ -1144,6 +1479,302 @@ mod pseudo_boolean_tests {
     use rustsat_cadical::CaDiCaL;
 
     #[test]
+    fn integer_relations_preserve_both_truth_values_for_every_provider() {
+        use crate::ast::sat_decision::IntegerRelation;
+        let variables: Vec<_> = (0..4)
+            .map(|index| {
+                DeclarationPtr::new_find(Name::User(format!("r{index}").into()), Domain::bool())
+            })
+            .collect();
+        let inputs: Vec<Expression> = variables
+            .iter()
+            .map(|variable| Reference::new(variable.clone()).into())
+            .collect();
+        let terms = vec![
+            (2, inputs[0].clone()),
+            (-3, inputs[1].clone()),
+            (5, inputs[2].clone()),
+            (1, inputs[0].clone()),
+            (
+                -2,
+                Expression::Not(Metadata::new(), Moo::new(inputs[0].clone())),
+            ),
+            (4, true.into()),
+            (9, false.into()),
+        ];
+        for algorithm in PbEncoding::ALL {
+            for relation in [
+                IntegerRelation::Equal,
+                IntegerRelation::NotEqual,
+                IntegerRelation::Less,
+                IntegerRelation::LessEqual,
+                IntegerRelation::Greater,
+                IntegerRelation::GreaterEqual,
+            ] {
+                for bound in [i64::MIN, -10, -3, 0, 1, 2, 4, 8, 10, i64::MAX] {
+                    for output in [
+                        inputs[3].clone(),
+                        inputs[0].clone(),
+                        true.into(),
+                        false.into(),
+                    ] {
+                        let mut instance = SatInstance::new();
+                        let mut map = HashMap::new();
+                        for variable in &variables {
+                            map.insert(variable.name().clone(), instance.new_lit());
+                        }
+                        let decision = SatEncodingDecision::IntegerRelation {
+                            output: output.clone(),
+                            terms: terms.clone(),
+                            groups: vec![],
+                            relation,
+                            bound,
+                            encoding: Some(EncodingSelection {
+                                algorithm,
+                                provenance: SelectionProvenance::ExplicitConfiguration,
+                            }),
+                        };
+                        assert_eq!(
+                            serde_json::from_str::<SatEncodingDecision>(
+                                &serde_json::to_string(&decision).unwrap()
+                            )
+                            .unwrap(),
+                            decision
+                        );
+                        compile_decisions(&[decision], &mut instance, &mut map).unwrap();
+                        let used = instance.var_manager_mut().n_used();
+                        assert_eq!(instance.new_lit().var().idx32(), used);
+                        let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                        let mut solver = CaDiCaL::default();
+                        solver.add_cnf(cnf).unwrap();
+                        for assignment in 0usize..16 {
+                            let bit = |index| i64::from(assignment & (1usize << index) != 0);
+                            let value = 5 * bit(0) - 3 * bit(1) + 5 * bit(2) + 2;
+                            let truth = match relation {
+                                IntegerRelation::Equal => value == bound,
+                                IntegerRelation::NotEqual => value != bound,
+                                IntegerRelation::Less => value < bound,
+                                IntegerRelation::LessEqual => value <= bound,
+                                IntegerRelation::Greater => value > bound,
+                                IntegerRelation::GreaterEqual => value >= bound,
+                            };
+                            let actual_output = if output == inputs[3] {
+                                bit(3) != 0
+                            } else if output == inputs[0] {
+                                bit(0) != 0
+                            } else {
+                                output == Expression::from(true)
+                            };
+                            let assumptions: Vec<_> = variables
+                                .iter()
+                                .enumerate()
+                                .map(|(index, variable)| {
+                                    let lit = map[&variable.name()];
+                                    if bit(index) != 0 { lit } else { !lit }
+                                })
+                                .collect();
+                            assert_eq!(
+                                solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
+                                truth == actual_output,
+                                "{algorithm} {relation:?} bound={bound} bits={assignment} output={output}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn choice_relations_preserve_truth_for_sparse_and_signed_values() {
+        use crate::ast::sat_decision::{IntegerRelation, PbTermGroup, PbTermStructure};
+        let variables: Vec<_> = (0..5)
+            .map(|index| {
+                DeclarationPtr::new_find(Name::User(format!("c{index}").into()), Domain::bool())
+            })
+            .collect();
+        let inputs: Vec<Expression> = variables
+            .iter()
+            .map(|variable| Reference::new(variable.clone()).into())
+            .collect();
+        let weights = [-3, 2, 3, -6];
+        for algorithm in PbEncoding::ALL {
+            for relation in [
+                IntegerRelation::Equal,
+                IntegerRelation::NotEqual,
+                IntegerRelation::Less,
+                IntegerRelation::LessEqual,
+                IntegerRelation::Greater,
+                IntegerRelation::GreaterEqual,
+            ] {
+                for count in [1, 2] {
+                    for bound in [-5, 0, 3, 6] {
+                        let mut instance = SatInstance::new();
+                        let mut map = HashMap::new();
+                        for variable in &variables {
+                            map.insert(variable.name().clone(), instance.new_lit());
+                        }
+                        compile_decisions(
+                            &[SatEncodingDecision::IntegerRelation {
+                                output: inputs[4].clone(),
+                                terms: weights[..count * 2]
+                                    .iter()
+                                    .zip(&inputs)
+                                    .map(|(weight, input)| (*weight, input.clone()))
+                                    .collect(),
+                                groups: (0..count)
+                                    .map(|index| PbTermGroup {
+                                        start: index * 2,
+                                        end: index * 2 + 2,
+                                        structure: PbTermStructure::Choice,
+                                    })
+                                    .collect(),
+                                relation,
+                                bound,
+                                encoding: Some(EncodingSelection {
+                                    algorithm,
+                                    provenance: SelectionProvenance::ExplicitConfiguration,
+                                }),
+                            }],
+                            &mut instance,
+                            &mut map,
+                        )
+                        .unwrap();
+                        let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                        let mut solver = CaDiCaL::default();
+                        solver.add_cnf(cnf).unwrap();
+                        for assignment in 0usize..32 {
+                            if (0..count)
+                                .any(|index| ((assignment >> (index * 2)) & 3).count_ones() != 1)
+                            {
+                                continue;
+                            }
+                            let value: i64 = weights[..count * 2]
+                                .iter()
+                                .enumerate()
+                                .filter(|(index, _)| assignment & (1 << index) != 0)
+                                .map(|(_, weight)| *weight)
+                                .sum();
+                            let truth = match relation {
+                                IntegerRelation::Equal => value == bound,
+                                IntegerRelation::NotEqual => value != bound,
+                                IntegerRelation::Less => value < bound,
+                                IntegerRelation::LessEqual => value <= bound,
+                                IntegerRelation::Greater => value > bound,
+                                IntegerRelation::GreaterEqual => value >= bound,
+                            };
+                            let assumptions: Vec<_> = variables
+                                .iter()
+                                .enumerate()
+                                .map(|(index, variable)| {
+                                    let literal = map[&variable.name()];
+                                    if assignment & (1 << index) != 0 {
+                                        literal
+                                    } else {
+                                        !literal
+                                    }
+                                })
+                                .collect();
+                            assert_eq!(
+                                solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
+                                truth == (assignment & 16 != 0),
+                                "{algorithm} {relation:?} groups={count} bound={bound} bits={assignment}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn asserted_relations_allocate_outputs_and_preserve_truth_in_both_orders() {
+        use crate::ast::sat_decision::IntegerRelation;
+        let variables: Vec<_> = (0..3)
+            .map(|index| {
+                DeclarationPtr::new_find(Name::User(format!("a{index}").into()), Domain::bool())
+            })
+            .collect();
+        let inputs: Vec<Expression> = variables
+            .iter()
+            .map(|variable| Reference::new(variable.clone()).into())
+            .collect();
+        for algorithm in PbEncoding::ALL {
+            for relation in [
+                IntegerRelation::Equal,
+                IntegerRelation::NotEqual,
+                IntegerRelation::Less,
+                IntegerRelation::LessEqual,
+                IntegerRelation::Greater,
+                IntegerRelation::GreaterEqual,
+            ] {
+                for bound in [-3, -1, 0, 2] {
+                    for truth in [false, true] {
+                        for assertion_first in [false, true] {
+                            let mut instance = SatInstance::new();
+                            let mut map = HashMap::new();
+                            for variable in &variables[..2] {
+                                map.insert(variable.name().clone(), instance.new_lit());
+                            }
+                            let assertion = SatEncodingDecision::Assert(if truth {
+                                inputs[2].clone()
+                            } else {
+                                Expression::Not(Metadata::new(), Moo::new(inputs[2].clone()))
+                            });
+                            let decision = SatEncodingDecision::IntegerRelation {
+                                output: inputs[2].clone(),
+                                terms: vec![(2, inputs[0].clone()), (-3, inputs[1].clone())],
+                                groups: vec![],
+                                relation,
+                                bound,
+                                encoding: Some(EncodingSelection {
+                                    algorithm,
+                                    provenance: SelectionProvenance::ExplicitConfiguration,
+                                }),
+                            };
+                            let decisions = if assertion_first {
+                                vec![assertion, decision]
+                            } else {
+                                vec![decision, assertion]
+                            };
+                            compile_decisions(&decisions, &mut instance, &mut map).unwrap();
+                            let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                            let mut solver = CaDiCaL::default();
+                            solver.add_cnf(cnf).unwrap();
+                            for assignment in 0usize..4 {
+                                let bit = |index| assignment & (1usize << index) != 0;
+                                let value = 2 * i64::from(bit(0)) - 3 * i64::from(bit(1));
+                                let expected = match relation {
+                                    IntegerRelation::Equal => value == bound,
+                                    IntegerRelation::NotEqual => value != bound,
+                                    IntegerRelation::Less => value < bound,
+                                    IntegerRelation::LessEqual => value <= bound,
+                                    IntegerRelation::Greater => value > bound,
+                                    IntegerRelation::GreaterEqual => value >= bound,
+                                };
+                                let assumptions: Vec<_> = variables[..2]
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(index, variable)| {
+                                        let lit = map[&variable.name()];
+                                        if bit(index) { lit } else { !lit }
+                                    })
+                                    .collect();
+                                assert_eq!(
+                                    solver.solve_assumps(&assumptions).unwrap()
+                                        == SolverResult::Sat,
+                                    expected == truth,
+                                    "{algorithm} {relation:?} bound={bound} truth={truth} bits={assignment} first={assertion_first}"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn structured_providers_preserve_representation_domains_and_signed_occurrences() {
         let variables: Vec<_> = (0..4)
             .map(|index| {
@@ -1506,7 +2137,7 @@ mod pseudo_boolean_tests {
                             let mut solver = CaDiCaL::default();
                             solver.add_cnf(cnf).unwrap();
                             for assignment in 0..8 {
-                                let active = |index| i64::from(assignment & (1 << index) != 0);
+                                let active = |index| i64::from(assignment & (1usize << index) != 0);
                                 let mut value: i64 = weights
                                     .into_iter()
                                     .enumerate()

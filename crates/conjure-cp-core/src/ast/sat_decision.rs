@@ -33,6 +33,15 @@ pub enum SatEncodingDecision {
         bound: i64,
         encoding: Option<EncodingSelection<PbEncoding>>,
     },
+    /// Define an integer relation over a signed weighted view of the numeric operands.
+    IntegerRelation {
+        output: Expression,
+        terms: Vec<(i64, Expression)>,
+        groups: Vec<PbTermGroup>,
+        relation: IntegerRelation,
+        bound: i64,
+        encoding: Option<EncodingSelection<PbEncoding>>,
+    },
     /// Define an output as equivalent to a semantic Boolean expression.
     Boolean {
         output: Expression,
@@ -89,12 +98,39 @@ impl Display for SatEncodingDecision {
                 }
                 Ok(())
             }
+            Self::IntegerRelation {
+                output,
+                terms,
+                groups,
+                relation,
+                bound,
+                encoding,
+            } => write!(
+                f,
+                "define({output} <-> integer-weighted({}) {relation:?} {bound}) using {encoding:?} with {groups:?}",
+                terms
+                    .iter()
+                    .map(|(weight, input)| format!("{weight}*{input}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
             Self::Assert(expression) => write!(f, "assert({expression}) using tseitin"),
             Self::Boolean { output, expression } => {
                 write!(f, "define({output} <-> {expression}) using tseitin")
             }
         }
     }
+}
+
+/// Numeric relation between a weighted integer view and its bound.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
+pub enum IntegerRelation {
+    Equal,
+    NotEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
 }
 
 /// A contiguous group of weighted terms with an existing representation invariant.
@@ -127,6 +163,9 @@ impl SatEncodingDecision {
                 inputs.iter().collect()
             }
             Self::PseudoBoolean { terms, .. } => terms.iter().map(|(_, input)| input).collect(),
+            Self::IntegerRelation { output, terms, .. } => std::iter::once(output)
+                .chain(terms.iter().map(|(_, input)| input))
+                .collect(),
             Self::Assert(expression) => vec![expression],
             Self::Boolean { output, expression } => vec![output, expression],
         }
@@ -488,6 +527,11 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
                 terms,
                 encoding: None,
                 ..
+            }
+            | SatEncodingDecision::IntegerRelation {
+                terms,
+                encoding: None,
+                ..
             } => Some(terms),
             _ => None,
         })
@@ -517,7 +561,8 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
         (PbEncoding::ALL[index], SelectionProvenance::Heuristic)
     };
     for decision in decisions {
-        if let SatEncodingDecision::PseudoBoolean { encoding, .. } = decision
+        if let SatEncodingDecision::PseudoBoolean { encoding, .. }
+        | SatEncodingDecision::IntegerRelation { encoding, .. } = decision
             && encoding.is_none()
         {
             *encoding = Some(EncodingSelection {

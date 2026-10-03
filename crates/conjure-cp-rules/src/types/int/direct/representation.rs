@@ -6,7 +6,7 @@
 //! [`IntLog`](super::super::IntLog)'s logarithmic.
 
 use crate::shared::representation_prelude::*;
-use crate::types::int::{finite_int_bounds, int_domain_to_expr, int_ranges};
+use crate::types::int::{finite_int_bounds, int_ranges};
 use conjure_cp::ast::{Domain, Moo, Reference, SATIntEncoding};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::settings::SolverFamily;
@@ -67,8 +67,13 @@ register_representation!(
         let count = Expression::Sum(Metadata::new(), Moo::new(into_matrix_expr!(indicators)));
         let mut constraints = vec![Expression::Leq(Metadata::new(), Moo::new(count), Moo::new(1.into()))];
 
-        // ...and the value taken is one the domain allows, which also forces at least one bit.
-        constraints.push(int_domain_to_expr(state.sat_int_expr(), &state.ranges));
+        // One allowed indicator must be set independently of numeric equality encoding.
+        // Otherwise an all-false code can impersonate value zero in a weighted view.
+        let (low, high) = state.bounds;
+        let allowed = bits.iter().zip(low..=high)
+            .filter(|(_, value)| state.ranges.iter().any(|(lower, upper)| lower <= value && value <= upper))
+            .map(|(bit, _)| bit.clone()).collect::<Vec<_>>();
+        constraints.push(Expression::Or(Metadata::new(), Moo::new(into_matrix_expr!(allowed))));
         constraints
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {

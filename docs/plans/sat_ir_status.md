@@ -23,14 +23,14 @@ Branch: `sat-ir`. Conventional commits; never push.
 - The initial uniform SAT expansion enabled 41 existing CNF fixture directories plus the unequal-domain fixture. That stage contained 245 uniform SAT portfolios across these 42 fixtures, including all six AMO choices where applicable. Reference solutions are checked before accepting goldens.
 
 - Production Boolean and integer gate rules now emit semantic `SatEncodingDecision` assertions/definitions through `RuleEffect::sat`. Model CNF fields, `CnfClause` and the legacy clause converter have been removed. RustSAT generates all clauses at load time; dominance injection uses the same allocation frontier as encoder auxiliaries.
-- Asserted AMO decisions carry a selectable algorithm and explicit/heuristic provenance. `--amo-encoding` pins pairwise, ladder, bitwise, commander, bimander or two-product. Otherwise the existing first/random/compact/interactive/all heuristics choose one AMO algorithm per model. Compact uses pairwise through five inputs and ladder above that; this is an initial policy, not a performance claim.
+- Asserted AMO decisions carry a selectable algorithm and explicit/heuristic provenance. `--sat-encoding-amo` pins pairwise, ladder, bitwise, commander, bimander or two-product. Otherwise the existing first/random/compact/interactive/all heuristics choose one AMO algorithm per model. Compact uses pairwise through five inputs and ladder above that; this is an initial policy, not a performance claim.
 - Direct integer domain constraints and direct division quotient constraints retain AMO semantics until library generation. All-mode integration portfolios enumerate encoder choices alongside uniform representation choices.
 - `EncodingSelection<T>` records a resolved algorithm and its provenance without tying the choice container to AMO. Cardinality and weighted PB reuse that selection container.
 
-- Asserted cardinality decisions retain upper/lower/exact bounds and occurrence multiplicity. `--cardinality-encoding` selects RustSAT totalizer or Pindakaas sorting network. Heuristics resolve one cardinality choice per model; compact initially selects totalizer.
+- Asserted cardinality decisions retain upper/lower/exact bounds and occurrence multiplicity. `--sat-encoding-cardinality` selects RustSAT totalizer or Pindakaas sorting network. Heuristics resolve one cardinality choice per model; compact initially selects totalizer.
 - Pindakaas 0.5.1 is pinned with its default solver features disabled. Its clause sink shares the RustSAT allocator, including every encoder auxiliary. Constants and impossible/trivial bounds are normalised before dispatch.
 
-- Asserted pseudo-Boolean decisions retain signed weights, upper/lower/exact bounds and selected provider provenance. `--pb-encoding` pins RustSAT generalised totalizer, RustSAT binary adder, Pindakaas BDD, RustSAT dynamic polynomial watchdog or Pindakaas SWC. Explicit overrides take precedence; all-mode shares one choice per model. Compact initially uses GTE through a coefficient sum of 4096 and the adder above that.
+- Asserted pseudo-Boolean decisions retain signed weights, upper/lower/exact bounds and selected provider provenance. `--sat-encoding-pb` pins RustSAT generalised totalizer, RustSAT binary adder, Pindakaas BDD, RustSAT dynamic polynomial watchdog or Pindakaas SWC. Explicit overrides take precedence; all-mode shares one choice per model. Compact initially uses GTE through a coefficient sum of 4096 and the adder above that.
 - Linear extraction uses Direct, Order and BinaryValue views, retaining numeric values for sparse domains. Checked coefficient arithmetic precedes library dispatch; constants, repeated/complementary literals, negative weights and trivial bounds are normalised in the adaptor. Library-range overflow is reported rather than wrapped.
 - Signed BinaryValue multiplication includes sign extension. Division bounds and circuits follow Essence floor semantics, including negative operands and minimum-value magnitudes. The three previous solution mismatches now pass uniform portfolios.
 
@@ -101,3 +101,26 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 ## Subsequent work policy
 
 Finish major encoding features and known missing library connections first, including guarded/reified constraints and incremental bounds where applicable. Once these and the remaining decision families are covered, return to a repeated cycle of selecting the smallest known failing fixture, reproducing it and fixing it with regression coverage. The disabled-test inventory supplies candidates; historical failures must be reconfirmed before choosing a fix.
+
+## Active follow-up priorities
+
+- Keep the implementation and integration campaign on `channelling=uniform` for now. Lazy mixed-representation materialisation, sharing and channelling remain deferred; revisit them explicitly after the uniform backend is broadly working.
+- Migrate the remaining decision families: integer equality/disequality and comparisons first, then allDifferent, table, element and remaining linear-integer strategies. Prefer public RustSAT/Pindakaas encoders and remove superseded Oxide circuits rather than retaining duplicate implementations.
+- Keep guarded/reified AMO/cardinality/PB constraints, reusable incremental bounds and objective tightening on the work list. Integer relation reification is the first supporting connection, not completion of this whole gap.
+- Keep encoder tuning, proof-producing variants, Boolean-arena unification and the fixture-discovery gap visible. Alternate Pindakaas implementations of already connected algorithms remain deferred.
+- Reconfirm historical failures before the smallest-failing-fixture loop. Library bugs require a standalone reproducer and upstream-status report before adding an adaptor workaround. Local upstream reporting material in `bug-reports/` must not be committed.
+
+## Integer relation migration
+
+- Integer equality/disequality and all four ordering relations now have dedicated semantic decisions, including Boolean outputs for nested/reified uses. Numeric views share the selected PB provider and provenance with asserted PB constraints.
+- RustSAT implication helpers construct both directions of each inequality equivalence. Equality combines the two bounds using library atomic gates; disequality complements that result. GTE, binary adder, DPW, BDD and SWC encode the resulting constraints. No clauses are stored in the model.
+- Removed the representation-specific Direct, Order and BinaryValue equality/comparison rewrite circuits. The internal binary comparator used by min/max arithmetic remains to be migrated with those arithmetic strategies; it is not a public comparison fallback.
+- Direct domain constraints now require an allowed indicator explicitly, so their exactly-one invariant no longer depends on an equality encoding. Numeric zero must not make an all-false one-hot code valid.
+- Rank comparisons continue to use the actual-value mapping before numeric encoding. Relation decisions retain numeric term groups. One Direct choice against a constant and equality/disequality between two Direct choices use library Boolean gates over the value indicators, avoiding unnecessarily large weighted counters. Other reified relation views currently use flat PB inputs; preserving structured groups through PB reification remains a follow-up alongside general guarded/reified AMO/cardinality/PB.
+- Next dedicated families: allDifferent (library AMO and disequality compositions), table, element, and additional linear-integer strategies. Remain on uniform representations throughout this work.
+
+- Encoding CLI flags use the common `--sat-encoding-<family>` prefix: `amo`, `cardinality` and `pb`. The former flag names are removed; no compatibility aliases are retained. New family selectors should follow this naming convention.
+
+- Singleton bounds must not be folded to constants before representation constraints have fixed the code bits. Literal integer constants remain foldable. The `basic/bool/04` regression checks the singleton value 42 across the uniform portfolio.
+- Direct Boolean assertions are collected before generation so asserted integer relations use native PB assertions rather than unnecessary full equivalence. For flat upper/equality PB constraints, individually overweight terms are forced false before constructing the counter. Checked library-range errors remain explicit.
+- Numeric views accept both expression matrices and literal matrices of bits; the zero absolute-value fixture covers the latter form.

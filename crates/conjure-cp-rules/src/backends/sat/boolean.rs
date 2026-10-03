@@ -11,7 +11,7 @@ use conjure_cp::ast::{Domain, SymbolTable};
 
 use crate::shared::utils::is_literal;
 
-fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
+pub(super) fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     let name = symbols.gen_find_auxiliary(&Domain::bool());
 
     symbols.insert(name.clone());
@@ -321,6 +321,30 @@ fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     Ok(RuleEffect::sat(new_expr, new_sat_decisions, new_symbols))
 }
 
+/// Shared recognition keeps asserted Boolean counts in their own encoding family.
+pub(super) fn count_inputs(sum: &Expr) -> Option<Vec<Expr>> {
+    let Expr::AbstractLiteral(_, Matrix(terms, _)) = sum else {
+        return None;
+    };
+    terms
+        .iter()
+        .map(|term| match term {
+            Expr::ToInt(_, input)
+                if is_literal(input)
+                    && input.domain_of().is_some_and(|domain| domain.is_bool()) =>
+            {
+                Some(input.as_ref().clone())
+            }
+            Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(value)))
+                if *value == 0 || *value == 1 =>
+            {
+                Some((*value == 1).into())
+            }
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>()
+}
+
 /// Preserve asserted Boolean counts until a library encoder is selected.
 #[register_rule("SAT", 20000, [Root])]
 fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -353,27 +377,7 @@ fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             }
             _ => continue,
         };
-        let Expr::AbstractLiteral(_, Matrix(terms, _)) = sum.as_ref() else {
-            continue;
-        };
-        let inputs = terms
-            .iter()
-            .map(|term| match term {
-                Expr::ToInt(_, input)
-                    if is_literal(input)
-                        && input.domain_of().is_some_and(|domain| domain.is_bool()) =>
-                {
-                    Some(input.as_ref().clone())
-                }
-                Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(value)))
-                    if *value == 0 || *value == 1 =>
-                {
-                    Some((*value == 1).into())
-                }
-                _ => None,
-            })
-            .collect::<Option<Vec<_>>>();
-        let Some(inputs) = inputs else {
+        let Some(inputs) = count_inputs(sum) else {
             continue;
         };
         let decision = if relation == CardinalityRelation::AtMost && bound == 1 {
