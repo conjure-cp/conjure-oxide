@@ -1,0 +1,140 @@
+Model before rewriting:
+
+find a: int(-6..20)
+
+such that
+
+a < 10
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#int_direct_1: bool
+  find a#int_direct_10: bool
+  find a#int_direct_11: bool
+  find a#int_direct_12: bool
+  find a#int_direct_13: bool
+  find a#int_direct_14: bool
+  find a#int_direct_15: bool
+  find a#int_direct_16: bool
+  find a#int_direct_17: bool
+  find a#int_direct_18: bool
+  find a#int_direct_19: bool
+  find a#int_direct_2: bool
+  find a#int_direct_20: bool
+  find a#int_direct_21: bool
+  find a#int_direct_22: bool
+  find a#int_direct_23: bool
+  find a#int_direct_24: bool
+  find a#int_direct_25: bool
+  find a#int_direct_26: bool
+  find a#int_direct_27: bool
+  find a#int_direct_3: bool
+  find a#int_direct_4: bool
+  find a#int_direct_5: bool
+  find a#int_direct_6: bool
+  find a#int_direct_7: bool
+  find a#int_direct_8: bool
+  find a#int_direct_9: bool
+new constraints:
+  sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3),toInt(a#int_direct_4),toInt(a#int_direct_5),toInt(a#int_direct_6),toInt(a#int_direct_7),toInt(a#int_direct_8),toInt(a#int_direct_9),toInt(a#int_direct_10),toInt(a#int_direct_11),toInt(a#int_direct_12),toInt(a#int_direct_13),toInt(a#int_direct_14),toInt(a#int_direct_15),toInt(a#int_direct_16),toInt(a#int_direct_17),toInt(a#int_direct_18),toInt(a#int_direct_19),toInt(a#int_direct_20),toInt(a#int_direct_21),toInt(a#int_direct_22),toInt(a#int_direct_23),toInt(a#int_direct_24),toInt(a#int_direct_25),toInt(a#int_direct_26),toInt(a#int_direct_27);int(1..)]) <= 1
+  or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6,a#int_direct_7,a#int_direct_8,a#int_direct_9,a#int_direct_10,a#int_direct_11,a#int_direct_12,a#int_direct_13,a#int_direct_14,a#int_direct_15,a#int_direct_16,a#int_direct_17,a#int_direct_18,a#int_direct_19,a#int_direct_20,a#int_direct_21,a#int_direct_22,a#int_direct_23,a#int_direct_24,a#int_direct_25,a#int_direct_26,a#int_direct_27;int(1..)])
+
+--
+
+a < 10
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(-6*a#int_direct_1, -5*a#int_direct_2, -4*a#int_direct_3, -3*a#int_direct_4, -2*a#int_direct_5, -1*a#int_direct_6, 0*a#int_direct_7, 1*a#int_direct_8, 2*a#int_direct_9, 3*a#int_direct_10, 4*a#int_direct_11, 5*a#int_direct_12, 6*a#int_direct_13, 7*a#int_direct_14, 8*a#int_direct_15, 9*a#int_direct_16, 10*a#int_direct_17, 11*a#int_direct_18, 12*a#int_direct_19, 13*a#int_direct_20, 14*a#int_direct_21, 15*a#int_direct_22, 16*a#int_direct_23, 17*a#int_direct_24, 18*a#int_direct_25, 19*a#int_direct_26, 20*a#int_direct_27) Less 10) using None with [PbTermGroup { start: 0, end: 27, structure: Choice }]
+
+--
+
+__0,
+sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3),toInt(a#int_direct_4),toInt(a#int_direct_5),toInt(a#int_direct_6),toInt(a#int_direct_7),toInt(a#int_direct_8),toInt(a#int_direct_9),toInt(a#int_direct_10),toInt(a#int_direct_11),toInt(a#int_direct_12),toInt(a#int_direct_13),toInt(a#int_direct_14),toInt(a#int_direct_15),toInt(a#int_direct_16),toInt(a#int_direct_17),toInt(a#int_direct_18),toInt(a#int_direct_19),toInt(a#int_direct_20),toInt(a#int_direct_21),toInt(a#int_direct_22),toInt(a#int_direct_23),toInt(a#int_direct_24),toInt(a#int_direct_25),toInt(a#int_direct_26),toInt(a#int_direct_27);int(1..)]) <= 1,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6,a#int_direct_7,a#int_direct_8,a#int_direct_9,a#int_direct_10,a#int_direct_11,a#int_direct_12,a#int_direct_13,a#int_direct_14,a#int_direct_15,a#int_direct_16,a#int_direct_17,a#int_direct_18,a#int_direct_19,a#int_direct_20,a#int_direct_21,a#int_direct_22,a#int_direct_23,a#int_direct_24,a#int_direct_25,a#int_direct_26,a#int_direct_27;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6,a#int_direct_7,a#int_direct_8,a#int_direct_9,a#int_direct_10,a#int_direct_11,a#int_direct_12,a#int_direct_13,a#int_direct_14,a#int_direct_15,a#int_direct_16,a#int_direct_17,a#int_direct_18,a#int_direct_19,a#int_direct_20,a#int_direct_21,a#int_direct_22,a#int_direct_23,a#int_direct_24,a#int_direct_25,a#int_direct_26,a#int_direct_27;int(1..)])
+new SAT encoding decisions:
+  at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3, a#int_direct_4, a#int_direct_5, a#int_direct_6, a#int_direct_7, a#int_direct_8, a#int_direct_9, a#int_direct_10, a#int_direct_11, a#int_direct_12, a#int_direct_13, a#int_direct_14, a#int_direct_15, a#int_direct_16, a#int_direct_17, a#int_direct_18, a#int_direct_19, a#int_direct_20, a#int_direct_21, a#int_direct_22, a#int_direct_23, a#int_direct_24, a#int_direct_25, a#int_direct_26, a#int_direct_27) using None
+
+--
+
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6,a#int_direct_7,a#int_direct_8,a#int_direct_9,a#int_direct_10,a#int_direct_11,a#int_direct_12,a#int_direct_13,a#int_direct_14,a#int_direct_15,a#int_direct_16,a#int_direct_17,a#int_direct_18,a#int_direct_19,a#int_direct_20,a#int_direct_21,a#int_direct_22,a#int_direct_23,a#int_direct_24,a#int_direct_25,a#int_direct_26,a#int_direct_27;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6,a#int_direct_7,a#int_direct_8,a#int_direct_9,a#int_direct_10,a#int_direct_11,a#int_direct_12,a#int_direct_13,a#int_direct_14,a#int_direct_15,a#int_direct_16,a#int_direct_17,a#int_direct_18,a#int_direct_19,a#int_direct_20,a#int_direct_21,a#int_direct_22,a#int_direct_23,a#int_direct_24,a#int_direct_25,a#int_direct_26,a#int_direct_27;int(1..)])) using tseitin
+
+--
+
+__0,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+Final model:
+
+find a: int(-6..20)
+find a#int_direct_1: bool
+find a#int_direct_2: bool
+find a#int_direct_3: bool
+find a#int_direct_4: bool
+find a#int_direct_5: bool
+find a#int_direct_6: bool
+find a#int_direct_7: bool
+find a#int_direct_8: bool
+find a#int_direct_9: bool
+find a#int_direct_10: bool
+find a#int_direct_11: bool
+find a#int_direct_12: bool
+find a#int_direct_13: bool
+find a#int_direct_14: bool
+find a#int_direct_15: bool
+find a#int_direct_16: bool
+find a#int_direct_17: bool
+find a#int_direct_18: bool
+find a#int_direct_19: bool
+find a#int_direct_20: bool
+find a#int_direct_21: bool
+find a#int_direct_22: bool
+find a#int_direct_23: bool
+find a#int_direct_24: bool
+find a#int_direct_25: bool
+find a#int_direct_26: bool
+find a#int_direct_27: bool
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(-6*a#int_direct_1, -5*a#int_direct_2, -4*a#int_direct_3, -3*a#int_direct_4, -2*a#int_direct_5, -1*a#int_direct_6, 0*a#int_direct_7, 1*a#int_direct_8, 2*a#int_direct_9, 3*a#int_direct_10, 4*a#int_direct_11, 5*a#int_direct_12, 6*a#int_direct_13, 7*a#int_direct_14, 8*a#int_direct_15, 9*a#int_direct_16, 10*a#int_direct_17, 11*a#int_direct_18, 12*a#int_direct_19, 13*a#int_direct_20, 14*a#int_direct_21, 15*a#int_direct_22, 16*a#int_direct_23, 17*a#int_direct_24, 18*a#int_direct_25, 19*a#int_direct_26, 20*a#int_direct_27) Less 10) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 27, structure: Choice }],
+at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3, a#int_direct_4, a#int_direct_5, a#int_direct_6, a#int_direct_7, a#int_direct_8, a#int_direct_9, a#int_direct_10, a#int_direct_11, a#int_direct_12, a#int_direct_13, a#int_direct_14, a#int_direct_15, a#int_direct_16, a#int_direct_17, a#int_direct_18, a#int_direct_19, a#int_direct_20, a#int_direct_21, a#int_direct_22, a#int_direct_23, a#int_direct_24, a#int_direct_25, a#int_direct_26, a#int_direct_27) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6,a#int_direct_7,a#int_direct_8,a#int_direct_9,a#int_direct_10,a#int_direct_11,a#int_direct_12,a#int_direct_13,a#int_direct_14,a#int_direct_15,a#int_direct_16,a#int_direct_17,a#int_direct_18,a#int_direct_19,a#int_direct_20,a#int_direct_21,a#int_direct_22,a#int_direct_23,a#int_direct_24,a#int_direct_25,a#int_direct_26,a#int_direct_27;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin
+

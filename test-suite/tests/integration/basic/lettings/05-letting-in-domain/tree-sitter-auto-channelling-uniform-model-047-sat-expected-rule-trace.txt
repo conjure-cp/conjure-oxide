@@ -1,0 +1,132 @@
+Model before rewriting:
+
+letting n be 2
+find a: int(1..n)
+
+such that
+
+a < n
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#int_rank_1: bool
+new constraints:
+  or([!(a#int_rank_1),true;int(1..)])
+
+--
+
+a
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [a#int_rank_1;int(1..)] [1, 2])
+
+--
+
+SATInt(Rank([(1, 2)]), [a#int_rank_1;int(1..)] [1, 2]) < 2
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Rank([(1, 2)]), [a#int_rank_1;int(1..)] [1, 2]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
+
+--
+
+SATInt(Rank([(1, 2)]), [a#int_rank_1;int(1..)] [1, 2]) < SATInt(Rank([(2, 2)]), [false;int(1..)] [2, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__1,__3,__5;int(1..)] [1, 2]) < SATInt(Log, [__7,__10,__12;int(1..)] [2, 2])
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__0 <-> !((a#int_rank_1) <-> (false))) using tseitin
+  define(__1 <-> !(__0)) using tseitin
+  define(__2 <-> or([a#int_rank_1,false;int(1..)])) using tseitin
+  define(__3 <-> !((false) <-> (__2))) using tseitin
+  define(__4 <-> and([false,__2;int(1..)])) using tseitin
+  define(__5 <-> !((false) <-> (__4))) using tseitin
+  define(__6 <-> and([false,__4;int(1..)])) using tseitin
+  define(__7 <-> !((false) <-> (false))) using tseitin
+  define(__8 <-> and([false,false;int(1..)])) using tseitin
+  define(__9 <-> !((false) <-> (__8))) using tseitin
+  define(__10 <-> !(__9)) using tseitin
+  define(__11 <-> or([false,__8;int(1..)])) using tseitin
+  define(__12 <-> !((false) <-> (__11))) using tseitin
+  define(__13 <-> and([false,__11;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__1,__3,__5;int(1..)] [1, 2]) < SATInt(Log, [__7,__10,__12;int(1..)] [2, 2])
+   ~~> select_integer_relation ([("SAT", 18500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> integer-weighted(1*__1, 2*__3, -4*__5, -1*__7, -2*__10, 4*__12) Less 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -2 } }]
+
+--
+
+__14,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__14) using tseitin
+
+--
+
+Final model:
+
+letting n be 2
+find a: int(1..n)
+find a#int_rank_1: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> !((a#int_rank_1) <-> (false))) using tseitin,
+define(__1 <-> !(__0)) using tseitin,
+define(__2 <-> or([a#int_rank_1,false;int(1..)])) using tseitin,
+define(__3 <-> !((false) <-> (__2))) using tseitin,
+define(__4 <-> and([false,__2;int(1..)])) using tseitin,
+define(__5 <-> !((false) <-> (__4))) using tseitin,
+define(__6 <-> and([false,__4;int(1..)])) using tseitin,
+define(__7 <-> !((false) <-> (false))) using tseitin,
+define(__8 <-> and([false,false;int(1..)])) using tseitin,
+define(__9 <-> !((false) <-> (__8))) using tseitin,
+define(__10 <-> !(__9)) using tseitin,
+define(__11 <-> or([false,__8;int(1..)])) using tseitin,
+define(__12 <-> !((false) <-> (__11))) using tseitin,
+define(__13 <-> and([false,__11;int(1..)])) using tseitin,
+define(__14 <-> integer-weighted(1*__1, 2*__3, -4*__5, -1*__7, -2*__10, 4*__12) Less 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 6, structure: BoundedBinary { lower: -2, upper: -2 } }],
+assert(__14) using tseitin
+

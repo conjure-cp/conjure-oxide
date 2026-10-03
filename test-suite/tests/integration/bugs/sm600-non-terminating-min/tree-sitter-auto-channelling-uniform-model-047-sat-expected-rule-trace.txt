@@ -263,17 +263,21 @@ new SAT encoding decisions:
 
 --
 
-sum([SATInt(Log, [__43,__44,__45,__46;int(1..)] [1, 7]),6;int(1..)])
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-sum([SATInt(Log, [__43,__44,__45,__46;int(1..)] [1, 7]),SATInt(Log, [false,true,true,false;int(1..)] [6, 6]);int(1..)])
+sum([SATInt(Log, [__43,__44,__45,__46;int(1..)] [1, 7]),6;int(1..)]) <= 10
+   ~~> select_integer_relation ([("SAT", 18500)])
+__47
+new variables:
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__47 <-> integer-weighted(1*__43, 2*__44, 4*__45, -8*__46) LessEqual 4) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 7 } }]
 
 --
 
-sum([SATInt(Log, [__43,__44,__45,__46;int(1..)] [1, 7]),SATInt(Log, [false,true,true,false;int(1..)] [6, 6]);int(1..)]) <= 10
-   ~~> select_pseudo_boolean ([("SAT", 19000)])
-
+__47
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
 new SAT encoding decisions:
-  weighted(1*__43, 2*__44, 4*__45, -8*__46) AtMost 4 using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 7 } }]
+  assert(__47) using tseitin
 
 --
 
@@ -334,6 +338,7 @@ findAux __43: bool
 findAux __44: bool
 findAux __45: bool
 findAux __46: bool
+findAux __47: bool
 
 such that
 
@@ -390,5 +395,6 @@ define(__43 <-> or([and([__42,__18;int(1..)]),and([!(__42),__9;int(1..)]);int(1.
 define(__44 <-> or([and([__42,__20;int(1..)]),and([!(__42),__11;int(1..)]);int(1..)])) using tseitin,
 define(__45 <-> or([and([__42,__22;int(1..)]),and([!(__42),__13;int(1..)]);int(1..)])) using tseitin,
 define(__46 <-> or([and([__42,__24;int(1..)]),and([!(__42),__15;int(1..)]);int(1..)])) using tseitin,
-weighted(1*__43, 2*__44, 4*__45, -8*__46) AtMost 4 using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 7 } }]
+define(__47 <-> integer-weighted(1*__43, 2*__44, 4*__45, -8*__46) LessEqual 4) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 7 } }],
+assert(__47) using tseitin
 

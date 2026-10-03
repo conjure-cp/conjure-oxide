@@ -20,82 +20,64 @@ new variables:
   find z#int_direct_1: bool
 new constraints:
   sum([toInt(z#int_direct_1);int(1..)]) <= 1
-  or([SATInt(Direct, [z#int_direct_1;int(1..)] [42, 42]) = 42;int(1..)])
+  or([z#int_direct_1;int(1..)])
 
 --
 
 x,
 y != false,
 sum([toInt(z#int_direct_1);int(1..)]) <= 1,
-or([SATInt(Direct, [z#int_direct_1;int(1..)] [42, 42]) = 42;int(1..)])
+or([z#int_direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 x,
 y != false,
-or([SATInt(Direct, [z#int_direct_1;int(1..)] [42, 42]) = 42;int(1..)])
+or([z#int_direct_1;int(1..)])
 new SAT encoding decisions:
   at-most-one(z#int_direct_1) using None
 
 --
 
-SATInt(Direct, [z#int_direct_1;int(1..)] [42, 42]) = 42
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Direct, [z#int_direct_1;int(1..)] [42, 42]) = SATInt(Direct, [true;int(1..)] [42, 42])
-
---
-
-SATInt(Direct, [z#int_direct_1;int(1..)] [42, 42]) = SATInt(Direct, [true;int(1..)] [42, 42])
-   ~~> eq_sat_direct ([("SAT", 9100)])
-__1
-new variables:
-  findAux __0: bool
-  findAux __1: bool
-new SAT encoding decisions:
-  define(__0 <-> (z#int_direct_1) <-> (true)) using tseitin
-  define(__1 <-> and([__0,true;int(1..)])) using tseitin
-
---
-
-or([__1;int(1..)])
+or([z#int_direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-__1
+z#int_direct_1
 
 --
 
 y != false
    ~~> apply_tseytin_xor_neq ([("SAT", 8500)])
-__2
+__0
 new variables:
-  findAux __2: bool
+  findAux __0: bool
 new SAT encoding decisions:
-  define(__2 <-> !((y) <-> (false))) using tseitin
+  define(__0 <-> !((y) <-> (false))) using tseitin
 
 --
 
 x,
-__2,
-__1
+__0,
+z#int_direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
-__2,
-__1
+__0,
+z#int_direct_1
 new SAT encoding decisions:
   assert(x) using tseitin
 
 --
 
-__2,
-__1
+__0,
+z#int_direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
-__1
+z#int_direct_1
 new SAT encoding decisions:
-  assert(__2) using tseitin
+  assert(__0) using tseitin
 
 --
 
-__1
+z#int_direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(z#int_direct_1) using tseitin
 
 --
 
@@ -106,8 +88,6 @@ find y: bool
 find z: int(42)
 find z#int_direct_1: bool
 findAux __0: bool
-findAux __1: bool
-findAux __2: bool
 
 such that
 
@@ -116,10 +96,8 @@ true
 sat encoding decisions:
 
 at-most-one(z#int_direct_1) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
-define(__0 <-> (z#int_direct_1) <-> (true)) using tseitin,
-define(__1 <-> and([__0,true;int(1..)])) using tseitin,
-define(__2 <-> !((y) <-> (false))) using tseitin,
+define(__0 <-> !((y) <-> (false))) using tseitin,
 assert(x) using tseitin,
-assert(__2) using tseitin,
-assert(__1) using tseitin
+assert(__0) using tseitin,
+assert(z#int_direct_1) using tseitin
 

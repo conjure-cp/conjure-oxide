@@ -26,7 +26,7 @@ new variables:
   find i#int_direct_1: bool
 new constraints:
   sum([toInt(i#int_direct_1);int(1..)]) <= 1
-  or([SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)])
+  or([i#int_direct_1;int(1..)])
 
 --
 
@@ -37,33 +37,33 @@ new variables:
   find j#int_direct_1: bool
 new constraints:
   sum([toInt(j#int_direct_1);int(1..)]) <= 1
-  or([SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)])
+  or([j#int_direct_1;int(1..)])
 
 --
 
 !(m[sum([i,j;int(1..)])]),
 sum([toInt(i#int_direct_1);int(1..)]) <= 1,
-or([SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)]),
+or([i#int_direct_1;int(1..)]),
 sum([toInt(j#int_direct_1);int(1..)]) <= 1,
-or([SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)])
+or([j#int_direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 !(m[sum([i,j;int(1..)])]),
-or([SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)]),
+or([i#int_direct_1;int(1..)]),
 sum([toInt(j#int_direct_1);int(1..)]) <= 1,
-or([SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)])
+or([j#int_direct_1;int(1..)])
 new SAT encoding decisions:
   at-most-one(i#int_direct_1) using None
 
 --
 
 !(m[sum([i,j;int(1..)])]),
-or([SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)]),
+or([i#int_direct_1;int(1..)]),
 sum([toInt(j#int_direct_1);int(1..)]) <= 1,
-or([SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)])
+or([j#int_direct_1;int(1..)])
    ~~> select_cardinality ([("SAT", 20000)])
 !(m[sum([i,j;int(1..)])]),
-or([SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)]),
-or([SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]) = 1;int(1..)])
+or([i#int_direct_1;int(1..)]),
+or([j#int_direct_1;int(1..)])
 new SAT encoding decisions:
   at-most-one(j#int_direct_1) using None
 
@@ -81,95 +81,59 @@ SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1])
 
 --
 
-SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]) = 1
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]) = SATInt(Direct, [true;int(1..)] [1, 1])
-
---
-
-SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]) = 1
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]) = SATInt(Direct, [true;int(1..)] [1, 1])
-
---
-
-SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]) = SATInt(Direct, [true;int(1..)] [1, 1])
-   ~~> eq_sat_direct ([("SAT", 9100)])
-__1
+sum([SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]),SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]);int(1..)])
+   ~~> add_sat_direct ([("SAT", 9100)])
+SATInt(Direct, [__1;int(1..)] [2, 2])
 new variables:
   findAux __0: bool
   findAux __1: bool
 new SAT encoding decisions:
-  define(__0 <-> (j#int_direct_1) <-> (true)) using tseitin
-  define(__1 <-> and([__0,true;int(1..)])) using tseitin
+  define(__0 <-> and([i#int_direct_1,j#int_direct_1;int(1..)])) using tseitin
+  define(__1 <-> or([false,__0;int(1..)])) using tseitin
 
 --
 
-SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]) = SATInt(Direct, [true;int(1..)] [1, 1])
-   ~~> eq_sat_direct ([("SAT", 9100)])
-__3
-new variables:
-  findAux __2: bool
-  findAux __3: bool
-new SAT encoding decisions:
-  define(__2 <-> (i#int_direct_1) <-> (true)) using tseitin
-  define(__3 <-> and([__2,true;int(1..)])) using tseitin
-
---
-
-sum([SATInt(Direct, [i#int_direct_1;int(1..)] [1, 1]),SATInt(Direct, [j#int_direct_1;int(1..)] [1, 1]);int(1..)])
-   ~~> add_sat_direct ([("SAT", 9100)])
-SATInt(Direct, [__5;int(1..)] [2, 2])
-new variables:
-  findAux __4: bool
-  findAux __5: bool
-new SAT encoding decisions:
-  define(__4 <-> and([i#int_direct_1,j#int_direct_1;int(1..)])) using tseitin
-  define(__5 <-> or([false,__4;int(1..)])) using tseitin
-
---
-
-or([__3;int(1..)])
+or([i#int_direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-__3
+i#int_direct_1
 
 --
 
-or([__1;int(1..)])
+or([j#int_direct_1;int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-__1
+j#int_direct_1
 
 --
 
-!(m[SATInt(Direct, [__5;int(1..)] [2, 2])]),
-__3,
-__1
+!(m[SATInt(Direct, [__1;int(1..)] [2, 2])]),
+i#int_direct_1,
+j#int_direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
-!(m[SATInt(Direct, [__5;int(1..)] [2, 2])]),
-__1
+!(m[SATInt(Direct, [__1;int(1..)] [2, 2])]),
+j#int_direct_1
 new SAT encoding decisions:
-  assert(__3) using tseitin
+  assert(i#int_direct_1) using tseitin
 
 --
 
-!(m[SATInt(Direct, [__5;int(1..)] [2, 2])]),
-__1
+!(m[SATInt(Direct, [__1;int(1..)] [2, 2])]),
+j#int_direct_1
    ~~> remove_single_atom ([("SAT", 8400)])
-!(m[SATInt(Direct, [__5;int(1..)] [2, 2])])
+!(m[SATInt(Direct, [__1;int(1..)] [2, 2])])
 new SAT encoding decisions:
-  assert(__1) using tseitin
+  assert(j#int_direct_1) using tseitin
 
 --
 
-m[SATInt(Direct, [__5;int(1..)] [2, 2])]
+m[SATInt(Direct, [__1;int(1..)] [2, 2])]
    ~~> index_to_bubble ([("Bubble", 6000)])
-{SafeIndex(m,[SATInt(Direct, [__5;int(1..)] [2, 2])]) @ false}
+{SafeIndex(m,[SATInt(Direct, [__1;int(1..)] [2, 2])]) @ false}
 
 --
 
-{SafeIndex(m,[SATInt(Direct, [__5;int(1..)] [2, 2])]) @ false}
+{SafeIndex(m,[SATInt(Direct, [__1;int(1..)] [2, 2])]) @ false}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(m,[SATInt(Direct, [__5;int(1..)] [2, 2])]),false;int(1..)])
+and([SafeIndex(m,[SATInt(Direct, [__1;int(1..)] [2, 2])]),false;int(1..)])
 
 --
 
@@ -184,10 +148,6 @@ find i#int_direct_1: bool
 find j#int_direct_1: bool
 findAux __0: bool
 findAux __1: bool
-findAux __2: bool
-findAux __3: bool
-findAux __4: bool
-findAux __5: bool
 
 such that
 
@@ -197,12 +157,8 @@ sat encoding decisions:
 
 at-most-one(i#int_direct_1) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
 at-most-one(j#int_direct_1) using Some(EncodingSelection { algorithm: Bitwise, provenance: Heuristic }),
-define(__0 <-> (j#int_direct_1) <-> (true)) using tseitin,
-define(__1 <-> and([__0,true;int(1..)])) using tseitin,
-define(__2 <-> (i#int_direct_1) <-> (true)) using tseitin,
-define(__3 <-> and([__2,true;int(1..)])) using tseitin,
-define(__4 <-> and([i#int_direct_1,j#int_direct_1;int(1..)])) using tseitin,
-define(__5 <-> or([false,__4;int(1..)])) using tseitin,
-assert(__3) using tseitin,
-assert(__1) using tseitin
+define(__0 <-> and([i#int_direct_1,j#int_direct_1;int(1..)])) using tseitin,
+define(__1 <-> or([false,__0;int(1..)])) using tseitin,
+assert(i#int_direct_1) using tseitin,
+assert(j#int_direct_1) using tseitin
 

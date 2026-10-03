@@ -1,0 +1,712 @@
+Model before rewriting:
+
+find x: int(5..20)
+find y: int(0..5)
+find z: int(0..6)
+
+such that
+
+(x / (y / z)) = 10
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_direct_1: bool
+  find x#int_direct_10: bool
+  find x#int_direct_11: bool
+  find x#int_direct_12: bool
+  find x#int_direct_13: bool
+  find x#int_direct_14: bool
+  find x#int_direct_15: bool
+  find x#int_direct_16: bool
+  find x#int_direct_2: bool
+  find x#int_direct_3: bool
+  find x#int_direct_4: bool
+  find x#int_direct_5: bool
+  find x#int_direct_6: bool
+  find x#int_direct_7: bool
+  find x#int_direct_8: bool
+  find x#int_direct_9: bool
+new constraints:
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7),toInt(x#int_direct_8),toInt(x#int_direct_9),toInt(x#int_direct_10),toInt(x#int_direct_11),toInt(x#int_direct_12),toInt(x#int_direct_13),toInt(x#int_direct_14),toInt(x#int_direct_15),toInt(x#int_direct_16);int(1..)]) <= 1
+  or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)])
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_direct_1: bool
+  find y#int_direct_2: bool
+  find y#int_direct_3: bool
+  find y#int_direct_4: bool
+  find y#int_direct_5: bool
+  find y#int_direct_6: bool
+new constraints:
+  sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1
+  or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)])
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#int_direct_1: bool
+  find z#int_direct_2: bool
+  find z#int_direct_3: bool
+  find z#int_direct_4: bool
+  find z#int_direct_5: bool
+  find z#int_direct_6: bool
+  find z#int_direct_7: bool
+new constraints:
+  sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6),toInt(z#int_direct_7);int(1..)]) <= 1
+  or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])
+
+--
+
+(x / (y / z)) = 10,
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3),toInt(x#int_direct_4),toInt(x#int_direct_5),toInt(x#int_direct_6),toInt(x#int_direct_7),toInt(x#int_direct_8),toInt(x#int_direct_9),toInt(x#int_direct_10),toInt(x#int_direct_11),toInt(x#int_direct_12),toInt(x#int_direct_13),toInt(x#int_direct_14),toInt(x#int_direct_15),toInt(x#int_direct_16);int(1..)]) <= 1,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)]),
+sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6),toInt(z#int_direct_7);int(1..)]) <= 1,
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(x / (y / z)) = 10,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)]),
+sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6),toInt(z#int_direct_7);int(1..)]) <= 1,
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6, x#int_direct_7, x#int_direct_8, x#int_direct_9, x#int_direct_10, x#int_direct_11, x#int_direct_12, x#int_direct_13, x#int_direct_14, x#int_direct_15, x#int_direct_16) using None
+
+--
+
+(x / (y / z)) = 10,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3),toInt(y#int_direct_4),toInt(y#int_direct_5),toInt(y#int_direct_6);int(1..)]) <= 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)]),
+sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6),toInt(z#int_direct_7);int(1..)]) <= 1,
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(x / (y / z)) = 10,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)]),
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)]),
+sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6),toInt(z#int_direct_7);int(1..)]) <= 1,
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4, y#int_direct_5, y#int_direct_6) using None
+
+--
+
+(x / (y / z)) = 10,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)]),
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)]),
+sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3),toInt(z#int_direct_4),toInt(z#int_direct_5),toInt(z#int_direct_6),toInt(z#int_direct_7);int(1..)]) <= 1,
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(x / (y / z)) = 10,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)]),
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)]),
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])
+new SAT encoding decisions:
+  at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3, z#int_direct_4, z#int_direct_5, z#int_direct_6, z#int_direct_7) using None
+
+--
+
+x
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20])
+
+--
+
+y
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5])
+
+--
+
+z
+   ~~> integer_decision_representation_direct ([("SAT", 9500)])
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6])
+
+--
+
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)])) using tseitin
+
+--
+
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)])) using tseitin
+
+--
+
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])) using tseitin
+
+--
+
+(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / (SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]) / SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]))) = 10,
+__0,
+__1,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / (SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]) / SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]))) = 10,
+__1,
+__2
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / (SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]) / SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]))) = 10,
+__1,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / (SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]) / SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]))) = 10,
+__2
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / (SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]) / SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]))) = 10,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / (SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]) / SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]))) = 10
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+(SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]) / SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]))
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]), SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6])) @ SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]) != 0}
+
+--
+
+SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]) != 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(0*z#int_direct_1, 1*z#int_direct_2, 2*z#int_direct_3, 3*z#int_direct_4, 4*z#int_direct_5, 5*z#int_direct_6, 6*z#int_direct_7) NotEqual 0) using None with [PbTermGroup { start: 0, end: 7, structure: Choice }]
+
+--
+
+SafeDiv(SATInt(Direct, [y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)] [0, 5]), SATInt(Direct, [z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)] [0, 6]))
+   ~~> safediv_sat_direct ([("SAT", 9100)])
+SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5])
+new variables:
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+new SAT encoding decisions:
+  assert((and([y#int_direct_1,z#int_direct_1;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_1,z#int_direct_2;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_1,z#int_direct_3;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_1,z#int_direct_4;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_1,z#int_direct_5;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_1,z#int_direct_6;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_1,z#int_direct_7;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_2,z#int_direct_1;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_2,z#int_direct_2;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_2,z#int_direct_3;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_2,z#int_direct_4;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_2,z#int_direct_5;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_2,z#int_direct_6;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_2,z#int_direct_7;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_3,z#int_direct_1;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_3,z#int_direct_2;int(1..)])) -> (__6)) using tseitin
+  assert((and([y#int_direct_3,z#int_direct_3;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_3,z#int_direct_4;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_3,z#int_direct_5;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_3,z#int_direct_6;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_3,z#int_direct_7;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_4,z#int_direct_1;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_4,z#int_direct_2;int(1..)])) -> (__7)) using tseitin
+  assert((and([y#int_direct_4,z#int_direct_3;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_4,z#int_direct_4;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_4,z#int_direct_5;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_4,z#int_direct_6;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_4,z#int_direct_7;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_5,z#int_direct_1;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_5,z#int_direct_2;int(1..)])) -> (__8)) using tseitin
+  assert((and([y#int_direct_5,z#int_direct_3;int(1..)])) -> (__6)) using tseitin
+  assert((and([y#int_direct_5,z#int_direct_4;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_5,z#int_direct_5;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_5,z#int_direct_6;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_5,z#int_direct_7;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_6,z#int_direct_1;int(1..)])) -> (__4)) using tseitin
+  assert((and([y#int_direct_6,z#int_direct_2;int(1..)])) -> (__9)) using tseitin
+  assert((and([y#int_direct_6,z#int_direct_3;int(1..)])) -> (__6)) using tseitin
+  assert((and([y#int_direct_6,z#int_direct_4;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_6,z#int_direct_5;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_6,z#int_direct_6;int(1..)])) -> (__5)) using tseitin
+  assert((and([y#int_direct_6,z#int_direct_7;int(1..)])) -> (__4)) using tseitin
+  at-most-one(__4, __5, __6, __7, __8, __9) using None
+
+--
+
+(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / {SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5]) @ __3})
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5])) @ __3}
+
+--
+
+{(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5])) @ __3} = 10
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5])) = 10 @ __3}
+
+--
+
+{(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5])) = 10 @ __3}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5])) = 10,__3;int(1..)])
+
+--
+
+(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]) / SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5]))
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]), SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5])) @ SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5]) != 0}
+
+--
+
+SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5]) != 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(0*__4, 1*__5, 2*__6, 3*__7, 4*__8, 5*__9) NotEqual 0) using None with [PbTermGroup { start: 0, end: 6, structure: Choice }]
+
+--
+
+SafeDiv(SATInt(Direct, [x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)] [5, 20]), SATInt(Direct, [__4,__5,__6,__7,__8,__9;int(1..)] [0, 5]))
+   ~~> safediv_sat_direct ([("SAT", 9100)])
+SATInt(Direct, [__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30,__31;int(1..)] [0, 20])
+new variables:
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+  findAux __14: bool
+  findAux __15: bool
+  findAux __16: bool
+  findAux __17: bool
+  findAux __18: bool
+  findAux __19: bool
+  findAux __20: bool
+  findAux __21: bool
+  findAux __22: bool
+  findAux __23: bool
+  findAux __24: bool
+  findAux __25: bool
+  findAux __26: bool
+  findAux __27: bool
+  findAux __28: bool
+  findAux __29: bool
+  findAux __30: bool
+  findAux __31: bool
+new SAT encoding decisions:
+  assert((and([x#int_direct_1,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_1,__5;int(1..)])) -> (__16)) using tseitin
+  assert((and([x#int_direct_1,__6;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_1,__7;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_1,__8;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_1,__9;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_2,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_2,__5;int(1..)])) -> (__17)) using tseitin
+  assert((and([x#int_direct_2,__6;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_2,__7;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_2,__8;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_2,__9;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_3,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_3,__5;int(1..)])) -> (__18)) using tseitin
+  assert((and([x#int_direct_3,__6;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_3,__7;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_3,__8;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_3,__9;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_4,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_4,__5;int(1..)])) -> (__19)) using tseitin
+  assert((and([x#int_direct_4,__6;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_4,__7;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_4,__8;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_4,__9;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_5,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_5,__5;int(1..)])) -> (__20)) using tseitin
+  assert((and([x#int_direct_5,__6;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_5,__7;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_5,__8;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_5,__9;int(1..)])) -> (__12)) using tseitin
+  assert((and([x#int_direct_6,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_6,__5;int(1..)])) -> (__21)) using tseitin
+  assert((and([x#int_direct_6,__6;int(1..)])) -> (__16)) using tseitin
+  assert((and([x#int_direct_6,__7;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_6,__8;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_6,__9;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_7,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_7,__5;int(1..)])) -> (__22)) using tseitin
+  assert((and([x#int_direct_7,__6;int(1..)])) -> (__16)) using tseitin
+  assert((and([x#int_direct_7,__7;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_7,__8;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_7,__9;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_8,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_8,__5;int(1..)])) -> (__23)) using tseitin
+  assert((and([x#int_direct_8,__6;int(1..)])) -> (__17)) using tseitin
+  assert((and([x#int_direct_8,__7;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_8,__8;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_8,__9;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_9,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_9,__5;int(1..)])) -> (__24)) using tseitin
+  assert((and([x#int_direct_9,__6;int(1..)])) -> (__17)) using tseitin
+  assert((and([x#int_direct_9,__7;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_9,__8;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_9,__9;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_10,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_10,__5;int(1..)])) -> (__25)) using tseitin
+  assert((and([x#int_direct_10,__6;int(1..)])) -> (__18)) using tseitin
+  assert((and([x#int_direct_10,__7;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_10,__8;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_10,__9;int(1..)])) -> (__13)) using tseitin
+  assert((and([x#int_direct_11,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_11,__5;int(1..)])) -> (__26)) using tseitin
+  assert((and([x#int_direct_11,__6;int(1..)])) -> (__18)) using tseitin
+  assert((and([x#int_direct_11,__7;int(1..)])) -> (__16)) using tseitin
+  assert((and([x#int_direct_11,__8;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_11,__9;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_12,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_12,__5;int(1..)])) -> (__27)) using tseitin
+  assert((and([x#int_direct_12,__6;int(1..)])) -> (__19)) using tseitin
+  assert((and([x#int_direct_12,__7;int(1..)])) -> (__16)) using tseitin
+  assert((and([x#int_direct_12,__8;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_12,__9;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_13,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_13,__5;int(1..)])) -> (__28)) using tseitin
+  assert((and([x#int_direct_13,__6;int(1..)])) -> (__19)) using tseitin
+  assert((and([x#int_direct_13,__7;int(1..)])) -> (__16)) using tseitin
+  assert((and([x#int_direct_13,__8;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_13,__9;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_14,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_14,__5;int(1..)])) -> (__29)) using tseitin
+  assert((and([x#int_direct_14,__6;int(1..)])) -> (__20)) using tseitin
+  assert((and([x#int_direct_14,__7;int(1..)])) -> (__17)) using tseitin
+  assert((and([x#int_direct_14,__8;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_14,__9;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_15,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_15,__5;int(1..)])) -> (__30)) using tseitin
+  assert((and([x#int_direct_15,__6;int(1..)])) -> (__20)) using tseitin
+  assert((and([x#int_direct_15,__7;int(1..)])) -> (__17)) using tseitin
+  assert((and([x#int_direct_15,__8;int(1..)])) -> (__15)) using tseitin
+  assert((and([x#int_direct_15,__9;int(1..)])) -> (__14)) using tseitin
+  assert((and([x#int_direct_16,__4;int(1..)])) -> (__11)) using tseitin
+  assert((and([x#int_direct_16,__5;int(1..)])) -> (__31)) using tseitin
+  assert((and([x#int_direct_16,__6;int(1..)])) -> (__21)) using tseitin
+  assert((and([x#int_direct_16,__7;int(1..)])) -> (__17)) using tseitin
+  assert((and([x#int_direct_16,__8;int(1..)])) -> (__16)) using tseitin
+  assert((and([x#int_direct_16,__9;int(1..)])) -> (__15)) using tseitin
+  at-most-one(__11, __12, __13, __14, __15, __16, __17, __18, __19, __20, __21, __22, __23, __24, __25, __26, __27, __28, __29, __30, __31) using None
+
+--
+
+{SATInt(Direct, [__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30,__31;int(1..)] [0, 20]) @ __10} = 10
+   ~~> bubble_up ([("Bubble", 8800)])
+{SATInt(Direct, [__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30,__31;int(1..)] [0, 20]) = 10 @ __10}
+
+--
+
+SATInt(Direct, [__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26,__27,__28,__29,__30,__31;int(1..)] [0, 20]) = 10
+   ~~> select_integer_relation ([("SAT", 18500)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> integer-weighted(0*__11, 1*__12, 2*__13, 3*__14, 4*__15, 5*__16, 6*__17, 7*__18, 8*__19, 9*__20, 10*__21, 11*__22, 12*__23, 13*__24, 14*__25, 15*__26, 16*__27, 17*__28, 18*__29, 19*__30, 20*__31) Equal 10) using None with [PbTermGroup { start: 0, end: 21, structure: Choice }]
+
+--
+
+{__32 @ __10}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([__32,__10;int(1..)])
+
+--
+
+and([and([__32,__10;int(1..)]),__3;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([__32,__10,__3;int(1..)])
+
+--
+
+and([__32,__10,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> and([__32,__10,__3;int(1..)])) using tseitin
+
+--
+
+__33
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__33) using tseitin
+
+--
+
+Final model:
+
+find x: int(5..20)
+find y: int(0..5)
+find z: int(0..6)
+find x#int_direct_1: bool
+find x#int_direct_2: bool
+find x#int_direct_3: bool
+find x#int_direct_4: bool
+find x#int_direct_5: bool
+find x#int_direct_6: bool
+find x#int_direct_7: bool
+find x#int_direct_8: bool
+find x#int_direct_9: bool
+find x#int_direct_10: bool
+find x#int_direct_11: bool
+find x#int_direct_12: bool
+find x#int_direct_13: bool
+find x#int_direct_14: bool
+find x#int_direct_15: bool
+find x#int_direct_16: bool
+find y#int_direct_1: bool
+find y#int_direct_2: bool
+find y#int_direct_3: bool
+find y#int_direct_4: bool
+find y#int_direct_5: bool
+find y#int_direct_6: bool
+find z#int_direct_1: bool
+find z#int_direct_2: bool
+find z#int_direct_3: bool
+find z#int_direct_4: bool
+find z#int_direct_5: bool
+find z#int_direct_6: bool
+find z#int_direct_7: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3, x#int_direct_4, x#int_direct_5, x#int_direct_6, x#int_direct_7, x#int_direct_8, x#int_direct_9, x#int_direct_10, x#int_direct_11, x#int_direct_12, x#int_direct_13, x#int_direct_14, x#int_direct_15, x#int_direct_16) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3, y#int_direct_4, y#int_direct_5, y#int_direct_6) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3, z#int_direct_4, z#int_direct_5, z#int_direct_6, z#int_direct_7) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__0 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3,x#int_direct_4,x#int_direct_5,x#int_direct_6,x#int_direct_7,x#int_direct_8,x#int_direct_9,x#int_direct_10,x#int_direct_11,x#int_direct_12,x#int_direct_13,x#int_direct_14,x#int_direct_15,x#int_direct_16;int(1..)])) using tseitin,
+define(__1 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3,y#int_direct_4,y#int_direct_5,y#int_direct_6;int(1..)])) using tseitin,
+define(__2 <-> or([z#int_direct_1,z#int_direct_2,z#int_direct_3,z#int_direct_4,z#int_direct_5,z#int_direct_6,z#int_direct_7;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin,
+assert(__2) using tseitin,
+define(__3 <-> integer-weighted(0*z#int_direct_1, 1*z#int_direct_2, 2*z#int_direct_3, 3*z#int_direct_4, 4*z#int_direct_5, 5*z#int_direct_6, 6*z#int_direct_7) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 7, structure: Choice }],
+assert((and([y#int_direct_1,z#int_direct_1;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_1,z#int_direct_2;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_1,z#int_direct_3;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_1,z#int_direct_4;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_1,z#int_direct_5;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_1,z#int_direct_6;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_1,z#int_direct_7;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_2,z#int_direct_1;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_2,z#int_direct_2;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_2,z#int_direct_3;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_2,z#int_direct_4;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_2,z#int_direct_5;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_2,z#int_direct_6;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_2,z#int_direct_7;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_3,z#int_direct_1;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_3,z#int_direct_2;int(1..)])) -> (__6)) using tseitin,
+assert((and([y#int_direct_3,z#int_direct_3;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_3,z#int_direct_4;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_3,z#int_direct_5;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_3,z#int_direct_6;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_3,z#int_direct_7;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_4,z#int_direct_1;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_4,z#int_direct_2;int(1..)])) -> (__7)) using tseitin,
+assert((and([y#int_direct_4,z#int_direct_3;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_4,z#int_direct_4;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_4,z#int_direct_5;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_4,z#int_direct_6;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_4,z#int_direct_7;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_5,z#int_direct_1;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_5,z#int_direct_2;int(1..)])) -> (__8)) using tseitin,
+assert((and([y#int_direct_5,z#int_direct_3;int(1..)])) -> (__6)) using tseitin,
+assert((and([y#int_direct_5,z#int_direct_4;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_5,z#int_direct_5;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_5,z#int_direct_6;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_5,z#int_direct_7;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_6,z#int_direct_1;int(1..)])) -> (__4)) using tseitin,
+assert((and([y#int_direct_6,z#int_direct_2;int(1..)])) -> (__9)) using tseitin,
+assert((and([y#int_direct_6,z#int_direct_3;int(1..)])) -> (__6)) using tseitin,
+assert((and([y#int_direct_6,z#int_direct_4;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_6,z#int_direct_5;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_6,z#int_direct_6;int(1..)])) -> (__5)) using tseitin,
+assert((and([y#int_direct_6,z#int_direct_7;int(1..)])) -> (__4)) using tseitin,
+at-most-one(__4, __5, __6, __7, __8, __9) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__10 <-> integer-weighted(0*__4, 1*__5, 2*__6, 3*__7, 4*__8, 5*__9) NotEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Choice }],
+assert((and([x#int_direct_1,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_1,__5;int(1..)])) -> (__16)) using tseitin,
+assert((and([x#int_direct_1,__6;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_1,__7;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_1,__8;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_1,__9;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_2,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_2,__5;int(1..)])) -> (__17)) using tseitin,
+assert((and([x#int_direct_2,__6;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_2,__7;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_2,__8;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_2,__9;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_3,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_3,__5;int(1..)])) -> (__18)) using tseitin,
+assert((and([x#int_direct_3,__6;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_3,__7;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_3,__8;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_3,__9;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_4,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_4,__5;int(1..)])) -> (__19)) using tseitin,
+assert((and([x#int_direct_4,__6;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_4,__7;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_4,__8;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_4,__9;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_5,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_5,__5;int(1..)])) -> (__20)) using tseitin,
+assert((and([x#int_direct_5,__6;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_5,__7;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_5,__8;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_5,__9;int(1..)])) -> (__12)) using tseitin,
+assert((and([x#int_direct_6,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_6,__5;int(1..)])) -> (__21)) using tseitin,
+assert((and([x#int_direct_6,__6;int(1..)])) -> (__16)) using tseitin,
+assert((and([x#int_direct_6,__7;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_6,__8;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_6,__9;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_7,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_7,__5;int(1..)])) -> (__22)) using tseitin,
+assert((and([x#int_direct_7,__6;int(1..)])) -> (__16)) using tseitin,
+assert((and([x#int_direct_7,__7;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_7,__8;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_7,__9;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_8,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_8,__5;int(1..)])) -> (__23)) using tseitin,
+assert((and([x#int_direct_8,__6;int(1..)])) -> (__17)) using tseitin,
+assert((and([x#int_direct_8,__7;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_8,__8;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_8,__9;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_9,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_9,__5;int(1..)])) -> (__24)) using tseitin,
+assert((and([x#int_direct_9,__6;int(1..)])) -> (__17)) using tseitin,
+assert((and([x#int_direct_9,__7;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_9,__8;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_9,__9;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_10,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_10,__5;int(1..)])) -> (__25)) using tseitin,
+assert((and([x#int_direct_10,__6;int(1..)])) -> (__18)) using tseitin,
+assert((and([x#int_direct_10,__7;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_10,__8;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_10,__9;int(1..)])) -> (__13)) using tseitin,
+assert((and([x#int_direct_11,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_11,__5;int(1..)])) -> (__26)) using tseitin,
+assert((and([x#int_direct_11,__6;int(1..)])) -> (__18)) using tseitin,
+assert((and([x#int_direct_11,__7;int(1..)])) -> (__16)) using tseitin,
+assert((and([x#int_direct_11,__8;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_11,__9;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_12,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_12,__5;int(1..)])) -> (__27)) using tseitin,
+assert((and([x#int_direct_12,__6;int(1..)])) -> (__19)) using tseitin,
+assert((and([x#int_direct_12,__7;int(1..)])) -> (__16)) using tseitin,
+assert((and([x#int_direct_12,__8;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_12,__9;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_13,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_13,__5;int(1..)])) -> (__28)) using tseitin,
+assert((and([x#int_direct_13,__6;int(1..)])) -> (__19)) using tseitin,
+assert((and([x#int_direct_13,__7;int(1..)])) -> (__16)) using tseitin,
+assert((and([x#int_direct_13,__8;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_13,__9;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_14,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_14,__5;int(1..)])) -> (__29)) using tseitin,
+assert((and([x#int_direct_14,__6;int(1..)])) -> (__20)) using tseitin,
+assert((and([x#int_direct_14,__7;int(1..)])) -> (__17)) using tseitin,
+assert((and([x#int_direct_14,__8;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_14,__9;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_15,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_15,__5;int(1..)])) -> (__30)) using tseitin,
+assert((and([x#int_direct_15,__6;int(1..)])) -> (__20)) using tseitin,
+assert((and([x#int_direct_15,__7;int(1..)])) -> (__17)) using tseitin,
+assert((and([x#int_direct_15,__8;int(1..)])) -> (__15)) using tseitin,
+assert((and([x#int_direct_15,__9;int(1..)])) -> (__14)) using tseitin,
+assert((and([x#int_direct_16,__4;int(1..)])) -> (__11)) using tseitin,
+assert((and([x#int_direct_16,__5;int(1..)])) -> (__31)) using tseitin,
+assert((and([x#int_direct_16,__6;int(1..)])) -> (__21)) using tseitin,
+assert((and([x#int_direct_16,__7;int(1..)])) -> (__17)) using tseitin,
+assert((and([x#int_direct_16,__8;int(1..)])) -> (__16)) using tseitin,
+assert((and([x#int_direct_16,__9;int(1..)])) -> (__15)) using tseitin,
+at-most-one(__11, __12, __13, __14, __15, __16, __17, __18, __19, __20, __21, __22, __23, __24, __25, __26, __27, __28, __29, __30, __31) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__32 <-> integer-weighted(0*__11, 1*__12, 2*__13, 3*__14, 4*__15, 5*__16, 6*__17, 7*__18, 8*__19, 9*__20, 10*__21, 11*__22, 12*__23, 13*__24, 14*__25, 15*__26, 16*__27, 17*__28, 18*__29, 19*__30, 20*__31) Equal 10) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 21, structure: Choice }],
+define(__33 <-> and([__32,__10,__3;int(1..)])) using tseitin,
+assert(__33) using tseitin
+

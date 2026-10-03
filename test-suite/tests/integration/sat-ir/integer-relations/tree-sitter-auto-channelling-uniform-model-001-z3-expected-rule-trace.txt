@@ -1,0 +1,260 @@
+Model before rewriting:
+
+find x: int(-2, 0, 3)
+find y: int(-1..0, 2)
+find eq: bool
+find ge: bool
+find gt: bool
+find le: bool
+find lt: bool
+find neq: bool
+find weighted: bool
+
+such that
+
+(eq) <-> (x = y),
+(neq) <-> (x != y),
+(lt) <-> (x < y),
+(le) <-> (x <= y),
+(gt) <-> (x > y),
+(ge) <-> (x >= y),
+(weighted) <-> ((product([2,x;int(1..)]) - y) <= 3),
+(eq) -> (x <= y),
+!(and([lt,gt;int(1..)]))
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#lia_1: int(-2, 0, 3)
+
+--
+
+x = y
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x = y
+new variables:
+  find y#lia_1: int(-1..0, 2)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+y
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+y#lia_1
+
+--
+
+x
+   ~~> smt_int_lia_variable ([("Smt", 9500)])
+x#lia_1
+
+--
+
+!(and([lt,gt;int(1..)]))
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(lt),!(gt);int(1..)])
+
+--
+
+(product([2,x#lia_1;int(1..)]) - y#lia_1)
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([product([2,x#lia_1;int(1..)]),-(y#lia_1);int(1..)])
+
+--
+
+Final model:
+
+find x: int(-2, 0, 3)
+find y: int(-1..0, 2)
+find eq: bool
+find ge: bool
+find gt: bool
+find le: bool
+find lt: bool
+find neq: bool
+find weighted: bool
+find x#lia_1: int(-2, 0, 3)
+find y#lia_1: int(-1..0, 2)
+
+such that
+
+(eq) <-> (x#lia_1 = y#lia_1),
+(neq) <-> (x#lia_1 != y#lia_1),
+(lt) <-> (x#lia_1 < y#lia_1),
+(le) <-> (x#lia_1 <= y#lia_1),
+(gt) <-> (x#lia_1 > y#lia_1),
+(ge) <-> (x#lia_1 >= y#lia_1),
+(weighted) <-> (sum([product([2,x#lia_1;int(1..)]),-(y#lia_1);int(1..)]) <= 3),
+(eq) -> (x#lia_1 <= y#lia_1),
+or([!(lt),!(gt);int(1..)])
+

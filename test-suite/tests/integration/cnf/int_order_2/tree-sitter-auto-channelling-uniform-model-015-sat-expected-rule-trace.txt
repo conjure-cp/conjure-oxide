@@ -1,0 +1,98 @@
+Model before rewriting:
+
+find a: int(0..5)
+
+such that
+
+a = 2
+
+--
+
+a
+   ~~> select_representation ([("ReprGeneral", 10000)])
+a
+new variables:
+  find a#int_direct_1: bool
+  find a#int_direct_2: bool
+  find a#int_direct_3: bool
+  find a#int_direct_4: bool
+  find a#int_direct_5: bool
+  find a#int_direct_6: bool
+new constraints:
+  sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3),toInt(a#int_direct_4),toInt(a#int_direct_5),toInt(a#int_direct_6);int(1..)]) <= 1
+  or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6;int(1..)])
+
+--
+
+a = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(0*a#int_direct_1, 1*a#int_direct_2, 2*a#int_direct_3, 3*a#int_direct_4, 4*a#int_direct_5, 5*a#int_direct_6) Equal 2) using None with [PbTermGroup { start: 0, end: 6, structure: Choice }]
+
+--
+
+__0,
+sum([toInt(a#int_direct_1),toInt(a#int_direct_2),toInt(a#int_direct_3),toInt(a#int_direct_4),toInt(a#int_direct_5),toInt(a#int_direct_6);int(1..)]) <= 1,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+__0,
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6;int(1..)])
+new SAT encoding decisions:
+  at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3, a#int_direct_4, a#int_direct_5, a#int_direct_6) using None
+
+--
+
+or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6;int(1..)])) using tseitin
+
+--
+
+__0,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+Final model:
+
+find a: int(0..5)
+find a#int_direct_1: bool
+find a#int_direct_2: bool
+find a#int_direct_3: bool
+find a#int_direct_4: bool
+find a#int_direct_5: bool
+find a#int_direct_6: bool
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(0*a#int_direct_1, 1*a#int_direct_2, 2*a#int_direct_3, 3*a#int_direct_4, 4*a#int_direct_5, 5*a#int_direct_6) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: Choice }],
+at-most-one(a#int_direct_1, a#int_direct_2, a#int_direct_3, a#int_direct_4, a#int_direct_5, a#int_direct_6) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__1 <-> or([a#int_direct_1,a#int_direct_2,a#int_direct_3,a#int_direct_4,a#int_direct_5,a#int_direct_6;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin
+

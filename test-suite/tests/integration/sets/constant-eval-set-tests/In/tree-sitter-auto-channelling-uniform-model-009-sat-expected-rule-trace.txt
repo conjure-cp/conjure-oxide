@@ -13,10 +13,57 @@ true
    ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
 true
 new variables:
-  find a#int_rank_1: bool
-  find a#int_rank_2: bool
+  find a#int_log_1: bool
+  find a#int_log_2: bool
+  find a#int_log_3: bool
+  find a#int_log_4: bool
 new constraints:
-  or([!(a#int_rank_2),or([!(a#int_rank_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4;int(1..)] [1, 4]) >= 1,SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4;int(1..)] [1, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4;int(1..)] [1, 4]) >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, 4*a#int_log_3, -8*a#int_log_4) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 4 } }]
+
+--
+
+SATInt(Log, [a#int_log_1,a#int_log_2,a#int_log_3,a#int_log_4;int(1..)] [1, 4]) <= 4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, 4*a#int_log_3, -8*a#int_log_4) LessEqual 4) using None with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 4 } }]
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+true,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__2) using tseitin
 
 --
 
@@ -24,11 +71,22 @@ Final model:
 
 find a: int(1..4)
 letting b be {1,2,3}
-find a#int_rank_1: bool
-find a#int_rank_2: bool
+find a#int_log_1: bool
+find a#int_log_2: bool
+find a#int_log_3: bool
+find a#int_log_4: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
 
 such that
 
-true,
 true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, 4*a#int_log_3, -8*a#int_log_4) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 4 } }],
+define(__1 <-> integer-weighted(1*a#int_log_1, 2*a#int_log_2, 4*a#int_log_3, -8*a#int_log_4) LessEqual 4) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 4, structure: BoundedBinary { lower: 1, upper: 4 } }],
+define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__2) using tseitin
 

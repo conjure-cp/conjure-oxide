@@ -1,0 +1,123 @@
+Model before rewriting:
+
+letting a be [[1,2,3;int(1..2, 4)],[1,3,2;int(1..2, 4)],[3,2,1;int(1..2, 4)];int(-2..0)]
+find b: int(1..5)
+
+such that
+
+b < a[-2, 2],
+allDifferent(a[-2,..])
+
+--
+
+b
+   ~~> select_representation ([("ReprGeneral", 10000)])
+b
+new variables:
+  find b#int_direct_1: bool
+  find b#int_direct_2: bool
+  find b#int_direct_3: bool
+  find b#int_direct_4: bool
+  find b#int_direct_5: bool
+new constraints:
+  sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3),toInt(b#int_direct_4),toInt(b#int_direct_5);int(1..)]) <= 1
+  or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+
+--
+
+b < 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*b#int_direct_1, 2*b#int_direct_2, 3*b#int_direct_3, 4*b#int_direct_4, 5*b#int_direct_5) Less 2) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
+
+--
+
+__0,
+true,
+sum([toInt(b#int_direct_1),toInt(b#int_direct_2),toInt(b#int_direct_3),toInt(b#int_direct_4),toInt(b#int_direct_5);int(1..)]) <= 1,
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+__0,
+true,
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+new SAT encoding decisions:
+  at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3, b#int_direct_4, b#int_direct_5) using None
+
+--
+
+__0,
+true,
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+   ~~> select_matrix_components ([("ReprMatrixComponents", 8500)])
+__0,
+true,
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+
+--
+
+or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])) using tseitin
+
+--
+
+__0,
+true,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+__1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+true,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+Final model:
+
+letting a be [[1,2,3;int(1..2, 4)],[1,3,2;int(1..2, 4)],[3,2,1;int(1..2, 4)];int(-2..0)]
+find b: int(1..5)
+find b#int_direct_1: bool
+find b#int_direct_2: bool
+find b#int_direct_3: bool
+find b#int_direct_4: bool
+find b#int_direct_5: bool
+findAux __0: bool
+letting a#components_1 be 1
+letting a#components_2 be 2
+letting a#components_3 be 3
+letting a#components_4 be 1
+letting a#components_5 be 3
+letting a#components_6 be 2
+letting a#components_7 be 3
+letting a#components_8 be 2
+letting a#components_9 be 1
+findAux __1: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*b#int_direct_1, 2*b#int_direct_2, 3*b#int_direct_3, 4*b#int_direct_4, 5*b#int_direct_5) Less 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
+at-most-one(b#int_direct_1, b#int_direct_2, b#int_direct_3, b#int_direct_4, b#int_direct_5) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__1 <-> or([b#int_direct_1,b#int_direct_2,b#int_direct_3,b#int_direct_4,b#int_direct_5;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin
+

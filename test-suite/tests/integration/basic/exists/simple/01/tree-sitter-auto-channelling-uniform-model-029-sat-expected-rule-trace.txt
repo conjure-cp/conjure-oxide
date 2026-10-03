@@ -1,0 +1,147 @@
+Model before rewriting:
+
+find x: int(1)
+
+such that
+
+or([ x = i | i : int(1..3) ])
+
+--
+
+or([ x = i | i : int(1..3) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+or([ x = i | i : int(1..3) ])
+new variables:
+  find x#int_direct_1: bool
+new constraints:
+  sum([toInt(x#int_direct_1);int(1..)]) <= 1
+  or([x#int_direct_1;int(1..)])
+
+--
+
+or([ x = i | i : int(1..3) ]),
+sum([toInt(x#int_direct_1);int(1..)]) <= 1,
+or([x#int_direct_1;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+or([ x = i | i : int(1..3) ]),
+or([x#int_direct_1;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#int_direct_1) using None
+
+--
+
+or([x#int_direct_1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+x#int_direct_1
+
+--
+
+or([ x = i | i : int(1..3) ]),
+x#int_direct_1
+   ~~> remove_single_atom ([("SAT", 8400)])
+or([ x = i | i : int(1..3) ])
+new SAT encoding decisions:
+  assert(x#int_direct_1) using tseitin
+
+--
+
+or([ x = i | i : int(1..3) ])
+   ~~> exists_quantified_to_finds ([("Base", 2003)])
+x = __0
+new variables:
+  findAux __0: int(1..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+__0
+   ~~> select_representation ([("ReprGeneral", 10000)])
+__0
+new variables:
+  findAux __0#int_direct_1: bool
+  findAux __0#int_direct_2: bool
+  findAux __0#int_direct_3: bool
+new constraints:
+  sum([toInt(__0#int_direct_1),toInt(__0#int_direct_2),toInt(__0#int_direct_3);int(1..)]) <= 1
+  or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3;int(1..)])
+
+--
+
+x = __0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#int_direct_1, -1*__0#int_direct_1, -2*__0#int_direct_2, -3*__0#int_direct_3) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 4, structure: Choice }]
+
+--
+
+__1,
+sum([toInt(__0#int_direct_1),toInt(__0#int_direct_2),toInt(__0#int_direct_3);int(1..)]) <= 1,
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+__1,
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(__0#int_direct_1, __0#int_direct_2, __0#int_direct_3) using None
+
+--
+
+or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3;int(1..)])) using tseitin
+
+--
+
+__1,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+__2
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+Final model:
+
+find x: int(1)
+find x#int_direct_1: bool
+findAux __0: int(1..3)
+findAux __0#int_direct_1: bool
+findAux __0#int_direct_2: bool
+findAux __0#int_direct_3: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(x#int_direct_1) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+assert(x#int_direct_1) using tseitin,
+define(__1 <-> integer-weighted(1*x#int_direct_1, -1*__0#int_direct_1, -2*__0#int_direct_2, -3*__0#int_direct_3) Equal 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Choice }, PbTermGroup { start: 1, end: 4, structure: Choice }],
+at-most-one(__0#int_direct_1, __0#int_direct_2, __0#int_direct_3) using Some(EncodingSelection { algorithm: TwoProduct, provenance: Heuristic }),
+define(__2 <-> or([__0#int_direct_1,__0#int_direct_2,__0#int_direct_3;int(1..)])) using tseitin,
+assert(__1) using tseitin,
+assert(__2) using tseitin
+

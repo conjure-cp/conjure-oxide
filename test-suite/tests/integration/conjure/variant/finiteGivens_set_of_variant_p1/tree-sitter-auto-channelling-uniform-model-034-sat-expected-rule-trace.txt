@@ -1,0 +1,264 @@
+Model before rewriting:
+
+letting REC be domain variant {a: int(-2147483647..2147483647), b: int(-2147483647..2147483647)}
+letting p be {variant{a = 10},variant{a = 13},variant{b = 7},variant{b = 3}}
+find x: int(0..100)
+find y: int(0..100)
+letting r be variant{a = 1}
+find r_in_p: bool
+
+such that
+
+x = sum([ i[a] | i <- p, active(i, a) ]),
+y = sum([ i[b] | i <- p, active(i, b) ]),
+r_in_p = r in p
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_log_1: bool
+  find x#int_log_2: bool
+  find x#int_log_3: bool
+  find x#int_log_4: bool
+  find x#int_log_5: bool
+  find x#int_log_6: bool
+  find x#int_log_7: bool
+  find x#int_log_8: bool
+new constraints:
+  or([and([SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4,x#int_log_5,x#int_log_6,x#int_log_7,x#int_log_8;int(1..)] [0, 100]) >= 0,SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4,x#int_log_5,x#int_log_6,x#int_log_7,x#int_log_8;int(1..)] [0, 100]) <= 100;int(1..)]);int(1..)])
+
+--
+
+x = 23
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, 16*x#int_log_5, 32*x#int_log_6, 64*x#int_log_7, -128*x#int_log_8) Equal 23) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }]
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4,x#int_log_5,x#int_log_6,x#int_log_7,x#int_log_8;int(1..)] [0, 100]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, 16*x#int_log_5, 32*x#int_log_6, 64*x#int_log_7, -128*x#int_log_8) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }]
+
+--
+
+SATInt(Log, [x#int_log_1,x#int_log_2,x#int_log_3,x#int_log_4,x#int_log_5,x#int_log_6,x#int_log_7,x#int_log_8;int(1..)] [0, 100]) <= 100
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, 16*x#int_log_5, 32*x#int_log_6, 64*x#int_log_7, -128*x#int_log_8) LessEqual 100) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }]
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_log_1: bool
+  find y#int_log_2: bool
+  find y#int_log_3: bool
+  find y#int_log_4: bool
+  find y#int_log_5: bool
+  find y#int_log_6: bool
+  find y#int_log_7: bool
+  find y#int_log_8: bool
+new constraints:
+  or([and([SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3,y#int_log_4,y#int_log_5,y#int_log_6,y#int_log_7,y#int_log_8;int(1..)] [0, 100]) >= 0,SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3,y#int_log_4,y#int_log_5,y#int_log_6,y#int_log_7,y#int_log_8;int(1..)] [0, 100]) <= 100;int(1..)]);int(1..)])
+
+--
+
+y = 10
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, 4*y#int_log_3, 8*y#int_log_4, 16*y#int_log_5, 32*y#int_log_6, 64*y#int_log_7, -128*y#int_log_8) Equal 10) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }]
+
+--
+
+SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3,y#int_log_4,y#int_log_5,y#int_log_6,y#int_log_7,y#int_log_8;int(1..)] [0, 100]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, 4*y#int_log_3, 8*y#int_log_4, 16*y#int_log_5, 32*y#int_log_6, 64*y#int_log_7, -128*y#int_log_8) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }]
+
+--
+
+SATInt(Log, [y#int_log_1,y#int_log_2,y#int_log_3,y#int_log_4,y#int_log_5,y#int_log_6,y#int_log_7,y#int_log_8;int(1..)] [0, 100]) <= 100
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, 4*y#int_log_3, 8*y#int_log_4, 16*y#int_log_5, 32*y#int_log_6, 64*y#int_log_7, -128*y#int_log_8) LessEqual 100) using None with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }]
+
+--
+
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__1,__2;int(1..)])
+
+--
+
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__4,__5;int(1..)])
+
+--
+
+and([__4,__5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> and([__4,__5;int(1..)])) using tseitin
+
+--
+
+and([__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> and([__1,__2;int(1..)])) using tseitin
+
+--
+
+r_in_p = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> (r_in_p) <-> (false)) using tseitin
+
+--
+
+__0,
+__3,
+__8,
+__7,
+__6
+   ~~> remove_single_atom ([("SAT", 8400)])
+__3,
+__8,
+__7,
+__6
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+__3,
+__8,
+__7,
+__6
+   ~~> remove_single_atom ([("SAT", 8400)])
+__8,
+__7,
+__6
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+__8,
+__7,
+__6
+   ~~> remove_single_atom ([("SAT", 8400)])
+__7,
+__6
+new SAT encoding decisions:
+  assert(__8) using tseitin
+
+--
+
+__7,
+__6
+   ~~> remove_single_atom ([("SAT", 8400)])
+__6
+new SAT encoding decisions:
+  assert(__7) using tseitin
+
+--
+
+__6
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__6) using tseitin
+
+--
+
+Final model:
+
+letting REC be domain variant {a: int(-2147483647..2147483647), b: int(-2147483647..2147483647)}
+letting p be {variant{a = 10},variant{a = 13},variant{b = 7},variant{b = 3}}
+find x: int(0..100)
+find y: int(0..100)
+letting r be variant{a = 1}
+find r_in_p: bool
+find x#int_log_1: bool
+find x#int_log_2: bool
+find x#int_log_3: bool
+find x#int_log_4: bool
+find x#int_log_5: bool
+find x#int_log_6: bool
+find x#int_log_7: bool
+find x#int_log_8: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+find y#int_log_1: bool
+find y#int_log_2: bool
+find y#int_log_3: bool
+find y#int_log_4: bool
+find y#int_log_5: bool
+find y#int_log_6: bool
+find y#int_log_7: bool
+find y#int_log_8: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, 16*x#int_log_5, 32*x#int_log_6, 64*x#int_log_7, -128*x#int_log_8) Equal 23) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
+define(__1 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, 16*x#int_log_5, 32*x#int_log_6, 64*x#int_log_7, -128*x#int_log_8) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
+define(__2 <-> integer-weighted(1*x#int_log_1, 2*x#int_log_2, 4*x#int_log_3, 8*x#int_log_4, 16*x#int_log_5, 32*x#int_log_6, 64*x#int_log_7, -128*x#int_log_8) LessEqual 100) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
+define(__3 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, 4*y#int_log_3, 8*y#int_log_4, 16*y#int_log_5, 32*y#int_log_6, 64*y#int_log_7, -128*y#int_log_8) Equal 10) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
+define(__4 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, 4*y#int_log_3, 8*y#int_log_4, 16*y#int_log_5, 32*y#int_log_6, 64*y#int_log_7, -128*y#int_log_8) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
+define(__5 <-> integer-weighted(1*y#int_log_1, 2*y#int_log_2, 4*y#int_log_3, 8*y#int_log_4, 16*y#int_log_5, 32*y#int_log_6, 64*y#int_log_7, -128*y#int_log_8) LessEqual 100) using Some(EncodingSelection { algorithm: PindakaasSwc, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 8, structure: BoundedBinary { lower: 0, upper: 100 } }],
+define(__6 <-> and([__4,__5;int(1..)])) using tseitin,
+define(__7 <-> and([__1,__2;int(1..)])) using tseitin,
+define(__8 <-> (r_in_p) <-> (false)) using tseitin,
+assert(__0) using tseitin,
+assert(__3) using tseitin,
+assert(__8) using tseitin,
+assert(__7) using tseitin,
+assert(__6) using tseitin
+

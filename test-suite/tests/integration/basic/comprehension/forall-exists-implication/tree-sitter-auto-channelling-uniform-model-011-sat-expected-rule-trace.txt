@@ -1,0 +1,149 @@
+Model before rewriting:
+
+find x: int(0..5)
+
+such that
+
+and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ])
+
+--
+
+and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ])
+new variables:
+  find x#int_offset_1: bool
+  find x#int_offset_2: bool
+  find x#int_offset_3: bool
+new constraints:
+  or([!(x#int_offset_3),and([!(x#int_offset_2),or([!(x#int_offset_1),true;int(1..)]);int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [x#int_offset_1,x#int_offset_2,x#int_offset_3;int(1..)] [0, 5]) >= 0,SATInt(Offset, [x#int_offset_1,x#int_offset_2,x#int_offset_3;int(1..)] [0, 5]) <= 5;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [x#int_offset_1,x#int_offset_2,x#int_offset_3;int(1..)] [0, 5]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]
+
+--
+
+SATInt(Offset, [x#int_offset_1,x#int_offset_2,x#int_offset_3;int(1..)] [0, 5]) <= 5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) LessEqual 5) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }]
+
+--
+
+!(x#int_offset_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> !(x#int_offset_3)) using tseitin
+
+--
+
+!(x#int_offset_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> !(x#int_offset_2)) using tseitin
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+and([__3;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__3
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+or([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> or([__2,__3;int(1..)])) using tseitin
+
+--
+
+and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ]),
+__5,
+__4
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ]),
+__4
+new SAT encoding decisions:
+  assert(__5) using tseitin
+
+--
+
+and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ]),
+__4
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ])
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+[ or([ (i = j) -> (x = 0) | j : int(1..2) ]) | i : int(1..2) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true;int(1..)]
+
+--
+
+Final model:
+
+find x: int(0..5)
+find x#int_offset_1: bool
+find x#int_offset_2: bool
+find x#int_offset_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
+define(__1 <-> integer-weighted(1*x#int_offset_1, 2*x#int_offset_2, 4*x#int_offset_3) LessEqual 5) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 0, upper: 5 } }],
+define(__2 <-> !(x#int_offset_3)) using tseitin,
+define(__3 <-> !(x#int_offset_2)) using tseitin,
+define(__4 <-> and([__0,__1;int(1..)])) using tseitin,
+define(__5 <-> or([__2,__3;int(1..)])) using tseitin,
+assert(__5) using tseitin,
+assert(__4) using tseitin
+

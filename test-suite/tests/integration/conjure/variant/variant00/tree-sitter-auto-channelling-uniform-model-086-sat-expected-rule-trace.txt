@@ -1,0 +1,1303 @@
+Model before rewriting:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find y1: V
+find y2: V
+find z: V
+find t1: V
+find t2: V
+find someInt: int(0)
+
+such that
+
+x[a] = true,
+y1 = variant{a = false},
+y2 = variant{b = 4},
+x = z,
+t1 = variant{b = someInt},
+t2 = variant{b = t1[b]}
+
+--
+
+y1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y1
+new variables:
+  find y1#packed_1: int(0..3)
+
+--
+
+y2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y2
+new variables:
+  find y2#packed_1: int(0..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..3)
+
+--
+
+x = z
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+x = z
+new variables:
+  find z#packed_1: int(0..3)
+
+--
+
+t1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1
+new variables:
+  find t1#packed_1: int(0..3)
+
+--
+
+t2
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t2
+new variables:
+  find t2#packed_1: int(0..3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+someInt
+   ~~> select_representation ([("ReprGeneral", 10000)])
+someInt
+new variables:
+  find someInt#int_offset_1: bool
+new constraints:
+  and([!(someInt#int_offset_1),true;int(1..)])
+  or([SATInt(Offset, [someInt#int_offset_1;int(1..)] [0, 0]) = 0;int(1..)])
+
+--
+
+SATInt(Offset, [someInt#int_offset_1;int(1..)] [0, 0]) = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*someInt#int_offset_1) Equal 0) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }]
+
+--
+
+t1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1
+
+--
+
+x[a] = true,
+y1 = variant{a = false},
+y2 = variant{b = 4},
+x = z,
+t1 = variant{b = someInt},
+t2 = variant{b = t1[b]},
+and([!(someInt#int_offset_1);int(1..)]),
+or([__0;int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x[a] = true,
+y1 = variant{a = false},
+y2 = variant{b = 4},
+x = z,
+t1 = variant{b = someInt},
+t2 = variant{b = t1[b]},
+and([!(someInt#int_offset_1);int(1..)]),
+or([__0;int(1..)])
+new variables:
+  find t1#packed_1#int_offset_1: bool
+  find t1#packed_1#int_offset_2: bool
+  find t2#packed_1#int_offset_1: bool
+  find t2#packed_1#int_offset_2: bool
+  find x#packed_1#int_offset_1: bool
+  find x#packed_1#int_offset_2: bool
+  find y1#packed_1#int_offset_1: bool
+  find y1#packed_1#int_offset_2: bool
+  find y2#packed_1#int_offset_1: bool
+  find y2#packed_1#int_offset_2: bool
+  find z#packed_1#int_offset_1: bool
+  find z#packed_1#int_offset_2: bool
+new constraints:
+  or([!(y1#packed_1#int_offset_2),or([!(y1#packed_1#int_offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [y1#packed_1#int_offset_1,y1#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [y1#packed_1#int_offset_1,y1#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(y2#packed_1#int_offset_2),or([!(y2#packed_1#int_offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [y2#packed_1#int_offset_1,y2#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [y2#packed_1#int_offset_1,y2#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(x#packed_1#int_offset_2),or([!(x#packed_1#int_offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [x#packed_1#int_offset_1,x#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [x#packed_1#int_offset_1,x#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(z#packed_1#int_offset_2),or([!(z#packed_1#int_offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [z#packed_1#int_offset_1,z#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [z#packed_1#int_offset_1,z#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(t1#packed_1#int_offset_2),or([!(t1#packed_1#int_offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [t1#packed_1#int_offset_1,t1#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [t1#packed_1#int_offset_1,t1#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  or([!(t2#packed_1#int_offset_2),or([!(t2#packed_1#int_offset_1),true;int(1..)]);int(1..)])
+  or([and([SATInt(Offset, [t2#packed_1#int_offset_1,t2#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0,SATInt(Offset, [t2#packed_1#int_offset_1,t2#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+SATInt(Offset, [y1#packed_1#int_offset_1,y1#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*y1#packed_1#int_offset_1, 2*y1#packed_1#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [y1#packed_1#int_offset_1,y1#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*y1#packed_1#int_offset_1, 2*y1#packed_1#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [y2#packed_1#int_offset_1,y2#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*y2#packed_1#int_offset_1, 2*y2#packed_1#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [y2#packed_1#int_offset_1,y2#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*y2#packed_1#int_offset_1, 2*y2#packed_1#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [x#packed_1#int_offset_1,x#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [x#packed_1#int_offset_1,x#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [z#packed_1#int_offset_1,z#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*z#packed_1#int_offset_1, 2*z#packed_1#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [z#packed_1#int_offset_1,z#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*z#packed_1#int_offset_1, 2*z#packed_1#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [t1#packed_1#int_offset_1,t1#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [t1#packed_1#int_offset_1,t1#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [t2#packed_1#int_offset_1,t2#packed_1#int_offset_2;int(1..)] [0, 3]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> integer-weighted(1*t2#packed_1#int_offset_1, 2*t2#packed_1#int_offset_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+SATInt(Offset, [t2#packed_1#int_offset_1,t2#packed_1#int_offset_2;int(1..)] [0, 3]) <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*t2#packed_1#int_offset_1, 2*t2#packed_1#int_offset_2) LessEqual 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+x[a] = true
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([x#packed_1 = 0,true = false;int(1..)]),and([x#packed_1 = 1,true = true;int(1..)]);int(1..)])
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x#packed_1 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+y1 = variant{a = false}
+   ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
+or([and([y1#packed_1 = 0,false = false;int(1..)]),and([y1#packed_1 = 1,false = true;int(1..)]);int(1..)])
+
+--
+
+y1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y1#packed_1
+
+--
+
+y1#packed_1 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> integer-weighted(1*y1#packed_1#int_offset_1, 2*y1#packed_1#int_offset_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+y2 = variant{b = 4}
+   ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
+or([and([y2#packed_1 = 2,4 = 0;int(1..)]),and([y2#packed_1 = 3,4 = 4;int(1..)]);int(1..)])
+
+--
+
+y2#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y2#packed_1
+
+--
+
+y2#packed_1 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> integer-weighted(1*y2#packed_1#int_offset_1, 2*y2#packed_1#int_offset_2) Equal 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+x = z
+   ~~> variant_packed_var_eq_var ([("ReprVariantPacked", 9700)])
+x#packed_1 = z#packed_1
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+z#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z#packed_1
+
+--
+
+x#packed_1 = z#packed_1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2, -1*z#packed_1#int_offset_1, -2*z#packed_1#int_offset_2) Equal 0) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }]
+
+--
+
+t1 = variant{b = someInt}
+   ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
+or([and([t1#packed_1 = 2,someInt = 0;int(1..)]),and([t1#packed_1 = 3,someInt = 4;int(1..)]);int(1..)])
+
+--
+
+someInt = 4
+   ~~> select_integer_relation ([("SAT", 18500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> integer-weighted(1*someInt#int_offset_1) Equal 4) using None with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }]
+
+--
+
+t1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1#packed_1
+
+--
+
+t1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1#packed_1
+
+--
+
+t1#packed_1 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+t1#packed_1 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) Equal 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+t2 = variant{b = t1[b]}
+   ~~> variant_packed_var_eq_lit ([("ReprVariantPacked", 9700)])
+or([and([t2#packed_1 = 2,t1[b] = 0;int(1..)]),and([t2#packed_1 = 3,t1[b] = 4;int(1..)]);int(1..)])
+
+--
+
+t2#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t2#packed_1
+
+--
+
+t2#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t2#packed_1
+
+--
+
+t2#packed_1 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> integer-weighted(1*t2#packed_1#int_offset_1, 2*t2#packed_1#int_offset_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+t2#packed_1 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> integer-weighted(1*t2#packed_1#int_offset_1, 2*t2#packed_1#int_offset_2) Equal 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+t1[b] = 0
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([t1#packed_1 = 2,0 = 0;int(1..)]),and([t1#packed_1 = 3,0 = 4;int(1..)]);int(1..)])
+
+--
+
+t1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1#packed_1
+
+--
+
+t1#packed_1 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+t1[b] = 4
+   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
+or([and([t1#packed_1 = 2,4 = 0;int(1..)]),and([t1#packed_1 = 3,4 = 4;int(1..)]);int(1..)])
+
+--
+
+t1#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t1#packed_1
+
+--
+
+t1#packed_1 = 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) Equal 3) using None with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }]
+
+--
+
+!(someInt#int_offset_1)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> !(someInt#int_offset_1)) using tseitin
+
+--
+
+or([and([__3,__4;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__3,__4;int(1..)])
+
+--
+
+or([and([__5,__6;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__5,__6;int(1..)])
+
+--
+
+or([and([__7,__8;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__7,__8;int(1..)])
+
+--
+
+or([and([__9,__10;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__9,__10;int(1..)])
+
+--
+
+or([and([__11,__12;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__11,__12;int(1..)])
+
+--
+
+or([and([__13;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__13;int(1..)])
+
+--
+
+or([and([__14;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__14;int(1..)])
+
+--
+
+or([and([__15;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__15;int(1..)])
+
+--
+
+or([and([__1,__2;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__1,__2;int(1..)])
+
+--
+
+and([__24;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__24
+
+--
+
+or([__0;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__0
+
+--
+
+and([__13;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__13
+
+--
+
+and([__14;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__14
+
+--
+
+and([__15;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__15
+
+--
+
+and([__18;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__18
+
+--
+
+or([and([__22;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__22;int(1..)])
+
+--
+
+or([and([__23;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__23;int(1..)])
+
+--
+
+and([__22;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__22
+
+--
+
+and([__23;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__23
+
+--
+
+and([__5,__6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> and([__5,__6;int(1..)])) using tseitin
+
+--
+
+and([__7,__8;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> and([__7,__8;int(1..)])) using tseitin
+
+--
+
+and([__9,__10;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__27
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> and([__9,__10;int(1..)])) using tseitin
+
+--
+
+and([__11,__12;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__28
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> and([__11,__12;int(1..)])) using tseitin
+
+--
+
+and([__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> and([__1,__2;int(1..)])) using tseitin
+
+--
+
+and([__3,__4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> and([__3,__4;int(1..)])) using tseitin
+
+--
+
+and([__19,__17;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> and([__19,__17;int(1..)])) using tseitin
+
+--
+
+or([__18,__31;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> or([__18,__31;int(1..)])) using tseitin
+
+--
+
+and([__20,__22;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> and([__20,__22;int(1..)])) using tseitin
+
+--
+
+and([__21,__23;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> and([__21,__23;int(1..)])) using tseitin
+
+--
+
+or([__33,__34;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> or([__33,__34;int(1..)])) using tseitin
+
+--
+
+__13,
+__14,
+__15,
+__16,
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+__14,
+__15,
+__16,
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__13) using tseitin
+
+--
+
+__14,
+__15,
+__16,
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+__15,
+__16,
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__14) using tseitin
+
+--
+
+__15,
+__16,
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+__16,
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__15) using tseitin
+
+--
+
+__16,
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__16) using tseitin
+
+--
+
+__32,
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__32) using tseitin
+
+--
+
+__35,
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__35) using tseitin
+
+--
+
+__24,
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__24) using tseitin
+
+--
+
+__0,
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+true,
+__29,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__29) using tseitin
+
+--
+
+true,
+true,
+__30,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__30) using tseitin
+
+--
+
+true,
+true,
+true,
+__25,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+__26,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__25) using tseitin
+
+--
+
+true,
+true,
+true,
+true,
+__26,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+__27,
+true,
+__28
+new SAT encoding decisions:
+  assert(__26) using tseitin
+
+--
+
+true,
+true,
+true,
+true,
+true,
+__27,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+true,
+__28
+new SAT encoding decisions:
+  assert(__27) using tseitin
+
+--
+
+true,
+true,
+true,
+true,
+true,
+true,
+__28
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__28) using tseitin
+
+--
+
+Final model:
+
+letting V be domain variant {a: bool, b: int(0, 4)}
+find x: V
+find y1: V
+find y2: V
+find z: V
+find t1: V
+find t2: V
+find someInt: int(0)
+find y1#packed_1: int(0..3)
+find y2#packed_1: int(0..3)
+find x#packed_1: int(0..3)
+find z#packed_1: int(0..3)
+find t1#packed_1: int(0..3)
+find t2#packed_1: int(0..3)
+find someInt#int_offset_1: bool
+findAux __0: bool
+find y1#packed_1#int_offset_1: bool
+find y1#packed_1#int_offset_2: bool
+find y2#packed_1#int_offset_1: bool
+find y2#packed_1#int_offset_2: bool
+find x#packed_1#int_offset_1: bool
+find x#packed_1#int_offset_2: bool
+find z#packed_1#int_offset_1: bool
+find z#packed_1#int_offset_2: bool
+find t1#packed_1#int_offset_1: bool
+find t1#packed_1#int_offset_2: bool
+find t2#packed_1#int_offset_1: bool
+find t2#packed_1#int_offset_2: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+
+such that
+
+true,
+true,
+true,
+true,
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*someInt#int_offset_1) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
+define(__1 <-> integer-weighted(1*y1#packed_1#int_offset_1, 2*y1#packed_1#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__2 <-> integer-weighted(1*y1#packed_1#int_offset_1, 2*y1#packed_1#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__3 <-> integer-weighted(1*y2#packed_1#int_offset_1, 2*y2#packed_1#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__4 <-> integer-weighted(1*y2#packed_1#int_offset_1, 2*y2#packed_1#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__5 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__6 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__7 <-> integer-weighted(1*z#packed_1#int_offset_1, 2*z#packed_1#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__8 <-> integer-weighted(1*z#packed_1#int_offset_1, 2*z#packed_1#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__9 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__10 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__11 <-> integer-weighted(1*t2#packed_1#int_offset_1, 2*t2#packed_1#int_offset_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__12 <-> integer-weighted(1*t2#packed_1#int_offset_1, 2*t2#packed_1#int_offset_2) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__13 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2) Equal 1) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__14 <-> integer-weighted(1*y1#packed_1#int_offset_1, 2*y1#packed_1#int_offset_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__15 <-> integer-weighted(1*y2#packed_1#int_offset_1, 2*y2#packed_1#int_offset_2) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__16 <-> integer-weighted(1*x#packed_1#int_offset_1, 2*x#packed_1#int_offset_2, -1*z#packed_1#int_offset_1, -2*z#packed_1#int_offset_2) Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }, PbTermGroup { start: 2, end: 4, structure: BoundedBinary { lower: -3, upper: 0 } }],
+define(__17 <-> integer-weighted(1*someInt#int_offset_1) Equal 4) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: BoundedBinary { lower: 0, upper: 0 } }],
+define(__18 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__19 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__20 <-> integer-weighted(1*t2#packed_1#int_offset_1, 2*t2#packed_1#int_offset_2) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__21 <-> integer-weighted(1*t2#packed_1#int_offset_1, 2*t2#packed_1#int_offset_2) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__22 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) Equal 2) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__23 <-> integer-weighted(1*t1#packed_1#int_offset_1, 2*t1#packed_1#int_offset_2) Equal 3) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: BoundedBinary { lower: 0, upper: 3 } }],
+define(__24 <-> !(someInt#int_offset_1)) using tseitin,
+define(__25 <-> and([__5,__6;int(1..)])) using tseitin,
+define(__26 <-> and([__7,__8;int(1..)])) using tseitin,
+define(__27 <-> and([__9,__10;int(1..)])) using tseitin,
+define(__28 <-> and([__11,__12;int(1..)])) using tseitin,
+define(__29 <-> and([__1,__2;int(1..)])) using tseitin,
+define(__30 <-> and([__3,__4;int(1..)])) using tseitin,
+define(__31 <-> and([__19,__17;int(1..)])) using tseitin,
+define(__32 <-> or([__18,__31;int(1..)])) using tseitin,
+define(__33 <-> and([__20,__22;int(1..)])) using tseitin,
+define(__34 <-> and([__21,__23;int(1..)])) using tseitin,
+define(__35 <-> or([__33,__34;int(1..)])) using tseitin,
+assert(__13) using tseitin,
+assert(__14) using tseitin,
+assert(__15) using tseitin,
+assert(__16) using tseitin,
+assert(__32) using tseitin,
+assert(__35) using tseitin,
+assert(__24) using tseitin,
+assert(__0) using tseitin,
+assert(__29) using tseitin,
+assert(__30) using tseitin,
+assert(__25) using tseitin,
+assert(__26) using tseitin,
+assert(__27) using tseitin,
+assert(__28) using tseitin
+

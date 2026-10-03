@@ -14,525 +14,402 @@ x
    ~~> select_representation ([("ReprGeneral", 10000)])
 x
 new variables:
-  find x#packed_1: int(0..3)
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-x
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x
-
---
-
-(active(x, a)) -> (x[a] = true),
-(active(x, b)) -> (x[b] = 0)
-   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
-(active(x, a)) -> (x[a] = true),
-(active(x, b)) -> (x[b] = 0)
-new variables:
-  find x#packed_1#int_log_1: bool
-  find x#packed_1#int_log_2: bool
-  find x#packed_1#int_log_3: bool
+  find x#components_1: int(1..2)
+  find x#components_2: bool
+  find x#components_3: int(0, 4)
 new constraints:
-  or([and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= 0,SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) <= 3;int(1..)]);int(1..)])
+  (x#components_1 != 1) -> (x#components_2 = false)
+  (x#components_1 != 2) -> (x#components_3 = 0)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_1
+new variables:
+  find x#components_1#int_direct_1: bool
+  find x#components_1#int_direct_2: bool
+new constraints:
+  sum([toInt(x#components_1#int_direct_1),toInt(x#components_1#int_direct_2);int(1..)]) <= 1
+  or([x#components_1#int_direct_1,x#components_1#int_direct_2;int(1..)])
+
+--
+
+x#components_1 != 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) NotEqual 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0),
+(__0) -> (x#components_2 = false),
+(x#components_1 != 2) -> (x#components_3 = 0),
+sum([toInt(x#components_1#int_direct_1),toInt(x#components_1#int_direct_2);int(1..)]) <= 1,
+or([x#components_1#int_direct_1,x#components_1#int_direct_2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0),
+(__0) -> (x#components_2 = false),
+(x#components_1 != 2) -> (x#components_3 = 0),
+or([x#components_1#int_direct_1,x#components_1#int_direct_2;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#components_1#int_direct_1, x#components_1#int_direct_2) using None
+
+--
+
+x#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_1
+
+--
+
+x#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_3
+new variables:
+  find x#components_3#int_direct_1: bool
+  find x#components_3#int_direct_2: bool
+  find x#components_3#int_direct_3: bool
+  find x#components_3#int_direct_4: bool
+  find x#components_3#int_direct_5: bool
+new constraints:
+  sum([toInt(x#components_3#int_direct_1),toInt(x#components_3#int_direct_2),toInt(x#components_3#int_direct_3),toInt(x#components_3#int_direct_4),toInt(x#components_3#int_direct_5);int(1..)]) <= 1
+  or([x#components_3#int_direct_1,x#components_3#int_direct_5;int(1..)])
+
+--
+
+x#components_3 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(0*x#components_3#int_direct_1, 1*x#components_3#int_direct_2, 2*x#components_3#int_direct_3, 3*x#components_3#int_direct_4, 4*x#components_3#int_direct_5) Equal 0) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
+
+--
+
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0),
+(__0) -> (x#components_2 = false),
+(x#components_1 != 2) -> (__1),
+or([x#components_1#int_direct_1,x#components_1#int_direct_2;int(1..)]),
+sum([toInt(x#components_3#int_direct_1),toInt(x#components_3#int_direct_2),toInt(x#components_3#int_direct_3),toInt(x#components_3#int_direct_4),toInt(x#components_3#int_direct_5);int(1..)]) <= 1,
+or([x#components_3#int_direct_1,x#components_3#int_direct_5;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+(active(x, a)) -> (x[a] = true),
+(active(x, b)) -> (x[b] = 0),
+(__0) -> (x#components_2 = false),
+(x#components_1 != 2) -> (__1),
+or([x#components_1#int_direct_1,x#components_1#int_direct_2;int(1..)]),
+or([x#components_3#int_direct_1,x#components_3#int_direct_5;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#components_3#int_direct_1, x#components_3#int_direct_2, x#components_3#int_direct_3, x#components_3#int_direct_4, x#components_3#int_direct_5) using None
+
+--
+
+x#components_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_1
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+x#components_1 != 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) NotEqual 2) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 x[a] = true
-   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
-or([and([x#packed_1 = 0,true = false;int(1..)]),and([x#packed_1 = 1,true = true;int(1..)]);int(1..)])
+   ~~> variant_components_field_eq ([("ReprGeneral", 9900)])
+and([x#components_1 = 1,x#components_2 = true;int(1..)])
 
 --
 
-x#packed_1
+x#components_1
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
+x#components_1
+
+--
+
+x#components_1 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 x[b] = 0
-   ~~> variant_packed_field_eq ([("ReprVariantPacked", 9900)])
-or([and([x#packed_1 = 2,0 = 0;int(1..)]),and([x#packed_1 = 3,0 = 4;int(1..)]);int(1..)])
+   ~~> variant_components_field_eq ([("ReprGeneral", 9900)])
+and([x#components_1 = 2,x#components_3 = 0;int(1..)])
 
 --
 
-x#packed_1
+x#components_1
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
+x#components_1
+
+--
+
+x#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#components_3
+
+--
+
+x#components_1 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
+
+--
+
+x#components_3 = 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(0*x#components_3#int_direct_1, 1*x#components_3#int_direct_2, 2*x#components_3#int_direct_3, 3*x#components_3#int_direct_4, 4*x#components_3#int_direct_5) Equal 0) using None with [PbTermGroup { start: 0, end: 5, structure: Choice }]
 
 --
 
 active(x, a)
-   ~~> variant_packed_active ([("ReprVariantPacked", 9800)])
-and([x#packed_1 >= 0,x#packed_1 < 2;int(1..)])
+   ~~> variant_components_active ([("ReprGeneral", 9800)])
+x#components_1 = 1
 
 --
 
-x#packed_1
+x#components_1
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
+x#components_1
 
 --
 
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
+x#components_1 = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) Equal 1) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
 active(x, b)
-   ~~> variant_packed_active ([("ReprVariantPacked", 9800)])
-and([x#packed_1 >= 2,x#packed_1 < 4;int(1..)])
+   ~~> variant_components_active ([("ReprGeneral", 9800)])
+x#components_1 = 2
 
 --
 
-x#packed_1
+x#components_1
    ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
+x#components_1
 
 --
 
-x#packed_1
-   ~~> select_representation ([("ReprGeneral", 10000)])
-x#packed_1
-
---
-
-x#packed_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3])
-
---
-
-x#packed_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3])
-
---
-
-x#packed_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3])
-
---
-
-x#packed_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3])
-
---
-
-x#packed_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3])
-
---
-
-x#packed_1
-   ~~> integer_decision_representation_log ([("SAT", 9500)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= 0
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false;int(1..)] [0, 0])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < 2
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,true,false;int(1..)] [2, 2])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= 2
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false,true,false;int(1..)] [2, 2])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < 4
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,false,true,false;int(1..)] [4, 4])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= 0
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false;int(1..)] [0, 0])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) <= 3
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) <= SATInt(Log, [true,true,false;int(1..)] [3, 3])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) = 1
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) = SATInt(Log, [true,false;int(1..)] [1, 1])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) = 2
-   ~~> encode_sat_int_literals ([("SAT", 9400)])
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) = SATInt(Log, [false,true,false;int(1..)] [2, 2])
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) = SATInt(Log, [true,false;int(1..)] [1, 1])
-   ~~> cnf_int_eq ([("SAT", 9100)])
-__5
+x#components_1 = 2
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
 new variables:
-  findAux __0: bool
-  findAux __1: bool
-  findAux __2: bool
-  findAux __3: bool
-  findAux __4: bool
-  findAux __5: bool
+  findAux __7: bool
 new SAT encoding decisions:
-  define(__0 <-> (x#packed_1#int_log_1) <-> (true)) using tseitin
-  define(__1 <-> and([__0,true;int(1..)])) using tseitin
-  define(__2 <-> (x#packed_1#int_log_2) <-> (false)) using tseitin
-  define(__3 <-> and([__2,__1;int(1..)])) using tseitin
-  define(__4 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin
-  define(__5 <-> and([__4,__3;int(1..)])) using tseitin
+  define(__7 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) Equal 2) using None with [PbTermGroup { start: 0, end: 2, structure: Choice }]
 
 --
 
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) = SATInt(Log, [false,true,false;int(1..)] [2, 2])
-   ~~> cnf_int_eq ([("SAT", 9100)])
+(__2) -> (__1)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> (__2) -> (__1)) using tseitin
+
+--
+
+or([x#components_1#int_direct_1,x#components_1#int_direct_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> or([x#components_1#int_direct_1,x#components_1#int_direct_2;int(1..)])) using tseitin
+
+--
+
+or([x#components_3#int_direct_1,x#components_3#int_direct_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> or([x#components_3#int_direct_1,x#components_3#int_direct_5;int(1..)])) using tseitin
+
+--
+
+and([__3,x#components_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
 __11
 new variables:
-  findAux __6: bool
-  findAux __7: bool
-  findAux __8: bool
-  findAux __9: bool
-  findAux __10: bool
   findAux __11: bool
 new SAT encoding decisions:
-  define(__6 <-> (x#packed_1#int_log_1) <-> (false)) using tseitin
-  define(__7 <-> and([__6,true;int(1..)])) using tseitin
-  define(__8 <-> (x#packed_1#int_log_2) <-> (true)) using tseitin
-  define(__9 <-> and([__8,__7;int(1..)])) using tseitin
-  define(__10 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin
-  define(__11 <-> and([__10,__9;int(1..)])) using tseitin
+  define(__11 <-> and([__3,x#components_2;int(1..)])) using tseitin
 
 --
 
-or([and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false;int(1..)] [0, 0]),SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) <= SATInt(Log, [true,true,false;int(1..)] [3, 3]);int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false;int(1..)] [0, 0]),SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) <= SATInt(Log, [true,true,false;int(1..)] [3, 3]);int(1..)])
-
---
-
-or([and([__5;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__5;int(1..)])
-
---
-
-or([and([__11;int(1..)]);int(1..)])
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__11;int(1..)])
-
---
-
-and([__5;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__5
-
---
-
-and([__11;int(1..)])
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__11
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false;int(1..)] [0, 0])
-   ~~> cnf_int_ineq ([("SAT", 4100)])
-__22
+(__6) -> (__11)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__12
 new variables:
   findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> (__6) -> (__11)) using tseitin
+
+--
+
+and([__4,__5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__13
+new variables:
   findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> and([__4,__5;int(1..)])) using tseitin
+
+--
+
+(__7) -> (__13)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__14
+new variables:
   findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> (__7) -> (__13)) using tseitin
+
+--
+
+x#components_2 = false
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__15
+new variables:
   findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> (x#components_2) <-> (false)) using tseitin
+
+--
+
+(__0) -> (__15)
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__16
+new variables:
   findAux __16: bool
-  findAux __17: bool
-  findAux __18: bool
-  findAux __19: bool
-  findAux __20: bool
-  findAux __21: bool
-  findAux __22: bool
 new SAT encoding decisions:
-  define(__12 <-> (false) -> (x#packed_1#int_log_1)) using tseitin
-  define(__13 <-> !(false)) using tseitin
-  define(__14 <-> and([x#packed_1#int_log_2,__13;int(1..)])) using tseitin
-  define(__15 <-> (x#packed_1#int_log_2) <-> (false)) using tseitin
-  define(__16 <-> and([__15,__12;int(1..)])) using tseitin
-  define(__17 <-> or([__14,__16;int(1..)])) using tseitin
-  define(__18 <-> !(x#packed_1#int_log_3)) using tseitin
-  define(__19 <-> and([__18,false;int(1..)])) using tseitin
-  define(__20 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin
-  define(__21 <-> and([__20,__17;int(1..)])) using tseitin
-  define(__22 <-> or([__19,__21;int(1..)])) using tseitin
+  define(__16 <-> (__0) -> (__15)) using tseitin
 
 --
 
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) <= SATInt(Log, [true,true,false;int(1..)] [3, 3])
-   ~~> cnf_int_ineq ([("SAT", 4100)])
-__33
-new variables:
-  findAux __23: bool
-  findAux __24: bool
-  findAux __25: bool
-  findAux __26: bool
-  findAux __27: bool
-  findAux __28: bool
-  findAux __29: bool
-  findAux __30: bool
-  findAux __31: bool
-  findAux __32: bool
-  findAux __33: bool
-new SAT encoding decisions:
-  define(__23 <-> (x#packed_1#int_log_1) -> (true)) using tseitin
-  define(__24 <-> !(x#packed_1#int_log_2)) using tseitin
-  define(__25 <-> and([true,__24;int(1..)])) using tseitin
-  define(__26 <-> (true) <-> (x#packed_1#int_log_2)) using tseitin
-  define(__27 <-> and([__26,__23;int(1..)])) using tseitin
-  define(__28 <-> or([__25,__27;int(1..)])) using tseitin
-  define(__29 <-> !(false)) using tseitin
-  define(__30 <-> and([__29,x#packed_1#int_log_3;int(1..)])) using tseitin
-  define(__31 <-> (false) <-> (x#packed_1#int_log_3)) using tseitin
-  define(__32 <-> and([__31,__28;int(1..)])) using tseitin
-  define(__33 <-> or([__30,__32;int(1..)])) using tseitin
-
---
-
-and([__22,__33;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__34
-new variables:
-  findAux __34: bool
-new SAT encoding decisions:
-  define(__34 <-> and([__22,__33;int(1..)])) using tseitin
-
---
-
-(and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false;int(1..)] [0, 0]),SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,true,false;int(1..)] [2, 2]);int(1..)])) -> (__5),
-(and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false,true,false;int(1..)] [2, 2]),SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,false,true,false;int(1..)] [4, 4]);int(1..)])) -> (__11),
-__34
+__12,
+__14,
+__16,
+__8,
+__9,
+__10
    ~~> remove_single_atom ([("SAT", 8400)])
-(and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false;int(1..)] [0, 0]),SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,true,false;int(1..)] [2, 2]);int(1..)])) -> (__5),
-(and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false,true,false;int(1..)] [2, 2]),SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,false,true,false;int(1..)] [4, 4]);int(1..)])) -> (__11)
+__14,
+__16,
+__8,
+__9,
+__10
 new SAT encoding decisions:
-  assert(__34) using tseitin
+  assert(__12) using tseitin
 
 --
 
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false;int(1..)] [0, 0])
-   ~~> cnf_int_ineq ([("SAT", 4100)])
-__45
-new variables:
-  findAux __35: bool
-  findAux __36: bool
-  findAux __37: bool
-  findAux __38: bool
-  findAux __39: bool
-  findAux __40: bool
-  findAux __41: bool
-  findAux __42: bool
-  findAux __43: bool
-  findAux __44: bool
-  findAux __45: bool
-new SAT encoding decisions:
-  define(__35 <-> (false) -> (x#packed_1#int_log_1)) using tseitin
-  define(__36 <-> !(false)) using tseitin
-  define(__37 <-> and([x#packed_1#int_log_2,__36;int(1..)])) using tseitin
-  define(__38 <-> (x#packed_1#int_log_2) <-> (false)) using tseitin
-  define(__39 <-> and([__38,__35;int(1..)])) using tseitin
-  define(__40 <-> or([__37,__39;int(1..)])) using tseitin
-  define(__41 <-> !(x#packed_1#int_log_3)) using tseitin
-  define(__42 <-> and([__41,false;int(1..)])) using tseitin
-  define(__43 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin
-  define(__44 <-> and([__43,__40;int(1..)])) using tseitin
-  define(__45 <-> or([__42,__44;int(1..)])) using tseitin
-
---
-
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,true,false;int(1..)] [2, 2])
-   ~~> cnf_int_ineq ([("SAT", 4100)])
-__57
-new variables:
-  findAux __46: bool
-  findAux __47: bool
-  findAux __48: bool
-  findAux __49: bool
-  findAux __50: bool
-  findAux __51: bool
-  findAux __52: bool
-  findAux __53: bool
-  findAux __54: bool
-  findAux __55: bool
-  findAux __56: bool
-  findAux __57: bool
-new SAT encoding decisions:
-  define(__46 <-> !(x#packed_1#int_log_1)) using tseitin
-  define(__47 <-> and([false,__46;int(1..)])) using tseitin
-  define(__48 <-> !(x#packed_1#int_log_2)) using tseitin
-  define(__49 <-> and([true,__48;int(1..)])) using tseitin
-  define(__50 <-> (true) <-> (x#packed_1#int_log_2)) using tseitin
-  define(__51 <-> and([__50,__47;int(1..)])) using tseitin
-  define(__52 <-> or([__49,__51;int(1..)])) using tseitin
-  define(__53 <-> !(false)) using tseitin
-  define(__54 <-> and([__53,x#packed_1#int_log_3;int(1..)])) using tseitin
-  define(__55 <-> (false) <-> (x#packed_1#int_log_3)) using tseitin
-  define(__56 <-> and([__55,__52;int(1..)])) using tseitin
-  define(__57 <-> or([__54,__56;int(1..)])) using tseitin
-
---
-
-and([__45,__57;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__58
-new variables:
-  findAux __58: bool
-new SAT encoding decisions:
-  define(__58 <-> and([__45,__57;int(1..)])) using tseitin
-
---
-
-(__58) -> (__5)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__59
-new variables:
-  findAux __59: bool
-new SAT encoding decisions:
-  define(__59 <-> (__58) -> (__5)) using tseitin
-
---
-
-__59,
-(and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false,true,false;int(1..)] [2, 2]),SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,false,true,false;int(1..)] [4, 4]);int(1..)])) -> (__11)
+__14,
+__16,
+__8,
+__9,
+__10
    ~~> remove_single_atom ([("SAT", 8400)])
-(and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false,true,false;int(1..)] [2, 2]),SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,false,true,false;int(1..)] [4, 4]);int(1..)])) -> (__11)
+__16,
+__8,
+__9,
+__10
 new SAT encoding decisions:
-  assert(__59) using tseitin
+  assert(__14) using tseitin
 
 --
 
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) >= SATInt(Log, [false,true,false;int(1..)] [2, 2])
-   ~~> cnf_int_ineq ([("SAT", 4100)])
-__70
-new variables:
-  findAux __60: bool
-  findAux __61: bool
-  findAux __62: bool
-  findAux __63: bool
-  findAux __64: bool
-  findAux __65: bool
-  findAux __66: bool
-  findAux __67: bool
-  findAux __68: bool
-  findAux __69: bool
-  findAux __70: bool
+__16,
+__8,
+__9,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__8,
+__9,
+__10
 new SAT encoding decisions:
-  define(__60 <-> (false) -> (x#packed_1#int_log_1)) using tseitin
-  define(__61 <-> !(true)) using tseitin
-  define(__62 <-> and([x#packed_1#int_log_2,__61;int(1..)])) using tseitin
-  define(__63 <-> (x#packed_1#int_log_2) <-> (true)) using tseitin
-  define(__64 <-> and([__63,__60;int(1..)])) using tseitin
-  define(__65 <-> or([__62,__64;int(1..)])) using tseitin
-  define(__66 <-> !(x#packed_1#int_log_3)) using tseitin
-  define(__67 <-> and([__66,false;int(1..)])) using tseitin
-  define(__68 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin
-  define(__69 <-> and([__68,__65;int(1..)])) using tseitin
-  define(__70 <-> or([__67,__69;int(1..)])) using tseitin
+  assert(__16) using tseitin
 
 --
 
-SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3;int(1..)] [0, 3]) < SATInt(Log, [false,false,true,false;int(1..)] [4, 4])
-   ~~> cnf_int_ineq ([("SAT", 4100)])
-__87
-new variables:
-  findAux __71: bool
-  findAux __72: bool
-  findAux __73: bool
-  findAux __74: bool
-  findAux __75: bool
-  findAux __76: bool
-  findAux __77: bool
-  findAux __78: bool
-  findAux __79: bool
-  findAux __80: bool
-  findAux __81: bool
-  findAux __82: bool
-  findAux __83: bool
-  findAux __84: bool
-  findAux __85: bool
-  findAux __86: bool
-  findAux __87: bool
+__8,
+__9,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__9,
+__10
 new SAT encoding decisions:
-  define(__71 <-> !(x#packed_1#int_log_1)) using tseitin
-  define(__72 <-> and([false,__71;int(1..)])) using tseitin
-  define(__73 <-> !(x#packed_1#int_log_2)) using tseitin
-  define(__74 <-> and([false,__73;int(1..)])) using tseitin
-  define(__75 <-> (false) <-> (x#packed_1#int_log_2)) using tseitin
-  define(__76 <-> and([__75,__72;int(1..)])) using tseitin
-  define(__77 <-> or([__74,__76;int(1..)])) using tseitin
-  define(__78 <-> !(x#packed_1#int_log_3)) using tseitin
-  define(__79 <-> and([true,__78;int(1..)])) using tseitin
-  define(__80 <-> (true) <-> (x#packed_1#int_log_3)) using tseitin
-  define(__81 <-> and([__80,__77;int(1..)])) using tseitin
-  define(__82 <-> or([__79,__81;int(1..)])) using tseitin
-  define(__83 <-> !(false)) using tseitin
-  define(__84 <-> and([__83,x#packed_1#int_log_3;int(1..)])) using tseitin
-  define(__85 <-> (false) <-> (x#packed_1#int_log_3)) using tseitin
-  define(__86 <-> and([__85,__82;int(1..)])) using tseitin
-  define(__87 <-> or([__84,__86;int(1..)])) using tseitin
+  assert(__8) using tseitin
 
 --
 
-and([__70,__87;int(1..)])
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__88
-new variables:
-  findAux __88: bool
+__9,
+__10
+   ~~> remove_single_atom ([("SAT", 8400)])
+__10
 new SAT encoding decisions:
-  define(__88 <-> and([__70,__87;int(1..)])) using tseitin
+  assert(__9) using tseitin
 
 --
 
-(__88) -> (__11)
-   ~~> apply_tseytin_imply ([("SAT", 8500)])
-__89
-new variables:
-  findAux __89: bool
-new SAT encoding decisions:
-  define(__89 <-> (__88) -> (__11)) using tseitin
-
---
-
-__89
+__10
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__89) using tseitin
+  assert(__10) using tseitin
 
 --
 
@@ -540,11 +417,17 @@ Final model:
 
 letting V be domain variant {a: bool, b: int(0, 4)}
 find x: V
-find x#packed_1: int(0..3)
-find x#packed_1#int_log_1: bool
-find x#packed_1#int_log_2: bool
-find x#packed_1#int_log_3: bool
+find x#components_1: int(1..2)
+find x#components_2: bool
+find x#components_3: int(0, 4)
+find x#components_1#int_direct_1: bool
+find x#components_1#int_direct_2: bool
 findAux __0: bool
+find x#components_3#int_direct_1: bool
+find x#components_3#int_direct_2: bool
+find x#components_3#int_direct_3: bool
+find x#components_3#int_direct_4: bool
+find x#components_3#int_direct_5: bool
 findAux __1: bool
 findAux __2: bool
 findAux __3: bool
@@ -561,79 +444,6 @@ findAux __13: bool
 findAux __14: bool
 findAux __15: bool
 findAux __16: bool
-findAux __17: bool
-findAux __18: bool
-findAux __19: bool
-findAux __20: bool
-findAux __21: bool
-findAux __22: bool
-findAux __23: bool
-findAux __24: bool
-findAux __25: bool
-findAux __26: bool
-findAux __27: bool
-findAux __28: bool
-findAux __29: bool
-findAux __30: bool
-findAux __31: bool
-findAux __32: bool
-findAux __33: bool
-findAux __34: bool
-findAux __35: bool
-findAux __36: bool
-findAux __37: bool
-findAux __38: bool
-findAux __39: bool
-findAux __40: bool
-findAux __41: bool
-findAux __42: bool
-findAux __43: bool
-findAux __44: bool
-findAux __45: bool
-findAux __46: bool
-findAux __47: bool
-findAux __48: bool
-findAux __49: bool
-findAux __50: bool
-findAux __51: bool
-findAux __52: bool
-findAux __53: bool
-findAux __54: bool
-findAux __55: bool
-findAux __56: bool
-findAux __57: bool
-findAux __58: bool
-findAux __59: bool
-findAux __60: bool
-findAux __61: bool
-findAux __62: bool
-findAux __63: bool
-findAux __64: bool
-findAux __65: bool
-findAux __66: bool
-findAux __67: bool
-findAux __68: bool
-findAux __69: bool
-findAux __70: bool
-findAux __71: bool
-findAux __72: bool
-findAux __73: bool
-findAux __74: bool
-findAux __75: bool
-findAux __76: bool
-findAux __77: bool
-findAux __78: bool
-findAux __79: bool
-findAux __80: bool
-findAux __81: bool
-findAux __82: bool
-findAux __83: bool
-findAux __84: bool
-findAux __85: bool
-findAux __86: bool
-findAux __87: bool
-findAux __88: bool
-findAux __89: bool
 
 such that
 
@@ -641,97 +451,29 @@ true
 
 sat encoding decisions:
 
-define(__0 <-> (x#packed_1#int_log_1) <-> (true)) using tseitin,
-define(__1 <-> and([__0,true;int(1..)])) using tseitin,
-define(__2 <-> (x#packed_1#int_log_2) <-> (false)) using tseitin,
-define(__3 <-> and([__2,__1;int(1..)])) using tseitin,
-define(__4 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin,
-define(__5 <-> and([__4,__3;int(1..)])) using tseitin,
-define(__6 <-> (x#packed_1#int_log_1) <-> (false)) using tseitin,
-define(__7 <-> and([__6,true;int(1..)])) using tseitin,
-define(__8 <-> (x#packed_1#int_log_2) <-> (true)) using tseitin,
-define(__9 <-> and([__8,__7;int(1..)])) using tseitin,
-define(__10 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin,
-define(__11 <-> and([__10,__9;int(1..)])) using tseitin,
-define(__12 <-> (false) -> (x#packed_1#int_log_1)) using tseitin,
-define(__13 <-> !(false)) using tseitin,
-define(__14 <-> and([x#packed_1#int_log_2,__13;int(1..)])) using tseitin,
-define(__15 <-> (x#packed_1#int_log_2) <-> (false)) using tseitin,
-define(__16 <-> and([__15,__12;int(1..)])) using tseitin,
-define(__17 <-> or([__14,__16;int(1..)])) using tseitin,
-define(__18 <-> !(x#packed_1#int_log_3)) using tseitin,
-define(__19 <-> and([__18,false;int(1..)])) using tseitin,
-define(__20 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin,
-define(__21 <-> and([__20,__17;int(1..)])) using tseitin,
-define(__22 <-> or([__19,__21;int(1..)])) using tseitin,
-define(__23 <-> (x#packed_1#int_log_1) -> (true)) using tseitin,
-define(__24 <-> !(x#packed_1#int_log_2)) using tseitin,
-define(__25 <-> and([true,__24;int(1..)])) using tseitin,
-define(__26 <-> (true) <-> (x#packed_1#int_log_2)) using tseitin,
-define(__27 <-> and([__26,__23;int(1..)])) using tseitin,
-define(__28 <-> or([__25,__27;int(1..)])) using tseitin,
-define(__29 <-> !(false)) using tseitin,
-define(__30 <-> and([__29,x#packed_1#int_log_3;int(1..)])) using tseitin,
-define(__31 <-> (false) <-> (x#packed_1#int_log_3)) using tseitin,
-define(__32 <-> and([__31,__28;int(1..)])) using tseitin,
-define(__33 <-> or([__30,__32;int(1..)])) using tseitin,
-define(__34 <-> and([__22,__33;int(1..)])) using tseitin,
-assert(__34) using tseitin,
-define(__35 <-> (false) -> (x#packed_1#int_log_1)) using tseitin,
-define(__36 <-> !(false)) using tseitin,
-define(__37 <-> and([x#packed_1#int_log_2,__36;int(1..)])) using tseitin,
-define(__38 <-> (x#packed_1#int_log_2) <-> (false)) using tseitin,
-define(__39 <-> and([__38,__35;int(1..)])) using tseitin,
-define(__40 <-> or([__37,__39;int(1..)])) using tseitin,
-define(__41 <-> !(x#packed_1#int_log_3)) using tseitin,
-define(__42 <-> and([__41,false;int(1..)])) using tseitin,
-define(__43 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin,
-define(__44 <-> and([__43,__40;int(1..)])) using tseitin,
-define(__45 <-> or([__42,__44;int(1..)])) using tseitin,
-define(__46 <-> !(x#packed_1#int_log_1)) using tseitin,
-define(__47 <-> and([false,__46;int(1..)])) using tseitin,
-define(__48 <-> !(x#packed_1#int_log_2)) using tseitin,
-define(__49 <-> and([true,__48;int(1..)])) using tseitin,
-define(__50 <-> (true) <-> (x#packed_1#int_log_2)) using tseitin,
-define(__51 <-> and([__50,__47;int(1..)])) using tseitin,
-define(__52 <-> or([__49,__51;int(1..)])) using tseitin,
-define(__53 <-> !(false)) using tseitin,
-define(__54 <-> and([__53,x#packed_1#int_log_3;int(1..)])) using tseitin,
-define(__55 <-> (false) <-> (x#packed_1#int_log_3)) using tseitin,
-define(__56 <-> and([__55,__52;int(1..)])) using tseitin,
-define(__57 <-> or([__54,__56;int(1..)])) using tseitin,
-define(__58 <-> and([__45,__57;int(1..)])) using tseitin,
-define(__59 <-> (__58) -> (__5)) using tseitin,
-assert(__59) using tseitin,
-define(__60 <-> (false) -> (x#packed_1#int_log_1)) using tseitin,
-define(__61 <-> !(true)) using tseitin,
-define(__62 <-> and([x#packed_1#int_log_2,__61;int(1..)])) using tseitin,
-define(__63 <-> (x#packed_1#int_log_2) <-> (true)) using tseitin,
-define(__64 <-> and([__63,__60;int(1..)])) using tseitin,
-define(__65 <-> or([__62,__64;int(1..)])) using tseitin,
-define(__66 <-> !(x#packed_1#int_log_3)) using tseitin,
-define(__67 <-> and([__66,false;int(1..)])) using tseitin,
-define(__68 <-> (x#packed_1#int_log_3) <-> (false)) using tseitin,
-define(__69 <-> and([__68,__65;int(1..)])) using tseitin,
-define(__70 <-> or([__67,__69;int(1..)])) using tseitin,
-define(__71 <-> !(x#packed_1#int_log_1)) using tseitin,
-define(__72 <-> and([false,__71;int(1..)])) using tseitin,
-define(__73 <-> !(x#packed_1#int_log_2)) using tseitin,
-define(__74 <-> and([false,__73;int(1..)])) using tseitin,
-define(__75 <-> (false) <-> (x#packed_1#int_log_2)) using tseitin,
-define(__76 <-> and([__75,__72;int(1..)])) using tseitin,
-define(__77 <-> or([__74,__76;int(1..)])) using tseitin,
-define(__78 <-> !(x#packed_1#int_log_3)) using tseitin,
-define(__79 <-> and([true,__78;int(1..)])) using tseitin,
-define(__80 <-> (true) <-> (x#packed_1#int_log_3)) using tseitin,
-define(__81 <-> and([__80,__77;int(1..)])) using tseitin,
-define(__82 <-> or([__79,__81;int(1..)])) using tseitin,
-define(__83 <-> !(false)) using tseitin,
-define(__84 <-> and([__83,x#packed_1#int_log_3;int(1..)])) using tseitin,
-define(__85 <-> (false) <-> (x#packed_1#int_log_3)) using tseitin,
-define(__86 <-> and([__85,__82;int(1..)])) using tseitin,
-define(__87 <-> or([__84,__86;int(1..)])) using tseitin,
-define(__88 <-> and([__70,__87;int(1..)])) using tseitin,
-define(__89 <-> (__88) -> (__11)) using tseitin,
-assert(__89) using tseitin
+define(__0 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) NotEqual 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+at-most-one(x#components_1#int_direct_1, x#components_1#int_direct_2) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__1 <-> integer-weighted(0*x#components_3#int_direct_1, 1*x#components_3#int_direct_2, 2*x#components_3#int_direct_3, 3*x#components_3#int_direct_4, 4*x#components_3#int_direct_5) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
+at-most-one(x#components_3#int_direct_1, x#components_3#int_direct_2, x#components_3#int_direct_3, x#components_3#int_direct_4, x#components_3#int_direct_5) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__2 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) NotEqual 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__3 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__4 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__5 <-> integer-weighted(0*x#components_3#int_direct_1, 1*x#components_3#int_direct_2, 2*x#components_3#int_direct_3, 3*x#components_3#int_direct_4, 4*x#components_3#int_direct_5) Equal 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: Choice }],
+define(__6 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) Equal 1) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__7 <-> integer-weighted(1*x#components_1#int_direct_1, 2*x#components_1#int_direct_2) Equal 2) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 2, structure: Choice }],
+define(__8 <-> (__2) -> (__1)) using tseitin,
+define(__9 <-> or([x#components_1#int_direct_1,x#components_1#int_direct_2;int(1..)])) using tseitin,
+define(__10 <-> or([x#components_3#int_direct_1,x#components_3#int_direct_5;int(1..)])) using tseitin,
+define(__11 <-> and([__3,x#components_2;int(1..)])) using tseitin,
+define(__12 <-> (__6) -> (__11)) using tseitin,
+define(__13 <-> and([__4,__5;int(1..)])) using tseitin,
+define(__14 <-> (__7) -> (__13)) using tseitin,
+define(__15 <-> (x#components_2) <-> (false)) using tseitin,
+define(__16 <-> (__0) -> (__15)) using tseitin,
+assert(__12) using tseitin,
+assert(__14) using tseitin,
+assert(__16) using tseitin,
+assert(__8) using tseitin,
+assert(__9) using tseitin,
+assert(__10) using tseitin
 

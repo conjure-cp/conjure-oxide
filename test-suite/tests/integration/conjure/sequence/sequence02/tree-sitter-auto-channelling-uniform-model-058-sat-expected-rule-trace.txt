@@ -1,0 +1,99 @@
+Model before rewriting:
+
+find x: sequence (maxSize 2) of int(1..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#packed_1: int(0..26)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#packed_1#int_log_1: bool
+  find x#packed_1#int_log_2: bool
+  find x#packed_1#int_log_3: bool
+  find x#packed_1#int_log_4: bool
+  find x#packed_1#int_log_5: bool
+  find x#packed_1#int_log_6: bool
+new constraints:
+  or([and([SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3,x#packed_1#int_log_4,x#packed_1#int_log_5,x#packed_1#int_log_6;int(1..)] [0, 26]) >= 0,SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3,x#packed_1#int_log_4,x#packed_1#int_log_5,x#packed_1#int_log_6;int(1..)] [0, 26]) <= 26;int(1..)]);int(1..)])
+
+--
+
+SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3,x#packed_1#int_log_4,x#packed_1#int_log_5,x#packed_1#int_log_6;int(1..)] [0, 26]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, 4*x#packed_1#int_log_3, 8*x#packed_1#int_log_4, 16*x#packed_1#int_log_5, -32*x#packed_1#int_log_6) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 26 } }]
+
+--
+
+SATInt(Log, [x#packed_1#int_log_1,x#packed_1#int_log_2,x#packed_1#int_log_3,x#packed_1#int_log_4,x#packed_1#int_log_5,x#packed_1#int_log_6;int(1..)] [0, 26]) <= 26
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, 4*x#packed_1#int_log_3, 8*x#packed_1#int_log_4, 16*x#packed_1#int_log_5, -32*x#packed_1#int_log_6) LessEqual 26) using None with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 26 } }]
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+true,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+Final model:
+
+find x: sequence (maxSize 2) of int(1..3)
+find x#packed_1: int(0..26)
+find x#packed_1#int_log_1: bool
+find x#packed_1#int_log_2: bool
+find x#packed_1#int_log_3: bool
+find x#packed_1#int_log_4: bool
+find x#packed_1#int_log_5: bool
+find x#packed_1#int_log_6: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, 4*x#packed_1#int_log_3, 8*x#packed_1#int_log_4, 16*x#packed_1#int_log_5, -32*x#packed_1#int_log_6) GreaterEqual 0) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 26 } }],
+define(__1 <-> integer-weighted(1*x#packed_1#int_log_1, 2*x#packed_1#int_log_2, 4*x#packed_1#int_log_3, 8*x#packed_1#int_log_4, 16*x#packed_1#int_log_5, -32*x#packed_1#int_log_6) LessEqual 26) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 6, structure: BoundedBinary { lower: 0, upper: 26 } }],
+define(__2 <-> and([__0,__1;int(1..)])) using tseitin,
+assert(__2) using tseitin
+

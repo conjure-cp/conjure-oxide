@@ -1,0 +1,336 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(1..x)
+find z: int(y..3)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#int_direct_1: bool
+  find x#int_direct_2: bool
+  find x#int_direct_3: bool
+new constraints:
+  sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3);int(1..)]) <= 1
+  or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+
+--
+
+true,
+sum([toInt(x#int_direct_1),toInt(x#int_direct_2),toInt(x#int_direct_3);int(1..)]) <= 1,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3) using None
+
+--
+
+true,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+   ~~> handle_variables_in_domains ([("Base", 8990)])
+true,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+
+updated variables:
+  find y: int(1..x) ~~> find y: int(1..3)
+  find z: int(y..3) ~~> find z: int(1..3)
+new constraints:
+  and([y >= 1,y <= x;int(1..)])
+  and([z >= y,z <= 3;int(1..)])
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_direct_1: bool
+  find y#int_direct_2: bool
+  find y#int_direct_3: bool
+new constraints:
+  sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1
+  or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+
+--
+
+y >= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) GreaterEqual 1) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+
+--
+
+true,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)]),
+and([__0,y <= x;int(1..)]),
+and([z >= y,z <= 3;int(1..)]),
+sum([toInt(y#int_direct_1),toInt(y#int_direct_2),toInt(y#int_direct_3);int(1..)]) <= 1,
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)]),
+and([__0,y <= x;int(1..)]),
+and([z >= y,z <= 3;int(1..)]),
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3) using None
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#int_direct_1: bool
+  find z#int_direct_2: bool
+  find z#int_direct_3: bool
+new constraints:
+  sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3);int(1..)]) <= 1
+  or([z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)])
+
+--
+
+z >= y
+   ~~> uniform_repr_in_comparison_op ([("ReprGeneral", 10100)])
+z >= y
+
+--
+
+z >= y
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*z#int_direct_1, 2*z#int_direct_2, 3*z#int_direct_3, -1*y#int_direct_1, -2*y#int_direct_2, -3*y#int_direct_3) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+
+--
+
+true,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)]),
+and([__0,y <= x;int(1..)]),
+and([__1,z <= 3;int(1..)]),
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)]),
+sum([toInt(z#int_direct_1),toInt(z#int_direct_2),toInt(z#int_direct_3);int(1..)]) <= 1,
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)]),
+and([__0,y <= x;int(1..)]),
+and([__1,z <= 3;int(1..)]),
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)]),
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)])
+new SAT encoding decisions:
+  at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3) using None
+
+--
+
+y <= x
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3, -1*x#int_direct_1, -2*x#int_direct_2, -3*x#int_direct_3) LessEqual 0) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }]
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+
+--
+
+z <= 3
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*z#int_direct_1, 2*z#int_direct_2, 3*z#int_direct_3) LessEqual 3) using None with [PbTermGroup { start: 0, end: 3, structure: Choice }]
+
+--
+
+or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin
+
+--
+
+and([__0,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> and([__0,__2;int(1..)])) using tseitin
+
+--
+
+and([__1,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> and([__1,__3;int(1..)])) using tseitin
+
+--
+
+or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])) using tseitin
+
+--
+
+or([z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> or([z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)])) using tseitin
+
+--
+
+true,
+__4,
+__5,
+__6,
+__7,
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+__5,
+__6,
+__7,
+__8
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+true,
+__5,
+__6,
+__7,
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+__6,
+__7,
+__8
+new SAT encoding decisions:
+  assert(__5) using tseitin
+
+--
+
+true,
+__6,
+__7,
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+__7,
+__8
+new SAT encoding decisions:
+  assert(__6) using tseitin
+
+--
+
+true,
+__7,
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+__8
+new SAT encoding decisions:
+  assert(__7) using tseitin
+
+--
+
+true,
+__8
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__8) using tseitin
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(1..3)
+find z: int(1..3)
+find x#int_direct_1: bool
+find x#int_direct_2: bool
+find x#int_direct_3: bool
+find y#int_direct_1: bool
+find y#int_direct_2: bool
+find y#int_direct_3: bool
+findAux __0: bool
+find z#int_direct_1: bool
+find z#int_direct_2: bool
+find z#int_direct_3: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(x#int_direct_1, x#int_direct_2, x#int_direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__0 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3) GreaterEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+at-most-one(y#int_direct_1, y#int_direct_2, y#int_direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__1 <-> integer-weighted(1*z#int_direct_1, 2*z#int_direct_2, 3*z#int_direct_3, -1*y#int_direct_1, -2*y#int_direct_2, -3*y#int_direct_3) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+at-most-one(z#int_direct_1, z#int_direct_2, z#int_direct_3) using Some(EncodingSelection { algorithm: Bimander, provenance: Heuristic }),
+define(__2 <-> integer-weighted(1*y#int_direct_1, 2*y#int_direct_2, 3*y#int_direct_3, -1*x#int_direct_1, -2*x#int_direct_2, -3*x#int_direct_3) LessEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }, PbTermGroup { start: 3, end: 6, structure: Choice }],
+define(__3 <-> integer-weighted(1*z#int_direct_1, 2*z#int_direct_2, 3*z#int_direct_3) LessEqual 3) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: Choice }],
+define(__4 <-> or([x#int_direct_1,x#int_direct_2,x#int_direct_3;int(1..)])) using tseitin,
+define(__5 <-> and([__0,__2;int(1..)])) using tseitin,
+define(__6 <-> and([__1,__3;int(1..)])) using tseitin,
+define(__7 <-> or([y#int_direct_1,y#int_direct_2,y#int_direct_3;int(1..)])) using tseitin,
+define(__8 <-> or([z#int_direct_1,z#int_direct_2,z#int_direct_3;int(1..)])) using tseitin,
+assert(__4) using tseitin,
+assert(__5) using tseitin,
+assert(__6) using tseitin,
+assert(__7) using tseitin,
+assert(__8) using tseitin
+

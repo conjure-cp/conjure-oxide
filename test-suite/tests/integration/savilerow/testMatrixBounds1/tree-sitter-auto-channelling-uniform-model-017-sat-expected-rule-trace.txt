@@ -1,0 +1,172 @@
+Model before rewriting:
+
+find i: int(1..1)
+find j: int(1..1)
+find m: matrix indexed by [int(0..1)] of bool
+
+such that
+
+m[sum([i,j;int(1..)])]
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#components_1: bool
+  find m#components_2: bool
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#int_order_1: bool
+new constraints:
+  i#int_order_1
+  or([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]) = 1;int(1..)])
+
+--
+
+SATInt(Order, [i#int_order_1;int(1..)] [1, 1]) = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted() Equal 0) using None with []
+
+--
+
+j
+   ~~> select_representation ([("ReprGeneral", 10000)])
+j
+new variables:
+  find j#int_order_1: bool
+new constraints:
+  j#int_order_1
+  or([SATInt(Order, [j#int_order_1;int(1..)] [1, 1]) = 1;int(1..)])
+
+--
+
+SATInt(Order, [j#int_order_1;int(1..)] [1, 1]) = 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted() Equal 0) using None with []
+
+--
+
+i
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [i#int_order_1;int(1..)] [1, 1])
+
+--
+
+j
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [j#int_order_1;int(1..)] [1, 1])
+
+--
+
+or([__1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__1
+
+--
+
+or([__0;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__0
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+i#int_order_1,
+__0,
+j#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+__0,
+j#int_order_1,
+__1
+new SAT encoding decisions:
+  assert(i#int_order_1) using tseitin
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+__0,
+j#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+j#int_order_1,
+__1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+j#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+__1
+new SAT encoding decisions:
+  assert(j#int_order_1) using tseitin
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]) @ false}
+
+--
+
+{SafeIndex(m,[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m,[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]),false;int(1..)])
+
+--
+
+Final model:
+
+find i: int(1..1)
+find j: int(1..1)
+find m: matrix indexed by [int(0..1)] of bool
+find m#components_1: bool
+find m#components_2: bool
+find i#int_order_1: bool
+findAux __0: bool
+find j#int_order_1: bool
+findAux __1: bool
+
+such that
+
+false
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [],
+define(__1 <-> integer-weighted() Equal 0) using Some(EncodingSelection { algorithm: RustsatBinaryAdder, provenance: Heuristic }) with [],
+assert(i#int_order_1) using tseitin,
+assert(__0) using tseitin,
+assert(j#int_order_1) using tseitin,
+assert(__1) using tseitin
+

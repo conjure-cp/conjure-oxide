@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after the structured PB input connection.
+Inventory date: 2026-10-03, branch `sat-ir` after the integer relation decision migration.
 
-328 of 623 runnable integration fixtures have SAT enabled. All 328 passed the latest full acceptance and normal golden checks, exercising 4,333 SAT portfolios. The remaining 295 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+329 of 624 runnable integration fixtures have SAT enabled. All 329 passed the latest full acceptance and normal golden verification, exercising 11,183 SAT portfolios. The remaining 295 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -366,3 +366,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 3. Retest `basic/abs/03-nested` across the complete uniform portfolio; compact/first already succeed.
 4. Re-screen residual-constraint cases after the weighted PB changes, then group remaining failures by their actual residual ASTs.
 5. Revisit bounded timeouts with longer limits and separate compilation cost from solving cost.
+
+## Passing performance follow-ups
+
+The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Preserving representation groups through native asserted integer PB calls and general reification remains an open library connection; currently only the Direct choice specialisations consume those groups at this boundary.

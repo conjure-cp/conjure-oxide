@@ -1,0 +1,4523 @@
+Model before rewriting:
+
+letting b be 3
+letting k be 3
+letting l be 20
+letting r be 60
+letting v be 3
+find bibd: matrix indexed by [int(1..v), int(1..b)] of int(0..1)
+find x: int(-5..5)
+find y: int(-5..5)
+
+such that
+
+bibd[bibd[x, y], 0] = 1
+
+--
+
+bibd
+   ~~> select_representation ([("ReprGeneral", 10000)])
+bibd
+new variables:
+  find bibd#components_1: int(0..1)
+  find bibd#components_2: int(0..1)
+  find bibd#components_3: int(0..1)
+  find bibd#components_4: int(0..1)
+  find bibd#components_5: int(0..1)
+  find bibd#components_6: int(0..1)
+  find bibd#components_7: int(0..1)
+  find bibd#components_8: int(0..1)
+  find bibd#components_9: int(0..1)
+
+--
+
+bibd
+   ~~> select_representation ([("ReprGeneral", 10000)])
+bibd
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_order_1: bool
+  find x#int_order_10: bool
+  find x#int_order_11: bool
+  find x#int_order_2: bool
+  find x#int_order_3: bool
+  find x#int_order_4: bool
+  find x#int_order_5: bool
+  find x#int_order_6: bool
+  find x#int_order_7: bool
+  find x#int_order_8: bool
+  find x#int_order_9: bool
+new constraints:
+  x#int_order_1
+  or([!(x#int_order_2),x#int_order_1;int(1..)])
+  or([!(x#int_order_3),x#int_order_2;int(1..)])
+  or([!(x#int_order_4),x#int_order_3;int(1..)])
+  or([!(x#int_order_5),x#int_order_4;int(1..)])
+  or([!(x#int_order_6),x#int_order_5;int(1..)])
+  or([!(x#int_order_7),x#int_order_6;int(1..)])
+  or([!(x#int_order_8),x#int_order_7;int(1..)])
+  or([!(x#int_order_9),x#int_order_8;int(1..)])
+  or([!(x#int_order_10),x#int_order_9;int(1..)])
+  or([!(x#int_order_11),x#int_order_10;int(1..)])
+  or([and([SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]) >= -5,SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]) <= 5;int(1..)]);int(1..)])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]) >= -5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6, 1*x#int_order_7, 1*x#int_order_8, 1*x#int_order_9, 1*x#int_order_10, 1*x#int_order_11) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 10, structure: Chain }]
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]) <= 5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6, 1*x#int_order_7, 1*x#int_order_8, 1*x#int_order_9, 1*x#int_order_10, 1*x#int_order_11) LessEqual 10) using None with [PbTermGroup { start: 0, end: 10, structure: Chain }]
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_order_1: bool
+  find y#int_order_10: bool
+  find y#int_order_11: bool
+  find y#int_order_2: bool
+  find y#int_order_3: bool
+  find y#int_order_4: bool
+  find y#int_order_5: bool
+  find y#int_order_6: bool
+  find y#int_order_7: bool
+  find y#int_order_8: bool
+  find y#int_order_9: bool
+new constraints:
+  y#int_order_1
+  or([!(y#int_order_2),y#int_order_1;int(1..)])
+  or([!(y#int_order_3),y#int_order_2;int(1..)])
+  or([!(y#int_order_4),y#int_order_3;int(1..)])
+  or([!(y#int_order_5),y#int_order_4;int(1..)])
+  or([!(y#int_order_6),y#int_order_5;int(1..)])
+  or([!(y#int_order_7),y#int_order_6;int(1..)])
+  or([!(y#int_order_8),y#int_order_7;int(1..)])
+  or([!(y#int_order_9),y#int_order_8;int(1..)])
+  or([!(y#int_order_10),y#int_order_9;int(1..)])
+  or([!(y#int_order_11),y#int_order_10;int(1..)])
+  or([and([SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]) >= -5,SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]) <= 5;int(1..)]);int(1..)])
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]) >= -5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6, 1*y#int_order_7, 1*y#int_order_8, 1*y#int_order_9, 1*y#int_order_10, 1*y#int_order_11) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 10, structure: Chain }]
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]) <= 5
+   ~~> select_integer_relation ([("SAT", 18500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6, 1*y#int_order_7, 1*y#int_order_8, 1*y#int_order_9, 1*y#int_order_10, 1*y#int_order_11) LessEqual 10) using None with [PbTermGroup { start: 0, end: 10, structure: Chain }]
+
+--
+
+bibd[bibd[x, y], 0] = 1,
+x#int_order_1,
+or([!(x#int_order_2),x#int_order_1;int(1..)]),
+or([!(x#int_order_3),x#int_order_2;int(1..)]),
+or([!(x#int_order_4),x#int_order_3;int(1..)]),
+or([!(x#int_order_5),x#int_order_4;int(1..)]),
+or([!(x#int_order_6),x#int_order_5;int(1..)]),
+or([!(x#int_order_7),x#int_order_6;int(1..)]),
+or([!(x#int_order_8),x#int_order_7;int(1..)]),
+or([!(x#int_order_9),x#int_order_8;int(1..)]),
+or([!(x#int_order_10),x#int_order_9;int(1..)]),
+or([!(x#int_order_11),x#int_order_10;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+y#int_order_1,
+or([!(y#int_order_2),y#int_order_1;int(1..)]),
+or([!(y#int_order_3),y#int_order_2;int(1..)]),
+or([!(y#int_order_4),y#int_order_3;int(1..)]),
+or([!(y#int_order_5),y#int_order_4;int(1..)]),
+or([!(y#int_order_6),y#int_order_5;int(1..)]),
+or([!(y#int_order_7),y#int_order_6;int(1..)]),
+or([!(y#int_order_8),y#int_order_7;int(1..)]),
+or([!(y#int_order_9),y#int_order_8;int(1..)]),
+or([!(y#int_order_10),y#int_order_9;int(1..)]),
+or([!(y#int_order_11),y#int_order_10;int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+bibd[bibd[x, y], 0] = 1,
+x#int_order_1,
+or([!(x#int_order_2),x#int_order_1;int(1..)]),
+or([!(x#int_order_3),x#int_order_2;int(1..)]),
+or([!(x#int_order_4),x#int_order_3;int(1..)]),
+or([!(x#int_order_5),x#int_order_4;int(1..)]),
+or([!(x#int_order_6),x#int_order_5;int(1..)]),
+or([!(x#int_order_7),x#int_order_6;int(1..)]),
+or([!(x#int_order_8),x#int_order_7;int(1..)]),
+or([!(x#int_order_9),x#int_order_8;int(1..)]),
+or([!(x#int_order_10),x#int_order_9;int(1..)]),
+or([!(x#int_order_11),x#int_order_10;int(1..)]),
+or([and([__0,__1;int(1..)]);int(1..)]),
+y#int_order_1,
+or([!(y#int_order_2),y#int_order_1;int(1..)]),
+or([!(y#int_order_3),y#int_order_2;int(1..)]),
+or([!(y#int_order_4),y#int_order_3;int(1..)]),
+or([!(y#int_order_5),y#int_order_4;int(1..)]),
+or([!(y#int_order_6),y#int_order_5;int(1..)]),
+or([!(y#int_order_7),y#int_order_6;int(1..)]),
+or([!(y#int_order_8),y#int_order_7;int(1..)]),
+or([!(y#int_order_9),y#int_order_8;int(1..)]),
+or([!(y#int_order_10),y#int_order_9;int(1..)]),
+or([!(y#int_order_11),y#int_order_10;int(1..)]),
+or([and([__2,__3;int(1..)]);int(1..)])
+new variables:
+  find bibd#components_1#int_order_1: bool
+  find bibd#components_1#int_order_2: bool
+  find bibd#components_2#int_order_1: bool
+  find bibd#components_2#int_order_2: bool
+  find bibd#components_3#int_order_1: bool
+  find bibd#components_3#int_order_2: bool
+  find bibd#components_4#int_order_1: bool
+  find bibd#components_4#int_order_2: bool
+  find bibd#components_5#int_order_1: bool
+  find bibd#components_5#int_order_2: bool
+  find bibd#components_6#int_order_1: bool
+  find bibd#components_6#int_order_2: bool
+  find bibd#components_7#int_order_1: bool
+  find bibd#components_7#int_order_2: bool
+  find bibd#components_8#int_order_1: bool
+  find bibd#components_8#int_order_2: bool
+  find bibd#components_9#int_order_1: bool
+  find bibd#components_9#int_order_2: bool
+new constraints:
+  bibd#components_1#int_order_1
+  or([!(bibd#components_1#int_order_2),bibd#components_1#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_1#int_order_1,bibd#components_1#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_1#int_order_1,bibd#components_1#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  bibd#components_2#int_order_1
+  or([!(bibd#components_2#int_order_2),bibd#components_2#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_2#int_order_1,bibd#components_2#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_2#int_order_1,bibd#components_2#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  bibd#components_3#int_order_1
+  or([!(bibd#components_3#int_order_2),bibd#components_3#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_3#int_order_1,bibd#components_3#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_3#int_order_1,bibd#components_3#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  bibd#components_4#int_order_1
+  or([!(bibd#components_4#int_order_2),bibd#components_4#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_4#int_order_1,bibd#components_4#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_4#int_order_1,bibd#components_4#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  bibd#components_5#int_order_1
+  or([!(bibd#components_5#int_order_2),bibd#components_5#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_5#int_order_1,bibd#components_5#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_5#int_order_1,bibd#components_5#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  bibd#components_6#int_order_1
+  or([!(bibd#components_6#int_order_2),bibd#components_6#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_6#int_order_1,bibd#components_6#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_6#int_order_1,bibd#components_6#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  bibd#components_7#int_order_1
+  or([!(bibd#components_7#int_order_2),bibd#components_7#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_7#int_order_1,bibd#components_7#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_7#int_order_1,bibd#components_7#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  bibd#components_8#int_order_1
+  or([!(bibd#components_8#int_order_2),bibd#components_8#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_8#int_order_1,bibd#components_8#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_8#int_order_1,bibd#components_8#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+  bibd#components_9#int_order_1
+  or([!(bibd#components_9#int_order_2),bibd#components_9#int_order_1;int(1..)])
+  or([and([SATInt(Order, [bibd#components_9#int_order_1,bibd#components_9#int_order_2;int(1..)] [0, 1]) >= 0,SATInt(Order, [bibd#components_9#int_order_1,bibd#components_9#int_order_2;int(1..)] [0, 1]) <= 1;int(1..)]);int(1..)])
+
+--
+
+SATInt(Order, [bibd#components_1#int_order_1,bibd#components_1#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> integer-weighted(1*bibd#components_1#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_1#int_order_1,bibd#components_1#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__5
+new variables:
+  findAux __5: bool
+new SAT encoding decisions:
+  define(__5 <-> integer-weighted(1*bibd#components_1#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_2#int_order_1,bibd#components_2#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__6
+new variables:
+  findAux __6: bool
+new SAT encoding decisions:
+  define(__6 <-> integer-weighted(1*bibd#components_2#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_2#int_order_1,bibd#components_2#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__7
+new variables:
+  findAux __7: bool
+new SAT encoding decisions:
+  define(__7 <-> integer-weighted(1*bibd#components_2#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_3#int_order_1,bibd#components_3#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__8
+new variables:
+  findAux __8: bool
+new SAT encoding decisions:
+  define(__8 <-> integer-weighted(1*bibd#components_3#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_3#int_order_1,bibd#components_3#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__9
+new variables:
+  findAux __9: bool
+new SAT encoding decisions:
+  define(__9 <-> integer-weighted(1*bibd#components_3#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_4#int_order_1,bibd#components_4#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__10
+new variables:
+  findAux __10: bool
+new SAT encoding decisions:
+  define(__10 <-> integer-weighted(1*bibd#components_4#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_4#int_order_1,bibd#components_4#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__11
+new variables:
+  findAux __11: bool
+new SAT encoding decisions:
+  define(__11 <-> integer-weighted(1*bibd#components_4#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_5#int_order_1,bibd#components_5#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__12
+new variables:
+  findAux __12: bool
+new SAT encoding decisions:
+  define(__12 <-> integer-weighted(1*bibd#components_5#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_5#int_order_1,bibd#components_5#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__13
+new variables:
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__13 <-> integer-weighted(1*bibd#components_5#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_6#int_order_1,bibd#components_6#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__14
+new variables:
+  findAux __14: bool
+new SAT encoding decisions:
+  define(__14 <-> integer-weighted(1*bibd#components_6#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_6#int_order_1,bibd#components_6#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__15
+new variables:
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__15 <-> integer-weighted(1*bibd#components_6#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_7#int_order_1,bibd#components_7#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__16
+new variables:
+  findAux __16: bool
+new SAT encoding decisions:
+  define(__16 <-> integer-weighted(1*bibd#components_7#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_7#int_order_1,bibd#components_7#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__17
+new variables:
+  findAux __17: bool
+new SAT encoding decisions:
+  define(__17 <-> integer-weighted(1*bibd#components_7#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_8#int_order_1,bibd#components_8#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__18
+new variables:
+  findAux __18: bool
+new SAT encoding decisions:
+  define(__18 <-> integer-weighted(1*bibd#components_8#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_8#int_order_1,bibd#components_8#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__19
+new variables:
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__19 <-> integer-weighted(1*bibd#components_8#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_9#int_order_1,bibd#components_9#int_order_2;int(1..)] [0, 1]) >= 0
+   ~~> select_integer_relation ([("SAT", 18500)])
+__20
+new variables:
+  findAux __20: bool
+new SAT encoding decisions:
+  define(__20 <-> integer-weighted(1*bibd#components_9#int_order_2) GreaterEqual 0) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+SATInt(Order, [bibd#components_9#int_order_1,bibd#components_9#int_order_2;int(1..)] [0, 1]) <= 1
+   ~~> select_integer_relation ([("SAT", 18500)])
+__21
+new variables:
+  findAux __21: bool
+new SAT encoding decisions:
+  define(__21 <-> integer-weighted(1*bibd#components_9#int_order_2) LessEqual 1) using None with [PbTermGroup { start: 0, end: 1, structure: Chain }]
+
+--
+
+x
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5])
+
+--
+
+y
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])
+
+--
+
+!(bibd#components_2#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__22
+new variables:
+  findAux __22: bool
+new SAT encoding decisions:
+  define(__22 <-> !(bibd#components_2#int_order_2)) using tseitin
+
+--
+
+!(bibd#components_3#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__23
+new variables:
+  findAux __23: bool
+new SAT encoding decisions:
+  define(__23 <-> !(bibd#components_3#int_order_2)) using tseitin
+
+--
+
+!(bibd#components_4#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__24
+new variables:
+  findAux __24: bool
+new SAT encoding decisions:
+  define(__24 <-> !(bibd#components_4#int_order_2)) using tseitin
+
+--
+
+!(bibd#components_5#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__25
+new variables:
+  findAux __25: bool
+new SAT encoding decisions:
+  define(__25 <-> !(bibd#components_5#int_order_2)) using tseitin
+
+--
+
+!(bibd#components_6#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__26
+new variables:
+  findAux __26: bool
+new SAT encoding decisions:
+  define(__26 <-> !(bibd#components_6#int_order_2)) using tseitin
+
+--
+
+!(bibd#components_7#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__27
+new variables:
+  findAux __27: bool
+new SAT encoding decisions:
+  define(__27 <-> !(bibd#components_7#int_order_2)) using tseitin
+
+--
+
+!(bibd#components_8#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__28
+new variables:
+  findAux __28: bool
+new SAT encoding decisions:
+  define(__28 <-> !(bibd#components_8#int_order_2)) using tseitin
+
+--
+
+!(bibd#components_9#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__29
+new variables:
+  findAux __29: bool
+new SAT encoding decisions:
+  define(__29 <-> !(bibd#components_9#int_order_2)) using tseitin
+
+--
+
+!(bibd#components_1#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__30
+new variables:
+  findAux __30: bool
+new SAT encoding decisions:
+  define(__30 <-> !(bibd#components_1#int_order_2)) using tseitin
+
+--
+
+!(x#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__31
+new variables:
+  findAux __31: bool
+new SAT encoding decisions:
+  define(__31 <-> !(x#int_order_2)) using tseitin
+
+--
+
+!(x#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__32
+new variables:
+  findAux __32: bool
+new SAT encoding decisions:
+  define(__32 <-> !(x#int_order_3)) using tseitin
+
+--
+
+!(x#int_order_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__33
+new variables:
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__33 <-> !(x#int_order_4)) using tseitin
+
+--
+
+!(x#int_order_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__34
+new variables:
+  findAux __34: bool
+new SAT encoding decisions:
+  define(__34 <-> !(x#int_order_5)) using tseitin
+
+--
+
+!(x#int_order_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__35
+new variables:
+  findAux __35: bool
+new SAT encoding decisions:
+  define(__35 <-> !(x#int_order_6)) using tseitin
+
+--
+
+!(x#int_order_7)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__36
+new variables:
+  findAux __36: bool
+new SAT encoding decisions:
+  define(__36 <-> !(x#int_order_7)) using tseitin
+
+--
+
+!(x#int_order_8)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__37
+new variables:
+  findAux __37: bool
+new SAT encoding decisions:
+  define(__37 <-> !(x#int_order_8)) using tseitin
+
+--
+
+!(x#int_order_9)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__38
+new variables:
+  findAux __38: bool
+new SAT encoding decisions:
+  define(__38 <-> !(x#int_order_9)) using tseitin
+
+--
+
+!(x#int_order_10)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__39
+new variables:
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__39 <-> !(x#int_order_10)) using tseitin
+
+--
+
+!(x#int_order_11)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__40
+new variables:
+  findAux __40: bool
+new SAT encoding decisions:
+  define(__40 <-> !(x#int_order_11)) using tseitin
+
+--
+
+!(y#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__41
+new variables:
+  findAux __41: bool
+new SAT encoding decisions:
+  define(__41 <-> !(y#int_order_2)) using tseitin
+
+--
+
+!(y#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__42
+new variables:
+  findAux __42: bool
+new SAT encoding decisions:
+  define(__42 <-> !(y#int_order_3)) using tseitin
+
+--
+
+!(y#int_order_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__43
+new variables:
+  findAux __43: bool
+new SAT encoding decisions:
+  define(__43 <-> !(y#int_order_4)) using tseitin
+
+--
+
+!(y#int_order_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__44
+new variables:
+  findAux __44: bool
+new SAT encoding decisions:
+  define(__44 <-> !(y#int_order_5)) using tseitin
+
+--
+
+!(y#int_order_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__45
+new variables:
+  findAux __45: bool
+new SAT encoding decisions:
+  define(__45 <-> !(y#int_order_6)) using tseitin
+
+--
+
+!(y#int_order_7)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__46
+new variables:
+  findAux __46: bool
+new SAT encoding decisions:
+  define(__46 <-> !(y#int_order_7)) using tseitin
+
+--
+
+!(y#int_order_8)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__47
+new variables:
+  findAux __47: bool
+new SAT encoding decisions:
+  define(__47 <-> !(y#int_order_8)) using tseitin
+
+--
+
+!(y#int_order_9)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__48
+new variables:
+  findAux __48: bool
+new SAT encoding decisions:
+  define(__48 <-> !(y#int_order_9)) using tseitin
+
+--
+
+!(y#int_order_10)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__49
+new variables:
+  findAux __49: bool
+new SAT encoding decisions:
+  define(__49 <-> !(y#int_order_10)) using tseitin
+
+--
+
+!(y#int_order_11)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__50
+new variables:
+  findAux __50: bool
+new SAT encoding decisions:
+  define(__50 <-> !(y#int_order_11)) using tseitin
+
+--
+
+or([and([__6,__7;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__6,__7;int(1..)])
+
+--
+
+or([and([__8,__9;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__8,__9;int(1..)])
+
+--
+
+or([and([__10,__11;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__10,__11;int(1..)])
+
+--
+
+or([and([__12,__13;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__12,__13;int(1..)])
+
+--
+
+or([and([__14,__15;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__14,__15;int(1..)])
+
+--
+
+or([and([__16,__17;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__16,__17;int(1..)])
+
+--
+
+or([and([__18,__19;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__18,__19;int(1..)])
+
+--
+
+or([and([__20,__21;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__20,__21;int(1..)])
+
+--
+
+or([and([__4,__5;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__4,__5;int(1..)])
+
+--
+
+or([and([__0,__1;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__0,__1;int(1..)])
+
+--
+
+or([and([__2,__3;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__2,__3;int(1..)])
+
+--
+
+or([__23,bibd#components_3#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__51
+new variables:
+  findAux __51: bool
+new SAT encoding decisions:
+  define(__51 <-> or([__23,bibd#components_3#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__24,bibd#components_4#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__52
+new variables:
+  findAux __52: bool
+new SAT encoding decisions:
+  define(__52 <-> or([__24,bibd#components_4#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__25,bibd#components_5#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__53
+new variables:
+  findAux __53: bool
+new SAT encoding decisions:
+  define(__53 <-> or([__25,bibd#components_5#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__26,bibd#components_6#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__54
+new variables:
+  findAux __54: bool
+new SAT encoding decisions:
+  define(__54 <-> or([__26,bibd#components_6#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__27,bibd#components_7#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__55
+new variables:
+  findAux __55: bool
+new SAT encoding decisions:
+  define(__55 <-> or([__27,bibd#components_7#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__28,bibd#components_8#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__56
+new variables:
+  findAux __56: bool
+new SAT encoding decisions:
+  define(__56 <-> or([__28,bibd#components_8#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__29,bibd#components_9#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__57
+new variables:
+  findAux __57: bool
+new SAT encoding decisions:
+  define(__57 <-> or([__29,bibd#components_9#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__30,bibd#components_1#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__58
+new variables:
+  findAux __58: bool
+new SAT encoding decisions:
+  define(__58 <-> or([__30,bibd#components_1#int_order_1;int(1..)])) using tseitin
+
+--
+
+and([__6,__7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__59
+new variables:
+  findAux __59: bool
+new SAT encoding decisions:
+  define(__59 <-> and([__6,__7;int(1..)])) using tseitin
+
+--
+
+and([__8,__9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__60
+new variables:
+  findAux __60: bool
+new SAT encoding decisions:
+  define(__60 <-> and([__8,__9;int(1..)])) using tseitin
+
+--
+
+and([__10,__11;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__61
+new variables:
+  findAux __61: bool
+new SAT encoding decisions:
+  define(__61 <-> and([__10,__11;int(1..)])) using tseitin
+
+--
+
+and([__12,__13;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__62
+new variables:
+  findAux __62: bool
+new SAT encoding decisions:
+  define(__62 <-> and([__12,__13;int(1..)])) using tseitin
+
+--
+
+and([__14,__15;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__63
+new variables:
+  findAux __63: bool
+new SAT encoding decisions:
+  define(__63 <-> and([__14,__15;int(1..)])) using tseitin
+
+--
+
+and([__16,__17;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__64
+new variables:
+  findAux __64: bool
+new SAT encoding decisions:
+  define(__64 <-> and([__16,__17;int(1..)])) using tseitin
+
+--
+
+and([__18,__19;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__65
+new variables:
+  findAux __65: bool
+new SAT encoding decisions:
+  define(__65 <-> and([__18,__19;int(1..)])) using tseitin
+
+--
+
+and([__20,__21;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__66
+new variables:
+  findAux __66: bool
+new SAT encoding decisions:
+  define(__66 <-> and([__20,__21;int(1..)])) using tseitin
+
+--
+
+and([__4,__5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__67
+new variables:
+  findAux __67: bool
+new SAT encoding decisions:
+  define(__67 <-> and([__4,__5;int(1..)])) using tseitin
+
+--
+
+and([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__68
+new variables:
+  findAux __68: bool
+new SAT encoding decisions:
+  define(__68 <-> and([__0,__1;int(1..)])) using tseitin
+
+--
+
+and([__2,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__69
+new variables:
+  findAux __69: bool
+new SAT encoding decisions:
+  define(__69 <-> and([__2,__3;int(1..)])) using tseitin
+
+--
+
+or([__22,bibd#components_2#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__70
+new variables:
+  findAux __70: bool
+new SAT encoding decisions:
+  define(__70 <-> or([__22,bibd#components_2#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__31,x#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__71
+new variables:
+  findAux __71: bool
+new SAT encoding decisions:
+  define(__71 <-> or([__31,x#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__32,x#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__72
+new variables:
+  findAux __72: bool
+new SAT encoding decisions:
+  define(__72 <-> or([__32,x#int_order_2;int(1..)])) using tseitin
+
+--
+
+or([__33,x#int_order_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__73
+new variables:
+  findAux __73: bool
+new SAT encoding decisions:
+  define(__73 <-> or([__33,x#int_order_3;int(1..)])) using tseitin
+
+--
+
+or([__34,x#int_order_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__74
+new variables:
+  findAux __74: bool
+new SAT encoding decisions:
+  define(__74 <-> or([__34,x#int_order_4;int(1..)])) using tseitin
+
+--
+
+or([__35,x#int_order_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__75
+new variables:
+  findAux __75: bool
+new SAT encoding decisions:
+  define(__75 <-> or([__35,x#int_order_5;int(1..)])) using tseitin
+
+--
+
+or([__36,x#int_order_6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__76
+new variables:
+  findAux __76: bool
+new SAT encoding decisions:
+  define(__76 <-> or([__36,x#int_order_6;int(1..)])) using tseitin
+
+--
+
+or([__37,x#int_order_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__77
+new variables:
+  findAux __77: bool
+new SAT encoding decisions:
+  define(__77 <-> or([__37,x#int_order_7;int(1..)])) using tseitin
+
+--
+
+or([__38,x#int_order_8;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__78
+new variables:
+  findAux __78: bool
+new SAT encoding decisions:
+  define(__78 <-> or([__38,x#int_order_8;int(1..)])) using tseitin
+
+--
+
+or([__39,x#int_order_9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__79
+new variables:
+  findAux __79: bool
+new SAT encoding decisions:
+  define(__79 <-> or([__39,x#int_order_9;int(1..)])) using tseitin
+
+--
+
+or([__40,x#int_order_10;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__80
+new variables:
+  findAux __80: bool
+new SAT encoding decisions:
+  define(__80 <-> or([__40,x#int_order_10;int(1..)])) using tseitin
+
+--
+
+or([__41,y#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__81
+new variables:
+  findAux __81: bool
+new SAT encoding decisions:
+  define(__81 <-> or([__41,y#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__42,y#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__82
+new variables:
+  findAux __82: bool
+new SAT encoding decisions:
+  define(__82 <-> or([__42,y#int_order_2;int(1..)])) using tseitin
+
+--
+
+or([__43,y#int_order_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__83
+new variables:
+  findAux __83: bool
+new SAT encoding decisions:
+  define(__83 <-> or([__43,y#int_order_3;int(1..)])) using tseitin
+
+--
+
+or([__44,y#int_order_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__84
+new variables:
+  findAux __84: bool
+new SAT encoding decisions:
+  define(__84 <-> or([__44,y#int_order_4;int(1..)])) using tseitin
+
+--
+
+or([__45,y#int_order_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__85
+new variables:
+  findAux __85: bool
+new SAT encoding decisions:
+  define(__85 <-> or([__45,y#int_order_5;int(1..)])) using tseitin
+
+--
+
+or([__46,y#int_order_6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__86
+new variables:
+  findAux __86: bool
+new SAT encoding decisions:
+  define(__86 <-> or([__46,y#int_order_6;int(1..)])) using tseitin
+
+--
+
+or([__47,y#int_order_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__87
+new variables:
+  findAux __87: bool
+new SAT encoding decisions:
+  define(__87 <-> or([__47,y#int_order_7;int(1..)])) using tseitin
+
+--
+
+or([__48,y#int_order_8;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__88
+new variables:
+  findAux __88: bool
+new SAT encoding decisions:
+  define(__88 <-> or([__48,y#int_order_8;int(1..)])) using tseitin
+
+--
+
+or([__49,y#int_order_9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__89
+new variables:
+  findAux __89: bool
+new SAT encoding decisions:
+  define(__89 <-> or([__49,y#int_order_9;int(1..)])) using tseitin
+
+--
+
+or([__50,y#int_order_10;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__90
+new variables:
+  findAux __90: bool
+new SAT encoding decisions:
+  define(__90 <-> or([__50,y#int_order_10;int(1..)])) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+x#int_order_1,
+__71,
+__72,
+__73,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__71,
+__72,
+__73,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(x#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__71,
+__72,
+__73,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__72,
+__73,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__71) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__72,
+__73,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__73,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__72) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__73,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__73) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__74,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__74) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__75,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__75) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__76,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__76) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__77,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__77) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__78,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__78) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__79,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__79) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__80,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__80) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__68,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__68) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+y#int_order_1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(y#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__81,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__81) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__82,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__82) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__83,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__83) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__84,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__84) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__85,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__85) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__86,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__86) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__87,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__87) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__88,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__88) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__89,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__89) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__90,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__90) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__69,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__69) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_1#int_order_1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_1#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__58,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__58) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__67,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__67) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_2#int_order_1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_2#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__70,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__70) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__59,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__59) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_3#int_order_1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_3#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__51,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__51) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__60,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__60) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_4#int_order_1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_4#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__52,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__52) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__61,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__61) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_5#int_order_1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_5#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__53,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__53) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__62,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__62) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_6#int_order_1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_6#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__54,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__54) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__63,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__63) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_7#int_order_1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_7#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__55,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__55) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__64,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__64) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_8#int_order_1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_8#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__56,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__56) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__65,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_9#int_order_1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(__65) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+bibd#components_9#int_order_1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__57,
+__66
+new SAT encoding decisions:
+  assert(bibd#components_9#int_order_1) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__57,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__66
+new SAT encoding decisions:
+  assert(__57) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1,
+__66
+   ~~> remove_single_atom ([("SAT", 8400)])
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0] = 1
+new SAT encoding decisions:
+  assert(__66) using tseitin
+
+--
+
+bibd[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(bibd,[bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])], 0]) @ false}
+
+--
+
+bibd[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(bibd,[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])]) @ and([__inDomain(SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]),int(1..3)),__inDomain(SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]),int(1..3));int(1..)])}
+
+--
+
+{SafeIndex(bibd,[{SafeIndex(bibd,[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])]) @ and([__inDomain(SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]),int(1..3)),__inDomain(SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]),int(1..3));int(1..)])}, 0]) @ false} = 1
+   ~~> bubble_up ([("Bubble", 8800)])
+{SafeIndex(bibd,[{SafeIndex(bibd,[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])]) @ and([__inDomain(SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]),int(1..3)),__inDomain(SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]),int(1..3));int(1..)])}, 0]) = 1 @ false}
+
+--
+
+{SafeIndex(bibd,[{SafeIndex(bibd,[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])]) @ and([__inDomain(SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]),int(1..3)),__inDomain(SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]),int(1..3));int(1..)])}, 0]) = 1 @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(bibd,[{SafeIndex(bibd,[SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]), SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5])]) @ and([__inDomain(SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3,x#int_order_4,x#int_order_5,x#int_order_6,x#int_order_7,x#int_order_8,x#int_order_9,x#int_order_10,x#int_order_11;int(1..)] [-5, 5]),int(1..3)),__inDomain(SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3,y#int_order_4,y#int_order_5,y#int_order_6,y#int_order_7,y#int_order_8,y#int_order_9,y#int_order_10,y#int_order_11;int(1..)] [-5, 5]),int(1..3));int(1..)])}, 0]) = 1,false;int(1..)])
+
+--
+
+Final model:
+
+letting b be 3
+letting k be 3
+letting l be 20
+letting r be 60
+letting v be 3
+find bibd: matrix indexed by [int(1..v), int(1..b)] of int(0..1)
+find x: int(-5..5)
+find y: int(-5..5)
+find bibd#components_1: int(0..1)
+find bibd#components_2: int(0..1)
+find bibd#components_3: int(0..1)
+find bibd#components_4: int(0..1)
+find bibd#components_5: int(0..1)
+find bibd#components_6: int(0..1)
+find bibd#components_7: int(0..1)
+find bibd#components_8: int(0..1)
+find bibd#components_9: int(0..1)
+find x#int_order_1: bool
+find x#int_order_2: bool
+find x#int_order_3: bool
+find x#int_order_4: bool
+find x#int_order_5: bool
+find x#int_order_6: bool
+find x#int_order_7: bool
+find x#int_order_8: bool
+find x#int_order_9: bool
+find x#int_order_10: bool
+find x#int_order_11: bool
+findAux __0: bool
+findAux __1: bool
+find y#int_order_1: bool
+find y#int_order_2: bool
+find y#int_order_3: bool
+find y#int_order_4: bool
+find y#int_order_5: bool
+find y#int_order_6: bool
+find y#int_order_7: bool
+find y#int_order_8: bool
+find y#int_order_9: bool
+find y#int_order_10: bool
+find y#int_order_11: bool
+findAux __2: bool
+findAux __3: bool
+find bibd#components_1#int_order_1: bool
+find bibd#components_1#int_order_2: bool
+find bibd#components_2#int_order_1: bool
+find bibd#components_2#int_order_2: bool
+find bibd#components_3#int_order_1: bool
+find bibd#components_3#int_order_2: bool
+find bibd#components_4#int_order_1: bool
+find bibd#components_4#int_order_2: bool
+find bibd#components_5#int_order_1: bool
+find bibd#components_5#int_order_2: bool
+find bibd#components_6#int_order_1: bool
+find bibd#components_6#int_order_2: bool
+find bibd#components_7#int_order_1: bool
+find bibd#components_7#int_order_2: bool
+find bibd#components_8#int_order_1: bool
+find bibd#components_8#int_order_2: bool
+find bibd#components_9#int_order_1: bool
+find bibd#components_9#int_order_2: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+
+such that
+
+false
+
+sat encoding decisions:
+
+define(__0 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6, 1*x#int_order_7, 1*x#int_order_8, 1*x#int_order_9, 1*x#int_order_10, 1*x#int_order_11) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: Chain }],
+define(__1 <-> integer-weighted(1*x#int_order_2, 1*x#int_order_3, 1*x#int_order_4, 1*x#int_order_5, 1*x#int_order_6, 1*x#int_order_7, 1*x#int_order_8, 1*x#int_order_9, 1*x#int_order_10, 1*x#int_order_11) LessEqual 10) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: Chain }],
+define(__2 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6, 1*y#int_order_7, 1*y#int_order_8, 1*y#int_order_9, 1*y#int_order_10, 1*y#int_order_11) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: Chain }],
+define(__3 <-> integer-weighted(1*y#int_order_2, 1*y#int_order_3, 1*y#int_order_4, 1*y#int_order_5, 1*y#int_order_6, 1*y#int_order_7, 1*y#int_order_8, 1*y#int_order_9, 1*y#int_order_10, 1*y#int_order_11) LessEqual 10) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: Chain }],
+define(__4 <-> integer-weighted(1*bibd#components_1#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__5 <-> integer-weighted(1*bibd#components_1#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__6 <-> integer-weighted(1*bibd#components_2#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__7 <-> integer-weighted(1*bibd#components_2#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__8 <-> integer-weighted(1*bibd#components_3#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__9 <-> integer-weighted(1*bibd#components_3#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__10 <-> integer-weighted(1*bibd#components_4#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__11 <-> integer-weighted(1*bibd#components_4#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__12 <-> integer-weighted(1*bibd#components_5#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__13 <-> integer-weighted(1*bibd#components_5#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__14 <-> integer-weighted(1*bibd#components_6#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__15 <-> integer-weighted(1*bibd#components_6#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__16 <-> integer-weighted(1*bibd#components_7#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__17 <-> integer-weighted(1*bibd#components_7#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__18 <-> integer-weighted(1*bibd#components_8#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__19 <-> integer-weighted(1*bibd#components_8#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__20 <-> integer-weighted(1*bibd#components_9#int_order_2) GreaterEqual 0) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__21 <-> integer-weighted(1*bibd#components_9#int_order_2) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 1, structure: Chain }],
+define(__22 <-> !(bibd#components_2#int_order_2)) using tseitin,
+define(__23 <-> !(bibd#components_3#int_order_2)) using tseitin,
+define(__24 <-> !(bibd#components_4#int_order_2)) using tseitin,
+define(__25 <-> !(bibd#components_5#int_order_2)) using tseitin,
+define(__26 <-> !(bibd#components_6#int_order_2)) using tseitin,
+define(__27 <-> !(bibd#components_7#int_order_2)) using tseitin,
+define(__28 <-> !(bibd#components_8#int_order_2)) using tseitin,
+define(__29 <-> !(bibd#components_9#int_order_2)) using tseitin,
+define(__30 <-> !(bibd#components_1#int_order_2)) using tseitin,
+define(__31 <-> !(x#int_order_2)) using tseitin,
+define(__32 <-> !(x#int_order_3)) using tseitin,
+define(__33 <-> !(x#int_order_4)) using tseitin,
+define(__34 <-> !(x#int_order_5)) using tseitin,
+define(__35 <-> !(x#int_order_6)) using tseitin,
+define(__36 <-> !(x#int_order_7)) using tseitin,
+define(__37 <-> !(x#int_order_8)) using tseitin,
+define(__38 <-> !(x#int_order_9)) using tseitin,
+define(__39 <-> !(x#int_order_10)) using tseitin,
+define(__40 <-> !(x#int_order_11)) using tseitin,
+define(__41 <-> !(y#int_order_2)) using tseitin,
+define(__42 <-> !(y#int_order_3)) using tseitin,
+define(__43 <-> !(y#int_order_4)) using tseitin,
+define(__44 <-> !(y#int_order_5)) using tseitin,
+define(__45 <-> !(y#int_order_6)) using tseitin,
+define(__46 <-> !(y#int_order_7)) using tseitin,
+define(__47 <-> !(y#int_order_8)) using tseitin,
+define(__48 <-> !(y#int_order_9)) using tseitin,
+define(__49 <-> !(y#int_order_10)) using tseitin,
+define(__50 <-> !(y#int_order_11)) using tseitin,
+define(__51 <-> or([__23,bibd#components_3#int_order_1;int(1..)])) using tseitin,
+define(__52 <-> or([__24,bibd#components_4#int_order_1;int(1..)])) using tseitin,
+define(__53 <-> or([__25,bibd#components_5#int_order_1;int(1..)])) using tseitin,
+define(__54 <-> or([__26,bibd#components_6#int_order_1;int(1..)])) using tseitin,
+define(__55 <-> or([__27,bibd#components_7#int_order_1;int(1..)])) using tseitin,
+define(__56 <-> or([__28,bibd#components_8#int_order_1;int(1..)])) using tseitin,
+define(__57 <-> or([__29,bibd#components_9#int_order_1;int(1..)])) using tseitin,
+define(__58 <-> or([__30,bibd#components_1#int_order_1;int(1..)])) using tseitin,
+define(__59 <-> and([__6,__7;int(1..)])) using tseitin,
+define(__60 <-> and([__8,__9;int(1..)])) using tseitin,
+define(__61 <-> and([__10,__11;int(1..)])) using tseitin,
+define(__62 <-> and([__12,__13;int(1..)])) using tseitin,
+define(__63 <-> and([__14,__15;int(1..)])) using tseitin,
+define(__64 <-> and([__16,__17;int(1..)])) using tseitin,
+define(__65 <-> and([__18,__19;int(1..)])) using tseitin,
+define(__66 <-> and([__20,__21;int(1..)])) using tseitin,
+define(__67 <-> and([__4,__5;int(1..)])) using tseitin,
+define(__68 <-> and([__0,__1;int(1..)])) using tseitin,
+define(__69 <-> and([__2,__3;int(1..)])) using tseitin,
+define(__70 <-> or([__22,bibd#components_2#int_order_1;int(1..)])) using tseitin,
+define(__71 <-> or([__31,x#int_order_1;int(1..)])) using tseitin,
+define(__72 <-> or([__32,x#int_order_2;int(1..)])) using tseitin,
+define(__73 <-> or([__33,x#int_order_3;int(1..)])) using tseitin,
+define(__74 <-> or([__34,x#int_order_4;int(1..)])) using tseitin,
+define(__75 <-> or([__35,x#int_order_5;int(1..)])) using tseitin,
+define(__76 <-> or([__36,x#int_order_6;int(1..)])) using tseitin,
+define(__77 <-> or([__37,x#int_order_7;int(1..)])) using tseitin,
+define(__78 <-> or([__38,x#int_order_8;int(1..)])) using tseitin,
+define(__79 <-> or([__39,x#int_order_9;int(1..)])) using tseitin,
+define(__80 <-> or([__40,x#int_order_10;int(1..)])) using tseitin,
+define(__81 <-> or([__41,y#int_order_1;int(1..)])) using tseitin,
+define(__82 <-> or([__42,y#int_order_2;int(1..)])) using tseitin,
+define(__83 <-> or([__43,y#int_order_3;int(1..)])) using tseitin,
+define(__84 <-> or([__44,y#int_order_4;int(1..)])) using tseitin,
+define(__85 <-> or([__45,y#int_order_5;int(1..)])) using tseitin,
+define(__86 <-> or([__46,y#int_order_6;int(1..)])) using tseitin,
+define(__87 <-> or([__47,y#int_order_7;int(1..)])) using tseitin,
+define(__88 <-> or([__48,y#int_order_8;int(1..)])) using tseitin,
+define(__89 <-> or([__49,y#int_order_9;int(1..)])) using tseitin,
+define(__90 <-> or([__50,y#int_order_10;int(1..)])) using tseitin,
+assert(x#int_order_1) using tseitin,
+assert(__71) using tseitin,
+assert(__72) using tseitin,
+assert(__73) using tseitin,
+assert(__74) using tseitin,
+assert(__75) using tseitin,
+assert(__76) using tseitin,
+assert(__77) using tseitin,
+assert(__78) using tseitin,
+assert(__79) using tseitin,
+assert(__80) using tseitin,
+assert(__68) using tseitin,
+assert(y#int_order_1) using tseitin,
+assert(__81) using tseitin,
+assert(__82) using tseitin,
+assert(__83) using tseitin,
+assert(__84) using tseitin,
+assert(__85) using tseitin,
+assert(__86) using tseitin,
+assert(__87) using tseitin,
+assert(__88) using tseitin,
+assert(__89) using tseitin,
+assert(__90) using tseitin,
+assert(__69) using tseitin,
+assert(bibd#components_1#int_order_1) using tseitin,
+assert(__58) using tseitin,
+assert(__67) using tseitin,
+assert(bibd#components_2#int_order_1) using tseitin,
+assert(__70) using tseitin,
+assert(__59) using tseitin,
+assert(bibd#components_3#int_order_1) using tseitin,
+assert(__51) using tseitin,
+assert(__60) using tseitin,
+assert(bibd#components_4#int_order_1) using tseitin,
+assert(__52) using tseitin,
+assert(__61) using tseitin,
+assert(bibd#components_5#int_order_1) using tseitin,
+assert(__53) using tseitin,
+assert(__62) using tseitin,
+assert(bibd#components_6#int_order_1) using tseitin,
+assert(__54) using tseitin,
+assert(__63) using tseitin,
+assert(bibd#components_7#int_order_1) using tseitin,
+assert(__55) using tseitin,
+assert(__64) using tseitin,
+assert(bibd#components_8#int_order_1) using tseitin,
+assert(__56) using tseitin,
+assert(__65) using tseitin,
+assert(bibd#components_9#int_order_1) using tseitin,
+assert(__57) using tseitin,
+assert(__66) using tseitin
+

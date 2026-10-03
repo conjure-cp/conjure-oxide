@@ -2689,10 +2689,20 @@ new SAT encoding decisions:
 --
 
 sum([SATInt(Log, [__1210,__1213,__1216,__1219,__1222;int(1..)] [-9, 6]),SATInt(Log, [__922,__925,__928,__931;int(1..)] [-8, 0]),product([5,toInt(a);int(1..)]);int(1..)]) <= 1
-   ~~> select_pseudo_boolean ([("SAT", 19000)])
-
+   ~~> select_integer_relation ([("SAT", 18500)])
+__1226
+new variables:
+  findAux __1226: bool
 new SAT encoding decisions:
-  weighted(1*__1210, 2*__1213, 4*__1216, 8*__1219, -16*__1222, 1*__922, 2*__925, 4*__928, -8*__931, 5*a) AtMost 1 using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: -9, upper: 6 } }, PbTermGroup { start: 5, end: 9, structure: BoundedBinary { lower: -8, upper: 0 } }]
+  define(__1226 <-> integer-weighted(1*__1210, 2*__1213, 4*__1216, 8*__1219, -16*__1222, 1*__922, 2*__925, 4*__928, -8*__931, 5*a) LessEqual 1) using None with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: -9, upper: 6 } }, PbTermGroup { start: 5, end: 9, structure: BoundedBinary { lower: -8, upper: 0 } }]
+
+--
+
+__1226
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__1226) using tseitin
 
 --
 
@@ -3933,6 +3943,7 @@ findAux __1222: bool
 findAux __1223: bool
 findAux __1224: bool
 findAux __1225: bool
+findAux __1226: bool
 
 such that
 
@@ -5171,5 +5182,6 @@ define(__1222 <-> or([__1220,__1221;int(1..)])) using tseitin,
 define(__1223 <-> and([__950,__1203;int(1..)])) using tseitin,
 define(__1224 <-> and([__1207,__1179;int(1..)])) using tseitin,
 define(__1225 <-> or([__1223,__1224;int(1..)])) using tseitin,
-weighted(1*__1210, 2*__1213, 4*__1216, 8*__1219, -16*__1222, 1*__922, 2*__925, 4*__928, -8*__931, 5*a) AtMost 1 using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: -9, upper: 6 } }, PbTermGroup { start: 5, end: 9, structure: BoundedBinary { lower: -8, upper: 0 } }]
+define(__1226 <-> integer-weighted(1*__1210, 2*__1213, 4*__1216, 8*__1219, -16*__1222, 1*__922, 2*__925, 4*__928, -8*__931, 5*a) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 5, structure: BoundedBinary { lower: -9, upper: 6 } }, PbTermGroup { start: 5, end: 9, structure: BoundedBinary { lower: -8, upper: 0 } }],
+assert(__1226) using tseitin
 

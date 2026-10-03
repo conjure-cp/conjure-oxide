@@ -1,0 +1,127 @@
+Model before rewriting:
+
+find x: tuple (int(1..2), int(1..5))
+
+such that
+
+x = (2,3)
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#packed_1: int(0..9)
+
+--
+
+x = (2,3)
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+x = (2,3)
+new variables:
+  find x#packed_1#int_direct_1: bool
+  find x#packed_1#int_direct_10: bool
+  find x#packed_1#int_direct_2: bool
+  find x#packed_1#int_direct_3: bool
+  find x#packed_1#int_direct_4: bool
+  find x#packed_1#int_direct_5: bool
+  find x#packed_1#int_direct_6: bool
+  find x#packed_1#int_direct_7: bool
+  find x#packed_1#int_direct_8: bool
+  find x#packed_1#int_direct_9: bool
+new constraints:
+  sum([toInt(x#packed_1#int_direct_1),toInt(x#packed_1#int_direct_2),toInt(x#packed_1#int_direct_3),toInt(x#packed_1#int_direct_4),toInt(x#packed_1#int_direct_5),toInt(x#packed_1#int_direct_6),toInt(x#packed_1#int_direct_7),toInt(x#packed_1#int_direct_8),toInt(x#packed_1#int_direct_9),toInt(x#packed_1#int_direct_10);int(1..)]) <= 1
+  or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9,x#packed_1#int_direct_10;int(1..)])
+
+--
+
+x = (2,3),
+sum([toInt(x#packed_1#int_direct_1),toInt(x#packed_1#int_direct_2),toInt(x#packed_1#int_direct_3),toInt(x#packed_1#int_direct_4),toInt(x#packed_1#int_direct_5),toInt(x#packed_1#int_direct_6),toInt(x#packed_1#int_direct_7),toInt(x#packed_1#int_direct_8),toInt(x#packed_1#int_direct_9),toInt(x#packed_1#int_direct_10);int(1..)]) <= 1,
+or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9,x#packed_1#int_direct_10;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+x = (2,3),
+or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9,x#packed_1#int_direct_10;int(1..)])
+new SAT encoding decisions:
+  at-most-one(x#packed_1#int_direct_1, x#packed_1#int_direct_2, x#packed_1#int_direct_3, x#packed_1#int_direct_4, x#packed_1#int_direct_5, x#packed_1#int_direct_6, x#packed_1#int_direct_7, x#packed_1#int_direct_8, x#packed_1#int_direct_9, x#packed_1#int_direct_10) using None
+
+--
+
+x = (2,3)
+   ~~> tuple_packed_var_eq_lit ([("ReprTuplePacked", 9700)])
+x#packed_1 = 7
+
+--
+
+x#packed_1
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x#packed_1
+
+--
+
+x#packed_1 = 7
+   ~~> select_integer_relation ([("SAT", 18500)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> integer-weighted(0*x#packed_1#int_direct_1, 1*x#packed_1#int_direct_2, 2*x#packed_1#int_direct_3, 3*x#packed_1#int_direct_4, 4*x#packed_1#int_direct_5, 5*x#packed_1#int_direct_6, 6*x#packed_1#int_direct_7, 7*x#packed_1#int_direct_8, 8*x#packed_1#int_direct_9, 9*x#packed_1#int_direct_10) Equal 7) using None with [PbTermGroup { start: 0, end: 10, structure: Choice }]
+
+--
+
+or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9,x#packed_1#int_direct_10;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9,x#packed_1#int_direct_10;int(1..)])) using tseitin
+
+--
+
+__0,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1
+new SAT encoding decisions:
+  assert(__0) using tseitin
+
+--
+
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+Final model:
+
+find x: tuple (int(1..2), int(1..5))
+find x#packed_1: int(0..9)
+find x#packed_1#int_direct_1: bool
+find x#packed_1#int_direct_2: bool
+find x#packed_1#int_direct_3: bool
+find x#packed_1#int_direct_4: bool
+find x#packed_1#int_direct_5: bool
+find x#packed_1#int_direct_6: bool
+find x#packed_1#int_direct_7: bool
+find x#packed_1#int_direct_8: bool
+find x#packed_1#int_direct_9: bool
+find x#packed_1#int_direct_10: bool
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+at-most-one(x#packed_1#int_direct_1, x#packed_1#int_direct_2, x#packed_1#int_direct_3, x#packed_1#int_direct_4, x#packed_1#int_direct_5, x#packed_1#int_direct_6, x#packed_1#int_direct_7, x#packed_1#int_direct_8, x#packed_1#int_direct_9, x#packed_1#int_direct_10) using Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__0 <-> integer-weighted(0*x#packed_1#int_direct_1, 1*x#packed_1#int_direct_2, 2*x#packed_1#int_direct_3, 3*x#packed_1#int_direct_4, 4*x#packed_1#int_direct_5, 5*x#packed_1#int_direct_6, 6*x#packed_1#int_direct_7, 7*x#packed_1#int_direct_8, 8*x#packed_1#int_direct_9, 9*x#packed_1#int_direct_10) Equal 7) using Some(EncodingSelection { algorithm: PindakaasBdd, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 10, structure: Choice }],
+define(__1 <-> or([x#packed_1#int_direct_1,x#packed_1#int_direct_2,x#packed_1#int_direct_3,x#packed_1#int_direct_4,x#packed_1#int_direct_5,x#packed_1#int_direct_6,x#packed_1#int_direct_7,x#packed_1#int_direct_8,x#packed_1#int_direct_9,x#packed_1#int_direct_10;int(1..)])) using tseitin,
+assert(__0) using tseitin,
+assert(__1) using tseitin
+

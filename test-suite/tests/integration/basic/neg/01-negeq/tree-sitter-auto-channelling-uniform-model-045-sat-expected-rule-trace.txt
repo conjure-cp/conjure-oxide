@@ -131,50 +131,22 @@ new SAT encoding decisions:
 
 --
 
--(SATInt(Log, [__11,__14;int(1..)] [-1, 1]))
-   ~~> cnf_int_neg ([("SAT", 4100)])
-SATInt(Log, [__18,__19;int(1..)] [-1, 1])
+SATInt(Log, [__4,__6,__8;int(1..)] [1, 2]) = -(SATInt(Log, [__11,__14;int(1..)] [-1, 1]))
+   ~~> select_integer_relation ([("SAT", 18500)])
+__16
 new variables:
   findAux __16: bool
-  findAux __17: bool
-  findAux __18: bool
-  findAux __19: bool
-  findAux __20: bool
 new SAT encoding decisions:
-  define(__16 <-> !(__11)) using tseitin
-  define(__17 <-> !(__14)) using tseitin
-  define(__18 <-> !(__16)) using tseitin
-  define(__19 <-> !((__16) <-> (__17))) using tseitin
-  define(__20 <-> and([__16,__17;int(1..)])) using tseitin
+  define(__16 <-> integer-weighted(1*__4, 2*__6, -4*__8, 1*__11, -2*__14) Equal 0) using None with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }]
 
 --
 
-SATInt(Log, [__4,__6,__8;int(1..)] [1, 2]) = SATInt(Log, [__18,__19;int(1..)] [-1, 1])
-   ~~> cnf_int_eq ([("SAT", 9100)])
-__26
-new variables:
-  findAux __21: bool
-  findAux __22: bool
-  findAux __23: bool
-  findAux __24: bool
-  findAux __25: bool
-  findAux __26: bool
-new SAT encoding decisions:
-  define(__21 <-> (__4) <-> (__18)) using tseitin
-  define(__22 <-> and([__21,true;int(1..)])) using tseitin
-  define(__23 <-> (__6) <-> (__19)) using tseitin
-  define(__24 <-> and([__23,__22;int(1..)])) using tseitin
-  define(__25 <-> (__8) <-> (__19)) using tseitin
-  define(__26 <-> and([__25,__24;int(1..)])) using tseitin
-
---
-
-__26,
+__16,
 true
    ~~> remove_single_atom ([("SAT", 8400)])
 true
 new SAT encoding decisions:
-  assert(__26) using tseitin
+  assert(__16) using tseitin
 
 --
 
@@ -202,16 +174,6 @@ findAux __13: bool
 findAux __14: bool
 findAux __15: bool
 findAux __16: bool
-findAux __17: bool
-findAux __18: bool
-findAux __19: bool
-findAux __20: bool
-findAux __21: bool
-findAux __22: bool
-findAux __23: bool
-findAux __24: bool
-findAux __25: bool
-findAux __26: bool
 
 such that
 
@@ -236,16 +198,6 @@ define(__12 <-> or([y#int_rank_1,false;int(1..)])) using tseitin,
 define(__13 <-> !((y#int_rank_2) <-> (__12))) using tseitin,
 define(__14 <-> !(__13)) using tseitin,
 define(__15 <-> or([y#int_rank_2,__12;int(1..)])) using tseitin,
-define(__16 <-> !(__11)) using tseitin,
-define(__17 <-> !(__14)) using tseitin,
-define(__18 <-> !(__16)) using tseitin,
-define(__19 <-> !((__16) <-> (__17))) using tseitin,
-define(__20 <-> and([__16,__17;int(1..)])) using tseitin,
-define(__21 <-> (__4) <-> (__18)) using tseitin,
-define(__22 <-> and([__21,true;int(1..)])) using tseitin,
-define(__23 <-> (__6) <-> (__19)) using tseitin,
-define(__24 <-> and([__23,__22;int(1..)])) using tseitin,
-define(__25 <-> (__8) <-> (__19)) using tseitin,
-define(__26 <-> and([__25,__24;int(1..)])) using tseitin,
-assert(__26) using tseitin
+define(__16 <-> integer-weighted(1*__4, 2*__6, -4*__8, 1*__11, -2*__14) Equal 0) using Some(EncodingSelection { algorithm: RustsatGeneralizedTotalizer, provenance: Heuristic }) with [PbTermGroup { start: 0, end: 3, structure: BoundedBinary { lower: 1, upper: 2 } }, PbTermGroup { start: 3, end: 5, structure: BoundedBinary { lower: -1, upper: 1 } }],
+assert(__16) using tseitin
 
