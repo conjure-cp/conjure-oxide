@@ -5,7 +5,8 @@ use conjure_cp::rule_engine::{
     ApplicationResult, RuleEffect, register_rule,
 };
 
-fn lex_operand_elements(
+/// Read a one-dimensional lex operand in its declared order.
+pub(crate) fn lex_operand_elements(
     expr: &Expr,
 ) -> Result<Vec<Expr>, conjure_cp::rule_engine::ApplicationError> {
     // Representation rules commonly turn a slice into an explicit matrix literal. Consume that
