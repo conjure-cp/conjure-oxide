@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after the integer relation decision migration.
+Inventory date: 2026-10-03, branch `sat-ir` after structured integer relation inputs were connected.
 
-329 of 624 runnable integration fixtures have SAT enabled. All 329 passed the latest full acceptance and normal golden verification, exercising 11,183 SAT portfolios. The remaining 295 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+329 of 624 runnable integration fixtures have SAT enabled. All 329 passed the latest full acceptance, exercising 11,183 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 295 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
