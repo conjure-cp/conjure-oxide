@@ -245,8 +245,14 @@ fn get_ref_sols(
     solution
 }
 
+// Representation names retain their original source through every nesting level.
 fn is_user_visible_solution_var(name: &Name) -> bool {
-    !matches!(name, Name::Machine(_))
+    match name {
+        Name::User(_) => true,
+        Name::Machine(_) => false,
+        Name::Represented(fields) => is_user_visible_solution_var(&fields.0),
+        Name::WithRepresentation(source, _) => is_user_visible_solution_var(source),
+    }
 }
 
 fn blocking_clause_for_solution(
@@ -855,6 +861,49 @@ mod tests {
             .unwrap();
         model.set_sat_encoding(decision).unwrap();
         model
+    }
+
+    #[test]
+    fn represented_auxiliary_witnesses_do_not_duplicate_user_solutions() {
+        let repr = crate::representation::ReprId::new("TestRepresentation", "test");
+        let user = Name::repr(Name::user("p"), repr, "bit");
+        let auxiliary = Name::repr(Name::repr(Name::Machine(1), repr, "inner"), repr, "bit");
+        assert!(is_user_visible_solution_var(&user));
+        assert!(!is_user_visible_solution_var(&auxiliary));
+        let p = SatVar::new(0).pos_lit();
+        let q = SatVar::new(1).pos_lit();
+        let mut instance = SatInstance::new();
+        instance.add_clause([p, q].into_iter().collect());
+        let names = HashMap::from([(user.clone(), p), (auxiliary, q)]);
+        let mut sat = Sat::default();
+        sat.decision_refs = Some(
+            names
+                .keys()
+                .filter(|name| is_user_visible_solution_var(name))
+                .cloned()
+                .collect(),
+        );
+        sat.var_map = Some(names);
+        sat.model_inst = Some(instance);
+        let rows = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let collected = rows.clone();
+        sat.solve(
+            Box::new(move |row| {
+                collected.lock().unwrap().push(row);
+                true
+            }),
+            private::Internal,
+        )
+        .unwrap();
+        let rows = rows.lock().unwrap();
+        assert_eq!(rows.len(), 2);
+        let values: std::collections::HashSet<_> =
+            rows.iter().map(|row| row[&user].clone()).collect();
+        assert_eq!(
+            values,
+            [Literal::Int(0), Literal::Int(1)].into_iter().collect()
+        );
+        assert!(rows.iter().all(|row| row.len() == 1));
     }
 
     #[test]
