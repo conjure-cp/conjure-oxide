@@ -2,6 +2,7 @@ mod alldifferent;
 mod boolean;
 mod domain;
 mod element;
+mod index_of;
 mod int;
 mod lex;
 mod pseudo_boolean;

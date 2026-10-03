@@ -1,6 +1,6 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after identity-default ElementId and scalar lexicographic comparisons were connected.
+Inventory date: 2026-10-03, branch `sat-ir` after constant scalar inverse lookup and Boolean ordering were connected.
 
 365 of 628 runnable integration fixtures have SAT enabled. All 365 passed full acceptance, exercising 14,447 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 263 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
@@ -10,7 +10,15 @@ Scalar integer/Boolean allDifferent now passes pairwise and eligible value-AMO p
 
 Constant-row positive/negative tables now pass tuple and MDD portfolios, including reification. Short tables, binary-support encodings and non-constant row relations remain gaps. A fresh compact screen of `savilerow/sportsScheduling2` lowers its tables but leaves `flatten` inside allDifferent; that fixture remains disabled.
 
-Scalar element definitions now pass implication/support portfolios across all five integer representations and five PB providers. Internal scalar index-membership guards lower through existing numeric relations, retaining definedness for nested, negated, reified and masked lookups. Twelve existing fixtures are enabled; `sat-ir/element` adds sparse and masked regression coverage. Identity-default ElementId and scalar lexicographic comparisons now pass full uniform portfolios in eight newly enabled existing fixtures. The new non-involutive, sparse and Boolean-conversion fixture checks 100 portfolios against 80 Conjure reference solutions. Internal function-domain IndexOf, compound lookups and remaining arithmetic strategies are still SAT gaps. Mixed representations and channelling remain deferred.
+Scalar element definitions now pass implication/support portfolios across all five integer representations and five PB providers. Internal scalar index-membership guards lower through existing numeric relations, retaining definedness for nested, negated, reified and masked lookups. Twelve existing fixtures are enabled; `sat-ir/element` adds sparse and masked regression coverage. Identity-default ElementId and scalar lexicographic comparisons now pass full uniform portfolios in eight newly enabled existing fixtures. The new non-involutive, sparse and Boolean-conversion fixture checks 100 portfolios against 80 Conjure reference solutions. Constant scalar function-domain IndexOf now reuses element selection. Compound/non-constant inverse lookups and remaining arithmetic strategies are still SAT gaps. Mixed representations and channelling remain deferred.
+
+## Fresh function portfolio screen
+
+Ten fixtures were retried with `heuristic=x`, `channelling=uniform` and `TEST_CASE_TIMEOUT=120`: all five `basic/function` fixtures and `conjure/function/function_total_{bool_01,bool_02,bool_smoke,int_01,int_02}`. None can yet be enabled for full SAT portfolios. Scalar lex expansion now waits for compound entries, removing a rewrite cycle in tuple comparisons. Boolean ordering now shares gate decisions. After those fixes, the remaining failures contain unencoded `SafeMod` from packed function/tuple representations, rather than establishing a RustSAT/Pindakaas bug.
+
+The compact SAT screen also reconfirmed the same `SafeMod` blocker in the small existing `basic/mod/01` (`a % b = 1`) and `basic/mod/03` (`2 = 8 % a`) fixtures. These are starting points for the next arithmetic connection, including zero-divisor definedness.
+
+Explicit function lookup also needs a guard on its original argument domain: an absent argument can equal a valid internal position through inverse identity padding. The guard is retained separately from the inverse lookup and partial-function flags, so `catchUndef` can select its fallback.
 
 ## Summary of last recorded outcomes
 

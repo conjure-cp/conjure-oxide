@@ -6,7 +6,8 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
-fn matrix_data(subject: &Expr) -> Option<(Vec<Expr>, Vec<i64>)> {
+/// Materialise scalar matrix entries with their actual numeric index labels.
+pub(super) fn matrix_data(subject: &Expr) -> Option<(Vec<Expr>, Vec<i64>)> {
     let subject = super::table::materialise(subject);
     let list = subject.is_list();
     let (entries, domain) = subject.unwrap_matrix_unchecked()?;
