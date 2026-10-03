@@ -1,6 +1,6 @@
-# SAT coverage survey, 2026-10-03
+# SAT coverage survey, 2026-10-04
 
-SAT is enabled in **365 of 628 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **14,447 SAT solution portfolios**; **14,310** use uniform channelling across **277 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
+SAT is enabled in **377 of 629 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **19,073 SAT solution portfolios**; **18,936** use uniform channelling across **289 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -83,3 +83,9 @@ Full acceptance passed 1,550 tests (14 skipped), plus the earlier workspace doct
 Eight existing fixtures gained SAT and the new fixture adds 100 SAT portfolios. Coverage is 365/628 fixtures, with 14,447 successful SAT portfolios; 14,310 portfolios use uniform channelling across 277 fixtures. The disabled inventory now contains 263 fixtures, whose historical failures still need fresh checks before diagnosis. No new upstream library bug was confirmed. SAT IndexOf/function-domain inverse lookup, compound operands and the previously deferred encoding families remain follow-ups; mixed representations and channelling remain deferred.
 
 Normal golden verification passed all 28 changed integration fixtures and the changed custom rule-attempt-trace fixture (29 checks). Timing cleanup preserved baseline fields in 628 files. Added SAT portfolios deliberately raise simpleElementId/valsymElementId/varsymElementId budgets from one to 60/90/10 seconds; the new fixture has a ten-second budget. Other existing budgets remain unchanged.
+
+## Modulo and full function portfolios
+
+Floor modulo connects the three basic modulo fixtures and eight previously blocked function fixtures. The new masked signed regression adds 100 portfolios; total coverage is 377/629 fixtures and 19,073 SAT portfolios. Uniform portfolios account for 18,936 across 289 fixtures. Trials used `TEST_CASE_TIMEOUT=120`; sparse partial functions still fail on occurrence-cardinality lowering, and total surjective integer functions exceeded that limit. The 252 disabled fixtures include those fresh observations and the remaining historical failures. No new upstream library bug was confirmed.
+
+Full acceptance passed 1,560 workspace tests (14 skipped) and all workspace doctests. Twelve new/expanded fixture goldens passed normal verification. Timing cleanup preserved baselines in 630 files and restored capped-search selection churn in three unrelated fixtures; these receive separate normal verification. The new modulo regression has a ten-second budget, and expanded function portfolios retain their deliberate budget increases. Production Clippy and formatting passed.
