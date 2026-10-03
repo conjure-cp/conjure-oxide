@@ -480,10 +480,8 @@ impl SolverAdaptor for Sat {
 
             let solutions = enumerate_all_solutions(sol_old);
 
-            tracing::info!("final solutions for run");
-            tracing::info!("{:#?}", solutions);
-
             for solution in solutions {
+                tracing::info!("completed solution: {:#?}", solution);
                 if budget.expired() {
                     return Ok(SolveSuccess {
                         stats: SolverStats::default(),
@@ -525,6 +523,10 @@ impl SolverAdaptor for Sat {
                         "Failed adding solution blocking clause to SAT solver: {e}"
                     ))
                 })?;
+                // Dominance can invalidate the remaining free completions of this assignment.
+                if dominance_expression.is_some() {
+                    break;
+                }
             }
         }
     }
@@ -727,78 +729,29 @@ impl SolverAdaptor for Sat {
     }
 }
 
-// Function that takes in solutions and returns updated solutions
-// update consists of checking each assignment and calling enumerate_real if dont-care types exist
-fn enumerate_all_solutions(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
-    tracing::info!("Enumerating");
-    for (key, val) in solution.clone() {
-        match val {
-            Literal::Int(a) => {
-                if (a == 2) {
-                    return enumerate_solution(solution);
-                } else {
-                    continue;
-                }
-            }
-            _ => continue,
+/// Expand free Boolean assignments lazily so limits can stop exponential completion.
+fn enumerate_all_solutions(
+    mut solution: HashMap<Name, Literal>,
+) -> impl Iterator<Item = HashMap<Name, Literal>> {
+    let mut dont_cares: Vec<_> = solution
+        .iter()
+        .filter(|(_, value)| **value == Literal::Int(2))
+        .map(|(name, _)| name.clone())
+        .collect();
+    dont_cares.sort_by_cached_key(ToString::to_string);
+    for name in &dont_cares {
+        solution.remove(name);
+    }
+    (0..dont_cares.len()).powerset().map(move |trues| {
+        let mut completed = solution.clone();
+        for (index, name) in dont_cares.iter().enumerate() {
+            completed.insert(
+                name.clone(),
+                Literal::Int(i32::from(trues.contains(&index))),
+            );
         }
-    }
-    vec![solution]
-}
-
-// Function that takes in ONE solution and
-// unfolds dont-care type ternaries into each possible type
-// returns all possible 'real' solutions for this 'generated' solution
-// a real solution is one with no variable assigned to Ternary::DontCare
-fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
-    tracing::info!("Enumerating: Real");
-    let mut sols = Vec::new();
-    let mut dont_cares = Vec::new();
-    let mut solutions_inclusive = HashMap::new();
-
-    for (key, val) in solution {
-        let v = match val {
-            Literal::Int(i) => i,
-            _ => bug!("Only Integers expected at this time"),
-        };
-        if v == 2 {
-            // anytime the value is 2 (dont-care in the ternary system used by rustsat), add the
-            // key to a vector of dontcare values
-            dont_cares.push(key);
-        } else {
-            // if the value is not a dont-care, then this (k, v) pair is usable in the final
-            // solution, so just add it to the inclusive solution (another HashMap)
-            solutions_inclusive.insert(key, val);
-        }
-    }
-
-    let mut tdcs = Vec::new();
-
-    tdcs.push(vec![]);
-    for len in 1..(dont_cares.len()) {
-        for combination in dont_cares.iter().combinations(len) {
-            tdcs.push(combination);
-        }
-    }
-
-    for trues in tdcs {
-        let mut d = solutions_inclusive.clone();
-        for key in dont_cares.clone() {
-            if trues.contains(&&key) {
-                d.insert(key, Literal::Int(1));
-            } else {
-                d.insert(key, Literal::Int(0));
-            }
-        }
-        sols.push(d);
-    }
-
-    for i in dont_cares {
-        solutions_inclusive.insert(i, Literal::Int(1));
-    }
-
-    sols.push(solutions_inclusive);
-    sols
+        completed
+    })
 }
 
 #[cfg(test)]
@@ -806,6 +759,75 @@ mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
     use crate::range;
+
+    #[test]
+    fn free_boolean_completions_are_unique_and_can_stop_early() {
+        let free: HashMap<_, _> = (0..50)
+            .map(|i| (Name::User(format!("free{i}").into()), Literal::Int(2)))
+            .collect();
+        assert_eq!(enumerate_all_solutions(free).take(100).count(), 100);
+        let a = Name::User("a".into());
+        let b = Name::User("b".into());
+        let fixed = Name::User("fixed".into());
+        let rows: Vec<_> = enumerate_all_solutions(HashMap::from([
+            (a.clone(), Literal::Int(2)),
+            (b.clone(), Literal::Int(2)),
+            (fixed.clone(), Literal::Int(1)),
+        ]))
+        .collect();
+        assert_eq!(rows.len(), 4);
+        let choices: std::collections::HashSet<_> = rows
+            .iter()
+            .map(|row| {
+                assert_eq!(row[&fixed], Literal::Int(1));
+                (row[&a].clone(), row[&b].clone())
+            })
+            .collect();
+        assert_eq!(choices.len(), 4);
+        assert_eq!(enumerate_all_solutions(HashMap::new()).count(), 1);
+    }
+
+    #[test]
+    fn free_boolean_completions_respect_added_dominance() {
+        crate::settings::set_current_rewriter(crate::settings::Rewriter::Rewrite(
+            crate::settings::RewriteConfig::baseline(),
+        ));
+        let mut model = ConjureModel::default();
+        let p = DeclarationPtr::new_find(Name::User("p".into()), Domain::bool());
+        model.add_symbol(p.clone()).unwrap();
+        let reference: Expression = Reference::new(p.clone()).into();
+        // False dominates true, so the first completion excludes the second.
+        let dominance = Expression::And(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(vec![
+                Expression::Not(Metadata::new(), Moo::new(reference.clone())),
+                Expression::FromSolution(
+                    Metadata::new(),
+                    Moo::new(Atom::Reference(Reference::new(p)))
+                ),
+            ])),
+        );
+        model.dominance = Some(Expression::DominanceRelation(
+            Metadata::new(),
+            Moo::new(dominance),
+        ));
+        let mut sat = Sat::default();
+        sat.load_model(model, private::Internal).unwrap();
+        let rows = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let collected = rows.clone();
+        sat.solve(
+            Box::new(move |row| {
+                collected.lock().unwrap().push(row);
+                true
+            }),
+            private::Internal,
+        )
+        .unwrap();
+        let rows = rows.lock().unwrap();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0][&Name::User("p".into())], Literal::Int(0));
+    }
+
     use rustsat::types::Var as SatVar;
 
     fn boolean_decision_model() -> ConjureModel {
