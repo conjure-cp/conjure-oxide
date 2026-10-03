@@ -22,6 +22,35 @@ pub(super) fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     )
 }
 
+/// Boolean order is false before true and shares the existing gate decisions.
+#[register_rule("SAT", 18500, [Lt, Gt, Leq, Geq])]
+fn boolean_order(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (left, right, strict) = match expr {
+        Expr::Lt(_, left, right) => (left, right, true),
+        Expr::Gt(_, left, right) => (right, left, true),
+        Expr::Leq(_, left, right) => (left, right, false),
+        Expr::Geq(_, left, right) => (right, left, false),
+        _ => return Err(RuleNotApplicable),
+    };
+    if [left, right]
+        .iter()
+        .any(|operand| !operand.domain_of().is_some_and(|domain| domain.is_bool()))
+    {
+        return Err(RuleNotApplicable);
+    }
+    Ok(RuleEffect::pure(if strict {
+        Expr::And(
+            Metadata::new(),
+            Moo::new(conjure_cp::into_matrix_expr!(vec![
+                Expr::Not(Metadata::new(), left.clone()),
+                (**right).clone(),
+            ])),
+        )
+    } else {
+        Expr::Imply(Metadata::new(), left.clone(), right.clone())
+    }))
+}
+
 /// Record an AND gate without generating clauses.
 pub fn tseytin_and(
     exprs: &[Expr],
@@ -407,6 +436,41 @@ fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 #[cfg(test)]
 mod amo_lowering_tests {
     use super::*;
+    #[test]
+    fn boolean_order_matches_all_truth_assignments_and_declines_integers() {
+        for left in [false, true] {
+            for right in [false, true] {
+                let lhs = Moo::new(Expr::from(left));
+                let rhs = Moo::new(Expr::from(right));
+                for (expr, expected) in [
+                    (
+                        Expr::Lt(Metadata::new(), lhs.clone(), rhs.clone()),
+                        i32::from(left) < i32::from(right),
+                    ),
+                    (
+                        Expr::Gt(Metadata::new(), lhs.clone(), rhs.clone()),
+                        i32::from(left) > i32::from(right),
+                    ),
+                    (
+                        Expr::Leq(Metadata::new(), lhs.clone(), rhs.clone()),
+                        i32::from(left) <= i32::from(right),
+                    ),
+                    (
+                        Expr::Geq(Metadata::new(), lhs.clone(), rhs.clone()),
+                        i32::from(left) >= i32::from(right),
+                    ),
+                ] {
+                    let lowered = boolean_order(&expr, &SymbolTable::new()).unwrap();
+                    assert_eq!(
+                        conjure_cp::ast::eval_constant(&lowered.new_expression),
+                        Some(expected.into())
+                    );
+                }
+            }
+        }
+        let numeric = Expr::Lt(Metadata::new(), Moo::new(0.into()), Moo::new(1.into()));
+        assert!(boolean_order(&numeric, &SymbolTable::new()).is_err());
+    }
     #[test]
     fn cardinality_accepts_simplified_constants_and_reversed_bounds() {
         use conjure_cp::ast::sat_decision::CardinalityRelation;
