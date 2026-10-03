@@ -15,6 +15,8 @@ enum Term {
     Constant(bool),
     Literal(Lit),
 }
+type TableNodeCache = HashMap<(usize, Vec<Vec<i64>>), Term>;
+
 impl Term {
     fn negated(self) -> Self {
         match self {
@@ -84,6 +86,17 @@ pub fn compile_decisions(
                     compiler
                         .integer_relation(algorithm, output, *relation, *bound, &terms, groups)?;
                 }
+            }
+            SatEncodingDecision::Table {
+                output,
+                inputs,
+                rows,
+                negative,
+                encoding,
+                pb_encoding,
+            } => {
+                let output = compiler.encode(output)?;
+                compiler.table(output, inputs, rows, *negative, encoding, pb_encoding)?;
             }
             SatEncodingDecision::AllDifferent {
                 output,
@@ -242,6 +255,142 @@ impl Compiler<'_> {
             self.amo(algorithm, literals)?;
         }
         Ok(())
+    }
+
+    fn table(
+        &mut self,
+        output: Term,
+        inputs: &[crate::ast::sat_decision::SatIntegerView],
+        rows: &[Vec<i64>],
+        negative: bool,
+        encoding: &Option<
+            crate::ast::sat_decision::EncodingSelection<crate::ast::sat_decision::TableEncoding>,
+        >,
+        pb_encoding: &Option<
+            crate::ast::sat_decision::EncodingSelection<crate::ast::sat_decision::PbEncoding>,
+        >,
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::{IntegerRelation, TableEncoding};
+        let algorithm = encoding
+            .as_ref()
+            .ok_or_else(|| SolverError::ModelInvalid("Unresolved table encoding decision".into()))?
+            .algorithm;
+        if rows.iter().any(|row| row.len() != inputs.len()) {
+            return Err(SolverError::ModelInvalid(
+                "Table row width differs from tuple width".into(),
+            ));
+        }
+        if rows.is_empty() || inputs.is_empty() {
+            let truth = !rows.is_empty();
+            self.equate(output, Term::Constant(truth != negative));
+            return Ok(());
+        }
+        let pb = pb_encoding
+            .as_ref()
+            .ok_or_else(|| {
+                SolverError::ModelInvalid("Unresolved table component PB encoding".into())
+            })?
+            .algorithm;
+        let mut rows = rows.to_vec();
+        rows.sort();
+        rows.dedup();
+        let mut cells = Vec::with_capacity(inputs.len());
+        for (column, input) in inputs.iter().enumerate() {
+            validate_pb_groups(&input.groups, input.terms.len())?;
+            let terms = input
+                .terms
+                .iter()
+                .map(|(weight, expression)| self.encode(expression).map(|term| (*weight, term)))
+                .collect::<Result<Vec<_>, _>>()?;
+            let values = rows
+                .iter()
+                .map(|row| row[column])
+                .collect::<std::collections::BTreeSet<_>>();
+            let mut equalities = std::collections::BTreeMap::new();
+            for value in values {
+                if terms.is_empty() {
+                    equalities.insert(value, Term::Constant(input.constant == value));
+                    continue;
+                }
+                let bound = i64::try_from(i128::from(value) - i128::from(input.constant)).map_err(
+                    |_| {
+                        SolverError::ModelInvalid(
+                            "Table cell difference exceeds the library range".into(),
+                        )
+                    },
+                )?;
+                let truth = Term::Literal(self.instance.new_lit());
+                if !self.choice_relation(
+                    truth,
+                    IntegerRelation::Equal,
+                    bound,
+                    &terms,
+                    &input.groups,
+                ) {
+                    self.integer_relation(
+                        pb,
+                        truth,
+                        IntegerRelation::Equal,
+                        bound,
+                        &terms,
+                        &input.groups,
+                    )?;
+                }
+                equalities.insert(value, truth);
+            }
+            cells.push(equalities);
+        }
+        let truth = match algorithm {
+            TableEncoding::Tuple => {
+                let matches = rows
+                    .iter()
+                    .map(|row| {
+                        self.combine(
+                            true,
+                            row.iter()
+                                .enumerate()
+                                .map(|(column, value)| cells[column][value])
+                                .collect(),
+                        )
+                    })
+                    .collect();
+                self.combine(false, matches)
+            }
+            TableEncoding::Mdd => self.table_mdd(0, rows, &cells, &mut HashMap::new()),
+        };
+        self.equate(output, if negative { truth.negated() } else { truth });
+        Ok(())
+    }
+
+    /// Identical suffix relations share one layered node and its library gates.
+    fn table_mdd(
+        &mut self,
+        column: usize,
+        rows: Vec<Vec<i64>>,
+        cells: &[std::collections::BTreeMap<i64, Term>],
+        memo: &mut TableNodeCache,
+    ) -> Term {
+        if column == cells.len() {
+            return Term::Constant(!rows.is_empty());
+        }
+        let key = (column, rows.clone());
+        if let Some(truth) = memo.get(&key) {
+            return *truth;
+        }
+        let mut branches = std::collections::BTreeMap::<i64, Vec<Vec<i64>>>::new();
+        for row in rows {
+            branches.entry(row[0]).or_default().push(row[1..].to_vec());
+        }
+        let mut truths = Vec::new();
+        for (value, mut suffixes) in branches {
+            suffixes.sort();
+            suffixes.dedup();
+            let suffix = self.table_mdd(column + 1, suffixes, cells, memo);
+            truths.push(self.combine(true, vec![cells[column][&value], suffix]));
+        }
+        let truth = self.combine(false, truths);
+        memo.insert(key, truth);
+        truth
     }
 
     fn alldifferent(
@@ -1829,6 +1978,234 @@ mod pseudo_boolean_tests {
         solvers::{Solve, SolveIncremental, SolverResult},
     };
     use rustsat_cadical::CaDiCaL;
+
+    #[test]
+    fn table_mdd_shares_suffixes_and_rejects_malformed_rows() {
+        use crate::ast::sat_decision::{SatIntegerView, TableEncoding};
+        let variables: Vec<_> = (0..4)
+            .map(|i| {
+                DeclarationPtr::new_find(Name::User(format!("mdd_{i}").into()), Domain::bool())
+            })
+            .collect();
+        let bits: Vec<Expression> = variables
+            .iter()
+            .cloned()
+            .map(Reference::new)
+            .map(Into::into)
+            .collect();
+        let inputs: Vec<_> = bits[..3]
+            .iter()
+            .map(|bit| SatIntegerView {
+                constant: 0,
+                terms: vec![(1, bit.clone())],
+                groups: vec![],
+                choices: None,
+            })
+            .collect();
+        let build = |strategy, rows| SatEncodingDecision::Table {
+            output: bits[3].clone(),
+            inputs: inputs.clone(),
+            rows,
+            negative: false,
+            encoding: Some(EncodingSelection {
+                algorithm: strategy,
+                provenance: SelectionProvenance::ExplicitConfiguration,
+            }),
+            pb_encoding: Some(EncodingSelection {
+                algorithm: PbEncoding::RustsatGeneralizedTotalizer,
+                provenance: SelectionProvenance::ExplicitConfiguration,
+            }),
+        };
+        let rows: Vec<_> = (0..8)
+            .map(|n| (0..3).map(|i| (n >> i) & 1).collect())
+            .collect();
+        let mut counts = Vec::new();
+        for strategy in TableEncoding::ALL {
+            let mut instance = SatInstance::new();
+            let mut map = HashMap::new();
+            for v in &variables {
+                map.insert(v.name().clone(), instance.new_lit());
+            }
+            compile_decisions(&[build(strategy, rows.clone())], &mut instance, &mut map).unwrap();
+            counts.push(instance.var_manager_mut().n_used());
+        }
+        assert!(
+            counts[1] < counts[0],
+            "Shared suffixes should save auxiliaries: {counts:?}"
+        );
+        let mut instance = SatInstance::new();
+        let mut map = HashMap::new();
+        for v in &variables {
+            map.insert(v.name().clone(), instance.new_lit());
+        }
+        assert!(
+            compile_decisions(
+                &[build(TableEncoding::Mdd, vec![vec![0]])],
+                &mut instance,
+                &mut map
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn tables_preserve_numeric_views_and_both_truth_values() {
+        use crate::ast::sat_decision::{SatIntegerView, TableEncoding};
+        let variables: Vec<_> = (0..5)
+            .map(|i| {
+                DeclarationPtr::new_find(Name::User(format!("table_{i}").into()), Domain::bool())
+            })
+            .collect();
+        let bits: Vec<Expression> = variables
+            .iter()
+            .cloned()
+            .map(Reference::new)
+            .map(Into::into)
+            .collect();
+        let not_a = Expression::Not(Metadata::new(), Moo::new(bits[0].clone()));
+        let choice = SatIntegerView {
+            constant: 0,
+            terms: vec![(-2, not_a.clone()), (3, bits[0].clone())],
+            groups: vec![PbTermGroup {
+                start: 0,
+                end: 2,
+                structure: PbTermStructure::Choice,
+            }],
+            choices: Some(vec![(-2, not_a), (3, bits[0].clone())]),
+        };
+        let views = vec![
+            choice.clone(),
+            SatIntegerView {
+                constant: -1,
+                terms: vec![(2, bits[1].clone()), (3, bits[2].clone())],
+                groups: vec![PbTermGroup {
+                    start: 0,
+                    end: 2,
+                    structure: PbTermStructure::Chain,
+                }],
+                choices: None,
+            },
+            SatIntegerView {
+                constant: 1,
+                terms: vec![(2, bits[3].clone())],
+                groups: vec![PbTermGroup {
+                    start: 0,
+                    end: 1,
+                    structure: PbTermStructure::BoundedBinary { lower: 0, upper: 2 },
+                }],
+                choices: None,
+            },
+            choice,
+            SatIntegerView {
+                constant: 0,
+                terms: vec![],
+                groups: vec![],
+                choices: Some(vec![(0, true.into())]),
+            },
+        ];
+        let relation = vec![
+            vec![-2, -1, 1, -2, 0],
+            vec![3, 4, 3, 3, 0],
+            vec![3, 4, 3, 3, 0],
+            vec![42, 0, 1, 42, 0],
+        ];
+        for strategy in TableEncoding::ALL {
+            for pb in PbEncoding::ALL {
+                for negative in [false, true] {
+                    for assertion in [None, Some(false), Some(true)] {
+                        for (inputs, rows) in [
+                            (views.clone(), relation.clone()),
+                            (views.clone(), vec![]),
+                            (vec![], vec![]),
+                            (vec![], vec![vec![]]),
+                        ] {
+                            let mut instance = SatInstance::new();
+                            let mut map = HashMap::new();
+                            for variable in &variables {
+                                map.insert(variable.name().clone(), instance.new_lit());
+                            }
+                            let mut decisions = vec![
+                                SatEncodingDecision::Assert(Expression::Imply(
+                                    Metadata::new(),
+                                    Moo::new(bits[2].clone()),
+                                    Moo::new(bits[1].clone()),
+                                )),
+                                SatEncodingDecision::Table {
+                                    output: bits[4].clone(),
+                                    inputs: inputs.clone(),
+                                    rows: rows.clone(),
+                                    negative,
+                                    encoding: Some(EncodingSelection {
+                                        algorithm: strategy,
+                                        provenance: SelectionProvenance::ExplicitConfiguration,
+                                    }),
+                                    pb_encoding: Some(EncodingSelection {
+                                        algorithm: pb,
+                                        provenance: SelectionProvenance::ExplicitConfiguration,
+                                    }),
+                                },
+                            ];
+                            if let Some(value) = assertion {
+                                decisions.push(SatEncodingDecision::Assert(if value {
+                                    bits[4].clone()
+                                } else {
+                                    Expression::Not(Metadata::new(), Moo::new(bits[4].clone()))
+                                }));
+                            }
+                            assert_eq!(
+                                serde_json::from_str::<SatEncodingDecision>(
+                                    &serde_json::to_string(&decisions[1]).unwrap()
+                                )
+                                .unwrap(),
+                                decisions[1]
+                            );
+                            compile_decisions(&decisions, &mut instance, &mut map).unwrap();
+                            let used = instance.var_manager_mut().n_used();
+                            assert_eq!(instance.new_lit().var().idx32(), used);
+                            let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                            let mut solver = CaDiCaL::default();
+                            solver.add_cnf(cnf).unwrap();
+                            for assignment in 0usize..32 {
+                                let set = |i| assignment & (1usize << i) != 0;
+                                let numeric = if inputs.is_empty() {
+                                    vec![]
+                                } else {
+                                    vec![
+                                        if set(0) { 3 } else { -2 },
+                                        -1 + 2 * i64::from(set(1)) + 3 * i64::from(set(2)),
+                                        1 + 2 * i64::from(set(3)),
+                                        if set(0) { 3 } else { -2 },
+                                        0,
+                                    ]
+                                };
+                                let truth = rows.contains(&numeric) != negative;
+                                let valid = (!set(2) || set(1))
+                                    && set(4) == truth
+                                    && assertion.is_none_or(|value| value == set(4));
+                                let assumptions: Vec<_> = variables
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(i, v)| {
+                                        if set(i) {
+                                            map[&v.name()]
+                                        } else {
+                                            !map[&v.name()]
+                                        }
+                                    })
+                                    .collect();
+                                assert_eq!(
+                                    solver.solve_assumps(&assumptions).unwrap()
+                                        == SolverResult::Sat,
+                                    valid,
+                                    "{strategy} {pb} negative={negative} asserted={assertion:?} bits={assignment} rows={rows:?}"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn alldifferent_preserves_sparse_values_repetition_and_both_truth_values() {

@@ -219,6 +219,10 @@ pub struct GlobalArgs {
     )]
     pub channelling: Channelling,
 
+    /// Pin the SAT table composition: tuple or mdd.
+    #[arg(long = "sat-encoding-table", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub table_encoding: Option<conjure_cp::ast::sat_decision::TableEncoding>,
+
     /// Pin allDifferent: pairwise, or value-amo (requires Direct or Boolean value indicators).
     #[arg(long = "sat-encoding-alldifferent", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub alldifferent_encoding: Option<conjure_cp::ast::sat_decision::AllDifferentEncoding>,

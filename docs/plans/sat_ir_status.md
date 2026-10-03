@@ -149,3 +149,11 @@ Finish major encoding features and known missing library connections first, incl
 - Numeric views print semantic operands and stable names, excluding declaration identity, locks and expression caches from recorded traces.
 - Verification: full acceptance passed 1,530 tests with 14 skipped, plus workspace doctests. Core/rule libraries contain 240/141 unit tests. Production Clippy and formatting passed. Normal golden checks passed all nine expanded fixtures and three changed capped-search fixtures.
 - SAT is enabled in 336 of 625 runnable fixtures, with 11,773 successful SAT portfolios; 11,636 portfolios are uniform across 248 fixtures. Six existing fixtures were enabled and the new sparse/reified fixture checks 80 SAT portfolios against the same 48 reference solutions. Baseline timings are preserved; budget increases reflect added portfolios. No new upstream library bug was confirmed.
+
+## Table decision family
+
+- Positive and negative constant-row tables retain scalar integer/Boolean value views, row values, strategy and PB component provenance in the semantic AST. Generated clauses remain inside the adaptor.
+- `--sat-encoding-table tuple|mdd` chooses between row matching and a reduced layered MDD with shared suffix relations. Both reuse library numeric equalities and Boolean gates; neither pinned library exposes a native table encoder.
+- First chooses tuple. Compact initially chooses MDD when any unresolved table has more than four rows; this is an initial policy, not a comparative performance claim. All/random/interactive enumerate both compositions. Explicit requests take precedence and one family choice is shared throughout a model.
+- Value-letting row matrices, duplicate rows, constants, repeated operands, out-of-domain cells, both table signs and reified outputs are supported. Rank uses actual-value mapping; other integer views remain intact until extraction. Empty relations and zero-column rows retain their mathematical semantics.
+- Short tables, binary-support tables and non-constant row relations remain follow-ups. Element, other arithmetic strategies, general guarded/reified AMO/cardinality/PB and reusable incremental bounds remain on the work list. Mixed representations and channelling remain deferred.

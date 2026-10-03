@@ -33,7 +33,7 @@ use uniplate::Uniplate;
 /// never reaches this rule; what is left over is the two cases that would otherwise be stuck --
 /// operands in different encodings, and an operation the operands' shared encoding has no rule
 /// for, such as a sum of order-encoded variables.
-#[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, AllDiff, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
+#[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, AllDiff, Table, NegativeTable, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
 fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let encodings: HashSet<SATIntEncoding> = operands(expr)
         .filter_map(|operand| match operand {
@@ -42,10 +42,13 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         })
         .collect();
 
-    // Partially materialised allDifferent operands must retain their ready value views.
+    // Semantic allDifferent/table operands retain their ready value views.
     // Only rank codes need conversion; the decision rule handles the other encodings.
-    let alldifferent = matches!(expr, Expr::AllDiff(..));
-    if alldifferent
+    let retains_views = matches!(
+        expr,
+        Expr::AllDiff(..) | Expr::Table(..) | Expr::NegativeTable(..)
+    );
+    if retains_views
         && !encodings
             .iter()
             .any(|encoding| matches!(encoding, SATIntEncoding::Rank(_)))
@@ -65,7 +68,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     let mut new_symbols = symbols.clone();
 
     let mut convert = |input: Expr| {
-        if alldifferent && !matches!(&input, Expr::SATInt(_, SATIntEncoding::Rank(_), _, _)) {
+        if retains_views && !matches!(&input, Expr::SATInt(_, SATIntEncoding::Rank(_), _, _)) {
             input
         } else {
             to_log(input, &mut clauses, &mut new_symbols)

@@ -118,3 +118,7 @@ Pindakaas 0.5.1 does not fully exploit binary bounds: its default internal conve
 ## allDifferent compositions
 
 Oxide now exposes `--sat-encoding-alldifferent pairwise|value-amo`. Pairwise composes actual-value integer disequalities using the selected PB provider, with Direct choice specialisations using library Boolean gates. Value-AMO groups Direct/Boolean value indicators and uses the selected RustSAT AMO encoder for assertions. Nested and negated uses compose equivalent PB count bounds with library Boolean gates. These are Oxide semantic compositions of public library encoders, not native allDifferent algorithms advertised by either library. Compound-valued operands and allDifferentExcept remain follow-ups.
+
+## Table compositions
+
+The pinned RustSAT 0.7.5 and Pindakaas 0.5.1 public APIs contain no dedicated table/MDD encoder. `--sat-encoding-table tuple|mdd` therefore selects semantic compositions over the existing library-backed integer equalities and RustSAT Boolean gates. Tuple shares column/value comparisons and combines matching rows. MDD shares identical suffix relations at each layer. Both retain actual numeric values and support positive, negative and reified relations. PB component selection applies across all integer representations; compatible Direct cell comparisons use the existing library-gate specialisation. Binary-support tables and short tables remain separate follow-ups.
