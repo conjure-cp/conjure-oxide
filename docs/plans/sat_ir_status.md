@@ -90,3 +90,12 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 - Replaced eager free-Boolean completion enumeration with a lazy iterator, so solution limits avoid allocating all 2^50 completions. Dominance constraints now cause re-solving before further completions; regression tests cover both behaviours.
 - Full `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,511 tests with 14 skipped, plus workspace doctests. Production Clippy and formatting passed. Coverage is 328 of 623 runnable fixtures, with 4,333 SAT portfolios and 4,236 uniform portfolios across 240 fixtures. Timing cleanup restored 299 timing-only files and preserved prior measurements in 327 semantic-statistics files.
 - Normal golden verification passed 787 tests, covering every SAT-enabled fixture and the core/rule packages. Generated traces retain their native formatting. Implementation and generated artefacts are committed separately.
+
+## Structured linear inputs
+
+- PB decisions now retain representation invariants as term groups: Direct choices, Order chains and weighted BinaryValue/Offset bounds. BDD/SWC receive compatible groups; RustSAT keeps its flattened input. Existing domain constraints remain authoritative.
+- Structured equality uses both inequality directions through the selected BDD/SWC provider, avoiding a 0.5.1 choice-view correctness issue. Signed-bit and negative-scale conversions preserve unsigned binary bounds. Repeated occurrences, complemented inputs and library-range expansion have conservative fallback paths. Pindakaas 0.5.1's default internal binary conversion does not fully exploit these bounds; no speed or propagation improvement is assumed.
+
+## Subsequent work policy
+
+Finish major encoding features and known missing library connections first, including guarded/reified constraints and incremental bounds where applicable. Once these and the remaining decision families are covered, return to a repeated cycle of selecting the smallest known failing fixture, reproducing it and fixing it with regression coverage. The disabled-test inventory supplies candidates; historical failures must be reconfirmed before choosing a fix.

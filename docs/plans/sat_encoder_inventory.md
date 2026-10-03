@@ -67,7 +67,7 @@ The repository README advertises **Product encoding** for AMO, but the 0.5.1 `ca
 - Public `IntEncoding::Direct { first, vals }` describes consecutive values. Sparse Direct must use explicitly weighted choices; passing a sparse domain as consecutive values is incorrect.
 - Public `IntEncoding::Order { first, vals }` describes consecutive greater-than thresholds. Sparse Order needs weighted threshold gaps, with the polarity adapted to Oxide's selected convention.
 - Public `IntEncoding::Log { signed, bits }` is actual-value binary semantics. Conversion code assigns ascending powers of two and negates the highest weight when signed; documentation wording about the sign-bit position is inconsistent, so test the adapter against the implementation. It supplies no independent BinaryOffset or BinaryRank representation. Offset needs an explicit additive constant; rank must never substitute for numeric value in arithmetic.
-- `BoolLinExp::add_choice`, `add_chain`, and `add_bounded_log_encoding` attach AMO, chain, and domain information to weighted terms. These can help exploit representation structure, but Oxide must retain its own domain/channel invariants and decoding.
+- `BoolLinExp::add_choice`, `add_chain`, and `add_bounded_log_encoding` attach AMO, chain, and domain information to weighted terms. Oxide now records these groups in PB decisions and forwards compatible groups to BDD/SWC while retaining its own domain constraints and decoding.
 
 Source: [public integer views](https://docs.rs/crate/pindakaas/0.5.1/source/src/lib.rs), [linear conversion and structured terms](https://docs.rs/crate/pindakaas/0.5.1/source/src/bool_linear.rs).
 
@@ -106,3 +106,11 @@ The inventory establishes API availability, not comparative speed or propagation
 5. Lower integer representations to literals plus weighted semantic views; keep BinaryValue, BinaryOffset and BinaryRank separate. Add checked coefficient/constant arithmetic and sparse membership restrictions before library dispatch.
 6. Migrate all remaining integer, channel, objective and dominance paths. Remove `Model`/`SerdeModel` CNF fields, `RuleEffect::new_clauses`, `CnfClause`, clause extraction/rewrite logic, and the legacy converter together. Encoding decisions replace clause-producing rules; renamed clause nodes do not meet this boundary.
 7. Split test artifacts into stable decision-AST snapshots and adaptor DIMACS/statistics. Continue validating semantic solutions across every uniform representation. No generated CNF should be serialized as a model AST golden.
+
+## Structured linear inputs
+
+Production PB decisions retain contiguous Direct choice groups, Order implication chains and weighted BinaryValue/Offset bounds. Ordinary Boolean occurrences remain free terms; sparse Rank is still mapped to actual values before arithmetic. RustSAT receives the same flattened mathematical sum.
+
+The Pindakaas bridge aggregates repeated/complementary terms with widened arithmetic before assigning each variable to at most one group. Choice and chain groups retain signed coefficients and canonical positive input polarities. Bounded binary groups are used only when their occurrence weights remain intact. Signed bits and negative multipliers are transformed to unsigned groups with equivalent complemented-bit proxies; bounds and constants are adjusted, and lower-bound constraints are inverted before library aggregation. Structured equality is encoded as upper and lower inequalities through the selected provider: the 0.5.1 direct equality path rejects some valid choice assignments. Incompatible groups fall back to free terms. A range guard also accounts for the extra coefficient sum introduced by negative-weight choice normalisation.
+
+Pindakaas 0.5.1 does not fully exploit binary bounds: its default internal conversion expands domain groups into individual bits, with the binary-to-order coupling disabled. Passing bounds preserves the available interface; it does not establish a performance improvement. Choice and chain groups are used directly by the encoders.

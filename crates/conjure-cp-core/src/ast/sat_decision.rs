@@ -26,6 +26,9 @@ pub enum SatEncodingDecision {
     /// Compare a signed weighted Boolean sum with an integer bound.
     PseudoBoolean {
         terms: Vec<(i64, Expression)>,
+        /// Relationships already guaranteed by the integer representation constraints.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        groups: Vec<PbTermGroup>,
         relation: CardinalityRelation,
         bound: i64,
         encoding: Option<EncodingSelection<PbEncoding>>,
@@ -67,24 +70,53 @@ impl Display for SatEncodingDecision {
             ),
             Self::PseudoBoolean {
                 terms,
+                groups,
                 relation,
                 bound,
                 encoding,
-            } => write!(
-                f,
-                "weighted({}) {relation:?} {bound} using {encoding:?}",
-                terms
-                    .iter()
-                    .map(|(weight, input)| format!("{weight}*{input}"))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
+            } => {
+                write!(
+                    f,
+                    "weighted({}) {relation:?} {bound} using {encoding:?}",
+                    terms
+                        .iter()
+                        .map(|(weight, input)| format!("{weight}*{input}"))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )?;
+                if !groups.is_empty() {
+                    write!(f, " with {groups:?}")?;
+                }
+                Ok(())
+            }
             Self::Assert(expression) => write!(f, "assert({expression}) using tseitin"),
             Self::Boolean { output, expression } => {
                 write!(f, "define({output} <-> {expression}) using tseitin")
             }
         }
     }
+}
+
+/// A contiguous group of weighted terms with an existing representation invariant.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
+pub struct PbTermGroup {
+    /// First term index, inclusive.
+    pub start: usize,
+    /// Last term index, exclusive.
+    pub end: usize,
+    /// The relationship between these terms, independent of library literals.
+    pub structure: PbTermStructure,
+}
+
+/// Structure available to a pseudo-Boolean encoder, guaranteed elsewhere in the model.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
+pub enum PbTermStructure {
+    /// At most one Boolean input in the group is true.
+    Choice,
+    /// Each Boolean input is implied by the next input in the group.
+    Chain,
+    /// Binary terms whose weighted contribution is within these inclusive bounds.
+    BoundedBinary { lower: i64, upper: i64 },
 }
 
 impl SatEncodingDecision {
@@ -501,9 +533,40 @@ mod pb_choice_tests {
     use super::*;
     use crate::settings::{self, Heuristic};
     #[test]
+    fn term_groups_round_trip_and_old_flat_decisions_remain_readable() {
+        let mut decision = SatEncodingDecision::PseudoBoolean {
+            terms: vec![(1, true.into()), (2, false.into())],
+            groups: vec![PbTermGroup {
+                start: 0,
+                end: 2,
+                structure: PbTermStructure::BoundedBinary { lower: 0, upper: 2 },
+            }],
+            relation: CardinalityRelation::AtMost,
+            bound: 2,
+            encoding: None,
+        };
+        let mut value = serde_json::to_value(&decision).unwrap();
+        assert_eq!(
+            serde_json::from_value::<SatEncodingDecision>(value.clone()).unwrap(),
+            decision
+        );
+        value["PseudoBoolean"]
+            .as_object_mut()
+            .unwrap()
+            .remove("groups");
+        if let SatEncodingDecision::PseudoBoolean { groups, .. } = &mut decision {
+            groups.clear();
+        }
+        assert_eq!(
+            serde_json::from_value::<SatEncodingDecision>(value).unwrap(),
+            decision
+        );
+    }
+    #[test]
     fn weighted_choices_are_shared_and_explicit_pins_take_precedence() {
         let decision = || SatEncodingDecision::PseudoBoolean {
             terms: vec![(3, true.into()), (-2, false.into())],
+            groups: vec![],
             relation: CardinalityRelation::AtMost,
             bound: 1,
             encoding: None,
@@ -531,6 +594,7 @@ mod pb_choice_tests {
             decision(),
             SatEncodingDecision::PseudoBoolean {
                 terms: vec![],
+                groups: vec![],
                 relation: CardinalityRelation::Exactly,
                 bound: 0,
                 encoding: Some(retained.clone()),
