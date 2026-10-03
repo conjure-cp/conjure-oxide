@@ -2,6 +2,8 @@
 
 SAT is enabled in **327 of 622 runnable integration fixtures**, up from 322 of 620 at the cardinality stage. This stage enables the three former solution-mismatch fixtures and adds `sat-ir/signed-arithmetic` and `sat-ir/weighted-linear`. All enabled fixtures have successful SAT run records. There are **3,355 SAT solution portfolios** after adding DPW and SWC; **3,260** use uniform channelling across **239 fixtures**. The cardinality-stage totals were 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
+The current filtered failure list and targeted rechecks are recorded in [SAT known issues](sat_known_issues.md).
+
 ## Survey of the 489 previously disabled fixtures
 
 | Final outcome | Fixtures |
