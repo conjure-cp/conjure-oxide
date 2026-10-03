@@ -1,0 +1,150 @@
+Model before rewriting:
+
+find x: int(-2, 0, 3)
+find y: int(-2, 0, 3)
+find b: bool
+find booleanInside: bool
+find c: bool
+find inside: bool
+find notInside: bool
+
+such that
+
+(inside) <-> (table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)])),
+(notInside) <-> (!(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)]))),
+(booleanInside) <-> (table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)])),
+!(table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])),
+table([0;int(1..1)], [[0;int(1..1)],[0;int(1..1)];int(1..2)])
+
+--
+
+(inside) <-> (table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)]), inside)
+
+--
+
+(notInside) <-> (!(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(!(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])), notInside)
+
+--
+
+(booleanInside) <-> (table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)]))
+   ~~> iff_to_eq ([("Minion", 4400)])
+Reify(table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)]), booleanInside)
+
+--
+
+!(table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__0)
+new variables:
+  findAux __0: bool
+new constraints:
+  __0 =aux table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])
+
+--
+
+__0 =aux table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)]), __0)
+
+--
+
+!(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+!(__1)
+new variables:
+  findAux __1: bool
+new constraints:
+  __1 =aux table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+
+--
+
+__1 =aux table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)]), __1)
+
+--
+
+!(__0)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__0,false)
+
+--
+
+!(__1)
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(__1,false)
+
+--
+
+table([0;int(1..1)], [[0;int(1..1)],[0;int(1..1)];int(1..2)])
+   ~~> matrix_to_list ([("Base", 1998)])
+table([0;int(1..)], [[0;int(1..1)],[0;int(1..1)];int(1..)])
+
+--
+
+table([toInt(b),toInt(c);int(1..2)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..2)])
+   ~~> matrix_to_list ([("Base", 1998)])
+table([toInt(b),toInt(c);int(1..)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..)])
+
+--
+
+table([x,x;int(1..2)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..2)])
+   ~~> matrix_to_list ([("Base", 1998)])
+table([x,x;int(1..)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..)])
+
+--
+
+table([x,y;int(1..2)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..2)])
+   ~~> matrix_to_list ([("Base", 1998)])
+table([x,y;int(1..)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..)])
+
+--
+
+table([x,y,x,0;int(1..4)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..4)])
+   ~~> matrix_to_list ([("Base", 1998)])
+table([x,y,x,0;int(1..)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..)])
+
+--
+
+table([toInt(b),toInt(c);int(1..)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..)])
+   ~~> flatten_matrix_literal ([("Minion", 1000)])
+table([__2,__3;int(1..)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..)])
+new variables:
+  findAux __2: int(0..1)
+  findAux __3: int(0..1)
+new constraints:
+  __2 =aux toInt(b)
+  __3 =aux toInt(c)
+
+--
+
+Final model:
+
+find x: int(-2, 0, 3)
+find y: int(-2, 0, 3)
+find b: bool
+find booleanInside: bool
+find c: bool
+find inside: bool
+find notInside: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: int(0..1)
+findAux __3: int(0..1)
+
+such that
+
+Reify(table([x,y,x,0;int(1..)], [[-2,0,-2,0;int(1..4)],[3,-2,3,0;int(1..4)],[3,-2,3,0;int(1..4)],[7,0,7,0;int(1..4)];int(1..)]), inside),
+Reify(WatchedLiteral(__1,false), notInside),
+Reify(table([__2,__3;int(1..)], [[0,1;int(1..2)],[1,0;int(1..2)];int(1..)]), booleanInside),
+WatchedLiteral(__0,false),
+table([0;int(1..)], [[0;int(1..1)],[0;int(1..1)];int(1..)]),
+Reify(table([x,x;int(1..)], [[-2,0;int(1..2)],[0,3;int(1..2)];int(1..)]), __0),
+Reify(table([x,y;int(1..)], [[0,0;int(1..2)],[3,3;int(1..2)];int(1..)]), __1),
+__2 =aux toInt(b),
+__3 =aux toInt(c)
+

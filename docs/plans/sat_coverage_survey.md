@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-03
 
-SAT is enabled in **336 of 625 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **11,773 SAT solution portfolios**; **11,636** use uniform channelling across **248 fixtures**. The allDifferent stage enables six existing fixtures and adds `sat-ir/alldifferent`, with pairwise and value-AMO compositions, including nested Boolean uses.
+SAT is enabled in **343 of 626 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **12,473 SAT solution portfolios**; **12,336** use uniform channelling across **255 fixtures**. The table stage enables six existing fixtures and adds `sat-ir/table`, with tuple and MDD compositions over actual numeric views, including nested Boolean uses.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -10,8 +10,8 @@ The current filtered failure list and targeted rechecks are recorded in [SAT kno
 
 | Final outcome | Fixtures |
 | --- | ---: |
-| Enabled after full uniform-portfolio verification | 200 |
-| Initial CLI error | 219 |
+| Enabled after full uniform-portfolio verification | 206 |
+| Initial CLI error | 213 |
 | Initial CLI timeout | 37 |
 | Full portfolio failed | 30 |
 | Full portfolio timed out | 3 |
@@ -29,7 +29,7 @@ The former mismatches in `basic/weighted-sum/04-needs-normalising`, `cnf/neg-div
 
 ## Verification and limits
 
-The full acceptance workflow, `NEXTEST_TEST_THREADS=4 make test-accept` with nextest's no-fail-fast option, passed **1,530 tests**, with **14 skipped**. Workspace doctests passed. Production Clippy and formatting checks passed. Core and rule libraries contain 240 and 141 unit tests respectively. Weighted PB uses RustSAT GTE, RustSAT binary adder, Pindakaas BDD, RustSAT DPW and Pindakaas SWC, with exhaustive signed-weight, constant, complement, bound and allocation checks.
+The full acceptance workflow, `NEXTEST_TEST_THREADS=4 make test-accept` with nextest's no-fail-fast option, passed **1,535 tests**, with **14 skipped**. Workspace doctests passed. Production Clippy and formatting checks passed. Core and rule libraries contain 243 and 142 unit tests respectively. Weighted PB uses RustSAT GTE, RustSAT binary adder, Pindakaas BDD, RustSAT DPW and Pindakaas SWC, with exhaustive signed-weight, constant, complement, bound and allocation checks.
 
 Uniform all-mode exercises Direct, Order, BinaryValue (`IntLog`), BinaryOffset (`IntOffset`) and BinaryRank (`IntRank`), together with available composite layouts and encoding-algorithm choices. Representation selection is shared across each type family throughout a model.
 
@@ -61,3 +61,9 @@ Normal verification also passed four structured-relation checks and six fixtures
 allDifferent stage: scalar integer and Boolean decisions support pairwise disequalities across every integer representation and value-AMO for compatible Direct/Boolean views. Asserted value-AMO composes the selected RustSAT AMO encoder; negated/reified groups compose the selected PB provider and library Boolean gates. Six formerly disabled fixtures now pass full uniform portfolios; `sat-ir/alldifferent` checks sparse domains, constants, repeated operands and both truth values, with 80 SAT portfolios each matching the same 48 Conjure/Minion/Z3 solutions. Two existing matrix fixtures also expand from 50 to 80 portfolios.
 
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,530 tests (14 skipped), including workspace doctests. Production Clippy and formatting passed. Normal golden verification passed all nine expanded fixtures and the three fixtures with changed capped-search samples. Coverage is 336/625 fixtures and 11,773 SAT portfolios; 11,636 portfolios use uniform channelling across 248 fixtures. Baseline timing fields were preserved in 625 files; measurements for added SAT portfolios were retained. Deliberate budgets rise for invalid-slice (16 to 30 seconds), 1d-alldiff (5 to 10) and 2d-slicing-alldiff (1 to 30); other existing budgets are preserved, and the new fixture has a 30-second budget. No new upstream library bug was confirmed. allDifferentExcept and compound-valued operands remain deferred; table is the next dedicated family.
+
+Table stage: tuple and reduced layered MDD decisions share column/value numeric equalities and library Boolean gates. All seven expanded fixtures pass 100 SAT portfolios each; the new sparse/reified fixture returns the same 36 reference solutions in every portfolio. Row lettings, duplicates, repeated operands, out-of-domain cells, constants, both signs and both output truth values are covered. Empty relations and zero-column rows are checked exhaustively. The MDD regression verifies that identical suffixes reduce auxiliary variables.
+
+Full acceptance passed 1,535 tests (14 skipped), plus workspace doctests. Strict production Clippy and formatting passed. Normal golden verification passed all seven table fixtures and three capped-search fixtures. The explicit negativeTable fixture already exempts Conjure validation; all 100 SAT portfolios independently match Minion's complete nine-solution set. Tuple/MDD CLI solution sets agree. The sportsScheduling2 compact screen now lowers its tables but still leaves flatten operations inside allDifferent, so its SAT configuration remains disabled. No new upstream library bug was confirmed.
+
+Coverage is 343/626 fixtures, with 12,473 SAT portfolios; 12,336 portfolios use uniform channelling across 255 fixtures. Six existing fixtures gained SAT and the new fixture adds 100 portfolios. Timing baselines are preserved; the two negative-table fixtures receive deliberate one-to-five-second budgets for added portfolios, and the new fixture has a five-second budget. Table binary-support, short tables and non-constant rows remain follow-ups. Element is the next dedicated decision family; mixed representations and channelling remain deferred.

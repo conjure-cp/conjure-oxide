@@ -1,26 +1,28 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after scalar allDifferent decisions were connected.
+Inventory date: 2026-10-03, branch `sat-ir` after constant-row table decisions were connected.
 
-336 of 625 runnable integration fixtures have SAT enabled. All 336 passed full acceptance, exercising 11,773 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 289 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+343 of 626 runnable integration fixtures have SAT enabled. All 343 passed full acceptance, exercising 12,473 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 283 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
 Scalar integer/Boolean allDifferent now passes pairwise and eligible value-AMO portfolios. allDifferentExcept and compound-valued operands remain gaps; the dedicated fixture also covers sparse domains, repeated operands, constants, negation and reification. No new upstream library bug was confirmed.
 
+Constant-row positive/negative tables now pass tuple and MDD portfolios, including reification. Short tables, binary-support encodings and non-constant row relations remain gaps. A fresh compact screen of `savilerow/sportsScheduling2` lowers its tables but leaves `flatten` inside allDifferent; that fixture remains disabled.
+
 ## Summary of last recorded outcomes
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 212 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 206 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 29 | Initial screen passed, but another representation/portfolio failed. |
 | Panics | 3 | Two reconfirmed today; one historical full-portfolio failure needs retesting. |
 | Model-loading errors | 5 | All five reconfirmed today. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
-| Total SAT-disabled runnable fixtures | 289 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 283 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 241 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 235 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -89,7 +91,7 @@ Last tested with a 120-second per-fixture bound.
 - [hakank-eprime/xkcd](../../test-suite/tests/integration/hakank-eprime/xkcd/xkcd.essence)
 - [savilerow/absBug](../../test-suite/tests/integration/savilerow/absBug/input.essence)
 
-## Initial-screen residual constraints (212)
+## Initial-screen residual constraints (206)
 
 Last recorded in the compact/first screen, before the weighted PB changes. Each fixture below remains SAT-disabled; a fresh screen may move cases out of this list.
 
@@ -125,16 +127,12 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [basic/mod/04](../../test-suite/tests/integration/basic/mod/04/input.essence)
 - [basic/mod/05](../../test-suite/tests/integration/basic/mod/05/mod-05.essence)
 - [basic/mod/06](../../test-suite/tests/integration/basic/mod/06/mod-06.essence)
-- [basic/negativeTable/01](../../test-suite/tests/integration/basic/negativeTable/01/input.essence)
 - [basic/pow/01-simple](../../test-suite/tests/integration/basic/pow/01-simple/input.essence)
 - [basic/pow/02-exponent-zero](../../test-suite/tests/integration/basic/pow/02-exponent-zero/input.essence)
 - [basic/pow/03-negative-exponent](../../test-suite/tests/integration/basic/pow/03-negative-exponent/input.essence)
 - [basic/pow/04-flatten](../../test-suite/tests/integration/basic/pow/04-flatten/input.essence)
 - [basic/pow/05-negative-base](../../test-suite/tests/integration/basic/pow/05-negative-base/input.essence)
 - [basic/sequence/apply-out-of-range](../../test-suite/tests/integration/basic/sequence/apply-out-of-range/input.essence)
-- [basic/table/01](../../test-suite/tests/integration/basic/table/01/input.essence)
-- [basic/table/02](../../test-suite/tests/integration/basic/table/02/input.essence)
-- [basic/table/03](../../test-suite/tests/integration/basic/table/03/input.essence)
 - [basic/toInt/01](../../test-suite/tests/integration/basic/toInt/01/input.essence)
 - [basic/toInt/02-flatten](../../test-suite/tests/integration/basic/toInt/02-flatten/input.essence)
 - [bugs/treemorph-misses-node-01](../../test-suite/tests/integration/bugs/treemorph-misses-node-01/input.essence)
@@ -270,8 +268,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [savilerow/test-power](../../test-suite/tests/integration/savilerow/test-power/input.essence)
 - [savilerow/test_comprehension_functions](../../test-suite/tests/integration/savilerow/test_comprehension_functions/input.essence)
 - [savilerow/test_element_simplify](../../test-suite/tests/integration/savilerow/test_element_simplify/input.essence)
-- [savilerow/test_negative_table](../../test-suite/tests/integration/savilerow/test_negative_table/input.essence)
-- [savilerow/test_negative_table2](../../test-suite/tests/integration/savilerow/test_negative_table2/input.essence)
 - [savilerow/test_power_raw](../../test-suite/tests/integration/savilerow/test_power_raw/input.essence)
 - [savilerow/tictactoe](../../test-suite/tests/integration/savilerow/tictactoe/input.essence)
 - [savilerow/valsymElementId](../../test-suite/tests/integration/savilerow/valsymElementId/input.essence)
