@@ -1,0 +1,192 @@
+Model before rewriting:
+
+find i: int(1..1)
+find j: int(1..1)
+find m: matrix indexed by [int(0..1)] of bool
+
+such that
+
+m[sum([i,j;int(1..)])]
+
+--
+
+m
+   ~~> select_representation ([("ReprGeneral", 10000)])
+m
+new variables:
+  find m#components_1: bool
+  find m#components_2: bool
+
+--
+
+i
+   ~~> select_representation ([("ReprGeneral", 10000)])
+i
+new variables:
+  find i#int_order_1: bool
+new constraints:
+  i#int_order_1
+  or([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]) = 1;int(1..)])
+
+--
+
+j
+   ~~> select_representation ([("ReprGeneral", 10000)])
+j
+new variables:
+  find j#int_order_1: bool
+new constraints:
+  j#int_order_1
+  or([SATInt(Order, [j#int_order_1;int(1..)] [1, 1]) = 1;int(1..)])
+
+--
+
+i
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [i#int_order_1;int(1..)] [1, 1])
+
+--
+
+j
+   ~~> integer_decision_representation_order ([("SAT", 9500)])
+SATInt(Order, [j#int_order_1;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [i#int_order_1;int(1..)] [1, 1]) = 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [i#int_order_1;int(1..)] [1, 1]) = SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [j#int_order_1;int(1..)] [1, 1]) = 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [j#int_order_1;int(1..)] [1, 1]) = SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [j#int_order_1;int(1..)] [1, 1]) = SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> eq_sat_order ([("SAT", 9100)])
+__1
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__0 <-> (j#int_order_1) <-> (true)) using tseitin
+  define(__1 <-> and([__0,true;int(1..)])) using tseitin
+
+--
+
+SATInt(Order, [i#int_order_1;int(1..)] [1, 1]) = SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> eq_sat_order ([("SAT", 9100)])
+__3
+new variables:
+  findAux __2: bool
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__2 <-> (i#int_order_1) <-> (true)) using tseitin
+  define(__3 <-> and([__2,true;int(1..)])) using tseitin
+
+--
+
+or([__1;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__1
+
+--
+
+or([__3;int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+__3
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+i#int_order_1,
+__3,
+j#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+__3,
+j#int_order_1,
+__1
+new SAT encoding decisions:
+  assert(i#int_order_1) using tseitin
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+__3,
+j#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+j#int_order_1,
+__1
+new SAT encoding decisions:
+  assert(__3) using tseitin
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+j#int_order_1,
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+__1
+new SAT encoding decisions:
+  assert(j#int_order_1) using tseitin
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])],
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+m[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]) @ false}
+
+--
+
+{SafeIndex(m,[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]) @ false}
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([SafeIndex(m,[sum([SATInt(Order, [i#int_order_1;int(1..)] [1, 1]),SATInt(Order, [j#int_order_1;int(1..)] [1, 1]);int(1..)])]),false;int(1..)])
+
+--
+
+Final model:
+
+find i: int(1..1)
+find j: int(1..1)
+find m: matrix indexed by [int(0..1)] of bool
+find m#components_1: bool
+find m#components_2: bool
+find i#int_order_1: bool
+find j#int_order_1: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+false
+
+sat encoding decisions:
+
+define(__0 <-> (j#int_order_1) <-> (true)) using tseitin,
+define(__1 <-> and([__0,true;int(1..)])) using tseitin,
+define(__2 <-> (i#int_order_1) <-> (true)) using tseitin,
+define(__3 <-> and([__2,true;int(1..)])) using tseitin,
+assert(i#int_order_1) using tseitin,
+assert(__3) using tseitin,
+assert(j#int_order_1) using tseitin,
+assert(__1) using tseitin
+

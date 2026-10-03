@@ -1,0 +1,1078 @@
+Model before rewriting:
+
+letting n be 10
+find class: matrix indexed by [int(1..n)] of int(1..2)
+
+such that
+
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+
+--
+
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+new variables:
+  find class#components_1: int(1..2)
+  find class#components_10: int(1..2)
+  find class#components_2: int(1..2)
+  find class#components_3: int(1..2)
+  find class#components_4: int(1..2)
+  find class#components_5: int(1..2)
+  find class#components_6: int(1..2)
+  find class#components_7: int(1..2)
+  find class#components_8: int(1..2)
+  find class#components_9: int(1..2)
+
+--
+
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+new variables:
+  find class#components_1#int_rank_1: bool
+  find class#components_10#int_rank_1: bool
+  find class#components_2#int_rank_1: bool
+  find class#components_3#int_rank_1: bool
+  find class#components_4#int_rank_1: bool
+  find class#components_5#int_rank_1: bool
+  find class#components_6#int_rank_1: bool
+  find class#components_7#int_rank_1: bool
+  find class#components_8#int_rank_1: bool
+  find class#components_9#int_rank_1: bool
+new constraints:
+  or([!(class#components_1#int_rank_1),true;int(1..)])
+  or([!(class#components_2#int_rank_1),true;int(1..)])
+  or([!(class#components_3#int_rank_1),true;int(1..)])
+  or([!(class#components_4#int_rank_1),true;int(1..)])
+  or([!(class#components_5#int_rank_1),true;int(1..)])
+  or([!(class#components_6#int_rank_1),true;int(1..)])
+  or([!(class#components_7#int_rank_1),true;int(1..)])
+  or([!(class#components_8#int_rank_1),true;int(1..)])
+  or([!(class#components_9#int_rank_1),true;int(1..)])
+  or([!(class#components_10#int_rank_1),true;int(1..)])
+
+--
+
+Model before rewriting:
+
+find a: int(1..n)
+find b: int(1..n)
+find c: int(1..n)
+findAux __0: matrix indexed by [int(1..n)] of int(1..2)
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+
+such that
+
+true != (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+
+--
+
+true != (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true != (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+new variables:
+  findAux __0#components_1: int(1..2)
+  findAux __0#components_10: int(1..2)
+  findAux __0#components_2: int(1..2)
+  findAux __0#components_3: int(1..2)
+  findAux __0#components_4: int(1..2)
+  findAux __0#components_5: int(1..2)
+  findAux __0#components_6: int(1..2)
+  findAux __0#components_7: int(1..2)
+  findAux __0#components_8: int(1..2)
+  findAux __0#components_9: int(1..2)
+
+--
+
+and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b,b <= c;int(1..)])
+
+--
+
+(c ** 2)
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(c, 2) @ and([or([c != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])}
+
+--
+
+(a ** 2)
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(a, 2) @ and([or([a != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])}
+
+--
+
+(b ** 2)
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(b, 2) @ and([or([b != 0,2 != 0;int(1..)]),2 >= 0;int(1..)])}
+
+--
+
+true != (and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> flatten_generic ([("Minion", 4200)])
+true != __4
+new variables:
+  findAux __4: bool
+new constraints:
+  __4 =aux (and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+
+--
+
+__4 =aux (and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)])), __4)
+
+--
+
+(and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> flatten_imply ([("Minion", 4200)])
+(__5) -> (or([__1,__2,__3;int(1..3)]))
+new variables:
+  findAux __5: bool
+new constraints:
+  __5 =aux and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])
+
+--
+
+__5 =aux and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)])
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2),a <= b,b <= c;int(1..)]), __5)
+
+--
+
+(__5) -> (or([__1,__2,__3;int(1..3)]))
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply(or([__1,__2,__3;int(1..3)]), __5)
+
+--
+
+sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)
+   ~~> flatten_eq ([("Minion", 4200)])
+__6 = __7
+new variables:
+  findAux __6: int(2..200)
+  findAux __7: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+new constraints:
+  __6 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..)])
+  __7 =aux SafePow(c, 2)
+
+--
+
+__6 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..)])
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__8, __9], __6),SumGeq([__8, __9], __6);int(1..)])
+new variables:
+  findAux __8: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+  findAux __9: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+new constraints:
+  __8 =aux SafePow(a, 2)
+  __9 =aux SafePow(b, 2)
+
+--
+
+__8 =aux SafePow(a, 2)
+   ~~> introduce_poweq ([("Minion", 4200)])
+MinionPow(a,2,__8)
+
+--
+
+__9 =aux SafePow(b, 2)
+   ~~> introduce_poweq ([("Minion", 4200)])
+MinionPow(b,2,__9)
+
+--
+
+__7 =aux SafePow(c, 2)
+   ~~> introduce_poweq ([("Minion", 4200)])
+MinionPow(c,2,__7)
+
+--
+
+a <= b
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(a, b, 0)
+
+--
+
+b <= c
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(b, c, 0)
+
+--
+
+or([__1,__2,__3;int(1..3)])
+   ~~> matrix_to_list ([("Base", 1998)])
+or([__1,__2,__3;int(1..)])
+
+--
+
+Final model:
+
+find a: int(1..n)
+find b: int(1..n)
+find c: int(1..n)
+findAux __0: matrix indexed by [int(1..n)] of int(1..2)
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __0#components_1: int(1..2)
+findAux __0#components_2: int(1..2)
+findAux __0#components_3: int(1..2)
+findAux __0#components_4: int(1..2)
+findAux __0#components_5: int(1..2)
+findAux __0#components_6: int(1..2)
+findAux __0#components_7: int(1..2)
+findAux __0#components_8: int(1..2)
+findAux __0#components_9: int(1..2)
+findAux __0#components_10: int(1..2)
+findAux __4: bool
+findAux __5: bool
+findAux __6: int(2..200)
+findAux __7: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+findAux __8: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+findAux __9: int(1, 4, 9, 16, 25, 36, 49, 64, 81, 100)
+
+such that
+
+true != __4,
+Reify(ReifyImply(or([__1,__2,__3;int(1..)]), __5), __4),
+Reify(and([__6 = __7,Ineq(a, b, 0),Ineq(b, c, 0);int(1..)]), __5),
+and([SumLeq([__8, __9], __6),SumGeq([__8, __9], __6);int(1..)]),
+MinionPow(c,2,__7),
+MinionPow(a,2,__8),
+MinionPow(b,2,__9)
+
+and([ (and([and([sum([(a ** 2),(b ** 2);int(1..)]) = (c ** 2),a <= b;int(1..)]),b <= c;int(1..)])) -> (or([class[a] != class[b],class[b] != class[c],class[c] != class[a];int(1..3)])) | a : int(1..n), b : int(1..n), c : int(1..n) ])
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+and([or([class#components_3 != class#components_4,class#components_4 != class#components_5,class#components_5 != class#components_3;int(1..3)]),or([class#components_6 != class#components_8,class#components_8 != class#components_10,class#components_10 != class#components_6;int(1..3)]);int(1..)])
+
+--
+
+class#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_3
+
+--
+
+class#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_4
+
+--
+
+class#components_4
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_4
+
+--
+
+class#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_5
+
+--
+
+class#components_5
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_5
+
+--
+
+class#components_3
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_3
+
+--
+
+class#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_6
+
+--
+
+class#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_8
+
+--
+
+class#components_8
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_8
+
+--
+
+class#components_10
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_10
+
+--
+
+class#components_10
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_10
+
+--
+
+class#components_6
+   ~~> select_representation ([("ReprGeneral", 10000)])
+class#components_6
+
+--
+
+class#components_4
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_4#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_4
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_4#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_5
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_5#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_5
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_5#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_3
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_3#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_6
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_6#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_8
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_8#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_8
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_8#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_10
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_10#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_10
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_10#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_6
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_6#int_rank_1;int(1..)] [1, 2])
+
+--
+
+class#components_3
+   ~~> integer_decision_representation_unsigned ([("SAT", 9500)])
+SATInt(Rank([(1, 2)]), [class#components_3#int_rank_1;int(1..)] [1, 2])
+
+--
+
+SATInt(Rank([(1, 2)]), [class#components_3#int_rank_1;int(1..)] [1, 2]) != SATInt(Rank([(1, 2)]), [class#components_4#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__1,__3,__5;int(1..)] [1, 2]) != SATInt(Log, [__8,__10,__12;int(1..)] [1, 2])
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+new SAT encoding decisions:
+  define(__0 <-> !((class#components_3#int_rank_1) <-> (false))) using tseitin
+  define(__1 <-> !(__0)) using tseitin
+  define(__2 <-> or([class#components_3#int_rank_1,false;int(1..)])) using tseitin
+  define(__3 <-> !((false) <-> (__2))) using tseitin
+  define(__4 <-> and([false,__2;int(1..)])) using tseitin
+  define(__5 <-> !((false) <-> (__4))) using tseitin
+  define(__6 <-> and([false,__4;int(1..)])) using tseitin
+  define(__7 <-> !((class#components_4#int_rank_1) <-> (false))) using tseitin
+  define(__8 <-> !(__7)) using tseitin
+  define(__9 <-> or([class#components_4#int_rank_1,false;int(1..)])) using tseitin
+  define(__10 <-> !((false) <-> (__9))) using tseitin
+  define(__11 <-> and([false,__9;int(1..)])) using tseitin
+  define(__12 <-> !((false) <-> (__11))) using tseitin
+  define(__13 <-> and([false,__11;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__1,__3,__5;int(1..)] [1, 2]) != SATInt(Log, [__8,__10,__12;int(1..)] [1, 2])
+   ~~> cnf_int_neq ([("SAT", 4100)])
+__19
+new variables:
+  findAux __14: bool
+  findAux __15: bool
+  findAux __16: bool
+  findAux __17: bool
+  findAux __18: bool
+  findAux __19: bool
+new SAT encoding decisions:
+  define(__14 <-> !((__1) <-> (__8))) using tseitin
+  define(__15 <-> or([__14,false;int(1..)])) using tseitin
+  define(__16 <-> !((__3) <-> (__10))) using tseitin
+  define(__17 <-> or([__16,__15;int(1..)])) using tseitin
+  define(__18 <-> !((__5) <-> (__12))) using tseitin
+  define(__19 <-> or([__18,__17;int(1..)])) using tseitin
+
+--
+
+SATInt(Rank([(1, 2)]), [class#components_5#int_rank_1;int(1..)] [1, 2]) != SATInt(Rank([(1, 2)]), [class#components_3#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__21,__23,__25;int(1..)] [1, 2]) != SATInt(Log, [__28,__30,__32;int(1..)] [1, 2])
+new variables:
+  findAux __20: bool
+  findAux __21: bool
+  findAux __22: bool
+  findAux __23: bool
+  findAux __24: bool
+  findAux __25: bool
+  findAux __26: bool
+  findAux __27: bool
+  findAux __28: bool
+  findAux __29: bool
+  findAux __30: bool
+  findAux __31: bool
+  findAux __32: bool
+  findAux __33: bool
+new SAT encoding decisions:
+  define(__20 <-> !((class#components_5#int_rank_1) <-> (false))) using tseitin
+  define(__21 <-> !(__20)) using tseitin
+  define(__22 <-> or([class#components_5#int_rank_1,false;int(1..)])) using tseitin
+  define(__23 <-> !((false) <-> (__22))) using tseitin
+  define(__24 <-> and([false,__22;int(1..)])) using tseitin
+  define(__25 <-> !((false) <-> (__24))) using tseitin
+  define(__26 <-> and([false,__24;int(1..)])) using tseitin
+  define(__27 <-> !((class#components_3#int_rank_1) <-> (false))) using tseitin
+  define(__28 <-> !(__27)) using tseitin
+  define(__29 <-> or([class#components_3#int_rank_1,false;int(1..)])) using tseitin
+  define(__30 <-> !((false) <-> (__29))) using tseitin
+  define(__31 <-> and([false,__29;int(1..)])) using tseitin
+  define(__32 <-> !((false) <-> (__31))) using tseitin
+  define(__33 <-> and([false,__31;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__21,__23,__25;int(1..)] [1, 2]) != SATInt(Log, [__28,__30,__32;int(1..)] [1, 2])
+   ~~> cnf_int_neq ([("SAT", 4100)])
+__39
+new variables:
+  findAux __34: bool
+  findAux __35: bool
+  findAux __36: bool
+  findAux __37: bool
+  findAux __38: bool
+  findAux __39: bool
+new SAT encoding decisions:
+  define(__34 <-> !((__21) <-> (__28))) using tseitin
+  define(__35 <-> or([__34,false;int(1..)])) using tseitin
+  define(__36 <-> !((__23) <-> (__30))) using tseitin
+  define(__37 <-> or([__36,__35;int(1..)])) using tseitin
+  define(__38 <-> !((__25) <-> (__32))) using tseitin
+  define(__39 <-> or([__38,__37;int(1..)])) using tseitin
+
+--
+
+SATInt(Rank([(1, 2)]), [class#components_8#int_rank_1;int(1..)] [1, 2]) != SATInt(Rank([(1, 2)]), [class#components_10#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__41,__43,__45;int(1..)] [1, 2]) != SATInt(Log, [__48,__50,__52;int(1..)] [1, 2])
+new variables:
+  findAux __40: bool
+  findAux __41: bool
+  findAux __42: bool
+  findAux __43: bool
+  findAux __44: bool
+  findAux __45: bool
+  findAux __46: bool
+  findAux __47: bool
+  findAux __48: bool
+  findAux __49: bool
+  findAux __50: bool
+  findAux __51: bool
+  findAux __52: bool
+  findAux __53: bool
+new SAT encoding decisions:
+  define(__40 <-> !((class#components_8#int_rank_1) <-> (false))) using tseitin
+  define(__41 <-> !(__40)) using tseitin
+  define(__42 <-> or([class#components_8#int_rank_1,false;int(1..)])) using tseitin
+  define(__43 <-> !((false) <-> (__42))) using tseitin
+  define(__44 <-> and([false,__42;int(1..)])) using tseitin
+  define(__45 <-> !((false) <-> (__44))) using tseitin
+  define(__46 <-> and([false,__44;int(1..)])) using tseitin
+  define(__47 <-> !((class#components_10#int_rank_1) <-> (false))) using tseitin
+  define(__48 <-> !(__47)) using tseitin
+  define(__49 <-> or([class#components_10#int_rank_1,false;int(1..)])) using tseitin
+  define(__50 <-> !((false) <-> (__49))) using tseitin
+  define(__51 <-> and([false,__49;int(1..)])) using tseitin
+  define(__52 <-> !((false) <-> (__51))) using tseitin
+  define(__53 <-> and([false,__51;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__41,__43,__45;int(1..)] [1, 2]) != SATInt(Log, [__48,__50,__52;int(1..)] [1, 2])
+   ~~> cnf_int_neq ([("SAT", 4100)])
+__59
+new variables:
+  findAux __54: bool
+  findAux __55: bool
+  findAux __56: bool
+  findAux __57: bool
+  findAux __58: bool
+  findAux __59: bool
+new SAT encoding decisions:
+  define(__54 <-> !((__41) <-> (__48))) using tseitin
+  define(__55 <-> or([__54,false;int(1..)])) using tseitin
+  define(__56 <-> !((__43) <-> (__50))) using tseitin
+  define(__57 <-> or([__56,__55;int(1..)])) using tseitin
+  define(__58 <-> !((__45) <-> (__52))) using tseitin
+  define(__59 <-> or([__58,__57;int(1..)])) using tseitin
+
+--
+
+SATInt(Rank([(1, 2)]), [class#components_4#int_rank_1;int(1..)] [1, 2]) != SATInt(Rank([(1, 2)]), [class#components_5#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__61,__63,__65;int(1..)] [1, 2]) != SATInt(Log, [__68,__70,__72;int(1..)] [1, 2])
+new variables:
+  findAux __60: bool
+  findAux __61: bool
+  findAux __62: bool
+  findAux __63: bool
+  findAux __64: bool
+  findAux __65: bool
+  findAux __66: bool
+  findAux __67: bool
+  findAux __68: bool
+  findAux __69: bool
+  findAux __70: bool
+  findAux __71: bool
+  findAux __72: bool
+  findAux __73: bool
+new SAT encoding decisions:
+  define(__60 <-> !((class#components_4#int_rank_1) <-> (false))) using tseitin
+  define(__61 <-> !(__60)) using tseitin
+  define(__62 <-> or([class#components_4#int_rank_1,false;int(1..)])) using tseitin
+  define(__63 <-> !((false) <-> (__62))) using tseitin
+  define(__64 <-> and([false,__62;int(1..)])) using tseitin
+  define(__65 <-> !((false) <-> (__64))) using tseitin
+  define(__66 <-> and([false,__64;int(1..)])) using tseitin
+  define(__67 <-> !((class#components_5#int_rank_1) <-> (false))) using tseitin
+  define(__68 <-> !(__67)) using tseitin
+  define(__69 <-> or([class#components_5#int_rank_1,false;int(1..)])) using tseitin
+  define(__70 <-> !((false) <-> (__69))) using tseitin
+  define(__71 <-> and([false,__69;int(1..)])) using tseitin
+  define(__72 <-> !((false) <-> (__71))) using tseitin
+  define(__73 <-> and([false,__71;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__61,__63,__65;int(1..)] [1, 2]) != SATInt(Log, [__68,__70,__72;int(1..)] [1, 2])
+   ~~> cnf_int_neq ([("SAT", 4100)])
+__79
+new variables:
+  findAux __74: bool
+  findAux __75: bool
+  findAux __76: bool
+  findAux __77: bool
+  findAux __78: bool
+  findAux __79: bool
+new SAT encoding decisions:
+  define(__74 <-> !((__61) <-> (__68))) using tseitin
+  define(__75 <-> or([__74,false;int(1..)])) using tseitin
+  define(__76 <-> !((__63) <-> (__70))) using tseitin
+  define(__77 <-> or([__76,__75;int(1..)])) using tseitin
+  define(__78 <-> !((__65) <-> (__72))) using tseitin
+  define(__79 <-> or([__78,__77;int(1..)])) using tseitin
+
+--
+
+or([__19,__79,__39;int(1..3)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__80
+new variables:
+  findAux __80: bool
+new SAT encoding decisions:
+  define(__80 <-> or([__19,__79,__39;int(1..)])) using tseitin
+
+--
+
+SATInt(Rank([(1, 2)]), [class#components_10#int_rank_1;int(1..)] [1, 2]) != SATInt(Rank([(1, 2)]), [class#components_6#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__82,__84,__86;int(1..)] [1, 2]) != SATInt(Log, [__89,__91,__93;int(1..)] [1, 2])
+new variables:
+  findAux __81: bool
+  findAux __82: bool
+  findAux __83: bool
+  findAux __84: bool
+  findAux __85: bool
+  findAux __86: bool
+  findAux __87: bool
+  findAux __88: bool
+  findAux __89: bool
+  findAux __90: bool
+  findAux __91: bool
+  findAux __92: bool
+  findAux __93: bool
+  findAux __94: bool
+new SAT encoding decisions:
+  define(__81 <-> !((class#components_10#int_rank_1) <-> (false))) using tseitin
+  define(__82 <-> !(__81)) using tseitin
+  define(__83 <-> or([class#components_10#int_rank_1,false;int(1..)])) using tseitin
+  define(__84 <-> !((false) <-> (__83))) using tseitin
+  define(__85 <-> and([false,__83;int(1..)])) using tseitin
+  define(__86 <-> !((false) <-> (__85))) using tseitin
+  define(__87 <-> and([false,__85;int(1..)])) using tseitin
+  define(__88 <-> !((class#components_6#int_rank_1) <-> (false))) using tseitin
+  define(__89 <-> !(__88)) using tseitin
+  define(__90 <-> or([class#components_6#int_rank_1,false;int(1..)])) using tseitin
+  define(__91 <-> !((false) <-> (__90))) using tseitin
+  define(__92 <-> and([false,__90;int(1..)])) using tseitin
+  define(__93 <-> !((false) <-> (__92))) using tseitin
+  define(__94 <-> and([false,__92;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__82,__84,__86;int(1..)] [1, 2]) != SATInt(Log, [__89,__91,__93;int(1..)] [1, 2])
+   ~~> cnf_int_neq ([("SAT", 4100)])
+__100
+new variables:
+  findAux __95: bool
+  findAux __96: bool
+  findAux __97: bool
+  findAux __98: bool
+  findAux __99: bool
+  findAux __100: bool
+new SAT encoding decisions:
+  define(__95 <-> !((__82) <-> (__89))) using tseitin
+  define(__96 <-> or([__95,false;int(1..)])) using tseitin
+  define(__97 <-> !((__84) <-> (__91))) using tseitin
+  define(__98 <-> or([__97,__96;int(1..)])) using tseitin
+  define(__99 <-> !((__86) <-> (__93))) using tseitin
+  define(__100 <-> or([__99,__98;int(1..)])) using tseitin
+
+--
+
+SATInt(Rank([(1, 2)]), [class#components_6#int_rank_1;int(1..)] [1, 2]) != SATInt(Rank([(1, 2)]), [class#components_8#int_rank_1;int(1..)] [1, 2])
+   ~~> unify_sat_int_encodings ([("SAT", 4000)])
+SATInt(Log, [__102,__104,__106;int(1..)] [1, 2]) != SATInt(Log, [__109,__111,__113;int(1..)] [1, 2])
+new variables:
+  findAux __101: bool
+  findAux __102: bool
+  findAux __103: bool
+  findAux __104: bool
+  findAux __105: bool
+  findAux __106: bool
+  findAux __107: bool
+  findAux __108: bool
+  findAux __109: bool
+  findAux __110: bool
+  findAux __111: bool
+  findAux __112: bool
+  findAux __113: bool
+  findAux __114: bool
+new SAT encoding decisions:
+  define(__101 <-> !((class#components_6#int_rank_1) <-> (false))) using tseitin
+  define(__102 <-> !(__101)) using tseitin
+  define(__103 <-> or([class#components_6#int_rank_1,false;int(1..)])) using tseitin
+  define(__104 <-> !((false) <-> (__103))) using tseitin
+  define(__105 <-> and([false,__103;int(1..)])) using tseitin
+  define(__106 <-> !((false) <-> (__105))) using tseitin
+  define(__107 <-> and([false,__105;int(1..)])) using tseitin
+  define(__108 <-> !((class#components_8#int_rank_1) <-> (false))) using tseitin
+  define(__109 <-> !(__108)) using tseitin
+  define(__110 <-> or([class#components_8#int_rank_1,false;int(1..)])) using tseitin
+  define(__111 <-> !((false) <-> (__110))) using tseitin
+  define(__112 <-> and([false,__110;int(1..)])) using tseitin
+  define(__113 <-> !((false) <-> (__112))) using tseitin
+  define(__114 <-> and([false,__112;int(1..)])) using tseitin
+
+--
+
+SATInt(Log, [__102,__104,__106;int(1..)] [1, 2]) != SATInt(Log, [__109,__111,__113;int(1..)] [1, 2])
+   ~~> cnf_int_neq ([("SAT", 4100)])
+__120
+new variables:
+  findAux __115: bool
+  findAux __116: bool
+  findAux __117: bool
+  findAux __118: bool
+  findAux __119: bool
+  findAux __120: bool
+new SAT encoding decisions:
+  define(__115 <-> !((__102) <-> (__109))) using tseitin
+  define(__116 <-> or([__115,false;int(1..)])) using tseitin
+  define(__117 <-> !((__104) <-> (__111))) using tseitin
+  define(__118 <-> or([__117,__116;int(1..)])) using tseitin
+  define(__119 <-> !((__106) <-> (__113))) using tseitin
+  define(__120 <-> or([__119,__118;int(1..)])) using tseitin
+
+--
+
+or([__120,__59,__100;int(1..3)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__121
+new variables:
+  findAux __121: bool
+new SAT encoding decisions:
+  define(__121 <-> or([__120,__59,__100;int(1..)])) using tseitin
+
+--
+
+and([__80,__121;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__122
+new variables:
+  findAux __122: bool
+new SAT encoding decisions:
+  define(__122 <-> and([__80,__121;int(1..)])) using tseitin
+
+--
+
+__122,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+   ~~> remove_single_atom ([("SAT", 8400)])
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+new SAT encoding decisions:
+  assert(__122) using tseitin
+
+--
+
+Final model:
+
+letting n be 10
+find class: matrix indexed by [int(1..n)] of int(1..2)
+find class#components_1: int(1..2)
+find class#components_2: int(1..2)
+find class#components_3: int(1..2)
+find class#components_4: int(1..2)
+find class#components_5: int(1..2)
+find class#components_6: int(1..2)
+find class#components_7: int(1..2)
+find class#components_8: int(1..2)
+find class#components_9: int(1..2)
+find class#components_10: int(1..2)
+find class#components_1#int_rank_1: bool
+find class#components_2#int_rank_1: bool
+find class#components_3#int_rank_1: bool
+find class#components_4#int_rank_1: bool
+find class#components_5#int_rank_1: bool
+find class#components_6#int_rank_1: bool
+find class#components_7#int_rank_1: bool
+find class#components_8#int_rank_1: bool
+find class#components_9#int_rank_1: bool
+find class#components_10#int_rank_1: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: bool
+findAux __98: bool
+findAux __99: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+findAux __105: bool
+findAux __106: bool
+findAux __107: bool
+findAux __108: bool
+findAux __109: bool
+findAux __110: bool
+findAux __111: bool
+findAux __112: bool
+findAux __113: bool
+findAux __114: bool
+findAux __115: bool
+findAux __116: bool
+findAux __117: bool
+findAux __118: bool
+findAux __119: bool
+findAux __120: bool
+findAux __121: bool
+findAux __122: bool
+
+such that
+
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true
+
+sat encoding decisions:
+
+define(__0 <-> !((class#components_3#int_rank_1) <-> (false))) using tseitin,
+define(__1 <-> !(__0)) using tseitin,
+define(__2 <-> or([class#components_3#int_rank_1,false;int(1..)])) using tseitin,
+define(__3 <-> !((false) <-> (__2))) using tseitin,
+define(__4 <-> and([false,__2;int(1..)])) using tseitin,
+define(__5 <-> !((false) <-> (__4))) using tseitin,
+define(__6 <-> and([false,__4;int(1..)])) using tseitin,
+define(__7 <-> !((class#components_4#int_rank_1) <-> (false))) using tseitin,
+define(__8 <-> !(__7)) using tseitin,
+define(__9 <-> or([class#components_4#int_rank_1,false;int(1..)])) using tseitin,
+define(__10 <-> !((false) <-> (__9))) using tseitin,
+define(__11 <-> and([false,__9;int(1..)])) using tseitin,
+define(__12 <-> !((false) <-> (__11))) using tseitin,
+define(__13 <-> and([false,__11;int(1..)])) using tseitin,
+define(__14 <-> !((__1) <-> (__8))) using tseitin,
+define(__15 <-> or([__14,false;int(1..)])) using tseitin,
+define(__16 <-> !((__3) <-> (__10))) using tseitin,
+define(__17 <-> or([__16,__15;int(1..)])) using tseitin,
+define(__18 <-> !((__5) <-> (__12))) using tseitin,
+define(__19 <-> or([__18,__17;int(1..)])) using tseitin,
+define(__20 <-> !((class#components_5#int_rank_1) <-> (false))) using tseitin,
+define(__21 <-> !(__20)) using tseitin,
+define(__22 <-> or([class#components_5#int_rank_1,false;int(1..)])) using tseitin,
+define(__23 <-> !((false) <-> (__22))) using tseitin,
+define(__24 <-> and([false,__22;int(1..)])) using tseitin,
+define(__25 <-> !((false) <-> (__24))) using tseitin,
+define(__26 <-> and([false,__24;int(1..)])) using tseitin,
+define(__27 <-> !((class#components_3#int_rank_1) <-> (false))) using tseitin,
+define(__28 <-> !(__27)) using tseitin,
+define(__29 <-> or([class#components_3#int_rank_1,false;int(1..)])) using tseitin,
+define(__30 <-> !((false) <-> (__29))) using tseitin,
+define(__31 <-> and([false,__29;int(1..)])) using tseitin,
+define(__32 <-> !((false) <-> (__31))) using tseitin,
+define(__33 <-> and([false,__31;int(1..)])) using tseitin,
+define(__34 <-> !((__21) <-> (__28))) using tseitin,
+define(__35 <-> or([__34,false;int(1..)])) using tseitin,
+define(__36 <-> !((__23) <-> (__30))) using tseitin,
+define(__37 <-> or([__36,__35;int(1..)])) using tseitin,
+define(__38 <-> !((__25) <-> (__32))) using tseitin,
+define(__39 <-> or([__38,__37;int(1..)])) using tseitin,
+define(__40 <-> !((class#components_8#int_rank_1) <-> (false))) using tseitin,
+define(__41 <-> !(__40)) using tseitin,
+define(__42 <-> or([class#components_8#int_rank_1,false;int(1..)])) using tseitin,
+define(__43 <-> !((false) <-> (__42))) using tseitin,
+define(__44 <-> and([false,__42;int(1..)])) using tseitin,
+define(__45 <-> !((false) <-> (__44))) using tseitin,
+define(__46 <-> and([false,__44;int(1..)])) using tseitin,
+define(__47 <-> !((class#components_10#int_rank_1) <-> (false))) using tseitin,
+define(__48 <-> !(__47)) using tseitin,
+define(__49 <-> or([class#components_10#int_rank_1,false;int(1..)])) using tseitin,
+define(__50 <-> !((false) <-> (__49))) using tseitin,
+define(__51 <-> and([false,__49;int(1..)])) using tseitin,
+define(__52 <-> !((false) <-> (__51))) using tseitin,
+define(__53 <-> and([false,__51;int(1..)])) using tseitin,
+define(__54 <-> !((__41) <-> (__48))) using tseitin,
+define(__55 <-> or([__54,false;int(1..)])) using tseitin,
+define(__56 <-> !((__43) <-> (__50))) using tseitin,
+define(__57 <-> or([__56,__55;int(1..)])) using tseitin,
+define(__58 <-> !((__45) <-> (__52))) using tseitin,
+define(__59 <-> or([__58,__57;int(1..)])) using tseitin,
+define(__60 <-> !((class#components_4#int_rank_1) <-> (false))) using tseitin,
+define(__61 <-> !(__60)) using tseitin,
+define(__62 <-> or([class#components_4#int_rank_1,false;int(1..)])) using tseitin,
+define(__63 <-> !((false) <-> (__62))) using tseitin,
+define(__64 <-> and([false,__62;int(1..)])) using tseitin,
+define(__65 <-> !((false) <-> (__64))) using tseitin,
+define(__66 <-> and([false,__64;int(1..)])) using tseitin,
+define(__67 <-> !((class#components_5#int_rank_1) <-> (false))) using tseitin,
+define(__68 <-> !(__67)) using tseitin,
+define(__69 <-> or([class#components_5#int_rank_1,false;int(1..)])) using tseitin,
+define(__70 <-> !((false) <-> (__69))) using tseitin,
+define(__71 <-> and([false,__69;int(1..)])) using tseitin,
+define(__72 <-> !((false) <-> (__71))) using tseitin,
+define(__73 <-> and([false,__71;int(1..)])) using tseitin,
+define(__74 <-> !((__61) <-> (__68))) using tseitin,
+define(__75 <-> or([__74,false;int(1..)])) using tseitin,
+define(__76 <-> !((__63) <-> (__70))) using tseitin,
+define(__77 <-> or([__76,__75;int(1..)])) using tseitin,
+define(__78 <-> !((__65) <-> (__72))) using tseitin,
+define(__79 <-> or([__78,__77;int(1..)])) using tseitin,
+define(__80 <-> or([__19,__79,__39;int(1..)])) using tseitin,
+define(__81 <-> !((class#components_10#int_rank_1) <-> (false))) using tseitin,
+define(__82 <-> !(__81)) using tseitin,
+define(__83 <-> or([class#components_10#int_rank_1,false;int(1..)])) using tseitin,
+define(__84 <-> !((false) <-> (__83))) using tseitin,
+define(__85 <-> and([false,__83;int(1..)])) using tseitin,
+define(__86 <-> !((false) <-> (__85))) using tseitin,
+define(__87 <-> and([false,__85;int(1..)])) using tseitin,
+define(__88 <-> !((class#components_6#int_rank_1) <-> (false))) using tseitin,
+define(__89 <-> !(__88)) using tseitin,
+define(__90 <-> or([class#components_6#int_rank_1,false;int(1..)])) using tseitin,
+define(__91 <-> !((false) <-> (__90))) using tseitin,
+define(__92 <-> and([false,__90;int(1..)])) using tseitin,
+define(__93 <-> !((false) <-> (__92))) using tseitin,
+define(__94 <-> and([false,__92;int(1..)])) using tseitin,
+define(__95 <-> !((__82) <-> (__89))) using tseitin,
+define(__96 <-> or([__95,false;int(1..)])) using tseitin,
+define(__97 <-> !((__84) <-> (__91))) using tseitin,
+define(__98 <-> or([__97,__96;int(1..)])) using tseitin,
+define(__99 <-> !((__86) <-> (__93))) using tseitin,
+define(__100 <-> or([__99,__98;int(1..)])) using tseitin,
+define(__101 <-> !((class#components_6#int_rank_1) <-> (false))) using tseitin,
+define(__102 <-> !(__101)) using tseitin,
+define(__103 <-> or([class#components_6#int_rank_1,false;int(1..)])) using tseitin,
+define(__104 <-> !((false) <-> (__103))) using tseitin,
+define(__105 <-> and([false,__103;int(1..)])) using tseitin,
+define(__106 <-> !((false) <-> (__105))) using tseitin,
+define(__107 <-> and([false,__105;int(1..)])) using tseitin,
+define(__108 <-> !((class#components_8#int_rank_1) <-> (false))) using tseitin,
+define(__109 <-> !(__108)) using tseitin,
+define(__110 <-> or([class#components_8#int_rank_1,false;int(1..)])) using tseitin,
+define(__111 <-> !((false) <-> (__110))) using tseitin,
+define(__112 <-> and([false,__110;int(1..)])) using tseitin,
+define(__113 <-> !((false) <-> (__112))) using tseitin,
+define(__114 <-> and([false,__112;int(1..)])) using tseitin,
+define(__115 <-> !((__102) <-> (__109))) using tseitin,
+define(__116 <-> or([__115,false;int(1..)])) using tseitin,
+define(__117 <-> !((__104) <-> (__111))) using tseitin,
+define(__118 <-> or([__117,__116;int(1..)])) using tseitin,
+define(__119 <-> !((__106) <-> (__113))) using tseitin,
+define(__120 <-> or([__119,__118;int(1..)])) using tseitin,
+define(__121 <-> or([__120,__59,__100;int(1..)])) using tseitin,
+define(__122 <-> and([__80,__121;int(1..)])) using tseitin,
+assert(__122) using tseitin
+

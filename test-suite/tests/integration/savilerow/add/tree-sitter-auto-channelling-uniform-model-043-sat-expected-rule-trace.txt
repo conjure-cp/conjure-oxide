@@ -1,0 +1,2113 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(1..3)
+find z: int(1..10)
+find t: int(0..4)
+
+such that
+
+sum([t,z;int(1..)]) = sum([x,y;int(1..)])
+
+--
+
+t
+   ~~> select_representation ([("ReprGeneral", 10000)])
+t
+new variables:
+  find t#int_order_1: bool
+  find t#int_order_2: bool
+  find t#int_order_3: bool
+  find t#int_order_4: bool
+  find t#int_order_5: bool
+new constraints:
+  t#int_order_1
+  or([!(t#int_order_2),t#int_order_1;int(1..)])
+  or([!(t#int_order_3),t#int_order_2;int(1..)])
+  or([!(t#int_order_4),t#int_order_3;int(1..)])
+  or([!(t#int_order_5),t#int_order_4;int(1..)])
+  or([and([SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) >= 0,SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) <= 4;int(1..)]);int(1..)])
+
+--
+
+z
+   ~~> select_representation ([("ReprGeneral", 10000)])
+z
+new variables:
+  find z#int_order_1: bool
+  find z#int_order_10: bool
+  find z#int_order_2: bool
+  find z#int_order_3: bool
+  find z#int_order_4: bool
+  find z#int_order_5: bool
+  find z#int_order_6: bool
+  find z#int_order_7: bool
+  find z#int_order_8: bool
+  find z#int_order_9: bool
+new constraints:
+  z#int_order_1
+  or([!(z#int_order_2),z#int_order_1;int(1..)])
+  or([!(z#int_order_3),z#int_order_2;int(1..)])
+  or([!(z#int_order_4),z#int_order_3;int(1..)])
+  or([!(z#int_order_5),z#int_order_4;int(1..)])
+  or([!(z#int_order_6),z#int_order_5;int(1..)])
+  or([!(z#int_order_7),z#int_order_6;int(1..)])
+  or([!(z#int_order_8),z#int_order_7;int(1..)])
+  or([!(z#int_order_9),z#int_order_8;int(1..)])
+  or([!(z#int_order_10),z#int_order_9;int(1..)])
+  or([and([SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) >= 1,SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) <= 10;int(1..)]);int(1..)])
+
+--
+
+x
+   ~~> select_representation ([("ReprGeneral", 10000)])
+x
+new variables:
+  find x#int_order_1: bool
+  find x#int_order_2: bool
+  find x#int_order_3: bool
+new constraints:
+  x#int_order_1
+  or([!(x#int_order_2),x#int_order_1;int(1..)])
+  or([!(x#int_order_3),x#int_order_2;int(1..)])
+  or([and([SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) >= 1,SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+y
+   ~~> select_representation ([("ReprGeneral", 10000)])
+y
+new variables:
+  find y#int_order_1: bool
+  find y#int_order_2: bool
+  find y#int_order_3: bool
+new constraints:
+  y#int_order_1
+  or([!(y#int_order_2),y#int_order_1;int(1..)])
+  or([!(y#int_order_3),y#int_order_2;int(1..)])
+  or([and([SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) >= 1,SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+
+--
+
+sum([t,z;int(1..)]) = sum([x,y;int(1..)]),
+t#int_order_1,
+or([!(t#int_order_2),t#int_order_1;int(1..)]),
+or([!(t#int_order_3),t#int_order_2;int(1..)]),
+or([!(t#int_order_4),t#int_order_3;int(1..)]),
+or([!(t#int_order_5),t#int_order_4;int(1..)]),
+or([and([SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) >= 0,SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) <= 4;int(1..)]);int(1..)]),
+z#int_order_1,
+or([!(z#int_order_2),z#int_order_1;int(1..)]),
+or([!(z#int_order_3),z#int_order_2;int(1..)]),
+or([!(z#int_order_4),z#int_order_3;int(1..)]),
+or([!(z#int_order_5),z#int_order_4;int(1..)]),
+or([!(z#int_order_6),z#int_order_5;int(1..)]),
+or([!(z#int_order_7),z#int_order_6;int(1..)]),
+or([!(z#int_order_8),z#int_order_7;int(1..)]),
+or([!(z#int_order_9),z#int_order_8;int(1..)]),
+or([!(z#int_order_10),z#int_order_9;int(1..)]),
+or([and([SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) >= 1,SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) <= 10;int(1..)]);int(1..)]),
+x#int_order_1,
+or([!(x#int_order_2),x#int_order_1;int(1..)]),
+or([!(x#int_order_3),x#int_order_2;int(1..)]),
+or([and([SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) >= 1,SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)]),
+y#int_order_1,
+or([!(y#int_order_2),y#int_order_1;int(1..)]),
+or([!(y#int_order_3),y#int_order_2;int(1..)]),
+or([and([SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) >= 1,SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+t#int_order_1,
+or([!(t#int_order_2),t#int_order_1;int(1..)]),
+or([!(t#int_order_3),t#int_order_2;int(1..)]),
+or([!(t#int_order_4),t#int_order_3;int(1..)]),
+or([!(t#int_order_5),t#int_order_4;int(1..)]),
+or([and([SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) >= 0,SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) <= 4;int(1..)]);int(1..)]),
+z#int_order_1,
+or([!(z#int_order_2),z#int_order_1;int(1..)]),
+or([!(z#int_order_3),z#int_order_2;int(1..)]),
+or([!(z#int_order_4),z#int_order_3;int(1..)]),
+or([!(z#int_order_5),z#int_order_4;int(1..)]),
+or([!(z#int_order_6),z#int_order_5;int(1..)]),
+or([!(z#int_order_7),z#int_order_6;int(1..)]),
+or([!(z#int_order_8),z#int_order_7;int(1..)]),
+or([!(z#int_order_9),z#int_order_8;int(1..)]),
+or([!(z#int_order_10),z#int_order_9;int(1..)]),
+or([and([SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) >= 1,SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) <= 10;int(1..)]);int(1..)]),
+x#int_order_1,
+or([!(x#int_order_2),x#int_order_1;int(1..)]),
+or([!(x#int_order_3),x#int_order_2;int(1..)]),
+or([and([SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) >= 1,SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)]),
+y#int_order_1,
+or([!(y#int_order_2),y#int_order_1;int(1..)]),
+or([!(y#int_order_3),y#int_order_2;int(1..)]),
+or([and([SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) >= 1,SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) <= 3;int(1..)]);int(1..)])
+new SAT encoding decisions:
+  weighted(1*t#int_order_2, 1*t#int_order_3, 1*t#int_order_4, 1*t#int_order_5, 1*z#int_order_2, 1*z#int_order_3, 1*z#int_order_4, 1*z#int_order_5, 1*z#int_order_6, 1*z#int_order_7, 1*z#int_order_8, 1*z#int_order_9, 1*z#int_order_10, -1*x#int_order_2, -1*x#int_order_3, -1*y#int_order_2, -1*y#int_order_3) Exactly 1 using None
+
+--
+
+SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) >= 0
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) >= SATInt(Order, [true;int(1..)] [0, 0])
+
+--
+
+SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) <= 4
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) <= SATInt(Order, [true;int(1..)] [4, 4])
+
+--
+
+SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) >= 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) >= SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) <= 10
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) <= SATInt(Order, [true;int(1..)] [10, 10])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) >= 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) >= SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) <= 3
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) <= SATInt(Order, [true;int(1..)] [3, 3])
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) >= 1
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) >= SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) <= 3
+   ~~> encode_sat_int_literals ([("SAT", 9400)])
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) <= SATInt(Order, [true;int(1..)] [3, 3])
+
+--
+
+SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) <= SATInt(Order, [true;int(1..)] [4, 4])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__15
+new variables:
+  findAux __0: bool
+  findAux __1: bool
+  findAux __2: bool
+  findAux __3: bool
+  findAux __4: bool
+  findAux __5: bool
+  findAux __6: bool
+  findAux __7: bool
+  findAux __8: bool
+  findAux __9: bool
+  findAux __10: bool
+  findAux __11: bool
+  findAux __12: bool
+  findAux __13: bool
+  findAux __14: bool
+  findAux __15: bool
+new SAT encoding decisions:
+  define(__0 <-> !(true)) using tseitin
+  define(__1 <-> and([__0,t#int_order_1;int(1..)])) using tseitin
+  define(__2 <-> or([false,__1;int(1..)])) using tseitin
+  define(__3 <-> !(true)) using tseitin
+  define(__4 <-> and([__3,t#int_order_2;int(1..)])) using tseitin
+  define(__5 <-> or([__2,__4;int(1..)])) using tseitin
+  define(__6 <-> !(true)) using tseitin
+  define(__7 <-> and([__6,t#int_order_3;int(1..)])) using tseitin
+  define(__8 <-> or([__5,__7;int(1..)])) using tseitin
+  define(__9 <-> !(true)) using tseitin
+  define(__10 <-> and([__9,t#int_order_4;int(1..)])) using tseitin
+  define(__11 <-> or([__8,__10;int(1..)])) using tseitin
+  define(__12 <-> !(true)) using tseitin
+  define(__13 <-> and([__12,t#int_order_5;int(1..)])) using tseitin
+  define(__14 <-> or([__11,__13;int(1..)])) using tseitin
+  define(__15 <-> !(__14)) using tseitin
+
+--
+
+SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) >= SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__46
+new variables:
+  findAux __16: bool
+  findAux __17: bool
+  findAux __18: bool
+  findAux __19: bool
+  findAux __20: bool
+  findAux __21: bool
+  findAux __22: bool
+  findAux __23: bool
+  findAux __24: bool
+  findAux __25: bool
+  findAux __26: bool
+  findAux __27: bool
+  findAux __28: bool
+  findAux __29: bool
+  findAux __30: bool
+  findAux __31: bool
+  findAux __32: bool
+  findAux __33: bool
+  findAux __34: bool
+  findAux __35: bool
+  findAux __36: bool
+  findAux __37: bool
+  findAux __38: bool
+  findAux __39: bool
+  findAux __40: bool
+  findAux __41: bool
+  findAux __42: bool
+  findAux __43: bool
+  findAux __44: bool
+  findAux __45: bool
+  findAux __46: bool
+new SAT encoding decisions:
+  define(__16 <-> !(z#int_order_1)) using tseitin
+  define(__17 <-> and([__16,true;int(1..)])) using tseitin
+  define(__18 <-> or([false,__17;int(1..)])) using tseitin
+  define(__19 <-> !(z#int_order_2)) using tseitin
+  define(__20 <-> and([__19,false;int(1..)])) using tseitin
+  define(__21 <-> or([__18,__20;int(1..)])) using tseitin
+  define(__22 <-> !(z#int_order_3)) using tseitin
+  define(__23 <-> and([__22,false;int(1..)])) using tseitin
+  define(__24 <-> or([__21,__23;int(1..)])) using tseitin
+  define(__25 <-> !(z#int_order_4)) using tseitin
+  define(__26 <-> and([__25,false;int(1..)])) using tseitin
+  define(__27 <-> or([__24,__26;int(1..)])) using tseitin
+  define(__28 <-> !(z#int_order_5)) using tseitin
+  define(__29 <-> and([__28,false;int(1..)])) using tseitin
+  define(__30 <-> or([__27,__29;int(1..)])) using tseitin
+  define(__31 <-> !(z#int_order_6)) using tseitin
+  define(__32 <-> and([__31,false;int(1..)])) using tseitin
+  define(__33 <-> or([__30,__32;int(1..)])) using tseitin
+  define(__34 <-> !(z#int_order_7)) using tseitin
+  define(__35 <-> and([__34,false;int(1..)])) using tseitin
+  define(__36 <-> or([__33,__35;int(1..)])) using tseitin
+  define(__37 <-> !(z#int_order_8)) using tseitin
+  define(__38 <-> and([__37,false;int(1..)])) using tseitin
+  define(__39 <-> or([__36,__38;int(1..)])) using tseitin
+  define(__40 <-> !(z#int_order_9)) using tseitin
+  define(__41 <-> and([__40,false;int(1..)])) using tseitin
+  define(__42 <-> or([__39,__41;int(1..)])) using tseitin
+  define(__43 <-> !(z#int_order_10)) using tseitin
+  define(__44 <-> and([__43,false;int(1..)])) using tseitin
+  define(__45 <-> or([__42,__44;int(1..)])) using tseitin
+  define(__46 <-> !(__45)) using tseitin
+
+--
+
+SATInt(Order, [z#int_order_1,z#int_order_2,z#int_order_3,z#int_order_4,z#int_order_5,z#int_order_6,z#int_order_7,z#int_order_8,z#int_order_9,z#int_order_10;int(1..)] [1, 10]) <= SATInt(Order, [true;int(1..)] [10, 10])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__77
+new variables:
+  findAux __47: bool
+  findAux __48: bool
+  findAux __49: bool
+  findAux __50: bool
+  findAux __51: bool
+  findAux __52: bool
+  findAux __53: bool
+  findAux __54: bool
+  findAux __55: bool
+  findAux __56: bool
+  findAux __57: bool
+  findAux __58: bool
+  findAux __59: bool
+  findAux __60: bool
+  findAux __61: bool
+  findAux __62: bool
+  findAux __63: bool
+  findAux __64: bool
+  findAux __65: bool
+  findAux __66: bool
+  findAux __67: bool
+  findAux __68: bool
+  findAux __69: bool
+  findAux __70: bool
+  findAux __71: bool
+  findAux __72: bool
+  findAux __73: bool
+  findAux __74: bool
+  findAux __75: bool
+  findAux __76: bool
+  findAux __77: bool
+new SAT encoding decisions:
+  define(__47 <-> !(true)) using tseitin
+  define(__48 <-> and([__47,z#int_order_1;int(1..)])) using tseitin
+  define(__49 <-> or([false,__48;int(1..)])) using tseitin
+  define(__50 <-> !(true)) using tseitin
+  define(__51 <-> and([__50,z#int_order_2;int(1..)])) using tseitin
+  define(__52 <-> or([__49,__51;int(1..)])) using tseitin
+  define(__53 <-> !(true)) using tseitin
+  define(__54 <-> and([__53,z#int_order_3;int(1..)])) using tseitin
+  define(__55 <-> or([__52,__54;int(1..)])) using tseitin
+  define(__56 <-> !(true)) using tseitin
+  define(__57 <-> and([__56,z#int_order_4;int(1..)])) using tseitin
+  define(__58 <-> or([__55,__57;int(1..)])) using tseitin
+  define(__59 <-> !(true)) using tseitin
+  define(__60 <-> and([__59,z#int_order_5;int(1..)])) using tseitin
+  define(__61 <-> or([__58,__60;int(1..)])) using tseitin
+  define(__62 <-> !(true)) using tseitin
+  define(__63 <-> and([__62,z#int_order_6;int(1..)])) using tseitin
+  define(__64 <-> or([__61,__63;int(1..)])) using tseitin
+  define(__65 <-> !(true)) using tseitin
+  define(__66 <-> and([__65,z#int_order_7;int(1..)])) using tseitin
+  define(__67 <-> or([__64,__66;int(1..)])) using tseitin
+  define(__68 <-> !(true)) using tseitin
+  define(__69 <-> and([__68,z#int_order_8;int(1..)])) using tseitin
+  define(__70 <-> or([__67,__69;int(1..)])) using tseitin
+  define(__71 <-> !(true)) using tseitin
+  define(__72 <-> and([__71,z#int_order_9;int(1..)])) using tseitin
+  define(__73 <-> or([__70,__72;int(1..)])) using tseitin
+  define(__74 <-> !(true)) using tseitin
+  define(__75 <-> and([__74,z#int_order_10;int(1..)])) using tseitin
+  define(__76 <-> or([__73,__75;int(1..)])) using tseitin
+  define(__77 <-> !(__76)) using tseitin
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) >= SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__87
+new variables:
+  findAux __78: bool
+  findAux __79: bool
+  findAux __80: bool
+  findAux __81: bool
+  findAux __82: bool
+  findAux __83: bool
+  findAux __84: bool
+  findAux __85: bool
+  findAux __86: bool
+  findAux __87: bool
+new SAT encoding decisions:
+  define(__78 <-> !(x#int_order_1)) using tseitin
+  define(__79 <-> and([__78,true;int(1..)])) using tseitin
+  define(__80 <-> or([false,__79;int(1..)])) using tseitin
+  define(__81 <-> !(x#int_order_2)) using tseitin
+  define(__82 <-> and([__81,false;int(1..)])) using tseitin
+  define(__83 <-> or([__80,__82;int(1..)])) using tseitin
+  define(__84 <-> !(x#int_order_3)) using tseitin
+  define(__85 <-> and([__84,false;int(1..)])) using tseitin
+  define(__86 <-> or([__83,__85;int(1..)])) using tseitin
+  define(__87 <-> !(__86)) using tseitin
+
+--
+
+SATInt(Order, [x#int_order_1,x#int_order_2,x#int_order_3;int(1..)] [1, 3]) <= SATInt(Order, [true;int(1..)] [3, 3])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__97
+new variables:
+  findAux __88: bool
+  findAux __89: bool
+  findAux __90: bool
+  findAux __91: bool
+  findAux __92: bool
+  findAux __93: bool
+  findAux __94: bool
+  findAux __95: bool
+  findAux __96: bool
+  findAux __97: bool
+new SAT encoding decisions:
+  define(__88 <-> !(true)) using tseitin
+  define(__89 <-> and([__88,x#int_order_1;int(1..)])) using tseitin
+  define(__90 <-> or([false,__89;int(1..)])) using tseitin
+  define(__91 <-> !(true)) using tseitin
+  define(__92 <-> and([__91,x#int_order_2;int(1..)])) using tseitin
+  define(__93 <-> or([__90,__92;int(1..)])) using tseitin
+  define(__94 <-> !(true)) using tseitin
+  define(__95 <-> and([__94,x#int_order_3;int(1..)])) using tseitin
+  define(__96 <-> or([__93,__95;int(1..)])) using tseitin
+  define(__97 <-> !(__96)) using tseitin
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) >= SATInt(Order, [true;int(1..)] [1, 1])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__107
+new variables:
+  findAux __98: bool
+  findAux __99: bool
+  findAux __100: bool
+  findAux __101: bool
+  findAux __102: bool
+  findAux __103: bool
+  findAux __104: bool
+  findAux __105: bool
+  findAux __106: bool
+  findAux __107: bool
+new SAT encoding decisions:
+  define(__98 <-> !(y#int_order_1)) using tseitin
+  define(__99 <-> and([__98,true;int(1..)])) using tseitin
+  define(__100 <-> or([false,__99;int(1..)])) using tseitin
+  define(__101 <-> !(y#int_order_2)) using tseitin
+  define(__102 <-> and([__101,false;int(1..)])) using tseitin
+  define(__103 <-> or([__100,__102;int(1..)])) using tseitin
+  define(__104 <-> !(y#int_order_3)) using tseitin
+  define(__105 <-> and([__104,false;int(1..)])) using tseitin
+  define(__106 <-> or([__103,__105;int(1..)])) using tseitin
+  define(__107 <-> !(__106)) using tseitin
+
+--
+
+SATInt(Order, [y#int_order_1,y#int_order_2,y#int_order_3;int(1..)] [1, 3]) <= SATInt(Order, [true;int(1..)] [3, 3])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__117
+new variables:
+  findAux __108: bool
+  findAux __109: bool
+  findAux __110: bool
+  findAux __111: bool
+  findAux __112: bool
+  findAux __113: bool
+  findAux __114: bool
+  findAux __115: bool
+  findAux __116: bool
+  findAux __117: bool
+new SAT encoding decisions:
+  define(__108 <-> !(true)) using tseitin
+  define(__109 <-> and([__108,y#int_order_1;int(1..)])) using tseitin
+  define(__110 <-> or([false,__109;int(1..)])) using tseitin
+  define(__111 <-> !(true)) using tseitin
+  define(__112 <-> and([__111,y#int_order_2;int(1..)])) using tseitin
+  define(__113 <-> or([__110,__112;int(1..)])) using tseitin
+  define(__114 <-> !(true)) using tseitin
+  define(__115 <-> and([__114,y#int_order_3;int(1..)])) using tseitin
+  define(__116 <-> or([__113,__115;int(1..)])) using tseitin
+  define(__117 <-> !(__116)) using tseitin
+
+--
+
+SATInt(Order, [t#int_order_1,t#int_order_2,t#int_order_3,t#int_order_4,t#int_order_5;int(1..)] [0, 4]) >= SATInt(Order, [true;int(1..)] [0, 0])
+   ~~> ineq_sat_order ([("SAT", 9100)])
+__133
+new variables:
+  findAux __118: bool
+  findAux __119: bool
+  findAux __120: bool
+  findAux __121: bool
+  findAux __122: bool
+  findAux __123: bool
+  findAux __124: bool
+  findAux __125: bool
+  findAux __126: bool
+  findAux __127: bool
+  findAux __128: bool
+  findAux __129: bool
+  findAux __130: bool
+  findAux __131: bool
+  findAux __132: bool
+  findAux __133: bool
+new SAT encoding decisions:
+  define(__118 <-> !(t#int_order_1)) using tseitin
+  define(__119 <-> and([__118,true;int(1..)])) using tseitin
+  define(__120 <-> or([false,__119;int(1..)])) using tseitin
+  define(__121 <-> !(t#int_order_2)) using tseitin
+  define(__122 <-> and([__121,false;int(1..)])) using tseitin
+  define(__123 <-> or([__120,__122;int(1..)])) using tseitin
+  define(__124 <-> !(t#int_order_3)) using tseitin
+  define(__125 <-> and([__124,false;int(1..)])) using tseitin
+  define(__126 <-> or([__123,__125;int(1..)])) using tseitin
+  define(__127 <-> !(t#int_order_4)) using tseitin
+  define(__128 <-> and([__127,false;int(1..)])) using tseitin
+  define(__129 <-> or([__126,__128;int(1..)])) using tseitin
+  define(__130 <-> !(t#int_order_5)) using tseitin
+  define(__131 <-> and([__130,false;int(1..)])) using tseitin
+  define(__132 <-> or([__129,__131;int(1..)])) using tseitin
+  define(__133 <-> !(__132)) using tseitin
+
+--
+
+!(t#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__134
+new variables:
+  findAux __134: bool
+new SAT encoding decisions:
+  define(__134 <-> !(t#int_order_2)) using tseitin
+
+--
+
+!(t#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__135
+new variables:
+  findAux __135: bool
+new SAT encoding decisions:
+  define(__135 <-> !(t#int_order_3)) using tseitin
+
+--
+
+!(t#int_order_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__136
+new variables:
+  findAux __136: bool
+new SAT encoding decisions:
+  define(__136 <-> !(t#int_order_4)) using tseitin
+
+--
+
+!(t#int_order_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__137
+new variables:
+  findAux __137: bool
+new SAT encoding decisions:
+  define(__137 <-> !(t#int_order_5)) using tseitin
+
+--
+
+!(z#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__138
+new variables:
+  findAux __138: bool
+new SAT encoding decisions:
+  define(__138 <-> !(z#int_order_2)) using tseitin
+
+--
+
+!(z#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__139
+new variables:
+  findAux __139: bool
+new SAT encoding decisions:
+  define(__139 <-> !(z#int_order_3)) using tseitin
+
+--
+
+!(z#int_order_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__140
+new variables:
+  findAux __140: bool
+new SAT encoding decisions:
+  define(__140 <-> !(z#int_order_4)) using tseitin
+
+--
+
+!(z#int_order_5)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__141
+new variables:
+  findAux __141: bool
+new SAT encoding decisions:
+  define(__141 <-> !(z#int_order_5)) using tseitin
+
+--
+
+!(z#int_order_6)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__142
+new variables:
+  findAux __142: bool
+new SAT encoding decisions:
+  define(__142 <-> !(z#int_order_6)) using tseitin
+
+--
+
+!(z#int_order_7)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__143
+new variables:
+  findAux __143: bool
+new SAT encoding decisions:
+  define(__143 <-> !(z#int_order_7)) using tseitin
+
+--
+
+!(z#int_order_8)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__144
+new variables:
+  findAux __144: bool
+new SAT encoding decisions:
+  define(__144 <-> !(z#int_order_8)) using tseitin
+
+--
+
+!(z#int_order_9)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__145
+new variables:
+  findAux __145: bool
+new SAT encoding decisions:
+  define(__145 <-> !(z#int_order_9)) using tseitin
+
+--
+
+!(z#int_order_10)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__146
+new variables:
+  findAux __146: bool
+new SAT encoding decisions:
+  define(__146 <-> !(z#int_order_10)) using tseitin
+
+--
+
+!(x#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__147
+new variables:
+  findAux __147: bool
+new SAT encoding decisions:
+  define(__147 <-> !(x#int_order_2)) using tseitin
+
+--
+
+!(x#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__148
+new variables:
+  findAux __148: bool
+new SAT encoding decisions:
+  define(__148 <-> !(x#int_order_3)) using tseitin
+
+--
+
+!(y#int_order_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__149
+new variables:
+  findAux __149: bool
+new SAT encoding decisions:
+  define(__149 <-> !(y#int_order_2)) using tseitin
+
+--
+
+!(y#int_order_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__150
+new variables:
+  findAux __150: bool
+new SAT encoding decisions:
+  define(__150 <-> !(y#int_order_3)) using tseitin
+
+--
+
+or([and([__133,__15;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__133,__15;int(1..)])
+
+--
+
+or([and([__46,__77;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__46,__77;int(1..)])
+
+--
+
+or([and([__87,__97;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__87,__97;int(1..)])
+
+--
+
+or([and([__107,__117;int(1..)]);int(1..)])
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__107,__117;int(1..)])
+
+--
+
+and([__46,__77;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__151
+new variables:
+  findAux __151: bool
+new SAT encoding decisions:
+  define(__151 <-> and([__46,__77;int(1..)])) using tseitin
+
+--
+
+and([__87,__97;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__152
+new variables:
+  findAux __152: bool
+new SAT encoding decisions:
+  define(__152 <-> and([__87,__97;int(1..)])) using tseitin
+
+--
+
+and([__107,__117;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__153
+new variables:
+  findAux __153: bool
+new SAT encoding decisions:
+  define(__153 <-> and([__107,__117;int(1..)])) using tseitin
+
+--
+
+and([__133,__15;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__154
+new variables:
+  findAux __154: bool
+new SAT encoding decisions:
+  define(__154 <-> and([__133,__15;int(1..)])) using tseitin
+
+--
+
+or([__134,t#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__155
+new variables:
+  findAux __155: bool
+new SAT encoding decisions:
+  define(__155 <-> or([__134,t#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__135,t#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__156
+new variables:
+  findAux __156: bool
+new SAT encoding decisions:
+  define(__156 <-> or([__135,t#int_order_2;int(1..)])) using tseitin
+
+--
+
+or([__136,t#int_order_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__157
+new variables:
+  findAux __157: bool
+new SAT encoding decisions:
+  define(__157 <-> or([__136,t#int_order_3;int(1..)])) using tseitin
+
+--
+
+or([__137,t#int_order_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__158
+new variables:
+  findAux __158: bool
+new SAT encoding decisions:
+  define(__158 <-> or([__137,t#int_order_4;int(1..)])) using tseitin
+
+--
+
+or([__138,z#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__159
+new variables:
+  findAux __159: bool
+new SAT encoding decisions:
+  define(__159 <-> or([__138,z#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__139,z#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__160
+new variables:
+  findAux __160: bool
+new SAT encoding decisions:
+  define(__160 <-> or([__139,z#int_order_2;int(1..)])) using tseitin
+
+--
+
+or([__140,z#int_order_3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__161
+new variables:
+  findAux __161: bool
+new SAT encoding decisions:
+  define(__161 <-> or([__140,z#int_order_3;int(1..)])) using tseitin
+
+--
+
+or([__141,z#int_order_4;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__162
+new variables:
+  findAux __162: bool
+new SAT encoding decisions:
+  define(__162 <-> or([__141,z#int_order_4;int(1..)])) using tseitin
+
+--
+
+or([__142,z#int_order_5;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__163
+new variables:
+  findAux __163: bool
+new SAT encoding decisions:
+  define(__163 <-> or([__142,z#int_order_5;int(1..)])) using tseitin
+
+--
+
+or([__143,z#int_order_6;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__164
+new variables:
+  findAux __164: bool
+new SAT encoding decisions:
+  define(__164 <-> or([__143,z#int_order_6;int(1..)])) using tseitin
+
+--
+
+or([__144,z#int_order_7;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__165
+new variables:
+  findAux __165: bool
+new SAT encoding decisions:
+  define(__165 <-> or([__144,z#int_order_7;int(1..)])) using tseitin
+
+--
+
+or([__145,z#int_order_8;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__166
+new variables:
+  findAux __166: bool
+new SAT encoding decisions:
+  define(__166 <-> or([__145,z#int_order_8;int(1..)])) using tseitin
+
+--
+
+or([__146,z#int_order_9;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__167
+new variables:
+  findAux __167: bool
+new SAT encoding decisions:
+  define(__167 <-> or([__146,z#int_order_9;int(1..)])) using tseitin
+
+--
+
+or([__147,x#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__168
+new variables:
+  findAux __168: bool
+new SAT encoding decisions:
+  define(__168 <-> or([__147,x#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__148,x#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__169
+new variables:
+  findAux __169: bool
+new SAT encoding decisions:
+  define(__169 <-> or([__148,x#int_order_2;int(1..)])) using tseitin
+
+--
+
+or([__149,y#int_order_1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__170
+new variables:
+  findAux __170: bool
+new SAT encoding decisions:
+  define(__170 <-> or([__149,y#int_order_1;int(1..)])) using tseitin
+
+--
+
+or([__150,y#int_order_2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__171
+new variables:
+  findAux __171: bool
+new SAT encoding decisions:
+  define(__171 <-> or([__150,y#int_order_2;int(1..)])) using tseitin
+
+--
+
+t#int_order_1,
+__155,
+__156,
+__157,
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__155,
+__156,
+__157,
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(t#int_order_1) using tseitin
+
+--
+
+__155,
+__156,
+__157,
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__156,
+__157,
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__155) using tseitin
+
+--
+
+__156,
+__157,
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__157,
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__156) using tseitin
+
+--
+
+__157,
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__157) using tseitin
+
+--
+
+__158,
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__158) using tseitin
+
+--
+
+__154,
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__154) using tseitin
+
+--
+
+z#int_order_1,
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(z#int_order_1) using tseitin
+
+--
+
+__159,
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__159) using tseitin
+
+--
+
+__160,
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__160) using tseitin
+
+--
+
+__161,
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__161) using tseitin
+
+--
+
+__162,
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__162) using tseitin
+
+--
+
+__163,
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__163) using tseitin
+
+--
+
+__164,
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__164) using tseitin
+
+--
+
+__165,
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__165) using tseitin
+
+--
+
+__166,
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__166) using tseitin
+
+--
+
+__167,
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__167) using tseitin
+
+--
+
+__151,
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__151) using tseitin
+
+--
+
+x#int_order_1,
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(x#int_order_1) using tseitin
+
+--
+
+__168,
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__168) using tseitin
+
+--
+
+__169,
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__169) using tseitin
+
+--
+
+__152,
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+y#int_order_1,
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(__152) using tseitin
+
+--
+
+y#int_order_1,
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__170,
+__171,
+__153
+new SAT encoding decisions:
+  assert(y#int_order_1) using tseitin
+
+--
+
+__170,
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__171,
+__153
+new SAT encoding decisions:
+  assert(__170) using tseitin
+
+--
+
+__171,
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+__153
+new SAT encoding decisions:
+  assert(__171) using tseitin
+
+--
+
+__153
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__153) using tseitin
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(1..3)
+find z: int(1..10)
+find t: int(0..4)
+find t#int_order_1: bool
+find t#int_order_2: bool
+find t#int_order_3: bool
+find t#int_order_4: bool
+find t#int_order_5: bool
+find z#int_order_1: bool
+find z#int_order_2: bool
+find z#int_order_3: bool
+find z#int_order_4: bool
+find z#int_order_5: bool
+find z#int_order_6: bool
+find z#int_order_7: bool
+find z#int_order_8: bool
+find z#int_order_9: bool
+find z#int_order_10: bool
+find x#int_order_1: bool
+find x#int_order_2: bool
+find x#int_order_3: bool
+find y#int_order_1: bool
+find y#int_order_2: bool
+find y#int_order_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+findAux __5: bool
+findAux __6: bool
+findAux __7: bool
+findAux __8: bool
+findAux __9: bool
+findAux __10: bool
+findAux __11: bool
+findAux __12: bool
+findAux __13: bool
+findAux __14: bool
+findAux __15: bool
+findAux __16: bool
+findAux __17: bool
+findAux __18: bool
+findAux __19: bool
+findAux __20: bool
+findAux __21: bool
+findAux __22: bool
+findAux __23: bool
+findAux __24: bool
+findAux __25: bool
+findAux __26: bool
+findAux __27: bool
+findAux __28: bool
+findAux __29: bool
+findAux __30: bool
+findAux __31: bool
+findAux __32: bool
+findAux __33: bool
+findAux __34: bool
+findAux __35: bool
+findAux __36: bool
+findAux __37: bool
+findAux __38: bool
+findAux __39: bool
+findAux __40: bool
+findAux __41: bool
+findAux __42: bool
+findAux __43: bool
+findAux __44: bool
+findAux __45: bool
+findAux __46: bool
+findAux __47: bool
+findAux __48: bool
+findAux __49: bool
+findAux __50: bool
+findAux __51: bool
+findAux __52: bool
+findAux __53: bool
+findAux __54: bool
+findAux __55: bool
+findAux __56: bool
+findAux __57: bool
+findAux __58: bool
+findAux __59: bool
+findAux __60: bool
+findAux __61: bool
+findAux __62: bool
+findAux __63: bool
+findAux __64: bool
+findAux __65: bool
+findAux __66: bool
+findAux __67: bool
+findAux __68: bool
+findAux __69: bool
+findAux __70: bool
+findAux __71: bool
+findAux __72: bool
+findAux __73: bool
+findAux __74: bool
+findAux __75: bool
+findAux __76: bool
+findAux __77: bool
+findAux __78: bool
+findAux __79: bool
+findAux __80: bool
+findAux __81: bool
+findAux __82: bool
+findAux __83: bool
+findAux __84: bool
+findAux __85: bool
+findAux __86: bool
+findAux __87: bool
+findAux __88: bool
+findAux __89: bool
+findAux __90: bool
+findAux __91: bool
+findAux __92: bool
+findAux __93: bool
+findAux __94: bool
+findAux __95: bool
+findAux __96: bool
+findAux __97: bool
+findAux __98: bool
+findAux __99: bool
+findAux __100: bool
+findAux __101: bool
+findAux __102: bool
+findAux __103: bool
+findAux __104: bool
+findAux __105: bool
+findAux __106: bool
+findAux __107: bool
+findAux __108: bool
+findAux __109: bool
+findAux __110: bool
+findAux __111: bool
+findAux __112: bool
+findAux __113: bool
+findAux __114: bool
+findAux __115: bool
+findAux __116: bool
+findAux __117: bool
+findAux __118: bool
+findAux __119: bool
+findAux __120: bool
+findAux __121: bool
+findAux __122: bool
+findAux __123: bool
+findAux __124: bool
+findAux __125: bool
+findAux __126: bool
+findAux __127: bool
+findAux __128: bool
+findAux __129: bool
+findAux __130: bool
+findAux __131: bool
+findAux __132: bool
+findAux __133: bool
+findAux __134: bool
+findAux __135: bool
+findAux __136: bool
+findAux __137: bool
+findAux __138: bool
+findAux __139: bool
+findAux __140: bool
+findAux __141: bool
+findAux __142: bool
+findAux __143: bool
+findAux __144: bool
+findAux __145: bool
+findAux __146: bool
+findAux __147: bool
+findAux __148: bool
+findAux __149: bool
+findAux __150: bool
+findAux __151: bool
+findAux __152: bool
+findAux __153: bool
+findAux __154: bool
+findAux __155: bool
+findAux __156: bool
+findAux __157: bool
+findAux __158: bool
+findAux __159: bool
+findAux __160: bool
+findAux __161: bool
+findAux __162: bool
+findAux __163: bool
+findAux __164: bool
+findAux __165: bool
+findAux __166: bool
+findAux __167: bool
+findAux __168: bool
+findAux __169: bool
+findAux __170: bool
+findAux __171: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+weighted(1*t#int_order_2, 1*t#int_order_3, 1*t#int_order_4, 1*t#int_order_5, 1*z#int_order_2, 1*z#int_order_3, 1*z#int_order_4, 1*z#int_order_5, 1*z#int_order_6, 1*z#int_order_7, 1*z#int_order_8, 1*z#int_order_9, 1*z#int_order_10, -1*x#int_order_2, -1*x#int_order_3, -1*y#int_order_2, -1*y#int_order_3) Exactly 1 using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__0 <-> !(true)) using tseitin,
+define(__1 <-> and([__0,t#int_order_1;int(1..)])) using tseitin,
+define(__2 <-> or([false,__1;int(1..)])) using tseitin,
+define(__3 <-> !(true)) using tseitin,
+define(__4 <-> and([__3,t#int_order_2;int(1..)])) using tseitin,
+define(__5 <-> or([__2,__4;int(1..)])) using tseitin,
+define(__6 <-> !(true)) using tseitin,
+define(__7 <-> and([__6,t#int_order_3;int(1..)])) using tseitin,
+define(__8 <-> or([__5,__7;int(1..)])) using tseitin,
+define(__9 <-> !(true)) using tseitin,
+define(__10 <-> and([__9,t#int_order_4;int(1..)])) using tseitin,
+define(__11 <-> or([__8,__10;int(1..)])) using tseitin,
+define(__12 <-> !(true)) using tseitin,
+define(__13 <-> and([__12,t#int_order_5;int(1..)])) using tseitin,
+define(__14 <-> or([__11,__13;int(1..)])) using tseitin,
+define(__15 <-> !(__14)) using tseitin,
+define(__16 <-> !(z#int_order_1)) using tseitin,
+define(__17 <-> and([__16,true;int(1..)])) using tseitin,
+define(__18 <-> or([false,__17;int(1..)])) using tseitin,
+define(__19 <-> !(z#int_order_2)) using tseitin,
+define(__20 <-> and([__19,false;int(1..)])) using tseitin,
+define(__21 <-> or([__18,__20;int(1..)])) using tseitin,
+define(__22 <-> !(z#int_order_3)) using tseitin,
+define(__23 <-> and([__22,false;int(1..)])) using tseitin,
+define(__24 <-> or([__21,__23;int(1..)])) using tseitin,
+define(__25 <-> !(z#int_order_4)) using tseitin,
+define(__26 <-> and([__25,false;int(1..)])) using tseitin,
+define(__27 <-> or([__24,__26;int(1..)])) using tseitin,
+define(__28 <-> !(z#int_order_5)) using tseitin,
+define(__29 <-> and([__28,false;int(1..)])) using tseitin,
+define(__30 <-> or([__27,__29;int(1..)])) using tseitin,
+define(__31 <-> !(z#int_order_6)) using tseitin,
+define(__32 <-> and([__31,false;int(1..)])) using tseitin,
+define(__33 <-> or([__30,__32;int(1..)])) using tseitin,
+define(__34 <-> !(z#int_order_7)) using tseitin,
+define(__35 <-> and([__34,false;int(1..)])) using tseitin,
+define(__36 <-> or([__33,__35;int(1..)])) using tseitin,
+define(__37 <-> !(z#int_order_8)) using tseitin,
+define(__38 <-> and([__37,false;int(1..)])) using tseitin,
+define(__39 <-> or([__36,__38;int(1..)])) using tseitin,
+define(__40 <-> !(z#int_order_9)) using tseitin,
+define(__41 <-> and([__40,false;int(1..)])) using tseitin,
+define(__42 <-> or([__39,__41;int(1..)])) using tseitin,
+define(__43 <-> !(z#int_order_10)) using tseitin,
+define(__44 <-> and([__43,false;int(1..)])) using tseitin,
+define(__45 <-> or([__42,__44;int(1..)])) using tseitin,
+define(__46 <-> !(__45)) using tseitin,
+define(__47 <-> !(true)) using tseitin,
+define(__48 <-> and([__47,z#int_order_1;int(1..)])) using tseitin,
+define(__49 <-> or([false,__48;int(1..)])) using tseitin,
+define(__50 <-> !(true)) using tseitin,
+define(__51 <-> and([__50,z#int_order_2;int(1..)])) using tseitin,
+define(__52 <-> or([__49,__51;int(1..)])) using tseitin,
+define(__53 <-> !(true)) using tseitin,
+define(__54 <-> and([__53,z#int_order_3;int(1..)])) using tseitin,
+define(__55 <-> or([__52,__54;int(1..)])) using tseitin,
+define(__56 <-> !(true)) using tseitin,
+define(__57 <-> and([__56,z#int_order_4;int(1..)])) using tseitin,
+define(__58 <-> or([__55,__57;int(1..)])) using tseitin,
+define(__59 <-> !(true)) using tseitin,
+define(__60 <-> and([__59,z#int_order_5;int(1..)])) using tseitin,
+define(__61 <-> or([__58,__60;int(1..)])) using tseitin,
+define(__62 <-> !(true)) using tseitin,
+define(__63 <-> and([__62,z#int_order_6;int(1..)])) using tseitin,
+define(__64 <-> or([__61,__63;int(1..)])) using tseitin,
+define(__65 <-> !(true)) using tseitin,
+define(__66 <-> and([__65,z#int_order_7;int(1..)])) using tseitin,
+define(__67 <-> or([__64,__66;int(1..)])) using tseitin,
+define(__68 <-> !(true)) using tseitin,
+define(__69 <-> and([__68,z#int_order_8;int(1..)])) using tseitin,
+define(__70 <-> or([__67,__69;int(1..)])) using tseitin,
+define(__71 <-> !(true)) using tseitin,
+define(__72 <-> and([__71,z#int_order_9;int(1..)])) using tseitin,
+define(__73 <-> or([__70,__72;int(1..)])) using tseitin,
+define(__74 <-> !(true)) using tseitin,
+define(__75 <-> and([__74,z#int_order_10;int(1..)])) using tseitin,
+define(__76 <-> or([__73,__75;int(1..)])) using tseitin,
+define(__77 <-> !(__76)) using tseitin,
+define(__78 <-> !(x#int_order_1)) using tseitin,
+define(__79 <-> and([__78,true;int(1..)])) using tseitin,
+define(__80 <-> or([false,__79;int(1..)])) using tseitin,
+define(__81 <-> !(x#int_order_2)) using tseitin,
+define(__82 <-> and([__81,false;int(1..)])) using tseitin,
+define(__83 <-> or([__80,__82;int(1..)])) using tseitin,
+define(__84 <-> !(x#int_order_3)) using tseitin,
+define(__85 <-> and([__84,false;int(1..)])) using tseitin,
+define(__86 <-> or([__83,__85;int(1..)])) using tseitin,
+define(__87 <-> !(__86)) using tseitin,
+define(__88 <-> !(true)) using tseitin,
+define(__89 <-> and([__88,x#int_order_1;int(1..)])) using tseitin,
+define(__90 <-> or([false,__89;int(1..)])) using tseitin,
+define(__91 <-> !(true)) using tseitin,
+define(__92 <-> and([__91,x#int_order_2;int(1..)])) using tseitin,
+define(__93 <-> or([__90,__92;int(1..)])) using tseitin,
+define(__94 <-> !(true)) using tseitin,
+define(__95 <-> and([__94,x#int_order_3;int(1..)])) using tseitin,
+define(__96 <-> or([__93,__95;int(1..)])) using tseitin,
+define(__97 <-> !(__96)) using tseitin,
+define(__98 <-> !(y#int_order_1)) using tseitin,
+define(__99 <-> and([__98,true;int(1..)])) using tseitin,
+define(__100 <-> or([false,__99;int(1..)])) using tseitin,
+define(__101 <-> !(y#int_order_2)) using tseitin,
+define(__102 <-> and([__101,false;int(1..)])) using tseitin,
+define(__103 <-> or([__100,__102;int(1..)])) using tseitin,
+define(__104 <-> !(y#int_order_3)) using tseitin,
+define(__105 <-> and([__104,false;int(1..)])) using tseitin,
+define(__106 <-> or([__103,__105;int(1..)])) using tseitin,
+define(__107 <-> !(__106)) using tseitin,
+define(__108 <-> !(true)) using tseitin,
+define(__109 <-> and([__108,y#int_order_1;int(1..)])) using tseitin,
+define(__110 <-> or([false,__109;int(1..)])) using tseitin,
+define(__111 <-> !(true)) using tseitin,
+define(__112 <-> and([__111,y#int_order_2;int(1..)])) using tseitin,
+define(__113 <-> or([__110,__112;int(1..)])) using tseitin,
+define(__114 <-> !(true)) using tseitin,
+define(__115 <-> and([__114,y#int_order_3;int(1..)])) using tseitin,
+define(__116 <-> or([__113,__115;int(1..)])) using tseitin,
+define(__117 <-> !(__116)) using tseitin,
+define(__118 <-> !(t#int_order_1)) using tseitin,
+define(__119 <-> and([__118,true;int(1..)])) using tseitin,
+define(__120 <-> or([false,__119;int(1..)])) using tseitin,
+define(__121 <-> !(t#int_order_2)) using tseitin,
+define(__122 <-> and([__121,false;int(1..)])) using tseitin,
+define(__123 <-> or([__120,__122;int(1..)])) using tseitin,
+define(__124 <-> !(t#int_order_3)) using tseitin,
+define(__125 <-> and([__124,false;int(1..)])) using tseitin,
+define(__126 <-> or([__123,__125;int(1..)])) using tseitin,
+define(__127 <-> !(t#int_order_4)) using tseitin,
+define(__128 <-> and([__127,false;int(1..)])) using tseitin,
+define(__129 <-> or([__126,__128;int(1..)])) using tseitin,
+define(__130 <-> !(t#int_order_5)) using tseitin,
+define(__131 <-> and([__130,false;int(1..)])) using tseitin,
+define(__132 <-> or([__129,__131;int(1..)])) using tseitin,
+define(__133 <-> !(__132)) using tseitin,
+define(__134 <-> !(t#int_order_2)) using tseitin,
+define(__135 <-> !(t#int_order_3)) using tseitin,
+define(__136 <-> !(t#int_order_4)) using tseitin,
+define(__137 <-> !(t#int_order_5)) using tseitin,
+define(__138 <-> !(z#int_order_2)) using tseitin,
+define(__139 <-> !(z#int_order_3)) using tseitin,
+define(__140 <-> !(z#int_order_4)) using tseitin,
+define(__141 <-> !(z#int_order_5)) using tseitin,
+define(__142 <-> !(z#int_order_6)) using tseitin,
+define(__143 <-> !(z#int_order_7)) using tseitin,
+define(__144 <-> !(z#int_order_8)) using tseitin,
+define(__145 <-> !(z#int_order_9)) using tseitin,
+define(__146 <-> !(z#int_order_10)) using tseitin,
+define(__147 <-> !(x#int_order_2)) using tseitin,
+define(__148 <-> !(x#int_order_3)) using tseitin,
+define(__149 <-> !(y#int_order_2)) using tseitin,
+define(__150 <-> !(y#int_order_3)) using tseitin,
+define(__151 <-> and([__46,__77;int(1..)])) using tseitin,
+define(__152 <-> and([__87,__97;int(1..)])) using tseitin,
+define(__153 <-> and([__107,__117;int(1..)])) using tseitin,
+define(__154 <-> and([__133,__15;int(1..)])) using tseitin,
+define(__155 <-> or([__134,t#int_order_1;int(1..)])) using tseitin,
+define(__156 <-> or([__135,t#int_order_2;int(1..)])) using tseitin,
+define(__157 <-> or([__136,t#int_order_3;int(1..)])) using tseitin,
+define(__158 <-> or([__137,t#int_order_4;int(1..)])) using tseitin,
+define(__159 <-> or([__138,z#int_order_1;int(1..)])) using tseitin,
+define(__160 <-> or([__139,z#int_order_2;int(1..)])) using tseitin,
+define(__161 <-> or([__140,z#int_order_3;int(1..)])) using tseitin,
+define(__162 <-> or([__141,z#int_order_4;int(1..)])) using tseitin,
+define(__163 <-> or([__142,z#int_order_5;int(1..)])) using tseitin,
+define(__164 <-> or([__143,z#int_order_6;int(1..)])) using tseitin,
+define(__165 <-> or([__144,z#int_order_7;int(1..)])) using tseitin,
+define(__166 <-> or([__145,z#int_order_8;int(1..)])) using tseitin,
+define(__167 <-> or([__146,z#int_order_9;int(1..)])) using tseitin,
+define(__168 <-> or([__147,x#int_order_1;int(1..)])) using tseitin,
+define(__169 <-> or([__148,x#int_order_2;int(1..)])) using tseitin,
+define(__170 <-> or([__149,y#int_order_1;int(1..)])) using tseitin,
+define(__171 <-> or([__150,y#int_order_2;int(1..)])) using tseitin,
+assert(t#int_order_1) using tseitin,
+assert(__155) using tseitin,
+assert(__156) using tseitin,
+assert(__157) using tseitin,
+assert(__158) using tseitin,
+assert(__154) using tseitin,
+assert(z#int_order_1) using tseitin,
+assert(__159) using tseitin,
+assert(__160) using tseitin,
+assert(__161) using tseitin,
+assert(__162) using tseitin,
+assert(__163) using tseitin,
+assert(__164) using tseitin,
+assert(__165) using tseitin,
+assert(__166) using tseitin,
+assert(__167) using tseitin,
+assert(__151) using tseitin,
+assert(x#int_order_1) using tseitin,
+assert(__168) using tseitin,
+assert(__169) using tseitin,
+assert(__152) using tseitin,
+assert(y#int_order_1) using tseitin,
+assert(__170) using tseitin,
+assert(__171) using tseitin,
+assert(__153) using tseitin
+

@@ -1,0 +1,88 @@
+Model before rewriting:
+
+find a: int(0..5)
+
+such that
+
+a = -1
+
+--
+
+false
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+false
+new variables:
+  find a#int_rank_1: bool
+  find a#int_rank_2: bool
+  find a#int_rank_3: bool
+new constraints:
+  or([!(a#int_rank_3),and([!(a#int_rank_2),or([!(a#int_rank_1),true;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+!(a#int_rank_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(a#int_rank_3)) using tseitin
+
+--
+
+!(a#int_rank_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(a#int_rank_2)) using tseitin
+
+--
+
+and([__1;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__1
+
+--
+
+or([__0,__1;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> or([__0,__1;int(1..)])) using tseitin
+
+--
+
+false,
+__2
+   ~~> remove_single_atom ([("SAT", 8400)])
+false
+new SAT encoding decisions:
+  assert(__2) using tseitin
+
+--
+
+Final model:
+
+find a: int(0..5)
+find a#int_rank_1: bool
+find a#int_rank_2: bool
+find a#int_rank_3: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+
+such that
+
+false
+
+sat encoding decisions:
+
+define(__0 <-> !(a#int_rank_3)) using tseitin,
+define(__1 <-> !(a#int_rank_2)) using tseitin,
+define(__2 <-> or([__0,__1;int(1..)])) using tseitin,
+assert(__2) using tseitin
+

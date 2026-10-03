@@ -1,0 +1,134 @@
+Model before rewriting:
+
+find x: int(1..10)
+letting m be 5
+
+such that
+
+and([ sum([x,i;int(1..)]) = 10 | i : int(((m - 1))..10) ]),
+and([ sum([x,i;int(1..)]) = 10 | i : int((sum([1,m;int(1..)]))..10) ])
+
+--
+
+and([ sum([x,i;int(1..)]) = 10 | i : int(((m - 1))..10) ]),
+and([ sum([x,i;int(1..)]) = 10 | i : int((sum([1,m;int(1..)]))..10) ])
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+and([ sum([x,i;int(1..)]) = 10 | i : int(((m - 1))..10) ]),
+and([ sum([x,i;int(1..)]) = 10 | i : int((sum([1,m;int(1..)]))..10) ])
+new variables:
+  find x#int_rank_1: bool
+  find x#int_rank_2: bool
+  find x#int_rank_3: bool
+  find x#int_rank_4: bool
+new constraints:
+  or([!(x#int_rank_4),and([!(x#int_rank_3),and([!(x#int_rank_2),or([!(x#int_rank_1),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+!(x#int_rank_4)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> !(x#int_rank_4)) using tseitin
+
+--
+
+!(x#int_rank_3)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> !(x#int_rank_3)) using tseitin
+
+--
+
+!(x#int_rank_2)
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  findAux __2: bool
+new SAT encoding decisions:
+  define(__2 <-> !(x#int_rank_2)) using tseitin
+
+--
+
+and([__2;int(1..)])
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+__2
+
+--
+
+and([__1,__2;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  findAux __3: bool
+new SAT encoding decisions:
+  define(__3 <-> and([__1,__2;int(1..)])) using tseitin
+
+--
+
+or([__0,__3;int(1..)])
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  findAux __4: bool
+new SAT encoding decisions:
+  define(__4 <-> or([__0,__3;int(1..)])) using tseitin
+
+--
+
+and([ sum([x,i;int(1..)]) = 10 | i : int(((m - 1))..10) ]),
+and([ sum([x,i;int(1..)]) = 10 | i : int((sum([1,m;int(1..)]))..10) ]),
+__4
+   ~~> remove_single_atom ([("SAT", 8400)])
+and([ sum([x,i;int(1..)]) = 10 | i : int(((m - 1))..10) ]),
+and([ sum([x,i;int(1..)]) = 10 | i : int((sum([1,m;int(1..)]))..10) ])
+new SAT encoding decisions:
+  assert(__4) using tseitin
+
+--
+
+[ sum([x,i;int(1..)]) = 10 | i : int(((m - 1))..10) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[false;int(1..)]
+
+--
+
+[ sum([x,i;int(1..)]) = 10 | i : int((sum([1,m;int(1..)]))..10) ]
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[false;int(1..)]
+
+--
+
+Final model:
+
+find x: int(1..10)
+letting m be 5
+find x#int_rank_1: bool
+find x#int_rank_2: bool
+find x#int_rank_3: bool
+find x#int_rank_4: bool
+findAux __0: bool
+findAux __1: bool
+findAux __2: bool
+findAux __3: bool
+findAux __4: bool
+
+such that
+
+false,
+false
+
+sat encoding decisions:
+
+define(__0 <-> !(x#int_rank_4)) using tseitin,
+define(__1 <-> !(x#int_rank_3)) using tseitin,
+define(__2 <-> !(x#int_rank_2)) using tseitin,
+define(__3 <-> and([__1,__2;int(1..)])) using tseitin,
+define(__4 <-> or([__0,__3;int(1..)])) using tseitin,
+assert(__4) using tseitin
+
