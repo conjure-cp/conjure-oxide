@@ -105,7 +105,7 @@ Finish major encoding features and known missing library connections first, incl
 ## Active follow-up priorities
 
 - Keep the implementation and integration campaign on `channelling=uniform` for now. Lazy mixed-representation materialisation, sharing and channelling remain deferred; revisit them explicitly after the uniform backend is broadly working.
-- Migrate the remaining decision families: integer equality/disequality and comparisons first, then allDifferent, table, element and remaining linear-integer strategies. Prefer public RustSAT/Pindakaas encoders and remove superseded Oxide circuits rather than retaining duplicate implementations.
+- Migrate the remaining decision families: allDifferent, table, element and remaining linear-integer strategies. Integer equality/disequality and comparisons are connected. Prefer public RustSAT/Pindakaas encoders and remove superseded Oxide circuits rather than retaining duplicate implementations.
 - Keep guarded/reified AMO/cardinality/PB constraints, reusable incremental bounds and objective tightening on the work list. Integer relation reification is the first supporting connection, not completion of this whole gap.
 - Keep encoder tuning, proof-producing variants, Boolean-arena unification and the fixture-discovery gap visible. Alternate Pindakaas implementations of already connected algorithms remain deferred.
 - Reconfirm historical failures before the smallest-failing-fixture loop. Library bugs require a standalone reproducer and upstream-status report before adding an adaptor workaround. Local upstream reporting material in `bug-reports/` must not be committed.
@@ -113,10 +113,10 @@ Finish major encoding features and known missing library connections first, incl
 ## Integer relation migration
 
 - Integer equality/disequality and all four ordering relations now have dedicated semantic decisions, including Boolean outputs for nested/reified uses. Numeric views share the selected PB provider and provenance with asserted PB constraints.
-- RustSAT implication helpers construct both directions of each inequality equivalence. Equality combines the two bounds using library atomic gates; disequality complements that result. GTE, binary adder, DPW, BDD and SWC encode the resulting constraints. No clauses are stored in the model.
+- RustSAT implication helpers construct both directions of each flat inequality equivalence. Structured Pindakaas relations encode complementary inequalities under opposite output guards; the guards cover aggregation clauses as well as encoder clauses. Equality combines the two bounds using library atomic gates; disequality complements that result. GTE, binary adder, DPW, BDD and SWC encode the resulting constraints. No clauses are stored in the model.
 - Removed the representation-specific Direct, Order and BinaryValue equality/comparison rewrite circuits. The internal binary comparator used by min/max arithmetic remains to be migrated with those arithmetic strategies; it is not a public comparison fallback.
 - Direct domain constraints now require an allowed indicator explicitly, so their exactly-one invariant no longer depends on an equality encoding. Numeric zero must not make an all-false one-hot code valid.
-- Rank comparisons continue to use the actual-value mapping before numeric encoding. Relation decisions retain numeric term groups. One Direct choice against a constant and equality/disequality between two Direct choices use library Boolean gates over the value indicators, avoiding unnecessarily large weighted counters. Other integer relation views currently use flat PB inputs, including native asserted PB calls. Passing structured groups to those calls and through PB reification remains a follow-up alongside general guarded/reified AMO/cardinality/PB.
+- Rank comparisons continue to use the actual-value mapping before numeric encoding. Relation decisions retain numeric term groups. One Direct choice against a constant and equality/disequality between two Direct choices use library Boolean gates over the value indicators, avoiding unnecessarily large weighted counters. Other integer relation views now retain compatible groups through native asserted PB calls and both directions of reification for Pindakaas BDD/SWC. RustSAT keeps its flat PB input. General guarded/reified AMO/cardinality/PB remains a separate follow-up.
 - Next dedicated families: allDifferent (library AMO and disequality compositions), table, element, and additional linear-integer strategies. Remain on uniform representations throughout this work.
 
 - Encoding CLI flags use the common `--sat-encoding-<family>` prefix: `amo`, `cardinality` and `pb`. The former flag names are removed; no compatibility aliases are retained. New family selectors should follow this naming convention.
@@ -127,3 +127,9 @@ Finish major encoding features and known missing library connections first, incl
 
 - Verification: full workspace acceptance passed 1,522 tests (14 skipped), with workspace doctests, production Clippy and formatting. SAT coverage is 329 of 624 runnable fixtures, with 11,183 portfolios; 11,046 are uniform across 241 fixtures. The expanded weighted-sum/flattening and matrix-domain quantification cases pass but need profiling during encoder tuning.
 - Normal golden verification passed 798 tests, covering every SAT-enabled fixture and all core/rule tests.
+
+## Structured integer relation inputs
+
+- BDD/SWC receive the original Direct choice, Order chain and bounded binary groups from integer relations, including signed terms and strict comparisons. Existing group compatibility checks and representation domain constraints remain authoritative.
+- The original term polarities and group bounds survive both implication directions. Clause guards cover Pindakaas aggregation, including contradictions, so an impossible conditional constraint only forbids its guard. Auxiliary complemented-bit definitions remain unconditional equivalences.
+- Exhaustive assignment checks cover all six relations, positive/negative scaling, sparse choices, chains, signed binary bounds, repeated/complemented terms, extreme bounds, free/asserted outputs and outputs shared with inputs.

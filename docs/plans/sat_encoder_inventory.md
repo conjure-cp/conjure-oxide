@@ -67,7 +67,7 @@ The repository README advertises **Product encoding** for AMO, but the 0.5.1 `ca
 - Public `IntEncoding::Direct { first, vals }` describes consecutive values. Sparse Direct must use explicitly weighted choices; passing a sparse domain as consecutive values is incorrect.
 - Public `IntEncoding::Order { first, vals }` describes consecutive greater-than thresholds. Sparse Order needs weighted threshold gaps, with the polarity adapted to Oxide's selected convention.
 - Public `IntEncoding::Log { signed, bits }` is actual-value binary semantics. Conversion code assigns ascending powers of two and negates the highest weight when signed; documentation wording about the sign-bit position is inconsistent, so test the adapter against the implementation. It supplies no independent BinaryOffset or BinaryRank representation. Offset needs an explicit additive constant; rank must never substitute for numeric value in arithmetic.
-- `BoolLinExp::add_choice`, `add_chain`, and `add_bounded_log_encoding` attach AMO, chain, and domain information to weighted terms. Oxide now records these groups in PB decisions and forwards compatible groups to BDD/SWC while retaining its own domain constraints and decoding.
+- `BoolLinExp::add_choice`, `add_chain`, and `add_bounded_log_encoding` attach AMO, chain, and domain information to weighted terms. Oxide records these groups in PB and integer relation decisions and forwards compatible groups to BDD/SWC, including both directions of integer relation reification, while retaining its own domain constraints and decoding.
 
 Source: [public integer views](https://docs.rs/crate/pindakaas/0.5.1/source/src/lib.rs), [linear conversion and structured terms](https://docs.rs/crate/pindakaas/0.5.1/source/src/bool_linear.rs).
 
