@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-02
 
-SAT is enabled in **327 of 622 runnable integration fixtures**, up from 322 of 620 at the cardinality stage. This stage enables the three former solution-mismatch fixtures and adds `sat-ir/signed-arithmetic` and `sat-ir/weighted-linear`. All enabled fixtures have successful SAT run records. There are **2,663 SAT solution portfolios**; **2,568** use uniform channelling across **239 fixtures**. The cardinality-stage totals were 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
+SAT is enabled in **327 of 622 runnable integration fixtures**, up from 322 of 620 at the cardinality stage. This stage enables the three former solution-mismatch fixtures and adds `sat-ir/signed-arithmetic` and `sat-ir/weighted-linear`. All enabled fixtures have successful SAT run records. There are **3,355 SAT solution portfolios** after adding DPW and SWC; **3,260** use uniform channelling across **239 fixtures**. The cardinality-stage totals were 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
 ## Survey of the 489 previously disabled fixtures
 
@@ -25,14 +25,16 @@ The former mismatches in `basic/weighted-sum/04-needs-normalising`, `cnf/neg-div
 
 ## Verification and limits
 
-The full acceptance workflow, `NEXTEST_TEST_THREADS=4 make test-accept` with nextest's no-fail-fast option, passed **1,505 tests**, with **14 skipped**. Workspace doctests passed. Production Clippy and formatting checks passed. Core and rule libraries contain 225 and 134 unit tests respectively. Weighted PB uses RustSAT GTE, RustSAT binary adder and Pindakaas BDD, with exhaustive signed-weight, constant, complement, bound and allocation checks.
+The full acceptance workflow, `NEXTEST_TEST_THREADS=4 make test-accept` with nextest's no-fail-fast option, passed **1,505 tests**, with **14 skipped**. Workspace doctests passed. Production Clippy and formatting checks passed. Core and rule libraries contain 225 and 134 unit tests respectively. Weighted PB uses RustSAT GTE, RustSAT binary adder, Pindakaas BDD, RustSAT DPW and Pindakaas SWC, with exhaustive signed-weight, constant, complement, bound and allocation checks.
 
 Uniform all-mode exercises the currently implemented SAT integer representations: Direct, Order and BinaryValue (`IntLog`), together with available composite layouts and encoding-algorithm choices. BinaryOffset and BinaryRank remain planned IR kinds. Representation selection is shared across each type family throughout a model.
 
 Acceptance uses the configured Conjure reference checks. Existing search limits compare counts when results are truncated. Seven newly enabled fixtures already exempt Conjure validation: intermediate optimisation solutions, two decision-dependent domains, three dominance fixtures and a type-annotation fixture. Their outputs were additionally checked against the existing Minion/Z3 portfolios: complete output sets agreed where complete search was configured; the remaining cases use their configured limits and allow different subsets.
 
-For this stage, the contribution guide's cleanup script restored 300 timing-only files. Existing timing fields were preserved in 325 files with semantic changes; new run entries retain their measurements. The signed-division fixture budget is deliberately raised from one to ten seconds for complete uniform SAT solution enumeration. No changes outside SAT-enabled fixture directories remain in the integration artefacts. Artefacts and configurations are committed separately from implementation code.
+For the initial weighted stage, the contribution guide's cleanup script restored 300 timing-only files. Existing timing fields were preserved in 325 files with semantic changes; new run entries retain their measurements. The signed-division fixture budget is deliberately raised from one to ten seconds for complete uniform SAT solution enumeration. No changes outside SAT-enabled fixture directories remain in the integration artefacts. Artefacts and configurations are committed separately from implementation code.
 
 Weighted-stage normal golden verification passed **781 tests**, covering all 327 enabled SAT fixtures and the core/rule tests.
 
-The signed-arithmetic fixture verifies all 48 operand pairs against Conjure and Minion, including minimum signed magnitudes and negative divisors. Z3 is excluded from this fixture because its existing Euclidean division differs from Essence floor division (for example, `-4 / -3` yields 2 instead of 1). The sparse weighted fixture checks all three SAT integer representations and all three PB providers against both Minion and Z3; every portfolio returns the same five solutions.
+The signed-arithmetic fixture verifies all 48 operand pairs against Conjure and Minion, including minimum signed magnitudes and negative divisors. Z3 is excluded from this fixture because its existing Euclidean division differs from Essence floor division (for example, `-4 / -3` yields 2 instead of 1). The sparse weighted fixture checks all three SAT integer representations and all five PB algorithms against both Minion and Z3; every portfolio returns the same five solutions.
+
+DPW/SWC expansion: full workspace acceptance again passed 1,505 tests (14 skipped) and workspace doctests; normal golden verification passed 781 tests. Timing cleanup restored 578 timing-only files and preserved previous timings in the 44 files with semantic statistics changes. The expanded portfolios remain confined to SAT-enabled fixtures.

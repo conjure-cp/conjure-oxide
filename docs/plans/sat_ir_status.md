@@ -73,3 +73,10 @@ The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boo
 - Weighted-stage verification: complete `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,505 tests with 14 skipped, plus all workspace doctests. Normal golden verification passed 781 tests across every enabled SAT fixture and the core/rule packages. Production Clippy and formatting passed.
 - Weighted-stage coverage was 327 of 622 runnable fixtures, with 2,663 SAT portfolios and 2,568 uniform portfolios across 239 fixtures. The three former mismatches are enabled; new fixtures cover all 48 signed-arithmetic operand pairs and five solutions of sparse weighted constraints. The signed fixture uses Conjure/Minion references because existing Z3 Euclidean division differs for negative divisors.
 - Weighted-stage timing cleanup restored 300 timing-only files and retained prior measurements in 325 semantic-statistics files. The newly expanded signed-division fixture deliberately raises its expected-time budget from one to ten seconds. Generated artefacts are committed separately from implementation.
+
+## Remaining PB algorithms
+
+- Added `rustsat-dynamic-poly-watchdog` and `pindakaas-swc`; all-mode enumerates five PB choices. DPW lower bounds use inversion and exact bounds combine both directions, at full precision. Pindakaas specialisation retains SWC when selected. Overlapping Pindakaas adder and totaliser implementations are deferred.
+- Full `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,505 tests with 14 skipped, plus workspace doctests. Production Clippy and formatting passed. Exhaustive PB projection now also covers weights 1, 64 and 257 and their bound transitions.
+- All 327 SAT-enabled fixtures remain successful, with 3,355 SAT portfolios (3,260 uniform across 239 fixtures), an increase of 692 portfolios. Timing cleanup restored 578 timing-only files and retained previous timing fields in the 44 files with semantic statistics changes.
+- Normal golden verification passed 781 tests, covering every enabled SAT fixture and the core/rule packages.
