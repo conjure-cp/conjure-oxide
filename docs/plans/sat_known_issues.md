@@ -1,24 +1,26 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after structured integer relation inputs were connected.
+Inventory date: 2026-10-03, branch `sat-ir` after scalar allDifferent decisions were connected.
 
-329 of 624 runnable integration fixtures have SAT enabled. All 329 passed the latest full acceptance, exercising 11,183 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 295 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+336 of 625 runnable integration fixtures have SAT enabled. All 336 passed full acceptance, exercising 11,773 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 289 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
+
+Scalar integer/Boolean allDifferent now passes pairwise and eligible value-AMO portfolios. allDifferentExcept and compound-valued operands remain gaps; the dedicated fixture also covers sparse domains, repeated operands, constants, negation and reification. No new upstream library bug was confirmed.
 
 ## Summary of last recorded outcomes
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 218 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 212 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 29 | Initial screen passed, but another representation/portfolio failed. |
 | Panics | 3 | Two reconfirmed today; one historical full-portfolio failure needs retesting. |
 | Model-loading errors | 5 | All five reconfirmed today. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
-| Total SAT-disabled runnable fixtures | 295 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 289 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 247 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 241 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -87,14 +89,11 @@ Last tested with a 120-second per-fixture bound.
 - [hakank-eprime/xkcd](../../test-suite/tests/integration/hakank-eprime/xkcd/xkcd.essence)
 - [savilerow/absBug](../../test-suite/tests/integration/savilerow/absBug/input.essence)
 
-## Initial-screen residual constraints (218)
+## Initial-screen residual constraints (212)
 
 Last recorded in the compact/first screen, before the weighted PB changes. Each fixture below remains SAT-disabled; a fresh screen may move cases out of this list.
 
 - [antichain](../../test-suite/tests/integration/antichain/antichain.essence)
-- [basic/alldiff/01-basic](../../test-suite/tests/integration/basic/alldiff/01-basic/input.essence)
-- [basic/alldiff/02-trivially-false](../../test-suite/tests/integration/basic/alldiff/02-trivially-false/input.essence)
-- [basic/alldiff/03-trivially-true](../../test-suite/tests/integration/basic/alldiff/03-trivially-true/input.essence)
 - [basic/comprehension/set-bounded-image-member](../../test-suite/tests/integration/basic/comprehension/set-bounded-image-member/input.essence)
 - [basic/comprehension/set-bounded-size-member](../../test-suite/tests/integration/basic/comprehension/set-bounded-size-member/input.essence)
 - [basic/comprehension/set-fixed-size-member](../../test-suite/tests/integration/basic/comprehension/set-fixed-size-member/input.essence)
@@ -115,7 +114,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [basic/matrix/09-index-is-expr-offset](../../test-suite/tests/integration/basic/matrix/09-index-is-expr-offset/input.essence)
 - [basic/matrix/10-value-letting-index-is-expr](../../test-suite/tests/integration/basic/matrix/10-value-letting-index-is-expr/input.essence)
 - [basic/matrix/11-index-matrix-literal](../../test-suite/tests/integration/basic/matrix/11-index-matrix-literal/input.essence)
-- [basic/matrix/12-alldiff-matrix-literal-needs-flattening](../../test-suite/tests/integration/basic/matrix/12-alldiff-matrix-literal-needs-flattening/input.essence)
 - [basic/matrix/13-index-matrix-literal-2d](../../test-suite/tests/integration/basic/matrix/13-index-matrix-literal-2d/input.essence)
 - [basic/matrix/14-matrix-index-matrix](../../test-suite/tests/integration/basic/matrix/14-matrix-index-matrix/matrix-index-matrix.essence)
 - [basic/matrix/15-matrix-index-matrix-with-offset](../../test-suite/tests/integration/basic/matrix/15-matrix-index-matrix-with-offset/matrix-index-matrix.essence)
@@ -294,8 +292,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [sets/union-comprehension](../../test-suite/tests/integration/sets/union-comprehension/input.essence)
 - [sets/union2](../../test-suite/tests/integration/sets/union2/input.essence)
 - [smt/int/to-int](../../test-suite/tests/integration/smt/int/to-int/input.essence)
-- [smt/matrix/1d-alldiff](../../test-suite/tests/integration/smt/matrix/1d-alldiff/input.essence)
-- [smt/matrix/2d-slicing-alldiff](../../test-suite/tests/integration/smt/matrix/2d-slicing-alldiff/input.essence)
 - [smt/matrix/bibd](../../test-suite/tests/integration/smt/matrix/bibd/input.essence)
 - [smt/matrix/flatten-no-depth](../../test-suite/tests/integration/smt/matrix/flatten-no-depth/input.essence)
 - [smt/matrix/lex-eq](../../test-suite/tests/integration/smt/matrix/lex-eq/input.essence)

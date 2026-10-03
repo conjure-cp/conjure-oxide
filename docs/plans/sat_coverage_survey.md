@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-03
 
-SAT is enabled in **329 of 624 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **11,183 SAT solution portfolios**; **11,046** use uniform channelling across **241 fixtures**. The integer relation stage adds `sat-ir/integer-relations` and extends PB algorithm selection to numeric equality, disequality and comparisons, including nested Boolean uses.
+SAT is enabled in **336 of 625 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **11,773 SAT solution portfolios**; **11,636** use uniform channelling across **248 fixtures**. The allDifferent stage enables six existing fixtures and adds `sat-ir/alldifferent`, with pairwise and value-AMO compositions, including nested Boolean uses.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -10,8 +10,8 @@ The current filtered failure list and targeted rechecks are recorded in [SAT kno
 
 | Final outcome | Fixtures |
 | --- | ---: |
-| Enabled after full uniform-portfolio verification | 194 |
-| Initial CLI error | 225 |
+| Enabled after full uniform-portfolio verification | 200 |
+| Initial CLI error | 219 |
 | Initial CLI timeout | 37 |
 | Full portfolio failed | 30 |
 | Full portfolio timed out | 3 |
@@ -29,7 +29,7 @@ The former mismatches in `basic/weighted-sum/04-needs-normalising`, `cnf/neg-div
 
 ## Verification and limits
 
-The full acceptance workflow, `NEXTEST_TEST_THREADS=4 make test-accept` with nextest's no-fail-fast option, passed **1,524 tests**, with **14 skipped**. Workspace doctests passed. Production Clippy and formatting checks passed. Core and rule libraries contain 237 and 139 unit tests respectively. Weighted PB uses RustSAT GTE, RustSAT binary adder, Pindakaas BDD, RustSAT DPW and Pindakaas SWC, with exhaustive signed-weight, constant, complement, bound and allocation checks.
+The full acceptance workflow, `NEXTEST_TEST_THREADS=4 make test-accept` with nextest's no-fail-fast option, passed **1,530 tests**, with **14 skipped**. Workspace doctests passed. Production Clippy and formatting checks passed. Core and rule libraries contain 240 and 141 unit tests respectively. Weighted PB uses RustSAT GTE, RustSAT binary adder, Pindakaas BDD, RustSAT DPW and Pindakaas SWC, with exhaustive signed-weight, constant, complement, bound and allocation checks.
 
 Uniform all-mode exercises Direct, Order, BinaryValue (`IntLog`), BinaryOffset (`IntOffset`) and BinaryRank (`IntRank`), together with available composite layouts and encoding-algorithm choices. Representation selection is shared across each type family throughout a model.
 
@@ -57,3 +57,7 @@ Integer relation normal golden verification passed **798 tests**, covering every
 
 Structured integer relation follow-up: compatible Direct choices, Order chains and bounded binary groups now reach Pindakaas BDD/SWC for native assertions and both directions of reification. Exhaustive truth-table checks include asserted outputs, shared input/output variables and extreme bounds. A separate regression checks that choice bounds reduce auxiliary variables and that an impossible reverse implication only constrains its guard. Full acceptance passed 1,524 tests (14 skipped), with workspace doctests, production Clippy and formatting. Coverage remains 329/624 fixtures and 11,183 SAT portfolios.
 Normal verification also passed four structured-relation checks and six fixtures containing the changed capped solution samples. Timing-only changes were discarded; the 22 changed SAT solution records and one non-time statistics change are recorded separately from source. No new upstream library bug was confirmed.
+
+allDifferent stage: scalar integer and Boolean decisions support pairwise disequalities across every integer representation and value-AMO for compatible Direct/Boolean views. Asserted value-AMO composes the selected RustSAT AMO encoder; negated/reified groups compose the selected PB provider and library Boolean gates. Six formerly disabled fixtures now pass full uniform portfolios; `sat-ir/alldifferent` checks sparse domains, constants, repeated operands and both truth values, with 80 SAT portfolios each matching the same 48 Conjure/Minion/Z3 solutions. Two existing matrix fixtures also expand from 50 to 80 portfolios.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,530 tests (14 skipped), including workspace doctests. Production Clippy and formatting passed. Normal golden verification passed all nine expanded fixtures and the three fixtures with changed capped-search samples. Coverage is 336/625 fixtures and 11,773 SAT portfolios; 11,636 portfolios use uniform channelling across 248 fixtures. Baseline timing fields were preserved in 625 files; measurements for added SAT portfolios were retained. Deliberate budgets rise for invalid-slice (16 to 30 seconds), 1d-alldiff (5 to 10) and 2d-slicing-alldiff (1 to 30); other existing budgets are preserved, and the new fixture has a 30-second budget. No new upstream library bug was confirmed. allDifferentExcept and compound-valued operands remain deferred; table is the next dedicated family.

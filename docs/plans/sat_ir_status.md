@@ -36,7 +36,7 @@ Branch: `sat-ir`. Conventional commits; never push.
 
 ## Original decision family catalogue
 
-The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boolean, linear integer, allDifferent, table, element, integer equality and integer comparison plans. The remaining dedicated choices are linear-integer strategies (including order-tree and mixed forms), allDifferent decompositions, table encodings (tuple/MDD/binary support), element, equality/disequality and comparisons. Reification/guards, domain membership, channelling, objective tightening and proof-producing variants are supporting capabilities across these families.
+The copied architecture plan named Boolean/Tseitin, AMO, cardinality, pseudo-Boolean, linear integer, allDifferent, table, element, integer equality and integer comparison plans. The remaining dedicated choices are linear-integer strategies (including order-tree and mixed forms), remaining allDifferent variants, table encodings (tuple/MDD/binary support) and element. Scalar allDifferent and integer equality/disequality/comparisons are connected. Reification/guards, domain membership, channelling, objective tightening and proof-producing variants are supporting capabilities across these families.
 
 ## Coverage investigation
 
@@ -119,7 +119,7 @@ Finish major encoding features and known missing library connections first, incl
 - Rank comparisons continue to use the actual-value mapping before numeric encoding. Relation decisions retain numeric term groups. One Direct choice against a constant and equality/disequality between two Direct choices use library Boolean gates over the value indicators, avoiding unnecessarily large weighted counters. Other integer relation views now retain compatible groups through native asserted PB calls and both directions of reification for Pindakaas BDD/SWC. RustSAT keeps its flat PB input. General guarded/reified AMO/cardinality/PB remains a separate follow-up.
 - Next dedicated families: table, element, and additional linear-integer strategies; scalar allDifferent now uses library AMO and disequality compositions. Remain on uniform representations throughout this work.
 
-- Encoding CLI flags use the common `--sat-encoding-<family>` prefix: `amo`, `cardinality` and `pb`. The former flag names are removed; no compatibility aliases are retained. New family selectors should follow this naming convention.
+- Encoding CLI flags use the common `--sat-encoding-<family>` prefix: `amo`, `cardinality`, `pb` and `alldifferent`. The former flag names are removed; no compatibility aliases are retained. New family selectors should follow this naming convention.
 
 - Singleton bounds must not be folded to constants before representation constraints have fixed the code bits. Literal integer constants remain foldable. The `basic/bool/04` regression checks the singleton value 42 across the uniform portfolio.
 - Direct Boolean assertions are collected before generation so asserted integer relations use native PB assertions rather than unnecessary full equivalence. For flat upper/equality PB constraints, individually overweight terms are forced false before constructing the counter. Checked library-range errors remain explicit.
@@ -147,3 +147,5 @@ Finish major encoding features and known missing library connections first, incl
 - Remaining allDifferent scope: allDifferentExcept and compound-valued operands. Table, element, remaining arithmetic and general guarded/reified AMO/cardinality/PB remain on the work list. Keep mixed representations and channelling deferred; continue uniform verification.
 - Partially materialised allDifferent operands retain Direct/Order/Offset views while the remaining operands become ready. The fallback converts only Rank operands at this boundary. Literal Boolean code bits may establish a constant actual value and value indicator; singleton domain bounds alone never do.
 - Numeric views print semantic operands and stable names, excluding declaration identity, locks and expression caches from recorded traces.
+- Verification: full acceptance passed 1,530 tests with 14 skipped, plus workspace doctests. Core/rule libraries contain 240/141 unit tests. Production Clippy and formatting passed. Normal golden checks passed all nine expanded fixtures and three changed capped-search fixtures.
+- SAT is enabled in 336 of 625 runnable fixtures, with 11,773 successful SAT portfolios; 11,636 portfolios are uniform across 248 fixtures. Six existing fixtures were enabled and the new sparse/reified fixture checks 80 SAT portfolios against the same 48 reference solutions. Baseline timings are preserved; budget increases reflect added portfolios. No new upstream library bug was confirmed.
