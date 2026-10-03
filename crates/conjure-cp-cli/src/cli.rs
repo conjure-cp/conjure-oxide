@@ -221,15 +221,15 @@ pub struct GlobalArgs {
 
     /// Pin the SAT AMO encoder: pairwise, ladder, bitwise, commander, bimander, or two-product.
     /// If omitted, the modelling heuristic chooses one algorithm for the model.
-    #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-amo", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub amo_encoding: Option<conjure_cp::ast::sat_decision::AmoEncoding>,
 
     /// Pin the SAT cardinality encoder: rustsat-totalizer or pindakaas-sorting-network.
-    #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-cardinality", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub cardinality_encoding: Option<conjure_cp::ast::sat_decision::CardinalityEncoding>,
 
     /// Pin the SAT weighted encoder: rustsat-generalized-totalizer, rustsat-binary-adder, pindakaas-bdd, rustsat-dynamic-poly-watchdog, or pindakaas-swc.
-    #[arg(long, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    #[arg(long = "sat-encoding-pb", global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub pb_encoding: Option<conjure_cp::ast::sat_decision::PbEncoding>,
 
     /// Solver to use.
