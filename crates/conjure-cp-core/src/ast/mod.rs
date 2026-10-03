@@ -9,6 +9,7 @@ pub mod encoding_plan;
 pub mod eval;
 mod expression_arena;
 mod expressions;
+mod integer_arithmetic;
 mod literals;
 pub mod matrix;
 mod metadata;
@@ -45,6 +46,7 @@ pub use eval::{
 };
 pub use expression_arena::{ExpressionArena, ExpressionNodeId};
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
+pub use integer_arithmetic::{floor_div, floor_mod};
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
 pub use metadata::Metadata;

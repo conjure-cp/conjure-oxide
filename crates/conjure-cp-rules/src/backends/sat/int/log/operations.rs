@@ -703,25 +703,49 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// ```
 #[register_rule("SAT", 4100, [SafeDiv])]
 fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // Using "Restoring division" algorithm
-    // https://en.wikipedia.org/wiki/Division_algorithm#Restoring_division
     let Expr::SafeDiv(_, numer, denom) = expr else {
         return Err(RuleNotApplicable);
     };
+    encode_div_mod(numer, denom, symbols, false)
+}
 
-    let Expr::SATInt(_, _, _, (numer_min, numer_max)) = numer.as_ref() else {
+/// Reuses restoring division's remainder, with Essence's floor-modulo semantics.
+#[register_rule("SAT", 4100, [SafeMod])]
+fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::SafeMod(_, numer, denom) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    encode_div_mod(numer, denom, symbols, true)
+}
+
+fn encode_div_mod(
+    numer: &Expr,
+    denom: &Expr,
+    symbols: &SymbolTable,
+    modulo: bool,
+) -> ApplicationResult {
+    // Restoring division computes both quotient and remainder magnitudes.
+
+    let Expr::SATInt(_, _, _, (numer_min, numer_max)) = numer else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::SATInt(_, _, _, (denom_min, denom_max)) = denom.as_ref() else {
+    let Expr::SATInt(_, _, _, (denom_min, denom_max)) = denom else {
         return Err(RuleNotApplicable);
     };
 
-    let (min, max) = division_bounds((*numer_min, *numer_max), (*denom_min, *denom_max))
-        .ok_or(RuleNotApplicable)?;
+    let (min, max) = if modulo {
+        // Remainders have the divisor's sign; include the safe zero-divisor dummy.
+        (
+            if *denom_min < 0 { denom_min + 1 } else { 0 },
+            if *denom_max > 0 { denom_max - 1 } else { 0 },
+        )
+    } else {
+        division_bounds((*numer_min, *numer_max), (*denom_min, *denom_max))
+            .ok_or(RuleNotApplicable)?
+    };
 
-    let binding =
-        validate_log_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()], None)?;
+    let binding = validate_log_int_operands(vec![numer.clone(), denom.clone()], None)?;
     let [numer_bits, denom_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -732,8 +756,6 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     numer_bits.push(numer_bits.last().unwrap().clone());
     denom_bits.push(denom_bits.last().unwrap().clone());
     let bit_count = numer_bits.len();
-
-    // TODO: Separate into division/mod function
 
     let mut new_symbols = symbols.clone();
     let mut new_sat_decisions = vec![];
@@ -752,6 +774,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         &mut new_symbols,
     );
 
+    let denom_sign = denom_bits[bit_count - 1].clone();
     let sign_bit = tseytin_xor(
         numer_bits[bit_count - 1].clone(),
         denom_bits[bit_count - 1].clone(),
@@ -777,7 +800,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut r = numer_bits;
     r.extend(std::iter::repeat_n(r[bit_count - 1].clone(), bit_count));
     let mut d = std::iter::repeat_n(false.into(), bit_count).collect_vec();
-    d.extend(denom_bits);
+    d.extend(denom_bits.clone());
 
     let minus_d = tseytin_negate(
         &d.clone(),
@@ -802,7 +825,6 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_symbols,
         );
 
-        // TODO: For mod don't calculate on final iter
         quotient[i] = tseytin_not(
             // q[i] = inverse of sign bit - 1 if positive, 0 if negative
             rminusd[2 * bit_count - 1].clone(),
@@ -810,7 +832,6 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_symbols,
         );
 
-        // TODO: For div don't calculate on final iter
         for j in 0..(2 * bit_count) {
             r[j] = tseytin_mux(
                 quotient[i].clone(),
@@ -830,30 +851,76 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         &mut new_sat_decisions,
         &mut new_symbols,
     );
-    let mut correction = vec![false.into(); bit_count];
-    correction[0] = round_down;
-    quotient = tseytin_int_adder(
-        &quotient,
-        &correction,
-        bit_count,
-        &mut new_sat_decisions,
-        &mut new_symbols,
-    );
+    let out = if modulo {
+        let remainder = r[bit_count..].to_vec();
+        let minus_remainder = tseytin_negate(
+            &remainder,
+            bit_count,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        );
+        let complement = tseytin_int_adder(
+            &denom_bits,
+            &minus_remainder,
+            bit_count,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        );
+        let magnitude = tseytin_select_array(
+            round_down,
+            &remainder,
+            &complement,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        );
+        let negative = tseytin_negate(
+            &magnitude,
+            bit_count,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        );
+        let signed = tseytin_select_array(
+            denom_sign,
+            &magnitude,
+            &negative,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        );
+        // A safe zero divisor must not restrict the operands or escape the result bounds.
+        let nonzero = tseytin_or(&denom_bits, &mut new_sat_decisions, &mut new_symbols);
+        tseytin_select_array(
+            nonzero,
+            &vec![false.into(); bit_count],
+            &signed,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        )
+    } else {
+        let mut correction = vec![false.into(); bit_count];
+        correction[0] = round_down;
+        quotient = tseytin_int_adder(
+            &quotient,
+            &correction,
+            bit_count,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        );
 
-    let minus_quotient = tseytin_negate(
-        &quotient.clone(),
-        bit_count,
-        &mut new_sat_decisions,
-        &mut new_symbols,
-    );
+        let minus_quotient = tseytin_negate(
+            &quotient.clone(),
+            bit_count,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        );
 
-    let out = tseytin_select_array(
-        sign_bit,
-        &quotient,
-        &minus_quotient,
-        &mut new_sat_decisions,
-        &mut new_symbols,
-    );
+        tseytin_select_array(
+            sign_bit,
+            &quotient,
+            &minus_quotient,
+            &mut new_sat_decisions,
+            &mut new_symbols,
+        )
+    };
 
     Ok(RuleEffect::sat(
         Expr::SATInt(
@@ -910,15 +977,6 @@ mod division_bounds_tests {
 }
 
 /*
-/// Converts SafeMod of SATInts to a single SATInt
-///
-/// ```text
-/// SafeMod(SATInt(a), SATInt(b)) ~> SATInt(c)
-///
-/// ```
-#[register_rule("SAT", 4100, [SafeMod])]
-fn cnf_int_safemod(expr: &Expr, _: &SymbolTable) -> ApplicationResult {}
-
 /// Converts SafePow of SATInts to a single SATInt
 ///
 /// ```text
@@ -930,3 +988,91 @@ fn cnf_int_safepow(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // use 'Exponentiation by squaring'
 }
 */
+
+#[cfg(test)]
+mod modulo_tests {
+    use super::*;
+    use conjure_cp::ast::{Atom, Literal, Name};
+    use std::collections::HashMap;
+
+    fn evaluate(expr: &Expr, values: &HashMap<Name, bool>) -> bool {
+        match expr {
+            Expr::Atomic(_, Atom::Literal(Literal::Bool(value))) => *value,
+            Expr::Atomic(_, Atom::Reference(reference)) => values[&reference.name()],
+            Expr::Not(_, input) => !evaluate(input, values),
+            Expr::Iff(_, left, right) => evaluate(left, values) == evaluate(right, values),
+            Expr::And(_, inner) => inner
+                .unwrap_list_ref()
+                .unwrap()
+                .iter()
+                .all(|x| evaluate(x, values)),
+            Expr::Or(_, inner) => inner
+                .unwrap_list_ref()
+                .unwrap()
+                .iter()
+                .any(|x| evaluate(x, values)),
+            other => panic!("unexpected Boolean gate: {other}"),
+        }
+    }
+
+    fn binary(value: i32) -> Expr {
+        let width = bit_magnitude(value);
+        let bits: Vec<Expr> = (0..width)
+            .map(|i| ((i64::from(value) >> i) & 1 == 1).into())
+            .collect();
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(bits)),
+            (value, value),
+        )
+    }
+
+    #[test]
+    fn restoring_modulo_handles_signs_zero_and_machine_boundaries() {
+        let cases = (-5..=5).cartesian_product(-5..=5).chain([
+            (i32::MIN, -1),
+            (i32::MIN, 3),
+            (i32::MAX, -3),
+            (i32::MAX, i32::MIN),
+            (i32::MIN, i32::MIN),
+            (i32::MIN, 0),
+        ]);
+        for (numerator, denominator) in cases {
+            let effect = encode_div_mod(
+                &binary(numerator),
+                &binary(denominator),
+                &SymbolTable::default(),
+                true,
+            )
+            .unwrap();
+            let mut values = HashMap::new();
+            for decision in effect.new_sat_decisions {
+                let SatEncodingDecision::Boolean {
+                    output: Expr::Atomic(_, Atom::Reference(reference)),
+                    expression,
+                } = decision
+                else {
+                    panic!("unexpected division decision")
+                };
+                values.insert(reference.name().clone(), evaluate(&expression, &values));
+            }
+            let Expr::SATInt(_, _, inner, bounds) = effect.new_expression else {
+                panic!("expected binary remainder")
+            };
+            let bits = inner.unwrap_list_ref().unwrap();
+            let width = bits.len();
+            let mut result: i64 = bits
+                .iter()
+                .enumerate()
+                .map(|(i, bit)| i64::from(evaluate(bit, &values)) << i)
+                .sum();
+            if result & (1i64 << (width - 1)) != 0 {
+                result -= 1i64 << width;
+            }
+            let expected = conjure_cp::ast::floor_mod(numerator, denominator).unwrap_or(0);
+            assert_eq!(result, i64::from(expected), "{numerator} % {denominator}");
+            assert!((bounds.0..=bounds.1).contains(&expected));
+        }
+    }
+}

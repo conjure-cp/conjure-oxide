@@ -3,18 +3,7 @@ mod direct;
 mod log;
 mod order;
 
-/// Essence division rounds towards negative infinity; widened arithmetic avoids MIN / -1.
-fn floor_div(dividend: i32, divisor: i32) -> Option<i32> {
-    let (dividend, divisor) = (i64::from(dividend), i64::from(divisor));
-    let quotient = dividend.checked_div(divisor)?;
-    let remainder = dividend % divisor;
-    let quotient = if remainder != 0 && (dividend < 0) != (divisor < 0) {
-        quotient - 1
-    } else {
-        quotient
-    };
-    i32::try_from(quotient).ok()
-}
+use conjure_cp::ast::floor_div;
 
 #[cfg(test)]
 mod tests {

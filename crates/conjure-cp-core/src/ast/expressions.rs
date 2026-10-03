@@ -1210,13 +1210,7 @@ impl Expression {
                 .apply_i32(
                     // rust integer division is truncating; however, we want to always round down,
                     // including for negative numbers.
-                    |x, y| {
-                        if y != 0 {
-                            Some((x as f32 / y as f32).floor() as i32)
-                        } else {
-                            None
-                        }
-                    },
+                    super::floor_div,
                     b.domain_of()?.resolve().ok()?.as_ref(),
                 )
                 .map(DomainPtr::from)
@@ -1234,16 +1228,7 @@ impl Expression {
                     .domain_of()?
                     .resolve()
                     .ok()?
-                    .apply_i32(
-                        |x, y| {
-                            if y != 0 {
-                                Some((x as f32 / y as f32).floor() as i32)
-                            } else {
-                                None
-                            }
-                        },
-                        b.domain_of()?.resolve().ok()?.as_ref(),
-                    )
+                    .apply_i32(super::floor_div, b.domain_of()?.resolve().ok()?.as_ref())
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
                 if let GroundDomain::Int(ranges) = domain {
@@ -1260,10 +1245,7 @@ impl Expression {
                 .domain_of()?
                 .resolve()
                 .ok()?
-                .apply_i32(
-                    |x, y| if y != 0 { Some(x % y) } else { None },
-                    b.domain_of()?.resolve().ok()?.as_ref(),
-                )
+                .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
             Expression::SafeMod(_, a, b) => {
@@ -1271,10 +1253,7 @@ impl Expression {
                     .domain_of()?
                     .resolve()
                     .ok()?
-                    .apply_i32(
-                        |x, y| if y != 0 { Some(x % y) } else { None },
-                        b.domain_of()?.resolve().ok()?.as_ref(),
-                    )
+                    .apply_i32(super::floor_mod, b.domain_of()?.resolve().ok()?.as_ref())
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
                 if let GroundDomain::Int(ranges) = domain {

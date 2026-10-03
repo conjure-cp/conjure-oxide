@@ -752,17 +752,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             opt_vec_lit_op::<i32, i32>(|e| e.iter().max().copied(), e.as_ref()).map(Lit::Int)
         }
         Expr::UnsafeDiv(_, a, b) | Expr::SafeDiv(_, a, b) => {
-            if unwrap_expr::<i32>(b)? == 0 {
-                return None;
-            }
-            bin_op::<i32, i32>(|a, b| ((a as f32) / (b as f32)).floor() as i32, a, b).map(Lit::Int)
+            super::floor_div(unwrap_expr::<i32>(a)?, unwrap_expr::<i32>(b)?).map(Lit::Int)
         }
         Expr::UnsafeMod(_, a, b) | Expr::SafeMod(_, a, b) => {
-            if unwrap_expr::<i32>(b)? == 0 {
-                return None;
-            }
-            bin_op::<i32, i32>(|a, b| a - b * (a as f32 / b as f32).floor() as i32, a, b)
-                .map(Lit::Int)
+            super::floor_mod(unwrap_expr::<i32>(a)?, unwrap_expr::<i32>(b)?).map(Lit::Int)
         }
         Expr::Substring(_, s, t) => match (s.as_ref(), t.as_ref()) {
             (
@@ -849,7 +842,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             }
 
-            let modulo = a - b * (a as f32 / b as f32).floor() as i32;
+            let modulo = super::floor_mod(a, b)?;
             Some(Lit::Bool(modulo == c))
         }
         Expr::MinionPow(_, a, b, c) => {
@@ -1454,6 +1447,28 @@ mod tests {
 
     fn int_lit(value: i32) -> Expr {
         Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(value)))
+    }
+
+    #[test]
+    fn modulo_evaluation_and_domains_use_exact_floor_arithmetic() {
+        for (a, b, expected) in [
+            (-4, 3, 2),
+            (4, -3, -2),
+            (i32::MIN, -1, 0),
+            (i32::MAX, -3, -2),
+        ] {
+            for expression in [
+                Expr::SafeMod(Metadata::new(), Moo::new(int_lit(a)), Moo::new(int_lit(b))),
+                Expr::UnsafeMod(Metadata::new(), Moo::new(int_lit(a)), Moo::new(int_lit(b))),
+            ] {
+                assert_eq!(eval_constant(&expression), Some(Lit::Int(expected)));
+                let domain = expression.domain_of().unwrap().resolve().unwrap();
+                assert!(domain.values_i32().unwrap().contains(&expected));
+            }
+        }
+        let undefined =
+            Expr::UnsafeMod(Metadata::new(), Moo::new(int_lit(4)), Moo::new(int_lit(0)));
+        assert_eq!(eval_constant(&undefined), None);
     }
 
     fn bool_lit(value: bool) -> Expr {
