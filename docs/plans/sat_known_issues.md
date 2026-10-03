@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after the DPW/SWC additions.
+Inventory date: 2026-10-03, branch `sat-ir` after the BinaryOffset/Rank additions.
 
-327 of 622 runnable integration fixtures have SAT enabled. All 327 passed the latest full acceptance and normal golden checks, exercising 3,355 SAT portfolios. The remaining 295 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+328 of 623 runnable integration fixtures have SAT enabled. All 328 passed the latest full acceptance and normal golden checks, exercising 4,333 SAT portfolios. The remaining 295 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -354,7 +354,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Coverage gaps outside these failure counts
 
-- BinaryOffset and BinaryRank are planned IR kinds, not production SAT representations. The verified integer portfolio covers Direct, Order and BinaryValue (`IntLog`).
+- The current integer portfolio covers Direct, Order, BinaryValue (`IntLog`), BinaryOffset (`IntOffset`) and BinaryRank (`IntRank`). Sparse Rank maps codes to actual domain values before numeric encoding.
 - Full lazy mixed-representation materialisation and channelling are not yet verified by this uniform campaign.
 - `cnf/cnf2` has two Essence inputs in one directory and is not discovered as an integration fixture. This is a harness/discovery gap, not a recorded solver failure.
 - Dedicated decisions for the remaining encoding families are still planned; absence of a selectable library encoding does not imply that every corresponding constraint fails, because existing decompositions may work.
