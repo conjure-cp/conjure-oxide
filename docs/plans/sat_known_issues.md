@@ -352,3 +352,15 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 ## Passing performance follow-ups
 
 The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. General guarded/reified AMO/cardinality/PB remains open.
+
+## Cross-backend masked lookup follow-up
+
+Independent explicit-function probes expose a separate Minion discrepancy. The total model below has 24 assignments (four functions times six arguments); SAT returns exactly those assignments across 50 integer/element/PB portfolios. Minion with `--heuristic=i --responses=2 --channelling=uniform` returns eight assignments, all with `i` inside the original domain. Replacing `total` with `size 1` also gives eight rather than 24; Boolean-domain probes return the expected eight assignments. The original-domain guard is retained, but the Minion lookup path still appears to force validity of a masked lookup. Its precise cause remains to be isolated; this is not a diagnosed RustSAT/Pindakaas bug.
+
+```essence
+language Essence 1.3
+find f : function (total) int(-2,3) --> int(10,20)
+find i : int(-3,-2,0,1,3,4)
+find y : int(-7,10,20)
+such that y = catchUndef(f(i), -7)
+```
