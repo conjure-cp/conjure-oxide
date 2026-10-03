@@ -4,6 +4,7 @@ mod base;
 mod bubble;
 mod catch_undef;
 mod comprehensions;
+mod element_id;
 mod lex;
 mod normalisers;
 pub(crate) mod representation;

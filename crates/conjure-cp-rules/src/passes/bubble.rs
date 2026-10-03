@@ -45,11 +45,15 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 */
 #[register_rule("Bubble", 8800, [* / Bubble, * / Atomic / Reference])]
 fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
+    // catchUndef consumes definedness itself; lifting its bubble would bypass the fallback.
     // do not put root inside a bubble
     //
     // also do not bubble bubbles inside bubbles, as this does nothing productive it just shuffles
     // the conditions around, shuffles them back, then gets stuck in a loop doing this ad infinitum
-    if matches!(expr, Expression::Root(_, _) | Expression::Bubble(_, _, _)) {
+    if matches!(
+        expr,
+        Expression::Root(_, _) | Expression::Bubble(_, _, _) | Expression::CatchUndef(_, _, _)
+    ) {
         return Err(RuleNotApplicable);
     }
 
@@ -254,4 +258,19 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         )));
     }
     Err(ApplicationError::RuleNotApplicable)
+}
+
+#[cfg(test)]
+mod catch_boundary_tests {
+    use super::*;
+
+    #[test]
+    fn catch_undef_consumes_partial_value_and_can_discard_partial_default() {
+        let partial =
+            Expression::Bubble(Metadata::new(), Moo::new(7.into()), Moo::new(false.into()));
+        for (inner, default) in [(partial.clone(), 9.into()), (7.into(), partial)] {
+            let catch = Expression::CatchUndef(Metadata::new(), Moo::new(inner), Moo::new(default));
+            assert!(bubble_up(&catch, &SymbolTable::new()).is_err());
+        }
+    }
 }

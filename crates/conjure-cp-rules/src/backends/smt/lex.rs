@@ -31,8 +31,9 @@ fn lex_operand_elements(
         .collect()
 }
 
+/// Expand scalar lexicographic comparisons for library-backed solver relations.
 #[register_rule("Smt", 2001, [LexLt, LexLeq])]
-fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+pub(crate) fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
         Expr::LexLt(_, lhs, rhs) | Expr::LexLeq(_, lhs, rhs) => (lhs, rhs),
         _ => return Err(RuleNotApplicable),

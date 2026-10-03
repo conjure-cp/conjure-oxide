@@ -438,7 +438,7 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
             && categories.contains(&Category::Decision)
             && categories.contains(&Category::Constant))
     {
-        if let Expr::ElementId(_, _, value) = expr {
+        if let Expr::ElementId(_, _, value) | Expr::IndexOf(_, _, value) = expr {
             let value_categories = value.universe_categories();
             if !(value_categories.len() == 1 && value_categories.contains(&Category::Decision)
                 || value_categories.len() == 2
@@ -471,7 +471,7 @@ fn to_aux_var_domain(expr: &Expr) -> Option<DomainPtr> {
     if let Expr::SafeIndex(_, subject, indices) = expr {
         let index_has_element_id = indices
             .iter()
-            .any(|index| matches!(index, Expr::ElementId(..)));
+            .any(|index| matches!(index, Expr::ElementId(..) | Expr::IndexOf(..)));
         let can_lower_via_element = is_element_lowerable_subject(subject)
             && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
 

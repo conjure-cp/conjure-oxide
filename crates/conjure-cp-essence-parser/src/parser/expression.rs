@@ -87,6 +87,10 @@ pub fn parse_expression(
             }
             parse_arithmetic_expression(ctx, &node)
         }
+        "negative_expr" | "abs_value" | "sub_arith_expr" | "factorial_expr" | "toInt_expr" => {
+            parse_unary_expression(ctx, &node)
+        }
+        "product_expr" | "sum_expr" | "exponent" => parse_binary_expression(ctx, &node),
         "comparison_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(

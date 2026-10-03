@@ -3,7 +3,7 @@
 //! `values_matrix` is indexed by plain position (`int(1..n)`), not by the function's own
 //! (possibly non-int, possibly compound) domain -- see `values_matrix`'s field doc on
 //! `FunctionExplicit::State`. So `image(f, arg)` first has to find `arg`'s position among the
-//! function's domain values via `elementId` (already backed by the Minion backend, the same
+//! function's domain values via `indexOf` (already backed by the Minion backend, the same
 //! mechanism `allDifferentExcept`-style indexing uses), then index into `values_matrix` at that
 //! position.
 //!
@@ -38,7 +38,7 @@ fn image_function_explicit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .collect();
     let domain_values_matrix = into_matrix_expr![domain_value_exprs; domain_int!(1..n)];
 
-    let position = Expr::ElementId(Metadata::new(), Moo::new(domain_values_matrix), arg.clone());
+    let position = Expr::IndexOf(Metadata::new(), Moo::new(domain_values_matrix), arg.clone());
     let value = representation.value_expr_at(position.clone());
 
     if representation.flags_matrix.is_none() {
@@ -63,7 +63,7 @@ mod tests {
     use conjure_cp::{domain_int, range};
 
     #[test]
-    fn image_lowers_to_an_element_id_lookup_into_the_values_matrix() {
+    fn image_lowers_to_an_index_of_lookup_into_the_values_matrix() {
         let domain = Domain::function(
             FuncAttr::<i32> {
                 size: Range::Unbounded,
@@ -92,6 +92,6 @@ mod tests {
             Expr::Atomic(_, Atom::Reference(_))
         ));
         assert_eq!(indices.len(), 1);
-        assert!(matches!(indices[0], Expr::ElementId(_, _, _)));
+        assert!(matches!(indices[0], Expr::IndexOf(_, _, _)));
     }
 }

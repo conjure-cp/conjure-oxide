@@ -3,6 +3,7 @@ mod boolean;
 mod domain;
 mod element;
 mod int;
+mod lex;
 mod pseudo_boolean;
 mod rules;
 mod table;

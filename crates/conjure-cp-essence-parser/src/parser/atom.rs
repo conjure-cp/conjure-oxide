@@ -271,7 +271,7 @@ fn parse_element_id(
         ctx.typechecking_context = saved_context;
         return Ok(None);
     };
-    let Some(value) = parse_table_operand(ctx, &value_node)? else {
+    let Some(value) = parse_expression(ctx, value_node)? else {
         ctx.typechecking_context = saved_context;
         return Ok(None);
     };

@@ -371,8 +371,12 @@ pub enum Expression {
     #[compatible(JsonInput)]
     AllDifferentExcept(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `elementId(<matrix>, <value>)` — 1-based index of value in matrix
+    /// Select a scalar matrix entry, returning the index itself outside the index domain.
     ElementId(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Internal inverse lookup used to locate a function argument among its domain values.
+    #[polyquine_skip]
+    IndexOf(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// `table([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
     ///
@@ -1359,7 +1363,33 @@ impl Expression {
             Expression::AllDiff(_, _) => Some(Domain::bool()),
             Expression::SmtDistinct(_, _) => Some(Domain::bool()),
             Expression::AllDifferentExcept(_, _, _) => Some(Domain::bool()),
-            Expression::ElementId(_, matrix, value) => {
+            Expression::ElementId(_, matrix, index) => {
+                let lookup = Expression::UnsafeIndex(
+                    Metadata::new(),
+                    matrix.clone(),
+                    vec![(**index).clone()],
+                );
+                let numeric = |domain: DomainPtr| {
+                    if domain.is_bool() {
+                        Some(Domain::int(vec![Range::Bounded(0, 1)]))
+                    } else if domain.is_int() {
+                        Some(domain)
+                    } else {
+                        None
+                    }
+                };
+                if matches!(matrix.as_ref(), Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(entries, _)))) if entries.is_empty())
+                    || matrix
+                        .unwrap_matrix_unchecked_ref()
+                        .is_some_and(|(entries, _)| entries.is_empty())
+                {
+                    return numeric(index.domain_of()?);
+                }
+                numeric(lookup.domain_of()?)?
+                    .union(&numeric(index.domain_of()?)?)
+                    .ok()
+            }
+            Expression::IndexOf(_, matrix, value) => {
                 let dom = matrix.domain_of()?.resolve().ok()?;
                 let idx_doms = match dom.as_ref() {
                     GroundDomain::Matrix(_, idx) => idx,
@@ -2062,6 +2092,7 @@ impl Expression {
             SmtDistinct,
             AllDifferentExcept,
             ElementId,
+            IndexOf,
             Minus,
             Factorial,
             FlatAbsEq,
@@ -2803,6 +2834,7 @@ impl Display for Expression {
             Expression::ElementId(_, matrix, value) => {
                 write!(f, "elementId({matrix}, {value})")
             }
+            Expression::IndexOf(_, matrix, value) => write!(f, "indexOf({matrix}, {value})"),
             Expression::SatElement(_, matrix, index, value) => {
                 write!(f, "satElement({matrix}, {index}, {value})")
             }
@@ -3153,7 +3185,7 @@ impl Typeable for Expression {
             Expression::AllDiff(_, _) => ReturnType::Bool,
             Expression::SmtDistinct(_, _) => ReturnType::Bool,
             Expression::AllDifferentExcept(_, _, _) => ReturnType::Bool,
-            Expression::ElementId(_, _, _) => ReturnType::Int,
+            Expression::ElementId(_, _, _) | Expression::IndexOf(_, _, _) => ReturnType::Int,
             Expression::SatElement(_, _, _, _) => ReturnType::Bool,
             Expression::Table(_, _, _) => ReturnType::Bool,
             Expression::NegativeTable(_, _, _) => ReturnType::Bool,
@@ -3519,7 +3551,9 @@ impl Expression {
             }
 
             // Moo<Expression> + Moo<Expression> (two-arg globals)
-            Expression::AllDifferentExcept(_, m1, m2) | Expression::ElementId(_, m1, m2) => {
+            Expression::AllDifferentExcept(_, m1, m2)
+            | Expression::ElementId(_, m1, m2)
+            | Expression::IndexOf(_, m1, m2) => {
                 f(m1);
                 f(m2);
             }
@@ -3843,7 +3877,9 @@ impl Expression {
             }
 
             // Moo<Expression> + Moo<Expression> (two-arg globals)
-            Expression::AllDifferentExcept(_, m1, m2) | Expression::ElementId(_, m1, m2) => {
+            Expression::AllDifferentExcept(_, m1, m2)
+            | Expression::ElementId(_, m1, m2)
+            | Expression::IndexOf(_, m1, m2) => {
                 child_hash(child_hashes).hash(&mut hasher);
                 child_hash(child_hashes).hash(&mut hasher);
             }
