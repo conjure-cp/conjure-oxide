@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-03
 
-SAT is enabled in **356 of 627 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **13,797 SAT solution portfolios**; **13,660** use uniform channelling across **268 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
+SAT is enabled in **365 of 628 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **14,447 SAT solution portfolios**; **14,310** use uniform channelling across **277 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -10,8 +10,8 @@ The current filtered failure list and targeted rechecks are recorded in [SAT kno
 
 | Final outcome | Fixtures |
 | --- | ---: |
-| Enabled after full uniform-portfolio verification | 218 |
-| Initial CLI error | 201 |
+| Enabled after full uniform-portfolio verification | 226 |
+| Initial CLI error | 193 |
 | Initial CLI timeout | 37 |
 | Full portfolio failed | 30 |
 | Full portfolio timed out | 3 |
@@ -73,4 +73,13 @@ Element stage: safe scalar lookup definitions retain actual index/value/entry vi
 
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,542 tests (14 skipped), plus workspace doctests. Core/rule libraries contain 246/145 unit tests. Production Clippy and formatting passed. Explicit CLI checks for both element strategies and every PB provider return the same 48 solutions. Normal golden verification passes all expanded fixtures, the two changed existing traces, all nine remaining changed-statistics fixtures and all three changed capped-search fixtures (27 checks).
 
-Timing cleanup preserved baseline fields in 629 files and retained SAT measurements for added portfolios. The 2D matrix-literal fixture deliberately raises its budget from one to five seconds; other existing budgets are preserved. The new element fixture has a five-second budget. No new upstream library bug was confirmed. ElementId, compound-valued lookups, remaining arithmetic and guarded/reified encoder connections remain follow-ups; mixed representations and channelling remain deferred.
+Timing cleanup preserved baseline fields in 629 files and retained SAT measurements for added portfolios. The 2D matrix-literal fixture deliberately raises its budget from one to five seconds; other existing budgets are preserved. The new element fixture has a five-second budget. No new upstream library bug was confirmed. The subsequent stage below connects ElementId and scalar lexicographic comparisons; compound-valued lookups, remaining arithmetic and guarded/reified encoder connections remain follow-ups; mixed representations and channelling remain deferred.
+
+
+Identity-element stage: ElementId preserves forward selection with an index-valued fallback; internal inverse lookup is now the separate IndexOf node. Scalar lexicographic comparisons share existing numeric relations and Boolean gates. Bubble propagation respects catchUndef boundaries, and solver projection removes represented internal auxiliaries from user solution enumeration. Minion literal lookups include identity entries across finite bounds. Conjure's Boolean-matrix ElementId typing differs from Savile Row's numeric operation, so the reference fixture explicitly converts entries with toInt; separate unit and complete CLI checks cover direct Boolean entries.
+
+Full acceptance passed 1,550 tests (14 skipped), plus the earlier workspace doctests. Core/rule libraries contain 247/151 unit tests. Production Clippy and formatting passed. Both element strategies and all five PB providers match the independently enumerated 80 solutions for both regression forms (20 explicit CLI checks); Minion matches the complete reference assignment set as well.
+
+Eight existing fixtures gained SAT and the new fixture adds 100 SAT portfolios. Coverage is 365/628 fixtures, with 14,447 successful SAT portfolios; 14,310 portfolios use uniform channelling across 277 fixtures. The disabled inventory now contains 263 fixtures, whose historical failures still need fresh checks before diagnosis. No new upstream library bug was confirmed. SAT IndexOf/function-domain inverse lookup, compound operands and the previously deferred encoding families remain follow-ups; mixed representations and channelling remain deferred.
+
+Normal golden verification passed all 28 changed integration fixtures and the changed custom rule-attempt-trace fixture (29 checks). Timing cleanup preserved baseline fields in 628 files. Added SAT portfolios deliberately raise simpleElementId/valsymElementId/varsymElementId budgets from one to 60/90/10 seconds; the new fixture has a ten-second budget. Other existing budgets remain unchanged.

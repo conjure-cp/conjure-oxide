@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after scalar element decisions and index membership guards were connected.
+Inventory date: 2026-10-03, branch `sat-ir` after identity-default ElementId and scalar lexicographic comparisons were connected.
 
-356 of 627 runnable integration fixtures have SAT enabled. All 356 passed full acceptance, exercising 13,797 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 271 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+365 of 628 runnable integration fixtures have SAT enabled. All 365 passed full acceptance, exercising 14,447 SAT portfolios. The earlier integer relation migration also passed full normal golden verification. The remaining 263 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -10,21 +10,21 @@ Scalar integer/Boolean allDifferent now passes pairwise and eligible value-AMO p
 
 Constant-row positive/negative tables now pass tuple and MDD portfolios, including reification. Short tables, binary-support encodings and non-constant row relations remain gaps. A fresh compact screen of `savilerow/sportsScheduling2` lowers its tables but leaves `flatten` inside allDifferent; that fixture remains disabled.
 
-Scalar element definitions now pass implication/support portfolios across all five integer representations and five PB providers. Internal scalar index-membership guards lower through existing numeric relations, retaining definedness for nested, negated, reified and masked lookups. Twelve existing fixtures are enabled; `sat-ir/element` adds sparse and masked regression coverage. ElementId and compound-valued lookups remain gaps. A compact rewrite of `savilerow/simpleElementId` still leaves ElementId and lexicographic constraints. Mixed representations and channelling remain deferred.
+Scalar element definitions now pass implication/support portfolios across all five integer representations and five PB providers. Internal scalar index-membership guards lower through existing numeric relations, retaining definedness for nested, negated, reified and masked lookups. Twelve existing fixtures are enabled; `sat-ir/element` adds sparse and masked regression coverage. Identity-default ElementId and scalar lexicographic comparisons now pass full uniform portfolios in eight newly enabled existing fixtures. The new non-involutive, sparse and Boolean-conversion fixture checks 100 portfolios against 80 Conjure reference solutions. Internal function-domain IndexOf, compound lookups and remaining arithmetic strategies are still SAT gaps. Mixed representations and channelling remain deferred.
 
 ## Summary of last recorded outcomes
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 194 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 186 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 29 | Initial screen passed, but another representation/portfolio failed. |
 | Panics | 3 | Two reconfirmed today; one historical full-portfolio failure needs retesting. |
 | Model-loading errors | 5 | All five reconfirmed today. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
-| Total SAT-disabled runnable fixtures | 271 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 263 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 223 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 215 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -93,7 +93,7 @@ Last tested with a 120-second per-fixture bound.
 - [hakank-eprime/xkcd](../../test-suite/tests/integration/hakank-eprime/xkcd/xkcd.essence)
 - [savilerow/absBug](../../test-suite/tests/integration/savilerow/absBug/input.essence)
 
-## Initial-screen residual constraints (194)
+## Initial-screen residual constraints (186)
 
 Last recorded in the compact/first screen, before the weighted PB changes. Each fixture below remains SAT-disabled; a fresh screen may move cases out of this list.
 
@@ -108,10 +108,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [basic/function/apply-in-domain](../../test-suite/tests/integration/basic/function/apply-in-domain/input.essence)
 - [basic/function/apply-out-of-domain](../../test-suite/tests/integration/basic/function/apply-out-of-domain/input.essence)
 - [basic/function/sparse-partial](../../test-suite/tests/integration/basic/function/sparse-partial/input.essence)
-- [basic/lex/long-leq-short](../../test-suite/tests/integration/basic/lex/long-leq-short/input.essence)
-- [basic/lex/long-lt-short](../../test-suite/tests/integration/basic/lex/long-lt-short/input.essence)
-- [basic/lex/short-leq-long](../../test-suite/tests/integration/basic/lex/short-leq-long/input.essence)
-- [basic/lex/short-lt-long](../../test-suite/tests/integration/basic/lex/short-lt-long/input.essence)
 - [basic/matrix/02-2d-slicing](../../test-suite/tests/integration/basic/matrix/02-2d-slicing/input.essence)
 - [basic/matrix/03-domain-letting](../../test-suite/tests/integration/basic/matrix/03-domain-letting/input.essence)
 - [basic/mod/01](../../test-suite/tests/integration/basic/mod/01/input.essence)
@@ -242,13 +238,11 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [savilerow/peaceableArmyOfQueens2](../../test-suite/tests/integration/savilerow/peaceableArmyOfQueens2/input.essence)
 - [savilerow/peaceableArmyOfQueens2-failing](../../test-suite/tests/integration/savilerow/peaceableArmyOfQueens2-failing/input.essence)
 - [savilerow/peacefulArmyQueens3](../../test-suite/tests/integration/savilerow/peacefulArmyQueens3/input.essence)
-- [savilerow/permMultElementId](../../test-suite/tests/integration/savilerow/permMultElementId/input.essence)
 - [savilerow/problem110](../../test-suite/tests/integration/savilerow/problem110/input.essence)
 - [savilerow/problem51](../../test-suite/tests/integration/savilerow/problem51/input.essence)
 - [savilerow/quantification_over_matrix_doms_4](../../test-suite/tests/integration/savilerow/quantification_over_matrix_doms_4/input.essence)
 - [savilerow/quasiGroup5NonIdempotent](../../test-suite/tests/integration/savilerow/quasiGroup5NonIdempotent/input.essence)
 - [savilerow/sendMoreMoney](../../test-suite/tests/integration/savilerow/sendMoreMoney/input.essence)
-- [savilerow/simpleElementId](../../test-suite/tests/integration/savilerow/simpleElementId/input.essence)
 - [savilerow/sonet2](../../test-suite/tests/integration/savilerow/sonet2/input.essence)
 - [savilerow/sonet_problem](../../test-suite/tests/integration/savilerow/sonet_problem/input.essence)
 - [savilerow/sportsScheduling](../../test-suite/tests/integration/savilerow/sportsScheduling/input.essence)
@@ -261,8 +255,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [savilerow/test_comprehension_functions](../../test-suite/tests/integration/savilerow/test_comprehension_functions/input.essence)
 - [savilerow/test_power_raw](../../test-suite/tests/integration/savilerow/test_power_raw/input.essence)
 - [savilerow/tictactoe](../../test-suite/tests/integration/savilerow/tictactoe/input.essence)
-- [savilerow/valsymElementId](../../test-suite/tests/integration/savilerow/valsymElementId/input.essence)
-- [savilerow/varsymElementId](../../test-suite/tests/integration/savilerow/varsymElementId/input.essence)
 - [sets/MinMax](../../test-suite/tests/integration/sets/MinMax/input.essence)
 - [sets/constant-eval-set-tests/Intersect](../../test-suite/tests/integration/sets/constant-eval-set-tests/Intersect/input.essence)
 - [sets/constant-eval-set-tests/Union](../../test-suite/tests/integration/sets/constant-eval-set-tests/Union/input.essence)

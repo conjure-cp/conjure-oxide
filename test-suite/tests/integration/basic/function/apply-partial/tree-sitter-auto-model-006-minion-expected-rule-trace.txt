@@ -66,7 +66,7 @@ f#explicit_2
 
 image(f,y)
    ~~> image_function_explicit ([("Base", 8400)])
-{SafeIndex(f#explicit_1,[elementId([1,2;int(1..2)], y)]) @ SafeIndex(f#explicit_2,[elementId([1,2;int(1..2)], y)])}
+{SafeIndex(f#explicit_1,[indexOf([1,2;int(1..2)], y)]) @ SafeIndex(f#explicit_2,[indexOf([1,2;int(1..2)], y)])}
 
 --
 
@@ -82,15 +82,15 @@ f#explicit_2
 
 --
 
-{SafeIndex(f#explicit_1,[elementId([1,2;int(1..2)], y)]) @ SafeIndex(f#explicit_2,[elementId([1,2;int(1..2)], y)])} = 1
+{SafeIndex(f#explicit_1,[indexOf([1,2;int(1..2)], y)]) @ SafeIndex(f#explicit_2,[indexOf([1,2;int(1..2)], y)])} = 1
    ~~> bubble_up ([("Bubble", 8800)])
-{SafeIndex(f#explicit_1,[elementId([1,2;int(1..2)], y)]) = 1 @ SafeIndex(f#explicit_2,[elementId([1,2;int(1..2)], y)])}
+{SafeIndex(f#explicit_1,[indexOf([1,2;int(1..2)], y)]) = 1 @ SafeIndex(f#explicit_2,[indexOf([1,2;int(1..2)], y)])}
 
 --
 
-{SafeIndex(f#explicit_1,[elementId([1,2;int(1..2)], y)]) = 1 @ SafeIndex(f#explicit_2,[elementId([1,2;int(1..2)], y)])}
+{SafeIndex(f#explicit_1,[indexOf([1,2;int(1..2)], y)]) = 1 @ SafeIndex(f#explicit_2,[indexOf([1,2;int(1..2)], y)])}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([SafeIndex(f#explicit_1,[elementId([1,2;int(1..2)], y)]) = 1,SafeIndex(f#explicit_2,[elementId([1,2;int(1..2)], y)]);int(1..)])
+and([SafeIndex(f#explicit_1,[indexOf([1,2;int(1..2)], y)]) = 1,SafeIndex(f#explicit_2,[indexOf([1,2;int(1..2)], y)]);int(1..)])
 
 --
 
@@ -106,13 +106,13 @@ f#explicit_2#components_2
 
 --
 
-SafeIndex(f#explicit_2,[elementId([1,2;int(1..2)], y)])
+SafeIndex(f#explicit_2,[indexOf([1,2;int(1..2)], y)])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 SafeIndex([f#explicit_2#components_1,f#explicit_2#components_2;int(1..)],[sum([product([1,(__0 - 1);int(1..)]),1;int(1..)])])
 new variables:
   findAux __0: int(1..2)
 new constraints:
-  __0 =aux elementId([1,2;int(1..2)], y)
+  __0 =aux indexOf([1,2;int(1..2)], y)
 
 --
 
@@ -158,13 +158,13 @@ f#explicit_1#components_2
 
 --
 
-SafeIndex(f#explicit_1,[elementId([1,2;int(1..2)], y)])
+SafeIndex(f#explicit_1,[indexOf([1,2;int(1..2)], y)])
    ~~> index_matrix_components ([("ReprMatrixComponents", 5000)])
 SafeIndex([f#explicit_1#components_1,f#explicit_1#components_2;int(1..)],[sum([product([1,(__1 - 1);int(1..)]),1;int(1..)])])
 new variables:
   findAux __1: int(1..2)
 new constraints:
-  __1 =aux elementId([1,2;int(1..2)], y)
+  __1 =aux indexOf([1,2;int(1..2)], y)
 
 --
 
@@ -216,14 +216,14 @@ and([SumLeq([f#explicit_2#components_1, f#explicit_2#components_2], 1),SumGeq([f
 
 --
 
-__0 =aux elementId([1,2;int(1..2)], y)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__0 =aux indexOf([1,2;int(1..2)], y)
+   ~~> introduce_index_of_from_aux_decl ([("Minion", 4400)])
 __minion_element_one([1,2],__0,y)
 
 --
 
-__1 =aux elementId([1,2;int(1..2)], y)
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__1 =aux indexOf([1,2;int(1..2)], y)
+   ~~> introduce_index_of_from_aux_decl ([("Minion", 4400)])
 __minion_element_one([1,2],__1,y)
 
 --
