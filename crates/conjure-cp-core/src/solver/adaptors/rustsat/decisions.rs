@@ -16,8 +16,8 @@ enum Term {
     Literal(Lit),
 }
 type TableNodeCache = HashMap<(usize, Vec<Vec<i64>>), Term>;
-// Large reified GTE sums retain library implication transformations for propagation.
-const MAX_SHARED_GTE_REIFICATION_INPUTS: usize = 64;
+// Wide assertions and GTE predicates retain their original library constructions.
+const MAX_SHARED_WEIGHTED_INPUTS: usize = 64;
 
 impl Term {
     fn negated(self) -> Self {
@@ -1294,7 +1294,7 @@ impl Compiler<'_> {
             let predicate = self.instance.new_lit();
             if algorithm == PbEncoding::RustsatBinaryAdder
                 || (algorithm == PbEncoding::RustsatGeneralizedTotalizer
-                    && terms.len() <= MAX_SHARED_GTE_REIFICATION_INPUTS)
+                    && terms.len() <= MAX_SHARED_WEIGHTED_INPUTS)
             {
                 self.guarded_pseudo_boolean(
                     algorithm,
@@ -1513,11 +1513,11 @@ impl Compiler<'_> {
                 "Pseudo-Boolean coefficient sum exceeds the library range".into(),
             ));
         }
-        if self.counters.is_some()
-            && matches!(
-                algorithm,
-                PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder
-            )
+        if guard.is_some()
+            && self.counters.is_some()
+            && (algorithm == PbEncoding::RustsatBinaryAdder
+                || (algorithm == PbEncoding::RustsatGeneralizedTotalizer
+                    && positive.len() <= MAX_SHARED_WEIGHTED_INPUTS))
             && bound != 0
             && bound != total
         {
@@ -1567,6 +1567,24 @@ impl Compiler<'_> {
             .into_iter()
             .map(|(literal, weight)| (literal, weight as usize))
             .collect();
+        // Preserve unconditional pruning before sharing; wide assertions retain
+        // the library's original BoundBoth construction and propagation.
+        if guard.is_none()
+            && self.counters.is_some()
+            && positive.len() <= MAX_SHARED_WEIGHTED_INPUTS
+            && matches!(
+                algorithm,
+                PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder
+            )
+        {
+            return self.cached_weighted_bound(
+                algorithm,
+                relation,
+                bound as usize,
+                positive,
+                guard,
+            );
+        }
         match algorithm {
             PbEncoding::RustsatGeneralizedTotalizer
             | PbEncoding::RustsatBinaryAdder
@@ -3277,6 +3295,50 @@ mod pseudo_boolean_tests {
                 assert_eq!(
                     solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
                     truth == (count <= 48)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn wide_asserted_equalities_preserve_native_bound_both_projection() {
+        for algorithm in [
+            PbEncoding::RustsatGeneralizedTotalizer,
+            PbEncoding::RustsatBinaryAdder,
+        ] {
+            let mut instance = SatInstance::new();
+            let mut variables = HashMap::new();
+            let mut cache = EncodingCache::default();
+            let inputs: Vec<_> = (0..96).map(|_| instance.new_lit()).collect();
+            for pair in inputs.windows(2) {
+                instance.add_clause(atomics::lit_impl_lit(pair[1], pair[0]));
+            }
+            let mut compiler = Compiler {
+                instance: &mut instance,
+                variables: &mut variables,
+                counters: Some(&mut cache),
+            };
+            compiler
+                .pseudo_boolean(
+                    algorithm,
+                    CardinalityRelation::Exactly,
+                    48,
+                    inputs.iter().map(|&lit| (1, Term::Literal(lit))).collect(),
+                    &[],
+                )
+                .unwrap();
+            assert!(cache.weighted.is_empty());
+            let mut solver = CaDiCaL::default();
+            solver.add_cnf(instance.cnf().clone()).unwrap();
+            for count in [0, 47, 48, 49, 96] {
+                let assumptions: Vec<_> = inputs
+                    .iter()
+                    .enumerate()
+                    .map(|(bit, &lit)| if bit < count { lit } else { !lit })
+                    .collect();
+                assert_eq!(
+                    solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
+                    count == 48
                 );
             }
         }
