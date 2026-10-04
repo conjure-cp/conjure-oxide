@@ -1138,7 +1138,7 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
-        Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::SatObjective(..) | Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
         Expr::Active(m, variant, alternative) => {

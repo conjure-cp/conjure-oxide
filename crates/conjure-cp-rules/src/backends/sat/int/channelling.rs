@@ -33,7 +33,7 @@ use uniplate::Uniplate;
 /// never reaches this rule; what is left over is the two cases that would otherwise be stuck --
 /// operands in different encodings, and an operation the operands' shared encoding has no rule
 /// for, such as a sum of order-encoded variables.
-#[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, AllDiff, Table, NegativeTable, SatElement, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
+#[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, AllDiff, Table, NegativeTable, SatElement, SatObjective, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
 fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let encodings: HashSet<SATIntEncoding> = operands(expr)
         .filter_map(|operand| match operand {
@@ -46,7 +46,11 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     // Only rank codes need conversion; the decision rule handles the other encodings.
     let retains_views = matches!(
         expr,
-        Expr::AllDiff(..) | Expr::Table(..) | Expr::NegativeTable(..) | Expr::SatElement(..)
+        Expr::AllDiff(..)
+            | Expr::Table(..)
+            | Expr::NegativeTable(..)
+            | Expr::SatElement(..)
+            | Expr::SatObjective(..)
     );
     if retains_views
         && !encodings

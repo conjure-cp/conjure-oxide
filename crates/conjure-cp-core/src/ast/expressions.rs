@@ -677,6 +677,9 @@ pub enum Expression {
     /// This expression is for encoding ints for the SAT solver, it stores the encoding type, the vector of booleans and the min/max for the int.
     #[compatible(SAT)]
     SATInt(Metadata, SATIntEncoding, Moo<Expression>, (i32, i32)),
+    /// Retain an optimisation objective until its actual-value SAT view is ready.
+    #[compatible(SAT)]
+    SatObjective(Metadata, bool, Moo<Expression>),
 
     /// Addition over a pair of expressions (i.e. a + b) rather than a vec-expr like Expression::Sum.
     /// This is for compatibility with backends that do not support addition over vectors.
@@ -1467,6 +1470,7 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
             Expression::ToInt(_, _) => Some(Domain::int(vec![Range::Bounded(0, 1)])),
+            Expression::SatObjective(..) => Some(Domain::bool()),
             Expression::SATInt(_, _, _, (low, high)) => {
                 Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
             }
@@ -2095,6 +2099,7 @@ impl Expression {
             MinionElementOne,
             AuxDeclaration,
             SATInt,
+            SatObjective,
             PairwiseSum,
             PairwiseProduct,
             Image,
@@ -2960,6 +2965,9 @@ impl Display for Expression {
                 write!(f, "toInt({expr})")
             }
 
+            Expression::SatObjective(_, minimise, value) => {
+                write!(f, "optimise(minimise={minimise}, value={value})")
+            }
             Expression::SATInt(_, encoding, bits, (min, max)) => {
                 write!(f, "SATInt({encoding:?}, {bits} [{min}, {max}])")
             }
@@ -3213,6 +3221,7 @@ impl Typeable for Expression {
             Expression::MinionPow(_, _, _, _) => ReturnType::Bool,
             Expression::ToInt(_, _) => ReturnType::Int,
             Expression::SATInt(..) => ReturnType::Int,
+            Expression::SatObjective(..) => ReturnType::Bool,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
             Expression::Defined(_, function) => {
@@ -3569,7 +3578,7 @@ impl Expression {
             }
 
             // SATIntEncoding + Moo<Expression> + (i32, i32)
-            Expression::SATInt(_, _, m, _) => {
+            Expression::SatObjective(_, _, m) | Expression::SATInt(_, _, m, _) => {
                 f(m);
             }
 
@@ -3905,6 +3914,10 @@ impl Expression {
             }
 
             // SATIntEncoding + Moo<Expression> + (i32, i32)
+            Expression::SatObjective(_, minimise, _) => {
+                minimise.hash(&mut hasher);
+                child_hash(child_hashes).hash(&mut hasher);
+            }
             Expression::SATInt(_, enc, m, bounds) => {
                 enc.hash(&mut hasher);
                 child_hash(child_hashes).hash(&mut hasher);

@@ -9,7 +9,7 @@ use std::vec;
 use clap::error;
 use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
-use rustsat::solvers::{ControlSignal, Solve, SolverResult, Terminate};
+use rustsat::solvers::{ControlSignal, Solve, SolveIncremental, SolverResult, Terminate};
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
@@ -52,6 +52,7 @@ pub struct Sat {
     var_map: Option<HashMap<Name, Lit>>,
     solver_inst: CaDiCaL<'static, 'static>,
     decision_refs: Option<Vec<Name>>,
+    objective: Option<super::objective::CompiledObjective>,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
 }
@@ -68,6 +69,7 @@ impl Default for Sat {
             var_map: None,
             model_inst: None,
             decision_refs: None,
+            objective: None,
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -313,6 +315,7 @@ impl Sat {
         dominance_model.replace_constraints(vec![]);
         dominance_model.replace_sat_decisions(vec![]);
         dominance_model.dominance = None;
+        dominance_model.objective = None;
         dominance_model.add_constraint(rewritten_dominance);
 
         // Prefer the rule sets the model was built with, but fall back to resolving them for this
@@ -367,6 +370,8 @@ impl SolverAdaptor for Sat {
         let timeout_enabled = self.timeout.is_some();
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
+        let mut objective = self.objective.take();
+        let mut objective_assumptions = Vec::new();
         let mut solver = &mut self.solver_inst;
         let solver_seed = i32::try_from(self.solver_seed).map_err(|_| {
             SolverError::Runtime(format!(
@@ -413,7 +418,7 @@ impl SolverAdaptor for Sat {
                 });
             }
 
-            let res = match solver.solve() {
+            let res = match solver.solve_assumps(&objective_assumptions) {
                 Ok(r) => r,
                 Err(e) => {
                     return Err(SolverError::Runtime(format!(
@@ -507,6 +512,38 @@ impl SolverAdaptor for Sat {
                     });
                 }
 
+                if let Some(objective) = objective.as_mut() {
+                    let mut completed = sol.clone();
+                    for literal in var_map.values() {
+                        if completed.var_value(literal.var()) == TernaryVal::DontCare {
+                            completed.assign_var(literal.var(), TernaryVal::False);
+                        }
+                    }
+                    for (name, value) in &solution {
+                        if let Some(literal) = var_map.get(name) {
+                            let value = match value {
+                                Literal::Bool(value) => *value,
+                                Literal::Int(value) => *value != 0,
+                                _ => continue,
+                            };
+                            completed.assign_var(
+                                literal.var(),
+                                TernaryVal::from(if literal.is_pos() { value } else { !value }),
+                            );
+                        }
+                    }
+                    let mut instance: SatInstance = SatInstance::new();
+                    instance
+                        .var_manager_mut()
+                        .increase_next_free(satVar::new(next_free));
+                    objective_assumptions =
+                        objective.tighten(&completed, &mut instance, &mut var_map)?;
+                    let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
+                    next_free = manager.n_used();
+                    solver.add_cnf(cnf).map_err(|error| {
+                        SolverError::Runtime(format!("Failed adding objective bound: {error}"))
+                    })?;
+                }
                 let mut dominance_solution = full_assignment_solution.clone();
                 dominance_solution.extend(solution.clone());
                 if let Some(model_template) = dominance_model_template.as_ref() {
@@ -530,7 +567,7 @@ impl SolverAdaptor for Sat {
                     ))
                 })?;
                 // Dominance can invalidate the remaining free completions of this assignment.
-                if dominance_expression.is_some() {
+                if dominance_expression.is_some() || objective.is_some() {
                     break;
                 }
             }
@@ -546,6 +583,7 @@ impl SolverAdaptor for Sat {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
+        self.objective = None;
         self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
             Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
             _ => expr.clone(),
@@ -674,6 +712,7 @@ impl SolverAdaptor for Sat {
 
         self.decision_refs = Some(finds.clone());
 
+        let model_objective_required = model.objective.is_some();
         let m_clone = model;
 
         // All constraints should have terminal encoding decisions.
@@ -695,6 +734,24 @@ impl SolverAdaptor for Sat {
             var_map.insert(name, inst.new_lit());
         }
         compile_decisions(decisions, &mut inst, &mut var_map)?;
+        let objectives: Vec<_> = decisions
+            .iter()
+            .filter(|decision| {
+                matches!(decision, crate::ast::SatEncodingDecision::Objective { .. })
+            })
+            .collect();
+        if objectives.len() > 1 || (model_objective_required && objectives.is_empty()) {
+            return Err(SolverError::ModelInvalid(
+                "SAT requires exactly one compiled decision for an optimisation objective".into(),
+            ));
+        }
+        if let Some(decision) = objectives.first() {
+            self.objective = Some(super::objective::CompiledObjective::new(
+                decision,
+                &mut inst,
+                &mut var_map,
+            )?);
+        }
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
@@ -765,6 +822,77 @@ mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
     use crate::range;
+
+    #[test]
+    fn objective_tightening_improves_free_completions_and_proves_the_optimum() {
+        use crate::ast::sat_decision::{
+            EncodingSelection, PbEncoding, SatIntegerView, SelectionProvenance,
+        };
+        for minimise in [false, true] {
+            for algorithm in PbEncoding::ALL {
+                let mut model = ConjureModel::default();
+                let p = DeclarationPtr::new_find(Name::user("objective_p"), Domain::bool());
+                let q = DeclarationPtr::new_find(Name::user("objective_q"), Domain::bool());
+                model.add_symbol(p.clone()).unwrap();
+                model.add_symbol(q.clone()).unwrap();
+                model.add_sat_decisions(vec![crate::ast::SatEncodingDecision::Objective {
+                    minimise,
+                    value: SatIntegerView {
+                        constant: 1,
+                        terms: vec![
+                            (3, Reference::new(p).into()),
+                            (-2, Reference::new(q).into()),
+                        ],
+                        groups: vec![],
+                        choices: None,
+                    },
+                    encoding: Some(EncodingSelection {
+                        algorithm,
+                        provenance: SelectionProvenance::ExplicitConfiguration,
+                    }),
+                }]);
+                let mut sat = Sat::default();
+                sat.load_model(model, private::Internal).unwrap();
+                let rows = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+                let collected = rows.clone();
+                let result = sat
+                    .solve(
+                        Box::new(move |row| {
+                            let bit = |name| match row[&Name::user(name)] {
+                                Literal::Bool(value) => i64::from(value),
+                                Literal::Int(value) => i64::from(value),
+                                _ => panic!("expected a Boolean assignment"),
+                            };
+                            collected
+                                .lock()
+                                .unwrap()
+                                .push(1 + 3 * bit("objective_p") - 2 * bit("objective_q"));
+                            true
+                        }),
+                        private::Internal,
+                    )
+                    .unwrap();
+                assert!(matches!(
+                    result.status,
+                    SearchStatus::Complete(solver::SearchComplete::HasSolutions)
+                ));
+                let rows = rows.lock().unwrap();
+                assert_eq!(
+                    rows.last(),
+                    Some(if minimise { &-1 } else { &4 }),
+                    "{algorithm:?}"
+                );
+                assert!(
+                    rows.windows(2).all(|pair| if minimise {
+                        pair[1] < pair[0]
+                    } else {
+                        pair[1] > pair[0]
+                    }),
+                    "{algorithm:?}: {rows:?}"
+                );
+            }
+        }
+    }
 
     #[test]
     fn free_boolean_completions_are_unique_and_can_stop_early() {
@@ -872,7 +1000,7 @@ mod tests {
         assert!(!is_user_visible_solution_var(&auxiliary));
         let p = SatVar::new(0).pos_lit();
         let q = SatVar::new(1).pos_lit();
-        let mut instance = SatInstance::new();
+        let mut instance: SatInstance = SatInstance::new();
         instance.add_clause([p, q].into_iter().collect());
         let names = HashMap::from([(user.clone(), p), (auxiliary, q)]);
         let mut sat = Sat::default();

@@ -794,3 +794,21 @@ mod tests {
         assert!(Linear::default().add(&product, 1).is_none());
     }
 }
+
+/// Preserve the objective's actual-value view and shared PB choice for solve-time tightening.
+#[register_rule("SAT", 18400, [SatObjective])]
+fn select_sat_objective(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::SatObjective(_, minimise, value) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let value = integer_view(value).ok_or(RuleNotApplicable)?;
+    Ok(RuleEffect::sat(
+        true.into(),
+        vec![SatEncodingDecision::Objective {
+            minimise: *minimise,
+            value,
+            encoding: None,
+        }],
+        symbols.clone(),
+    ))
+}

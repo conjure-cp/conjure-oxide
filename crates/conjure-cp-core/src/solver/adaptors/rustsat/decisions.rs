@@ -55,6 +55,17 @@ pub fn compile_decisions(
     }
     for decision in decisions {
         match decision {
+            SatEncodingDecision::Objective {
+                value, encoding, ..
+            } => {
+                // The adaptor owns solve-time objective state; it has no feasibility clauses.
+                if encoding.is_none() {
+                    return Err(SolverError::ModelInvalid(
+                        "Unresolved objective PB encoding decision".into(),
+                    ));
+                }
+                validate_pb_groups(&value.groups, value.terms.len())?;
+            }
             SatEncodingDecision::IntegerRelation {
                 output,
                 terms,
@@ -268,6 +279,50 @@ fn validate_pb_groups(
     }
     Ok(())
 }
+/// Compile and normalise the fixed input set for a minimised objective cost.
+pub(super) fn compile_objective_terms(
+    value: &crate::ast::sat_decision::SatIntegerView,
+    minimise: bool,
+    instance: &mut SatInstance,
+    variables: &mut HashMap<Name, Lit>,
+) -> Result<(i128, Vec<(Lit, usize)>), SolverError> {
+    validate_pb_groups(&value.groups, value.terms.len())?;
+    let mut compiler = Compiler {
+        instance,
+        variables,
+    };
+    let terms = value
+        .terms
+        .iter()
+        .map(|(weight, expression)| compiler.encode(expression).map(|term| (*weight, term)))
+        .collect::<Result<Vec<_>, _>>()?;
+    let (adjusted, coefficients) = canonical_pb_terms(0, &terms);
+    let sign = if minimise { 1i128 } else { -1i128 };
+    let mut constant = sign * (i128::from(value.constant) - adjusted);
+    let mut positive = Vec::new();
+    let mut total = 0i128;
+    for (literal, weight) in coefficients {
+        let weight = sign * weight;
+        if weight == 0 {
+            continue;
+        }
+        let (literal, weight) = if weight < 0 {
+            constant += weight;
+            (!literal, -weight)
+        } else {
+            (literal, weight)
+        };
+        total += weight;
+        if total >= (isize::MAX as i128).min(i128::from(i64::MAX)) {
+            return Err(SolverError::ModelInvalid(
+                "Objective coefficient sum exceeds the library range".into(),
+            ));
+        }
+        positive.push((literal, weight as usize));
+    }
+    Ok((constant, positive))
+}
+
 struct Compiler<'a> {
     instance: &'a mut SatInstance,
     variables: &'a mut HashMap<Name, Lit>,

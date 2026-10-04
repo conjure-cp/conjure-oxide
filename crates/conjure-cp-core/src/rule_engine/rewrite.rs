@@ -1828,6 +1828,25 @@ pub fn rewrite_model<'a>(
         .collect_vec();
 
     let mut model = introduce_objective_auxiliary(model.clone());
+    if rule_sets.iter().any(|rules| rules.name == "SAT")
+        && let Some(objective) = &model.objective
+        && !model
+            .sat_decisions()
+            .iter()
+            .any(|decision| matches!(decision, crate::ast::SatEncodingDecision::Objective { .. }))
+        && !model
+            .root()
+            .any_expression(|expression| matches!(expression, Expr::SatObjective(..)))
+    {
+        model.add_constraint(Expr::SatObjective(
+            crate::ast::Metadata::new(),
+            matches!(
+                objective.direction,
+                crate::ast::OptimiseDirection::Minimising
+            ),
+            crate::ast::Moo::new(objective.expression.clone()),
+        ));
+    }
     tighten_domains_from_constraints(&mut model);
     let mut rewriter_stats = RewriterStats::new();
     rewriter_stats.is_optimisation_enabled = Some(!config.is_baseline());

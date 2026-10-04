@@ -1016,6 +1016,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
+        Expr::SatObjective(..) => None,
         Expr::SATInt(_, _, _, _) => {
             // TODO: If this SATInt is composed of literals, we should evaluate it back to an
             // integer literal.

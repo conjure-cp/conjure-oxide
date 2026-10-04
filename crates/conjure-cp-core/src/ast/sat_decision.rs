@@ -52,6 +52,12 @@ pub enum SatEncodingDecision {
         bound: i64,
         encoding: Option<EncodingSelection<PbEncoding>>,
     },
+    /// Minimise or maximise an actual-value integer view using the selected PB provider.
+    Objective {
+        minimise: bool,
+        value: SatIntegerView,
+        encoding: Option<EncodingSelection<PbEncoding>>,
+    },
     /// Define whether every numeric operand has a different value.
     AllDifferent {
         output: Expression,
@@ -211,6 +217,14 @@ impl Display for SatEncodingDecision {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
+            Self::Objective {
+                minimise,
+                value,
+                encoding,
+            } => write!(
+                f,
+                "optimise(minimise={minimise}, value={value}) using {encoding:?}"
+            ),
             Self::Assert(expression) => write!(f, "assert({expression}) using tseitin"),
             Self::Boolean { output, expression } => {
                 write!(f, "define({output} <-> {expression}) using tseitin")
@@ -259,6 +273,11 @@ impl SatEncodingDecision {
             Self::AtMostOne { inputs, .. } | Self::Cardinality { inputs, .. } => {
                 inputs.iter().collect()
             }
+            Self::Objective { value, .. } => value
+                .terms
+                .iter()
+                .map(|(_, expression)| expression)
+                .collect(),
             Self::CountRelation { output, inputs, .. } => {
                 std::iter::once(output).chain(inputs).collect()
             }
@@ -1078,6 +1097,11 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
                 encoding: None,
                 ..
             } => Some(terms),
+            SatEncodingDecision::Objective {
+                value,
+                encoding: None,
+                ..
+            } => Some(&value.terms),
             SatEncodingDecision::AllDifferent {
                 inputs,
                 pb_encoding: None,
@@ -1143,6 +1167,7 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
     for decision in decisions {
         if let SatEncodingDecision::PseudoBoolean { encoding, .. }
         | SatEncodingDecision::IntegerRelation { encoding, .. }
+        | SatEncodingDecision::Objective { encoding, .. }
         | SatEncodingDecision::AllDifferent {
             pb_encoding: encoding,
             ..
