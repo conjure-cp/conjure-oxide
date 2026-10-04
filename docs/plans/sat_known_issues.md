@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after guarded Boolean counts were connected to native PB decisions.
+Inventory date: 2026-10-04, branch `sat-ir` after dedicated AMO/cardinality reification was connected.
 
-384 of 632 runnable integration fixtures have SAT enabled, exercising 21,423 SAT portfolios. Full acceptance for the guarded-count stage passed all 1,566 workspace tests (14 skipped), including workspace doctests. The earlier integer relation migration also passed full normal golden verification. The remaining 248 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+385 of 633 runnable integration fixtures have SAT enabled, exercising 21,435 SAT portfolios. Full acceptance for the native count-reification stage passed all 1,569 workspace tests (14 skipped), including workspace doctests. The earlier integer relation migration also passed full normal golden verification. The remaining 248 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -31,7 +31,7 @@ Explicit function lookup also needs a guard on its original argument domain: an 
 
 Native AMO/cardinality and PB selection now searches literal conjunctions beneath Root while preserving their grouping. Only asserted conjuncts are extracted; negation, disjunction, implication and reification are not asserted contexts. This avoids globally flattening the evaluator worklist. Both cardinality providers and all five PB providers match Conjure across all five integer representations in 50 explicit checks.
 
-The three-element occurrence set (`maxSize 2`, with `1 in s`) now has exactly the three expected solutions through native cardinality decisions. `sat-ir/asserted-conjunctions` adds nested cardinality and weighted bounds plus a reified scalar comparison. The subsequent guarded-count connection below supports direct reified counts such as `sum(toInt(...)) <= 1 <-> p` through the existing PB-backed integer-relation decision.
+The three-element occurrence set (`maxSize 2`, with `1 in s`) now has exactly the three expected solutions through native cardinality decisions. `sat-ir/asserted-conjunctions` adds nested cardinality and weighted bounds plus a reified scalar comparison. The subsequent guarded-count connection below supports direct reified counts such as `sum(toInt(...)) <= 1 <-> p` through dedicated AMO/cardinality equivalence decisions.
 
 `conjure/function/function_total_int_02` passed all 1,000 SAT portfolios with `TEST_CASE_TIMEOUT=600`, taking about 168 seconds in that trial. It is enabled under full uniform selection; the earlier 120-second timeout was a performance observation, not unsupported semantics.
 
@@ -39,9 +39,9 @@ The three-element occurrence set (`maxSize 2`, with `1 in s`) now has exactly th
 
 ## Guarded counts and bounded function probes
 
-Ready Boolean counts beneath negation, disjunction, implication, equivalence and `toInt` now become output-bearing integer-relation decisions. Both truth values are encoded by the selected PB provider. Asserted bounds retain native AMO/cardinality selection; asserted count disequality uses an equivalence decision. The selector traverses borrowed scalar/Boolean contexts, preserving conjunctions and avoiding binders and undefined-value bubbles. It does not add a clause encoder.
+Ready Boolean counts beneath negation, disjunction, implication, equivalence and `toInt` now become output-bearing `CountRelation` decisions. Both truth values are encoded by the selected cardinality provider, with the selected AMO provider handling upper thresholds of one. Asserted bounds retain native AMO/cardinality selection; asserted count disequality uses an equivalence decision. The selector traverses borrowed scalar/Boolean contexts, preserving conjunctions and avoiding binders and undefined-value bubbles. It does not add a clause encoder.
 
-Fifty explicit portfolios across all five integer representations, both cardinality providers and all five PB providers agree with nine independent and Conjure reference assignments. `sat-ir/guarded-counts` checks all six comparisons, reversed bounds, duplicates, negated operands, constants, guards and `toInt`; its full uniform sweep has 300 SAT portfolios. Dedicated AMO/cardinality-provider reification remains distinct from this PB-backed path.
+Three hundred explicit portfolios across all five integer representations, all six AMO encodings, both cardinality providers and all five PB providers agree with nine independent and Conjure reference assignments. `sat-ir/guarded-counts` checks all six comparisons, reversed bounds, duplicates, negated operands, constants, guards and `toInt`; its full uniform sweep has 300 SAT portfolios. Dedicated AMO/cardinality-provider reification is now connected. The Boolean-only `sat-ir/reified-cardinality` fixture exercises all twelve provider pairs without numeric or weighted constraints, matching 64 Conjure and independently enumerated assignments. All five normal golden checks pass; existing timing budgets are preserved and the new fixture has a deliberate five-second budget.
 
 The original sparse-partial fixture passes Packed + BinaryValue with exactly five expected assignments. Bounded rewrite-only probes show Packed + Direct costs growing with the packed integer domain: three-by-three (64 codes) takes about 0.09 seconds, four-by-four (625) 0.32 seconds and five-by-five (7,776) 3.56 seconds. Six-by-six (117,649) exceeds the 15-second rewrite limit; BinaryValue finishes that rewrite in about 1.76 seconds. Pairwise CNF probes for the first two cases pass with 40,339 and 348,922 clauses respectively. These isolate representation-size growth before or during encoding, but do not establish the cause of the earlier SIGKILL or a library bug. The original full fixture stays disabled.
 
@@ -357,7 +357,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Connect dedicated AMO/cardinality-provider reification; ready guarded counts already use PB-backed equivalence decisions.
+1. Connect reusable incremental bounds and objective tightening where the native library APIs support them; dedicated AMO/cardinality-provider reification is connected.
 2. Tune cost-aware representation/encoding selection and further isolate the original sparse-partial termination; bounded probes already show packed Direct growth.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
@@ -367,7 +367,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Passing performance follow-ups
 
-The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts and linear comparisons use PB-backed equivalence decisions. Dedicated reification through the AMO/cardinality provider selections remains a separate library connection.
+The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. Reusable incremental bounds and objective tightening remain separate library connections.
 
 ## Cross-backend masked lookup follow-up
 
