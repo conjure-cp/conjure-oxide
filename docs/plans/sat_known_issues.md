@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after reusable cardinality and weighted dominance bounds were connected.
+Inventory date: 2026-10-04, branch `sat-ir` after shared sparse Rank projections were connected.
 
-390 of 637 runnable integration fixtures have SAT enabled, exercising 21,723 SAT portfolios. Full acceptance for the weighted-reuse stage passed all 1,580 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 247 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+391 of 638 runnable integration fixtures have SAT enabled, exercising 21,773 SAT portfolios. Full acceptance for the shared-projection stage passed all 1,583 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 247 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -356,7 +356,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Share sparse BinaryRank actual-value projections across dominance rewrites, then investigate cost-aware selection. Weighted GTE/adder counters and bound-specific DPW/Pindakaas predicates now share stable inputs; cardinality sharing, PB objective tightening and dedicated AMO/cardinality-provider reification are connected.
+1. Resume the smallest-failing-fixture loop with `sets/in` (41-byte model). A fresh compact uniform SAT check leaves `SATInt(Offset, ...) in {1,2,3}` and fails before library encoding. Sparse BinaryRank projections, weighted/cardinality reuse, PB objective tightening and dedicated AMO/cardinality-provider reification are connected.
 2. Tune cost-aware representation/encoding selection and further isolate the original sparse-partial termination; bounded probes already show packed Direct growth.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
@@ -366,7 +366,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Passing performance follow-ups
 
-The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. PB objective tightening now reuses native RustSAT state. Cardinality bounds now reuse state across dominance updates. Weighted dominance sharing now retains GTE/adder counters and bound-specific DPW/Pindakaas predicates; sparse Rank projection sharing remains separate.
+The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. PB objective tightening now reuses native RustSAT state. Cardinality bounds now reuse state across dominance updates. Weighted dominance sharing now retains GTE/adder counters and bound-specific DPW/Pindakaas predicates; sparse Rank projection sharing is now connected.
 
 ## Cross-backend masked lookup follow-up
 
@@ -414,3 +414,16 @@ Unrestricted native sharing caused the 2,000-input Order/GTE fixture to run for 
 All six focused integration checks pass. The three complete wide-domain fixtures finish in 63-65 seconds, matching prior 65-72-second baselines; large Direct addition and the dominance RFC example finish in about nine seconds. CLI GTE/adder probes return the unique value 4 in 1.65/1.38 seconds. This is an encoding-construction performance observation, not a confirmed upstream correctness bug.
 
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,580 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed; core/rule libraries have 259/160 unit tests. All 13 final normal golden checks passed, including the new weighted regression, the wide-domain cases and four restored capped-search samples. Independent auditing confirms all 50 weighted portfolios match the five-assignment frontier. Timing cleanup preserves prior fields in 639 files; existing budgets remain unchanged and the new fixture has a deliberate five-second budget. Coverage is 390/637 runnable fixtures and 21,723 SAT portfolios; 21,586 are uniform across 302 fixtures, with 247 fixtures still disabled.
+
+
+## Shared sparse Rank projections
+
+The solver-local encoding cache now retains equivalent Boolean gates and output aliases across decision batches. Gate keys use canonical solver inputs and ignore commutative input order. Aliases retain polarity and constants; the original equivalence clauses remain present for earlier uses and solution decoding. Rebuilt Rank decoders therefore expose the same physical inputs to weighted encoders even when dominance rewriting assigns fresh auxiliary names. Cache state resets with each loaded model. Clause generation still uses RustSAT atomics; no CNF or cache state enters the model AST.
+
+Multi-batch projection tests check all input assignments, negated alias chains, changing bounds, every PB provider and all old/new output truths together. Repeating a projection and bound adds no gate or PB auxiliaries beyond the new named outputs. A separate test retains assertions made before an alias and handles multiple definitions of the same output.
+
+All 25 explicit integer/PB combinations of the existing weighted regression preserve its five-assignment frontier and confirm weighted reuse. `sat-ir/dominance-rank-views` adds unequal sparse gaps and multiple intervals, with three independently enumerated nondominated assignments. Its 25 explicit combinations preserve those assignments; sparse Rank reuses decoder gates with every provider. Distinct bounds still use the selected provider's established native or one-shot policy. No new upstream library bug was confirmed. Mixed representations/channelling, cost-aware selection and large packed-Direct growth remain deferred.
+
+A fresh check of the smallest disabled model, `sets/in`, confirms a constant-set membership lowering gap: `find a: int(1..5); such that a in {1,2,3}` leaves membership over a ready Offset operand. The residual-model assertion fires before native SAT encoding. This is the next smallest-failing-fixture candidate, not a new upstream library bug.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,583 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed; core/rule libraries have 261/160 unit tests. All 44 SAT unit tests and 50 explicit integer/PB checks pass. Independent audits confirm both sets of 50 recorded weighted portfolios. All 16 final normal golden checks passed, including the wide-domain cases and six restored capped-search samples. Timing cleanup preserves prior fields in 639 files; existing budgets remain unchanged and the new fixture has a deliberate five-second budget. Coverage is 391/638 runnable fixtures and 21,773 SAT portfolios; 21,636 are uniform across 303 fixtures, with 247 fixtures still disabled.
