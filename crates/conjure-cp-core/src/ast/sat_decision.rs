@@ -62,6 +62,9 @@ pub enum SatEncodingDecision {
     AllDifferent {
         output: Expression,
         inputs: Vec<SatIntegerView>,
+        /// This value may occur repeatedly.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        except: Option<i64>,
         encoding: Option<EncodingSelection<AllDifferentEncoding>>,
         amo_encoding: Option<EncodingSelection<AmoEncoding>>,
         pb_encoding: Option<EncodingSelection<PbEncoding>>,
@@ -174,18 +177,25 @@ impl Display for SatEncodingDecision {
             Self::AllDifferent {
                 output,
                 inputs,
+                except,
                 encoding,
                 amo_encoding,
                 pb_encoding,
-            } => write!(
-                f,
-                "define({output} <-> allDifferent({})) using {encoding:?}, AMO {amo_encoding:?}, PB {pb_encoding:?}",
-                inputs
+            } => {
+                let inputs = inputs
                     .iter()
                     .map(ToString::to_string)
                     .collect::<Vec<_>>()
-                    .join(", ")
-            ),
+                    .join(", ");
+                let constraint = match except {
+                    Some(value) => format!("allDifferentExcept({inputs}, {value})"),
+                    None => format!("allDifferent({inputs})"),
+                };
+                write!(
+                    f,
+                    "define({output} <-> {constraint}) using {encoding:?}, AMO {amo_encoding:?}, PB {pb_encoding:?}"
+                )
+            }
             Self::Table {
                 output,
                 inputs,
@@ -1317,6 +1327,7 @@ mod alldifferent_choice_tests {
         let build = |input: SatIntegerView| SatEncodingDecision::AllDifferent {
             output: true.into(),
             inputs: vec![input.clone(), input],
+            except: None,
             encoding: None,
             amo_encoding: None,
             pb_encoding: None,

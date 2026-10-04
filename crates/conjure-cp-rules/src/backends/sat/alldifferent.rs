@@ -1,14 +1,23 @@
 //! Retain allDifferent as a semantic decision until library clause generation.
-use conjure_cp::ast::{Expression as Expr, SatEncodingDecision, SymbolTable};
+use conjure_cp::ast::{
+    Expression as Expr, Literal, SatEncodingDecision, SymbolTable, eval_constant,
+};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, RuleEffect, register_rule,
 };
 
 /// Preserve ready numeric operands, including nested Boolean uses.
-#[register_rule("SAT", 18500, [AllDiff])]
+#[register_rule("SAT", 18500, [AllDiff, AllDifferentExcept])]
 fn select_alldifferent(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::AllDiff(_, matrix) = expr else {
-        return Err(RuleNotApplicable);
+    let (matrix, except) = match expr {
+        Expr::AllDiff(_, matrix) => (matrix, None),
+        Expr::AllDifferentExcept(_, matrix, except) => {
+            let Some(Literal::Int(value)) = eval_constant(except) else {
+                return Err(RuleNotApplicable);
+            };
+            (matrix, Some(i64::from(value)))
+        }
+        _ => return Err(RuleNotApplicable),
     };
     let elements = matrix.unwrap_list_cow().ok_or(RuleNotApplicable)?;
     let inputs = elements
@@ -23,6 +32,7 @@ fn select_alldifferent(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         vec![SatEncodingDecision::AllDifferent {
             output,
             inputs,
+            except,
             encoding: None,
             amo_encoding: None,
             pb_encoding: None,
@@ -37,6 +47,32 @@ mod tests {
     use conjure_cp::ast::{
         AbstractLiteral, DeclarationPtr, Domain, Metadata, Moo, Name, Reference, SATIntEncoding,
     };
+
+    #[test]
+    fn constant_exception_is_retained_and_variable_exception_waits() {
+        let matrix = Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(vec![0.into(), 0.into()]),
+        );
+        let input = Expr::AllDifferentExcept(
+            Metadata::new(),
+            Moo::new(matrix.clone()),
+            Moo::new(0.into()),
+        );
+        let effect = select_alldifferent(&input, &SymbolTable::new()).unwrap();
+        assert!(matches!(
+            &effect.new_sat_decisions[0],
+            SatEncodingDecision::AllDifferent { except: Some(0), inputs, .. }
+            if inputs.len() == 2
+        ));
+        let pending: Expr = Reference::new(DeclarationPtr::new_find(
+            Name::User("exception".into()),
+            Domain::int(vec![conjure_cp::ast::Range::Bounded(0, 1)]),
+        ))
+        .into();
+        let input = Expr::AllDifferentExcept(Metadata::new(), Moo::new(matrix), Moo::new(pending));
+        assert!(select_alldifferent(&input, &SymbolTable::new()).is_err());
+    }
 
     #[test]
     fn alldifferent_retains_actual_numeric_views_and_declines_compound_values() {

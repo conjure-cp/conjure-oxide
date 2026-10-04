@@ -139,6 +139,7 @@ pub(super) fn compile_decisions_with_cache(
             SatEncodingDecision::AllDifferent {
                 output,
                 inputs,
+                except,
                 encoding,
                 amo_encoding,
                 pb_encoding,
@@ -149,7 +150,14 @@ pub(super) fn compile_decisions_with_cache(
                     Term::Literal(literal) if asserted.contains(&!literal) => Term::Constant(false),
                     output => output,
                 };
-                compiler.alldifferent(output, inputs, encoding, amo_encoding, pb_encoding)?;
+                compiler.alldifferent(
+                    output,
+                    inputs,
+                    *except,
+                    encoding,
+                    amo_encoding,
+                    pb_encoding,
+                )?;
             }
             SatEncodingDecision::PseudoBoolean {
                 terms,
@@ -664,6 +672,7 @@ impl Compiler<'_> {
         &mut self,
         output: Term,
         inputs: &[crate::ast::sat_decision::SatIntegerView],
+        except: Option<i64>,
         encoding: &Option<
             crate::ast::sat_decision::EncodingSelection<
                 crate::ast::sat_decision::AllDifferentEncoding,
@@ -702,6 +711,9 @@ impl Compiler<'_> {
                 let choices = input.choices.as_ref().ok_or_else(|| SolverError::ModelInvalid(
                     "allDifferent value-amo requires value indicators for every operand (Direct or Boolean views)".into()))?;
                 for (value, expression) in choices {
+                    if except == Some(*value) {
+                        continue;
+                    }
                     by_value
                         .entry(*value)
                         .or_default()
@@ -731,6 +743,31 @@ impl Compiler<'_> {
                         &[],
                     )?;
                     truths.push(Term::Literal(truth));
+                }
+            }
+        } else if let Some(except) = except {
+            let pb = pb_encoding
+                .as_ref()
+                .ok_or_else(|| {
+                    SolverError::ModelInvalid("Unresolved allDifferent PB encoding decision".into())
+                })?
+                .algorithm;
+            let exception = crate::ast::sat_decision::SatIntegerView {
+                constant: except,
+                terms: vec![],
+                groups: vec![],
+                choices: None,
+            };
+            for (index, left) in inputs.iter().enumerate() {
+                let exempt = self.view_equality(left, &exception, pb)?;
+                for right in &inputs[index + 1..] {
+                    let distinct = self.view_equality(left, right, pb)?.negated();
+                    let truth = self.combine(false, vec![exempt, distinct]);
+                    if matches!(output, Term::Constant(true)) {
+                        self.equate(output, truth);
+                    } else {
+                        truths.push(truth);
+                    }
                 }
             }
         } else {
@@ -3854,7 +3891,11 @@ mod pseudo_boolean_tests {
         for strategy in AllDifferentEncoding::ALL {
             for pb in PbEncoding::ALL {
                 for amo in AmoEncoding::ALL {
-                    for kind in 0..3 {
+                    for (kind, except) in (0..5).flat_map(|kind| {
+                        [None, Some(-2), Some(0), Some(3), Some(42)]
+                            .into_iter()
+                            .map(move |except| (kind, except))
+                    }) {
                         let mut inputs = views.clone();
                         match kind {
                             1 => inputs[2] = inputs[0].clone(),
@@ -3866,6 +3907,8 @@ mod pseudo_boolean_tests {
                                     choices: Some(vec![(0, true.into())]),
                                 }
                             }
+                            3 => inputs.clear(),
+                            4 => inputs.truncate(1),
                             _ => (),
                         }
                         for assertion in [None, Some(false), Some(true)] {
@@ -3891,6 +3934,7 @@ mod pseudo_boolean_tests {
                             let mut decisions = vec![SatEncodingDecision::AllDifferent {
                                 output: expressions[9].clone(),
                                 inputs: inputs.clone(),
+                                except,
                                 encoding: Some(EncodingSelection {
                                     algorithm: strategy,
                                     provenance: SelectionProvenance::ExplicitConfiguration,
@@ -3942,9 +3986,12 @@ mod pseudo_boolean_tests {
                                 if kind == 2 {
                                     numeric[2] = 0;
                                 }
-                                let truth = numeric[0] != numeric[1]
-                                    && numeric[0] != numeric[2]
-                                    && numeric[1] != numeric[2];
+                                let truth = (0..inputs.len()).all(|left| {
+                                    (left + 1..inputs.len()).all(|right| {
+                                        numeric[left] != numeric[right]
+                                            || Some(numeric[left]) == except
+                                    })
+                                });
                                 for output in [false, true] {
                                     let assumptions: Vec<_> = variables
                                         .iter()
@@ -3965,7 +4012,7 @@ mod pseudo_boolean_tests {
                                         solver.solve_assumps(&assumptions).unwrap()
                                             == SolverResult::Sat,
                                         expected,
-                                        "{strategy} {pb} {amo} kind={kind} assertion={assertion:?} bits={assignment} output={output}"
+                                        "{strategy} {pb} {amo} kind={kind} except={except:?} assertion={assertion:?} bits={assignment} output={output}"
                                     );
                                 }
                             }

@@ -32,7 +32,7 @@ use uniplate::Uniplate;
 /// operation whose operands share an encoding that knows how to encode it is handled there and
 /// never reaches this rule. Remaining operands may have different encodings, use an encoding with
 /// no rule for the operation, or include Boolean indicators needing an actual-value circuit view.
-#[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, AllDiff, Table, NegativeTable, SatElement, SatObjective, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
+#[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, AllDiff, AllDifferentExcept, Table, NegativeTable, SatElement, SatObjective, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
 fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut encodings = HashSet::new();
     let mut has_indicator = false;
@@ -55,6 +55,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     let retains_views = matches!(
         expr,
         Expr::AllDiff(..)
+            | Expr::AllDifferentExcept(..)
             | Expr::Table(..)
             | Expr::NegativeTable(..)
             | Expr::SatElement(..)
