@@ -36,8 +36,15 @@ use uniplate::Uniplate;
 fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut encodings = HashSet::new();
     let mut has_indicator = false;
+    let mut operands_ready = true;
     for operand in operands(expr) {
-        has_indicator |= ready_indicator(&operand);
+        let indicator = ready_indicator(&operand);
+        has_indicator |= indicator;
+        operands_ready &= indicator
+            || matches!(
+                operand,
+                Expr::SATInt(..) | Expr::Atomic(_, Atom::Literal(Literal::Int(_)))
+            );
         if let Expr::SATInt(_, encoding, _, _) = operand {
             encodings.insert(encoding);
         }
@@ -62,7 +69,7 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     }
     // Ready indicators need an actual-value view only when a circuit is required.
     // Linear and count decisions run earlier and retain their original inputs.
-    let has_indicator = !retains_views && has_indicator;
+    let has_indicator = !retains_views && has_indicator && operands_ready;
     if !has_indicator
         && encodings
             .iter()
@@ -75,7 +82,9 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     let mut new_symbols = symbols.clone();
 
     let mut convert = |input: Expr| {
-        if retains_views && !matches!(&input, Expr::SATInt(_, SATIntEncoding::Rank(_), _, _)) {
+        if (retains_views && !matches!(&input, Expr::SATInt(_, SATIntEncoding::Rank(_), _, _)))
+            || (!has_indicator && ready_indicator(&input))
+        {
             input
         } else {
             to_log(input, &mut clauses, &mut new_symbols)
@@ -391,6 +400,23 @@ mod unsigned_tests {
     use crate::types::int::unsigned::{unsigned_capacity, unsigned_width, value_at_rank};
     use conjure_cp::ast::Name;
     use std::collections::HashMap;
+
+    #[test]
+    fn pending_count_operands_keep_indicators_for_native_cardinality() {
+        let indicator = Expr::ToInt(Metadata::new(), Moo::new(true.into()));
+        let pending = Expr::ToInt(
+            Metadata::new(),
+            Moo::new(Expr::Or(
+                Metadata::new(),
+                Moo::new(into_matrix_expr!(vec![true.into(), false.into()])),
+            )),
+        );
+        let count = Expr::Sum(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(vec![indicator, pending])),
+        );
+        assert!(unify_sat_int_encodings(&count, &SymbolTable::new()).is_err());
+    }
 
     #[test]
     fn indicator_circuit_view_has_zero_sign_bit_without_auxiliaries() {
