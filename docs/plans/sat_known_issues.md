@@ -1,12 +1,12 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after mixed Boolean-indicator arithmetic was connected.
+Inventory date: 2026-10-04, branch `sat-ir` after constant integer allDifferentExcept was connected.
 
-402 of 641 runnable integration fixtures have SAT enabled, exercising 22,484 SAT portfolios. Full acceptance for the mixed-indicator stage passed all 1,590 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 239 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+406 of 642 runnable integration fixtures have SAT enabled, exercising 22,804 SAT portfolios. Full acceptance for the constant-exception stage passed all 1,592 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 236 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
-Scalar integer/Boolean allDifferent now passes pairwise and eligible value-AMO portfolios. allDifferentExcept and compound-valued operands remain gaps; the dedicated fixture also covers sparse domains, repeated operands, constants, negation and reification. No new upstream library bug was confirmed.
+Scalar integer/Boolean allDifferent now passes pairwise and eligible value-AMO portfolios. Constant integer allDifferentExcept is connected; variable exceptions and compound-valued operands remain gaps; the dedicated fixture also covers sparse domains, repeated operands, constants, negation and reification. No new upstream library bug was confirmed.
 
 Constant-row positive/negative tables now pass tuple and MDD portfolios, including reification. Short tables, binary-support encodings and non-constant row relations remain gaps. A fresh compact screen of `savilerow/sportsScheduling2` lowers its tables but leaves `flatten` inside allDifferent; that fixture remains disabled.
 
@@ -53,16 +53,16 @@ Fresh full uniform trials also enable `basic/toInt/{01,02-flatten}` and `basic/a
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 169 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 166 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 22 | Historical full uniform lowering failures; fresh passing and resource-limited trials are separated below. |
 | Panics | 2 | Both reconfirmed with compact and first; the historical nested-absolute case now passes a full uniform portfolio. |
 | Model-loading errors | 5 | All five reconfirmed in the earlier targeted recheck. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
 | External termination | 1 | Fresh sparse-partial trial received SIGKILL after about 472 seconds; cause unconfirmed. |
-| Total SAT-disabled runnable fixtures | 239 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 236 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 191 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 188 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -144,7 +144,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [basic/pow/05-negative-base](../../test-suite/tests/integration/basic/pow/05-negative-base/input.essence)
 - [basic/sequence/apply-out-of-range](../../test-suite/tests/integration/basic/sequence/apply-out-of-range/input.essence)
 - [bugs/treemorph-misses-node-01](../../test-suite/tests/integration/bugs/treemorph-misses-node-01/input.essence)
-- [conjure/all_diff/all_diff_except_comprehension_smoke](../../test-suite/tests/integration/conjure/all_diff/all_diff_except_comprehension_smoke/input.essence)
 - [conjure/function/function_complex_01](../../test-suite/tests/integration/conjure/function/function_complex_01/input.essence)
 - [conjure/function/function_partial_int_set_01](../../test-suite/tests/integration/conjure/function/function_partial_int_set_01/input.essence)
 - [conjure/function/function_record_injective_attr](../../test-suite/tests/integration/conjure/function/function_record_injective_attr/input.essence)
@@ -222,8 +221,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [minion-constraints/modulo-undefzero-04-nested-neq](../../test-suite/tests/integration/minion-constraints/modulo-undefzero-04-nested-neq/input.essence)
 - [minion-constraints/modulo-undefzero-05-nested-noteq](../../test-suite/tests/integration/minion-constraints/modulo-undefzero-05-nested-noteq/input.essence)
 - [optimisations/implies-tautologies-cse](../../test-suite/tests/integration/optimisations/implies-tautologies-cse/input.essence)
-- [savilerow/alldiff_except](../../test-suite/tests/integration/savilerow/alldiff_except/input.essence)
-- [savilerow/alldiff_except_nest](../../test-suite/tests/integration/savilerow/alldiff_except_nest/input.essence)
 - [savilerow/atleast-test](../../test-suite/tests/integration/savilerow/atleast-test/input.essence)
 - [savilerow/atmost-test](../../test-suite/tests/integration/savilerow/atmost-test/input.essence)
 - [savilerow/bibd](../../test-suite/tests/integration/savilerow/bibd/input.essence)
@@ -348,14 +345,14 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Connect `allDifferentExcept` to the semantic allDifferent encoding family. A fresh compact uniform probe `find x, y : int(0..2); such that allDifferentExcept([x,y], 0)` leaves the global constraint over ready Offset views unencoded before either library receives it. Mixed integer/Boolean-indicator arithmetic is now connected through temporary actual-value circuit views.
+1. Complete the remaining scalar allDifferent connections: variable exceptions and compound-valued operands. Constant integer `allDifferentExcept` now uses the existing pairwise/value-AMO family across all five integer representations. Mixed integer/Boolean-indicator arithmetic is also connected.
 2. Complete remaining modelling/encoding families and missing library connections, then continue fresh uniform rechecks of the smallest disabled fixtures. Feature completeness takes priority over measurement and heuristic tuning.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
 5. Retest the smallest remaining disabled arithmetic fixture; `basic/abs/03-nested` now passes all 50 uniform portfolios.
 6. Re-screen residual-constraint cases after the weighted PB changes, then group remaining failures by their actual residual ASTs.
 7. After feature completeness, measure compilation and solving separately, tune cost-aware selection and further isolate the original sparse-partial termination; bounded probes already show packed Direct growth. Mixed representations/channelling remain deferred.
-7. Revisit bounded timeouts with longer limits and separate compilation cost from solving cost.
+8. Revisit bounded timeouts with longer limits and separate compilation cost from solving cost.
 
 ## Passing performance follow-ups
 
@@ -455,3 +452,14 @@ Fresh coverage rechecks enable `basic/mod/05` and `basic/mod/06`, with 50 portfo
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,590 tests (14 skipped), plus workspace doctests. `make check` passed. All 15 targeted normal golden checks passed, covering the new/expanded fixtures, restored cardinality portfolios, affected indicator/count cases, sparse Rank dominance and five retained capped-search samples. Independent audits verify all 200 new SAT portfolios. Timing cleanup preserves prior fields in 643 files; the three new/expanded fixtures have deliberate five-second budgets and other existing budgets remain unchanged. No new upstream library bug was confirmed.
 
 The next confirmed constraint-family gap is `allDifferentExcept([x,y], 0)` over small ready integer views. Performance measurement and heuristic tuning follow feature completeness; mixed representations/channelling remain deferred.
+
+
+## Constant integer allDifferentExcept connection
+
+The allDifferent decision retains an optional constant integer exception. Pairwise uses numeric equalities and Boolean disjunction; value-AMO omits the exception bucket. Selected library providers still own clause generation. Sparse Rank uses its existing actual-value projection, while Direct and Order retain structured views. Plain allDifferent retains its existing path.
+
+The new sparse/reified/negated regression returns 21 independently enumerated assignments across 80 portfolios. The original comprehension regression adds 80 portfolios returning all 34 assignments. The two Savile Row cases each add 80 portfolios with 100 distinct valid capped assignments per result, including the constraint inside a disjunction. Conjure validation remains enabled. Variable exceptions and compound-valued operands remain gaps; the new rule unit test deliberately declines a non-constant exception.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,592 tests (14 skipped), plus workspace doctests. `make check` and all nine focused checks passed. All eleven final normal golden checks passed, including the existing allDifferent regression, sparse Rank dominance and five restored capped-search fixtures. Independent audits verify all 320 new SAT portfolios. The sparse regression retains 50 pairwise and 30 value-AMO portfolios, covering all six AMO algorithms and five PB providers. No new upstream library correctness bug was confirmed.
+
+Timing cleanup preserves prior fields in 645 files and restores 24 capped-search solution samples. The new regression and expanded comprehension fixture have deliberate five-second budgets; the two expanded Savile Row fixtures have ten-second budgets. Other existing budgets remain unchanged. Coverage is 406/642 runnable fixtures and 22,804 SAT portfolios; 22,667 are uniform across 318 fixtures, with 236 fixtures still disabled. Exactly four fixtures add 80 portfolios each; no existing portfolios were lost.

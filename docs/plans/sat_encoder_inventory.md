@@ -117,7 +117,7 @@ Pindakaas 0.5.1 does not fully exploit binary bounds: its default internal conve
 
 ## allDifferent compositions
 
-Oxide now exposes `--sat-encoding-alldifferent pairwise|value-amo`. Pairwise composes actual-value integer disequalities using the selected PB provider, with Direct choice specialisations using library Boolean gates. Value-AMO groups Direct/Boolean value indicators and uses the selected RustSAT AMO encoder for assertions. Nested and negated uses compose equivalent PB count bounds with library Boolean gates. These are Oxide semantic compositions of public library encoders, not native allDifferent algorithms advertised by either library. Compound-valued operands and allDifferentExcept remain follow-ups.
+Oxide now exposes `--sat-encoding-alldifferent pairwise|value-amo`. Pairwise composes actual-value integer disequalities using the selected PB provider, with Direct choice specialisations using library Boolean gates. Value-AMO groups Direct/Boolean value indicators and uses the selected RustSAT AMO encoder for assertions. Nested and negated uses compose equivalent PB count bounds with library Boolean gates. These are Oxide semantic compositions of public library encoders, not native allDifferent algorithms advertised by either library. Constant integer `allDifferentExcept` now retains the exception in the same decision. Pairwise combines disequality with equality to the exception through numeric/PB and Boolean helpers; value-AMO excludes the exception bucket. Both paths preserve reification and negation. Variable exceptions and compound-valued operands remain follow-ups.
 
 ## Table compositions
 

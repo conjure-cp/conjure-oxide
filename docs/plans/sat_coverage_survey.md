@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-04
 
-SAT is enabled in **402 of 641 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **22,484 SAT solution portfolios**; **22,347** use uniform channelling across **314 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
+SAT is enabled in **406 of 642 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **22,804 SAT solution portfolios**; **22,667** use uniform channelling across **318 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -10,8 +10,8 @@ The current filtered failure list and targeted rechecks are recorded in [SAT kno
 
 | Final outcome | Fixtures |
 | --- | ---: |
-| Currently SAT-enabled | 250 |
-| Initial CLI error | 176 |
+| Currently SAT-enabled | 253 |
+| Initial CLI error | 173 |
 | Initial CLI timeout | 37 |
 | Full portfolio failed to lower | 22 |
 | Full portfolio timed out | 3 |
@@ -185,3 +185,14 @@ Fresh coverage rechecks enable `basic/mod/05` and `basic/mod/06`, retaining Mini
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,590 tests (14 skipped), plus workspace doctests. `make check` passed. All 15 targeted normal golden checks passed, covering the new/expanded fixtures, restored cardinality portfolios, affected indicator/count cases, sparse Rank dominance and five retained capped-search samples. Independent audits verify all 200 new SAT portfolios. Timing cleanup preserves prior fields in 643 files; the three new/expanded fixtures have deliberate five-second budgets and other existing budgets remain unchanged. No new upstream library bug was confirmed.
 
 Coverage is 402/641 runnable fixtures and 22,484 SAT portfolios; 22,347 are uniform across 314 fixtures, with 239 fixtures still disabled. The next confirmed gap is scalar `allDifferentExcept`. Feature completeness precedes measurement and heuristic tuning; mixed representations/channelling remain deferred.
+
+
+## Constant integer allDifferentExcept
+
+The semantic allDifferent decision now retains a constant integer exception. Both existing strategies reuse library numeric/PB, AMO and Boolean helpers. The new sparse regression covers repeated operands, constants, out-of-domain exceptions, reification and negation; all 80 portfolios match its 21-assignment complete set. The existing comprehension fixture adds 80 portfolios with all 34 assignments. Both existing Savile Row fixtures add 80 portfolios with 100 distinct valid capped assignments each, including a disjunctive use. Conjure validation is retained.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,592 tests (14 skipped), plus workspace doctests. `make check` and all nine focused checks passed. All eleven final normal golden checks passed, including the existing allDifferent regression, sparse Rank dominance and five restored capped-search fixtures. Independent audits verify all 320 new SAT portfolios. The sparse regression retains 50 pairwise and 30 value-AMO portfolios, covering all six AMO algorithms and five PB providers. No new upstream library correctness bug was confirmed.
+
+Timing cleanup preserves prior fields in 645 files and restores 24 capped-search solution samples. The new regression and expanded comprehension fixture have deliberate five-second budgets; the two expanded Savile Row fixtures have ten-second budgets. Other existing budgets remain unchanged. Coverage is 406/642 runnable fixtures and 22,804 SAT portfolios; 22,667 are uniform across 318 fixtures, with 236 fixtures still disabled. Exactly four fixtures add 80 portfolios each; no existing portfolios were lost.
+
+Variable exceptions, compound-valued operands, remaining linear strategies and short/binary-support tables remain follow-ups. Feature completeness precedes measurement and heuristic tuning; mixed representations/channelling remain deferred.

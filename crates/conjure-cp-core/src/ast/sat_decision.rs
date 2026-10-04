@@ -58,7 +58,7 @@ pub enum SatEncodingDecision {
         value: SatIntegerView,
         encoding: Option<EncodingSelection<PbEncoding>>,
     },
-    /// Define whether every numeric operand has a different value.
+    /// Define numeric distinctness, with an optional repeated exception value.
     AllDifferent {
         output: Expression,
         inputs: Vec<SatIntegerView>,
