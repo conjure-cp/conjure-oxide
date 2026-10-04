@@ -28,7 +28,7 @@ use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_con
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::SolveTimeBudget;
-use crate::solver::adaptors::rustsat::decisions::compile_decisions;
+use crate::solver::adaptors::rustsat::decisions::{CardinalityCache, compile_decisions_with_cache};
 use crate::solver::{
     self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
     SolverMutCallback, private,
@@ -53,6 +53,7 @@ pub struct Sat {
     solver_inst: CaDiCaL<'static, 'static>,
     decision_refs: Option<Vec<Name>>,
     objective: Option<super::objective::CompiledObjective>,
+    counters: CardinalityCache,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
 }
@@ -70,6 +71,7 @@ impl Default for Sat {
             model_inst: None,
             decision_refs: None,
             objective: None,
+            counters: CardinalityCache::default(),
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -299,6 +301,7 @@ impl Sat {
         solution: &HashMap<Name, Literal>,
         var_map: &mut HashMap<Name, Lit>,
         next_free: &mut u32,
+        counters: &mut CardinalityCache,
     ) -> Result<(), SolverError> {
         let Some(dominance_expression) = dominance_expression else {
             return Ok(());
@@ -342,12 +345,13 @@ impl Sat {
         instance
             .var_manager_mut()
             .increase_next_free(satVar::new(*next_free));
-        compile_decisions(rewritten.sat_decisions(), &mut instance, var_map)?;
+        compile_decisions_with_cache(rewritten.sat_decisions(), &mut instance, var_map, counters)?;
         for constraint in rewritten.constraints() {
-            compile_decisions(
+            compile_decisions_with_cache(
                 &[crate::ast::SatEncodingDecision::Assert(constraint.clone())],
                 &mut instance,
                 var_map,
+                counters,
             )?;
         }
         let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
@@ -557,6 +561,7 @@ impl SolverAdaptor for Sat {
                     &dominance_solution,
                     &mut var_map,
                     &mut next_free,
+                    &mut self.counters,
                 )?;
 
                 let blocking_cl = blocking_clause_for_solution(&solution, &var_map)?;
@@ -584,6 +589,7 @@ impl SolverAdaptor for Sat {
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
         self.objective = None;
+        self.counters = CardinalityCache::default();
         self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
             Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
             _ => expr.clone(),
@@ -733,7 +739,7 @@ impl SolverAdaptor for Sat {
         for name in finds {
             var_map.insert(name, inst.new_lit());
         }
-        compile_decisions(decisions, &mut inst, &mut var_map)?;
+        compile_decisions_with_cache(decisions, &mut inst, &mut var_map, &mut self.counters)?;
         let objectives: Vec<_> = decisions
             .iter()
             .filter(|decision| {

@@ -32,9 +32,25 @@ pub fn compile_decisions(
     instance: &mut SatInstance,
     variables: &mut HashMap<Name, Lit>,
 ) -> Result<(), SolverError> {
+    compile_decisions_with_cache(
+        decisions,
+        instance,
+        variables,
+        &mut CardinalityCache::default(),
+    )
+}
+
+/// Compile another decision batch against counters already emitted into the same solver.
+pub(super) fn compile_decisions_with_cache(
+    decisions: &[SatEncodingDecision],
+    instance: &mut SatInstance,
+    variables: &mut HashMap<Name, Lit>,
+    cache: &mut CardinalityCache,
+) -> Result<(), SolverError> {
     let mut compiler = Compiler {
         instance,
         variables,
+        counters: Some(cache),
     };
     // Direct assertions determine whether a relation needs an assertion or equivalence.
     // Keep their units in the model so output literals remain correctly constrained.
@@ -290,6 +306,7 @@ pub(super) fn compile_objective_terms(
     let mut compiler = Compiler {
         instance,
         variables,
+        counters: None,
     };
     let terms = value
         .terms
@@ -323,9 +340,18 @@ pub(super) fn compile_objective_terms(
     Ok((constant, positive))
 }
 
+/// Native counters and one-shot threshold predicates belonging to one loaded solver.
+#[derive(Default)]
+pub(super) struct CardinalityCache {
+    totalizers: HashMap<Vec<Lit>, rustsat::encodings::card::Totalizer>,
+    thresholds: HashMap<(Vec<Lit>, i64), Lit>,
+    occurrences: HashMap<Vec<Lit>, Vec<Lit>>,
+}
+
 struct Compiler<'a> {
     instance: &'a mut SatInstance,
     variables: &'a mut HashMap<Name, Lit>,
+    counters: Option<&'a mut CardinalityCache>,
 }
 impl Compiler<'_> {
     fn asserted_amo(
@@ -1577,6 +1603,141 @@ impl Compiler<'_> {
         expression += BoolLinExp::from_terms(&free);
         (expression, bound as i64)
     }
+    fn cached_cardinality(
+        &mut self,
+        algorithm: crate::ast::sat_decision::CardinalityEncoding,
+        relation: crate::ast::sat_decision::CardinalityRelation,
+        bound: i64,
+        mut literals: Vec<Lit>,
+        guard: Option<Lit>,
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::{CardinalityEncoding, CardinalityRelation};
+        use rustsat::encodings::card::{
+            BoundLower, BoundLowerIncremental, BoundUpper, BoundUpperIncremental,
+        };
+        // Input order has no semantic meaning, but multiplicity and polarity do.
+        literals.sort_unstable();
+        let cache = self.counters.as_deref_mut().unwrap();
+        tracing::debug!(
+            ?algorithm,
+            ?relation,
+            bound,
+            inputs = literals.len(),
+            reused = cache.occurrences.contains_key(&literals),
+            "compiling shared cardinality bound"
+        );
+        let inputs = if let Some(inputs) = cache.occurrences.get(&literals) {
+            inputs.clone()
+        } else {
+            let mut seen = std::collections::HashSet::new();
+            let inputs: Vec<_> = literals
+                .iter()
+                .copied()
+                .map(|literal| {
+                    if seen.insert(literal.var()) {
+                        literal
+                    } else {
+                        let alias = self.instance.new_lit();
+                        self.instance
+                            .add_clause(atomics::lit_impl_lit(alias, literal));
+                        self.instance
+                            .add_clause(atomics::lit_impl_lit(literal, alias));
+                        alias
+                    }
+                })
+                .collect();
+            cache.occurrences.insert(literals.clone(), inputs.clone());
+            inputs
+        };
+        if algorithm == CardinalityEncoding::RustsatTotalizer {
+            let encoder = cache
+                .totalizers
+                .entry(literals)
+                .or_insert_with(|| inputs.into_iter().collect());
+            let mut cnf = Cnf::new();
+            let mut enforcement = Vec::new();
+            let bound = bound as usize;
+            if relation != CardinalityRelation::AtLeast {
+                encoder
+                    .encode_ub_change(bound..=bound, &mut cnf, self.instance.var_manager_mut())
+                    .map_err(|e| {
+                        SolverError::Runtime(format!(
+                            "Incremental cardinality encoding failed: {e}"
+                        ))
+                    })?;
+                enforcement.extend(encoder.enforce_ub(bound).map_err(|e| {
+                    SolverError::Runtime(format!("Cardinality upper bound failed: {e}"))
+                })?);
+            }
+            if relation != CardinalityRelation::AtMost {
+                encoder
+                    .encode_lb_change(bound..=bound, &mut cnf, self.instance.var_manager_mut())
+                    .map_err(|e| {
+                        SolverError::Runtime(format!(
+                            "Incremental cardinality encoding failed: {e}"
+                        ))
+                    })?;
+                enforcement.extend(encoder.enforce_lb(bound).map_err(|e| {
+                    SolverError::Runtime(format!("Cardinality lower bound failed: {e}"))
+                })?);
+            }
+            // Counter structure is unconditional; only enforcement belongs to the guard.
+            for clause in cnf {
+                self.instance.add_clause(clause);
+            }
+            for literal in enforcement {
+                self.assert_guarded(Term::Literal(literal), guard);
+            }
+            return Ok(());
+        }
+        // Pindakaas exposes one-shot networks. Retain a fully equivalent threshold,
+        // so another guard or bound direction can reuse its existing network safely.
+        let bounds: Vec<_> = match relation {
+            CardinalityRelation::AtMost => vec![(bound, true)],
+            CardinalityRelation::AtLeast => vec![(bound - 1, false)],
+            CardinalityRelation::Exactly => vec![(bound, true), (bound - 1, false)],
+        };
+        for (upper, positive) in bounds {
+            let key = (literals.clone(), upper);
+            let threshold =
+                if let Some(&literal) = self.counters.as_ref().unwrap().thresholds.get(&key) {
+                    literal
+                } else {
+                    let output = self.instance.new_lit();
+                    let mut one_shot = Compiler {
+                        instance: self.instance,
+                        variables: self.variables,
+                        counters: None,
+                    };
+                    one_shot.cardinality_guarded(
+                        algorithm,
+                        CardinalityRelation::AtMost,
+                        upper,
+                        inputs.iter().copied().map(Term::Literal).collect(),
+                        Some(output),
+                    )?;
+                    one_shot.cardinality_guarded(
+                        algorithm,
+                        CardinalityRelation::AtLeast,
+                        upper + 1,
+                        inputs.iter().copied().map(Term::Literal).collect(),
+                        Some(!output),
+                    )?;
+                    self.counters
+                        .as_deref_mut()
+                        .unwrap()
+                        .thresholds
+                        .insert(key, output);
+                    output
+                };
+            self.assert_guarded(
+                Term::Literal(if positive { threshold } else { !threshold }),
+                guard,
+            );
+        }
+        Ok(())
+    }
+
     fn count_relation(
         &mut self,
         algorithm: crate::ast::sat_decision::CardinalityEncoding,
@@ -1592,18 +1753,10 @@ impl Compiler<'_> {
                 .iter()
                 .filter(|term| matches!(term, Term::Constant(true)))
                 .count() as i128;
-        let mut seen = std::collections::HashSet::new();
-        // Retain unit coefficients and multiplicities, including opposite polarities.
         let literals: Vec<_> = terms
             .into_iter()
             .filter_map(|term| match term {
-                Term::Literal(literal) => Some(if seen.insert(literal.var()) {
-                    literal
-                } else {
-                    let alias = self.instance.new_lit();
-                    self.equate(Term::Literal(alias), Term::Literal(literal));
-                    alias
-                }),
+                Term::Literal(literal) => Some(literal),
                 _ => None,
             })
             .collect();
@@ -1743,6 +1896,9 @@ impl Compiler<'_> {
                 );
             }
             return Ok(());
+        }
+        if self.counters.is_some() {
+            return self.cached_cardinality(algorithm, relation, bound, literals, guard);
         }
         match algorithm {
             CardinalityEncoding::RustsatTotalizer => {
@@ -2222,6 +2378,116 @@ mod cardinality_tests {
         solvers::{Solve, SolveIncremental, SolverResult},
     };
     use rustsat_cadical::CaDiCaL;
+    #[test]
+    fn reusable_cardinality_batches_preserve_guards_and_occurrence_counts() {
+        for algorithm in CardinalityEncoding::ALL {
+            let mut cache = CardinalityCache::default();
+            let mut variables = HashMap::new();
+            let mut solver = CaDiCaL::default();
+            let mut initial: SatInstance = SatInstance::new();
+            let inputs: Vec<_> = (0..3).map(|_| initial.new_lit()).collect();
+            let (_, mut manager): (Cnf, BasicVarManager) = initial.into_cnf();
+            let mut guards = Vec::new();
+            // Opposite/repeated occurrences remain unit-weight count inputs.
+            let occurrences = vec![inputs[0], !inputs[1], inputs[0], inputs[2], inputs[1]];
+            for (batch, bound) in [2, 4, 1, 3, 2, 0, 5].into_iter().enumerate() {
+                for relation in [
+                    CardinalityRelation::AtMost,
+                    CardinalityRelation::AtLeast,
+                    CardinalityRelation::Exactly,
+                ] {
+                    let mut delta: SatInstance = SatInstance::new();
+                    delta
+                        .var_manager_mut()
+                        .increase_next_free(rustsat::types::Var::new(manager.n_used()));
+                    let guard = delta.new_lit();
+                    guards.push(guard);
+                    let mut terms = occurrences.clone();
+                    if batch % 2 == 0 {
+                        terms.reverse();
+                    }
+                    let mut compiler = Compiler {
+                        instance: &mut delta,
+                        variables: &mut variables,
+                        counters: Some(&mut cache),
+                    };
+                    compiler
+                        .cardinality_guarded(
+                            algorithm,
+                            relation,
+                            bound,
+                            terms.iter().copied().map(Term::Literal).collect(),
+                            Some(guard),
+                        )
+                        .unwrap();
+                    let allocated = compiler.instance.var_manager_mut().n_used();
+                    let clauses = compiler.instance.cnf().len();
+                    compiler
+                        .cardinality_guarded(
+                            algorithm,
+                            relation,
+                            bound,
+                            terms.iter().copied().map(Term::Literal).collect(),
+                            Some(guard),
+                        )
+                        .unwrap();
+                    assert_eq!(
+                        compiler.instance.var_manager_mut().n_used(),
+                        allocated,
+                        "repeated threshold must reuse auxiliaries: {algorithm:?}"
+                    );
+                    if bound > 0 && bound < occurrences.len() as i64 {
+                        assert!(
+                            compiler.instance.cnf().len() - clauses <= 2,
+                            "repeated threshold must only add guard enforcement"
+                        );
+                    }
+                    let (cnf, next): (Cnf, BasicVarManager) = delta.into_cnf();
+                    manager = next;
+                    solver.add_cnf(cnf).unwrap();
+                    for assignment in 0..8 {
+                        let count = 2 * usize::from(assignment & 1 != 0)
+                            + 1
+                            + usize::from(assignment & 4 != 0);
+                        let expected = match relation {
+                            CardinalityRelation::AtMost => count <= bound as usize,
+                            CardinalityRelation::AtLeast => count >= bound as usize,
+                            CardinalityRelation::Exactly => count == bound as usize,
+                        };
+                        let fixed: Vec<_> = inputs
+                            .iter()
+                            .enumerate()
+                            .map(|(bit, &lit)| {
+                                if assignment & (1 << bit) != 0 {
+                                    lit
+                                } else {
+                                    !lit
+                                }
+                            })
+                            .collect();
+                        for active in [false, true] {
+                            let mut assumptions = fixed.clone();
+                            assumptions.extend(
+                                guards
+                                    .iter()
+                                    .map(|&lit| if lit == guard && active { lit } else { !lit }),
+                            );
+                            assert_eq!(
+                                solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
+                                !active || expected,
+                                "{algorithm:?} {relation:?} bound={bound} assignment={assignment} active={active}"
+                            );
+                        }
+                    }
+                }
+            }
+            if algorithm == CardinalityEncoding::RustsatTotalizer {
+                assert_eq!(cache.totalizers.len(), 1);
+            }
+            assert_eq!(cache.occurrences.len(), 1);
+        }
+    }
+
     #[test]
     fn count_relations_preserve_both_truth_values_for_every_native_provider() {
         use crate::ast::sat_decision::{AmoEncoding, IntegerRelation};
@@ -3509,6 +3775,7 @@ mod pseudo_boolean_tests {
                 Compiler {
                     instance: &mut instance,
                     variables: &mut variables,
+                    counters: None,
                 }
                 .integer_relation(
                     algorithm,
@@ -3558,6 +3825,7 @@ mod pseudo_boolean_tests {
         let mut compiler = Compiler {
             instance: &mut instance,
             variables: &mut variables,
+            counters: None,
         };
         compiler
             .pseudo_boolean(
