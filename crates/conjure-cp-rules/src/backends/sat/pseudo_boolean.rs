@@ -1,4 +1,4 @@
-//! Preserve asserted linear constraints as semantic weighted Boolean decisions.
+//! Preserve linear constraints and numeric relations as semantic library decisions.
 use conjure_cp::ast::sat_decision::{CardinalityRelation, PbTermGroup, PbTermStructure};
 use conjure_cp::ast::{
     AbstractLiteral::Matrix, Atom, Expression as Expr, Literal, Metadata, SATIntEncoding,
@@ -297,9 +297,101 @@ fn select_pseudo_boolean(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         })
     })
 }
+fn ready_count_comparison(expr: &Expr) -> bool {
+    let (left, right) = match expr {
+        Expr::Eq(_, left, right)
+        | Expr::Neq(_, left, right)
+        | Expr::Lt(_, left, right)
+        | Expr::Leq(_, left, right)
+        | Expr::Gt(_, left, right)
+        | Expr::Geq(_, left, right) => (left, right),
+        _ => return false,
+    };
+    let count = |expression: &Expr| {
+        matches!(expression, Expr::Sum(_, inputs)
+        if super::boolean::count_inputs(inputs).is_some())
+    };
+    (count(left) && constant_int(right).is_some()) || (count(right) && constant_int(left).is_some())
+}
+
+/// Reify Boolean counts within ready Boolean contexts using the existing PB providers.
+#[register_rule("SAT", 18600, [Root])]
+fn select_guarded_count(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    if !matches!(expr, Expr::Root(..)) {
+        return Err(RuleNotApplicable);
+    }
+    guarded_count(expr, true, symbols).ok_or(RuleNotApplicable)
+}
+
+fn guarded_count(expr: &Expr, asserted: bool, symbols: &SymbolTable) -> Option<RuleEffect> {
+    if !asserted && ready_count_comparison(expr) {
+        return integer_relation(expr, symbols).ok();
+    }
+    // Only traverse Boolean contexts and literal matrices, never a binder or undefined value.
+    match expr {
+        Expr::Root(_, entries) => guarded_children(expr, entries.iter(), true, symbols),
+        Expr::AbstractLiteral(_, Matrix(entries, _)) => {
+            guarded_children(expr, entries.iter(), asserted, symbols)
+        }
+        Expr::And(_, entries)
+            if matches!(entries.as_ref(), Expr::AbstractLiteral(_, Matrix(..))) =>
+        {
+            guarded_children(expr, std::iter::once(entries.as_ref()), asserted, symbols)
+        }
+        Expr::Or(_, entries)
+            if matches!(entries.as_ref(), Expr::AbstractLiteral(_, Matrix(..))) =>
+        {
+            guarded_children(expr, std::iter::once(entries.as_ref()), false, symbols)
+        }
+        Expr::Not(_, child) | Expr::ToInt(_, child) => {
+            guarded_children(expr, std::iter::once(child.as_ref()), false, symbols)
+        }
+        Expr::Imply(_, left, right)
+        | Expr::Iff(_, left, right)
+        | Expr::Eq(_, left, right)
+        | Expr::Neq(_, left, right)
+        | Expr::Lt(_, left, right)
+        | Expr::Leq(_, left, right)
+        | Expr::Gt(_, left, right)
+        | Expr::Geq(_, left, right) => guarded_children(
+            expr,
+            [left.as_ref(), right.as_ref()].into_iter(),
+            false,
+            symbols,
+        ),
+        _ => None,
+    }
+}
+
+fn guarded_children<'a>(
+    expr: &Expr,
+    children: impl Iterator<Item = &'a Expr>,
+    asserted: bool,
+    symbols: &SymbolTable,
+) -> Option<RuleEffect> {
+    use uniplate::Uniplate;
+    for (index, child) in children.enumerate() {
+        if let Some(mut effect) = guarded_count(child, asserted, symbols) {
+            let mut replacements = expr.children();
+            replacements[index] = effect.new_expression;
+            effect.new_expression = expr.with_children(replacements);
+            return Some(effect);
+        }
+    }
+    None
+}
+
 /// Preserve numeric equality and comparison, including nested Boolean uses, for library encoding.
 #[register_rule("SAT", 18500, [Eq, Neq, Lt, Leq, Gt, Geq])]
 fn select_integer_relation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // Root chooses asserted bounds; disequality and guarded counts require equivalence decisions.
+    if ready_count_comparison(expr) && !matches!(expr, Expr::Neq(..)) {
+        return Err(RuleNotApplicable);
+    }
+    integer_relation(expr, symbols)
+}
+
+fn integer_relation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     use conjure_cp::ast::sat_decision::IntegerRelation;
     let (left, right, relation) = match expr {
         Expr::Eq(_, left, right) => (left, right, IntegerRelation::Equal),
@@ -310,16 +402,6 @@ fn select_integer_relation(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         Expr::Geq(_, left, right) => (left, right, IntegerRelation::GreaterEqual),
         _ => return Err(RuleNotApplicable),
     };
-    // Do not consume ready Boolean counts before Root can select AMO/cardinality.
-    let count = |expression: &Expr| {
-        matches!(expression, Expr::Sum(_, inputs)
-        if super::boolean::count_inputs(inputs).is_some())
-    };
-    if (count(left) && constant_int(right).is_some())
-        || (count(right) && constant_int(left).is_some())
-    {
-        return Err(RuleNotApplicable);
-    }
     // Boolean equality stays in the Boolean family. Ready SATInt views are already numeric.
     if !matches!(left.as_ref(), Expr::SATInt(..))
         && !left.domain_of().is_some_and(|domain| domain.is_int())
@@ -360,6 +442,78 @@ mod tests {
     use super::*;
     use conjure_cp::ast::{DeclarationPtr, Domain, Moo, Name, Reference};
     use conjure_cp::into_matrix_expr;
+    #[test]
+    fn guarded_counts_define_truth_without_asserting_the_bound() {
+        let boolean = |name: &str| {
+            Expr::from(Reference::new(DeclarationPtr::new_find(
+                Name::user(name),
+                Domain::bool(),
+            )))
+        };
+        let a = boolean("a");
+        let p = boolean("p");
+        let count = Expr::Sum(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(vec![
+                Expr::ToInt(Metadata::new(), Moo::new(a.clone())),
+                Expr::ToInt(Metadata::new(), Moo::new(a)),
+                Expr::from(1),
+            ])),
+        );
+        let bound = Expr::Leq(Metadata::new(), Moo::new(count), Moo::new(2.into()));
+        let symbols = SymbolTable::new();
+        let asserted = Expr::Root(
+            Metadata::new(),
+            vec![Expr::And(
+                Metadata::new(),
+                Moo::new(into_matrix_expr!(vec![bound.clone()])),
+            )],
+        );
+        assert!(select_guarded_count(&asserted, &symbols).is_err());
+        for context in [
+            Expr::Not(Metadata::new(), Moo::new(bound.clone())),
+            Expr::Imply(
+                Metadata::new(),
+                Moo::new(p.clone()),
+                Moo::new(bound.clone()),
+            ),
+            Expr::Iff(
+                Metadata::new(),
+                Moo::new(bound.clone()),
+                Moo::new(p.clone()),
+            ),
+            Expr::Or(
+                Metadata::new(),
+                Moo::new(into_matrix_expr!(vec![bound.clone(), p])),
+            ),
+            Expr::Eq(
+                Metadata::new(),
+                Moo::new(0.into()),
+                Moo::new(Expr::ToInt(Metadata::new(), Moo::new(bound.clone()))),
+            ),
+        ] {
+            let root = Expr::Root(Metadata::new(), vec![context]);
+            let effect = select_guarded_count(&root, &symbols).unwrap();
+            assert!(effect.new_top.is_empty());
+            let [
+                SatEncodingDecision::IntegerRelation {
+                    output,
+                    terms,
+                    bound: 1,
+                    relation: conjure_cp::ast::sat_decision::IntegerRelation::LessEqual,
+                    encoding: None,
+                    ..
+                },
+            ] = effect.new_sat_decisions.as_slice()
+            else {
+                panic!("expected an equivalence decision, without a bound assertion");
+            };
+            assert_eq!(terms.iter().map(|(weight, _)| *weight).sum::<i64>(), 2);
+            use uniplate::Uniplate;
+            assert!(effect.new_expression.universe().contains(output));
+        }
+    }
+
     #[test]
     fn relations_use_numeric_views_and_leave_boolean_equality_alone() {
         use conjure_cp::ast::sat_decision::IntegerRelation;
