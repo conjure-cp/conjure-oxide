@@ -1,0 +1,77 @@
+Model before rewriting:
+
+find a1: bool
+find a2: bool
+find a3: bool
+find b1: bool
+find b2: bool
+find b3: bool
+find small_a: bool
+
+such that
+
+sum([sum([toInt(a1),toInt(a2),toInt(a3);int(1..3)]),sum([toInt(b1),toInt(b2),toInt(b3);int(1..3)]);int(1..)]) >= 3,
+(small_a) <-> (sum([toInt(a1),toInt(a2),toInt(a3);int(1..3)]) <= 1)
+
+--
+
+sum([sum([toInt(a1),toInt(a2),toInt(a3);int(1..3)]),sum([toInt(b1),toInt(b2),toInt(b3);int(1..3)]);int(1..)]) >= 3,
+(small_a) <-> (sum([toInt(a1),toInt(a2),toInt(a3);int(1..3)]) <= 1)
+   ~~> select_pseudo_boolean ([("SAT", 19000)])
+(small_a) <-> (sum([toInt(a1),toInt(a2),toInt(a3);int(1..3)]) <= 1)
+new SAT encoding decisions:
+  weighted(1*a1, 1*a2, 1*a3, 1*b1, 1*b2, 1*b3) AtLeast 3 using None
+
+--
+
+(small_a) <-> (sum([toInt(a1),toInt(a2),toInt(a3);int(1..3)]) <= 1)
+   ~~> select_guarded_count ([("SAT", 18600)])
+(small_a) <-> (__0)
+new variables:
+  findAux __0: bool
+new SAT encoding decisions:
+  define(__0 <-> count(a1, a2, a3) LessEqual 1) using None, AMO None
+
+--
+
+(small_a) <-> (__0)
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__1
+new variables:
+  findAux __1: bool
+new SAT encoding decisions:
+  define(__1 <-> (small_a) <-> (__0)) using tseitin
+
+--
+
+__1
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new SAT encoding decisions:
+  assert(__1) using tseitin
+
+--
+
+Final model:
+
+find a1: bool
+find a2: bool
+find a3: bool
+find b1: bool
+find b2: bool
+find b3: bool
+find small_a: bool
+findAux __0: bool
+findAux __1: bool
+
+such that
+
+true
+
+sat encoding decisions:
+
+weighted(1*a1, 1*a2, 1*a3, 1*b1, 1*b2, 1*b3) AtLeast 3 using Some(EncodingSelection { algorithm: RustsatDynamicPolyWatchdog, provenance: Heuristic }),
+define(__0 <-> count(a1, a2, a3) LessEqual 1) using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }), AMO Some(EncodingSelection { algorithm: Commander, provenance: Heuristic }),
+define(__1 <-> (small_a) <-> (__0)) using tseitin,
+assert(__1) using tseitin
+
