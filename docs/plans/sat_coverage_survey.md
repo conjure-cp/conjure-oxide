@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-04
 
-SAT is enabled in **385 of 633 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **21,435 SAT solution portfolios**; **21,298** use uniform channelling across **297 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
+SAT is enabled in **388 of 635 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **21,613 SAT solution portfolios**; **21,476** use uniform channelling across **300 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -10,8 +10,8 @@ The current filtered failure list and targeted rechecks are recorded in [SAT kno
 
 | Final outcome | Fixtures |
 | --- | ---: |
-| Currently SAT-enabled | 241 |
-| Initial CLI error | 185 |
+| Currently SAT-enabled | 242 |
+| Initial CLI error | 184 |
 | Initial CLI timeout | 37 |
 | Full portfolio failed to lower | 22 |
 | Full portfolio timed out | 3 |
@@ -112,3 +112,12 @@ Reified Boolean counts now retain an output-bearing `CountRelation` decision and
 Three hundred explicit integer/AMO/cardinality/PB portfolios match the same nine reference assignments. The new Boolean-only `sat-ir/reified-cardinality` fixture adds twelve uniform portfolios, each matching 64 Conjure and independently enumerated assignments. Coverage is now 385/633 runnable fixtures and 21,435 SAT portfolios; 21,298 are uniform across 297 fixtures. The historical survey still has 248 disabled fixtures; no new upstream library bug was confirmed.
 
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,569 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed. All five normal golden checks passed: both count regressions and three restored capped-search samples. Timing cleanup preserved baselines in 635 files; existing budgets stay unchanged and the new fixture has a deliberate five-second budget. Reusable incremental bounds, objective tightening and cost-aware selection remain follow-ups; mixed representations/channelling remain deferred.
+
+
+## Ordinary objectives and reusable PB bounds
+
+SAT now retains an actual-value objective decision and tightens it until UNSAT proves optimality. RustSAT GTE, binary adder and DPW reuse native encoding state and replace bound assumptions between solves; Pindakaas BDD/SWC retain one-shot structured numeric relations. Both directions work across all five integer representations and five PB providers. The new signed sparse objective fixtures each check 50 SAT portfolios against Minion and Conjure. `savilerow/problem51` is enabled with 50 portfolios and independently checked optimum 11; intermediate-optimisation portfolios expand from 22 to 50.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,573 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed. One hundred explicit CLI checks cover both directions and intermediate-result settings. Objective costs were independently checked in 200 generated portfolios. All eight normal golden checks passed, including three restored capped-search samples and `savilerow/tomsProblem`. Timing cleanup preserves prior fields in 634 files; expanded knapsack and both new objective fixtures have deliberate five-second budgets. Other existing budgets remain unchanged.
+
+Current coverage is 388/635 runnable fixtures, with 21,613 SAT portfolios; 21,476 are uniform across 300 fixtures. General cardinality-bound reuse, repeated dominance-counter sharing and cost-aware selection remain follow-ups. Mixed representations/channelling remain deferred. The separate Oxide Z3 adaptor still ignores ordinary objectives and is excluded from the two new objective fixtures. No new upstream library bug was confirmed.

@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after dedicated AMO/cardinality reification was connected.
+Inventory date: 2026-10-04, branch `sat-ir` after ordinary objective tightening was connected.
 
-385 of 633 runnable integration fixtures have SAT enabled, exercising 21,435 SAT portfolios. Full acceptance for the native count-reification stage passed all 1,569 workspace tests (14 skipped), including workspace doctests. The earlier integer relation migration also passed full normal golden verification. The remaining 248 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+388 of 635 runnable integration fixtures have SAT enabled, exercising 21,613 SAT portfolios. Full acceptance for the objective-tightening stage passed all 1,573 workspace tests (14 skipped), including workspace doctests. The earlier integer relation migration also passed full normal golden verification. The remaining 247 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -53,16 +53,16 @@ Fresh full uniform trials also enable `basic/toInt/{01,02-flatten}` and `basic/a
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 178 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 177 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 22 | Historical full uniform lowering failures; fresh passing and resource-limited trials are separated below. |
 | Panics | 2 | Both reconfirmed with compact and first; the historical nested-absolute case now passes a full uniform portfolio. |
 | Model-loading errors | 5 | All five reconfirmed in the earlier targeted recheck. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
 | External termination | 1 | Fresh sparse-partial trial received SIGKILL after about 472 seconds; cause unconfirmed. |
-| Total SAT-disabled runnable fixtures | 248 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 247 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 200 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 199 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -123,7 +123,7 @@ Last tested with a 120-second per-fixture bound.
 - [hakank-eprime/xkcd](../../test-suite/tests/integration/hakank-eprime/xkcd/xkcd.essence)
 - [savilerow/absBug](../../test-suite/tests/integration/savilerow/absBug/input.essence)
 
-## Initial-screen residual constraints (178)
+## Initial-screen residual constraints (177)
 
 Last recorded in the compact/first screen, before the weighted PB changes. Each fixture below remains SAT-disabled; a fresh screen may move cases out of this list.
 
@@ -261,7 +261,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [savilerow/peaceableArmyOfQueens2-failing](../../test-suite/tests/integration/savilerow/peaceableArmyOfQueens2-failing/input.essence)
 - [savilerow/peacefulArmyQueens3](../../test-suite/tests/integration/savilerow/peacefulArmyQueens3/input.essence)
 - [savilerow/problem110](../../test-suite/tests/integration/savilerow/problem110/input.essence)
-- [savilerow/problem51](../../test-suite/tests/integration/savilerow/problem51/input.essence)
 - [savilerow/quantification_over_matrix_doms_4](../../test-suite/tests/integration/savilerow/quantification_over_matrix_doms_4/input.essence)
 - [savilerow/quasiGroup5NonIdempotent](../../test-suite/tests/integration/savilerow/quasiGroup5NonIdempotent/input.essence)
 - [savilerow/sendMoreMoney](../../test-suite/tests/integration/savilerow/sendMoreMoney/input.essence)
@@ -357,7 +356,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Connect reusable incremental bounds and objective tightening where the native library APIs support them; dedicated AMO/cardinality-provider reification is connected.
+1. Connect general reusable cardinality bounds and repeated dominance-counter sharing; PB objective tightening and dedicated AMO/cardinality-provider reification are connected.
 2. Tune cost-aware representation/encoding selection and further isolate the original sparse-partial termination; bounded probes already show packed Direct growth.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
@@ -367,7 +366,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Passing performance follow-ups
 
-The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. Reusable incremental bounds and objective tightening remain separate library connections.
+The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. PB objective tightening now reuses native RustSAT state. General cardinality-bound reuse and repeated dominance-counter sharing remain separate library connections.
 
 ## Cross-backend masked lookup follow-up
 
@@ -380,3 +379,12 @@ find i : int(-3,-2,0,1,3,4)
 find y : int(-7,10,20)
 such that y = catchUndef(f(i), -7)
 ```
+
+
+## Ordinary optimisation and cross-backend objective handling
+
+The production SAT adaptor previously enumerated feasible assignments while ignoring ordinary objectives. It now records an actual-value objective decision and strictly improves it until UNSAT proves optimality. RustSAT GTE/adder/DPW retain native bound state; Pindakaas BDD/SWC use one-shot structured numeric relations. The native projection tests caught permanent DPW enforcement units conflicting after tightening; replacing per-solve assumptions fixes that adaptor usage error. No new upstream library bug was confirmed.
+
+The separate Z3 adaptor still ignores ordinary objectives. A CLI probe of `sat-ir/objective-min` returns `x=-3,y=0,g=false` (cost -2), although `x=-3,y=2,g=true` has the optimum cost -6. The new objective regressions therefore use SAT, Minion and Conjure references. Existing intermediate-optimisation fixtures keep their Conjure exemption because Conjure exposes the final result rather than the intermediate sequence.
+
+General reusable cardinality bounds and repeated dominance-counter sharing remain deferred; this stage connects PB objective tightening. Mixed representations/channelling, cost-aware selection and the original sparse-partial packed-Direct growth remain separate work items.
