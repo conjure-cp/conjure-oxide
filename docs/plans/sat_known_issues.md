@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after Boolean-indicator products were connected.
+Inventory date: 2026-10-04, branch `sat-ir` after mixed Boolean-indicator arithmetic was connected.
 
-399 of 640 runnable integration fixtures have SAT enabled, exercising 22,284 SAT portfolios. Full acceptance for the Boolean-product stage passed all 1,587 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 241 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+402 of 641 runnable integration fixtures have SAT enabled, exercising 22,484 SAT portfolios. Full acceptance for the mixed-indicator stage passed all 1,590 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 239 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -53,16 +53,16 @@ Fresh full uniform trials also enable `basic/toInt/{01,02-flatten}` and `basic/a
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 171 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 169 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 22 | Historical full uniform lowering failures; fresh passing and resource-limited trials are separated below. |
 | Panics | 2 | Both reconfirmed with compact and first; the historical nested-absolute case now passes a full uniform portfolio. |
 | Model-loading errors | 5 | All five reconfirmed in the earlier targeted recheck. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
 | External termination | 1 | Fresh sparse-partial trial received SIGKILL after about 472 seconds; cause unconfirmed. |
-| Total SAT-disabled runnable fixtures | 241 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 239 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 193 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 191 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -137,8 +137,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [basic/finite-givens/set05](../../test-suite/tests/integration/basic/finite-givens/set05/finite-givens-set05.essence)
 - [basic/matrix/02-2d-slicing](../../test-suite/tests/integration/basic/matrix/02-2d-slicing/input.essence)
 - [basic/matrix/03-domain-letting](../../test-suite/tests/integration/basic/matrix/03-domain-letting/input.essence)
-- [basic/mod/05](../../test-suite/tests/integration/basic/mod/05/mod-05.essence)
-- [basic/mod/06](../../test-suite/tests/integration/basic/mod/06/mod-06.essence)
 - [basic/pow/01-simple](../../test-suite/tests/integration/basic/pow/01-simple/input.essence)
 - [basic/pow/02-exponent-zero](../../test-suite/tests/integration/basic/pow/02-exponent-zero/input.essence)
 - [basic/pow/03-negative-exponent](../../test-suite/tests/integration/basic/pow/03-negative-exponent/input.essence)
@@ -350,7 +348,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Complete Boolean-indicator arithmetic connections. Products containing only indicators now lower to a conjunction indicator; mixed integer/indicator products still fail. A fresh compact uniform probe `find b : bool; find x : int(-1..1); such that x * toInt(b) = 1` leaves a BinaryValue operand and `toInt(b)` in a residual Product before library encoding.
+1. Connect `allDifferentExcept` to the semantic allDifferent encoding family. A fresh compact uniform probe `find x, y : int(0..2); such that allDifferentExcept([x,y], 0)` leaves the global constraint over ready Offset views unencoded before either library receives it. Mixed integer/Boolean-indicator arithmetic is now connected through temporary actual-value circuit views.
 2. Complete remaining modelling/encoding families and missing library connections, then continue fresh uniform rechecks of the smallest disabled fixtures. Feature completeness takes priority over measurement and heuristic tuning.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
@@ -446,3 +444,14 @@ Fresh full uniform rechecks enable `conjure/set/setOfSet01`, `conjure/set/set01_
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,587 tests (14 skipped), plus workspace doctests. `make check` passed. All 12 targeted normal golden checks passed, covering the five changed/new fixtures, six retained capped-search samples and the affected `problem51` trace. Coverage is 399/640 runnable fixtures and 22,284 SAT portfolios; 22,147 are uniform across 311 fixtures, with 241 fixtures still disabled.
 
 Timing cleanup preserves prior fields in 640 files. The four expanded fixtures deliberately increase their one-second budgets to five seconds, except sets of sets at ten seconds; the new regression has a five-second budget. Twenty-six changed capped-search solution samples were restored, and their normal checks passed. Meaningful rule-attempt/application counts and changed traces are retained. No new upstream library bug was confirmed. Mixed integer/indicator arithmetic is the next confirmed connection gap; performance measurement and heuristic tuning follow feature completeness, with mixed representations/channelling still deferred.
+
+
+## Mixed integer/Boolean-indicator arithmetic
+
+Ready Boolean indicators now expose temporary actual-value binary operands, with an explicit zero sign bit. The fallback waits for pending operands, preserving native cardinality selection. `sat-ir/mixed-indicators` passes 100 uniform portfolios with sixteen independently enumerated assignments, including signed multiplication, floor division/modulo and a compound reified count. Three partial-function regressions retain 800 portfolios each; premature conversion in the first attempt had removed 135 cardinality portfolios despite correct solutions.
+
+Fresh coverage rechecks enable `basic/mod/05` and `basic/mod/06`, with 50 portfolios each and complete sets of 36 and 52 assignments. The latter allows zero divisors under negated equality; the former requires a defined remainder. Minion, Z3 and Conjure validation are retained. Coverage is 402/641 runnable fixtures and 22,484 SAT portfolios; 22,347 use uniform channelling across 314 fixtures, leaving 239 disabled fixtures.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,590 tests (14 skipped), plus workspace doctests. `make check` passed. All 15 targeted normal golden checks passed, covering the new/expanded fixtures, restored cardinality portfolios, affected indicator/count cases, sparse Rank dominance and five retained capped-search samples. Independent audits verify all 200 new SAT portfolios. Timing cleanup preserves prior fields in 643 files; the three new/expanded fixtures have deliberate five-second budgets and other existing budgets remain unchanged. No new upstream library bug was confirmed.
+
+The next confirmed constraint-family gap is `allDifferentExcept([x,y], 0)` over small ready integer views. Performance measurement and heuristic tuning follow feature completeness; mixed representations/channelling remain deferred.
