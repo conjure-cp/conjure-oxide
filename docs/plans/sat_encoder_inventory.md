@@ -130,3 +130,5 @@ The pinned public APIs provide no dedicated element encoder. Oxide exposes `--sa
 Scalar lexicographic comparisons expand sequence order into actual-value equalities/strict comparisons and Boolean gates, reusing the connected numeric relation providers. Neither pinned library advertises a dedicated lexicographic encoder.
 
 Floor modulo now shares Oxide's existing restoring division circuit. The remainder's floor semantics are expressed with the same RustSAT gate decisions; no new clause encoder or selectable library family is introduced. All five integer representations convert through actual-value binary operands, while surrounding numeric relations retain the selected PB provider. Zero-divisor definedness remains in the model's bubble guards.
+
+Asserted AMO/cardinality/PB selectors also consume ready leaves inside literal root conjunctions, without flattening the worklist. These use the same library algorithms and CLI decisions. Boolean comparisons beneath negation, disjunction, implication or reification are not asserted constraints; direct reified counts remain a separate connection to implement.

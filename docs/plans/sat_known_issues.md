@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-03, branch `sat-ir` after constant scalar inverse lookup and Boolean ordering were connected.
+Inventory date: 2026-10-04, branch `sat-ir` after asserted conjunctions were connected to native encodings.
 
-377 of 629 runnable integration fixtures have SAT enabled, exercising 19,073 SAT portfolios. All 377 passed full acceptance in the modulo stage (1,560 workspace tests passed, 14 skipped); workspace doctests also passed. The earlier integer relation migration also passed full normal golden verification. The remaining 252 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+379 of 630 runnable integration fixtures have SAT enabled, exercising 20,173 SAT portfolios. Full acceptance for the asserted-conjunction stage passed all 1,563 workspace tests (14 skipped); workspace doctests passed separately. The earlier integer relation migration also passed full normal golden verification. The remaining 251 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -12,13 +12,13 @@ Constant-row positive/negative tables now pass tuple and MDD portfolios, includi
 
 Scalar element definitions now pass implication/support portfolios across all five integer representations and five PB providers. Internal scalar index-membership guards lower through existing numeric relations, retaining definedness for nested, negated, reified and masked lookups. Twelve existing fixtures are enabled; `sat-ir/element` adds sparse and masked regression coverage. Identity-default ElementId and scalar lexicographic comparisons now pass full uniform portfolios in eight newly enabled existing fixtures. The new non-involutive, sparse and Boolean-conversion fixture checks 100 portfolios against 80 Conjure reference solutions. Constant scalar function-domain IndexOf now reuses element selection. Compound/non-constant inverse lookups and remaining arithmetic strategies are still SAT gaps. Mixed representations and channelling remain deferred.
 
-## Fresh modulo and function portfolio screen
+## Modulo-stage function portfolio screen
 
 `SafeMod` now reuses the restoring division circuit and RustSAT Boolean gate decisions. All five integer representations and five PB providers match Conjure for signed, zero-divisor masking and negated comparisons. Domain inference and constant evaluation now share exact floor arithmetic, including machine-boundary remainders.
 
 Full uniform acceptance enabled `basic/mod/{01,03,04}`, four `basic/function/apply-*` fixtures, and `conjure/function/function_total_{bool_01,bool_02,bool_smoke,int_01}`. The new `sat-ir/modulo` regression includes all 81 signed operand pairs with `catchUndef` and 100 SAT portfolios. Trials used `TEST_CASE_TIMEOUT=120`.
 
-Two function fixtures remain disabled after this fresh screen:
+Two function fixtures remained disabled after that screen; the asserted-conjunction stage below updates their outcomes:
 
 - `basic/function/sparse-partial`: the FunctionAsRelation occurrence representation leaves `sum(toInt(occurrence)) >= 0` and `<= 2` unencoded. The run failed after about 70 seconds; this is an Oxide lowering gap before library encoding.
 - `conjure/function/function_total_int_02`: the full uniform SAT trial exceeded 120 seconds. This establishes a bounded timeout, not a semantic mismatch.
@@ -27,19 +27,30 @@ A separate large sparse-domain probe, `find a : int(-2147483647 - 1, 2147483647)
 
 Explicit function lookup also needs a guard on its original argument domain: an absent argument can equal a valid internal position through inverse identity padding. The guard is retained separately from the inverse lookup and partial-function flags, so `catchUndef` can select its fallback.
 
+## Asserted conjunction connection
+
+Native AMO/cardinality and PB selection now searches literal conjunctions beneath Root while preserving their grouping. Only asserted conjuncts are extracted; negation, disjunction, implication and reification are not asserted contexts. This avoids globally flattening the evaluator worklist. Both cardinality providers and all five PB providers match Conjure across all five integer representations in 50 explicit checks.
+
+The three-element occurrence set (`maxSize 2`, with `1 in s`) now has exactly the three expected solutions through native cardinality decisions. `sat-ir/asserted-conjunctions` adds nested cardinality and weighted bounds plus a reified scalar comparison. Direct reified counts such as `sum(toInt(...)) <= 1 <-> p` remain a separate known gap: integer relation selection deliberately reserves those counts for the root selector, which cannot assert a reified comparison.
+
+`conjure/function/function_total_int_02` passed all 1,000 SAT portfolios with `TEST_CASE_TIMEOUT=600`, taking about 168 seconds in that trial. It is enabled under full uniform selection; the earlier 120-second timeout was a performance observation, not unsupported semantics.
+
+`basic/function/sparse-partial` remains disabled. Its 120-second fresh trial timed out after the cardinality connection. The 600-second retry completed 600 SAT portfolios before receiving SIGKILL after about 472 seconds. No residual-constraint error was observed in that retry. The attempted process sample arrived after the process had exited, so the termination stage and cause are unconfirmed. The failed configuration and generated trial artefacts were restored. Code inspection identifies a possible resource stressor: the packed partial function has radix seven over six positions, yielding 117,649 integer codes. Direct then has 117,649 indicators, and RustSAT pairwise AMO would emit 6,920,584,776 clauses. This is a candidate to isolate, not confirmation that the killed trial reached that combination. No RustSAT/Pindakaas bug was established.
+
 ## Summary of last recorded outcomes
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
 | Residual constraints in initial screen | 180 | Compact/first CLI screen failed to finish lowering. |
-| Residual constraints in full uniform portfolio | 23 | Full uniform lowering failed; includes the fresh sparse-partial function failure. |
+| Residual constraints in full uniform portfolio | 22 | Historical full uniform lowering failures; fresh passing and resource-limited trials are separated below. |
 | Panics | 3 | Two reconfirmed today; one historical full-portfolio failure needs retesting. |
 | Model-loading errors | 5 | All five reconfirmed today. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
-| Full uniform portfolio timeouts | 4 | 120-second per-fixture limit. |
-| Total SAT-disabled runnable fixtures | 252 | Current configurations matched to survey records. |
+| Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
+| External termination | 1 | Fresh sparse-partial trial received SIGKILL after about 472 seconds; cause unconfirmed. |
+| Total SAT-disabled runnable fixtures | 251 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 203 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 202 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -66,11 +77,9 @@ target/release/conjure-oxide solve --solver=sat --channelling=uniform \
   test-suite/tests/integration/smt/matrix/2d-eq/input.essence
 ```
 
-## Residual constraints: full-portfolio failures (23)
+## Residual constraints: full-portfolio failures (22)
 
-These failed a full uniform portfolio; most passed the historical initial screen. The sparse partial function case was freshly rerun after modulo lowering. They include partial/total functions, tuple and record operations, multisets, sequences, sets and matrices containing sets. These are observed fixture families, not a blanket claim that every operation of those types fails.
-
-- [basic/function/sparse-partial](../../test-suite/tests/integration/basic/function/sparse-partial/input.essence): freshly fails on occurrence-cardinality bounds after modulo lowering.
+These failed a historical full uniform portfolio; most passed the initial screen. The fresh sparse-partial resource outcome is recorded above. They include partial/total functions, tuple and record operations, multisets, sequences, sets and matrices containing sets. These are observed fixture families, not a blanket claim that every operation of those types fails.
 
 - [basic/tuples/01-bool-int](../../test-suite/tests/integration/basic/tuples/01-bool-int/input.essence)
 - [basic/tuples/03-equality](../../test-suite/tests/integration/basic/tuples/03-equality/input.essence)
@@ -95,11 +104,9 @@ These failed a full uniform portfolio; most passed the historical initial screen
 - [conjure/tuple/tuple_packed_nested_tuple_smoke](../../test-suite/tests/integration/conjure/tuple/tuple_packed_nested_tuple_smoke/input.essence)
 - [sets/intersect2](../../test-suite/tests/integration/sets/intersect2/input.essence)
 
-## Full uniform portfolio timeouts (4)
+## Full uniform portfolio timeouts (3)
 
 Last tested with a 120-second per-fixture bound.
-
-- [conjure/function/function_total_int_02](../../test-suite/tests/integration/conjure/function/function_total_int_02/input.essence): fresh 120-second limit after modulo connection.
 
 - [basic/comprehension/dependent-domains](../../test-suite/tests/integration/basic/comprehension/dependent-domains/input.essence)
 - [hakank-eprime/xkcd](../../test-suite/tests/integration/hakank-eprime/xkcd/xkcd.essence)
@@ -341,7 +348,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Connect the sparse partial function occurrence-cardinality bounds to existing library decisions.
+1. Reduce and isolate the sparse-partial resource termination; asserted occurrence-cardinality bounds are connected. Connect guarded/reified Boolean counts separately.
 2. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 3. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
 4. Retest `basic/abs/03-nested` across the complete uniform portfolio; compact/first already succeed.
