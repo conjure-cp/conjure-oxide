@@ -378,15 +378,12 @@ pub(super) fn count_inputs(sum: &Expr) -> Option<Vec<Expr>> {
 #[register_rule("SAT", 20000, [Root])]
 fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     use conjure_cp::ast::sat_decision::CardinalityRelation;
-    let Expr::Root(_, children) = expr else {
-        return Err(RuleNotApplicable);
-    };
-    for (index, child) in children.iter().enumerate() {
+    super::asserted::select_asserted(expr, symbols, |child| {
         let (left, right, mut relation) = match child {
             Expr::Leq(_, left, right) => (left, right, CardinalityRelation::AtMost),
             Expr::Geq(_, left, right) => (left, right, CardinalityRelation::AtLeast),
             Expr::Eq(_, left, right) => (left, right, CardinalityRelation::Exactly),
-            _ => continue,
+            _ => return None,
         };
         let (sum, bound) = match (left.as_ref(), right.as_ref()) {
             (
@@ -404,12 +401,10 @@ fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 };
                 (terms, *bound)
             }
-            _ => continue,
+            _ => return None,
         };
-        let Some(inputs) = count_inputs(sum) else {
-            continue;
-        };
-        let decision = if relation == CardinalityRelation::AtMost && bound == 1 {
+        let inputs = count_inputs(sum)?;
+        Some(if relation == CardinalityRelation::AtMost && bound == 1 {
             SatEncodingDecision::AtMostOne {
                 inputs,
                 encoding: None,
@@ -421,16 +416,8 @@ fn select_cardinality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 bound: i64::from(bound),
                 encoding: None,
             }
-        };
-        let mut children = children.clone();
-        children.remove(index);
-        return Ok(RuleEffect::sat(
-            Expr::Root(Metadata::new(), children),
-            vec![decision],
-            symbols.clone(),
-        ));
-    }
-    Err(RuleNotApplicable)
+        })
+    })
 }
 
 #[cfg(test)]

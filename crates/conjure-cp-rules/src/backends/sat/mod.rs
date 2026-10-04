@@ -1,4 +1,5 @@
 mod alldifferent;
+mod asserted;
 mod boolean;
 mod domain;
 mod element;

@@ -258,64 +258,44 @@ fn has_linear_operation(expression: &Expr) -> bool {
 /// Extract ready, asserted linear comparisons before integer circuits consume them.
 #[register_rule("SAT", 19000, [Root])]
 fn select_pseudo_boolean(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Root(_, children) = expr else {
-        return Err(RuleNotApplicable);
-    };
-    for (index, child) in children.iter().enumerate() {
+    super::asserted::select_asserted(expr, symbols, |child| {
         let (left, right, relation, strict) = match child {
             Expr::Leq(_, left, right) => (left, right, CardinalityRelation::AtMost, false),
             Expr::Lt(_, left, right) => (left, right, CardinalityRelation::AtMost, true),
             Expr::Geq(_, left, right) => (left, right, CardinalityRelation::AtLeast, false),
             Expr::Gt(_, left, right) => (left, right, CardinalityRelation::AtLeast, true),
             Expr::Eq(_, left, right) => (left, right, CardinalityRelation::Exactly, false),
-            _ => continue,
+            _ => return None,
         };
         if !has_linear_operation(left) && !has_linear_operation(right) {
-            continue;
+            return None;
         }
         let mut linear = Linear::default();
-        if linear.add(left, 1).is_none() || linear.add(right, -1).is_none() {
-            continue;
-        }
-        let Some(mut bound) = linear.constant.checked_neg() else {
-            continue;
-        };
+        linear.add(left, 1)?;
+        linear.add(right, -1)?;
+        let mut bound = linear.constant.checked_neg()?;
         if strict {
-            let Some(adjusted) = bound.checked_add(if relation == CardinalityRelation::AtMost {
+            bound = bound.checked_add(if relation == CardinalityRelation::AtMost {
                 -1
             } else {
                 1
-            }) else {
-                continue;
-            };
-            bound = adjusted;
+            })?;
         }
-        let Ok(bound) = i64::try_from(bound) else {
-            continue;
-        };
+        let bound = i64::try_from(bound).ok()?;
         let terms = linear
             .terms
             .into_iter()
             .map(|(weight, input)| i64::try_from(weight).map(|weight| (weight, input)))
-            .collect::<Result<Vec<_>, _>>();
-        let Ok(terms) = terms else {
-            continue;
-        };
-        let mut children = children.clone();
-        children.remove(index);
-        return Ok(RuleEffect::sat(
-            Expr::Root(Metadata::new(), children),
-            vec![SatEncodingDecision::PseudoBoolean {
-                terms,
-                groups: linear.groups,
-                relation,
-                bound,
-                encoding: None,
-            }],
-            symbols.clone(),
-        ));
-    }
-    Err(RuleNotApplicable)
+            .collect::<Result<Vec<_>, _>>()
+            .ok()?;
+        Some(SatEncodingDecision::PseudoBoolean {
+            terms,
+            groups: linear.groups,
+            relation,
+            bound,
+            encoding: None,
+        })
+    })
 }
 /// Preserve numeric equality and comparison, including nested Boolean uses, for library encoding.
 #[register_rule("SAT", 18500, [Eq, Neq, Lt, Leq, Gt, Geq])]
