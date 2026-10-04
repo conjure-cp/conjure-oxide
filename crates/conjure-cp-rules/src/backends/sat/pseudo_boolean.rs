@@ -255,6 +255,22 @@ fn has_linear_operation(expression: &Expr) -> bool {
     )
 }
 
+/// Preserve products of Boolean indicators as an indicator of their conjunction.
+#[register_rule("SAT", 18900, [Product])]
+fn product_boolean_indicators(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Product(_, factors) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let inputs = super::boolean::count_inputs(factors).ok_or(RuleNotApplicable)?;
+    Ok(RuleEffect::pure(Expr::ToInt(
+        Metadata::new(),
+        conjure_cp::ast::Moo::new(Expr::And(
+            Metadata::new(),
+            conjure_cp::ast::Moo::new(conjure_cp::into_matrix_expr!(inputs)),
+        )),
+    )))
+}
+
 /// Extract ready, asserted linear comparisons before integer circuits consume them.
 #[register_rule("SAT", 19000, [Root])]
 fn select_pseudo_boolean(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -488,6 +504,19 @@ mod tests {
     use super::*;
     use conjure_cp::ast::{DeclarationPtr, Domain, Moo, Name, Reference};
     use conjure_cp::into_matrix_expr;
+    #[test]
+    fn boolean_product_does_not_consume_general_integer_factors() {
+        let integer = Expr::from(Reference::new(DeclarationPtr::new_find(
+            Name::user("x"),
+            Domain::int(vec![conjure_cp::ast::Range::Bounded(0, 2)]),
+        )));
+        let product = Expr::Product(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(vec![integer, 1.into()])),
+        );
+        assert!(product_boolean_indicators(&product, &SymbolTable::new()).is_err());
+    }
+
     #[test]
     fn guarded_counts_define_truth_without_asserting_the_bound() {
         let boolean = |name: &str| {
