@@ -19,6 +19,26 @@ new constraints:
 
 --
 
+false,
+and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+false,
+and([true,sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2;int(1..)])
+new SAT encoding decisions:
+  count(x#occurrence_1, x#occurrence_2) AtLeast 0 using None
+
+--
+
+false,
+and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+false,
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(x#occurrence_1, x#occurrence_2) AtMost 2 using None
+
+--
+
 Final model:
 
 find x: set (representation occurrence) of int(1..2)
@@ -28,5 +48,10 @@ find x#occurrence_2: bool
 such that
 
 false,
-and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2);int(1..)]) <= 2;int(1..)])
+true
+
+sat encoding decisions:
+
+count(x#occurrence_1, x#occurrence_2) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(x#occurrence_1, x#occurrence_2) AtMost 2 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })
 
