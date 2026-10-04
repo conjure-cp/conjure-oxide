@@ -16,6 +16,8 @@ enum Term {
     Literal(Lit),
 }
 type TableNodeCache = HashMap<(usize, Vec<Vec<i64>>), Term>;
+// Large reified GTE sums retain library implication transformations for propagation.
+const MAX_SHARED_GTE_REIFICATION_INPUTS: usize = 64;
 
 impl Term {
     fn negated(self) -> Self {
@@ -1290,10 +1292,10 @@ impl Compiler<'_> {
             predicate
         } else {
             let predicate = self.instance.new_lit();
-            if matches!(
-                algorithm,
-                PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder
-            ) {
+            if algorithm == PbEncoding::RustsatBinaryAdder
+                || (algorithm == PbEncoding::RustsatGeneralizedTotalizer
+                    && terms.len() <= MAX_SHARED_GTE_REIFICATION_INPUTS)
+            {
                 self.guarded_pseudo_boolean(
                     algorithm,
                     CardinalityRelation::AtMost,
@@ -1311,8 +1313,9 @@ impl Compiler<'_> {
                     Some(!predicate),
                 )?;
             } else {
-                // DPW control literals are bound-specific. Pindakaas exposes one-shot
-                // encoders. Retain their complete equivalence for this threshold only.
+                // DPW controls are bound-specific; Pindakaas is one-shot. Large GTE
+                // predicates retain the previous implication construction for propagation.
+                // Repeated bounds still share the complete equivalence.
                 let mut one_shot = Compiler {
                     instance: self.instance,
                     variables: self.variables,
@@ -3211,6 +3214,70 @@ mod pseudo_boolean_tests {
                     );
                     assumptions[index] = !assumptions[index];
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn large_gte_chain_predicates_preserve_projection_and_threshold_reuse() {
+        use crate::ast::sat_decision::IntegerRelation;
+        let mut instance = SatInstance::new();
+        let mut variables = HashMap::new();
+        let mut cache = EncodingCache::default();
+        let inputs: Vec<_> = (0..96).map(|_| instance.new_lit()).collect();
+        for pair in inputs.windows(2) {
+            instance.add_clause(atomics::lit_impl_lit(pair[1], pair[0]));
+        }
+        let output = instance.new_lit();
+        let terms: Vec<_> = inputs.iter().map(|&lit| (1, Term::Literal(lit))).collect();
+        let groups = vec![PbTermGroup {
+            start: 0,
+            end: inputs.len(),
+            structure: PbTermStructure::Chain,
+        }];
+        let mut compiler = Compiler {
+            instance: &mut instance,
+            variables: &mut variables,
+            counters: Some(&mut cache),
+        };
+        compiler
+            .integer_relation(
+                PbEncoding::RustsatGeneralizedTotalizer,
+                Term::Literal(output),
+                IntegerRelation::LessEqual,
+                48,
+                &terms,
+                &groups,
+            )
+            .unwrap();
+        let allocated = compiler.instance.var_manager_mut().n_used();
+        compiler
+            .integer_relation(
+                PbEncoding::RustsatGeneralizedTotalizer,
+                Term::Literal(output),
+                IntegerRelation::LessEqual,
+                48,
+                &terms,
+                &groups,
+            )
+            .unwrap();
+        assert_eq!(compiler.instance.var_manager_mut().n_used(), allocated);
+        assert!(cache.weighted.is_empty());
+        assert_eq!(cache.weighted_thresholds.len(), 1);
+        let mut solver = CaDiCaL::default();
+        solver.add_cnf(instance.cnf().clone()).unwrap();
+        for count in [0, 47, 48, 49, 96] {
+            for truth in [false, true] {
+                let mut assumptions: Vec<_> = inputs
+                    .iter()
+                    .enumerate()
+                    .map(|(bit, &lit)| if bit < count { lit } else { !lit })
+                    .collect();
+                assumptions.push(if truth { output } else { !output });
+                assert_eq!(
+                    solver.solve_assumps(&assumptions).unwrap() == SolverResult::Sat,
+                    truth == (count <= 48)
+                );
             }
         }
     }
