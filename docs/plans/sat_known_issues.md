@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after shared sparse Rank projections were connected.
+Inventory date: 2026-10-04, branch `sat-ir` after constant-set membership was connected.
 
-391 of 638 runnable integration fixtures have SAT enabled, exercising 21,773 SAT portfolios. Full acceptance for the shared-projection stage passed all 1,583 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 247 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+394 of 639 runnable integration fixtures have SAT enabled, exercising 21,975 SAT portfolios. Full acceptance for the membership stage passed all 1,585 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 245 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -53,16 +53,16 @@ Fresh full uniform trials also enable `basic/toInt/{01,02-flatten}` and `basic/a
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 177 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 175 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 22 | Historical full uniform lowering failures; fresh passing and resource-limited trials are separated below. |
 | Panics | 2 | Both reconfirmed with compact and first; the historical nested-absolute case now passes a full uniform portfolio. |
 | Model-loading errors | 5 | All five reconfirmed in the earlier targeted recheck. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
 | External termination | 1 | Fresh sparse-partial trial received SIGKILL after about 472 seconds; cause unconfirmed. |
-| Total SAT-disabled runnable fixtures | 247 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 245 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 199 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 197 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
@@ -188,7 +188,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [conjure/sequence/sequence_bijective](../../test-suite/tests/integration/conjure/sequence/sequence_bijective/input.essence)
 - [conjure/sequence/sequence_injective_fixed](../../test-suite/tests/integration/conjure/sequence/sequence_injective_fixed/input.essence)
 - [conjure/sequence/sequence_surjective](../../test-suite/tests/integration/conjure/sequence/sequence_surjective/input.essence)
-- [conjure/set/cut_01_off](../../test-suite/tests/integration/conjure/set/cut_01_off/input.essence)
 - [conjure/set/finiteGivens_set03](../../test-suite/tests/integration/conjure/set/finiteGivens_set03/input.essence)
 - [conjure/set/finiteGivens_set05_p1](../../test-suite/tests/integration/conjure/set/finiteGivens_set05_p1/input.essence)
 - [conjure/set/finiteGivens_set05_p2](../../test-suite/tests/integration/conjure/set/finiteGivens_set05_p2/input.essence)
@@ -282,7 +281,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [sets/difference](../../test-suite/tests/integration/sets/difference/input.essence)
 - [sets/equals2](../../test-suite/tests/integration/sets/equals2/input.essence)
 - [sets/explicit-large-inner-domain](../../test-suite/tests/integration/sets/explicit-large-inner-domain/input.essence)
-- [sets/in](../../test-suite/tests/integration/sets/in/input.essence)
 - [sets/neq-marker](../../test-suite/tests/integration/sets/neq-marker/input.essence)
 - [sets/occurrence-large-inner-domain](../../test-suite/tests/integration/sets/occurrence-large-inner-domain/input.essence)
 - [sets/occurrence-set-of-set-membership](../../test-suite/tests/integration/sets/occurrence-set-of-set-membership/input.essence)
@@ -356,7 +354,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Resume the smallest-failing-fixture loop with `sets/in` (41-byte model). A fresh compact uniform SAT check leaves `SATInt(Offset, ...) in {1,2,3}` and fails before library encoding. Sparse BinaryRank projections, weighted/cardinality reuse, PB objective tightening and dedicated AMO/cardinality-provider reification are connected.
+1. Continue with `smt/int/to-int` (52-byte model): a fresh compact uniform check leaves `product([toInt(x),toInt(y)]) = 1` unencoded. `sets/in` now passes all 50 SAT portfolios; the next-smallest historical entry, `conjure/set/cut_01_off`, passes all 102 uniform portfolios.
 2. Tune cost-aware representation/encoding selection and further isolate the original sparse-partial termination; bounded probes already show packed Direct growth.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
@@ -427,3 +425,16 @@ All 25 explicit integer/PB combinations of the existing weighted regression pres
 A fresh check of the smallest disabled model, `sets/in`, confirms a constant-set membership lowering gap: `find a: int(1..5); such that a in {1,2,3}` leaves membership over a ready Offset operand. The residual-model assertion fires before native SAT encoding. This is the next smallest-failing-fixture candidate, not a new upstream library bug.
 
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,583 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed; core/rule libraries have 261/160 unit tests. All 44 SAT unit tests and 50 explicit integer/PB checks pass. Independent audits confirm both sets of 50 recorded weighted portfolios. All 16 final normal golden checks passed, including the wide-domain cases and six restored capped-search samples. Timing cleanup preserves prior fields in 639 files; existing budgets remain unchanged and the new fixture has a deliberate five-second budget. Coverage is 391/638 runnable fixtures and 21,773 SAT portfolios; 21,636 are uniform across 303 fixtures, with 247 fixtures still disabled.
+
+
+## Constant-set membership
+
+SAT now expands membership in literal integer sets through the existing disjunction-of-equalities helper. The Base rule still delegates these sets to Minion's native `w-inset`; the SAT rule fills the missing connection without emitting clauses or adding an encoding algorithm. Existing numeric relation and Boolean decisions handle assertions, negation, reification and compound member expressions across all five integer representations.
+
+`sets/in` is enabled for uniform SAT portfolios while retaining Minion. Its complete expected assignments are `a = 1, 2, 3`. `sat-ir/set-membership` covers negative and zero values, sparse literal sets, negation, reification and a compound member. All 25 explicit integer/PB combinations match four independently enumerated assignments. The regression keeps Conjure validation. Unit checks cover empty/repeated sets and both AST literal forms, and retain Base delegation for Minion.
+
+The compound-member probe also exposes an existing Oxide Minion gap: `x + 1 in {-2,0,3,4}` remains unlowered because native `w-inset` requires an atom. The new regression therefore selects SAT. The parser's set-literal grammar requires at least one element, rejecting source `{}`; empty-set semantics are checked directly through the AST. Both are separate Oxide gaps, with no new upstream library bug confirmed.
+
+A fresh recheck also enables `conjure/set/cut_01_off` with 102 uniform SAT portfolios. Each matches all eight independently enumerated subsets of `{1,2,3}` and Conjure reference solutions. Its compact check already passed before this trial; this is a current-support recheck, not attribution to the membership fix. The next confirmed small failure is `smt/int/to-int`, whose Boolean-to-integer product remains unlowered before library encoding.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,585 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed. All 15 membership-related unit tests and 25 explicit integer/PB checks passed. Independent audits verify all 202 newly recorded SAT portfolios. All 16 final normal golden checks passed, including the changed fixtures and six restored capped-search samples. Timing cleanup preserves prior fields in 640 files; the expanded subset fixture budget rises from one to five seconds, the new regression has a five-second budget, and other existing budgets remain unchanged. Coverage is 394/639 runnable fixtures and 21,975 SAT portfolios; 21,838 are uniform across 306 fixtures, with 245 fixtures still disabled.

@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-04
 
-SAT is enabled in **391 of 638 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **21,773 SAT solution portfolios**; **21,636** use uniform channelling across **303 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
+SAT is enabled in **394 of 639 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **21,975 SAT solution portfolios**; **21,838** use uniform channelling across **306 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -10,8 +10,8 @@ The current filtered failure list and targeted rechecks are recorded in [SAT kno
 
 | Final outcome | Fixtures |
 | --- | ---: |
-| Currently SAT-enabled | 242 |
-| Initial CLI error | 184 |
+| Currently SAT-enabled | 244 |
+| Initial CLI error | 182 |
 | Initial CLI timeout | 37 |
 | Full portfolio failed to lower | 22 |
 | Full portfolio timed out | 3 |
@@ -150,3 +150,16 @@ All 25 explicit integer/PB combinations of the weighted regression return its fi
 The next smallest-failing-fixture candidate is `sets/in`: a fresh compact uniform check leaves constant-set membership over a ready Offset operand. This is an Oxide lowering gap before native encoding. Mixed representations/channelling, cost-aware selection and large packed-Direct growth remain deferred. No new upstream library bug was confirmed.
 
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,583 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed; core/rule libraries have 261/160 unit tests. All 44 SAT unit tests and 50 explicit integer/PB checks pass. Independent audits confirm both sets of 50 recorded weighted portfolios. All 16 final normal golden checks passed, including the wide-domain cases and six restored capped-search samples. Timing cleanup preserves prior fields in 639 files; existing budgets remain unchanged and the new fixture has a deliberate five-second budget. Coverage is 391/638 runnable fixtures and 21,773 SAT portfolios; 21,636 are uniform across 303 fixtures, with 247 fixtures still disabled.
+
+
+## Constant-set membership
+
+SAT now expands membership in literal integer sets through the existing disjunction-of-equalities helper. The Base rule still delegates these sets to Minion's native `w-inset`; the SAT rule fills the missing connection without emitting clauses or adding an encoding algorithm. Existing numeric relation and Boolean decisions handle assertions, negation, reification and compound member expressions across all five integer representations.
+
+`sets/in` is enabled for uniform SAT portfolios while retaining Minion. Its complete expected assignments are `a = 1, 2, 3`. `sat-ir/set-membership` covers negative and zero values, sparse literal sets, negation, reification and a compound member. All 25 explicit integer/PB combinations match four independently enumerated assignments. The regression keeps Conjure validation. Unit checks cover empty/repeated sets and both AST literal forms, and retain Base delegation for Minion.
+
+The compound-member probe also exposes an existing Oxide Minion gap: `x + 1 in {-2,0,3,4}` remains unlowered because native `w-inset` requires an atom. The new regression therefore selects SAT. The parser's set-literal grammar requires at least one element, rejecting source `{}`; empty-set semantics are checked directly through the AST. Both are separate Oxide gaps, with no new upstream library bug confirmed.
+
+A fresh recheck also enables `conjure/set/cut_01_off` with 102 uniform SAT portfolios. Each matches all eight independently enumerated subsets of `{1,2,3}` and Conjure reference solutions. Its compact check already passed before this trial; this is a current-support recheck, not attribution to the membership fix. The next confirmed small failure is `smt/int/to-int`, whose Boolean-to-integer product remains unlowered before library encoding.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,585 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed. All 15 membership-related unit tests and 25 explicit integer/PB checks passed. Independent audits verify all 202 newly recorded SAT portfolios. All 16 final normal golden checks passed, including the changed fixtures and six restored capped-search samples. Timing cleanup preserves prior fields in 640 files; the expanded subset fixture budget rises from one to five seconds, the new regression has a five-second budget, and other existing budgets remain unchanged. Coverage is 394/639 runnable fixtures and 21,975 SAT portfolios; 21,838 are uniform across 306 fixtures, with 245 fixtures still disabled.
