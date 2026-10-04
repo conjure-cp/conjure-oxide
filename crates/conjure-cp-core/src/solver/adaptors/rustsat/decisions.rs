@@ -144,6 +144,41 @@ pub fn compile_decisions(
                 validate_pb_groups(groups, terms.len())?;
                 compiler.pseudo_boolean(algorithm, *relation, *bound, terms, groups)?;
             }
+            SatEncodingDecision::CountRelation {
+                output,
+                inputs,
+                relation,
+                bound,
+                encoding,
+                amo_encoding,
+            } => {
+                let algorithm = encoding
+                    .as_ref()
+                    .ok_or_else(|| {
+                        SolverError::ModelInvalid(
+                            "Unresolved count cardinality encoding decision".into(),
+                        )
+                    })?
+                    .algorithm;
+                let output = compiler.encode(output)?;
+                let output = match output {
+                    Term::Literal(literal) if asserted.contains(&literal) => Term::Constant(true),
+                    Term::Literal(literal) if asserted.contains(&!literal) => Term::Constant(false),
+                    output => output,
+                };
+                let terms = inputs
+                    .iter()
+                    .map(|input| compiler.encode(input))
+                    .collect::<Result<Vec<_>, _>>()?;
+                compiler.count_relation(
+                    algorithm,
+                    amo_encoding.as_ref().map(|selection| selection.algorithm),
+                    output,
+                    *relation,
+                    *bound,
+                    terms,
+                )?;
+            }
             SatEncodingDecision::Cardinality {
                 inputs,
                 relation,
@@ -1487,12 +1522,133 @@ impl Compiler<'_> {
         expression += BoolLinExp::from_terms(&free);
         (expression, bound as i64)
     }
+    fn count_relation(
+        &mut self,
+        algorithm: crate::ast::sat_decision::CardinalityEncoding,
+        amo: Option<crate::ast::sat_decision::AmoEncoding>,
+        output: Term,
+        relation: crate::ast::sat_decision::IntegerRelation,
+        bound: i64,
+        terms: Vec<Term>,
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::IntegerRelation;
+        let bound = i128::from(bound)
+            - terms
+                .iter()
+                .filter(|term| matches!(term, Term::Constant(true)))
+                .count() as i128;
+        let mut seen = std::collections::HashSet::new();
+        // Retain unit coefficients and multiplicities, including opposite polarities.
+        let literals: Vec<_> = terms
+            .into_iter()
+            .filter_map(|term| match term {
+                Term::Literal(literal) => Some(if seen.insert(literal.var()) {
+                    literal
+                } else {
+                    let alias = self.instance.new_lit();
+                    self.equate(Term::Literal(alias), Term::Literal(literal));
+                    alias
+                }),
+                _ => None,
+            })
+            .collect();
+        match relation {
+            IntegerRelation::Less => self.count_upper(algorithm, amo, output, bound - 1, &literals),
+            IntegerRelation::LessEqual => {
+                self.count_upper(algorithm, amo, output, bound, &literals)
+            }
+            IntegerRelation::Greater => {
+                self.count_upper(algorithm, amo, output.negated(), bound, &literals)
+            }
+            IntegerRelation::GreaterEqual => {
+                self.count_upper(algorithm, amo, output.negated(), bound - 1, &literals)
+            }
+            IntegerRelation::Equal | IntegerRelation::NotEqual => {
+                let upper = Term::Literal(self.instance.new_lit());
+                let below = Term::Literal(self.instance.new_lit());
+                self.count_upper(algorithm, amo, upper, bound, &literals)?;
+                self.count_upper(algorithm, amo, below, bound - 1, &literals)?;
+                let value = self.combine(true, vec![upper, below.negated()]);
+                self.equate(
+                    output,
+                    if relation == IntegerRelation::Equal {
+                        value
+                    } else {
+                        value.negated()
+                    },
+                );
+                Ok(())
+            }
+        }
+    }
+
+    fn count_upper(
+        &mut self,
+        algorithm: crate::ast::sat_decision::CardinalityEncoding,
+        amo: Option<crate::ast::sat_decision::AmoEncoding>,
+        output: Term,
+        bound: i128,
+        literals: &[Lit],
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::CardinalityRelation;
+        if bound < 0 || bound >= literals.len() as i128 {
+            self.equate(output, Term::Constant(bound >= 0));
+            return Ok(());
+        }
+        let terms = || literals.iter().copied().map(Term::Literal).collect();
+        if !matches!(output, Term::Constant(false)) {
+            let guard = match output {
+                Term::Literal(literal) => Some(literal),
+                _ => None,
+            };
+            if bound == 1 {
+                let amo = amo.ok_or_else(|| {
+                    SolverError::ModelInvalid("Unresolved count AMO encoding decision".into())
+                })?;
+                self.amo_guarded(amo, literals.to_vec(), guard)?;
+            } else {
+                self.cardinality_guarded(
+                    algorithm,
+                    CardinalityRelation::AtMost,
+                    bound as i64,
+                    terms(),
+                    guard,
+                )?;
+            }
+        }
+        if !matches!(output, Term::Constant(true)) {
+            let guard = match output {
+                Term::Literal(literal) => Some(!literal),
+                _ => None,
+            };
+            self.cardinality_guarded(
+                algorithm,
+                CardinalityRelation::AtLeast,
+                (bound + 1) as i64,
+                terms(),
+                guard,
+            )?;
+        }
+        Ok(())
+    }
+
     fn cardinality(
         &mut self,
         algorithm: crate::ast::sat_decision::CardinalityEncoding,
         relation: crate::ast::sat_decision::CardinalityRelation,
         bound: i64,
         terms: Vec<Term>,
+    ) -> Result<(), SolverError> {
+        self.cardinality_guarded(algorithm, relation, bound, terms, None)
+    }
+
+    fn cardinality_guarded(
+        &mut self,
+        algorithm: crate::ast::sat_decision::CardinalityEncoding,
+        relation: crate::ast::sat_decision::CardinalityRelation,
+        bound: i64,
+        terms: Vec<Term>,
+        guard: Option<Lit>,
     ) -> Result<(), SolverError> {
         use crate::ast::sat_decision::{CardinalityEncoding, CardinalityRelation};
         let constants = terms
@@ -1516,7 +1672,7 @@ impl Compiler<'_> {
             CardinalityRelation::Exactly => bound < 0 || bound > size,
         };
         if impossible {
-            self.assert(Term::Constant(false));
+            self.assert_guarded(Term::Constant(false), guard);
             return Ok(());
         }
         if (relation == CardinalityRelation::AtMost && bound >= size)
@@ -1526,11 +1682,10 @@ impl Compiler<'_> {
         }
         if bound == 0 || bound == size {
             for literal in literals {
-                self.assert(Term::Literal(if bound == size {
-                    literal
-                } else {
-                    !literal
-                }));
+                self.assert_guarded(
+                    Term::Literal(if bound == size { literal } else { !literal }),
+                    guard,
+                );
             }
             return Ok(());
         }
@@ -1556,7 +1711,10 @@ impl Compiler<'_> {
                     self.instance.var_manager_mut(),
                 )
                 .map_err(|error| SolverError::Runtime(format!("Totalizer failed: {error}")))?;
-                for clause in cnf {
+                for mut clause in cnf {
+                    if let Some(guard) = guard {
+                        clause.add(!guard);
+                    }
                     self.instance.add_clause(clause);
                 }
             }
@@ -1597,7 +1755,7 @@ impl Compiler<'_> {
                 );
                 let mut sink = PindakaasSink {
                     instance: self.instance,
-                    guard: None,
+                    guard,
                 };
                 let variant = BoolLinAggregator::default()
                     .aggregate(&mut sink, &BoolLinear::new(expression, comparison, bound));
@@ -1619,7 +1777,7 @@ impl Compiler<'_> {
                     Err(error) => Err(error),
                 };
                 if result.is_err() {
-                    self.assert(Term::Constant(false));
+                    self.assert_guarded(Term::Constant(false), guard);
                 }
             }
         }
@@ -1629,6 +1787,15 @@ impl Compiler<'_> {
         &mut self,
         algorithm: crate::ast::sat_decision::AmoEncoding,
         inputs: Vec<Lit>,
+    ) -> Result<(), SolverError> {
+        self.amo_guarded(algorithm, inputs, None)
+    }
+
+    fn amo_guarded(
+        &mut self,
+        algorithm: crate::ast::sat_decision::AmoEncoding,
+        inputs: Vec<Lit>,
+        guard: Option<Lit>,
     ) -> Result<(), SolverError> {
         use crate::ast::sat_decision::AmoEncoding;
         use rustsat::encodings::am1::{self, Encode};
@@ -1645,7 +1812,10 @@ impl Compiler<'_> {
             }
         };
         result.map_err(|error| SolverError::Runtime(format!("AMO encoder failed: {error}")))?;
-        for clause in cnf {
+        for mut clause in cnf {
+            if let Some(guard) = guard {
+                clause.add(!guard);
+            }
             self.instance.add_clause(clause);
         }
         Ok(())
@@ -1991,12 +2161,141 @@ mod cardinality_tests {
     use crate::ast::sat_decision::{
         CardinalityEncoding, CardinalityRelation, EncodingSelection, SelectionProvenance,
     };
-    use crate::ast::{DeclarationPtr, Domain, Reference};
+    use crate::ast::{DeclarationPtr, Domain, Metadata, Moo, Reference};
     use rustsat::{
         instances::{BasicVarManager, ManageVars},
         solvers::{Solve, SolveIncremental, SolverResult},
     };
     use rustsat_cadical::CaDiCaL;
+    #[test]
+    fn count_relations_preserve_both_truth_values_for_every_native_provider() {
+        use crate::ast::sat_decision::{AmoEncoding, IntegerRelation};
+        for size in 0..=4 {
+            let vars: Vec<_> = (0..=size)
+                .map(|i| {
+                    DeclarationPtr::new_find(
+                        Name::User(format!("count_{i}").into()),
+                        Domain::bool(),
+                    )
+                })
+                .collect();
+            let expressions: Vec<Expression> = vars
+                .iter()
+                .cloned()
+                .map(Reference::new)
+                .map(Into::into)
+                .collect();
+            for special in [false, true] {
+                let mut inputs = expressions[..size].to_vec();
+                if special {
+                    inputs.extend([true.into(), false.into()]);
+                    if size > 0 {
+                        inputs.extend([
+                            expressions[0].clone(),
+                            Expression::Not(Metadata::new(), Moo::new(expressions[0].clone())),
+                        ]);
+                    }
+                }
+                let mut bounds: Vec<_> = (-1..=inputs.len() as i64 + 1).collect();
+                bounds.extend([i64::MIN, i64::MAX]);
+                for algorithm in CardinalityEncoding::ALL {
+                    for amo in AmoEncoding::ALL {
+                        for relation in [
+                            IntegerRelation::Equal,
+                            IntegerRelation::NotEqual,
+                            IntegerRelation::Less,
+                            IntegerRelation::LessEqual,
+                            IntegerRelation::Greater,
+                            IntegerRelation::GreaterEqual,
+                        ] {
+                            for &bound in &bounds {
+                                for fixed in [None, Some(false), Some(true)] {
+                                    let mut instance = SatInstance::new();
+                                    let mut map = HashMap::new();
+                                    for var in &vars {
+                                        map.insert(var.name().clone(), instance.new_lit());
+                                    }
+                                    let output = fixed
+                                        .map(Expression::from)
+                                        .unwrap_or_else(|| expressions[size].clone());
+                                    compile_decisions(
+                                        &[SatEncodingDecision::CountRelation {
+                                            output,
+                                            inputs: inputs.clone(),
+                                            relation,
+                                            bound,
+                                            encoding: Some(EncodingSelection {
+                                                algorithm,
+                                                provenance:
+                                                    SelectionProvenance::ExplicitConfiguration,
+                                            }),
+                                            amo_encoding: Some(EncodingSelection {
+                                                algorithm: amo,
+                                                provenance:
+                                                    SelectionProvenance::ExplicitConfiguration,
+                                            }),
+                                        }],
+                                        &mut instance,
+                                        &mut map,
+                                    )
+                                    .unwrap();
+                                    let used = instance.var_manager_mut().n_used();
+                                    assert_eq!(instance.new_lit().var().idx32(), used);
+                                    let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+                                    let mut solver = CaDiCaL::default();
+                                    solver.add_cnf(cnf).unwrap();
+                                    for assignment in 0..(1usize << size) {
+                                        let count = assignment.count_ones() as i64
+                                            + if special {
+                                                if size > 0 { 2 } else { 1 }
+                                            } else {
+                                                0
+                                            };
+                                        let expected = match relation {
+                                            IntegerRelation::Equal => count == bound,
+                                            IntegerRelation::NotEqual => count != bound,
+                                            IntegerRelation::Less => count < bound,
+                                            IntegerRelation::LessEqual => count <= bound,
+                                            IntegerRelation::Greater => count > bound,
+                                            IntegerRelation::GreaterEqual => count >= bound,
+                                        };
+                                        for out in [false, true] {
+                                            if fixed.is_some_and(|fixed| fixed != out) {
+                                                continue;
+                                            }
+                                            let mut assumptions: Vec<_> = vars[..size]
+                                                .iter()
+                                                .enumerate()
+                                                .map(|(i, var)| {
+                                                    let lit = map[&var.name()];
+                                                    if assignment & (1 << i) != 0 {
+                                                        lit
+                                                    } else {
+                                                        !lit
+                                                    }
+                                                })
+                                                .collect();
+                                            if fixed.is_none() {
+                                                let lit = map[&vars[size].name()];
+                                                assumptions.push(if out { lit } else { !lit });
+                                            }
+                                            assert_eq!(
+                                                solver.solve_assumps(&assumptions).unwrap()
+                                                    == SolverResult::Sat,
+                                                out == expected,
+                                                "{algorithm:?}/{amo:?} {relation:?} {bound}, size={size}, special={special}, assignment={assignment}, fixed={fixed:?}, output={out}"
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     #[test]
     fn cardinality_providers_preserve_all_bounds_assignments_and_multiplicities() {
         for algorithm in CardinalityEncoding::ALL {

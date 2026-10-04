@@ -314,7 +314,7 @@ fn ready_count_comparison(expr: &Expr) -> bool {
     (count(left) && constant_int(right).is_some()) || (count(right) && constant_int(left).is_some())
 }
 
-/// Reify Boolean counts within ready Boolean contexts using the existing PB providers.
+/// Reify Boolean counts within ready Boolean contexts using cardinality and AMO providers.
 #[register_rule("SAT", 18600, [Root])]
 fn select_guarded_count(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(expr, Expr::Root(..)) {
@@ -325,7 +325,7 @@ fn select_guarded_count(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
 fn guarded_count(expr: &Expr, asserted: bool, symbols: &SymbolTable) -> Option<RuleEffect> {
     if !asserted && ready_count_comparison(expr) {
-        return integer_relation(expr, symbols).ok();
+        return count_relation(expr, symbols).ok();
     }
     // Only traverse Boolean contexts and literal matrices, never a binder or undefined value.
     match expr {
@@ -388,7 +388,53 @@ fn select_integer_relation(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     if ready_count_comparison(expr) && !matches!(expr, Expr::Neq(..)) {
         return Err(RuleNotApplicable);
     }
+    if ready_count_comparison(expr) {
+        return count_relation(expr, symbols);
+    }
     integer_relation(expr, symbols)
+}
+
+fn count_relation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    use conjure_cp::ast::sat_decision::IntegerRelation;
+    let (left, right, mut relation) = match expr {
+        Expr::Eq(_, left, right) => (left, right, IntegerRelation::Equal),
+        Expr::Neq(_, left, right) => (left, right, IntegerRelation::NotEqual),
+        Expr::Lt(_, left, right) => (left, right, IntegerRelation::Less),
+        Expr::Leq(_, left, right) => (left, right, IntegerRelation::LessEqual),
+        Expr::Gt(_, left, right) => (left, right, IntegerRelation::Greater),
+        Expr::Geq(_, left, right) => (left, right, IntegerRelation::GreaterEqual),
+        _ => return Err(RuleNotApplicable),
+    };
+    let (sum, bound) = if let Expr::Sum(_, sum) = left.as_ref() {
+        (sum, constant_int(right).ok_or(RuleNotApplicable)?)
+    } else if let Expr::Sum(_, sum) = right.as_ref() {
+        relation = match relation {
+            IntegerRelation::Less => IntegerRelation::Greater,
+            IntegerRelation::LessEqual => IntegerRelation::GreaterEqual,
+            IntegerRelation::Greater => IntegerRelation::Less,
+            IntegerRelation::GreaterEqual => IntegerRelation::LessEqual,
+            other => other,
+        };
+        (sum, constant_int(left).ok_or(RuleNotApplicable)?)
+    } else {
+        return Err(RuleNotApplicable);
+    };
+    let inputs = super::boolean::count_inputs(sum).ok_or(RuleNotApplicable)?;
+    let bound = i64::from(bound);
+    let mut symbols = symbols.clone();
+    let output = super::boolean::create_bool_aux(&mut symbols);
+    Ok(RuleEffect::sat(
+        output.clone(),
+        vec![SatEncodingDecision::CountRelation {
+            output,
+            inputs,
+            relation,
+            bound,
+            encoding: None,
+            amo_encoding: None,
+        }],
+        symbols,
+    ))
 }
 
 fn integer_relation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -496,10 +542,10 @@ mod tests {
             let effect = select_guarded_count(&root, &symbols).unwrap();
             assert!(effect.new_top.is_empty());
             let [
-                SatEncodingDecision::IntegerRelation {
+                SatEncodingDecision::CountRelation {
                     output,
-                    terms,
-                    bound: 1,
+                    inputs,
+                    bound: 2,
                     relation: conjure_cp::ast::sat_decision::IntegerRelation::LessEqual,
                     encoding: None,
                     ..
@@ -508,7 +554,9 @@ mod tests {
             else {
                 panic!("expected an equivalence decision, without a bound assertion");
             };
-            assert_eq!(terms.iter().map(|(weight, _)| *weight).sum::<i64>(), 2);
+            assert_eq!(inputs.len(), 3);
+            assert_eq!(inputs[0], inputs[1]);
+            assert_eq!(inputs[2], true.into());
             use uniplate::Uniplate;
             assert!(effect.new_expression.universe().contains(output));
         }

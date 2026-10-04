@@ -23,6 +23,16 @@ pub enum SatEncodingDecision {
         bound: i64,
         encoding: Option<EncodingSelection<CardinalityEncoding>>,
     },
+    /// Define the truth of a Boolean count comparison using cardinality and AMO providers.
+    CountRelation {
+        output: Expression,
+        inputs: Vec<Expression>,
+        relation: IntegerRelation,
+        bound: i64,
+        encoding: Option<EncodingSelection<CardinalityEncoding>>,
+        /// Selected when either implication includes an at-most-one threshold.
+        amo_encoding: Option<EncodingSelection<AmoEncoding>>,
+    },
     /// Compare a signed weighted Boolean sum with an integer bound.
     PseudoBoolean {
         terms: Vec<(i64, Expression)>,
@@ -101,6 +111,22 @@ impl Display for SatEncodingDecision {
                     .collect::<Vec<_>>()
                     .join(", "),
                 relation
+            ),
+            Self::CountRelation {
+                output,
+                inputs,
+                relation,
+                bound,
+                encoding,
+                amo_encoding,
+            } => write!(
+                f,
+                "define({output} <-> count({}) {relation:?} {bound}) using {encoding:?}, AMO {amo_encoding:?}",
+                inputs
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", "),
             ),
             Self::PseudoBoolean {
                 terms,
@@ -232,6 +258,9 @@ impl SatEncodingDecision {
         match self {
             Self::AtMostOne { inputs, .. } | Self::Cardinality { inputs, .. } => {
                 inputs.iter().collect()
+            }
+            Self::CountRelation { output, inputs, .. } => {
+                std::iter::once(output).chain(inputs).collect()
             }
             Self::PseudoBoolean { terms, .. } => terms.iter().map(|(_, input)| input).collect(),
             Self::IntegerRelation { output, terms, .. } => std::iter::once(output)
@@ -630,6 +659,30 @@ fn resolve_alldifferent_choices(decisions: &mut [SatEncodingDecision]) {
         }
     }
 }
+/// Whether a count comparison needs an upper threshold of one after constant folding.
+pub(crate) fn count_uses_amo(inputs: &[Expression], relation: IntegerRelation, bound: i64) -> bool {
+    let (constants, variables) =
+        inputs
+            .iter()
+            .fold(
+                (0i128, 0usize),
+                |(constants, variables), input| match crate::ast::eval_constant(input) {
+                    Some(crate::ast::Literal::Bool(true)) => (constants + 1, variables),
+                    Some(crate::ast::Literal::Bool(false)) => (constants, variables),
+                    _ => (constants, variables + 1),
+                },
+            );
+    if variables <= 1 {
+        return false;
+    }
+    let bound = i128::from(bound) - constants;
+    match relation {
+        IntegerRelation::Less | IntegerRelation::GreaterEqual => bound - 1 == 1,
+        IntegerRelation::LessEqual | IntegerRelation::Greater => bound == 1,
+        IntegerRelation::Equal | IntegerRelation::NotEqual => bound == 1 || bound - 1 == 1,
+    }
+}
+
 fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
     use crate::settings::{self, Heuristic};
     let largest = decisions
@@ -639,6 +692,13 @@ fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
                 inputs,
                 encoding: None,
             } => Some(inputs.len()),
+            SatEncodingDecision::CountRelation {
+                inputs,
+                relation,
+                bound,
+                amo_encoding: None,
+                ..
+            } if count_uses_amo(inputs, *relation, *bound) => Some(inputs.len()),
             SatEncodingDecision::AllDifferent {
                 inputs,
                 encoding: Some(selection),
@@ -672,6 +732,21 @@ fn resolve_amo_choices(decisions: &mut [SatEncodingDecision]) {
         (AmoEncoding::ALL[index], SelectionProvenance::Heuristic)
     };
     for decision in decisions {
+        if let SatEncodingDecision::CountRelation {
+            inputs,
+            relation,
+            bound,
+            amo_encoding,
+            ..
+        } = decision
+            && amo_encoding.is_none()
+            && count_uses_amo(inputs, *relation, *bound)
+        {
+            *amo_encoding = Some(EncodingSelection {
+                algorithm,
+                provenance,
+            });
+        }
         if let SatEncodingDecision::AtMostOne { encoding, .. }
         | SatEncodingDecision::AllDifferent {
             amo_encoding: encoding,
@@ -750,6 +825,75 @@ mod tests {
         settings::set_cardinality_encoding(None);
         settings::set_heuristic(Heuristic::Compact);
     }
+    #[test]
+    fn count_relation_choices_share_providers_and_fold_constant_thresholds() {
+        use crate::ast::{DeclarationPtr, Domain, Name, Reference};
+        let a: Expression = Reference::new(DeclarationPtr::new_find(
+            Name::user("count_choice"),
+            Domain::bool(),
+        ))
+        .into();
+        let build = || SatEncodingDecision::CountRelation {
+            output: a.clone(),
+            inputs: vec![true.into(), a.clone(), a.clone()],
+            relation: IntegerRelation::Equal,
+            bound: 2,
+            encoding: None,
+            amo_encoding: None,
+        };
+        assert!(count_uses_amo(
+            &[true.into(), a.clone(), a.clone()],
+            IntegerRelation::Equal,
+            2
+        ));
+        assert!(!count_uses_amo(
+            &[true.into(), a.clone()],
+            IntegerRelation::Equal,
+            2
+        ));
+        assert!(!count_uses_amo(
+            &[a.clone(), a.clone()],
+            IntegerRelation::LessEqual,
+            i64::MIN
+        ));
+        assert!(!count_uses_amo(
+            &[a.clone(), a.clone()],
+            IntegerRelation::LessEqual,
+            i64::MAX
+        ));
+        settings::set_heuristic(Heuristic::All);
+        settings::set_amo_encoding(None);
+        settings::set_cardinality_encoding(None);
+        for (amo_index, amo) in AmoEncoding::ALL.into_iter().enumerate() {
+            for (card_index, card) in CardinalityEncoding::ALL.into_iter().enumerate() {
+                settings::begin_heuristic_all_choices(vec![card_index, amo_index]);
+                let mut decisions = vec![build(), build()];
+                resolve_encoding_choices(&mut decisions);
+                assert_eq!(settings::heuristic_all_choices().len(), 2);
+                for decision in decisions {
+                    assert!(matches!(decision, SatEncodingDecision::CountRelation {
+                        encoding: Some(EncodingSelection { algorithm, provenance: SelectionProvenance::Heuristic }),
+                        amo_encoding: Some(EncodingSelection { algorithm: actual_amo, provenance: SelectionProvenance::Heuristic }), ..
+                    } if algorithm == card && actual_amo == amo));
+                }
+            }
+        }
+        settings::set_amo_encoding(Some(AmoEncoding::Ladder));
+        settings::set_cardinality_encoding(Some(CardinalityEncoding::PindakaasSortingNetwork));
+        settings::begin_heuristic_all_choices(vec![]);
+        let mut decisions = vec![build()];
+        resolve_encoding_choices(&mut decisions);
+        let retained = decisions[0].clone();
+        settings::set_amo_encoding(Some(AmoEncoding::Pairwise));
+        settings::set_cardinality_encoding(Some(CardinalityEncoding::RustsatTotalizer));
+        resolve_encoding_choices(&mut decisions);
+        assert_eq!(decisions[0], retained);
+        assert!(settings::heuristic_all_choices().is_empty());
+        settings::set_amo_encoding(None);
+        settings::set_cardinality_encoding(None);
+        settings::set_heuristic(Heuristic::Compact);
+    }
+
     fn decision() -> SatEncodingDecision {
         SatEncodingDecision::AtMostOne {
             inputs: vec![true.into(); 6],
@@ -840,6 +984,7 @@ fn resolve_cardinality_choices(decisions: &mut [SatEncodingDecision]) {
         matches!(
             decision,
             SatEncodingDecision::Cardinality { encoding: None, .. }
+                | SatEncodingDecision::CountRelation { encoding: None, .. }
         )
     }) {
         return;
@@ -861,7 +1006,8 @@ fn resolve_cardinality_choices(decisions: &mut [SatEncodingDecision]) {
         )
     };
     for decision in decisions {
-        if let SatEncodingDecision::Cardinality { encoding, .. } = decision
+        if let SatEncodingDecision::Cardinality { encoding, .. }
+        | SatEncodingDecision::CountRelation { encoding, .. } = decision
             && encoding.is_none()
         {
             *encoding = Some(EncodingSelection {
