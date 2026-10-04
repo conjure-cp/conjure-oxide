@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-04
 
-SAT is enabled in **394 of 639 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **21,975 SAT solution portfolios**; **21,838** use uniform channelling across **306 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
+SAT is enabled in **399 of 640 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **22,284 SAT solution portfolios**; **22,147** use uniform channelling across **311 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -10,8 +10,8 @@ The current filtered failure list and targeted rechecks are recorded in [SAT kno
 
 | Final outcome | Fixtures |
 | --- | ---: |
-| Currently SAT-enabled | 244 |
-| Initial CLI error | 182 |
+| Currently SAT-enabled | 248 |
+| Initial CLI error | 178 |
 | Initial CLI timeout | 37 |
 | Full portfolio failed to lower | 22 |
 | Full portfolio timed out | 3 |
@@ -163,3 +163,14 @@ The compound-member probe also exposes an existing Oxide Minion gap: `x + 1 in {
 A fresh recheck also enables `conjure/set/cut_01_off` with 102 uniform SAT portfolios. Each matches all eight independently enumerated subsets of `{1,2,3}` and Conjure reference solutions. Its compact check already passed before this trial; this is a current-support recheck, not attribution to the membership fix. The next confirmed small failure is `smt/int/to-int`, whose Boolean-to-integer product remains unlowered before library encoding.
 
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,585 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed. All 15 membership-related unit tests and 25 explicit integer/PB checks passed. Independent audits verify all 202 newly recorded SAT portfolios. All 16 final normal golden checks passed, including the changed fixtures and six restored capped-search samples. Timing cleanup preserves prior fields in 640 files; the expanded subset fixture budget rises from one to five seconds, the new regression has a five-second budget, and other existing budgets remain unchanged. Coverage is 394/639 runnable fixtures and 21,975 SAT portfolios; 21,838 are uniform across 306 fixtures, with 245 fixtures still disabled.
+
+
+## Boolean-indicator products
+
+`smt/int/to-int` is enabled after lowering products of Boolean indicators to a conjunction indicator. `sat-ir/boolean-products` adds repeated factors, negation, weighted sums, numeric outputs and reification. This keeps the semantic/native encoding boundary intact.
+
+Fresh full uniform rechecks enable `conjure/set/setOfSet01`, `conjure/set/set01_1` and `sets/constant-eval-set-tests/Union`. These are recorded as coverage rechecks rather than attributed to the product fix. Independent audits verify all 309 newly recorded SAT portfolios: one assignment for the original product case, four for the new regression, all 16 sets of subsets of `{1,2}`, three size-two subsets of `{1,2,3}` and three union-membership values. Conjure validation is retained.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed 1,587 tests (14 skipped), plus workspace doctests. `make check` passed. All 12 targeted normal golden checks passed, covering the five changed/new fixtures, six retained capped-search samples and the affected `problem51` trace. Coverage is 399/640 runnable fixtures and 22,284 SAT portfolios; 22,147 are uniform across 311 fixtures, with 241 fixtures still disabled.
+
+Timing cleanup preserves prior fields in 640 files. The four expanded fixtures deliberately increase their one-second budgets to five seconds, except sets of sets at ten seconds; the new regression has a five-second budget. Twenty-six changed capped-search solution samples were restored, and their normal checks passed. Meaningful rule-attempt/application counts and changed traces are retained. No new upstream library bug was confirmed. Mixed integer/indicator arithmetic is the next confirmed connection gap; performance measurement and heuristic tuning follow feature completeness, with mixed representations/channelling still deferred.
