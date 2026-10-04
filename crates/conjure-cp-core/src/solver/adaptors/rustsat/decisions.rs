@@ -10,7 +10,7 @@ use rustsat::{
 };
 use std::collections::HashMap;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum Term {
     Constant(bool),
     Literal(Lit),
@@ -36,7 +36,7 @@ pub fn compile_decisions(
         decisions,
         instance,
         variables,
-        &mut CardinalityCache::default(),
+        &mut EncodingCache::default(),
     )
 }
 
@@ -45,7 +45,7 @@ pub(super) fn compile_decisions_with_cache(
     decisions: &[SatEncodingDecision],
     instance: &mut SatInstance,
     variables: &mut HashMap<Name, Lit>,
-    cache: &mut CardinalityCache,
+    cache: &mut EncodingCache,
 ) -> Result<(), SolverError> {
     let mut compiler = Compiler {
         instance,
@@ -342,16 +342,36 @@ pub(super) fn compile_objective_terms(
 
 /// Native counters and one-shot threshold predicates belonging to one loaded solver.
 #[derive(Default)]
-pub(super) struct CardinalityCache {
+pub(super) struct EncodingCache {
     totalizers: HashMap<Vec<Lit>, rustsat::encodings::card::Totalizer>,
     thresholds: HashMap<(Vec<Lit>, i64), Lit>,
     occurrences: HashMap<Vec<Lit>, Vec<Lit>>,
+    weighted: HashMap<WeightedKey, WeightedEncoder>,
+    weighted_thresholds: HashMap<WeightedThresholdKey, Lit>,
+}
+
+type WeightedKey = (crate::ast::sat_decision::PbEncoding, Vec<(Lit, usize)>);
+
+#[derive(PartialEq, Eq, Hash)]
+struct WeightedThresholdKey {
+    algorithm: crate::ast::sat_decision::PbEncoding,
+    coefficients: Vec<(Lit, i128)>,
+    groups: Vec<WeightedGroupKey>,
+    bound: i128,
+}
+
+type WeightedGroupKey = (u8, i128, i128, Vec<(i128, Term)>);
+
+// These providers expose bound outputs which can be enforced independently.
+enum WeightedEncoder {
+    Totalizer(rustsat::encodings::pb::GeneralizedTotalizer),
+    Adder(rustsat::encodings::pb::BinaryAdder),
 }
 
 struct Compiler<'a> {
     instance: &'a mut SatInstance,
     variables: &'a mut HashMap<Name, Lit>,
-    counters: Option<&'a mut CardinalityCache>,
+    counters: Option<&'a mut EncodingCache>,
 }
 impl Compiler<'_> {
     fn asserted_amo(
@@ -1066,6 +1086,9 @@ impl Compiler<'_> {
                 )
             })
         };
+        if self.counters.is_some() && matches!(output, Term::Literal(_)) {
+            return self.cached_weighted_threshold(algorithm, output, bound, terms, groups);
+        }
         match output {
             Term::Constant(value) => self.pseudo_boolean(
                 algorithm,
@@ -1150,6 +1173,13 @@ impl Compiler<'_> {
                 "Reified integer coefficient sum exceeds the library range".into(),
             ));
         }
+        if self.counters.is_some() {
+            let terms: Vec<_> = positive
+                .iter()
+                .map(|(lit, weight)| (*weight as i64, Term::Literal(*lit)))
+                .collect();
+            return self.cached_weighted_threshold(algorithm, output, bound as i64, &terms, &[]);
+        }
         let Term::Literal(literal) = output else {
             unreachable!()
         };
@@ -1187,6 +1217,201 @@ impl Compiler<'_> {
                     .collect(),
                 &[],
             )?;
+        }
+        Ok(())
+    }
+
+    fn cached_weighted_threshold(
+        &mut self,
+        algorithm: crate::ast::sat_decision::PbEncoding,
+        output: Term,
+        bound: i64,
+        terms: &[(i64, Term)],
+        groups: &[crate::ast::sat_decision::PbTermGroup],
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::PbTermStructure;
+        use crate::ast::sat_decision::{CardinalityRelation, PbEncoding};
+        let (adjusted, coefficients) = canonical_pb_terms(bound, terms);
+        let mut coefficients: Vec<_> = coefficients
+            .into_iter()
+            .filter(|(_, weight)| *weight != 0)
+            .collect();
+        // S <= b and -S <= -b-1 are complementary predicates.
+        let inverted = coefficients.first().is_some_and(|(_, weight)| *weight < 0);
+        let sign = if inverted { -1i128 } else { 1 };
+        for (_, weight) in &mut coefficients {
+            *weight *= sign;
+        }
+        let mut group_keys: Vec<_> = groups
+            .iter()
+            .map(|group| {
+                let mut members: Vec<_> = terms[group.start..group.end]
+                    .iter()
+                    .map(|(weight, term)| (i128::from(*weight) * sign, *term))
+                    .collect();
+                let (kind, lower, upper) = match group.structure {
+                    PbTermStructure::Choice => (0, 0, 0),
+                    PbTermStructure::Chain => (1, 0, 0),
+                    PbTermStructure::BoundedBinary { lower, upper } => {
+                        let a = i128::from(lower) * sign;
+                        let b = i128::from(upper) * sign;
+                        (2, a.min(b), a.max(b))
+                    }
+                };
+                // Chains carry implication order; choice/binary sums do not.
+                if kind != 1 {
+                    members.sort_unstable();
+                }
+                (kind, lower, upper, members)
+            })
+            .collect();
+        group_keys.sort_unstable();
+        let key = WeightedThresholdKey {
+            algorithm,
+            coefficients,
+            groups: group_keys,
+            bound: if inverted { -adjusted - 1 } else { adjusted },
+        };
+        let existing = self
+            .counters
+            .as_ref()
+            .unwrap()
+            .weighted_thresholds
+            .get(&key)
+            .copied();
+        tracing::debug!(
+            ?algorithm,
+            bound,
+            inputs = terms.len(),
+            reused = existing.is_some(),
+            "compiling shared weighted threshold"
+        );
+        let predicate = if let Some(predicate) = existing {
+            predicate
+        } else {
+            let predicate = self.instance.new_lit();
+            if matches!(
+                algorithm,
+                PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder
+            ) {
+                self.guarded_pseudo_boolean(
+                    algorithm,
+                    CardinalityRelation::AtMost,
+                    bound,
+                    terms.to_vec(),
+                    groups,
+                    Some(predicate),
+                )?;
+                self.guarded_pseudo_boolean(
+                    algorithm,
+                    CardinalityRelation::AtLeast,
+                    bound + 1,
+                    terms.to_vec(),
+                    groups,
+                    Some(!predicate),
+                )?;
+            } else {
+                // DPW control literals are bound-specific. Pindakaas exposes one-shot
+                // encoders. Retain their complete equivalence for this threshold only.
+                let mut one_shot = Compiler {
+                    instance: self.instance,
+                    variables: self.variables,
+                    counters: None,
+                };
+                one_shot.integer_relation(
+                    algorithm,
+                    Term::Literal(predicate),
+                    crate::ast::sat_decision::IntegerRelation::LessEqual,
+                    bound,
+                    terms,
+                    groups,
+                )?;
+            }
+            self.counters
+                .as_deref_mut()
+                .unwrap()
+                .weighted_thresholds
+                .insert(key, if inverted { !predicate } else { predicate });
+            if inverted { !predicate } else { predicate }
+        };
+        self.equate(
+            output,
+            Term::Literal(if inverted { !predicate } else { predicate }),
+        );
+        Ok(())
+    }
+
+    fn cached_weighted_bound(
+        &mut self,
+        algorithm: crate::ast::sat_decision::PbEncoding,
+        relation: crate::ast::sat_decision::CardinalityRelation,
+        bound: usize,
+        positive: Vec<(Lit, usize)>,
+        guard: Option<Lit>,
+    ) -> Result<(), SolverError> {
+        use crate::ast::sat_decision::{CardinalityRelation, PbEncoding};
+        use rustsat::encodings::pb::{BoundUpper, BoundUpperIncremental};
+        let total: usize = positive.iter().map(|(_, weight)| *weight).sum();
+        let mut bounds = Vec::new();
+        if relation != CardinalityRelation::AtLeast {
+            bounds.push((positive.clone(), bound));
+        }
+        if relation != CardinalityRelation::AtMost {
+            bounds.push((
+                positive
+                    .iter()
+                    .map(|(lit, weight)| (!*lit, *weight))
+                    .collect(),
+                total - bound,
+            ));
+        }
+        for (mut inputs, upper) in bounds {
+            inputs.sort_unstable();
+            let key = (algorithm, inputs);
+            let cache = self.counters.as_deref_mut().unwrap();
+            tracing::debug!(
+                ?algorithm,
+                bound = upper,
+                inputs = key.1.len(),
+                reused = cache.weighted.contains_key(&key),
+                "compiling shared weighted counter"
+            );
+            let encoder =
+                cache
+                    .weighted
+                    .entry(key)
+                    .or_insert_with_key(|(_, inputs)| match algorithm {
+                        PbEncoding::RustsatGeneralizedTotalizer => {
+                            WeightedEncoder::Totalizer(inputs.iter().copied().collect())
+                        }
+                        PbEncoding::RustsatBinaryAdder => {
+                            WeightedEncoder::Adder(inputs.iter().copied().collect())
+                        }
+                        _ => unreachable!(),
+                    });
+            let mut cnf = Cnf::new();
+            macro_rules! encode {
+                ($encoder:expr) => {{
+                    $encoder
+                        .encode_ub_change(upper..=upper, &mut cnf, self.instance.var_manager_mut())
+                        .map_err(|e| {
+                            SolverError::Runtime(format!("Incremental PB encoding failed: {e}"))
+                        })?;
+                    $encoder.enforce_ub(upper).map_err(|e| {
+                        SolverError::Runtime(format!("Incremental PB bound failed: {e}"))
+                    })?
+                }};
+            }
+            let enforcement = match encoder {
+                WeightedEncoder::Totalizer(encoder) => encode!(encoder),
+                WeightedEncoder::Adder(encoder) => encode!(encoder),
+            };
+            for clause in cnf {
+                self.instance.add_clause(clause);
+            }
+            for literal in enforcement {
+                self.assert_guarded(Term::Literal(literal), guard);
+            }
         }
         Ok(())
     }
@@ -1284,6 +1509,25 @@ impl Compiler<'_> {
             return Err(SolverError::ModelInvalid(
                 "Pseudo-Boolean coefficient sum exceeds the library range".into(),
             ));
+        }
+        if self.counters.is_some()
+            && matches!(
+                algorithm,
+                PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder
+            )
+            && bound != 0
+            && bound != total
+        {
+            return self.cached_weighted_bound(
+                algorithm,
+                relation,
+                bound as usize,
+                positive
+                    .into_iter()
+                    .map(|(lit, weight)| (lit, weight as usize))
+                    .collect(),
+                guard,
+            );
         }
         // An upper/equality bound forbids every individual positive term above it.
         // Remove those terms before constructing a counter, including its inverted lower side.
@@ -2381,7 +2625,7 @@ mod cardinality_tests {
     #[test]
     fn reusable_cardinality_batches_preserve_guards_and_occurrence_counts() {
         for algorithm in CardinalityEncoding::ALL {
-            let mut cache = CardinalityCache::default();
+            let mut cache = EncodingCache::default();
             let mut variables = HashMap::new();
             let mut solver = CaDiCaL::default();
             let mut initial: SatInstance = SatInstance::new();
@@ -2724,6 +2968,252 @@ mod pseudo_boolean_tests {
         solvers::{Solve, SolveIncremental, SolverResult},
     };
     use rustsat_cadical::CaDiCaL;
+
+    #[test]
+    fn weighted_thresholds_reuse_batches_and_coexist_for_every_provider() {
+        use crate::ast::sat_decision::IntegerRelation;
+        for algorithm in PbEncoding::ALL {
+            let mut cache = EncodingCache::default();
+            let mut variables = HashMap::new();
+            let mut solver = CaDiCaL::default();
+            let mut initial: SatInstance = SatInstance::new();
+            let inputs: Vec<_> = (0..3).map(|_| initial.new_lit()).collect();
+            let (_, mut manager): (Cnf, BasicVarManager) = initial.into_cnf();
+            let terms = vec![
+                (3, Term::Literal(inputs[0])),
+                (-2, Term::Literal(inputs[1])),
+                (1, Term::Literal(inputs[0])),
+                (2, Term::Literal(!inputs[2])),
+                (1, Term::Constant(true)),
+            ];
+            let mut outputs = Vec::new();
+            // Visit bounds in both directions, including repeated and trivial bounds.
+            for bound in [3, 0, 4, 1, 3, -2, 7, 2] {
+                let mut delta: SatInstance = SatInstance::new();
+                delta
+                    .var_manager_mut()
+                    .increase_next_free(rustsat::types::Var::new(manager.n_used()));
+                let output = delta.new_lit();
+                let mut compiler = Compiler {
+                    instance: &mut delta,
+                    variables: &mut variables,
+                    counters: Some(&mut cache),
+                };
+                compiler
+                    .integer_relation(
+                        algorithm,
+                        Term::Literal(output),
+                        IntegerRelation::LessEqual,
+                        bound,
+                        &terms,
+                        &[],
+                    )
+                    .unwrap();
+                let allocated = compiler.instance.var_manager_mut().n_used();
+                let clauses = compiler.instance.cnf().len();
+                compiler
+                    .integer_relation(
+                        algorithm,
+                        Term::Literal(output),
+                        IntegerRelation::LessEqual,
+                        bound,
+                        &terms,
+                        &[],
+                    )
+                    .unwrap();
+                assert_eq!(
+                    compiler.instance.var_manager_mut().n_used(),
+                    allocated,
+                    "Repeated PB thresholds must reuse auxiliaries: {algorithm:?}"
+                );
+                assert!(compiler.instance.cnf().len() - clauses <= 2);
+                let (cnf, next): (Cnf, BasicVarManager) = delta.into_cnf();
+                manager = next;
+                solver.add_cnf(cnf).unwrap();
+                outputs.push((output, bound));
+            }
+            for assignment in 0..8 {
+                let value = 4 * i64::from(assignment & 1 != 0) - 2 * i64::from(assignment & 2 != 0)
+                    + 2 * i64::from(assignment & 4 == 0)
+                    + 1;
+                let mut assumptions: Vec<_> = inputs
+                    .iter()
+                    .enumerate()
+                    .map(|(bit, &lit)| {
+                        if assignment & (1 << bit) != 0 {
+                            lit
+                        } else {
+                            !lit
+                        }
+                    })
+                    .collect();
+                assumptions.extend(
+                    outputs
+                        .iter()
+                        .map(|&(lit, bound)| if value <= bound { lit } else { !lit }),
+                );
+                // Every old and new bound must coexist, including DPW thresholds.
+                assert_eq!(
+                    solver.solve_assumps(&assumptions).unwrap(),
+                    SolverResult::Sat,
+                    "Compatible bounds rejected: {algorithm:?} assignment={assignment}"
+                );
+                for index in inputs.len()..assumptions.len() {
+                    assumptions[index] = !assumptions[index];
+                    assert_eq!(
+                        solver.solve_assumps(&assumptions).unwrap(),
+                        SolverResult::Unsat,
+                        "Reverse implication missing: {algorithm:?} assignment={assignment} output={index}"
+                    );
+                    assumptions[index] = !assumptions[index];
+                }
+            }
+            if matches!(
+                algorithm,
+                PbEncoding::RustsatGeneralizedTotalizer | PbEncoding::RustsatBinaryAdder
+            ) {
+                assert_eq!(
+                    cache.weighted.len(),
+                    2,
+                    "Upper and inverted lower counters must be shared"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn structured_threshold_cache_ignores_group_order_and_constant_spelling() {
+        use crate::ast::sat_decision::IntegerRelation;
+        for algorithm in [PbEncoding::PindakaasBdd, PbEncoding::PindakaasSwc] {
+            let mut instance = SatInstance::new();
+            let mut variables = HashMap::new();
+            let mut cache = EncodingCache::default();
+            let inputs: Vec<_> = (0..6).map(|_| instance.new_lit()).collect();
+            let weights = [-2, 3, 2, -1, 4, 1];
+            let original: Vec<_> = weights
+                .iter()
+                .zip(&inputs)
+                .map(|(&weight, &lit)| (weight, Term::Literal(lit)))
+                .collect();
+            let groups = vec![
+                PbTermGroup {
+                    start: 0,
+                    end: 3,
+                    structure: PbTermStructure::Chain,
+                },
+                PbTermGroup {
+                    start: 3,
+                    end: 6,
+                    structure: PbTermStructure::Choice,
+                },
+            ];
+            let mut outputs = Vec::new();
+            for bound in [0, 4, 1, 0] {
+                let output = instance.new_lit();
+                let mut compiler = Compiler {
+                    instance: &mut instance,
+                    variables: &mut variables,
+                    counters: Some(&mut cache),
+                };
+                let mut terms = original.clone();
+                terms.push((1, Term::Constant(true)));
+                compiler
+                    .integer_relation(
+                        algorithm,
+                        Term::Literal(output),
+                        IntegerRelation::LessEqual,
+                        bound,
+                        &terms,
+                        &groups,
+                    )
+                    .unwrap();
+                let allocated = compiler.instance.var_manager_mut().n_used();
+                // Move the choice before the chain, retaining chain implication order.
+                let mut reordered = original[3..].to_vec();
+                reordered.reverse();
+                reordered.extend_from_slice(&original[..3]);
+                reordered.push((2, Term::Constant(true)));
+                let reordered_groups = vec![
+                    PbTermGroup {
+                        start: 3,
+                        end: 6,
+                        structure: PbTermStructure::Chain,
+                    },
+                    PbTermGroup {
+                        start: 0,
+                        end: 3,
+                        structure: PbTermStructure::Choice,
+                    },
+                ];
+                compiler
+                    .integer_relation(
+                        algorithm,
+                        Term::Literal(output),
+                        IntegerRelation::LessEqual,
+                        bound + 1,
+                        &reordered,
+                        &reordered_groups,
+                    )
+                    .unwrap();
+                let complementary: Vec<_> = terms
+                    .iter()
+                    .map(|(weight, term)| (-*weight, *term))
+                    .collect();
+                compiler
+                    .integer_relation(
+                        algorithm,
+                        Term::Literal(!output),
+                        IntegerRelation::LessEqual,
+                        -bound - 1,
+                        &complementary,
+                        &groups,
+                    )
+                    .unwrap();
+                assert_eq!(
+                    compiler.instance.var_manager_mut().n_used(),
+                    allocated,
+                    "Equivalent structured thresholds must share auxiliaries: {algorithm:?}"
+                );
+                outputs.push((output, bound));
+            }
+            let mut solver = CaDiCaL::default();
+            solver.add_cnf(instance.cnf().clone()).unwrap();
+            for assignment in 0usize..64 {
+                let set = |bit: usize| assignment & (1usize << bit) != 0;
+                if (set(1) && !set(0)) || (set(2) && !set(1)) || (assignment >> 3).count_ones() > 1
+                {
+                    continue;
+                }
+                let value = 1 + weights
+                    .iter()
+                    .enumerate()
+                    .map(|(bit, weight)| weight * i64::from(set(bit)))
+                    .sum::<i64>();
+                let mut assumptions: Vec<_> = inputs
+                    .iter()
+                    .enumerate()
+                    .map(|(bit, &lit)| if set(bit) { lit } else { !lit })
+                    .collect();
+                assumptions.extend(
+                    outputs
+                        .iter()
+                        .map(|&(lit, bound)| if value <= bound { lit } else { !lit }),
+                );
+                assert_eq!(
+                    solver.solve_assumps(&assumptions).unwrap(),
+                    SolverResult::Sat
+                );
+                for index in inputs.len()..assumptions.len() {
+                    assumptions[index] = !assumptions[index];
+                    assert_eq!(
+                        solver.solve_assumps(&assumptions).unwrap(),
+                        SolverResult::Unsat
+                    );
+                    assumptions[index] = !assumptions[index];
+                }
+            }
+        }
+    }
 
     #[test]
     fn table_mdd_shares_suffixes_and_rejects_malformed_rows() {

@@ -28,7 +28,7 @@ use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_con
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::SolveTimeBudget;
-use crate::solver::adaptors::rustsat::decisions::{CardinalityCache, compile_decisions_with_cache};
+use crate::solver::adaptors::rustsat::decisions::{EncodingCache, compile_decisions_with_cache};
 use crate::solver::{
     self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
     SolverMutCallback, private,
@@ -53,7 +53,7 @@ pub struct Sat {
     solver_inst: CaDiCaL<'static, 'static>,
     decision_refs: Option<Vec<Name>>,
     objective: Option<super::objective::CompiledObjective>,
-    counters: CardinalityCache,
+    counters: EncodingCache,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
 }
@@ -71,7 +71,7 @@ impl Default for Sat {
             model_inst: None,
             decision_refs: None,
             objective: None,
-            counters: CardinalityCache::default(),
+            counters: EncodingCache::default(),
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -301,7 +301,7 @@ impl Sat {
         solution: &HashMap<Name, Literal>,
         var_map: &mut HashMap<Name, Lit>,
         next_free: &mut u32,
-        counters: &mut CardinalityCache,
+        counters: &mut EncodingCache,
     ) -> Result<(), SolverError> {
         let Some(dominance_expression) = dominance_expression else {
             return Ok(());
@@ -589,7 +589,7 @@ impl SolverAdaptor for Sat {
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
         self.objective = None;
-        self.counters = CardinalityCache::default();
+        self.counters = EncodingCache::default();
         self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
             Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
             _ => expr.clone(),
