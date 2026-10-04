@@ -157,6 +157,9 @@ pub enum Expression {
     #[polyquine_skip]
     SatElement(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
 
+    /// Whole-value distinctness after constructing representation-independent comparisons.
+    SatAllDifferentComparisons(Metadata, Moo<Expression>),
+
     /// A matrix slice: `a[indices]`.
     ///
     /// One of the indicies may be `None`, representing the dimension of the matrix we want to take
@@ -1405,7 +1408,9 @@ impl Expression {
                     Some(Domain::int(vec![Range::Bounded(1, num_elems)]))
                 }
             }
-            Expression::SatElement(_, _, _, _) => Some(Domain::bool()),
+            Expression::SatElement(_, _, _, _) | Expression::SatAllDifferentComparisons(_, _) => {
+                Some(Domain::bool())
+            }
             Expression::Table(_, _, _) => Some(Domain::bool()),
             Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
             Expression::AtLeast(_, _, _, _) => Some(Domain::bool()),
@@ -2026,6 +2031,7 @@ impl Expression {
             UnsafeIndex,
             SafeIndex,
             SatElement,
+            SatAllDifferentComparisons,
             UnsafeSlice,
             SafeSlice,
             InDomain,
@@ -2819,6 +2825,9 @@ impl Display for Expression {
                 write!(f, "elementId({matrix}, {value})")
             }
             Expression::IndexOf(_, matrix, value) => write!(f, "indexOf({matrix}, {value})"),
+            Expression::SatAllDifferentComparisons(_, conditions) => {
+                write!(f, "sat-allDifferent-comparisons({conditions})")
+            }
             Expression::SatElement(_, matrix, index, value) => {
                 write!(f, "satElement({matrix}, {index}, {value})")
             }
@@ -3173,7 +3182,9 @@ impl Typeable for Expression {
             Expression::SmtDistinct(_, _) => ReturnType::Bool,
             Expression::AllDifferentExcept(_, _, _) => ReturnType::Bool,
             Expression::ElementId(_, _, _) | Expression::IndexOf(_, _, _) => ReturnType::Int,
-            Expression::SatElement(_, _, _, _) => ReturnType::Bool,
+            Expression::SatElement(_, _, _, _) | Expression::SatAllDifferentComparisons(_, _) => {
+                ReturnType::Bool
+            }
             Expression::Table(_, _, _) => ReturnType::Bool,
             Expression::NegativeTable(_, _, _) => ReturnType::Bool,
             Expression::AtLeast(_, _, _, _) => ReturnType::Bool,
@@ -3447,6 +3458,7 @@ impl Expression {
             | Expression::PermInverse(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
+            | Expression::SatAllDifferentComparisons(_, m1)
             | Expression::SmtDistinct(_, m1)
             | Expression::Factorial(_, m1)
             | Expression::Range(_, m1)
@@ -3764,6 +3776,7 @@ impl Expression {
             | Expression::PermInverse(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
+            | Expression::SatAllDifferentComparisons(_, m1)
             | Expression::SmtDistinct(_, m1)
             | Expression::Factorial(_, m1)
             | Expression::Participants(_, m1)

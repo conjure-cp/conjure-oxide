@@ -140,6 +140,7 @@ pub(super) fn compile_decisions_with_cache(
                 output,
                 inputs,
                 except,
+                comparisons,
                 encoding,
                 amo_encoding,
                 pb_encoding,
@@ -150,10 +151,27 @@ pub(super) fn compile_decisions_with_cache(
                     Term::Literal(literal) if asserted.contains(&!literal) => Term::Constant(false),
                     output => output,
                 };
+                if let Some(comparisons) = comparisons {
+                    if encoding.as_ref().is_none_or(|selection| {
+                        selection.algorithm
+                            != crate::ast::sat_decision::AllDifferentEncoding::Pairwise
+                    }) {
+                        return Err(SolverError::ModelInvalid(
+                            "Compound allDifferent requires the pairwise encoding".into(),
+                        ));
+                    }
+                    let terms = comparisons
+                        .iter()
+                        .map(|condition| compiler.encode(condition))
+                        .collect::<Result<Vec<_>, _>>()?;
+                    let truth = compiler.combine(true, terms);
+                    compiler.equate(output, truth);
+                    continue;
+                }
                 compiler.alldifferent(
                     output,
                     inputs,
-                    *except,
+                    except.as_ref(),
                     encoding,
                     amo_encoding,
                     pb_encoding,
@@ -392,6 +410,15 @@ impl Compiler<'_> {
         algorithm: crate::ast::sat_decision::AmoEncoding,
         terms: Vec<Term>,
     ) -> Result<(), SolverError> {
+        self.asserted_amo_guarded(algorithm, terms, None)
+    }
+
+    fn asserted_amo_guarded(
+        &mut self,
+        algorithm: crate::ast::sat_decision::AmoEncoding,
+        terms: Vec<Term>,
+        guard: Option<Lit>,
+    ) -> Result<(), SolverError> {
         let true_count = terms
             .iter()
             .filter(|term| matches!(term, Term::Constant(true)))
@@ -404,13 +431,13 @@ impl Compiler<'_> {
             })
             .collect();
         if true_count >= 2 {
-            self.assert(Term::Constant(false));
+            self.assert_guarded(Term::Constant(false), guard);
         } else if true_count == 1 {
             for literal in literals {
-                self.assert(Term::Literal(!literal));
+                self.assert_guarded(Term::Literal(!literal), guard);
             }
         } else {
-            self.amo(algorithm, literals)?;
+            self.amo_guarded(algorithm, literals, guard)?;
         }
         Ok(())
     }
@@ -672,7 +699,7 @@ impl Compiler<'_> {
         &mut self,
         output: Term,
         inputs: &[crate::ast::sat_decision::SatIntegerView],
-        except: Option<i64>,
+        except: Option<&crate::ast::sat_decision::SatIntegerView>,
         encoding: &Option<
             crate::ast::sat_decision::EncodingSelection<
                 crate::ast::sat_decision::AllDifferentEncoding,
@@ -711,7 +738,9 @@ impl Compiler<'_> {
                 let choices = input.choices.as_ref().ok_or_else(|| SolverError::ModelInvalid(
                     "allDifferent value-amo requires value indicators for every operand (Direct or Boolean views)".into()))?;
                 for (value, expression) in choices {
-                    if except == Some(*value) {
+                    if except
+                        .is_some_and(|except| except.terms.is_empty() && except.constant == *value)
+                    {
                         continue;
                     }
                     by_value
@@ -720,9 +749,34 @@ impl Compiler<'_> {
                         .push(self.encode(expression)?);
                 }
             }
-            for terms in by_value.into_values().filter(|terms| terms.len() >= 2) {
+            for (value, terms) in by_value.into_iter().filter(|(_, terms)| terms.len() >= 2) {
+                let exempt = if let Some(except) = except {
+                    let pb = pb_encoding
+                        .as_ref()
+                        .ok_or_else(|| {
+                            SolverError::ModelInvalid(
+                                "Unresolved allDifferent PB encoding decision".into(),
+                            )
+                        })?
+                        .algorithm;
+                    let value = crate::ast::sat_decision::SatIntegerView {
+                        constant: value,
+                        terms: vec![],
+                        groups: vec![],
+                        choices: None,
+                    };
+                    self.view_equality(except, &value, pb)?
+                } else {
+                    Term::Constant(false)
+                };
                 if matches!(output, Term::Constant(true)) {
-                    self.asserted_amo(amo, terms)?;
+                    match exempt {
+                        Term::Constant(true) => (),
+                        Term::Constant(false) => self.asserted_amo(amo, terms)?,
+                        Term::Literal(literal) => {
+                            self.asserted_amo_guarded(amo, terms, Some(!literal))?
+                        }
+                    }
                 } else {
                     let pb = pb_encoding
                         .as_ref()
@@ -742,24 +796,19 @@ impl Compiler<'_> {
                         &terms,
                         &[],
                     )?;
-                    truths.push(Term::Literal(truth));
+                    let truth = self.combine(false, vec![exempt, Term::Literal(truth)]);
+                    truths.push(truth);
                 }
             }
-        } else if let Some(except) = except {
+        } else if let Some(exception) = except {
             let pb = pb_encoding
                 .as_ref()
                 .ok_or_else(|| {
                     SolverError::ModelInvalid("Unresolved allDifferent PB encoding decision".into())
                 })?
                 .algorithm;
-            let exception = crate::ast::sat_decision::SatIntegerView {
-                constant: except,
-                terms: vec![],
-                groups: vec![],
-                choices: None,
-            };
             for (index, left) in inputs.iter().enumerate() {
-                let exempt = self.view_equality(left, &exception, pb)?;
+                let exempt = self.view_equality(left, exception, pb)?;
                 for right in &inputs[index + 1..] {
                     let distinct = self.view_equality(left, right, pb)?.negated();
                     let truth = self.combine(false, vec![exempt, distinct]);
@@ -2299,14 +2348,6 @@ impl Compiler<'_> {
         }
         Ok(())
     }
-    fn amo(
-        &mut self,
-        algorithm: crate::ast::sat_decision::AmoEncoding,
-        inputs: Vec<Lit>,
-    ) -> Result<(), SolverError> {
-        self.amo_guarded(algorithm, inputs, None)
-    }
-
     fn amo_guarded(
         &mut self,
         algorithm: crate::ast::sat_decision::AmoEncoding,
@@ -3892,9 +3933,17 @@ mod pseudo_boolean_tests {
             for pb in PbEncoding::ALL {
                 for amo in AmoEncoding::ALL {
                     for (kind, except) in (0..5).flat_map(|kind| {
-                        [None, Some(-2), Some(0), Some(3), Some(42)]
-                            .into_iter()
-                            .map(move |except| (kind, except))
+                        [
+                            None,
+                            Some(-2),
+                            Some(0),
+                            Some(3),
+                            Some(42),
+                            Some(43),
+                            Some(44),
+                        ]
+                        .into_iter()
+                        .map(move |except| (kind, except))
                     }) {
                         let mut inputs = views.clone();
                         match kind {
@@ -3932,9 +3981,19 @@ mod pseudo_boolean_tests {
                                 }
                             }
                             let mut decisions = vec![SatEncodingDecision::AllDifferent {
+                                comparisons: None,
                                 output: expressions[9].clone(),
                                 inputs: inputs.clone(),
-                                except,
+                                except: except.map(|constant| match constant {
+                                    43 => views[0].clone(),
+                                    44 => views[2].clone(),
+                                    _ => SatIntegerView {
+                                        constant,
+                                        terms: vec![],
+                                        groups: vec![],
+                                        choices: None,
+                                    },
+                                }),
                                 encoding: Some(EncodingSelection {
                                     algorithm: strategy,
                                     provenance: SelectionProvenance::ExplicitConfiguration,
@@ -3989,7 +4048,20 @@ mod pseudo_boolean_tests {
                                 let truth = (0..inputs.len()).all(|left| {
                                     (left + 1..inputs.len()).all(|right| {
                                         numeric[left] != numeric[right]
-                                            || Some(numeric[left]) == except
+                                            || Some(numeric[left])
+                                                == match except {
+                                                    Some(43) => Some(numeric[0]),
+                                                    Some(44) => Some(
+                                                        values[2]
+                                                            .iter()
+                                                            .enumerate()
+                                                            .map(|(column, value)| {
+                                                                value * i64::from(set(6 + column))
+                                                            })
+                                                            .sum(),
+                                                    ),
+                                                    value => value,
+                                                }
                                     })
                                 });
                                 for output in [false, true] {

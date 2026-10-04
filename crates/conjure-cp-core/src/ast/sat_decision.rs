@@ -58,13 +58,16 @@ pub enum SatEncodingDecision {
         value: SatIntegerView,
         encoding: Option<EncodingSelection<PbEncoding>>,
     },
-    /// Define numeric distinctness, with an optional repeated exception value.
+    /// Define scalar or whole-value distinctness, with an optional repeated exception value.
     AllDifferent {
         output: Expression,
         inputs: Vec<SatIntegerView>,
+        /// Pair conditions for compound values, lowered through the existing equality rules.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        comparisons: Option<Vec<Expression>>,
         /// This value may occur repeatedly.
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        except: Option<i64>,
+        except: Option<SatIntegerView>,
         encoding: Option<EncodingSelection<AllDifferentEncoding>>,
         amo_encoding: Option<EncodingSelection<AmoEncoding>>,
         pb_encoding: Option<EncodingSelection<PbEncoding>>,
@@ -178,6 +181,7 @@ impl Display for SatEncodingDecision {
                 output,
                 inputs,
                 except,
+                comparisons,
                 encoding,
                 amo_encoding,
                 pb_encoding,
@@ -187,9 +191,23 @@ impl Display for SatEncodingDecision {
                     .map(ToString::to_string)
                     .collect::<Vec<_>>()
                     .join(", ");
-                let constraint = match except {
-                    Some(value) => format!("allDifferentExcept({inputs}, {value})"),
-                    None => format!("allDifferent({inputs})"),
+                let constraint = if let Some(comparisons) = comparisons {
+                    format!(
+                        "allDifferentComparisons({})",
+                        comparisons
+                            .iter()
+                            .map(ToString::to_string)
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                } else {
+                    match except {
+                        Some(value) if value.terms.is_empty() => {
+                            format!("allDifferentExcept({inputs}, {})", value.constant)
+                        }
+                        Some(value) => format!("allDifferentExcept({inputs}, {value})"),
+                        None => format!("allDifferent({inputs})"),
+                    }
                 };
                 write!(
                     f,
@@ -295,17 +313,31 @@ impl SatEncodingDecision {
             Self::IntegerRelation { output, terms, .. } => std::iter::once(output)
                 .chain(terms.iter().map(|(_, input)| input))
                 .collect(),
-            Self::AllDifferent { output, inputs, .. } | Self::Table { output, inputs, .. } => {
-                std::iter::once(output)
-                    .chain(inputs.iter().flat_map(|input| {
-                        input
-                            .terms
-                            .iter()
-                            .map(|(_, term)| term)
-                            .chain(input.choices.iter().flatten().map(|(_, term)| term))
-                    }))
-                    .collect()
-            }
+            Self::AllDifferent {
+                output,
+                inputs,
+                except,
+                comparisons,
+                ..
+            } => std::iter::once(output)
+                .chain(comparisons.iter().flatten())
+                .chain(inputs.iter().chain(except.iter()).flat_map(|input| {
+                    input
+                        .terms
+                        .iter()
+                        .map(|(_, term)| term)
+                        .chain(input.choices.iter().flatten().map(|(_, term)| term))
+                }))
+                .collect(),
+            Self::Table { output, inputs, .. } => std::iter::once(output)
+                .chain(inputs.iter().flat_map(|input| {
+                    input
+                        .terms
+                        .iter()
+                        .map(|(_, term)| term)
+                        .chain(input.choices.iter().flatten().map(|(_, term)| term))
+                }))
+                .collect(),
             Self::Element {
                 index_view,
                 value,
@@ -645,9 +677,10 @@ fn resolve_alldifferent_choices(decisions: &mut [SatEncodingDecision]) {
         .filter_map(|decision| match decision {
             SatEncodingDecision::AllDifferent {
                 inputs,
+                comparisons,
                 encoding: None,
                 ..
-            } => Some(inputs.iter().all(|input| input.choices.is_some())),
+            } => Some(comparisons.is_none() && inputs.iter().all(|input| input.choices.is_some())),
             _ => None,
         })
         .collect();
@@ -1114,10 +1147,21 @@ fn resolve_pb_choices(decisions: &mut [SatEncodingDecision]) {
             } => Some(&value.terms),
             SatEncodingDecision::AllDifferent {
                 inputs,
+                except,
                 pb_encoding: None,
                 ..
-            }
-            | SatEncodingDecision::Table {
+            } => inputs
+                .iter()
+                .chain(except.iter())
+                .max_by_key(|input| {
+                    input
+                        .terms
+                        .iter()
+                        .map(|(weight, _)| i128::from(*weight).abs())
+                        .sum::<i128>()
+                })
+                .map(|input| &input.terms),
+            SatEncodingDecision::Table {
                 inputs,
                 pb_encoding: None,
                 ..
@@ -1328,6 +1372,7 @@ mod alldifferent_choice_tests {
             output: true.into(),
             inputs: vec![input.clone(), input],
             except: None,
+            comparisons: None,
             encoding: None,
             amo_encoding: None,
             pb_encoding: None,
@@ -1364,6 +1409,21 @@ mod alldifferent_choice_tests {
                 ..
             }
         )));
+        let mut compound = build(choice.clone());
+        if let SatEncodingDecision::AllDifferent { comparisons, .. } = &mut compound {
+            *comparisons = Some(vec![true.into()]);
+        }
+        resolve_alldifferent_choices(std::slice::from_mut(&mut compound));
+        assert!(matches!(
+            compound,
+            SatEncodingDecision::AllDifferent {
+                encoding: Some(EncodingSelection {
+                    algorithm: AllDifferentEncoding::Pairwise,
+                    ..
+                }),
+                ..
+            }
+        ));
         settings::set_alldifferent_encoding(Some(AllDifferentEncoding::Pairwise));
         let mut decisions = vec![build(choice)];
         resolve_encoding_choices(&mut decisions);

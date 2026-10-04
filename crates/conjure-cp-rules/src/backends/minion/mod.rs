@@ -1433,6 +1433,94 @@ fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> Applica
     ))
 }
 
+/// A variable exception uses defined occurrence counts, even beneath reification.
+#[register_rule("Minion", 4100, [AllDifferentExcept])]
+fn alldifferent_variable_except(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::AllDifferentExcept(_, matrix, except) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    if eval_constant(except).is_some() || !except.domain_of().is_some_and(|domain| domain.is_int())
+    {
+        return Err(RuleNotApplicable);
+    }
+    let inputs = matrix.unwrap_list_cow().ok_or(RuleNotApplicable)?;
+    if inputs.len() < 2 {
+        return Ok(RuleEffect::pure(true.into()));
+    }
+    let size = i32::try_from(inputs.len()).map_err(|_| RuleNotApplicable)?;
+    let mut values = std::collections::BTreeSet::new();
+    // Large domains use pairwise comparisons rather than enumerating every value.
+    let limit = inputs.len().saturating_mul(inputs.len());
+    for input in inputs.iter() {
+        let domain = input
+            .domain_of()
+            .ok_or(RuleNotApplicable)?
+            .resolve()
+            .map_err(|_| RuleNotApplicable)?;
+        if !matches!(domain.as_ref(), GroundDomain::Int(_)) {
+            return Err(RuleNotApplicable);
+        }
+        for value in domain.values().map_err(|_| RuleNotApplicable)? {
+            let Lit::Int(value) = value else {
+                return Err(RuleNotApplicable);
+            };
+            values.insert(value);
+            if values.len() > limit {
+                let mut pairs = Vec::new();
+                for (index, left) in inputs.iter().enumerate() {
+                    for right in &inputs[index + 1..] {
+                        pairs.push(Expr::Or(
+                            Metadata::new(),
+                            Moo::new(into_matrix_expr![vec![
+                                Expr::Neq(
+                                    Metadata::new(),
+                                    Moo::new(left.clone()),
+                                    Moo::new(right.clone())
+                                ),
+                                Expr::Eq(Metadata::new(), Moo::new(left.clone()), except.clone()),
+                            ]]),
+                        ));
+                    }
+                }
+                return Ok(RuleEffect::pure(Expr::And(
+                    Metadata::new(),
+                    Moo::new(into_matrix_expr![pairs]),
+                )));
+            }
+        }
+    }
+    let mut symbols = symbols.clone();
+    let mut counts = Vec::new();
+    let mut bounds = Vec::new();
+    let mut literals = Vec::new();
+    for value in values {
+        let count: Expr =
+            Reference::new(symbols.gen_find_auxiliary(&Domain::int(vec![Range::Bounded(0, size)])))
+                .into();
+        let value: Expr = value.into();
+        bounds.push(Expr::Or(
+            Metadata::new(),
+            Moo::new(into_matrix_expr![vec![
+                Expr::Eq(Metadata::new(), except.clone(), Moo::new(value.clone())),
+                Expr::Leq(Metadata::new(), Moo::new(count.clone()), Moo::new(1.into())),
+            ]]),
+        ));
+        counts.push(count);
+        literals.push(value);
+    }
+    let definition = Expr::GccWeak(
+        Metadata::new(),
+        Moo::new(into_matrix_expr![inputs.into_owned()]),
+        Moo::new(into_matrix_expr![literals]),
+        Moo::new(into_matrix_expr![counts]),
+    );
+    Ok(RuleEffect::new(
+        Expr::And(Metadata::new(), Moo::new(into_matrix_expr![bounds])),
+        vec![definition],
+        symbols,
+    ))
+}
+
 /// Native element requires a valid index; materialise identity entries across the finite bounds.
 #[register_rule("Minion", 19500, [ElementId])]
 fn total_identity_element(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -2962,6 +3050,41 @@ mod tests {
     use conjure_cp::ast::{DeclarationPtr, Domain};
     use conjure_cp::matrix_expr;
     use conjure_cp::rule_engine::{ApplicationError, get_rule_by_name};
+
+    #[test]
+    fn alldifferent_variable_except_defines_counts_outside_its_truth() {
+        let input = |name: &str, lower, upper| -> Expr {
+            Reference::new(DeclarationPtr::new_find(
+                Name::user(name),
+                Domain::int(vec![Range::Bounded(lower, upper)]),
+            ))
+            .into()
+        };
+        let matrix = into_matrix_expr!(vec![input("x", -1, 0), input("y", 0, 1)]);
+        let expr = Expr::AllDifferentExcept(
+            Metadata::new(),
+            Moo::new(matrix),
+            Moo::new(input("exception", -1, 1)),
+        );
+        let effect = alldifferent_variable_except(&expr, &SymbolTable::new()).unwrap();
+        assert!(matches!(effect.new_expression, Expr::And(_, _)));
+        let Expr::GccWeak(_, _, values, counts) = &effect.new_top[0] else {
+            panic!("count definition must be unconditional")
+        };
+        assert_eq!(values.unwrap_list_cow().unwrap().len(), 3);
+        assert_eq!(counts.unwrap_list_cow().unwrap().len(), 3);
+        let wide = Expr::AllDifferentExcept(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(vec![
+                input("x", -100, 100),
+                input("y", -100, 100)
+            ])),
+            Moo::new(input("exception", -1, 1)),
+        );
+        let effect = alldifferent_variable_except(&wide, &SymbolTable::new()).unwrap();
+        assert!(effect.new_top.is_empty());
+        assert!(matches!(effect.new_expression, Expr::And(_, _)));
+    }
 
     /// Builds a boolean decision-variable atomic expression.
     fn bool_atom(name: &str) -> Expr {

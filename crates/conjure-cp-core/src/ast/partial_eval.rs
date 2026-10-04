@@ -165,23 +165,30 @@ fn cheap_singleton_int_value(expr: &Expr) -> Option<i32> {
 }
 
 fn matrix_index_offset(index_domain: &DomainPtr, index: i32) -> Option<usize> {
-    let ranges = index_domain.as_int_ground()?;
-    let [range] = ranges.as_slice() else {
-        return None;
-    };
-    let from = *range.low()?;
-    usize::try_from(index.checked_sub(from)?).ok()
+    integer_index_offset(index_domain.as_int_ground()?, index)
 }
 
 fn ground_matrix_index_offset(index_domain: &GroundDomain, index: i32) -> Option<usize> {
     let GroundDomain::Int(ranges) = index_domain else {
         return None;
     };
-    let [range] = ranges.as_slice() else {
-        return None;
-    };
-    let from = *range.low()?;
-    usize::try_from(index.checked_sub(from)?).ok()
+    integer_index_offset(ranges, index)
+}
+
+/// Locate a label by its domain position, including gaps, without enumerating ranges.
+fn integer_index_offset(ranges: &[Range<i32>], index: i32) -> Option<usize> {
+    let mut offset = 0usize;
+    for range in ranges {
+        let lower = i64::from(*range.low()?);
+        let index = i64::from(index);
+        let upper = range.high().map(|value| i64::from(*value));
+        if index >= lower && upper.is_none_or(|upper| index <= upper) {
+            return offset.checked_add(usize::try_from(index - lower).ok()?);
+        }
+        let length = (upper? - lower + 1).max(0);
+        offset = offset.checked_add(usize::try_from(length).ok()?)?;
+    }
+    None
 }
 
 /// Selects one element from a matrix literal, including a referenced constant matrix.
@@ -1191,7 +1198,8 @@ fn run_partial_evaluator_with_mode(expr: &Expr, mode: PartialEvalMode) -> Applic
         Expr::AllDifferentExcept(_, _, _)
         | Expr::ElementId(_, _, _)
         | Expr::IndexOf(_, _, _)
-        | Expr::SatElement(_, _, _, _) => Err(RuleNotApplicable),
+        | Expr::SatElement(_, _, _, _)
+        | Expr::SatAllDifferentComparisons(_, _) => Err(RuleNotApplicable),
     }
 }
 
@@ -1331,6 +1339,37 @@ mod tests {
 
     fn bool_lit(value: bool) -> Expr {
         Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Bool(value)))
+    }
+
+    #[test]
+    fn alldifferent_sparse_matrix_comparisons_select_actual_index_labels() {
+        let x = atom_ref("x");
+        let y = atom_ref("y");
+        let matrix = Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Matrix(
+                vec![x.clone(), y.clone()],
+                Domain::int(vec![Range::Single(-1), Range::Single(2)]),
+            ),
+        );
+        for (label, expected) in [(-1, x), (2, y)] {
+            let expr = Expr::SafeIndex(
+                Metadata::new(),
+                Moo::new(matrix.clone()),
+                vec![label.into()],
+            );
+            assert_eq!(
+                run_partial_evaluator_local(&expr).unwrap().new_expression,
+                expected
+            );
+        }
+        for label in [0, 1, 3] {
+            assert!(resolve_matrix_element(&matrix, label).is_none());
+        }
+        assert_eq!(
+            integer_index_offset(&[Range::Bounded(i32::MIN, i32::MAX)], i32::MAX),
+            Some(u32::MAX as usize)
+        );
     }
 
     fn atom_ref(name: &str) -> Expr {

@@ -1214,7 +1214,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         // Needs the target's domain to expand, which this function has no access to; the
         // fallback rewrite rule (passes::attribute_as_constraint) handles expansion instead.
-        Expr::AttributeAsConstraint(_, _, _, _) | Expr::SatElement(_, _, _, _) => None,
+        Expr::AttributeAsConstraint(_, _, _, _)
+        | Expr::SatElement(_, _, _, _)
+        | Expr::SatAllDifferentComparisons(_, _) => None,
     }
 }
 
