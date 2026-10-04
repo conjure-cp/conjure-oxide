@@ -1,12 +1,12 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after constant integer allDifferentExcept was connected.
+Inventory date: 2026-10-04, branch `sat-ir` after variable exceptions and compound allDifferent operands were connected.
 
-406 of 642 runnable integration fixtures have SAT enabled, exercising 22,804 SAT portfolios. Full acceptance for the constant-exception stage passed all 1,592 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 236 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+413 of 649 runnable integration fixtures have SAT enabled, exercising 23,536 SAT portfolios. Full acceptance passes all 1,602 workspace tests (14 skipped), plus workspace doctests. All 18 focused checks, independent audits and 27 cleaned normal golden checks pass. The preceding constant-exception stage passed all 1,592 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 236 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
-Scalar integer/Boolean allDifferent now passes pairwise and eligible value-AMO portfolios. Constant integer allDifferentExcept is connected; variable exceptions and compound-valued operands remain gaps; the dedicated fixture also covers sparse domains, repeated operands, constants, negation and reification. No new upstream library bug was confirmed.
+Scalar integer/Boolean allDifferent and variable integer allDifferentExcept now pass pairwise and eligible value-AMO portfolios. Compound allDifferent/allDifferentExcept reuse whole-value equality through pairwise semantic decisions, with verified tuple, record, set, matrix and sequence portfolios. No new upstream library bug was confirmed.
 
 Constant-row positive/negative tables now pass tuple and MDD portfolios, including reification. Short tables, binary-support encodings and non-constant row relations remain gaps. A fresh compact screen of `savilerow/sportsScheduling2` lowers its tables but leaves `flatten` inside allDifferent; that fixture remains disabled.
 
@@ -345,7 +345,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Complete the remaining scalar allDifferent connections: variable exceptions and compound-valued operands. Constant integer `allDifferentExcept` now uses the existing pairwise/value-AMO family across all five integer representations. Mixed integer/Boolean-indicator arithmetic is also connected.
+1. Keep compound comparison representation costs visible: packed sequence comparisons expand substantially and multiple padding codes can reconstruct the same sequence. Variable integer exceptions and compound allDifferent/allDifferentExcept are connected; continue checking complete semantic solution sets.
 2. Complete remaining modelling/encoding families and missing library connections, then continue fresh uniform rechecks of the smallest disabled fixtures. Feature completeness takes priority over measurement and heuristic tuning.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
@@ -463,3 +463,14 @@ The new sparse/reified/negated regression returns 21 independently enumerated as
 Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,592 tests (14 skipped), plus workspace doctests. `make check` and all nine focused checks passed. All eleven final normal golden checks passed, including the existing allDifferent regression, sparse Rank dominance and five restored capped-search fixtures. Independent audits verify all 320 new SAT portfolios. The sparse regression retains 50 pairwise and 30 value-AMO portfolios, covering all six AMO algorithms and five PB providers. No new upstream library correctness bug was confirmed.
 
 Timing cleanup preserves prior fields in 645 files and restores 24 capped-search solution samples. The new regression and expanded comprehension fixture have deliberate five-second budgets; the two expanded Savile Row fixtures have ten-second budgets. Other existing budgets remain unchanged. Coverage is 406/642 runnable fixtures and 22,804 SAT portfolios; 22,667 are uniform across 318 fixtures, with 236 fixtures still disabled. Exactly four fixtures add 80 portfolios each; no existing portfolios were lost.
+
+
+## Variable exceptions and compound distinctness
+
+Variable integer exceptions now retain actual-value numeric views in allDifferent decisions, including their declaration references and PB selection inputs. Pairwise shares operand/exception equalities; value-AMO guards native AMO buckets by exception/value equality. Reified uses retain full truth equivalences. Minion defines exact occurrence counts with an unconditional GCC and uses `(exception = value) or (count <= 1)` as the constraint truth; wide domains use pairwise comparisons instead of exhaustive domain enumeration.
+
+Compound operands pass through a pending whole-value comparison node and existing equality rules. The terminal allDifferent decision keeps the pairwise encoding choice. Explicit value-AMO is rejected for compound values. No clauses are stored in the model. Tuple domains with different packed codes, records with reordered fields, sets, sparse-index matrices and variable-length sequences all match independent enumeration, including repeated operands, constant/variable exceptions, assertions, negation and reification.
+
+Seven new fixtures add 732 SAT portfolios without removing existing portfolios. Conjure rejects compound exceptions, and Savile Row requires constant scalar exceptions; these fixtures record that limitation and use complete independent enumeration. Minion's variable integer regression agrees on all 29 assignments. Full `NEXTEST_TEST_THREADS=4 make test-accept` passes all 1,602 tests (14 skipped), plus workspace doctests. `make check`, all 18 focused checks, independent audits and 27 cleaned normal golden checks pass.
+
+The parser now accepts compound exception literals and keeps record-field contexts independent. Constant matrix indexing now locates sparse labels without enumerating whole intervals. The five existing standalone matrix equality/disequality cases still fail to load with non-Boolean references in a fresh first-representation probe; they remain separate gaps. A tuple-valued non-constant indexed lookup used as the exception also leaves an unlowered whole-value equality, confirming that the existing compound-lookup gap still applies. A singleton compound allDifferent probe retains undefined-index truth correctly. Packed sequence padding permits duplicate decoded assignments, so sequence audits verify the complete semantic set and validity of every decoded assignment. A larger two-slot signed-integer sequence probe produced large packed lowering traces; the committed one-slot Boolean regression retains empty/inactive-padding coverage while keeping all representation choices manageable. Neither observation is a confirmed RustSAT/Pindakaas bug. Mixed representations/channelling and performance tuning remain deferred.
