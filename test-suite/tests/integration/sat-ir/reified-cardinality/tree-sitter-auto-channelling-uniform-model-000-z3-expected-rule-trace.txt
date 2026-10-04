@@ -1,0 +1,116 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find amo: bool
+find duplicate: bool
+find eq: bool
+find ge: bool
+find gt: bool
+find le: bool
+find lt: bool
+find ne: bool
+find reversed: bool
+
+such that
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 1) <-> (amo),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) <= 2) <-> (le),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) < 2) <-> (lt),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) = 2) <-> (eq),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) != 2) <-> (ne),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) >= 2) <-> (ge),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)]) > 2) <-> (gt),
+(2 >= sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])) <-> (reversed),
+(sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..5)]) = 2) <-> (duplicate)
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..6)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])
+
+--
+
+sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..5)])
+   ~~> matrix_to_list ([("Base", 1998)])
+sum([toInt(a),toInt(a),toInt(!(b)),1,0;int(1..)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find f: bool
+find amo: bool
+find duplicate: bool
+find eq: bool
+find ge: bool
+find gt: bool
+find le: bool
+find lt: bool
+find ne: bool
+find reversed: bool
+
+such that
+
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)]) <= 1) <-> (amo),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)]) <= 2) <-> (le),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)]) < 2) <-> (lt),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)]) = 2) <-> (eq),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)]) != 2) <-> (ne),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)]) >= 2) <-> (ge),
+(sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)]) > 2) <-> (gt),
+(2 >= sum([toInt(a),toInt(b),toInt(c),toInt(d),toInt(e),toInt(f);int(1..)])) <-> (reversed),
+(sum([toInt(a),toInt(a),toInt(!(b)),1;int(1..)]) = 2) <-> (duplicate)
+
