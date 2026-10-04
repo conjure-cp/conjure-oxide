@@ -30,17 +30,18 @@ use uniplate::Uniplate;
 ///
 /// This is a fallback, and sits below every encoding-specific operation rule on purpose. An
 /// operation whose operands share an encoding that knows how to encode it is handled there and
-/// never reaches this rule; what is left over is the two cases that would otherwise be stuck --
-/// operands in different encodings, and an operation the operands' shared encoding has no rule
-/// for, such as a sum of order-encoded variables.
+/// never reaches this rule. Remaining operands may have different encodings, use an encoding with
+/// no rule for the operation, or include Boolean indicators needing an actual-value circuit view.
 #[register_rule("SAT", 4000, [Eq, Neq, Lt, Gt, Leq, Geq, AllDiff, Table, NegativeTable, SatElement, SatObjective, Sum, Product, Min, Max, Abs, Neg, SafeDiv, SafeMod, SafePow])]
 fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let encodings: HashSet<SATIntEncoding> = operands(expr)
-        .filter_map(|operand| match operand {
-            Expr::SATInt(_, encoding, _, _) => Some(encoding),
-            _ => None,
-        })
-        .collect();
+    let mut encodings = HashSet::new();
+    let mut has_indicator = false;
+    for operand in operands(expr) {
+        has_indicator |= ready_indicator(&operand);
+        if let Expr::SATInt(_, encoding, _, _) = operand {
+            encodings.insert(encoding);
+        }
+    }
 
     // Semantic allDifferent/table/element operands retain their ready value views.
     // Only rank codes need conversion; the decision rule handles the other encodings.
@@ -59,11 +60,13 @@ fn unify_sat_int_encodings(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     {
         return Err(RuleNotApplicable);
     }
-    // Nothing to do when every operand is already logarithmic, which includes having no `SATInt`
-    // operands at all.
-    if encodings
-        .iter()
-        .all(|encoding| matches!(encoding, SATIntEncoding::Log))
+    // Ready indicators need an actual-value view only when a circuit is required.
+    // Linear and count decisions run earlier and retain their original inputs.
+    let has_indicator = !retains_views && has_indicator;
+    if !has_indicator
+        && encodings
+            .iter()
+            .all(|encoding| matches!(encoding, SATIntEncoding::Log))
     {
         return Err(RuleNotApplicable);
     }
@@ -134,6 +137,20 @@ fn operands(expr: &Expr) -> impl Iterator<Item = Expr> {
 
 /// Re-encode one operand into the logarithmic encoding, leaving anything else alone.
 fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut SymbolTable) -> Expr {
+    if ready_indicator(&expr) {
+        let Expr::ToInt(_, input) = expr else {
+            unreachable!()
+        };
+        return Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(vec![
+                input.as_ref().clone(),
+                false.into()
+            ])),
+            (0, 1),
+        );
+    }
     let Expr::SATInt(_, encoding, bits, bounds) = &expr else {
         return expr;
     };
@@ -209,6 +226,12 @@ fn to_log(expr: Expr, clauses: &mut Vec<SatEncodingDecision>, symbols: &mut Symb
         Moo::new(into_matrix_expr!(log_bits)),
         (low, high),
     )
+}
+
+fn ready_indicator(expr: &Expr) -> bool {
+    matches!(expr, Expr::ToInt(_, input)
+        if crate::shared::utils::is_literal(input)
+            && input.domain_of().is_some_and(|domain| domain.is_bool()))
 }
 
 /// Turn order-encoded thresholds into one bit per value.
@@ -368,6 +391,23 @@ mod unsigned_tests {
     use crate::types::int::unsigned::{unsigned_capacity, unsigned_width, value_at_rank};
     use conjure_cp::ast::Name;
     use std::collections::HashMap;
+
+    #[test]
+    fn indicator_circuit_view_has_zero_sign_bit_without_auxiliaries() {
+        for value in [false, true] {
+            let indicator = Expr::ToInt(Metadata::new(), Moo::new(value.into()));
+            let mut decisions = Vec::new();
+            let decoded = to_log(indicator, &mut decisions, &mut SymbolTable::new());
+            let Expr::SATInt(_, SATIntEncoding::Log, bits, (0, 1)) = decoded else {
+                panic!("expected an actual-value indicator view")
+            };
+            let bits = bits.unwrap_list_ref().unwrap();
+            assert_eq!(bits.len(), 2);
+            assert_eq!(bits[0], value.into());
+            assert_eq!(bits[1], false.into());
+            assert!(decisions.is_empty());
+        }
+    }
 
     #[test]
     fn alldifferent_waits_for_value_views_and_only_converts_rank_codes() {
