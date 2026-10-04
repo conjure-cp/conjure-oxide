@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after asserted conjunctions were connected to native encodings.
+Inventory date: 2026-10-04, branch `sat-ir` after guarded Boolean counts were connected to native PB decisions.
 
-379 of 630 runnable integration fixtures have SAT enabled, exercising 20,173 SAT portfolios. Full acceptance for the asserted-conjunction stage passed all 1,563 workspace tests (14 skipped); workspace doctests passed separately. The earlier integer relation migration also passed full normal golden verification. The remaining 251 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+384 of 632 runnable integration fixtures have SAT enabled, exercising 21,423 SAT portfolios. Full acceptance for the guarded-count stage passed all 1,566 workspace tests (14 skipped), including workspace doctests. The earlier integer relation migration also passed full normal golden verification. The remaining 248 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -31,36 +31,47 @@ Explicit function lookup also needs a guard on its original argument domain: an 
 
 Native AMO/cardinality and PB selection now searches literal conjunctions beneath Root while preserving their grouping. Only asserted conjuncts are extracted; negation, disjunction, implication and reification are not asserted contexts. This avoids globally flattening the evaluator worklist. Both cardinality providers and all five PB providers match Conjure across all five integer representations in 50 explicit checks.
 
-The three-element occurrence set (`maxSize 2`, with `1 in s`) now has exactly the three expected solutions through native cardinality decisions. `sat-ir/asserted-conjunctions` adds nested cardinality and weighted bounds plus a reified scalar comparison. Direct reified counts such as `sum(toInt(...)) <= 1 <-> p` remain a separate known gap: integer relation selection deliberately reserves those counts for the root selector, which cannot assert a reified comparison.
+The three-element occurrence set (`maxSize 2`, with `1 in s`) now has exactly the three expected solutions through native cardinality decisions. `sat-ir/asserted-conjunctions` adds nested cardinality and weighted bounds plus a reified scalar comparison. The subsequent guarded-count connection below supports direct reified counts such as `sum(toInt(...)) <= 1 <-> p` through the existing PB-backed integer-relation decision.
 
 `conjure/function/function_total_int_02` passed all 1,000 SAT portfolios with `TEST_CASE_TIMEOUT=600`, taking about 168 seconds in that trial. It is enabled under full uniform selection; the earlier 120-second timeout was a performance observation, not unsupported semantics.
 
 `basic/function/sparse-partial` remains disabled. Its 120-second fresh trial timed out after the cardinality connection. The 600-second retry completed 600 SAT portfolios before receiving SIGKILL after about 472 seconds. No residual-constraint error was observed in that retry. The attempted process sample arrived after the process had exited, so the termination stage and cause are unconfirmed. The failed configuration and generated trial artefacts were restored. Code inspection identifies a possible resource stressor: the packed partial function has radix seven over six positions, yielding 117,649 integer codes. Direct then has 117,649 indicators, and RustSAT pairwise AMO would emit 6,920,584,776 clauses. This is a candidate to isolate, not confirmation that the killed trial reached that combination. No RustSAT/Pindakaas bug was established.
 
+## Guarded counts and bounded function probes
+
+Ready Boolean counts beneath negation, disjunction, implication, equivalence and `toInt` now become output-bearing integer-relation decisions. Both truth values are encoded by the selected PB provider. Asserted bounds retain native AMO/cardinality selection; asserted count disequality uses an equivalence decision. The selector traverses borrowed scalar/Boolean contexts, preserving conjunctions and avoiding binders and undefined-value bubbles. It does not add a clause encoder.
+
+Fifty explicit portfolios across all five integer representations, both cardinality providers and all five PB providers agree with nine independent and Conjure reference assignments. `sat-ir/guarded-counts` checks all six comparisons, reversed bounds, duplicates, negated operands, constants, guards and `toInt`; its full uniform sweep has 300 SAT portfolios. Dedicated AMO/cardinality-provider reification remains distinct from this PB-backed path.
+
+The original sparse-partial fixture passes Packed + BinaryValue with exactly five expected assignments. Bounded rewrite-only probes show Packed + Direct costs growing with the packed integer domain: three-by-three (64 codes) takes about 0.09 seconds, four-by-four (625) 0.32 seconds and five-by-five (7,776) 3.56 seconds. Six-by-six (117,649) exceeds the 15-second rewrite limit; BinaryValue finishes that rewrite in about 1.76 seconds. Pairwise CNF probes for the first two cases pass with 40,339 and 348,922 clauses respectively. These isolate representation-size growth before or during encoding, but do not establish the cause of the earlier SIGKILL or a library bug. The original full fixture stays disabled.
+
+A three-by-three full uniform trial also exceeded 120 seconds after 150 successful SAT portfolios. Reducing the codomain to two values keeps the third argument absent while making the packed function domain 27 codes and the packed relation/set domain 64 codes. `sat-ir/sparse-partial-small` then passed all 800 SAT portfolios in about 110 seconds under `TEST_CASE_TIMEOUT=120`.
+
+Fresh full uniform trials also enable `basic/toInt/{01,02-flatten}` and `basic/abs/03-nested`, each with 50 SAT portfolios. These rechecks establish current support; they do not attribute the fixes to the new guarded-count selector. No new upstream bug was confirmed. Mixed representations/channelling and the Minion masked function lookup discrepancy remain deferred.
+
 ## Summary of last recorded outcomes
 
 | Outcome | Fixtures | Evidence |
 | --- | ---: | --- |
-| Residual constraints in initial screen | 180 | Compact/first CLI screen failed to finish lowering. |
+| Residual constraints in initial screen | 178 | Compact/first CLI screen failed to finish lowering. |
 | Residual constraints in full uniform portfolio | 22 | Historical full uniform lowering failures; fresh passing and resource-limited trials are separated below. |
-| Panics | 3 | Two reconfirmed today; one historical full-portfolio failure needs retesting. |
-| Model-loading errors | 5 | All five reconfirmed today. |
+| Panics | 2 | Both reconfirmed with compact and first; the historical nested-absolute case now passes a full uniform portfolio. |
+| Model-loading errors | 5 | All five reconfirmed in the earlier targeted recheck. |
 | Initial screen timeouts | 37 | Eight-second compilation / twelve-second solve-process limits. |
 | Full uniform portfolio timeouts | 3 | 120-second per-fixture limit. |
 | External termination | 1 | Fresh sparse-partial trial received SIGKILL after about 472 seconds; cause unconfirmed. |
-| Total SAT-disabled runnable fixtures | 251 | Current configurations matched to survey records. |
+| Total SAT-disabled runnable fixtures | 248 | Current configurations matched to survey records. |
 
-Timeouts are performance observations under those limits, not proof of unsupported semantics. The 202 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
+Timeouts are performance observations under those limits, not proof of unsupported semantics. The 200 residual-constraint cases were not all rerun after the PB changes. Residual constraints identify incomplete lowering; they do not by themselves identify the missing rule or representation.
 
 ## Concrete crashes and loading errors
 
-The current release binary was checked with the tree-sitter parser, uniform channelling, compact and first heuristics, and one requested solution. Checks left fixture configurations and goldens unchanged.
+Before the guarded-count stage, targeted rechecks used the tree-sitter parser, uniform channelling, compact and first heuristics, and one requested solution. Those checks left fixture configurations and goldens unchanged.
 
 | Fixture | Observation | Current status |
 | --- | --- | --- |
 | `basic/lettings/04-domain` | SAT adaptor panics: `Domain should be ground`. | Reconfirmed with compact and first. |
 | `savilerow/const_matrix_test` | Indexing panics: `0 is not a valid index for dimension 0`. | Reconfirmed with compact and first; not established as exclusive to SAT. |
-| `basic/abs/03-nested` | Historical Direct division lookup panic: index underflow during nested arithmetic. | Compact and first now succeed; full uniform portfolio still needs a retest. Do not count this as a reconfirmed crash. |
 | `smt/matrix/2d-eq` | `Non-Boolean SAT reference: m`. | Reconfirmed with compact and first. |
 | `smt/matrix/overlapping-eq` | `Non-Boolean SAT reference: a`. | Reconfirmed with compact and first. |
 | `smt/matrix/overlapping-neq` | `Non-Boolean SAT reference: a`. | Reconfirmed with compact and first. |
@@ -112,7 +123,7 @@ Last tested with a 120-second per-fixture bound.
 - [hakank-eprime/xkcd](../../test-suite/tests/integration/hakank-eprime/xkcd/xkcd.essence)
 - [savilerow/absBug](../../test-suite/tests/integration/savilerow/absBug/input.essence)
 
-## Initial-screen residual constraints (180)
+## Initial-screen residual constraints (178)
 
 Last recorded in the compact/first screen, before the weighted PB changes. Each fixture below remains SAT-disabled; a fresh screen may move cases out of this list.
 
@@ -134,8 +145,6 @@ Last recorded in the compact/first screen, before the weighted PB changes. Each 
 - [basic/pow/04-flatten](../../test-suite/tests/integration/basic/pow/04-flatten/input.essence)
 - [basic/pow/05-negative-base](../../test-suite/tests/integration/basic/pow/05-negative-base/input.essence)
 - [basic/sequence/apply-out-of-range](../../test-suite/tests/integration/basic/sequence/apply-out-of-range/input.essence)
-- [basic/toInt/01](../../test-suite/tests/integration/basic/toInt/01/input.essence)
-- [basic/toInt/02-flatten](../../test-suite/tests/integration/basic/toInt/02-flatten/input.essence)
 - [bugs/treemorph-misses-node-01](../../test-suite/tests/integration/bugs/treemorph-misses-node-01/input.essence)
 - [conjure/all_diff/all_diff_except_comprehension_smoke](../../test-suite/tests/integration/conjure/all_diff/all_diff_except_comprehension_smoke/input.essence)
 - [conjure/function/function_complex_01](../../test-suite/tests/integration/conjure/function/function_complex_01/input.essence)
@@ -348,16 +357,17 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Reduce and isolate the sparse-partial resource termination; asserted occurrence-cardinality bounds are connected. Connect guarded/reified Boolean counts separately.
-2. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
-3. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
-4. Retest `basic/abs/03-nested` across the complete uniform portfolio; compact/first already succeed.
-5. Re-screen residual-constraint cases after the weighted PB changes, then group remaining failures by their actual residual ASTs.
-6. Revisit bounded timeouts with longer limits and separate compilation cost from solving cost.
+1. Connect dedicated AMO/cardinality-provider reification; ready guarded counts already use PB-backed equivalence decisions.
+2. Tune cost-aware representation/encoding selection and further isolate the original sparse-partial termination; bounded probes already show packed Direct growth.
+3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
+4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
+5. Retest the smallest remaining disabled arithmetic fixture; `basic/abs/03-nested` now passes all 50 uniform portfolios.
+6. Re-screen residual-constraint cases after the weighted PB changes, then group remaining failures by their actual residual ASTs.
+7. Revisit bounded timeouts with longer limits and separate compilation cost from solving cost.
 
 ## Passing performance follow-ups
 
-The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. General guarded/reified AMO/cardinality/PB remains open.
+The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts and linear comparisons use PB-backed equivalence decisions. Dedicated reification through the AMO/cardinality provider selections remains a separate library connection.
 
 ## Cross-backend masked lookup follow-up
 

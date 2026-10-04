@@ -1,6 +1,6 @@
 # SAT coverage survey, 2026-10-04
 
-SAT is enabled in **379 of 630 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **20,173 SAT solution portfolios**; **20,036** use uniform channelling across **291 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
+SAT is enabled in **384 of 632 runnable integration fixtures**. All enabled fixtures have successful SAT run records, exercising **21,423 SAT solution portfolios**; **21,286** use uniform channelling across **296 fixtures**. The element stage enables twelve existing fixtures and adds `sat-ir/element`, with implication/support compositions, actual sparse index labels and scalar definedness guards.
 
 The structured-input stage had 328 successful SAT fixtures and 4,333 portfolios. BinaryOffset and BinaryRank expanded the previous 3,355 portfolios and added `sat-ir/unsigned-integers`. The weighted stage enabled three former solution-mismatch fixtures and added signed-arithmetic and weighted-linear fixtures; the cardinality-stage totals were 322 of 620 fixtures, 1,931 SAT portfolios and 1,836 uniform portfolios across 234 fixtures.
 
@@ -10,11 +10,12 @@ The current filtered failure list and targeted rechecks are recorded in [SAT kno
 
 | Final outcome | Fixtures |
 | --- | ---: |
-| Enabled after full uniform-portfolio verification | 226 |
-| Initial CLI error | 193 |
+| Currently SAT-enabled | 241 |
+| Initial CLI error | 185 |
 | Initial CLI timeout | 37 |
-| Full portfolio failed | 30 |
+| Full portfolio failed to lower | 22 |
 | Full portfolio timed out | 3 |
+| Full portfolio externally terminated | 1 |
 | Total | 489 |
 
 The [per-fixture CSV](sat_coverage_survey.csv) records the initial screen, portfolio outcome and failure category. A timeout does not establish unsupported semantics.
@@ -92,6 +93,14 @@ Full acceptance passed 1,560 workspace tests (14 skipped) and all workspace doct
 
 ## Asserted conjunction stage
 
-Native cardinality and PB bounds beneath asserted conjunctions now reach the existing library providers while retaining the evaluator's grouped worklist. The new regression has 100 SAT portfolios. Total surjective integer functions add 1,000 portfolios after a successful 600-second trial. Coverage is 379/630 fixtures, 20,173 SAT portfolios; 20,036 uniform portfolios across 291 fixtures. There are 251 disabled fixtures. Sparse partial functions passed 600 portfolios but were terminated by SIGKILL after about 472 seconds; the cause is unconfirmed, and their configuration and trial artefacts were restored. Direct reified counts remain a separate known connection gap. No new library bug was confirmed.
+Native cardinality and PB bounds beneath asserted conjunctions now reach the existing library providers while retaining the evaluator's grouped worklist. The new regression has 100 SAT portfolios. Total surjective integer functions add 1,000 portfolios after a successful 600-second trial. Coverage at that stage was 379/630 fixtures, 20,173 SAT portfolios; 20,036 uniform portfolios across 291 fixtures. There are 251 disabled fixtures. Sparse partial functions passed 600 portfolios but were terminated by SIGKILL after about 472 seconds; the cause is unconfirmed, and their configuration and trial artefacts were restored. At that stage, direct reified counts remained a separate known connection gap. No new library bug was confirmed.
 
 Full four-thread workspace acceptance passed all 1,563 tests (14 skipped); workspace doctests passed separately. Timing baselines were preserved in 631 files. The new function portfolio has a deliberate 210-second budget; the conjunction regression has a five-second budget. All ten normal golden checks passed, covering both new/expanded fixtures and eight changed or restored existing fixture goldens. Production Clippy and formatting passed.
+
+## Guarded-count connection and small function portfolios
+
+Guarded Boolean counts now use existing output-bearing numeric relation decisions and the selected PB library. Asserted counts retain AMO/cardinality selection. The 300-portfolio `sat-ir/guarded-counts` regression includes direct reification, implication, disjunction, negation, all six relations, reversed operands, duplicate inputs and `toInt`. Fifty explicit integer/cardinality/PB portfolios match nine independent and Conjure assignments.
+
+The original sparse-partial fixture passes pinned Packed + BinaryValue, but its full uniform portfolio remains disabled. Direct representation grows to 117,649 codes for its packed function and exceeds a bounded rewrite-only probe; pairwise AMO would require nearly seven billion clauses. This does not confirm the cause of its earlier SIGKILL. A three-by-three full sweep exceeded 120 seconds; reducing the codomain to two values produces `sat-ir/sparse-partial-small`, which passes 800 SAT portfolios under the same bound.
+
+Fresh uniform trials enable both basic Boolean-to-integer fixtures and nested absolute arithmetic, adding 150 portfolios. Coverage is now 384/632 runnable fixtures and 21,423 SAT portfolios, including 21,286 uniform portfolios across 296 fixtures. No new upstream bug was confirmed. Full four-thread workspace acceptance passed all 1,566 tests (14 skipped), including workspace doctests. All eight normal golden checks passed, covering five new/expanded fixtures and three restored capped-search samples. Timing baselines were preserved in 631 files. Existing budgets remain unchanged; the new guarded-count and small function fixtures have deliberate ten- and 180-second budgets. Production Clippy and formatting passed.
