@@ -42,7 +42,7 @@ pub fn compile_decisions(
     )
 }
 
-/// Compile another decision batch against counters already emitted into the same solver.
+/// Compile another decision batch against encodings already emitted into the same solver.
 pub(super) fn compile_decisions_with_cache(
     decisions: &[SatEncodingDecision],
     instance: &mut SatInstance,
@@ -247,6 +247,7 @@ pub(super) fn compile_decisions_with_cache(
                 let output = compiler.encode(output)?;
                 let value = compiler.encode(expression)?;
                 compiler.equate(output, value);
+                compiler.retain_boolean_alias(output, value);
             }
         }
     }
@@ -342,7 +343,7 @@ pub(super) fn compile_objective_terms(
     Ok((constant, positive))
 }
 
-/// Native counters and one-shot threshold predicates belonging to one loaded solver.
+/// Shared gates, aliases, native counters and threshold predicates for one loaded solver.
 #[derive(Default)]
 pub(super) struct EncodingCache {
     totalizers: HashMap<Vec<Lit>, rustsat::encodings::card::Totalizer>,
@@ -350,6 +351,8 @@ pub(super) struct EncodingCache {
     occurrences: HashMap<Vec<Lit>, Vec<Lit>>,
     weighted: HashMap<WeightedKey, WeightedEncoder>,
     weighted_thresholds: HashMap<WeightedThresholdKey, Lit>,
+    gates: HashMap<(bool, Vec<Lit>), Lit>,
+    aliases: HashMap<Lit, Term>,
 }
 
 type WeightedKey = (crate::ast::sat_decision::PbEncoding, Vec<(Lit, usize)>);
@@ -2316,10 +2319,51 @@ impl Compiler<'_> {
             Term::Literal(lit) => self.instance.add_clause([lit].into_iter().collect()),
         }
     }
+    fn resolve_alias(&self, mut term: Term) -> Term {
+        while let Term::Literal(literal) = term {
+            let positive = literal.var().pos_lit();
+            let Some(value) = self
+                .counters
+                .as_ref()
+                .and_then(|cache| cache.aliases.get(&positive))
+            else {
+                break;
+            };
+            term = if literal.is_pos() {
+                *value
+            } else {
+                value.negated()
+            };
+        }
+        term
+    }
+
+    // Keep the emitted equivalence: earlier clauses may already use the original literal.
+    fn retain_boolean_alias(&mut self, output: Term, value: Term) {
+        let output = self.resolve_alias(output);
+        let value = self.resolve_alias(value);
+        let Term::Literal(output) = output else {
+            return;
+        };
+        if matches!(value, Term::Literal(value) if value.var() == output.var()) {
+            return;
+        }
+        if let Some(cache) = self.counters.as_mut() {
+            cache.aliases.insert(
+                output.var().pos_lit(),
+                if output.is_pos() {
+                    value
+                } else {
+                    value.negated()
+                },
+            );
+        }
+    }
+
     fn combine(&mut self, and: bool, terms: Vec<Term>) -> Term {
         let mut literals = Vec::new();
         for term in terms {
-            match term {
+            match self.resolve_alias(term) {
                 Term::Constant(value) if value != and => return Term::Constant(value),
                 Term::Constant(_) => (),
                 Term::Literal(lit) => literals.push(lit),
@@ -2329,6 +2373,18 @@ impl Compiler<'_> {
             [] => Term::Constant(and),
             [lit] => Term::Literal(*lit),
             _ => {
+                // Gate inputs are commutative; aliases join independently rebuilt projections.
+                literals.sort_unstable();
+                let key = (and, literals.clone());
+                let existing = self
+                    .counters
+                    .as_ref()
+                    .and_then(|cache| cache.gates.get(&key))
+                    .copied();
+                tracing::debug!(reused = existing.is_some(), "compiling shared Boolean gate");
+                if let Some(output) = existing {
+                    return self.resolve_alias(Term::Literal(output));
+                }
                 let output = self.instance.new_lit();
                 if and {
                     for clause in atomics::lit_impl_cube(output, &literals) {
@@ -2343,6 +2399,9 @@ impl Compiler<'_> {
                     self.instance
                         .add_clause(atomics::lit_impl_clause(output, &literals));
                 }
+                if let Some(cache) = self.counters.as_mut() {
+                    cache.gates.insert(key, output);
+                }
                 Term::Literal(output)
             }
         }
@@ -2356,12 +2415,11 @@ impl Compiler<'_> {
                         "Non-Boolean SAT reference: {reference}"
                     )));
                 }
-                Term::Literal(
-                    *self
-                        .variables
-                        .entry(reference.name().clone())
-                        .or_insert_with(|| self.instance.new_lit()),
-                )
+                let literal = *self
+                    .variables
+                    .entry(reference.name().clone())
+                    .or_insert_with(|| self.instance.new_lit());
+                self.resolve_alias(Term::Literal(literal))
             }
             Expression::Not(_, inner) => self.encode(inner)?.negated(),
             Expression::And(_, children) | Expression::Or(_, children) => {
@@ -2451,6 +2509,193 @@ mod tests {
         solvers::{Solve, SolveIncremental, SolverResult},
     };
     use rustsat_cadical::CaDiCaL;
+
+    #[test]
+    fn rebuilt_boolean_projections_share_literals_across_batches() {
+        use crate::ast::sat_decision::{
+            EncodingSelection, IntegerRelation, PbEncoding, SelectionProvenance,
+        };
+        use rustsat::instances::ManageVars;
+
+        for algorithm in PbEncoding::ALL {
+            let inputs: Vec<_> = ["a", "b"]
+                .into_iter()
+                .map(|name| DeclarationPtr::new_find(Name::User(name.into()), Domain::bool()))
+                .collect();
+            let expressions: Vec<Expression> = inputs
+                .iter()
+                .map(|decl| Reference::new(decl.clone()).into())
+                .collect();
+            let mut cache = EncodingCache::default();
+            let mut map = HashMap::new();
+            let mut solver = CaDiCaL::default();
+            let mut next_free = 0;
+            let mut previous_projection = None;
+            let mut outputs = Vec::new();
+            let mut named_projections = Vec::new();
+            for batch in 0..3 {
+                let mut instance: SatInstance = SatInstance::new();
+                instance
+                    .var_manager_mut()
+                    .increase_next_free(rustsat::types::Var::new(next_free));
+                let declarations: Vec<_> = (0..4)
+                    .map(|index| {
+                        DeclarationPtr::new_find(
+                            Name::User(format!("batch{batch}_{index}").into()),
+                            Domain::bool(),
+                        )
+                    })
+                    .collect();
+                let refs: Vec<Expression> = declarations
+                    .iter()
+                    .map(|decl| Reference::new(decl.clone()).into())
+                    .collect();
+                let mut children = expressions.clone();
+                if batch == 1 {
+                    children.reverse();
+                }
+                let conjunction = Expression::And(
+                    Metadata::new(),
+                    Moo::new(crate::into_matrix_expr!(children)),
+                );
+                let decisions = [
+                    SatEncodingDecision::Boolean {
+                        output: refs[0].clone(),
+                        expression: conjunction,
+                    },
+                    SatEncodingDecision::Boolean {
+                        output: refs[1].clone(),
+                        expression: Expression::Not(Metadata::new(), Moo::new(refs[0].clone())),
+                    },
+                    SatEncodingDecision::Boolean {
+                        output: refs[2].clone(),
+                        expression: Expression::Not(Metadata::new(), Moo::new(refs[1].clone())),
+                    },
+                    SatEncodingDecision::IntegerRelation {
+                        output: refs[3].clone(),
+                        terms: vec![(3, refs[2].clone()), (2, expressions[0].clone())],
+                        groups: vec![],
+                        relation: IntegerRelation::LessEqual,
+                        bound: if batch == 1 { 0 } else { 3 },
+                        encoding: Some(EncodingSelection {
+                            algorithm,
+                            provenance: SelectionProvenance::ExplicitConfiguration,
+                        }),
+                    },
+                ];
+                compile_decisions_with_cache(&decisions, &mut instance, &mut map, &mut cache)
+                    .unwrap();
+                let compiler = Compiler {
+                    instance: &mut instance,
+                    variables: &mut map,
+                    counters: Some(&mut cache),
+                };
+                let projection = compiler
+                    .resolve_alias(Term::Literal(compiler.variables[&declarations[2].name()]));
+                if let Some(previous) = previous_projection {
+                    assert!(projection == previous);
+                }
+                previous_projection = Some(projection);
+                assert_eq!(
+                    cache.gates.len(),
+                    1,
+                    "{algorithm}: decoder gate should be shared"
+                );
+                named_projections.push(
+                    declarations[..3]
+                        .iter()
+                        .map(|decl| map[&decl.name()])
+                        .collect::<Vec<_>>(),
+                );
+                outputs.push((map[&declarations[3].name()], if batch == 1 { 0 } else { 3 }));
+                let (cnf, manager): (Cnf, BasicVarManager) = instance.into_cnf();
+                if batch == 2 {
+                    assert_eq!(
+                        manager.n_used(),
+                        next_free + 4,
+                        "{algorithm}: repeated projections and bounds need only new named outputs"
+                    );
+                }
+                next_free = manager.n_used();
+                solver.add_cnf(cnf).unwrap();
+            }
+            for bits in 0..4 {
+                let a = bits & 1 != 0;
+                let b = bits & 2 != 0;
+                let value = 3 * i64::from(a && b) + 2 * i64::from(a);
+                let mut assumptions: Vec<_> = inputs
+                    .iter()
+                    .zip([a, b])
+                    .map(|(decl, truth)| {
+                        let lit = map[&decl.name()];
+                        if truth { lit } else { !lit }
+                    })
+                    .collect();
+                for projections in &named_projections {
+                    assumptions.extend(
+                        projections
+                            .iter()
+                            .zip([a && b, !(a && b), a && b])
+                            .map(|(&lit, truth)| if truth { lit } else { !lit }),
+                    );
+                }
+                assumptions.extend(
+                    outputs
+                        .iter()
+                        .map(|&(lit, bound)| if value <= bound { lit } else { !lit }),
+                );
+                assert_eq!(
+                    solver.solve_assumps(&assumptions).unwrap(),
+                    SolverResult::Sat
+                );
+                for index in 2..assumptions.len() {
+                    assumptions[index] = !assumptions[index];
+                    assert_eq!(
+                        solver.solve_assumps(&assumptions).unwrap(),
+                        SolverResult::Unsat,
+                        "{algorithm}: batch projection/output {index}, inputs {bits}"
+                    );
+                    assumptions[index] = !assumptions[index];
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn boolean_aliases_retain_existing_uses_and_multiple_definitions() {
+        let vars: Vec<_> = ["a", "out"]
+            .into_iter()
+            .map(|name| DeclarationPtr::new_find(Name::User(name.into()), Domain::bool()))
+            .collect();
+        let refs: Vec<Expression> = vars
+            .iter()
+            .map(|decl| Reference::new(decl.clone()).into())
+            .collect();
+        let mut instance = SatInstance::new();
+        let mut map = HashMap::new();
+        let decisions = [
+            SatEncodingDecision::Assert(refs[1].clone()),
+            SatEncodingDecision::Boolean {
+                output: refs[1].clone(),
+                expression: Expression::Not(Metadata::new(), Moo::new(refs[0].clone())),
+            },
+            SatEncodingDecision::Boolean {
+                output: refs[1].clone(),
+                expression: true.into(),
+            },
+        ];
+        compile_decisions(&decisions, &mut instance, &mut map).unwrap();
+        let (cnf, _): (Cnf, BasicVarManager) = instance.into_cnf();
+        let mut solver = CaDiCaL::default();
+        solver.add_cnf(cnf).unwrap();
+        for a in [false, true] {
+            let lit = map[&vars[0].name()];
+            assert_eq!(
+                solver.solve_assumps(&[if a { lit } else { !lit }]).unwrap() == SolverResult::Sat,
+                !a
+            );
+        }
+    }
 
     #[test]
     fn semantic_gates_preserve_all_input_and_output_assignments() {
