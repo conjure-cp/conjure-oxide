@@ -1,8 +1,8 @@
 # SAT backend: known issues and disabled tests
 
-Inventory date: 2026-10-04, branch `sat-ir` after reusable cardinality bounds and dominance count sharing were connected.
+Inventory date: 2026-10-04, branch `sat-ir` after reusable cardinality and weighted dominance bounds were connected.
 
-389 of 636 runnable integration fixtures have SAT enabled, exercising 21,673 SAT portfolios. Full acceptance for the cardinality-reuse stage passed all 1,575 workspace tests (14 skipped), including workspace doctests. The earlier integer relation migration also passed full normal golden verification. The remaining 247 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
+390 of 637 runnable integration fixtures have SAT enabled, exercising 21,723 SAT portfolios. Full acceptance for the weighted-reuse stage passed all 1,580 workspace tests (14 skipped), with workspace doctests also passing. The earlier integer relation migration also passed full normal golden verification. The remaining 247 fixtures have SAT disabled. Disabled does not establish that a fixture still fails on today's code: the exhaustive screen predates the weighted PB and signed arithmetic changes.
 
 This list filters the [coverage CSV](sat_coverage_survey.csv) against current test configurations, excluding cases that have since been enabled. The CSV records observations rather than independently diagnosed root causes. No remaining solution mismatch is recorded in that survey; the three former mismatches have been fixed and enabled.
 
@@ -356,7 +356,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Suggested investigation order
 
-1. Investigate weighted dominance-counter sharing and cost-aware selection; reusable cardinality bounds, dominance count sharing, PB objective tightening and dedicated AMO/cardinality-provider reification are connected.
+1. Share sparse BinaryRank actual-value projections across dominance rewrites, then investigate cost-aware selection. Weighted GTE/adder counters and bound-specific DPW/Pindakaas predicates now share stable inputs; cardinality sharing, PB objective tightening and dedicated AMO/cardinality-provider reification are connected.
 2. Tune cost-aware representation/encoding selection and further isolate the original sparse-partial termination; bounded probes already show packed Direct growth.
 3. Fix the ground-domain crash and determine whether constant-matrix indexing is a shared frontend issue.
 4. Repair matrix equality/disequality lowering for the five reconfirmed loading errors.
@@ -366,7 +366,7 @@ Last recorded with eight seconds for compilation and twelve seconds for the solv
 
 ## Passing performance follow-ups
 
-The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. PB objective tightening now reuses native RustSAT state. Cardinality bounds now reuse state across dominance updates. General weighted dominance-counter sharing remains a separate library connection.
+The new integer relation decisions expand PB provider selection. `basic/weighted-sum/05-flattening` and `savilerow/quantification_over_matrix_doms_2` both pass, with portfolios growing from 10 to 50; their recorded acceptance budgets are now 240 and 270 seconds respectively. Profile these cases when tuning the integer strategies. Integer relations now preserve compatible representation groups through native asserted PB calls and both implication directions for Pindakaas BDD/SWC. Ready guarded/reified counts now use dedicated AMO/cardinality decisions. Weighted and linear comparisons retain PB-backed equivalence decisions. PB objective tightening now reuses native RustSAT state. Cardinality bounds now reuse state across dominance updates. Weighted dominance sharing now retains GTE/adder counters and bound-specific DPW/Pindakaas predicates; sparse Rank projection sharing remains separate.
 
 ## Cross-backend masked lookup follow-up
 
@@ -399,3 +399,18 @@ The two-count Pareto regression matches 20 independently enumerated nondominated
 The new count-based Pareto model exposes a separate Oxide Minion gap: mid-search dominance rewriting leaves a sum in a scalar comparison position, and `parse_atom` rejects it with `expected atomic expression`. Removing dominance allows the same constraints to solve. Flattening the initial bound into six weighted Boolean terms still leaves the Pareto-sum injection failing. This is before native Minion encoding, not a confirmed upstream Minion bug. The regression therefore selects SAT and checks its 20 assignments by independent enumeration; repairing Minion compound dominance lowering remains separate work.
 
 Full four-thread acceptance passed all 1,575 tests (14 skipped), including workspace doctests. All four final normal golden checks passed. Sixty explicit dominance portfolios and twelve Boolean-only reification portfolios passed; the sixty recorded dominance portfolios match the independently enumerated frontier. Coverage is 389/636 runnable fixtures and 21,673 SAT portfolios, with 247 fixtures still disabled. Existing timing budgets are preserved; the new regression has a deliberate five-second budget.
+
+
+## Weighted dominance reuse and sparse Rank sharing gap
+
+GTE/adder counters now share stable weighted inputs, with guarded enforcement and cached equivalent predicates. DPW predicates own separate state for distinct simultaneous bounds; Pindakaas BDD/SWC retain structured inputs through their public one-shot APIs. Repeated thresholds and complementary signed sums reuse complete equivalences.
+
+The sparse `sat-ir/dominance-weighted` model has five independently enumerated nondominated assignments. All 25 explicit integer/PB combinations match that frontier; 50 uniform recorded portfolios agree. Direct, Order, BinaryValue and BinaryOffset show cache hits for every provider. Sparse BinaryRank has zero hits: each dominance rewrite creates fresh actual-value arithmetic bits, giving identical mathematical views different input literals. CDP traces confirm fresh auxiliary names. Sharing these projections is an Oxide arithmetic-view/Boolean-arena connection, not an upstream library bug. Keep it visible before declaring dominance reuse complete for every representation.
+
+Multi-batch tests activate all old/new thresholds together and reject each incorrect output polarity. Structured tests reorder groups, reverse choice-member order, change constant spelling and negate complementary sums without allocating new auxiliaries. Chain implication order remains significant. Wide asserted and reified chains also preserve projected solutions.
+
+Unrestricted native sharing caused the 2,000-input Order/GTE fixture to run for 706 seconds without completing; a second attempt stopped at 382 seconds after only reification was corrected. Both acceptance attempts were deliberately interrupted. Sampling placed the cost in CaDiCaL search, not rewriting. The final provisional policy limits native reified GTE sharing to 64 weighted inputs, retaining library implication transformations for larger predicates. Adder reification still uses native state. Unconditional assertions preserve pruning and retain the original BoundBoth construction above 64 remaining inputs for both providers. Algorithms are unchanged; cost-aware tuning remains deferred.
+
+All six focused integration checks pass. The three complete wide-domain fixtures finish in 63-65 seconds, matching prior 65-72-second baselines; large Direct addition and the dominance RFC example finish in about nine seconds. CLI GTE/adder probes return the unique value 4 in 1.65/1.38 seconds. This is an encoding-construction performance observation, not a confirmed upstream correctness bug.
+
+Full `NEXTEST_TEST_THREADS=4 make test-accept` passed all 1,580 tests (14 skipped), plus workspace doctests. Production Clippy and formatting passed; core/rule libraries have 259/160 unit tests. All 13 final normal golden checks passed, including the new weighted regression, the wide-domain cases and four restored capped-search samples. Independent auditing confirms all 50 weighted portfolios match the five-assignment frontier. Timing cleanup preserves prior fields in 639 files; existing budgets remain unchanged and the new fixture has a deliberate five-second budget. Coverage is 390/637 runnable fixtures and 21,723 SAT portfolios; 21,586 are uniform across 302 fixtures, with 247 fixtures still disabled.
