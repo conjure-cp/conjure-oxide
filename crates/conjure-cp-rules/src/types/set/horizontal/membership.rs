@@ -24,25 +24,36 @@ fn membership_in_set_literal(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     }
 
+    Ok(expand_membership(member, elements))
+}
+
+/// SAT uses numeric equalities for the constant sets delegated to Minion's native constraint.
+#[register_rule("SAT", 8700, [In])]
+fn membership_in_integer_set_literal_sat(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::In(_, member, collection) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let elements = set_literal_elements(collection).ok_or(RuleNotApplicable)?;
+    if !minion_w_inset_applies(&elements) {
+        return Err(RuleNotApplicable);
+    }
+    Ok(expand_membership(member, elements))
+}
+
+fn expand_membership(member: &Expr, elements: Vec<Expr>) -> RuleEffect {
     if elements.is_empty() {
-        return Ok(RuleEffect::pure(false.into()));
+        return RuleEffect::pure(false.into());
     }
 
     let disjuncts = elements
         .into_iter()
-        .map(|element| {
-            Expr::Eq(
-                Metadata::new(),
-                Moo::new(Moo::unwrap_or_clone(Moo::clone(member))),
-                Moo::new(element),
-            )
-        })
+        .map(|element| Expr::Eq(Metadata::new(), Moo::new(member.clone()), Moo::new(element)))
         .collect();
 
-    Ok(RuleEffect::pure(Expr::Or(
+    RuleEffect::pure(Expr::Or(
         Metadata::new(),
         Moo::new(into_matrix_expr![disjuncts]),
-    )))
+    ))
 }
 
 /// The elements of a set written out in full, in either the literal or the expression form.
@@ -71,4 +82,44 @@ fn minion_w_inset_applies(elements: &[Expr]) -> bool {
     elements.iter().all(|element| {
         matches!(element, Expr::Atomic(_, Atom::Literal(literal)) if i32::try_from(literal).is_ok())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::eval_constant;
+
+    #[test]
+    fn sat_membership_preserves_sparse_empty_and_repeated_literal_sets() {
+        for values in [vec![], vec![-3, -1, 2], vec![-3, -3, 2]] {
+            for expression_form in [false, true] {
+                let collection = if expression_form {
+                    Expr::AbstractLiteral(
+                        Metadata::new(),
+                        AbstractLiteral::Set(values.iter().copied().map(Expr::from).collect()),
+                    )
+                } else {
+                    Literal::AbstractLiteral(AbstractLiteral::Set(
+                        values.iter().copied().map(Literal::Int).collect(),
+                    ))
+                    .into()
+                };
+                for member in -4..=4 {
+                    let expression = Expr::In(
+                        Metadata::new(),
+                        Moo::new(member.into()),
+                        Moo::new(collection.clone()),
+                    );
+                    assert!(membership_in_set_literal(&expression, &SymbolTable::new()).is_err());
+                    let effect =
+                        membership_in_integer_set_literal_sat(&expression, &SymbolTable::new())
+                            .unwrap();
+                    assert_eq!(
+                        eval_constant(&effect.new_expression),
+                        Some(values.contains(&member).into())
+                    );
+                }
+            }
+        }
+    }
 }
