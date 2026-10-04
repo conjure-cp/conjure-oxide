@@ -1,0 +1,57 @@
+Model before rewriting:
+
+find x: set of set of int(1..2)
+
+--
+
+true
+   ~~> select_representation_unconstrained ([("ReprGeneral", 9900)])
+true
+new variables:
+  find x#occurrence_1: bool
+  find x#occurrence_2: bool
+  find x#occurrence_3: bool
+  find x#occurrence_4: bool
+new constraints:
+  and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+
+--
+
+true,
+and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) >= 0,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([true,sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+new SAT encoding decisions:
+  count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtLeast 0 using None
+
+--
+
+true,
+and([sum([toInt(x#occurrence_1),toInt(x#occurrence_2),toInt(x#occurrence_3),toInt(x#occurrence_4);int(1..)]) <= 4;int(1..)])
+   ~~> select_cardinality ([("SAT", 20000)])
+true,
+and([true;int(1..)])
+new SAT encoding decisions:
+  count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtMost 4 using None
+
+--
+
+Final model:
+
+find x: set (representation occurrence) of set of int(1..2)
+find x#occurrence_1: bool
+find x#occurrence_2: bool
+find x#occurrence_3: bool
+find x#occurrence_4: bool
+
+such that
+
+true,
+true
+
+sat encoding decisions:
+
+count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtLeast 0 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic }),
+count(x#occurrence_1, x#occurrence_2, x#occurrence_3, x#occurrence_4) AtMost 4 using Some(EncodingSelection { algorithm: RustsatTotalizer, provenance: Heuristic })
+
